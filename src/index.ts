@@ -1,1 +1,1 @@
-export { mean, range } from "./stats";
+export { Viewport } from "./viewport";
