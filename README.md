@@ -17,3 +17,4 @@ Description of Gradle tasks:
 | transpileES |  run babel on `src` directory; *do not* transpile `import/export` statements for an ES module compatible build (used by bundlers for tree-shaking) |
 | test | run `mocha`; searches for any files matching the pattern "src/**/*.test.js" |
 | typeCheck | run `tsc` in type-check only mode |
+| start  | runs an example app from `examples` for testing. Runs at `localhost:8080/public/` |

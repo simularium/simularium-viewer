@@ -73,12 +73,26 @@ task bundle(type: NodeTask) {
     args = "--config webpack.config.js".tokenize()
 }
 
+task processCSS(type: NodeTask) {
+    dependsOn npmInstall
+
+    script = file("${npmBin}/postcss")
+    args = "src/style.css --output style/style.css".tokenize()
+}
+
+task devCSS(type: NodeTask) {
+    dependsOn npmInstall
+
+    script = file("${npmBin}/postcss")
+    args = "src/style.css --output examples/style.css".tokenize()
+}
+
 task transpileES(type: NodeTask) {
     dependsOn npmInstall
 
     environment = [TS_NODE_PROJECT: "tsconfig.es.json", BABEL_ENV: "es"]
     script = file("${npmBin}/babel")
-    args = "src --out-dir es --extensions .ts --ignore src/**/*.test.ts".tokenize()
+    args = "src --out-dir es --extensions .ts,.tsx --ignore src/**/*.test.ts".tokenize()
 }
 
 task transpileCommonJs(type: NodeTask) {
@@ -86,9 +100,17 @@ task transpileCommonJs(type: NodeTask) {
 
     environment = [TS_NODE_PROJECT: "tsconfig.commonjs.json"]
     script = file("${npmBin}/babel")
-    args = "src --out-dir lib --extensions .ts --ignore src/**/*.test.ts".tokenize()
+    args = "src --out-dir lib --extensions .ts,.tsx --ignore src/**/*.test.ts".tokenize()
 }
 
 task build {
-    dependsOn generateTypes, bundle, transpileES, transpileCommonJs
+    dependsOn generateTypes, bundle, transpileES, transpileCommonJs, processCSS
+}
+
+task start(type: NodeTask) {
+    dependsOn devCSS, bundle
+    environment = [NODE_ENV: "dev"]
+
+    script = file("${npmBin}/webpack-dev-server")
+    args = "--config webpack.dev.js".tokenize()
 }

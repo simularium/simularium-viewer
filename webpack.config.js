@@ -4,7 +4,7 @@ module.exports = {
     entry: './src/index.ts',
     output: {
         filename: 'index.js',
-        library: 'TemplatePackageName',  // TODO CHANGEME
+        library: 'agentviz-viewer',
         libraryTarget: 'umd',
         path: path.resolve(__dirname, 'dist'),
     },
@@ -12,15 +12,15 @@ module.exports = {
     module: {
         rules: [
             {
-                test: /\.ts$/,
+                test: /\.tsx?$/,
                 exclude: /node_modules/,
                 use: [
                     { loader: 'babel-loader' },
                 ],
-            },
+            }
         ],
     },
     resolve: {
-        extensions: ['.ts, .tsx'],
+        extensions: [".ts", ".tsx", ".js", ".jsx"],
     },
 };

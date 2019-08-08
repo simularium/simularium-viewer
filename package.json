@@ -44,5 +44,9 @@
     "webpack": "~4.29",
     "webpack-cli": "~3.2"
   },
-  "dependencies": {}
+  "dependencies": {
+    "react": "~16.9.0",
+    "react-dom": "^16.9.0",
+    "three": "^0.107.0"
+  }
 }
