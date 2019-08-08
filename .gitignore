@@ -1,0 +1,6 @@
+.idea
+.gradle
+node_modules
+lib
+es
+dist

@@ -1,0 +1,48 @@
+{
+  "name": "agentviz-viewer",
+  "version": "1.0.0",
+  "description": "An npm package to view simulations.",
+  "main": "lib/index.js",
+  "module": "es/index.js",
+  "browser": "dist/index.js",
+  "types": "type-declarations",
+  "scripts": {},
+  "files": [
+    "es",
+    "lib",
+    "dist",
+    "type-declarations",
+    "README.md",
+    "package.json"
+  ],
+  "publishConfig": {
+    "registry": "https://artifactory.corp.alleninstitute.org/artifactory/api/npm/npm-local/"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/cli": "~7.2",
+    "@babel/core": "~7.2",
+    "@babel/preset-env": "~7.3",
+    "@babel/preset-typescript": "~7.1",
+    "@types/chai": "~4.1",
+    "@types/mocha": "~5.2",
+    "@typescript-eslint/eslint-plugin": "~1.1",
+    "@typescript-eslint/parser": "~1.1",
+    "babel-loader": "~8.0",
+    "chai": "~4.2",
+    "eslint": "^5.12.1",
+    "eslint-config-prettier": "^3.6.0",
+    "husky": "^1.3.1",
+    "lint-staged": "^8.1.0",
+    "mocha": "~5.2",
+    "nyc": "~13.1",
+    "prettier": "^1.16.1",
+    "rimraf": "~2.6",
+    "ts-node": "~8.0",
+    "typescript": "~3.2",
+    "webpack": "~4.29",
+    "webpack-cli": "~3.2"
+  },
+  "dependencies": {}
+}
