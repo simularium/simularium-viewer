@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+
 /**
  * @author qiao / https://github.com/qiao
  * @author mrdoob / http://mrdoob.com
@@ -14,6 +16,60 @@
 //    Pan - right mouse, or left mouse + ctrl/metaKey, or arrow keys / touch: two-finger move
 
 THREE.OrbitControls = function (object, domElement) {
+    var scope = this;
+
+    var changeEvent = { type: 'change' };
+    const startEvent = { type: 'start' };
+    const endEvent = { type: 'end' };
+
+    var STATE = {
+        NONE: -1, ROTATE: 0, DOLLY: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_DOLLY_PAN: 4,
+    };
+
+    var state = STATE.NONE;
+
+    var EPS = 0.000001;
+
+    // current position in spherical coordinates
+    var spherical = new THREE.Spherical();
+    var sphericalDelta = new THREE.Spherical();
+
+    var scale = 1;
+    var panOffset = new THREE.Vector3();
+    var zoomChanged = false;
+
+    const rotateStart = new THREE.Vector2();
+    const rotateEnd = new THREE.Vector2();
+    const rotateDelta = new THREE.Vector2();
+
+    const panStart = new THREE.Vector2();
+    const panEnd = new THREE.Vector2();
+    const panDelta = new THREE.Vector2();
+
+    const dollyStart = new THREE.Vector2();
+    const dollyEnd = new THREE.Vector2();
+    const dollyDelta = new THREE.Vector2();
+
+
+    //
+    // internals
+    //
+
+    function getAutoRotationAngle() {
+        return 2 * Math.PI / 60 / 60 * scope.autoRotateSpeed;
+    }
+
+    function getZoomScale() {
+        return Math.pow(0.95, scope.zoomSpeed);
+    }
+
+    function rotateLeft(angle) {
+        sphericalDelta.theta -= angle;
+    }
+
+    function rotateUp(angle) {
+        sphericalDelta.phi -= angle;
+    }
     this.object = object;
 
     this.domElement = (domElement !== undefined) ? domElement : document;
@@ -202,76 +258,6 @@ THREE.OrbitControls = function (object, domElement) {
         };
     }());
 
-    this.dispose = function () {
-        scope.domElement.removeEventListener('contextmenu', onContextMenu, false);
-        scope.domElement.removeEventListener('mousedown', onMouseDown, false);
-        scope.domElement.removeEventListener('wheel', onMouseWheel, false);
-
-        scope.domElement.removeEventListener('touchstart', onTouchStart, false);
-        scope.domElement.removeEventListener('touchend', onTouchEnd, false);
-        scope.domElement.removeEventListener('touchmove', onTouchMove, false);
-
-        document.removeEventListener('mousemove', onMouseMove, false);
-        document.removeEventListener('mouseup', onMouseUp, false);
-
-        window.removeEventListener('keydown', onKeyDown, false);
-
-    // scope.dispatchEvent( { type: 'dispose' } ); // should this be added here?
-    };
-
-    //
-    // internals
-    //
-
-    var scope = this;
-
-    var changeEvent = { type: 'change' };
-    const startEvent = { type: 'start' };
-    const endEvent = { type: 'end' };
-
-    var STATE = {
-        NONE: -1, ROTATE: 0, DOLLY: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_DOLLY_PAN: 4,
-    };
-
-    var state = STATE.NONE;
-
-    var EPS = 0.000001;
-
-    // current position in spherical coordinates
-    var spherical = new THREE.Spherical();
-    var sphericalDelta = new THREE.Spherical();
-
-    var scale = 1;
-    var panOffset = new THREE.Vector3();
-    var zoomChanged = false;
-
-    const rotateStart = new THREE.Vector2();
-    const rotateEnd = new THREE.Vector2();
-    const rotateDelta = new THREE.Vector2();
-
-    const panStart = new THREE.Vector2();
-    const panEnd = new THREE.Vector2();
-    const panDelta = new THREE.Vector2();
-
-    const dollyStart = new THREE.Vector2();
-    const dollyEnd = new THREE.Vector2();
-    const dollyDelta = new THREE.Vector2();
-
-    function getAutoRotationAngle() {
-        return 2 * Math.PI / 60 / 60 * scope.autoRotateSpeed;
-    }
-
-    function getZoomScale() {
-        return Math.pow(0.95, scope.zoomSpeed);
-    }
-
-    function rotateLeft(angle) {
-        sphericalDelta.theta -= angle;
-    }
-
-    function rotateUp(angle) {
-        sphericalDelta.phi -= angle;
-    }
 
     const panLeft = (function () {
         const v = new THREE.Vector3();
@@ -558,63 +544,6 @@ THREE.OrbitControls = function (object, domElement) {
 
     }
 
-    //
-    // event handlers - FSM: listen for events and reset state
-    //
-
-    function onMouseDown(event) {
-        if (scope.enabled === false) return;
-
-        // event.preventDefault();
-
-        switch (event.button) {
-            case scope.mouseButtons.LEFT:
-
-                if (event.ctrlKey || event.metaKey) {
-                    if (scope.enablePan === false) return;
-
-                    handleMouseDownPan(event);
-
-                    state = STATE.PAN;
-                } else {
-                    if (scope.enableRotate === false) return;
-
-                    handleMouseDownRotate(event);
-
-                    state = STATE.ROTATE;
-                }
-
-                break;
-
-            case scope.mouseButtons.MIDDLE:
-
-                if (scope.enableZoom === false) return;
-
-                handleMouseDownDolly(event);
-
-                state = STATE.DOLLY;
-
-                break;
-
-            case scope.mouseButtons.RIGHT:
-
-                if (scope.enablePan === false) return;
-
-                handleMouseDownPan(event);
-
-                state = STATE.PAN;
-
-                break;
-        }
-
-        if (state !== STATE.NONE) {
-            document.addEventListener('mousemove', onMouseMove, false);
-            document.addEventListener('mouseup', onMouseUp, false);
-
-            scope.dispatchEvent(startEvent);
-        }
-    }
-
     function onMouseMove(event) {
         if (scope.enabled === false) return;
 
@@ -663,7 +592,7 @@ THREE.OrbitControls = function (object, domElement) {
     function onMouseWheel(event) {
         if (scope.enabled === false || scope.enableZoom === false || (state !== STATE.NONE && state !== STATE.ROTATE)) return;
 
-        event.preventDefault();
+        // event.preventDefault();
         event.stopPropagation();
 
         scope.dispatchEvent(startEvent);
@@ -763,6 +692,82 @@ THREE.OrbitControls = function (object, domElement) {
     }
 
     //
+    // event handlers - FSM: listen for events and reset state
+    //
+   
+
+    function onMouseDown(event) {
+        if (scope.enabled === false) return;
+
+        // event.preventDefault();
+
+        switch (event.button) {
+            case scope.mouseButtons.LEFT:
+
+                if (event.ctrlKey || event.metaKey) {
+                    if (scope.enablePan === false) return;
+
+                    handleMouseDownPan(event);
+
+                    state = STATE.PAN;
+                } else {
+                    if (scope.enableRotate === false) return;
+
+                    handleMouseDownRotate(event);
+
+                    state = STATE.ROTATE;
+                }
+
+                break;
+
+            case scope.mouseButtons.MIDDLE:
+
+                if (scope.enableZoom === false) return;
+
+                handleMouseDownDolly(event);
+
+                state = STATE.DOLLY;
+
+                break;
+
+            case scope.mouseButtons.RIGHT:
+
+                if (scope.enablePan === false) return;
+
+                handleMouseDownPan(event);
+
+                state = STATE.PAN;
+
+                break;
+        }
+
+        if (state !== STATE.NONE) {
+            document.addEventListener('mousemove', onMouseMove, false);
+            document.addEventListener('mouseup', onMouseUp, false);
+
+            scope.dispatchEvent(startEvent);
+        }
+    }
+
+    this.dispose = function () {
+        scope.domElement.removeEventListener('contextmenu', onContextMenu, false);
+        scope.domElement.removeEventListener('mousedown', onMouseDown, false);
+        scope.domElement.removeEventListener('wheel', onMouseWheel, false);
+
+        scope.domElement.removeEventListener('touchstart', onTouchStart, false);
+        scope.domElement.removeEventListener('touchend', onTouchEnd, false);
+        scope.domElement.removeEventListener('touchmove', onTouchMove, false);
+
+        document.removeEventListener('mousemove', onMouseMove, false);
+        document.removeEventListener('mouseup', onMouseUp, false);
+
+        window.removeEventListener('keydown', onKeyDown, false);
+
+        // scope.dispatchEvent( { type: 'dispose' } ); // should this be added here?
+    };
+ 
+
+    //
 
     scope.domElement.addEventListener('contextmenu', onContextMenu, false);
 
@@ -782,6 +787,7 @@ THREE.OrbitControls = function (object, domElement) {
 
 THREE.OrbitControls.prototype = Object.create(THREE.EventDispatcher.prototype);
 THREE.OrbitControls.prototype.constructor = THREE.OrbitControls;
+
 
 Object.defineProperties(THREE.OrbitControls.prototype, {
 
