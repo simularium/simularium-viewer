@@ -1,13 +1,35 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 
 import { VisGeometry, VisData, SimParameters, NetConnection, DevGUI } from "./AgentSimLib.js";
 
-class Viewport extends React.Component {
-    constructor(props)
-    {
-        super(props);
+// interface Viewport {
+//     visGeometry: any;
+//     visData: any;
+//     simParameters: any;
+//     netConnection: any;
+//     devGUI: any;
+//     devGuiRef: any;
+//     vdomRef: any;
+//     lastRenderTime: any;
+//     animate: any;
+// }
 
+interface ViewportProps {
+    height: number;
+    width: number;
+    devgui: any;
+}
+
+class Viewport extends React.Component<ViewportProps> {
+    public static defaultProps = {
+        height: 800,
+        width: 800,
+        devgui: false,
+    }
+
+    constructor(props: ViewportProps) {
+        super(props);
+  
         this.visGeometry = new VisGeometry();
         this.visData = new VisData();
         this.simParameters = new SimParameters();
@@ -58,42 +80,36 @@ class Viewport extends React.Component {
         };
     }
 
-    static get propTypes() {
-        return {
-            devgui: PropTypes.bool,
-            width: PropTypes.number,
-            height: PropTypes.number
-        };
+    componentDidMount() {
+        this.devGUI.reparent(this.devGuiRef.current);
+        this.visGeometry.reparent(this.vdomRef.current);
     }
 
-    drawDevGui()
-    {
-        if(this.props.devgui === true)
-        {
-            let style = {
-                position : "relative",
-                float : "right",
-                height : 0,
-                overflow : "visible",
-            };
+    drawDevGui() {
+        const { 
+            devgui,
+        } = this.props;
+        let style = {
+            position: "relative" as "relative",
+            height: 0,
+            overflow: "visible" as "visible",
+        };
+        return devgui && (<div style={style} ref={this.devGuiRef} />);
 
-            return <div id="devgui" style={style} ref={this.devGuiRef}></div>;
-        }
-
-        return <div></div>
     }
 
     render() {
         this.animate();
 
-        return(
-            // style is specified below so that the size
-            // can be passed as a react property
-            <div id="vdom"
+        // style is specified below so that the size
+        // can be passed as a react property
+        return (<div 
+                id="vdom"
                 style={
-                    {height:this.props.height,
+                    { 
+                        height:this.props.height,
                         width:this.props.width,
-                        float:"left"}
+                    }
                 }
                 ref={this.vdomRef}
             >
@@ -101,13 +117,6 @@ class Viewport extends React.Component {
             </div>
         );
     }
-
-    componentDidMount()
-    {
-        this.devGUI.reparent(this.devGuiRef.current);
-        this.visGeometry.reparent(this.vdomRef.current);
-    }
 }
 
-export { Viewport };
 export default Viewport;

@@ -77,14 +77,14 @@ task processCSS(type: NodeTask) {
     dependsOn npmInstall
 
     script = file("${npmBin}/postcss")
-    args = "src/style.css --output style/style.css".tokenize()
+    args = "src/viewport/index.css --output style/style.css".tokenize()
 }
 
 task devCSS(type: NodeTask) {
     dependsOn npmInstall
 
     script = file("${npmBin}/postcss")
-    args = "src/style.css --output examples/style.css".tokenize()
+    args = "src/viewport/index.css --output examples/style.css".tokenize()
 }
 
 task transpileES(type: NodeTask) {

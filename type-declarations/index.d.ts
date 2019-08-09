@@ -1,1 +1,2 @@
-export { mean, range } from "./stats";
+import Viewport from "./viewport";
+export default Viewport;
