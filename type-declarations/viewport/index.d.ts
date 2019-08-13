@@ -1,30 +1,38 @@
-import React from 'react';
-import PropTypes from 'prop-types';
+import * as React from 'react';
 interface Viewport {
     visGeometry: any;
-    visData: any;
-    simParameters: any;
-    netConnection: any;
-    devGUI: any;
-    devGuiRef: any;
-    vdomRef: any;
     lastRenderTime: any;
-    animate: any;
+    vdomRef: any;
 }
 interface ViewportProps {
     height: number;
     width: number;
     devgui: any;
+    timeStepSliderVal: number;
+    lastTimeStepSliderVal: number;
+    minimumTimeStep: number;
+    maximumTimeStep: number;
+    timeStepSliderExponent: number;
+    preRunNumTimeSteps: number;
+    preRunTimeStep: number;
+    trajectoryPlaybackFile: string;
+    cachePlaybackFrame: number;
+    serverPort: string;
+    serverIp: string;
+    loggerLevel: string;
+    netConnection: any;
+    visData: any;
+    simParameters: any;
 }
-declare class Viewport extends React.Component<ViewportProps, {}> {
-    constructor(props: ViewportProps);
-    static readonly propTypes: {
-        devgui: PropTypes.Requireable<boolean>;
-        width: PropTypes.Requireable<number>;
-        height: PropTypes.Requireable<number>;
+declare class Viewport extends React.Component<ViewportProps> {
+    static defaultProps: {
+        height: number;
+        width: number;
+        devgui: boolean;
     };
+    constructor(props: ViewportProps);
     componentDidMount(): void;
-    drawDevGui(): JSX.Element;
+    animate(): void;
     render(): JSX.Element;
 }
 export default Viewport;

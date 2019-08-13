@@ -251,7 +251,7 @@ class NetConnection {
     }
 
     startRemoteTrajectoryPlayback(fileName) {
-        if (fileName === '' || fileName === null) {
+        if (!fileName) {
             return;
         }
 
@@ -333,7 +333,7 @@ class NetConnection {
     *   Check for parameter updates (that need to be sent to backend)
     * */
     checkForUpdates() {
-        if (this.simParameters !== 'undefined') {
+        if (this.simParameters) {
             let updates = this.simParameters.getRateParameterUpdates();
             Object.keys(updates).forEach((paramName) => {
                 this.sendParameterUpdate(

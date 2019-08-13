@@ -1,15 +1,12 @@
 import * as React from 'react';
 import jsLogger from 'js-logger';
 
-import { VisGeometry, VisData, SimParameters, NetConnection, DevGUI } from "./AgentSimLib.js";
+import { VisGeometry, VisData, SimParameters, NetConnection, DevGUI } from "./AgentSimLib";
 
 interface Viewport {
     visGeometry: any;
-    visData: any;
-    simParameters: any;
-    netConnection: any;
-    devGUI: any;
     lastRenderTime: any;
+    vdomRef: any;
 }
 
 interface ViewportProps {
@@ -28,6 +25,10 @@ interface ViewportProps {
     serverPort: string;
     serverIp: string;
     loggerLevel: string;
+    netConnection: any;
+    visData: any;
+    simParameters: any;
+
 }
 
 
@@ -42,70 +43,54 @@ class Viewport extends React.Component<ViewportProps> {
 
     constructor(props: ViewportProps) {
         super(props);
-        const simParameters = {
-            timeStepSliderVal: props.timeStepSliderVal,
-            lastTimeStepSliderVal: props.lastTimeStepSliderVal,
-            minimumTimeStep: props.minimumTimeStep,
-            maximumTimeStep: props.maximumTimeStep,
-            timeStepSliderExponent: props.timeStepSliderExponent,
-            preRunNumTimeSteps: props.preRunNumTimeSteps,
-            preRunTimeStep: props.preRunTimeStep,
-            trajectoryPlaybackFile: props.trajectoryPlaybackFile,
-            cachePlaybackFrame: props.cachePlaybackFrame,         
-        }
 
-        const netConnection = {
-            serverIp: props.serverIp,
-            serverPort: props.serverPort,
-        }
         const loggerLevel = props.loggerLevel === 'debug' ? jsLogger.DEBUG : jsLogger.OFF;
-
-        this.animate = this.animate.bind(this);
-
         this.visGeometry = new VisGeometry(loggerLevel);
-        this.visData = new VisData(loggerLevel);
-        this.simParameters = new SimParameters(simParameters);
-        this.netConnection = new NetConnection(this.simParameters, this.visData, netConnection, loggerLevel);
-
-        setInterval(this.netConnection.checkForUpdates.bind(this.netConnection), 1000);
-
+        this.animate = this.animate.bind(this);
         this.visGeometry.setupScene();
-        this.visGeometry.createMaterials(this.visData.colors);
+        this.visGeometry.createMaterials(this.props.visData.colors);
         this.visGeometry.createMeshes(5000);
         this.vdomRef = React.createRef();
         this.lastRenderTime = Date.now();
     }
 
     componentDidMount() {
+        const { netConnection } = this.props;
         this.visGeometry.reparent(this.vdomRef.current);
-        this.netConnection.connect();
+        netConnection.connect();
+        setInterval(netConnection.checkForUpdates.bind(netConnection), 1000);
     }
 
 
     animate() {
+        const {
+            simParameters,
+            netConnection,
+            visData,
+        } = this.props;
         const framesPerSecond = 15; // how often the view-port rendering is refreshed per second
         const timePerFrame = 1000 / framesPerSecond; // the time interval at which to re-render
         const elapsedTime = Date.now() - this.lastRenderTime;
         if (elapsedTime > timePerFrame) {
-            if (!this.netConnection.socketIsValid()) {
+            if (!netConnection.socketIsValid()) {
                 this.visGeometry.clear();
             }
 
-            if (this.simParameters.newSimulationIsRunning) {
+            if (simParameters.newSimulationIsRunning) {
                 this.visGeometry.mapFromJSON(
-                    `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${this.simParameters.trajectoryPlaybackFile}.json`,
+                    `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${simParameters.trajectoryPlaybackFile}.json`,
                 );
-                this.simParameters.newSimulationIsRunning = false;
+                simParameters.newSimulationIsRunning = false;
             }
 
             this.visGeometry.render();
             this.lastRenderTime = Date.now();
         }
 
-        if (this.visData.hasNewData()) {
-            this.visGeometry.colorVariant = this.visData.colorVariant;
-            this.visGeometry.update(this.visData.agents);
-            this.visData.newDataHasBeenHandled();
+        if (visData.hasNewData()) {
+            this.visGeometry.colorVariant = visData.colorVariant;
+            this.visGeometry.update(visData.agents);
+            visData.newDataHasBeenHandled();
         }
 
         requestAnimationFrame(this.animate);
@@ -114,6 +99,11 @@ class Viewport extends React.Component<ViewportProps> {
     render() {
         const {
             devgui,
+            simParameters,
+            visData,
+            netConnection,
+            width,
+            height,
         } = this.props;
 
         this.animate();
@@ -124,16 +114,16 @@ class Viewport extends React.Component<ViewportProps> {
                 id="vdom"
                 style={
                     { 
-                        height:this.props.height,
-                        width:this.props.width,
+                        height: height,
+                        width: width,
                     }
                 }
                 ref={this.vdomRef}
             >
                 {devgui && (<DevGUI 
-                                simParams={this.simParameters}
-                                visData={this.visData}
-                                netConnection={this.netConnection}
+                                simParams={simParameters}
+                                visData={visData}
+                                netConnection={netConnection}
                             />)}
             </div>
         );
