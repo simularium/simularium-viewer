@@ -1,9 +1,4 @@
 import * as React from 'react';
-interface Viewport {
-    visGeometry: any;
-    lastRenderTime: any;
-    vdomRef: any;
-}
 interface ViewportProps {
     height: number;
     width: number;
@@ -25,6 +20,9 @@ interface ViewportProps {
     simParameters: any;
 }
 declare class Viewport extends React.Component<ViewportProps> {
+    private visGeometry;
+    private lastRenderTime;
+    private vdomRef;
     static defaultProps: {
         height: number;
         width: number;
