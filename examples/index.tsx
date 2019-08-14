@@ -25,6 +25,16 @@ ReactDOM.render(
         <button
             onClick={() => agentSim.stop()}
         >stop</button>
+        <button
+            onClick={() => agentSim.changeFile('microtubules15.h5')}
+        >
+            microtubules file
+        </button>
+        <button
+            onClick={() => agentSim.changeFile('actin5-1.h5')}
+        >
+            actin file
+        </button>
         <AgentVizViewer 
             height={600}
             width={600}

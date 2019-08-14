@@ -33,6 +33,12 @@ class SimParameters {
 
     set paramList(val) { this.mparamList = val; }
 
+    set playBackFile(val) {
+        if (this.trajectoryPlaybackFile !== val) {
+            this.trajectoryPlaybackFile = val; 
+        }
+    }
+
     get guiNeedsUpdate() { return this.mguiNeedsUpdate; }
 
     set guiNeedsUpdate(val) { this.mguiNeedsUpdate = val; }

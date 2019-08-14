@@ -31,6 +31,10 @@ export default class AgentSimController {
     resume() {
         this.netConnection.resumeRemoteSim()
     }
+
+    changeFile(newFile) {
+        this.simParameters.playBackFile = newFile;
+    }
 }
 
 export {
