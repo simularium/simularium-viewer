@@ -1,9 +1,4 @@
-import { VisGeometry } from './agentsim/VisGeometry';
-import { NetConnection } from './agentsim/NetConnection';
-import { SimParameters } from './agentsim/SimParameters';
-import  VisData  from './agentsim/VisData';
-import { ThreadUtil } from './agentsim/ThreadUtil';
-import { DevGUI } from './agentsim/DevGUI';
+import { NetConnection, SimParameters, VisData } from './agentsim';
 
 export default class AgentSimController {
     constructor(netConnectionSettings, params) {
@@ -35,13 +30,4 @@ export default class AgentSimController {
     changeFile(newFile) {
         this.simParameters.playBackFile = newFile;
     }
-}
-
-export {
-    VisGeometry,
-    NetConnection,
-    SimParameters,
-    VisData,
-    ThreadUtil,
-    DevGUI
 }
