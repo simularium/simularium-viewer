@@ -1,13 +1,8 @@
 import * as React from 'react';
 import jsLogger from 'js-logger';
 
-import { VisGeometry, VisData, SimParameters, NetConnection, DevGUI } from "./AgentSimLib";
+import { VisGeometry, VisData, SimParameters, NetConnection, DevGUI } from "./agentsim";
 
-interface Viewport {
-    visGeometry: any;
-    lastRenderTime: any;
-    vdomRef: any;
-}
 
 interface ViewportProps {
     height: number;
@@ -33,6 +28,10 @@ interface ViewportProps {
 
 
 class Viewport extends React.Component<ViewportProps> {
+    private visGeometry: any;
+    private lastRenderTime: any;
+    private vdomRef: any;
+
     public static defaultProps = {
         height: 800,
         width: 800,
