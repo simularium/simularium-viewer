@@ -137,8 +137,8 @@ class NetConnection {
         this.webSocket.close();
     }
 
-    static getIp() {
-        return 'ws://127.0.0.1:9002';
+    getIp() {
+        return `ws://${this.serverIp}:${this.serverPort}/`
     }
 
     waitForSocketConnection(socket, callback) {
@@ -215,7 +215,7 @@ class NetConnection {
     startRemoteSimPreRun(timeStep, numTimeSteps) {
         if (!this.socketIsValid()) {
             this.logger.debug('Requesting remote IP');
-            this.connectToUri(NetConnection.getIp());
+            this.connectToUri(this.getIp());
             if (!this.socketIsValid()) {
                 this.logger.debug('Failed to connect to remote IP');
             }
@@ -235,7 +235,7 @@ class NetConnection {
     startRemoteSimLive() {
         if (!this.socketIsValid()) {
             this.logger.debug('Requesting remote IP');
-            this.connectToUri(NetConnection.getIp());
+            this.connectToUri(this.getIp());
             if (!this.socketIsValid()) {
                 this.logger.debug('Failed to connect to remote IP');
             }
@@ -257,7 +257,7 @@ class NetConnection {
 
         if (!this.socketIsValid()) {
             this.logger.debug('Requesting remote IP');
-            this.connectToUri(NetConnection.getIp());
+            this.connectToUri(this.getIp());
             if (!this.socketIsValid()) {
                 this.logger.debug('Failed to connect to remote IP');
             }
