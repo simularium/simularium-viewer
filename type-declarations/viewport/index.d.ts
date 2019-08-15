@@ -1,23 +1,15 @@
 import * as React from 'react';
+interface AgentSimController {
+    simParameters: any;
+    visData: any;
+    netConnection: any;
+}
 interface ViewportProps {
     height: number;
     width: number;
-    devgui: any;
-    timeStepSliderVal: number;
-    lastTimeStepSliderVal: number;
-    minimumTimeStep: number;
-    maximumTimeStep: number;
-    timeStepSliderExponent: number;
-    preRunNumTimeSteps: number;
-    preRunTimeStep: number;
-    trajectoryPlaybackFile: string;
-    cachePlaybackFrame: number;
-    serverPort: string;
-    serverIp: string;
+    devgui: boolean;
     loggerLevel: string;
-    netConnection: any;
-    visData: any;
-    simParameters: any;
+    agentSimController: AgentSimController;
 }
 declare class Viewport extends React.Component<ViewportProps> {
     private visGeometry;

@@ -11,6 +11,7 @@ const netConnectionSettings = {
 }
 
 const agentSim = new AgentSimController(netConnectionSettings, { trajectoryPlaybackFile: "actin5-1.h5" })
+
 ReactDOM.render(
     <React.Fragment>
         <button 
@@ -40,7 +41,7 @@ ReactDOM.render(
             width={600}
             devgui={false}
             loggerLevel="debug"
-            visData={agentSim.visData}
+            agentSimController={agentSim}
             simParameters={agentSim.simParameters}
             netConnection={agentSim.netConnection}
 
