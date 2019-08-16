@@ -1,111 +1,95 @@
 import * as React from 'react';
 import jsLogger from 'js-logger';
 
-import { VisGeometry, VisData, SimParameters, NetConnection, DevGUI } from "./AgentSimLib.js";
+import { VisGeometry, VisData, SimParameters, NetConnection, DevGUI } from "./agentsim";
 
-interface Viewport {
-    visGeometry: any;
-    visData: any;
+interface AgentSimController {
+    // NOTE: these can be typed in the future, but they may change signifantly and I dont want to at the moment. -MMRM
     simParameters: any;
+    visData: any;
     netConnection: any;
-    devGUI: any;
-    lastRenderTime: any;
 }
 
 interface ViewportProps {
     height: number;
     width: number;
-    devgui: any;
-    timeStepSliderVal: number;
-    lastTimeStepSliderVal: number;
-    minimumTimeStep : number;
-    maximumTimeStep: number;
-    timeStepSliderExponent: number;
-    preRunNumTimeSteps: number;
-    preRunTimeStep: number;
-    trajectoryPlaybackFile: string;
-    cachePlaybackFrame: number;
-    serverPort: string;
-    serverIp: string;
+    devgui: boolean;
     loggerLevel: string;
+    agentSimController: AgentSimController;
 }
 
 
 class Viewport extends React.Component<ViewportProps> {
+    // NOTE: this can be typed in the future, but they may change signifantly and I dont want to at the moment. -MMRM
+    private visGeometry: any;
+    private lastRenderTime: number;
+    private vdomRef: React.RefObject<HTMLInputElement>;
+
     public static defaultProps = {
         height: 800,
         width: 800,
         devgui: false,
     }
 
-
-
     constructor(props: ViewportProps) {
         super(props);
-        const simParameters = {
-            timeStepSliderVal: props.timeStepSliderVal,
-            lastTimeStepSliderVal: props.lastTimeStepSliderVal,
-            minimumTimeStep: props.minimumTimeStep,
-            maximumTimeStep: props.maximumTimeStep,
-            timeStepSliderExponent: props.timeStepSliderExponent,
-            preRunNumTimeSteps: props.preRunNumTimeSteps,
-            preRunTimeStep: props.preRunTimeStep,
-            trajectoryPlaybackFile: props.trajectoryPlaybackFile,
-            cachePlaybackFrame: props.cachePlaybackFrame,         
-        }
 
-        const netConnection = {
-            serverIp: props.serverIp,
-            serverPort: props.serverPort,
-        }
         const loggerLevel = props.loggerLevel === 'debug' ? jsLogger.DEBUG : jsLogger.OFF;
-
-        this.animate = this.animate.bind(this);
+        const {
+            agentSimController,
+        } = this.props;
 
         this.visGeometry = new VisGeometry(loggerLevel);
-        this.visData = new VisData(loggerLevel);
-        this.simParameters = new SimParameters(simParameters);
-        this.netConnection = new NetConnection(this.simParameters, this.visData, netConnection, loggerLevel);
-
-        setInterval(this.netConnection.checkForUpdates.bind(this.netConnection), 1000);
-
+        this.animate = this.animate.bind(this);
         this.visGeometry.setupScene();
-        this.visGeometry.createMaterials(this.visData.colors);
+        this.visGeometry.createMaterials(agentSimController.visData.colors);
         this.visGeometry.createMeshes(5000);
         this.vdomRef = React.createRef();
         this.lastRenderTime = Date.now();
     }
 
     componentDidMount() {
+        const {
+            agentSimController,
+        } = this.props;
         this.visGeometry.reparent(this.vdomRef.current);
-        this.netConnection.connect();
+        agentSimController.netConnection.connect();
+        setInterval(agentSimController.netConnection.checkForUpdates.bind(agentSimController.netConnection), 1000);
     }
 
 
     animate() {
+        const {
+            agentSimController
+        } = this.props;
+        const {
+            simParameters,
+            netConnection,
+            visData,
+        } = agentSimController;
         const framesPerSecond = 15; // how often the view-port rendering is refreshed per second
         const timePerFrame = 1000 / framesPerSecond; // the time interval at which to re-render
         const elapsedTime = Date.now() - this.lastRenderTime;
         if (elapsedTime > timePerFrame) {
-            if (!this.netConnection.socketIsValid()) {
+            if (!netConnection.socketIsValid()) {
                 this.visGeometry.clear();
             }
 
-            if (this.simParameters.newSimulationIsRunning) {
+            if (simParameters.newSimulationIsRunning) {
                 this.visGeometry.mapFromJSON(
-                    `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${this.simParameters.trajectoryPlaybackFile}.json`,
+                    `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${simParameters.trajectoryPlaybackFile}.json`,
                 );
-                this.simParameters.newSimulationIsRunning = false;
+                simParameters.newSimulationIsRunning = false;
             }
 
             this.visGeometry.render();
             this.lastRenderTime = Date.now();
         }
 
-        if (this.visData.hasNewData()) {
-            this.visGeometry.colorVariant = this.visData.colorVariant;
-            this.visGeometry.update(this.visData.agents);
-            this.visData.newDataHasBeenHandled();
+        if (visData.hasNewData()) {
+            this.visGeometry.colorVariant = visData.colorVariant;
+            this.visGeometry.update(visData.agents);
+            visData.newDataHasBeenHandled();
         }
 
         requestAnimationFrame(this.animate);
@@ -114,8 +98,16 @@ class Viewport extends React.Component<ViewportProps> {
     render() {
         const {
             devgui,
+            agentSimController,
+            width,
+            height,
         } = this.props;
 
+        const {
+            simParameters,
+            netConnection,
+            visData,
+        } = agentSimController;
         this.animate();
 
         // style is specified below so that the size
@@ -124,16 +116,16 @@ class Viewport extends React.Component<ViewportProps> {
                 id="vdom"
                 style={
                     { 
-                        height:this.props.height,
-                        width:this.props.width,
+                        height: height,
+                        width: width,
                     }
                 }
                 ref={this.vdomRef}
             >
                 {devgui && (<DevGUI 
-                                simParams={this.simParameters}
-                                visData={this.visData}
-                                netConnection={this.netConnection}
+                                simParams={simParameters}
+                                visData={visData}
+                                netConnection={netConnection}
                             />)}
             </div>
         );
