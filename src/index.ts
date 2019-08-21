@@ -1,5 +1,5 @@
 import Viewport from "./viewport";
 
-import AgentSimController from "./viewport/AgentSimController";
+import AgentSimController from "./controller";
 export { AgentSimController };
 export default Viewport;

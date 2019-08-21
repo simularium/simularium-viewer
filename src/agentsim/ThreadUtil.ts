@@ -1,6 +1,6 @@
 const ThreadUtil = {
     browserSupportsWebWorkers() {
-        return typeof (Worker) !== 'undefined';
+        return typeof Worker !== "undefined";
     },
 
     createWebWorkerFromFunction(fn) {

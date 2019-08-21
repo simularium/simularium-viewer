@@ -1,7 +1,7 @@
 import * as React from 'react';
 import jsLogger from 'js-logger';
 
-import { VisGeometry, VisData, SimParameters, NetConnection, DevGUI } from "./agentsim";
+import { VisGeometry, DevGUI } from "../agentsim";
 
 interface AgentSimController {
     // NOTE: these can be typed in the future, but they may change signifantly and I dont want to at the moment. -MMRM

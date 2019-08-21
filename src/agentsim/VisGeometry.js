@@ -7,8 +7,8 @@
 import * as THREE from  'three';
 global.THREE = THREE;
 
-import '../three/OBJLoader.js';
-import '../three/OrbitControls.js';
+import '../viewport/three/OBJLoader.js';
+import '../viewport/three/OrbitControls.js';
 
 import jsLogger from 'js-logger';
 
