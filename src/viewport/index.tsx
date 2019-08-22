@@ -1,8 +1,7 @@
 import * as React from 'react';
 import jsLogger from 'js-logger';
 
-import { VisGeometry, DevGUI  }from "../agentsim";
-// const { VisGeometry, DevGUI } = agentsim;
+import { VisGeometry, DevGUI } from "../agentsim";
 
 interface AgentSimController {
     // NOTE: these can be typed in the future, but they may change signifantly and I dont want to at the moment. -MMRM
