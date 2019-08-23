@@ -68,7 +68,6 @@ function visDataWorkerFunc() {
     self.addEventListener('message', (e) => {
         const visDataMsg = e.data;
         const parsedAgentData = {};
-
         /**
         *   A copy of the above function 'unpackNetData'
         *   please see above for description
@@ -100,7 +99,14 @@ function visDataWorkerFunc() {
             agentCounter += 1;
         }
 
-        postMessage(parsedAgentData);
+        const frameData = {
+            time: visDataMsg.time,
+            frameNumber: visDataMsg.frame_number,
+        }
+        postMessage({
+            frameData,
+            parsedAgentData,
+        });
     }, false);
 }
 
@@ -116,7 +122,9 @@ class VisData {
 
         this.webWorker.onmessage = (event) => {
             this.agentsUpdated = true;
-            this.currentAgentDataFrame = event.data;
+            console.log(event.data.frameData)
+            this.currentTimeAndFrame = event.data.frameData;
+            this.currentAgentDataFrame = event.data.parsedAgentData;
         };
 
         this.mcolors = [
@@ -139,6 +147,8 @@ class VisData {
     get colors() { return this.mcolors; }
 
     get agents() { return this.currentAgentDataFrame; }
+
+    get time() { return this.currentTimeAndFrame }
 
     get colorVariant() { return this.mcolorVariant; }
 
@@ -174,11 +184,11 @@ class VisData {
 
     parseAgentsFromNetData(visDataMsg) {
         if (this.agentsUpdated) { return; } // last update not handled yet
-
         if (util.ThreadUtil.browserSupportsWebWorkers()) {
             this.webWorker.postMessage(visDataMsg);
         } else {
             this.currentAgentDataFrame = VisData.parse(visDataMsg);
+            console.log(this.currentAgentDataFrame)
             this.agentsUpdated = true;
         }
     }

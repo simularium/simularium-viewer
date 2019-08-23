@@ -19,6 +19,10 @@ export default class AgentSimController {
         this.netConnection.guiStartRemoteTrajectoryPlayback();
     }
 
+    public time() {
+        this.visData.time;
+    }
+
     public stop() {
         this.netConnection.abortRemoteSim();
     }

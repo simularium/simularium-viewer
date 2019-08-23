@@ -4,6 +4,7 @@ export default class AgentSimController {
     private visData;
     constructor(netConnectionSettings: any, params: any);
     start(): void;
+    time(): void;
     stop(): void;
     pause(): void;
     playFromCache(): void;
