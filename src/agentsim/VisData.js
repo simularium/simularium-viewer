@@ -67,7 +67,7 @@ function visDataWorkerFunc() {
 /* eslint-disable-next-line no-restricted-globals */
     self.addEventListener('message', (e) => {
         const visDataMsg = e.data;
-        const parsedAgentData = {};
+        const parsedAgentData = [];
         /**
         *   A copy of the above function 'unpackNetData'
         *   please see above for description
