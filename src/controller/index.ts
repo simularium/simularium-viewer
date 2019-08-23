@@ -5,7 +5,7 @@ export default class AgentSimController {
     private simParameters: any;
     private visData: any;
 
-    constructor(netConnectionSettings, params) {
+    public constructor(netConnectionSettings, params) {
         this.visData = new VisData({});
         this.simParameters = new SimParameters(params);
         this.netConnection = new NetConnection(
