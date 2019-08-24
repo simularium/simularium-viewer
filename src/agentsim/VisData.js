@@ -1,86 +1,47 @@
 import * as util from './ThreadUtil';
 
-function unpackNetData(visDataMsg) {
-    const outAgentData = {};
-    let agentCounter = 0;
-    const visData = visDataMsg.data;
-    const sizeOfData = visData.length;
 
+class VisData {
     /**
-    *   Parses a stream of data sent from the backend
-    *
-    *   To minimize bandwidth, traits/objects are not packed
-    *   1-1; what arrives is an array of float values
-    *
-    *   For instance for:
-    *   entity = (
-    *        trait1 : 4,
-    *        trait2 : 5,
-    *        trait3 : 6,
-    *    ) ...
-    *
-    *   what arrives will be:
-    *       [...,4,5,6,...]
-    *
-    *   The traits are assumed to be variable in length,
-    *   and the alorithm to decode them needs to the reverse
-    *   of the algorithm that packed them on the backend
-    *
-    *   This is more convuluted than sending the JSON objects themselves,
-    *   however these frames arrive multiple times per second. Even a naive
-    *   packing reduces the packet size by ~50%, reducing how much needs to
-    *   paid for network bandwith (and improving the quality & responsiveness
-    *   of the application, since network latency is a major bottle-neck)
-    * */
-    for (let i = 0; i < sizeOfData;) {
-        const agentData = {};
-        agentData['vis-type'] = visData[i]; i += 1; // read the first property
-        agentData.type = visData[i]; i += 1; // the second property,
-        agentData.x = visData[i]; i += 1;// ...
-        agentData.y = visData[i]; i += 1;
-        agentData.z = visData[i]; i += 1;
-        agentData.xrot = visData[i]; i += 1;
-        agentData.yrot = visData[i]; i += 1;
-        agentData.zrot = visData[i]; i += 1;
-        agentData.cr = visData[i]; i += 1;
-        const nSubPoints = visData[i]; i += 1;
-
-        /**
-        *   this is a trait that is variable in length
-        *   this is also why we cant use a calculable offset
-        *   and need to step 'i' through the data
-        * */
-        const subpoints = [];
-        for (let j = 0; j < nSubPoints; j += 1) {
-            subpoints[j] = visData[i]; i += 1;
-        }
-
-        agentData.subpoints = subpoints;
-        outAgentData[agentCounter] = agentData;
-        agentCounter += 1;
-    }
-
-    return outAgentData;
-}
-
-function visDataWorkerFunc() {
-/* eslint-disable-next-line no-restricted-globals */
-    self.addEventListener('message', (e) => {
-        const visDataMsg = e.data;
+* Parse Agents from Net Data
+* */
+    static parse(visDataMsg) {
         const parsedAgentData = [];
-        /**
-        *   A copy of the above function 'unpackNetData'
-        *   please see above for description
-        *   duplicated here for the web-worker
-        * */
         let agentCounter = 0;
         const visData = visDataMsg.data;
         const sizeOfData = visData.length;
+
+        /**
+        *   Parses a stream of data sent from the backend
+        *
+        *   To minimize bandwidth, traits/objects are not packed
+        *   1-1; what arrives is an array of float values
+        *
+        *   For instance for:
+        *   entity = (
+        *        trait1 : 4,
+        *        trait2 : 5,
+        *        trait3 : 6,
+        *    ) ...
+        *
+        *   what arrives will be:
+        *       [...,4,5,6,...]
+        *
+        *   The traits are assumed to be variable in length,
+        *   and the alorithm to decode them needs to the reverse
+        *   of the algorithm that packed them on the backend
+        *
+        *   This is more convuluted than sending the JSON objects themselves,
+        *   however these frames arrive multiple times per second. Even a naive
+        *   packing reduces the packet size by ~50%, reducing how much needs to
+        *   paid for network bandwith (and improving the quality & responsiveness
+        *   of the application, since network latency is a major bottle-neck)
+        * */
         for (let i = 0; i < sizeOfData;) {
             const agentData = {};
-            agentData['vis-type'] = visData[i]; i += 1;
-            agentData.type = visData[i]; i += 1;
-            agentData.x = visData[i]; i += 1;
+            agentData['vis-type'] = visData[i]; i += 1; // read the first property
+            agentData.type = visData[i]; i += 1; // the second property,
+            agentData.x = visData[i]; i += 1;// ...
             agentData.y = visData[i]; i += 1;
             agentData.z = visData[i]; i += 1;
             agentData.xrot = visData[i]; i += 1;
@@ -89,6 +50,11 @@ function visDataWorkerFunc() {
             agentData.cr = visData[i]; i += 1;
             const nSubPoints = visData[i]; i += 1;
 
+            /**
+            *   this is a trait that is variable in length
+            *   this is also why we cant use a calculable offset
+            *   and need to step 'i' through the data
+            * */
             const subpoints = [];
             for (let j = 0; j < nSubPoints; j += 1) {
                 subpoints[j] = visData[i]; i += 1;
@@ -103,21 +69,21 @@ function visDataWorkerFunc() {
             time: visDataMsg.time,
             frameNumber: visDataMsg.frame_number,
         }
-        postMessage({
+
+        return {
             frameData,
             parsedAgentData,
-        });
-    }, false);
-}
+        };
 
-class VisData {
+    }
+
     constructor() {
         this.currentAgentDataFrame = null;
         this.agentsUpdated = false;
         this.mcolorVariant = 50;
 
         this.webWorker = util.ThreadUtil.createWebWorkerFromFunction(
-            visDataWorkerFunc.toString(),
+            this.convertVisDataWorkFunctionToString(),
         );
 
         this.webWorker.onmessage = (event) => {
@@ -173,14 +139,7 @@ class VisData {
         this.currentAgentDataFrame = null;
     }
 
-    /**
-    * Parse Agents from Net Data
-    * */
-    static parse(visDataMsg) {
-        const parsedAgentData = unpackNetData(visDataMsg);
 
-        return parsedAgentData;
-    }
 
     parseAgentsFromNetData(visDataMsg) {
         if (this.agentsUpdated) { return; } // last update not handled yet
@@ -188,7 +147,6 @@ class VisData {
             this.webWorker.postMessage(visDataMsg);
         } else {
             this.currentAgentDataFrame = VisData.parse(visDataMsg);
-            console.log(this.currentAgentDataFrame)
             this.agentsUpdated = true;
         }
     }
@@ -196,6 +154,25 @@ class VisData {
     numberOfAgents() {
         return Object.keys(this.currentAgentDataFrame).length;
     }
+
+    convertVisDataWorkFunctionToString() {
+        return `function visDataWorkerFunc() {
+        self.addEventListener('message', (e) => {
+            const visDataMsg = e.data;
+            const {
+                frameData,
+                parsedAgentData,
+            } = ${VisData.parse}(visDataMsg)
+
+            postMessage({
+                frameData,
+                parsedAgentData,
+            });
+        }, false);
+        }`
+
+    }
+
 }
 
 export { VisData };
