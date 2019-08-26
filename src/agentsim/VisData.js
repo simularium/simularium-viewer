@@ -1,68 +1,64 @@
 import * as util from './ThreadUtil';
 
 
-class VisData {
-    /**
-* Parse Agents from Net Data
+/**
+    * Parse Agents from Net Data
 * */
+class VisData {
+
+    /**
+    *   Parses a stream of data sent from the backend
+    *
+    *   To minimize bandwidth, traits/objects are not packed
+    *   1-1; what arrives is an array of float values
+    *
+    *   For instance for:
+    *   entity = (
+    *        trait1 : 4,
+    *        trait2 : 5,
+    *        trait3 : 6,
+    *    ) ...
+    *
+    *   what arrives will be:
+    *       [...,4,5,6,...]
+    *
+    *   The traits are assumed to be variable in length,
+    *   and the alorithm to decode them needs to the reverse
+    *   of the algorithm that packed them on the backend
+    *
+    *   This is more convuluted than sending the JSON objects themselves,
+    *   however these frames arrive multiple times per second. Even a naive
+    *   packing reduces the packet size by ~50%, reducing how much needs to
+    *   paid for network bandwith (and improving the quality & responsiveness
+    *   of the application, since network latency is a major bottle-neck)
+    * */
+
     static parse(visDataMsg) {
-        const parsedAgentData = [];
-        let agentCounter = 0;
         const visData = visDataMsg.data;
-        const sizeOfData = visData.length;
+        const parsedAgentData = [];
+        const agentObjectKeys = ['vis-type', 'type', 'x', 'y', 'z', 'xrot', 'yrot', 'zrot', 'cr', 'nSubPoints'];
+        const nSubPointsIndex = agentObjectKeys.findIndex((ele) => ele === 'nSubPoints');
 
-        /**
-        *   Parses a stream of data sent from the backend
-        *
-        *   To minimize bandwidth, traits/objects are not packed
-        *   1-1; what arrives is an array of float values
-        *
-        *   For instance for:
-        *   entity = (
-        *        trait1 : 4,
-        *        trait2 : 5,
-        *        trait3 : 6,
-        *    ) ...
-        *
-        *   what arrives will be:
-        *       [...,4,5,6,...]
-        *
-        *   The traits are assumed to be variable in length,
-        *   and the alorithm to decode them needs to the reverse
-        *   of the algorithm that packed them on the backend
-        *
-        *   This is more convuluted than sending the JSON objects themselves,
-        *   however these frames arrive multiple times per second. Even a naive
-        *   packing reduces the packet size by ~50%, reducing how much needs to
-        *   paid for network bandwith (and improving the quality & responsiveness
-        *   of the application, since network latency is a major bottle-neck)
-        * */
-        for (let i = 0; i < sizeOfData;) {
-            const agentData = {};
-            agentData['vis-type'] = visData[i]; i += 1; // read the first property
-            agentData.type = visData[i]; i += 1; // the second property,
-            agentData.x = visData[i]; i += 1;// ...
-            agentData.y = visData[i]; i += 1;
-            agentData.z = visData[i]; i += 1;
-            agentData.xrot = visData[i]; i += 1;
-            agentData.yrot = visData[i]; i += 1;
-            agentData.zrot = visData[i]; i += 1;
-            agentData.cr = visData[i]; i += 1;
-            const nSubPoints = visData[i]; i += 1;
+        const parseOneAgent = (agentArray) => {
+            return newObject = agentArray.reduce((agentData, cur, i) => {
+                let key;
+                if (agentObjectKeys[i]) {
+                    key = agentObjectKeys[i];
+                    agentData[key] = cur;
+                } else {
+                    // any values outside of the main keys are subpoints
+                    agentData.subpoints.push(cur)
+                }
+                delete agentData.nSubPoints;
+                return agentData
+            }, { subpoints: [] })
+        }
 
-            /**
-            *   this is a trait that is variable in length
-            *   this is also why we cant use a calculable offset
-            *   and need to step 'i' through the data
-            * */
-            const subpoints = [];
-            for (let j = 0; j < nSubPoints; j += 1) {
-                subpoints[j] = visData[i]; i += 1;
-            }
-
-            agentData.subpoints = subpoints;
-            parsedAgentData[agentCounter] = agentData;
-            agentCounter += 1;
+        while (visData.length) {
+            const nSubPoints = visData[nSubPointsIndex];
+            const chunckLength = agentObjectKeys.length + nSubPoints; // each array length is varible based on how many subpoints the agent has
+            const agentSubSetArray = visData.splice(0, chunckLength); // cut off the array of 1 agent data from front of the array;
+            parsedAgentData.push(parseOneAgent(agentSubSetArray))
         }
 
         const frameData = {
@@ -74,7 +70,6 @@ class VisData {
             frameData,
             parsedAgentData,
         };
-
     }
 
     constructor() {
@@ -138,8 +133,6 @@ class VisData {
         this.agentsUpdated = false;
         this.currentAgentDataFrame = null;
     }
-
-
 
     parseAgentsFromNetData(visDataMsg) {
         if (this.agentsUpdated) { return; } // last update not handled yet
