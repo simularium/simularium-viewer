@@ -1,6 +1,5 @@
 import * as util from './ThreadUtil';
 
-
 /**
     * Parse Agents from Net Data
 * */
