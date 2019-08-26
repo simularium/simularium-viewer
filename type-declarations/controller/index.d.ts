@@ -7,7 +7,7 @@ export default class AgentSimController {
     time(): void;
     stop(): void;
     pause(): void;
-    playFromCache(): void;
+    playFromCache(frameNumber: any): void;
     resume(): void;
     changeFile(newFile: any): void;
 }

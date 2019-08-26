@@ -57,6 +57,11 @@ class Viewport extends React.Component<ViewportProps> {
         setInterval(agentSimController.netConnection.checkForUpdates.bind(agentSimController.netConnection), 1000);
     }
 
+    dispatchUpdatedTime(timeData) {
+        const event = new CustomEvent('timeChange', { detail: timeData });
+        dispatchEvent(event);
+    }
+
 
     animate() {
         const {
@@ -89,6 +94,7 @@ class Viewport extends React.Component<ViewportProps> {
         if (visData.hasNewData()) {
             this.visGeometry.colorVariant = visData.colorVariant;
             this.visGeometry.update(visData.agents);
+            this.dispatchUpdatedTime(visData.time);
             visData.newDataHasBeenHandled();
         }
 

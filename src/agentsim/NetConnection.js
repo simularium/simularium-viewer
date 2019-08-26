@@ -322,9 +322,10 @@ class NetConnection {
         this.simParameters.newSimulationIsRunning = true;
     }
 
-    guiPlayRemoteSimCache() {
+    guiPlayRemoteSimCache(frameNumber) {
+        const frame = frameNumber || this.simParameters.cachePlaybackFrame
         this.playRemoteSimCacheFromFrame(
-            this.simParameters.cachePlaybackFrame,
+            frame
         );
     }
 

@@ -22,6 +22,7 @@ declare class Viewport extends React.Component<ViewportProps> {
     };
     constructor(props: ViewportProps);
     componentDidMount(): void;
+    dispatchUpdatedTime(timeData: any): void;
     animate(): void;
     render(): JSX.Element;
 }
