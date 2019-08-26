@@ -2,7 +2,7 @@ import dat from "dat.gui";
 import * as React from 'react';
 import { get } from "js-logger";
 
-import "../dat/RemoveFolder.js";
+import "./dat/RemoveFolder.js";
 
 class DevGUI extends React.Component {
     constructor(props) {

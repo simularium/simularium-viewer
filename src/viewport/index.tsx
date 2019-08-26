@@ -8,8 +8,7 @@ import {
 import * as THREE from  'three';
 global.THREE = THREE;
 
-import { VisGeometry, VisData, SimParameters, NetConnection, DevGUI } from "./agentsim";
-import { TextureLoader } from 'three';
+import { VisGeometry, DevGUI } from "../agentsim";
 
 interface AgentSimController {
     // NOTE: these can be typed in the future, but they may change signifantly and I dont want to at the moment. -MMRM

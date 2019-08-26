@@ -42,8 +42,6 @@ ReactDOM.render(
             devgui={false}
             loggerLevel="debug"
             agentSimController={agentSim}
-            simParameters={agentSim.simParameters}
-            netConnection={agentSim.netConnection}
 
         />
     </React.Fragment>,
