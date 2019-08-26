@@ -165,6 +165,7 @@ class VisData {
 
     /**
     * Parse Agents from Net Data
+    * single threaded version of what the webworker is doing.
     * */
     static parse(visDataMsg) {
         const parsedAgentData = unpackNetData(visDataMsg);
