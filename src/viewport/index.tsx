@@ -23,6 +23,8 @@ interface ViewportProps {
     devgui: boolean;
     loggerLevel: string;
     agentSimController: AgentSimController;
+    onJsonDataArrived: any;
+    highlightedParticleType: number | string;
 }
 
 class Viewport extends React.Component<ViewportProps> {
@@ -57,10 +59,10 @@ class Viewport extends React.Component<ViewportProps> {
         this.visGeometry.createMeshes(5000);
         this.vdomRef = React.createRef();
         this.lastRenderTime = Date.now();
-        this.onMouseClick = this.onMouseClick.bind(this);
+        this.onPickObject = this.onPickObject.bind(this);
 
         this.handlers = {
-            click: this.onMouseClick
+            contextmenu: this.onPickObject
         };
         this.hit = false;
         this.raycaster = new THREE.Raycaster();
@@ -80,8 +82,15 @@ class Viewport extends React.Component<ViewportProps> {
     }
 
     componentWillUnmount() {
+        const {
+            agentSimController,
+        } = this.props;
         this.removeEventHandlersFromCanvas();
         this.stopAnimate();
+    }
+
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        this.visGeometry.setHighlightById(this.props.highlightedParticleType);
     }
 
     public addEventHandlersToCanvas() {
@@ -96,7 +105,7 @@ class Viewport extends React.Component<ViewportProps> {
         );
     }
 
-    onMouseClick(event: MouseEvent) {
+    onPickObject(event: MouseEvent) {
         console.log("click");
         
         const size = new THREE.Vector2();
@@ -132,7 +141,8 @@ class Viewport extends React.Component<ViewportProps> {
 
     animate() {
         const {
-            agentSimController
+            agentSimController,
+            onJsonDataArrived
         } = this.props;
         const {
             simParameters,
@@ -150,6 +160,7 @@ class Viewport extends React.Component<ViewportProps> {
             if (simParameters.newSimulationIsRunning) {
                 this.visGeometry.mapFromJSON(
                     `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${simParameters.trajectoryPlaybackFile}.json`,
+                    onJsonDataArrived
                 );
                 simParameters.newSimulationIsRunning = false;
             }

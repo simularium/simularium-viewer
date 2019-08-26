@@ -20,12 +20,15 @@ class VisGeometry {
         this.scaleMapping = new Map();
         this.geomCount = 100;
         this.materials = [];
+        this.desatMaterials = [];
         this.highlightMaterial = new THREE.MeshBasicMaterial({color: new THREE.Color(1,0,0)});
         this.followObject = null;
         this.runTimeMeshes = [];
         this.runTimeFiberMeshes = new Map();
         this.mlastNumberOfAgents = 0;
         this.mcolorVariant = 50;
+        this.fixLightsToCamera = true;
+        this.highlightedId = -1;
 
         this.mlogger = jsLogger.get('visgeometry');
         this.mlogger.setLevel(loggerLevel);
@@ -48,7 +51,22 @@ class VisGeometry {
         // put the camera on it
         if (obj) {
             this.controls.target.copy(obj.position);
+            obj.material = this.highlightMaterial;
         }
+    }
+
+    // equivalent to setFollowObject(null)
+    unfollow() {
+        this.followObject = null;
+    }
+
+    setHighlightById(id) {
+        this.highlightedId = id;
+    }
+
+    // equivalent to setHighlightById(-1)
+    dehighlight() {
+        this.highlightedId = -1;
     }
 
     /**
@@ -67,19 +85,20 @@ class VisGeometry {
         this.controls.zoomSpeed = 5;
         this.controls.enablePan = false;
 
-        this.dl = new THREE.DirectionalLight(0xffffff, 1);
-        this.dl.position.set(-1, 2, 1);
+        this.dl = null;
+        this.dl = new THREE.DirectionalLight(0xffffff, 0.6);
+        this.dl.position.set(0, 0, 1);
         this.scene.add(this.dl);
 
-        this.hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
-        this.hemiLight.color.setHSL(0.6, 1, 0.6);
-        this.hemiLight.groundColor.setHSL(0.095, 1, 0.75);
-        this.hemiLight.position.set(0, 50, 0);
+        this.hemiLight = new THREE.HemisphereLight(0xffffff, 0x000000, 0.6);
+        this.hemiLight.color.setHSL(0.095, 1, 0.75);
+        this.hemiLight.groundColor.setHSL(0.6, 1, 0.6); 
+        this.hemiLight.position.set(0, 1, 0);
         this.scene.add(this.hemiLight);
 
         this.renderer = new THREE.WebGLRenderer();
         this.renderer.setSize(initWidth, initHeight); // expected to change when reparented
-        this.renderer.setClearColor(new THREE.Color(0xffffff), 1);
+        this.renderer.setClearColor(new THREE.Color(0xcccccc), 1);
         this.renderer.clear();
 
         this.camera.position.z = 5;
@@ -136,6 +155,16 @@ class VisGeometry {
         if(this.runTimeMeshes.length == 0) { return; }
 
         this.controls.update();
+
+        if (this.dl && this.fixLightsToCamera) {
+            // position directional light at camera (facing scene, as headlight!)
+            this.dl.position.copy(this.camera.position);
+        }
+        if (this.hemiLight && this.fixLightsToCamera) {
+            // make hemi light come down from vertical of screen (camera up)
+            this.hemiLight.position.setFromMatrixColumn(this.camera.matrixWorld, 1);
+        }
+
         this.renderer.render(this.scene, this.camera);
     }
 
@@ -147,6 +176,13 @@ class VisGeometry {
         for (let i = 0; i < numColors; i += 1) {
             this.materials.push(
                 new THREE.MeshLambertMaterial({ color: colors[i] }),
+            );
+            const hsl = {};
+            const desatColor = new THREE.Color(colors[i]);
+            hsl = desatColor.getHSL(hsl);
+            desatColor.setHSL(hsl.h, 0.5*hsl.s, hsl.l);
+            this.desatMaterials.push(
+                new THREE.MeshLambertMaterial({ color: desatColor, opacity: 0.25, transparent: true }),
             );
         }
     }
@@ -201,10 +237,11 @@ class VisGeometry {
         return this.runTimeFiberMeshes.get(name);
     }
 
-    getMaterial(index) {
-        return this.materials[
-            Number(index)
-            % this.materials.length];
+    getMaterial(index, typeId) {
+        // if no highlight, or if this is the highlighed type, then use regular material, otherwise use desaturated.
+        // todo strings or numbers for these ids?????
+        let matArray = (this.highlightedId == -1 || this.highlightedId == typeId) ? this.materials : this.desatMaterials;
+        return matArray[Number(index) % matArray.length];
     }
 
     /**
@@ -239,7 +276,7 @@ class VisGeometry {
         return null;
     }
 
-    mapFromJSON(filePath) {
+    mapFromJSON(filePath, callback) {
         this.resetMapping();
         const jsonRequest = new Request(filePath);
         const self = this;
@@ -254,6 +291,9 @@ class VisGeometry {
                     self.mapIdToGeom(Number(id), entry.mesh);
                     self.setScaleForId(Number(id), entry.scale);
                 });
+                if (callback) {
+                    callback(jsonData);
+                }
             },
         );
     }
@@ -319,7 +359,7 @@ class VisGeometry {
                     runtimeMesh.material = this.highlightMaterial;
                 }
                 else {
-                    runtimeMesh.material = this.getMaterial(materialType);
+                    runtimeMesh.material = this.getMaterial(materialType, typeId);
                 }
 
                 runtimeMesh.scale.x = agentData.cr * scale;
@@ -389,7 +429,6 @@ class VisGeometry {
             direction.normalize();
             this.camera.position.subVectors(this.controls.target, direction.multiplyScalar(-distance));
         }
-
     }
 
     hideUnusedMeshes(numberOfAgents) {
