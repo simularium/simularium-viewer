@@ -12,11 +12,13 @@ const netConnectionSettings = {
 
 const agentSim = new AgentSimController(netConnectionSettings, { trajectoryPlaybackFile: "actin5-1.h5" })
 let currentFrame = 0;
-let currentTIme = 0;
+let currentTime = 0;
+const handleTimeChange = (timeData) => {
+    currentFrame = timeData.frameNumber;
+    currentTime = timeData.time;
+}
+
 addEventListener('timeChange', function (e) { 
-    console.log(e.detail)
-    currentFrame = e.detail.frameNumber;
-    currentTime = e.detail.time;
 }, false);
 
 ReactDOM.render(
@@ -49,6 +51,7 @@ ReactDOM.render(
             width={600}
             devgui={false}
             loggerLevel="debug"
+            onTimeChange={handleTimeChange}
             agentSimController={agentSim}
 
         />

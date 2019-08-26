@@ -9,7 +9,12 @@ interface ViewportProps {
     width: number;
     devgui: boolean;
     loggerLevel: string;
+    onTimeChange: (timeData: TimeData) => void;
     agentSimController: AgentSimController;
+}
+interface TimeData {
+    time: number;
+    frameNumber: number;
 }
 declare class Viewport extends React.Component<ViewportProps> {
     private visGeometry;
@@ -22,6 +27,7 @@ declare class Viewport extends React.Component<ViewportProps> {
     };
     constructor(props: ViewportProps);
     componentDidMount(): void;
+    handleTimeChange(e: any): void;
     dispatchUpdatedTime(timeData: any): void;
     animate(): void;
     render(): JSX.Element;

@@ -15,7 +15,13 @@ interface ViewportProps {
     width: number;
     devgui: boolean;
     loggerLevel: string;
+    onTimeChange: (timeData: TimeData) => void;
     agentSimController: AgentSimController;
+}
+
+interface TimeData {
+    time: number,
+    frameNumber: number,
 }
 
 
@@ -31,6 +37,11 @@ class Viewport extends React.Component<ViewportProps> {
         devgui: false,
     }
 
+    private static isCustomEvent(event: Event): event is CustomEvent {
+        return 'detail' in event;
+    }
+
+
     constructor(props: ViewportProps) {
         super(props);
 
@@ -45,23 +56,47 @@ class Viewport extends React.Component<ViewportProps> {
         this.visGeometry.createMaterials(agentSimController.visData.colors);
         this.visGeometry.createMeshes(5000);
         this.vdomRef = React.createRef();
+        this.dispatchUpdatedTime = this.dispatchUpdatedTime.bind(this);
+        this.handleTimeChange = this.handleTimeChange.bind(this);
         this.lastRenderTime = Date.now();
     }
 
     componentDidMount() {
         const {
             agentSimController,
+            onTimeChange,
         } = this.props;
         this.visGeometry.reparent(this.vdomRef.current);
         agentSimController.netConnection.connect();
         setInterval(agentSimController.netConnection.checkForUpdates.bind(agentSimController.netConnection), 1000);
+
+        if (this.vdomRef.current) {
+            this.vdomRef.current.addEventListener('timeChange', this.handleTimeChange, false);
+        }
     }
 
-    dispatchUpdatedTime(timeData) {
+    componentWillUnmount() {
+        if (this.vdomRef.current) {
+            this.vdomRef.current.removeEventListener('timeChange', this.handleTimeChange);
+        }
+    }
+
+    private handleTimeChange(e: Event) {
+        const {
+            onTimeChange,
+        } = this.props;
+        if (!Viewport.isCustomEvent(e)) {
+            throw new Error('not custom event');
+        }
+        onTimeChange(e.detail)
+    }
+
+    private dispatchUpdatedTime(timeData) {
         const event = new CustomEvent('timeChange', { detail: timeData });
-        dispatchEvent(event);
+        if (this.vdomRef.current) {
+            this.vdomRef.current.dispatchEvent(event);
+        }
     }
-
 
     animate() {
         const {
