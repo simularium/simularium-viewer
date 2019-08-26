@@ -383,7 +383,6 @@ class VisGeometry {
 
     update(agents) {
         const numberOfAgents = agents.length;
-        console.log(agents)
         this.updateScene(agents, numberOfAgents);
 
         if (this.lastNumberOfAgents > numberOfAgents) {

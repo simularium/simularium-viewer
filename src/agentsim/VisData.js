@@ -83,7 +83,6 @@ class VisData {
 
         this.webWorker.onmessage = (event) => {
             this.agentsUpdated = true;
-            console.log(event.data.frameData)
             this.currentTimeAndFrame = event.data.frameData;
             this.currentAgentDataFrame = event.data.parsedAgentData;
         };
