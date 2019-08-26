@@ -20,6 +20,8 @@ class VisGeometry {
         this.scaleMapping = new Map();
         this.geomCount = 100;
         this.materials = [];
+        this.highlightMaterial = new THREE.MeshBasicMaterial({color: new THREE.Color(1,0,0)});
+        this.followObject = null;
         this.runTimeMeshes = [];
         this.runTimeFiberMeshes = new Map();
         this.mlastNumberOfAgents = 0;
@@ -40,6 +42,14 @@ class VisGeometry {
     set colorVariant(val) { this.mcolorVariant = val; }
 
     get renderDom() { return this.renderer.domElement; }
+
+    setFollowObject(obj) {
+        this.followObject = obj;
+        // put the camera on it
+        if (obj) {
+            this.controls.target.copy(obj.position);
+        }
+    }
 
     /**
     *   Setup ThreeJS Scene
@@ -305,7 +315,12 @@ class VisGeometry {
                 runtimeMesh.rotation.z = agentData.zrot;
 
                 runtimeMesh.visible = true;
-                runtimeMesh.material = this.getMaterial(materialType);
+                if (runtimeMesh === this.followObject) {
+                    runtimeMesh.material = this.highlightMaterial;
+                }
+                else {
+                    runtimeMesh.material = this.getMaterial(materialType);
+                }
 
                 runtimeMesh.scale.x = agentData.cr * scale;
                 runtimeMesh.scale.y = agentData.cr * scale;
@@ -363,6 +378,18 @@ class VisGeometry {
                 fiberIndex += 1;
             }
         }
+        if (this.followObject) {
+            // keep camera at same distance from target.
+            const direction = new THREE.Vector3().subVectors( this.camera.position, this.controls.target );
+            const distance = direction.length();
+
+            // update controls target for orbiting
+            this.controls.target.copy(this.followObject.position);
+
+            direction.normalize();
+            this.camera.position.subVectors(this.controls.target, direction.multiplyScalar(-distance));
+        }
+
     }
 
     hideUnusedMeshes(numberOfAgents) {

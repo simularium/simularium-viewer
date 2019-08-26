@@ -33,7 +33,6 @@ class Viewport extends React.Component<ViewportProps> {
     private handlers: { [key: string]: (e: any) => void };
     
     private hit: boolean;
-    private followObject: THREE.Object3D | null;
     private raycaster: THREE.Raycaster;
     private animationRequestID: number;
 
@@ -64,7 +63,6 @@ class Viewport extends React.Component<ViewportProps> {
             click: this.onMouseClick
         };
         this.hit = false;
-        this.followObject = null;
         this.raycaster = new THREE.Raycaster();
         this.animationRequestID = 0;
     }
@@ -113,15 +111,15 @@ class Viewport extends React.Component<ViewportProps> {
         this.raycaster.setFromCamera(mouse, this.visGeometry.camera);
         // TODO: intersect with scene's children not including lights?
         // can we select a smaller number of things to hit test?
+        this.visGeometry.setFollowObject(null);
         const intersects = this.raycaster.intersectObjects(this.visGeometry.scene.children, true);
         if (intersects && intersects.length) {
             const obj = intersects[0].object;
             console.log("HIT ", obj);
             this.hit = true;
-            this.followObject = obj;
+            this.visGeometry.setFollowObject(obj);
         } else if (this.hit) {
             this.hit = false;
-            this.followObject = null;
         }
     }
 
@@ -156,9 +154,6 @@ class Viewport extends React.Component<ViewportProps> {
                 simParameters.newSimulationIsRunning = false;
             }
 
-            if (this.followObject) {
-                this.visGeometry.controls.target = this.followObject.position;
-            }
             this.visGeometry.render();
             this.lastRenderTime = Date.now();
         }
