@@ -1,5 +1,12 @@
 import * as React from 'react';
 import jsLogger from 'js-logger';
+import {
+    forOwn,
+} from "lodash";
+// Three JS is assumed to be in the global scope in extensions
+//  such as OrbitControls.js below
+import * as THREE from  'three';
+global.THREE = THREE;
 
 import { VisGeometry, DevGUI } from "../agentsim";
 
@@ -17,6 +24,8 @@ interface ViewportProps {
     loggerLevel: string;
     onTimeChange: (timeData: TimeData) => void;
     agentSimController: AgentSimController;
+    onJsonDataArrived: any;
+    highlightedParticleType: number | string;
 }
 
 interface TimeData {
@@ -30,12 +39,17 @@ class Viewport extends React.Component<ViewportProps> {
     private visGeometry: any;
     private lastRenderTime: number;
     private vdomRef: React.RefObject<HTMLInputElement>;
+    private handlers: { [key: string]: (e: any) => void };
+    
+    private hit: boolean;
+    private raycaster: THREE.Raycaster;
+    private animationRequestID: number;
 
     public static defaultProps = {
         height: 800,
         width: 800,
         devgui: false,
-    }
+    };
 
     private static isCustomEvent(event: Event): event is CustomEvent {
         return 'detail' in event;
@@ -59,6 +73,14 @@ class Viewport extends React.Component<ViewportProps> {
         this.dispatchUpdatedTime = this.dispatchUpdatedTime.bind(this);
         this.handleTimeChange = this.handleTimeChange.bind(this);
         this.lastRenderTime = Date.now();
+        this.onPickObject = this.onPickObject.bind(this);
+
+        this.handlers = {
+            contextmenu: this.onPickObject
+        };
+        this.hit = false;
+        this.raycaster = new THREE.Raycaster();
+        this.animationRequestID = 0;
     }
 
     public componentDidMount() {
@@ -72,11 +94,57 @@ class Viewport extends React.Component<ViewportProps> {
         if (this.vdomRef.current) {
             this.vdomRef.current.addEventListener('timeChange', this.handleTimeChange, false);
         }
+        this.addEventHandlersToCanvas();
+
+        this.animate();
     }
 
     public componentWillUnmount() {
         if (this.vdomRef.current) {
             this.vdomRef.current.removeEventListener('timeChange', this.handleTimeChange);
+        }
+        this.removeEventHandlersFromCanvas();
+        this.stopAnimate();
+
+    }
+
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        this.visGeometry.setHighlightById(this.props.highlightedParticleType);
+    }
+
+    public addEventHandlersToCanvas() {
+        forOwn(this.handlers, (handler, eventName) =>
+            this.visGeometry.renderDom.addEventListener(eventName, handler, false)
+        );
+    }
+
+    public removeEventHandlersFromCanvas() {
+        forOwn(this.handlers, (handler, eventName) =>
+            this.visGeometry.renderDom.removeEventListener(eventName, handler, false)
+        );
+    }
+
+    onPickObject(event: MouseEvent) {
+        const size = new THREE.Vector2();
+        this.visGeometry.renderer.getSize(size);
+
+        const mouse = {
+            x: ((event.offsetX) / size.x) * 2 - 1,
+            y: -((event.offsetY) / size.y) * 2 + 1
+        };
+
+        // hit testing
+        this.raycaster.setFromCamera(mouse, this.visGeometry.camera);
+        // TODO: intersect with scene's children not including lights?
+        // can we select a smaller number of things to hit test?
+        this.visGeometry.setFollowObject(null);
+        const intersects = this.raycaster.intersectObjects(this.visGeometry.scene.children, true);
+        if (intersects && intersects.length) {
+            const obj = intersects[0].object;
+            this.hit = true;
+            this.visGeometry.setFollowObject(obj);
+        } else if (this.hit) {
+            this.hit = false;
         }
     }
 
@@ -97,7 +165,14 @@ class Viewport extends React.Component<ViewportProps> {
         }
     }
 
-    public animate() {
+    stopAnimate() {
+        if (this.animationRequestID !== 0) {
+            cancelAnimationFrame(this.animationRequestID);
+            this.animationRequestID = 0;
+        }
+    }
+
+    animate() {
         const {
             agentSimController
         } = this.props;
@@ -106,7 +181,7 @@ class Viewport extends React.Component<ViewportProps> {
             netConnection,
             visData,
         } = agentSimController;
-        const framesPerSecond = 15; // how often the view-port rendering is refreshed per second
+        const framesPerSecond = 60; // how often the view-port rendering is refreshed per second
         const timePerFrame = 1000 / framesPerSecond; // the time interval at which to re-render
         const elapsedTime = Date.now() - this.lastRenderTime;
         if (elapsedTime > timePerFrame) {
@@ -117,6 +192,7 @@ class Viewport extends React.Component<ViewportProps> {
             if (simParameters.newSimulationIsRunning) {
                 this.visGeometry.mapFromJSON(
                     `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${simParameters.trajectoryPlaybackFile}.json`,
+                    onJsonDataArrived
                 );
                 simParameters.newSimulationIsRunning = false;
             }
@@ -132,7 +208,7 @@ class Viewport extends React.Component<ViewportProps> {
             visData.newDataHasBeenHandled();
         }
 
-        requestAnimationFrame(this.animate);
+        this.animationRequestID = requestAnimationFrame(this.animate);
     };
 
     public render() {
@@ -148,8 +224,6 @@ class Viewport extends React.Component<ViewportProps> {
             netConnection,
             visData,
         } = agentSimController;
-
-        this.animate();
 
         // style is specified below so that the size
         // can be passed as a react property

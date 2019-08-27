@@ -18,40 +18,67 @@ const handleTimeChange = (timeData) => {
     currentTime = timeData.time;
 }
 
-ReactDOM.render(
-    <React.Fragment>
-        <button 
-            onClick={() => agentSim.start()}
-        >Start</button>
-        <button
-            onClick={() => agentSim.pause()}
-        >Pause</button>
-        <button
-            onClick={() => agentSim.playFromCache(currentFrame)}
-        >Play from cache</button>
-        <button
-            onClick={() => agentSim.stop()}
-        >stop</button>
-        <button
-            onClick={() => agentSim.changeFile('microtubules15.h5')}
-        >
-            microtubules file
-        </button>
-        <button
-            onClick={() => agentSim.changeFile('actin5-1.h5')}
-        >
-            actin file
-        </button>
+const demoState = {
+    highlightId: -1,
+    particleTypeIds: []
+}
 
-        <AgentVizViewer 
-            height={600}
-            width={600}
-            devgui={false}
-            loggerLevel="debug"
-            onTimeChange={handleTimeChange}
-            agentSimController={agentSim}
+const handleJsonMeshData = (jsonData) => {
+    demoState.particleTypeIds = Object.keys(jsonData);
+    renderDemo(demoState);
+}
 
-        />
-    </React.Fragment>,
-    document.getElementById("root")
-);
+function highlightParticleType(typeId) {
+    demoState.highlightId = typeId;
+    renderDemo(demoState);
+}
+
+function renderDemo(state) {
+    ReactDOM.render(
+        <React.Fragment>
+            <button 
+                onClick={() => agentSim.start()}
+            >Start</button>
+            <button
+                onClick={() => agentSim.pause()}
+            >Pause</button>
+            <button
+                onClick={() => agentSim.playFromCache(currentFrame)}
+            >Play from cache</button>
+            <button
+                onClick={() => agentSim.stop()}
+            >stop</button>
+            <button
+                onClick={() => agentSim.changeFile('microtubules15.h5')}
+            >
+                microtubules file
+            </button>
+            <button
+                onClick={() => agentSim.changeFile('actin5-1.h5')}
+            >
+                actin file
+            </button>
+            <select
+                onChange={(event) => highlightParticleType(event.target.value)}
+            >
+                <option value="-1">None</option>
+                {state.particleTypeIds.map((id, i) => {     
+                    return (<option value={id}>{id}</option>); 
+                })}
+            </select>
+            <AgentVizViewer 
+                height={600}
+                width={600}
+                devgui={false}
+                loggerLevel="debug"
+                onTimeChange={handleTimeChange}
+                agentSimController={agentSim}
+                onJsonDataArrived={handleJsonMeshData}
+                highlightedParticleType={state.highlightId}
+            />
+        </React.Fragment>,
+        document.getElementById("root")
+    );
+}
+
+renderDemo(demoState);
