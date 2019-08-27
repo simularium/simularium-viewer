@@ -33,23 +33,23 @@ class VisData {
     * */
 
     static parse(visDataMsg) {
+        // IMPORTANT: Order of this array needs to perfectly match the incoming data. 
+        const agentObjectKeys = ['vis-type', 'type', 'x', 'y', 'z', 'xrot', 'yrot', 'zrot', 'cr', 'nSubPoints'];
         const visData = visDataMsg.data;
         const parsedAgentData = [];
-        const agentObjectKeys = ['vis-type', 'type', 'x', 'y', 'z', 'xrot', 'yrot', 'zrot', 'cr', 'nSubPoints'];
         const nSubPointsIndex = agentObjectKeys.findIndex((ele) => ele === 'nSubPoints');
 
+    
         const parseOneAgent = (agentArray) => {
-            return newObject = agentArray.reduce((agentData, cur, i) => {
+            return agentArray.reduce((agentData, cur, i) => {
                 let key;
                 if (agentObjectKeys[i]) {
                     key = agentObjectKeys[i];
                     agentData[key] = cur;
-                } else {
-                    // any values outside of the main keys are subpoints
-                    agentData.subpoints.push(cur)
+                } else if (i < agentArray.length + agentData.nSubPoints){
+                    agentData.subpoints.push(cur);
                 }
-                delete agentData.nSubPoints;
-                return agentData
+                return agentData;
             }, { subpoints: [] })
         }
 
@@ -57,6 +57,9 @@ class VisData {
             const nSubPoints = visData[nSubPointsIndex];
             const chunckLength = agentObjectKeys.length + nSubPoints; // each array length is varible based on how many subpoints the agent has
             const agentSubSetArray = visData.splice(0, chunckLength); // cut off the array of 1 agent data from front of the array;
+            if (agentSubSetArray.length < agentObjectKeys.length) {
+                throw Error('malformed data: indexing off');
+            }
             parsedAgentData.push(parseOneAgent(agentSubSetArray))
         }
 
