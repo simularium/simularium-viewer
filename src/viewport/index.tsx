@@ -106,8 +106,6 @@ class Viewport extends React.Component<ViewportProps> {
     }
 
     onPickObject(event: MouseEvent) {
-        console.log("click");
-        
         const size = new THREE.Vector2();
         this.visGeometry.renderer.getSize(size);
 
@@ -124,7 +122,6 @@ class Viewport extends React.Component<ViewportProps> {
         const intersects = this.raycaster.intersectObjects(this.visGeometry.scene.children, true);
         if (intersects && intersects.length) {
             const obj = intersects[0].object;
-            console.log("HIT ", obj);
             this.hit = true;
             this.visGeometry.setFollowObject(obj);
         } else if (this.hit) {
