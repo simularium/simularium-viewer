@@ -44,14 +44,14 @@ task lint(type: NodeTask) {
     dependsOn npmInstall
 
     script = file("${npmBin}/eslint")
-    args = ["src/**/*.ts"]
+    args = ["src/**/*"]
 }
 
 task test(type: NodeTask) {
     dependsOn npmInstall
 
-    script = file("${npmBin}/mocha")
-    args = "--require ts-node/register src/**/*.test.ts".tokenize()
+    script = file("${npmBin}/jest")
+    args = "src/**/*.test.ts".tokenize()
 }
 
 task typeCheck(type: NodeTask) {
