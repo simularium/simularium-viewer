@@ -18,9 +18,6 @@ const handleTimeChange = (timeData) => {
     currentTime = timeData.time;
 }
 
-addEventListener('timeChange', function (e) { 
-}, false);
-
 ReactDOM.render(
     <React.Fragment>
         <button 
