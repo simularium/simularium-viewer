@@ -9,5 +9,8 @@ module.exports = {
   "parserOptions": {
     "project": "./tsconfig.json"
   },
-  "plugins": ["@typescript-eslint"]
+  "plugins": ["@typescript-eslint"],
+  "rules": {
+    "@typescript-eslint/camelcase": ["warn", { "properties": "always" }]
+  }
 };

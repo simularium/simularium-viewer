@@ -76,7 +76,6 @@ class NetConnection {
             logger.console.error('Unrecognized web message of type ', msg.msg_type, ' arrived');
             return;
         }
-
         logger.debug('Websocket Message Recieved: ', msg);
         const responseData = {};
         switch (msgType) {
@@ -323,9 +322,10 @@ class NetConnection {
         this.simParameters.newSimulationIsRunning = true;
     }
 
-    guiPlayRemoteSimCache() {
+    guiPlayRemoteSimCache(frameNumber) {
+        const frame = frameNumber || this.simParameters.cachePlaybackFrame
         this.playRemoteSimCacheFromFrame(
-            this.simParameters.cachePlaybackFrame,
+            frame
         );
     }
 

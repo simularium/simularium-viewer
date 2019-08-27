@@ -19,6 +19,10 @@ export default class AgentSimController {
         this.netConnection.guiStartRemoteTrajectoryPlayback();
     }
 
+    public time() {
+        this.visData.time;
+    }
+
     public stop() {
         this.netConnection.abortRemoteSim();
     }
@@ -27,8 +31,8 @@ export default class AgentSimController {
         this.netConnection.pauseRemoteSim();
     }
 
-    public playFromCache() {
-        this.netConnection.guiPlayRemoteSimCache();
+    public playFromCache(frameNumber) {
+        this.netConnection.guiPlayRemoteSimCache(frameNumber);
     }
 
     public resume() {

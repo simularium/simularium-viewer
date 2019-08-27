@@ -11,6 +11,12 @@ const netConnectionSettings = {
 }
 
 const agentSim = new AgentSimController(netConnectionSettings, { trajectoryPlaybackFile: "actin5-1.h5" })
+let currentFrame = 0;
+let currentTime = 0;
+const handleTimeChange = (timeData) => {
+    currentFrame = timeData.frameNumber;
+    currentTime = timeData.time;
+}
 
 ReactDOM.render(
     <React.Fragment>
@@ -21,7 +27,7 @@ ReactDOM.render(
             onClick={() => agentSim.pause()}
         >Pause</button>
         <button
-            onClick={() => agentSim.playFromCache()}
+            onClick={() => agentSim.playFromCache(currentFrame)}
         >Play from cache</button>
         <button
             onClick={() => agentSim.stop()}
@@ -36,11 +42,13 @@ ReactDOM.render(
         >
             actin file
         </button>
+
         <AgentVizViewer 
             height={600}
             width={600}
             devgui={false}
             loggerLevel="debug"
+            onTimeChange={handleTimeChange}
             agentSimController={agentSim}
 
         />
