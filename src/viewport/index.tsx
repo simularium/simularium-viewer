@@ -20,8 +20,8 @@ interface ViewportProps {
 }
 
 interface TimeData {
-    time: number,
-    frameNumber: number,
+    time: number;
+    frameNumber: number;
 }
 
 
@@ -42,7 +42,7 @@ class Viewport extends React.Component<ViewportProps> {
     }
 
 
-    constructor(props: ViewportProps) {
+    public constructor(props: ViewportProps) {
         super(props);
 
         const loggerLevel = props.loggerLevel === 'debug' ? jsLogger.DEBUG : jsLogger.OFF;
@@ -61,10 +61,9 @@ class Viewport extends React.Component<ViewportProps> {
         this.lastRenderTime = Date.now();
     }
 
-    componentDidMount() {
+    public componentDidMount() {
         const {
             agentSimController,
-            onTimeChange,
         } = this.props;
         this.visGeometry.reparent(this.vdomRef.current);
         agentSimController.netConnection.connect();
@@ -75,7 +74,7 @@ class Viewport extends React.Component<ViewportProps> {
         }
     }
 
-    componentWillUnmount() {
+    public componentWillUnmount() {
         if (this.vdomRef.current) {
             this.vdomRef.current.removeEventListener('timeChange', this.handleTimeChange);
         }
@@ -98,7 +97,7 @@ class Viewport extends React.Component<ViewportProps> {
         }
     }
 
-    animate() {
+    public animate() {
         const {
             agentSimController
         } = this.props;
@@ -136,7 +135,7 @@ class Viewport extends React.Component<ViewportProps> {
         requestAnimationFrame(this.animate);
     };
 
-    render() {
+    public render() {
         const {
             devgui,
             agentSimController,
@@ -149,11 +148,13 @@ class Viewport extends React.Component<ViewportProps> {
             netConnection,
             visData,
         } = agentSimController;
+
         this.animate();
 
         // style is specified below so that the size
         // can be passed as a react property
-        return (<div 
+        return (
+            <div 
                 id="vdom"
                 style={
                     { 
@@ -163,11 +164,13 @@ class Viewport extends React.Component<ViewportProps> {
                 }
                 ref={this.vdomRef}
             >
-                {devgui && (<DevGUI 
-                                simParams={simParameters}
-                                visData={visData}
-                                netConnection={netConnection}
-                            />)}
+                {devgui && (
+                    <DevGUI 
+                        simParams={simParameters}
+                        visData={visData}
+                        netConnection={netConnection}
+                    />
+                )}
             </div>
         );
     }

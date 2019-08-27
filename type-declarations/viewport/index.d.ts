@@ -25,10 +25,12 @@ declare class Viewport extends React.Component<ViewportProps> {
         width: number;
         devgui: boolean;
     };
+    private static isCustomEvent;
     constructor(props: ViewportProps);
     componentDidMount(): void;
-    handleTimeChange(e: any): void;
-    dispatchUpdatedTime(timeData: any): void;
+    componentWillUnmount(): void;
+    private handleTimeChange;
+    private dispatchUpdatedTime;
     animate(): void;
     render(): JSX.Element;
 }
