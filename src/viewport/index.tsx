@@ -174,7 +174,8 @@ class Viewport extends React.Component<ViewportProps> {
 
     animate() {
         const {
-            agentSimController
+            agentSimController,
+            onJsonDataArrived
         } = this.props;
         const {
             simParameters,
