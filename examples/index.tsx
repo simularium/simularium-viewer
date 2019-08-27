@@ -11,6 +11,12 @@ const netConnectionSettings = {
 }
 
 const agentSim = new AgentSimController(netConnectionSettings, { trajectoryPlaybackFile: "actin5-1.h5" })
+let currentFrame = 0;
+let currentTime = 0;
+const handleTimeChange = (timeData) => {
+    currentFrame = timeData.frameNumber;
+    currentTime = timeData.time;
+}
 
 const demoState = {
     highlightId: -1,
@@ -37,7 +43,7 @@ function renderDemo(state) {
                 onClick={() => agentSim.pause()}
             >Pause</button>
             <button
-                onClick={() => agentSim.playFromCache()}
+                onClick={() => agentSim.playFromCache(currentFrame)}
             >Play from cache</button>
             <button
                 onClick={() => agentSim.stop()}
@@ -65,6 +71,7 @@ function renderDemo(state) {
                 width={600}
                 devgui={false}
                 loggerLevel="debug"
+                onTimeChange={handleTimeChange}
                 agentSimController={agentSim}
                 onJsonDataArrived={handleJsonMeshData}
                 highlightedParticleType={state.highlightId}

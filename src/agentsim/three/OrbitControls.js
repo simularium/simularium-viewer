@@ -416,10 +416,10 @@ THREE.OrbitControls = function (object, domElement) {
         scope.update();
     }
 
-    function handleMouseUp(event) {
+    function handleMouseUp() {
 
         // console.log( 'handleMouseUp' );
-
+        
     }
 
     function handleMouseWheel(event) {
@@ -538,7 +538,7 @@ THREE.OrbitControls = function (object, domElement) {
         scope.update();
     }
 
-    function handleTouchEnd(event) {
+    function handleTouchEnd() {
 
         // console.log( 'handleTouchEnd' );
 

@@ -22,10 +22,17 @@ interface ViewportProps {
     width: number;
     devgui: boolean;
     loggerLevel: string;
+    onTimeChange: (timeData: TimeData) => void;
     agentSimController: AgentSimController;
     onJsonDataArrived: any;
     highlightedParticleType: number | string;
 }
+
+interface TimeData {
+    time: number;
+    frameNumber: number;
+}
+
 
 class Viewport extends React.Component<ViewportProps> {
     // NOTE: this can be typed in the future, but they may change signifantly and I dont want to at the moment. -MMRM
@@ -44,7 +51,12 @@ class Viewport extends React.Component<ViewportProps> {
         devgui: false,
     };
 
-    constructor(props: ViewportProps) {
+    private static isCustomEvent(event: Event): event is CustomEvent {
+        return 'detail' in event;
+    }
+
+
+    public constructor(props: ViewportProps) {
         super(props);
 
         const loggerLevel = props.loggerLevel === 'debug' ? jsLogger.DEBUG : jsLogger.OFF;
@@ -58,6 +70,8 @@ class Viewport extends React.Component<ViewportProps> {
         this.visGeometry.createMaterials(agentSimController.visData.colors);
         this.visGeometry.createMeshes(5000);
         this.vdomRef = React.createRef();
+        this.dispatchUpdatedTime = this.dispatchUpdatedTime.bind(this);
+        this.handleTimeChange = this.handleTimeChange.bind(this);
         this.lastRenderTime = Date.now();
         this.onPickObject = this.onPickObject.bind(this);
 
@@ -69,24 +83,29 @@ class Viewport extends React.Component<ViewportProps> {
         this.animationRequestID = 0;
     }
 
-    componentDidMount() {
+    public componentDidMount() {
         const {
             agentSimController,
         } = this.props;
         this.visGeometry.reparent(this.vdomRef.current);
         agentSimController.netConnection.connect();
         setInterval(agentSimController.netConnection.checkForUpdates.bind(agentSimController.netConnection), 1000);
+
+        if (this.vdomRef.current) {
+            this.vdomRef.current.addEventListener('timeChange', this.handleTimeChange, false);
+        }
         this.addEventHandlersToCanvas();
 
         this.animate();
     }
 
-    componentWillUnmount() {
-        const {
-            agentSimController,
-        } = this.props;
+    public componentWillUnmount() {
+        if (this.vdomRef.current) {
+            this.vdomRef.current.removeEventListener('timeChange', this.handleTimeChange);
+        }
         this.removeEventHandlersFromCanvas();
         this.stopAnimate();
+
     }
 
     componentDidUpdate(prevProps, prevState, snapshot) {
@@ -129,6 +148,23 @@ class Viewport extends React.Component<ViewportProps> {
         }
     }
 
+    private handleTimeChange(e: Event) {
+        const {
+            onTimeChange,
+        } = this.props;
+        if (!Viewport.isCustomEvent(e)) {
+            throw new Error('not custom event');
+        }
+        onTimeChange(e.detail)
+    }
+
+    private dispatchUpdatedTime(timeData) {
+        const event = new CustomEvent('timeChange', { detail: timeData });
+        if (this.vdomRef.current) {
+            this.vdomRef.current.dispatchEvent(event);
+        }
+    }
+
     stopAnimate() {
         if (this.animationRequestID !== 0) {
             cancelAnimationFrame(this.animationRequestID);
@@ -138,8 +174,7 @@ class Viewport extends React.Component<ViewportProps> {
 
     animate() {
         const {
-            agentSimController,
-            onJsonDataArrived
+            agentSimController
         } = this.props;
         const {
             simParameters,
@@ -169,13 +204,14 @@ class Viewport extends React.Component<ViewportProps> {
         if (visData.hasNewData()) {
             this.visGeometry.colorVariant = visData.colorVariant;
             this.visGeometry.update(visData.agents);
+            this.dispatchUpdatedTime(visData.time);
             visData.newDataHasBeenHandled();
         }
 
         this.animationRequestID = requestAnimationFrame(this.animate);
     };
 
-    render() {
+    public render() {
         const {
             devgui,
             agentSimController,
@@ -191,7 +227,8 @@ class Viewport extends React.Component<ViewportProps> {
 
         // style is specified below so that the size
         // can be passed as a react property
-        return (<div 
+        return (
+            <div 
                 id="vdom"
                 style={
                     { 
@@ -201,11 +238,13 @@ class Viewport extends React.Component<ViewportProps> {
                 }
                 ref={this.vdomRef}
             >
-                {devgui && (<DevGUI 
-                                simParams={simParameters}
-                                visData={visData}
-                                netConnection={netConnection}
-                            />)}
+                {devgui && (
+                    <DevGUI 
+                        simParams={simParameters}
+                        visData={visData}
+                        netConnection={netConnection}
+                    />
+                )}
             </div>
         );
     }

@@ -1,10 +1,9 @@
 import * as util from './ThreadUtil';
 
-function unpackNetData(visDataMsg) {
-    const outAgentData = {};
-    let agentCounter = 0;
-    const visData = visDataMsg.data;
-    const sizeOfData = visData.length;
+/**
+    * Parse Agents from Net Data
+* */
+class VisData {
 
     /**
     *   Parses a stream of data sent from the backend
@@ -32,91 +31,62 @@ function unpackNetData(visDataMsg) {
     *   paid for network bandwith (and improving the quality & responsiveness
     *   of the application, since network latency is a major bottle-neck)
     * */
-    for (let i = 0; i < sizeOfData;) {
-        const agentData = {};
-        agentData['vis-type'] = visData[i]; i += 1; // read the first property
-        agentData.type = visData[i]; i += 1; // the second property,
-        agentData.x = visData[i]; i += 1;// ...
-        agentData.y = visData[i]; i += 1;
-        agentData.z = visData[i]; i += 1;
-        agentData.xrot = visData[i]; i += 1;
-        agentData.yrot = visData[i]; i += 1;
-        agentData.zrot = visData[i]; i += 1;
-        agentData.cr = visData[i]; i += 1;
-        const nSubPoints = visData[i]; i += 1;
 
-        /**
-        *   this is a trait that is variable in length
-        *   this is also why we cant use a calculable offset
-        *   and need to step 'i' through the data
-        * */
-        const subpoints = [];
-        for (let j = 0; j < nSubPoints; j += 1) {
-            subpoints[j] = visData[i]; i += 1;
+    static parse(visDataMsg) {
+        // IMPORTANT: Order of this array needs to perfectly match the incoming data. 
+        const agentObjectKeys = ['vis-type', 'type', 'x', 'y', 'z', 'xrot', 'yrot', 'zrot', 'cr', 'nSubPoints'];
+        const visData = visDataMsg.data;
+        const parsedAgentData = [];
+        const nSubPointsIndex = agentObjectKeys.findIndex((ele) => ele === 'nSubPoints');
+
+    
+        const parseOneAgent = (agentArray) => {
+            return agentArray.reduce((agentData, cur, i) => {
+                let key;
+                if (agentObjectKeys[i]) {
+                    key = agentObjectKeys[i];
+                    agentData[key] = cur;
+                } else if (i < agentArray.length + agentData.nSubPoints){
+                    agentData.subpoints.push(cur);
+                }
+                return agentData;
+            }, { subpoints: [] })
         }
 
-        agentData.subpoints = subpoints;
-        outAgentData[agentCounter] = agentData;
-        agentCounter += 1;
+        while (visData.length) {
+            const nSubPoints = visData[nSubPointsIndex];
+            const chunckLength = agentObjectKeys.length + nSubPoints; // each array length is varible based on how many subpoints the agent has
+            const agentSubSetArray = visData.splice(0, chunckLength); // cut off the array of 1 agent data from front of the array;
+            if (agentSubSetArray.length < agentObjectKeys.length) {
+                throw Error('malformed data: indexing off');
+            }
+            parsedAgentData.push(parseOneAgent(agentSubSetArray))
+        }
+
+        const frameData = {
+            time: visDataMsg.time,
+            frameNumber: visDataMsg.frame_number,
+        }
+
+        return {
+            frameData,
+            parsedAgentData,
+        };
     }
 
-    return outAgentData;
-}
-
-function visDataWorkerFunc() {
-/* eslint-disable-next-line no-restricted-globals */
-    self.addEventListener('message', (e) => {
-        const visDataMsg = e.data;
-        const parsedAgentData = {};
-
-        /**
-        *   A copy of the above function 'unpackNetData'
-        *   please see above for description
-        *   duplicated here for the web-worker
-        * */
-        let agentCounter = 0;
-        const visData = visDataMsg.data;
-        const sizeOfData = visData.length;
-        for (let i = 0; i < sizeOfData;) {
-            const agentData = {};
-            agentData['vis-type'] = visData[i]; i += 1;
-            agentData.type = visData[i]; i += 1;
-            agentData.x = visData[i]; i += 1;
-            agentData.y = visData[i]; i += 1;
-            agentData.z = visData[i]; i += 1;
-            agentData.xrot = visData[i]; i += 1;
-            agentData.yrot = visData[i]; i += 1;
-            agentData.zrot = visData[i]; i += 1;
-            agentData.cr = visData[i]; i += 1;
-            const nSubPoints = visData[i]; i += 1;
-
-            const subpoints = [];
-            for (let j = 0; j < nSubPoints; j += 1) {
-                subpoints[j] = visData[i]; i += 1;
-            }
-
-            agentData.subpoints = subpoints;
-            parsedAgentData[agentCounter] = agentData;
-            agentCounter += 1;
-        }
-
-        postMessage(parsedAgentData);
-    }, false);
-}
-
-class VisData {
     constructor() {
         this.currentAgentDataFrame = null;
         this.agentsUpdated = false;
         this.mcolorVariant = 50;
 
         this.webWorker = util.ThreadUtil.createWebWorkerFromFunction(
-            visDataWorkerFunc.toString(),
+            this.convertVisDataWorkFunctionToString(),
         );
 
         this.webWorker.onmessage = (event) => {
             this.agentsUpdated = true;
-            this.currentAgentDataFrame = event.data;
+            this.currentTimeAndFrame = event.data.frameData;
+            this.currentAgentDataFrame = event.data.parsedAgentData;
         };
 
         this.mcolors = [
@@ -139,6 +109,8 @@ class VisData {
     get colors() { return this.mcolors; }
 
     get agents() { return this.currentAgentDataFrame; }
+
+    get time() { return this.currentTimeAndFrame }
 
     get colorVariant() { return this.mcolorVariant; }
 
@@ -163,19 +135,8 @@ class VisData {
         this.currentAgentDataFrame = null;
     }
 
-    /**
-    * Parse Agents from Net Data
-    * single threaded version of what the webworker is doing.
-    * */
-    static parse(visDataMsg) {
-        const parsedAgentData = unpackNetData(visDataMsg);
-
-        return parsedAgentData;
-    }
-
     parseAgentsFromNetData(visDataMsg) {
         if (this.agentsUpdated) { return; } // last update not handled yet
-
         if (util.ThreadUtil.browserSupportsWebWorkers()) {
             this.webWorker.postMessage(visDataMsg);
         } else {
@@ -187,6 +148,25 @@ class VisData {
     numberOfAgents() {
         return Object.keys(this.currentAgentDataFrame).length;
     }
+
+    convertVisDataWorkFunctionToString() {
+        return `function visDataWorkerFunc() {
+        self.addEventListener('message', (e) => {
+            const visDataMsg = e.data;
+            const {
+                frameData,
+                parsedAgentData,
+            } = ${VisData.parse}(visDataMsg)
+
+            postMessage({
+                frameData,
+                parsedAgentData,
+            });
+        }, false);
+        }`
+
+    }
+
 }
 
 export { VisData };

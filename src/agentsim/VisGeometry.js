@@ -326,7 +326,7 @@ class VisGeometry {
     /**
     *   Update Scene
     * */
-    updateScene(agents, numberOfAgents) {
+    updateScene(agents) {
         let fiberIndex = 0;
 
         // these have been set to correspond to backend values
@@ -336,8 +336,8 @@ class VisGeometry {
         });
 
         // The agents sent over are mapped by an integer id
-        for (let i = 0; i < numberOfAgents; i += 1) {
-            const agentData = agents[i.toString()];
+        agents.forEach((agentData, i) => {
+
             const visType = agentData['vis-type'];
             const typeId = agentData.type;
             const scale = this.getScaleForId(typeId);
@@ -417,7 +417,7 @@ class VisGeometry {
 
                 fiberIndex += 1;
             }
-        }
+        });
         if (this.followObject) {
             // keep camera at same distance from target.
             const direction = new THREE.Vector3().subVectors( this.camera.position, this.controls.target );
@@ -448,7 +448,7 @@ class VisGeometry {
     }
 
     update(agents) {
-        const numberOfAgents = Object.keys(agents).length;
+        const numberOfAgents = agents.length;
         this.updateScene(agents, numberOfAgents);
 
         if (this.lastNumberOfAgents > numberOfAgents) {
