@@ -6,7 +6,6 @@ import {
 // Three JS is assumed to be in the global scope in extensions
 //  such as OrbitControls.js below
 import * as THREE from  'three';
-global.THREE = THREE;
 
 import { VisGeometry, DevGUI } from "../agentsim";
 
@@ -108,7 +107,7 @@ class Viewport extends React.Component<ViewportProps> {
 
     }
 
-    componentDidUpdate(prevProps, prevState, snapshot) {
+    public componentDidUpdate() {
         this.visGeometry.setHighlightById(this.props.highlightedParticleType);
     }
 
@@ -124,7 +123,7 @@ class Viewport extends React.Component<ViewportProps> {
         );
     }
 
-    onPickObject(event: MouseEvent) {
+    public onPickObject(event: MouseEvent) {
         const size = new THREE.Vector2();
         this.visGeometry.renderer.getSize(size);
 
@@ -165,14 +164,14 @@ class Viewport extends React.Component<ViewportProps> {
         }
     }
 
-    stopAnimate() {
+    public stopAnimate() {
         if (this.animationRequestID !== 0) {
             cancelAnimationFrame(this.animationRequestID);
             this.animationRequestID = 0;
         }
     }
 
-    animate() {
+    public animate() {
         const {
             agentSimController,
             onJsonDataArrived
