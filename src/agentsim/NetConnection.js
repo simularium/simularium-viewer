@@ -12,6 +12,14 @@ class NetConnection {
         this.webSocket = null;
         this.serverIp = opts.serverIp || '127.0.0.1';
         this.serverPort = opts.serverPort || '9002';
+        this.remoteServerName = ""; // only used for cleanup on remote machines
+        this.remoteServerSim = ""; // only used for cleanup on remote machines
+
+        // used to get the ip for a back-end to connect to (websockets)
+        this.ipServiceAddr = opts.ipServiceAddr || 'http://localhost:5000';
+
+         // if false, will use this.serverIp & this.serverPort above
+        this.useIpService = opts.useIpService || false;
 
         this.webSocketSentString = 'Web Socket Request Sent: ';
         this.mvisData = visData;
@@ -36,6 +44,9 @@ class NetConnection {
 
         this.mlogger = jsLogger.get('netconnection');
         this.mlogger.setLevel(loggerLevel);
+
+        // Frees the reserved backend in the event that the window closes w/o disconnecting
+        window.addEventListener("beforeunload", this.onClose.bind(this));
     }
 
     get visData() { return this.mvisData; }
@@ -109,6 +120,26 @@ class NetConnection {
         }
     }
 
+    onOpen() {
+        if(this.socketIsValid())
+        {
+            fetch(
+                this.ipServiceAddr + "/assign?command=reserve&name=" +
+                this.remoteServerName + "&simulation=" + this.remoteServerSim
+            );
+        }
+    }
+
+    onClose() {
+        if(this.socketIsValid())
+        {
+            fetch(
+                this.ipServiceAddr + "/assign?command=free&name=" +
+                this.remoteServerName + "&simulation=none"
+            );
+        }
+    }
+
     /**
     * WebSocket Connect
     * */
@@ -123,6 +154,8 @@ class NetConnection {
         this.logger.debug('WS Connection Request Sent: ', uri);
 
         // message handler
+        this.webSocket.onopen = this.onOpen.bind(this);
+        this.webSocket.onclose = this.onClose.bind(this);
         this.webSocket.onmessage = this.onMessage;
         this.webSocket.owner = this;
     }
@@ -140,6 +173,32 @@ class NetConnection {
         return `ws://${this.serverIp}:${this.serverPort}/`
     }
 
+    // @TODO return whole JSON object (to save server name & simulation)
+    requestServerInfo(queryParams) {
+        let ipFetch = fetch(
+            this.ipServiceAddr + "/get?" + queryParams
+        );
+
+        ipFetch = ipFetch.then(function(response) {
+                if (response.ok) {
+                    return response.json().then((data) => {
+                        return data[0];
+                    });
+                } else {
+                    return {
+                        ip: "ws://127.0.0.1:9002"
+                    }
+                }
+            })
+            .catch(function() {
+                return {
+                    ip: "ws://127.0.0.1:9002"
+                }
+            });
+
+        return ipFetch;
+    }
+
     waitForSocketConnection(socket, callback) {
         setTimeout(
             () => {
@@ -154,6 +213,70 @@ class NetConnection {
                 }
             }, 5,
         ); // wait 5 milisecond for the connection...
+    }
+
+    // Attempts to connect to the ws://${this.serverIp}:${this.serverPort}/
+    // and if connection succeeds, sends the message ${jsonData} to the server
+    connectAndSend(address, jsonData, description){
+        if (!this.socketIsValid()) {
+            this.logger.debug('Connecting to IP set in net connection parameters');
+            this.connectToUri(address);
+            if (!this.socketIsValid()) {
+                this.logger.debug('Failed to connect to IP');
+            }
+        }
+
+        this.waitForSocketConnection(this.webSocket, () => {
+            this.sendWebSocketRequest(jsonData, description);
+        });
+    }
+
+    // Asks for an IP from a REST service designed to manage AgentViz depoloyments
+    // @param queryParams: information about the state of the backend desired (e.g. state=free)
+    //                      formated as REST parameters
+    // @param jsonData: the message to be sent on connection
+    // @param description: a string used to identify this request in logging (e.g. "Live Simulation Start")
+    findServerAndSend(queryParams, jsonData, description) {
+        let self = this;
+
+        // The client is already connected to a backend
+        if (this.socketIsValid()) {
+            this.sendWebSocketRequest(jsonData, description);
+            return;
+        }
+
+        // Request the IP for a backend
+        // Then connect and send the request
+        if (!this.socketIsValid()) {
+            this.logger.debug("Requesting remote IP");
+            this.requestServerInfo(queryParams).then((jsonData) => {
+                self.connectToUri(jsonData.ip);
+
+                if (!self.socketIsValid()) {
+                    self.logger.debug("Failed to connect to remote IP");
+                    reject("connection failed");
+                }
+
+                self.waitForSocketConnection(function() {
+                    self.sendWebSocketRequest(jsonData, description);
+                });
+            });
+        }
+    }
+
+    connectToServerAndSend(queryParams, jsonData, description)
+    {
+        if(this.useIpService)
+        {
+            // Use the IP service to get a remote IP (on AWS)
+            // the connect and send message
+            this.findServerAndSend(queryParams, jsonData, description);
+        }
+        else {
+            // Connect to the IP set by manipulating variables
+            //  in this object
+            this.connectAndSend(this.getIp(), jsonData, description);
+        }
     }
 
     /**
@@ -212,41 +335,23 @@ class NetConnection {
     *
     */
     startRemoteSimPreRun(timeStep, numTimeSteps) {
-        if (!this.socketIsValid()) {
-            this.logger.debug('Requesting remote IP');
-            this.connectToUri(this.getIp());
-            if (!this.socketIsValid()) {
-                this.logger.debug('Failed to connect to remote IP');
-            }
-        }
+        const jsonData = {
+            msg_type: this.msgTypes.ID_VIS_DATA_REQUEST,
+            mode: this.playbackTypes.ID_PRE_RUN_SIMULATION,
+            "time-step": timeStep,
+            "num-time-steps": numTimeSteps,
+        };
 
-        this.waitForSocketConnection(this.webSocket, () => {
-            const jsonData = {
-                msg_type: this.msgTypes.ID_VIS_DATA_REQUEST,
-                mode: this.playbackTypes.ID_PRE_RUN_SIMULATION,
-                'time-step': timeStep,
-                'num-time-steps': numTimeSteps,
-            };
-            this.sendWebSocketRequest(jsonData, 'Start Simulation Pre-Run');
-        });
+        this.connectToServerAndSend("state=free", jsonData, "Start Simulation Pre-Run");
     }
 
     startRemoteSimLive() {
-        if (!this.socketIsValid()) {
-            this.logger.debug('Requesting remote IP');
-            this.connectToUri(this.getIp());
-            if (!this.socketIsValid()) {
-                this.logger.debug('Failed to connect to remote IP');
-            }
-        }
+        const jsonData = {
+            msg_type: this.msgTypes.ID_VIS_DATA_REQUEST,
+            mode: this.playbackTypes.ID_LIVE_SIMULATION,
+        };
 
-        this.waitForSocketConnection(this.webSocket, () => {
-            const jsonData = {
-                msg_type: this.msgTypes.ID_VIS_DATA_REQUEST,
-                mode: this.playbackTypes.ID_LIVE_SIMULATION,
-            };
-            this.sendWebSocketRequest(jsonData, ' Start Simulation Live');
-        });
+        this.connectToServerAndSend("state=free", jsonData, "Start Simulation Live");
     }
 
     startRemoteTrajectoryPlayback(fileName) {
@@ -254,22 +359,18 @@ class NetConnection {
             return;
         }
 
-        if (!this.socketIsValid()) {
-            this.logger.debug('Requesting remote IP');
-            this.connectToUri(this.getIp());
-            if (!this.socketIsValid()) {
-                this.logger.debug('Failed to connect to remote IP');
-            }
-        }
+        const jsonData = {
+            msg_type: this.msgTypes.ID_VIS_DATA_REQUEST,
+            mode: this.playbackTypes.ID_TRAJECTORY_FILE_PLAYBACK,
+            "file-name": fileName,
+        };
 
-        this.waitForSocketConnection(this.webSocket, () => {
-            const jsonData = {
-                msg_type: this.msgTypes.ID_VIS_DATA_REQUEST,
-                mode: this.playbackTypes.ID_TRAJECTORY_FILE_PLAYBACK,
-                'file-name': fileName,
-            };
-            this.sendWebSocketRequest(jsonData, 'Start Trajectory File Playback');
-        });
+        this.remoteServerSim = fileName;
+        this.connectToServerAndSend(
+            "simulation=" + fileName,
+            jsonData,
+            "Start Trajectory File Playback"
+        );
     }
 
     playRemoteSimCacheFromFrame(cacheFrame) {
