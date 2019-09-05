@@ -30,6 +30,7 @@ declare class Viewport extends React.Component<ViewportProps> {
         height: number;
         width: number;
         devgui: boolean;
+        highlightedParticleType: number;
     };
     private static isCustomEvent;
     constructor(props: ViewportProps);
