@@ -121,7 +121,7 @@ class NetConnection {
     }
 
     onOpen() {
-        if(this.socketIsValid())
+        if(this.socketIsValid() && this.remoteServerName !== "localhost")
         {
             fetch(
                 this.ipServiceAddr + "/assign?command=reserve&name=" +
@@ -131,7 +131,7 @@ class NetConnection {
     }
 
     onClose() {
-        if(this.socketIsValid())
+        if(this.socketIsValid() && this.remoteServerName !== "localhost")
         {
             fetch(
                 this.ipServiceAddr + "/assign?command=free&name=" +
@@ -160,6 +160,11 @@ class NetConnection {
         this.webSocket.owner = this;
     }
 
+    setServerName(name)
+    {
+        this.remoteServerName = name;
+    }
+
     disconnect() {
         if (!this.socketIsValid()) {
             this.logger.warn('disconnect failed, client is not connected');
@@ -180,20 +185,26 @@ class NetConnection {
         );
 
         ipFetch = ipFetch.then(function(response) {
-                if (response.ok) {
+                if (response.ok && Object.keys(response.json()).length > 0) {
                     return response.json().then((data) => {
                         return data[0];
                     });
                 } else {
-                    return {
-                        ip: "ws://127.0.0.1:9002"
-                    }
+                    const outJson = {
+                        ip: "127.0.0.1:9002",
+                        name: "localhost"
+                    };
+
+                    return outJson;
                 }
             })
             .catch(function() {
-                return {
-                    ip: "ws://127.0.0.1:9002"
-                }
+                const outJson = {
+                    ip: "127.0.0.1:9002",
+                    name: "localhost"
+                };
+
+                return outJson;
             });
 
         return ipFetch;
@@ -234,14 +245,13 @@ class NetConnection {
     // Asks for an IP from a REST service designed to manage AgentViz depoloyments
     // @param queryParams: information about the state of the backend desired (e.g. state=free)
     //                      formated as REST parameters
-    // @param jsonData: the message to be sent on connection
+    // @param msgData: the message to be sent on connection
     // @param description: a string used to identify this request in logging (e.g. "Live Simulation Start")
-    findServerAndSend(queryParams, jsonData, description) {
-        let self = this;
+    findServerAndSend(queryParams, msgData, description) {
 
         // The client is already connected to a backend
         if (this.socketIsValid()) {
-            this.sendWebSocketRequest(jsonData, description);
+            this.sendWebSocketRequest(msgData, description);
             return;
         }
 
@@ -250,15 +260,16 @@ class NetConnection {
         if (!this.socketIsValid()) {
             this.logger.debug("Requesting remote IP");
             this.requestServerInfo(queryParams).then((jsonData) => {
-                self.connectToUri(jsonData.ip);
+                this.connectToUri('ws://' + jsonData.ip);
+                this.setServerName(jsonData.name);
 
-                if (!self.socketIsValid()) {
-                    self.logger.debug("Failed to connect to remote IP");
+                if (!this.socketIsValid()) {
+                    this.logger.debug("Failed to connect to remote IP");
                     reject("connection failed");
                 }
 
-                self.waitForSocketConnection(function() {
-                    self.sendWebSocketRequest(jsonData, description);
+                this.waitForSocketConnection(() => {
+                    this.sendWebSocketRequest(msgData, description);
                 });
             });
         }
