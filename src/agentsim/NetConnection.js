@@ -268,9 +268,12 @@ class NetConnection {
                     reject("connection failed");
                 }
 
-                this.waitForSocketConnection(() => {
-                    this.sendWebSocketRequest(msgData, description);
-                });
+                this.waitForSocketConnection(
+                    this.webSocket,
+                    () => {
+                        this.sendWebSocketRequest(msgData, description);
+                    }
+                );
             });
         }
     }
