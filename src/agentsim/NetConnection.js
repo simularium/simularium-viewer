@@ -221,15 +221,13 @@ class NetConnection {
     //  e.g. state=free&simulation=coolsim
     connectUsingIpServiceAsync(queryParams) {
         let connectPromise = this.requestServerInfo(queryParams);
-        connectPromise.then((jsonData) => {
+        return connectPromise.then((jsonData) => {
             if(!this.socketIsValid())
             {
                 this.connectToUri('ws://' + jsonData.ip)
                 this.setServerName(jsonData.name);
             }
         });
-
-        return connectPromise;
     }
 
     StartRemoteSimulationAsync(queryParams, jsonData, description)
@@ -239,11 +237,12 @@ class NetConnection {
             {
                 this.sendWebSocketRequest(jsonData, description);
                 resolve("Remote sim sucessfully started");
+                return;
             }
 
             let startPromise = this.useIpService ?
-                this.connectUsingIpServiceAsync(queryParams, jsonData, description) :
-                this.connectToUriAsync(this.getIp(), jsonData, description);
+                this.connectUsingIpServiceAsync(queryParams) :
+                this.connectToUriAsync(this.getIp());
 
             return startPromise.then(() => {
                 setTimeout(
