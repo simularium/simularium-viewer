@@ -8,8 +8,6 @@ import './style.css';
 const netConnectionSettings = {
     serverIp: "127.0.0.1",
     serverPort: 9002,
-    //ipServiceAddr: 'http://a70fd6193bee611e9907a06c21ce3c1b-732404489.us-east-2.elb.amazonaws.com',
-    useIpService: true,
 }
 
 const agentSim = new AgentSimController(netConnectionSettings, { trajectoryPlaybackFile: "actin19.h5" })
