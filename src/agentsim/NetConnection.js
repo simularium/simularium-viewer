@@ -189,30 +189,24 @@ class NetConnection {
             {cache: "no-store"}
         );
 
-        ipFetch = ipFetch.then((response) => {
-                if (response.ok && Object.keys(response.json()).length > 0) {
+        const localServer = {
+            ip: "127.0.0.1:9002",
+            name: "localhost"
+        };
+
+        return ipFetch.then((response) => {
+                if (response.ok) {
                     return response.json().then((data) => {
-                        return data[0];
+                        return Object.keys(data).length > 0 ?
+                            data[0] : localServer;
                     });
                 } else {
-                    const outJson = {
-                        ip: "127.0.0.1:9002",
-                        name: "localhost"
-                    };
-
-                    return outJson;
+                    return localServer;
                 }
             })
             .catch(function() {
-                const outJson = {
-                    ip: "127.0.0.1:9002",
-                    name: "localhost"
-                };
-
-                return outJson;
+                return localServer;
             });
-
-        return ipFetch;
     }
 
     connectToUriAsync(address, jsonData, description) {
