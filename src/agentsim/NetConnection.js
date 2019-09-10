@@ -209,9 +209,10 @@ class NetConnection {
             });
     }
 
-    connectToUriAsync(address, jsonData, description) {
+    connectToUriAsync(address) {
         let connectPromise = new Promise((resolve, reject) => {
             this.connectToUri(address);
+            resolve("Succesfully connected to uri!");
         });
 
         return connectPromise;
@@ -255,7 +256,7 @@ class NetConnection {
                         else {
                             reject("Failed to connected to requested server");
                         }
-                    }, 5 // wait 5 milliseconds to allow connection
+                    }, 1000 // wait 1 second for websocket to open
                 );
             });
         });
