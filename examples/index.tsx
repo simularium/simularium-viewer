@@ -8,6 +8,8 @@ import './style.css';
 const netConnectionSettings = {
     serverIp: "52.15.70.94",
     serverPort: 9002,
+    useIpService: true,
+    ipServiceAddr: "http://localhost:5000"
 }
 
 const agentSim = new AgentSimController(netConnectionSettings, { trajectoryPlaybackFile: "actin19.h5" })
