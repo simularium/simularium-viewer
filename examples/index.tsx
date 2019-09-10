@@ -6,7 +6,7 @@ import './style.css';
 
 
 const netConnectionSettings = {
-    serverIp: "127.0.0.1",
+    serverIp: "52.15.70.94",
     serverPort: 9002,
 }
 
