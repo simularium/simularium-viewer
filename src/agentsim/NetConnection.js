@@ -12,6 +12,14 @@ class NetConnection {
         this.webSocket = null;
         this.serverIp = opts.serverIp || '127.0.0.1';
         this.serverPort = opts.serverPort || '9002';
+        this.remoteServerName = ""; // only used for cleanup on remote machines
+        this.remoteServerSim = ""; // only used for cleanup on remote machines
+
+        // used to get the ip for a back-end to connect to (websockets)
+        this.ipServiceAddr = opts.ipServiceAddr || 'http://localhost:5000';
+
+         // if false, will use this.serverIp & this.serverPort above
+        this.useIpService = opts.useIpService || false;
 
         this.webSocketSentString = 'Web Socket Request Sent: ';
         this.mvisData = visData;
@@ -36,6 +44,9 @@ class NetConnection {
 
         this.mlogger = jsLogger.get('netconnection');
         this.mlogger.setLevel(loggerLevel);
+
+        // Frees the reserved backend in the event that the window closes w/o disconnecting
+        window.addEventListener("beforeunload", this.onClose.bind(this));
     }
 
     get visData() { return this.mvisData; }
@@ -57,6 +68,11 @@ class NetConnection {
     socketIsValid() {
         return !(this.webSocket === null
             || this.webSocket.readyState === this.webSocket.CLOSED);
+    }
+
+    socketIsConnected() {
+        return this.webSocket !== null
+            && this.webSocket.readyState === this.webSocket.OPEN;
     }
 
     /**
@@ -109,6 +125,26 @@ class NetConnection {
         }
     }
 
+    onOpen() {
+        if(this.useIpService && this.socketIsValid() && this.remoteServerName !== "localhost")
+        {
+            fetch(
+                this.ipServiceAddr + "/assign?command=reserve&name=" +
+                this.remoteServerName + "&simulation=" + this.remoteServerSim
+            );
+        }
+    }
+
+    onClose() {
+        if(this.useIpService && this.socketIsValid() && this.remoteServerName !== "localhost")
+        {
+            fetch(
+                this.ipServiceAddr + "/assign?command=free&name=" +
+                this.remoteServerName + "&simulation=none"
+            );
+        }
+    }
+
     /**
     * WebSocket Connect
     * */
@@ -123,8 +159,15 @@ class NetConnection {
         this.logger.debug('WS Connection Request Sent: ', uri);
 
         // message handler
+        this.webSocket.onopen = this.onOpen.bind(this);
+        this.webSocket.onclose = this.onClose.bind(this);
         this.webSocket.onmessage = this.onMessage;
         this.webSocket.owner = this;
+    }
+
+    setServerName(name)
+    {
+        this.remoteServerName = name;
     }
 
     disconnect() {
@@ -140,20 +183,85 @@ class NetConnection {
         return `ws://${this.serverIp}:${this.serverPort}/`
     }
 
-    waitForSocketConnection(socket, callback) {
-        setTimeout(
-            () => {
-                if (socket.readyState === 1) {
-                    this.logger.debug('Connection is made');
-                    if (callback != null) {
-                        callback();
-                    }
+    requestServerInfo(queryParams) {
+        let ipFetch = fetch(
+            this.ipServiceAddr + "/get?" + queryParams,
+            {cache: "no-store"}
+        );
+
+        const localServer = {
+            ip: "127.0.0.1:9002",
+            name: "localhost"
+        };
+
+        return ipFetch.then((response) => {
+                if (response.ok) {
+                    return response.json().then((data) => {
+                        return Object.keys(data).length > 0 ?
+                            data[0] : localServer;
+                    });
                 } else {
-                    this.logger.debug('wait for connection...');
-                    this.waitForSocketConnection(socket, callback);
+                    return localServer;
                 }
-            }, 5,
-        ); // wait 5 milisecond for the connection...
+            })
+            .catch(function() {
+                return localServer;
+            });
+    }
+
+    connectToUriAsync(address) {
+        let connectPromise = new Promise((resolve, reject) => {
+            this.connectToUri(address);
+            resolve("Succesfully connected to uri!");
+        });
+
+        return connectPromise;
+    }
+
+    // queryParams are HTTP query parameters describing the desired server
+    //  e.g. state=free&simulation=coolsim
+    connectUsingIpServiceAsync(queryParams) {
+        let connectPromise = this.requestServerInfo(queryParams);
+        return connectPromise.then((jsonData) => {
+            if(!this.socketIsValid())
+            {
+                this.connectToUri('ws://' + jsonData.ip)
+                this.setServerName(jsonData.name);
+            }
+        });
+    }
+
+    StartRemoteSimulationAsync(queryParams, jsonData, description)
+    {
+        let remoteStartPromise = new Promise((resolve, reject) => {
+            if(this.socketIsConnected())
+            {
+                this.sendWebSocketRequest(jsonData, description);
+                resolve("Remote sim sucessfully started");
+                return;
+            }
+
+            let startPromise = this.useIpService ?
+                this.connectUsingIpServiceAsync(queryParams) :
+                this.connectToUriAsync(this.getIp());
+
+            return startPromise.then(() => {
+                setTimeout(
+                    () => {
+                        if(this.socketIsConnected())
+                        {
+                            this.sendWebSocketRequest(jsonData, description);
+                            resolve("Remote sim sucessfully started");
+                        }
+                        else {
+                            reject("Failed to connected to requested server");
+                        }
+                    }, 1000 // wait 1 second for websocket to open
+                );
+            });
+        });
+
+        return remoteStartPromise;
     }
 
     /**
@@ -212,41 +320,23 @@ class NetConnection {
     *
     */
     startRemoteSimPreRun(timeStep, numTimeSteps) {
-        if (!this.socketIsValid()) {
-            this.logger.debug('Requesting remote IP');
-            this.connectToUri(this.getIp());
-            if (!this.socketIsValid()) {
-                this.logger.debug('Failed to connect to remote IP');
-            }
-        }
+        const jsonData = {
+            msg_type: this.msgTypes.ID_VIS_DATA_REQUEST,
+            mode: this.playbackTypes.ID_PRE_RUN_SIMULATION,
+            "time-step": timeStep,
+            "num-time-steps": numTimeSteps,
+        };
 
-        this.waitForSocketConnection(this.webSocket, () => {
-            const jsonData = {
-                msg_type: this.msgTypes.ID_VIS_DATA_REQUEST,
-                mode: this.playbackTypes.ID_PRE_RUN_SIMULATION,
-                'time-step': timeStep,
-                'num-time-steps': numTimeSteps,
-            };
-            this.sendWebSocketRequest(jsonData, 'Start Simulation Pre-Run');
-        });
+        this.StartRemoteSimulationAsync("state=free", jsonData, "Start Simulation Pre-Run");
     }
 
     startRemoteSimLive() {
-        if (!this.socketIsValid()) {
-            this.logger.debug('Requesting remote IP');
-            this.connectToUri(this.getIp());
-            if (!this.socketIsValid()) {
-                this.logger.debug('Failed to connect to remote IP');
-            }
-        }
+        const jsonData = {
+            msg_type: this.msgTypes.ID_VIS_DATA_REQUEST,
+            mode: this.playbackTypes.ID_LIVE_SIMULATION,
+        };
 
-        this.waitForSocketConnection(this.webSocket, () => {
-            const jsonData = {
-                msg_type: this.msgTypes.ID_VIS_DATA_REQUEST,
-                mode: this.playbackTypes.ID_LIVE_SIMULATION,
-            };
-            this.sendWebSocketRequest(jsonData, ' Start Simulation Live');
-        });
+        this.StartRemoteSimulationAsync("state=free", jsonData, "Start Simulation Live");
     }
 
     startRemoteTrajectoryPlayback(fileName) {
@@ -254,22 +344,32 @@ class NetConnection {
             return;
         }
 
-        if (!this.socketIsValid()) {
-            this.logger.debug('Requesting remote IP');
-            this.connectToUri(this.getIp());
-            if (!this.socketIsValid()) {
-                this.logger.debug('Failed to connect to remote IP');
-            }
-        }
+        const jsonData = {
+            msg_type: this.msgTypes.ID_VIS_DATA_REQUEST,
+            mode: this.playbackTypes.ID_TRAJECTORY_FILE_PLAYBACK,
+            "file-name": fileName,
+        };
 
-        this.waitForSocketConnection(this.webSocket, () => {
-            const jsonData = {
-                msg_type: this.msgTypes.ID_VIS_DATA_REQUEST,
-                mode: this.playbackTypes.ID_TRAJECTORY_FILE_PLAYBACK,
-                'file-name': fileName,
-            };
-            this.sendWebSocketRequest(jsonData, 'Start Trajectory File Playback');
-        });
+        this.remoteServerSim = fileName;
+        this.StartRemoteSimulationAsync(
+            "simulation=" + fileName,
+            jsonData,
+            "Start Trajectory File Playback"
+        ).catch(() => {
+            // if failed to find a remote server running the desired simulation,
+            //  request a new one
+            if(this.useIpService) {
+                this.StartRemoteSimulationAsync(
+                    "state=free",
+                    jsonData,
+                    "Start Trajectory File Playback"
+                );
+            }
+
+            // if the ip service is not being used, a second request won't change
+            //  the result
+        }
+        );
     }
 
     playRemoteSimCacheFromFrame(cacheFrame) {

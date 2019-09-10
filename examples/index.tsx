@@ -5,12 +5,24 @@ import AgentVizViewer, { AgentSimController } from  '../dist';
 import './style.css';
 
 
+// The agentsim component relies on a web-socket connection
+//  this version of the config will attempt to connect to the
+//  provided settings on startup
 const netConnectionSettings = {
     serverIp: "52.15.70.94",
     serverPort: 9002,
 }
 
-const agentSim = new AgentSimController(netConnectionSettings, { trajectoryPlaybackFile: "actin5-1.h5" })
+// The agentsim component relies on a web-socket connection
+//  this version of the config will request information about a
+//  valid remote server from a service hosted at the address
+//  provided below
+const netConnectionSettingsIpService = {
+    useIpService: true,
+    ipServiceAddr: "http://a70fd6193bee611e9907a06c21ce3c1b-732404489.us-east-2.elb.amazonaws.com/"
+}
+
+const agentSim = new AgentSimController(netConnectionSettings, { trajectoryPlaybackFile: "actin19.h5" })
 let currentFrame = 0;
 let currentTime = 0;
 const handleTimeChange = (timeData) => {
@@ -36,7 +48,7 @@ function highlightParticleType(typeId) {
 function renderDemo(state) {
     ReactDOM.render(
         <React.Fragment>
-            <button 
+            <button
                 onClick={() => agentSim.start()}
             >Start</button>
             <button
@@ -49,12 +61,12 @@ function renderDemo(state) {
                 onClick={() => agentSim.stop()}
             >stop</button>
             <button
-                onClick={() => agentSim.changeFile('microtubules15.h5')}
+                onClick={() => agentSim.changeFile('microtubules19.h5')}
             >
                 microtubules file
             </button>
             <button
-                onClick={() => agentSim.changeFile('actin5-1.h5')}
+                onClick={() => agentSim.changeFile('actin19.h5')}
             >
                 actin file
             </button>
@@ -62,11 +74,11 @@ function renderDemo(state) {
                 onChange={(event) => highlightParticleType(event.target.value)}
             >
                 <option value="-1">None</option>
-                {state.particleTypeIds.map((id, i) => {     
-                    return (<option value={id}>{id}</option>); 
+                {state.particleTypeIds.map((id, i) => {
+                    return (<option value={id}>{id}</option>);
                 })}
             </select>
-            <AgentVizViewer 
+            <AgentVizViewer
                 height={600}
                 width={600}
                 devgui={false}
