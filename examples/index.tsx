@@ -55,8 +55,11 @@ function renderDemo(state) {
                 onClick={() => agentSim.pause()}
             >Pause</button>
             <button
-                onClick={() => agentSim.playFromCache(currentFrame)}
-            >Play from cache</button>
+                onClick={() => agentSim.playFromFrame(0)}
+            >Play from Frame</button>
+            <button
+                onClick={() => agentSim.playFromTime(25000)}
+            >Play from Time</button>
             <button
                 onClick={() => agentSim.stop()}
             >stop</button>

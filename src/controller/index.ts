@@ -31,8 +31,12 @@ export default class AgentSimController {
         this.netConnection.pauseRemoteSim();
     }
 
-    public playFromCache(frameNumber) {
-        this.netConnection.guiPlayRemoteSimCache(frameNumber);
+    public playFromFrame(frameNumber) {
+        this.netConnection.playRemoteSimCacheFromFrame(frameNumber);
+    }
+
+    public playFromTime(timeNs) {
+        this.netConnection.playRemoteSimCacheFromTime(timeNs);
     }
 
     public resume() {

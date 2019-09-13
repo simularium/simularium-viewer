@@ -379,7 +379,7 @@ class NetConnection {
             msg_type: this.msgTypes.ID_PLAY_CACHE,
             'frame-num': cacheFrame,
         };
-        this.sendWebSocketRequest(jsonData, 'Play Simulation Cache');
+        this.sendWebSocketRequest(jsonData, 'Play Simulation Cache from Frame');
     }
 
     pauseRemoteSim() {
@@ -396,6 +396,27 @@ class NetConnection {
         if (!this.socketIsValid()) { return; }
         this.sendWebSocketRequest({ msg_type: this.msgTypes.ID_VIS_DATA_ABORT }, 'Abort Simulation');
         this.disconnect();
+    }
+
+    requestSingleFrame(frameNumber) {
+        this.sendWebSocketRequest(
+            {
+                 msg_type: this.msgTypes.ID_VIS_DATA_REQUEST,
+                 count: 1
+            },
+            "Request Single Frame"
+        );
+    }
+
+    playRemoteSimCacheFromTime(timeNanoSeconds) {
+        console.log(timeNanoSeconds);
+        this.sendWebSocketRequest(
+            {
+                 msg_type: this.msgTypes.ID_PLAY_CACHE,
+                 time: timeNanoSeconds
+            },
+            "Play Simulation Cache from Time"
+        );
     }
 
     /**
