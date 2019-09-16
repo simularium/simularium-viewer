@@ -20,7 +20,7 @@ describe("VisData module", () => {
             ];
             const visDataMsg = {
                 data: testData,
-                frame_number: 0,
+                frameNumber: 0,
                 time: 0,
             };
             const parsedData = VisData.parse(visDataMsg);
@@ -60,7 +60,7 @@ describe("VisData module", () => {
             ];
             const visDataMsgTooShort = {
                 data: tooShort,
-                frame_number: 0,
+                frameNumber: 0,
                 time: 0,
             };
             const tooLong = [
@@ -80,7 +80,7 @@ describe("VisData module", () => {
             ];
             const visDataMsgTooLong = {
                 data: tooLong,
-                frame_number: 0,
+                frameNumber: 0,
                 time: 0,
             };
             expect(() => {
