@@ -9,7 +9,7 @@ import './style.css';
 //  this version of the config will attempt to connect to the
 //  provided settings on startup
 const netConnectionSettings = {
-    serverIp: "127.0.0.1",
+    serverIp: "52.15.70.94",
     serverPort: 9002,
 }
 
@@ -22,7 +22,7 @@ const netConnectionSettingsIpService = {
     ipServiceAddr: "http://a70fd6193bee611e9907a06c21ce3c1b-732404489.us-east-2.elb.amazonaws.com/"
 }
 
-const agentSim = new AgentSimController(netConnectionSettingsIpService, { trajectoryPlaybackFile: "actin19.h5" })
+const agentSim = new AgentSimController(netConnectionSettings, { trajectoryPlaybackFile: "actin19.h5" })
 let currentFrame = 0;
 let currentTime = 0;
 const handleTimeChange = (timeData) => {
