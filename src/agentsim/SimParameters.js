@@ -80,7 +80,7 @@ class SimParameters {
 
             updates = {
                 val: newTimeStep,
-                'slider-val': this.timeStepSliderVal,
+                'sliderVal': this.timeStepSliderVal,
             };
         }
 
@@ -107,7 +107,7 @@ class SimParameters {
 
                 updates[paramName] = {
                     val: newParamValue,
-                    'slider-val': currentSliderValue,
+                    'sliderVal': currentSliderValue,
                 };
             }
         });
