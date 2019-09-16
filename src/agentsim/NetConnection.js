@@ -18,7 +18,7 @@ class NetConnection {
         // used to get the ip for a back-end to connect to (websockets)
         this.ipServiceAddr = opts.ipServiceAddr || 'http://localhost:5000';
 
-         // if false, will use this.serverIp & this.serverPort above
+        // if false, will use this.serverIp & this.serverPort above
         this.useIpService = opts.useIpService || false;
 
         this.webSocketSentString = 'Web Socket Request Sent: ';
@@ -195,18 +195,17 @@ class NetConnection {
         };
 
         return ipFetch.then((response) => {
-                if (response.ok) {
-                    return response.json().then((data) => {
-                        return Object.keys(data).length > 0 ?
-                            data[0] : localServer;
-                    });
-                } else {
-                    return localServer;
-                }
-            })
-            .catch(function() {
+            if (response.ok) {
+                return response.json().then((data) => {
+                    return Object.keys(data).length > 0 ?
+                        data[0] : localServer;
+                });
+            } else {
                 return localServer;
-            });
+            }
+        }).catch(function() {
+            return localServer;
+        });
     }
 
     connectToUriAsync(address) {
@@ -401,9 +400,9 @@ class NetConnection {
     requestSingleFrame(startFrameNumber = 0) {
         this.sendWebSocketRequest(
             {
-                 msgType: this.msgTypes.ID_VIS_DATA_REQUEST,
-                 count: 1,
-                 frameNumber: startFrameNumber
+                msgType: this.msgTypes.ID_VIS_DATA_REQUEST,
+                count: 1,
+                frameNumber: startFrameNumber
             },
             "Request Single Frame"
         );
@@ -413,8 +412,8 @@ class NetConnection {
         console.log(timeNanoSeconds);
         this.sendWebSocketRequest(
             {
-                 msgType: this.msgTypes.ID_PLAY_CACHE,
-                 time: timeNanoSeconds
+                msgType: this.msgTypes.ID_PLAY_CACHE,
+                time: timeNanoSeconds
             },
             "Play Simulation Cache from Time"
         );
