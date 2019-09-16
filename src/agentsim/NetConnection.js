@@ -18,7 +18,7 @@ class NetConnection {
         // used to get the ip for a back-end to connect to (websockets)
         this.ipServiceAddr = opts.ipServiceAddr || 'http://localhost:5000';
 
-         // if false, will use this.serverIp & this.serverPort above
+        // if false, will use this.serverIp & this.serverPort above
         this.useIpService = opts.useIpService || false;
 
         this.webSocketSentString = 'Web Socket Request Sent: ';
@@ -195,15 +195,15 @@ class NetConnection {
         };
 
         return ipFetch.then((response) => {
-                if (response.ok) {
-                    return response.json().then((data) => {
-                        return Object.keys(data).length > 0 ?
-                            data[0] : localServer;
-                    });
-                } else {
-                    return localServer;
-                }
-            })
+            if (response.ok) {
+                return response.json().then((data) => {
+                    return Object.keys(data).length > 0 ?
+                        data[0] : localServer;
+                });
+            } else {
+                return localServer;
+            }
+        })
             .catch(function() {
                 return localServer;
             });
@@ -401,8 +401,8 @@ class NetConnection {
     requestSingleFrame(frameNumber) {
         this.sendWebSocketRequest(
             {
-                 msg_type: this.msgTypes.ID_VIS_DATA_REQUEST,
-                 count: 1
+                msg_type: this.msgTypes.ID_VIS_DATA_REQUEST,
+                count: 1
             },
             "Request Single Frame"
         );
@@ -412,8 +412,8 @@ class NetConnection {
         console.log(timeNanoSeconds);
         this.sendWebSocketRequest(
             {
-                 msg_type: this.msgTypes.ID_PLAY_CACHE,
-                 time: timeNanoSeconds
+                msg_type: this.msgTypes.ID_PLAY_CACHE,
+                time: timeNanoSeconds
             },
             "Play Simulation Cache from Time"
         );
