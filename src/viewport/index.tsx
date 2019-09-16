@@ -48,6 +48,7 @@ class Viewport extends React.Component<ViewportProps> {
         height: 800,
         width: 800,
         devgui: false,
+        highlightedParticleType: -1,
     };
 
     private static isCustomEvent(event: Event): event is CustomEvent {
@@ -107,8 +108,12 @@ class Viewport extends React.Component<ViewportProps> {
 
     }
 
-    public componentDidUpdate() {
+    public componentDidUpdate(prevProps: ViewportProps) {
+        const { height, width } = this.props;
         this.visGeometry.setHighlightById(this.props.highlightedParticleType);
+        if (prevProps.height !== height || prevProps.width !== width) {
+            this.visGeometry.resize(width, height);
+        }
     }
 
     public addEventHandlersToCanvas() {

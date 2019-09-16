@@ -121,6 +121,12 @@ class VisGeometry {
         };
     }
 
+    resize(width, height) {
+        this.camera.aspect = width / height;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(width, height);
+    }
+
     reparent(parent) {
         if(parent === 'undefined' || parent == null) {
             return;
