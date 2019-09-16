@@ -81,7 +81,6 @@ class Viewport extends React.Component<ViewportProps> {
         this.hit = false;
         this.raycaster = new THREE.Raycaster();
         this.animationRequestID = 0;
-        this.initialMount = true;
     }
 
     public componentDidMount() {
@@ -109,8 +108,12 @@ class Viewport extends React.Component<ViewportProps> {
 
     }
 
-    public componentDidUpdate() {
+    public componentDidUpdate(prevProps: ViewportProps) {
+        const { height, width } = this.props;
         this.visGeometry.setHighlightById(this.props.highlightedParticleType);
+        if (prevProps.height !== height || prevProps.width !== width) {
+            this.visGeometry.resize(width, height);
+        }
     }
 
     public addEventHandlersToCanvas() {

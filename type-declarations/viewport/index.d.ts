@@ -36,7 +36,7 @@ declare class Viewport extends React.Component<ViewportProps> {
     constructor(props: ViewportProps);
     componentDidMount(): void;
     componentWillUnmount(): void;
-    componentDidUpdate(): void;
+    componentDidUpdate(prevProps: any): void;
     addEventHandlersToCanvas(): void;
     removeEventHandlersFromCanvas(): void;
     onPickObject(event: MouseEvent): void;

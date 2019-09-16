@@ -2,6 +2,7 @@ import React from "react";
 
 import AgentVizViewer, { AgentSimController } from '../dist';
 import './style.css';
+import { CLIENT_RENEG_WINDOW } from "tls";
 
 
 const netConnectionSettings = {
@@ -15,6 +16,8 @@ interface ViewerState {
     particleTypeIds: string[];
     currentFrame: number;
     currentTime: number;   
+    height: number;
+    width: number;
 }
 
 const agentSim = new AgentSimController(netConnectionSettings, { trajectoryPlaybackFile: "actin5-1.h5" })
@@ -29,6 +32,8 @@ const intialState = {
     particleTypeIds: [],
     currentFrame: 0,
     currentTime: 0,
+    height: 800,
+    width: 800,
 }
 
 
@@ -43,6 +48,16 @@ class Viewer extends React.Component<{}, ViewerState> {
         this.state = intialState;
     }
 
+    componentDidMount() {
+        window.addEventListener('resize', () => {
+            const container = document.querySelector('.container');
+
+            const height = container.clientHeight;
+            const width = container.clientWidth;
+            this.setState({ height, width })
+        })
+    }
+
     handleJsonMeshData(jsonData) {
         this.setState({particleTypeIds: Object.keys(jsonData)})
     }
@@ -50,7 +65,6 @@ class Viewer extends React.Component<{}, ViewerState> {
     handleTimeChange(timeData){
         currentFrame = timeData.frameNumber;
         currentTime = timeData.time;
-        console.log('changed time', this.state.pauseOn, currentFrame)
         this.setState({ currentFrame, currentTime })
         if (this.state.pauseOn === currentFrame) {
             agentSim.pause()
@@ -70,8 +84,7 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     render() {
-
-        return (<React.Fragment>
+        return (<div className="container" style={{height: '90%', width: '75%'}}>
             <button
                 onClick={() => agentSim.start()}
             >Start</button>
@@ -110,8 +123,8 @@ class Viewer extends React.Component<{}, ViewerState> {
                 })}
             </select>
             <AgentVizViewer
-                height={600}
-                width={600}
+                height={this.state.height}
+                width={this.state.width}
                 devgui={false}
                 loggerLevel="debug"
                 onTimeChange={this.handleTimeChange}
@@ -119,7 +132,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                 onJsonDataArrived={this.handleJsonMeshData}
                 highlightedParticleType={this.state.highlightId}
             />
-        </React.Fragment>)
+        </div>)
     }
 }
 
