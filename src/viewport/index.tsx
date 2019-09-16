@@ -48,6 +48,7 @@ class Viewport extends React.Component<ViewportProps> {
         height: 800,
         width: 800,
         devgui: false,
+        highlightedParticleType: -1,
     };
 
     private static isCustomEvent(event: Event): event is CustomEvent {
@@ -80,6 +81,7 @@ class Viewport extends React.Component<ViewportProps> {
         this.hit = false;
         this.raycaster = new THREE.Raycaster();
         this.animationRequestID = 0;
+        this.initialMount = true;
     }
 
     public componentDidMount() {
