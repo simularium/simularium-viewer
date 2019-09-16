@@ -136,7 +136,7 @@ class NetConnection {
     }
 
     onClose() {
-        if(this.useIpService && this.socketIsValid() && this.remoteServerName !== "localhost")
+        if(this.useIpService && this.remoteServerName !== "localhost")
         {
             fetch(
                 this.ipServiceAddr + "/assign?command=free&name=" +
