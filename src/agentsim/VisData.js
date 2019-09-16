@@ -65,7 +65,7 @@ class VisData {
 
         const frameData = {
             time: visDataMsg.time,
-            frameNumber: visDataMsg.frame_number,
+            frameNumber: visDataMsg.frameNumber,
         }
 
         return {

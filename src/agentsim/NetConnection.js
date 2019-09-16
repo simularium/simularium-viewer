@@ -83,13 +83,13 @@ class NetConnection {
 
         const { logger } = this.owner;
         const msg = JSON.parse(event.data);
-        const msgType = msg.msg_type;
+        const msgType = msg.msgType;
         const numMsgTypes = Object.keys(this.owner.msgTypes).length;
 
         if (msgType > numMsgTypes || msgType < 1) {
             // this suggests either the back-end is out of sync, or a connection to an unknown back-end
             //  either would be very bad
-            logger.console.error('Unrecognized web message of type ', msg.msg_type, ' arrived');
+            logger.console.error('Unrecognized web message of type ', msg.msgType, ' arrived');
             return;
         }
         logger.debug('Websocket Message Recieved: ', msg);
@@ -100,18 +100,18 @@ class NetConnection {
                 break;
             case this.owner.msgTypes.ID_UPDATE_TIME_STEP:
                 // the timestep has been updated from another client
-                this.owner.simParameters.timeStepSliderVal = msg.slider_val;
-                this.owner.simParameters.lastTimeStepSliderVal = msg.slider_val;
+                this.owner.simParameters.timeStepSliderVal = msg.sliderVal;
+                this.owner.simParameters.lastTimeStepSliderVal = msg.sliderVal;
                 break;
             case this.owner.msgTypes.ID_UPDATE_RATE_PARAM:
-                if ('slider_val' in msg) {
-                    this.owner.simParameters.paramList[msg.param_name].val = msg.slider_val;
-                    this.owner.simParameters.paramListCache[msg.param_name] = msg.slider_val;
+                if ('sliderVal' in msg) {
+                    this.owner.simParameters.paramList[msg.paramName].val = msg.sliderVal;
+                    this.owner.simParameters.paramListCache[msg.paramName] = msg.sliderVal;
                 }
                 break;
             case this.owner.msgTypes.ID_HEARTBEAT_PING:
-                responseData.msg_type = this.owner.msgTypes.ID_HEARTBEAT_PONG;
-                responseData.conn_id = msg.conn_id;
+                responseData.msgType = this.owner.msgTypes.ID_HEARTBEAT_PONG;
+                responseData.connId = msg.connId;
 
                 this.owner.sendWebSocketRequest(responseData, 'Heartbeat pong');
                 break;
@@ -120,7 +120,7 @@ class NetConnection {
                 this.owner.simParameters.setParametersFromModel(msg);
                 break;
             default:
-                logger.debug('Web request recieved', msg.msg_type);
+                logger.debug('Web request recieved', msg.msgType);
                 break;
         }
     }
@@ -203,10 +203,9 @@ class NetConnection {
             } else {
                 return localServer;
             }
-        })
-            .catch(function() {
-                return localServer;
-            });
+        }).catch(function() {
+            return localServer;
+        });
     }
 
     connectToUriAsync(address) {
@@ -283,9 +282,9 @@ class NetConnection {
         if (!this.socketIsValid()) { return; }
 
         const jsonData = {
-            msg_type: this.msgTypes.ID_UPDATE_TIME_STEP,
-            time_step: newTimeStep,
-            slider_val: sliderVal,
+            msgType: this.msgTypes.ID_UPDATE_TIME_STEP,
+            timeStep: newTimeStep,
+            sliderVal: sliderVal,
         };
         this.sendWebSocketRequest(jsonData, 'Update Time-Step');
     }
@@ -294,10 +293,10 @@ class NetConnection {
         if (!this.socketIsValid()) { return; }
 
         const jsonData = {
-            msg_type: this.msgTypes.ID_UPDATE_RATE_PARAM,
-            param_name: paramName,
-            param_value: paramValue,
-            slider_val: sliderVal,
+            msgType: this.msgTypes.ID_UPDATE_RATE_PARAM,
+            paramName: paramName,
+            paramValue: paramValue,
+            sliderVal: sliderVal,
         };
         this.sendWebSocketRequest(jsonData, 'Rate Parameter Update');
     }
@@ -306,7 +305,7 @@ class NetConnection {
         if (!this.socketIsValid()) { return; }
 
         const dataToSend = model;
-        dataToSend.msg_type = this.msgTypes.ID_MODEL_DEFINITION;
+        dataToSend.msgType = this.msgTypes.ID_MODEL_DEFINITION;
         this.sendWebSocketRequest(dataToSend, 'Model Definition');
     }
 
@@ -321,10 +320,10 @@ class NetConnection {
     */
     startRemoteSimPreRun(timeStep, numTimeSteps) {
         const jsonData = {
-            msg_type: this.msgTypes.ID_VIS_DATA_REQUEST,
+            msgType: this.msgTypes.ID_VIS_DATA_REQUEST,
             mode: this.playbackTypes.ID_PRE_RUN_SIMULATION,
-            "time-step": timeStep,
-            "num-time-steps": numTimeSteps,
+            "timeStep": timeStep,
+            "numTimeSteps": numTimeSteps,
         };
 
         this.StartRemoteSimulationAsync("state=free", jsonData, "Start Simulation Pre-Run");
@@ -332,7 +331,7 @@ class NetConnection {
 
     startRemoteSimLive() {
         const jsonData = {
-            msg_type: this.msgTypes.ID_VIS_DATA_REQUEST,
+            msgType: this.msgTypes.ID_VIS_DATA_REQUEST,
             mode: this.playbackTypes.ID_LIVE_SIMULATION,
         };
 
@@ -345,7 +344,7 @@ class NetConnection {
         }
 
         const jsonData = {
-            msg_type: this.msgTypes.ID_VIS_DATA_REQUEST,
+            msgType: this.msgTypes.ID_VIS_DATA_REQUEST,
             mode: this.playbackTypes.ID_TRAJECTORY_FILE_PLAYBACK,
             "file-name": fileName,
         };
@@ -376,7 +375,7 @@ class NetConnection {
         if (!this.socketIsValid()) { return; }
 
         const jsonData = {
-            msg_type: this.msgTypes.ID_PLAY_CACHE,
+            msgType: this.msgTypes.ID_PLAY_CACHE,
             'frame-num': cacheFrame,
         };
         this.sendWebSocketRequest(jsonData, 'Play Simulation Cache from Frame');
@@ -384,25 +383,26 @@ class NetConnection {
 
     pauseRemoteSim() {
         if (!this.socketIsValid()) { return; }
-        this.sendWebSocketRequest({ msg_type: this.msgTypes.ID_VIS_DATA_PAUSE }, 'Pause Simulation');
+        this.sendWebSocketRequest({ msgType: this.msgTypes.ID_VIS_DATA_PAUSE }, 'Pause Simulation');
     }
 
     resumeRemoteSim() {
         if (!this.socketIsValid()) { return; }
-        this.sendWebSocketRequest({ msg_type: this.msgTypes.ID_VIS_DATA_RESUME }, 'Resume Simulation');
+        this.sendWebSocketRequest({ msgType: this.msgTypes.ID_VIS_DATA_RESUME }, 'Resume Simulation');
     }
 
     abortRemoteSim() {
         if (!this.socketIsValid()) { return; }
-        this.sendWebSocketRequest({ msg_type: this.msgTypes.ID_VIS_DATA_ABORT }, 'Abort Simulation');
+        this.sendWebSocketRequest({ msgType: this.msgTypes.ID_VIS_DATA_ABORT }, 'Abort Simulation');
         this.disconnect();
     }
 
-    requestSingleFrame(frameNumber) {
+    requestSingleFrame(startFrameNumber = 0) {
         this.sendWebSocketRequest(
             {
-                msg_type: this.msgTypes.ID_VIS_DATA_REQUEST,
-                count: 1
+                msgType: this.msgTypes.ID_VIS_DATA_REQUEST,
+                count: 1,
+                frameNumber: startFrameNumber
             },
             "Request Single Frame"
         );
@@ -412,7 +412,7 @@ class NetConnection {
         console.log(timeNanoSeconds);
         this.sendWebSocketRequest(
             {
-                msg_type: this.msgTypes.ID_PLAY_CACHE,
+                msgType: this.msgTypes.ID_PLAY_CACHE,
                 time: timeNanoSeconds
             },
             "Play Simulation Cache from Time"
@@ -460,7 +460,7 @@ class NetConnection {
                 this.sendParameterUpdate(
                     paramName,
                     updates[paramName].val,
-                    updates[paramName]['slider-val'],
+                    updates[paramName]['sliderVal'],
                 );
             });
 
@@ -469,7 +469,7 @@ class NetConnection {
                 this.logger.debug('Time step update found:', updates);
                 this.sendTimeStepUpdate(
                     updates.val,
-                    updates['slider-val'],
+                    updates['sliderVal'],
                 );
             }
         }
