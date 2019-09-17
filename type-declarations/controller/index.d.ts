@@ -7,6 +7,8 @@ export default class AgentSimController {
     time(): void;
     stop(): void;
     pause(): void;
+    numberOfFrames(): any;
+    timeStepSize(): any;
     playFromFrame(frameNumber: any): void;
     playFromTime(timeNs: any): void;
     playOneFrame(frameNumber: any): void;
