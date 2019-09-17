@@ -99,9 +99,13 @@ class Viewer extends React.Component<{}, ViewerState> {
 
     playOneFrame() {
         const frame = Number(document.querySelector('#frame-number').value);
-        agentSim.playFromCache(frame);
+        agentSim.playFromFrame(frame);
 
         this.setState({pauseOn: frame + 1})
+    }
+
+    handleTrajectoryInfo(data) {
+        console.log('Trajectory info arrived', data);
     }
 
     render() {
@@ -113,7 +117,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                 onClick={() => agentSim.pause()}
             >Pause</button>
             <button
-                onClick={() => agentSim.playFromCache(currentFrame)}
+                onClick={() => agentSim.playFromFrame(currentFrame)}
             >Play from cache</button>
             <button
                 onClick={() => agentSim.stop()}
@@ -151,6 +155,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                 onTimeChange={this.handleTimeChange}
                 agentSimController={agentSim}
                 onJsonDataArrived={this.handleJsonMeshData}
+                onTrajectoryFileInfoChanged={this.handleTrajectoryInfo}
                 highlightedParticleType={this.state.highlightId}
             />
         </div>)

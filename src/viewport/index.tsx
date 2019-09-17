@@ -24,6 +24,7 @@ interface ViewportProps {
     onTimeChange: (timeData: TimeData) => void;
     agentSimController: AgentSimController;
     onJsonDataArrived: any;
+    onTrajectoryFileInfoChanged: (cachedData: any) => void; 
     highlightedParticleType: number | string;
 }
 
@@ -86,9 +87,15 @@ class Viewport extends React.Component<ViewportProps> {
     public componentDidMount() {
         const {
             agentSimController,
+            onTrajectoryFileInfoChanged,
         } = this.props;
+        const {
+            simParameters,
+        } = agentSimController;
         this.visGeometry.reparent(this.vdomRef.current);
         agentSimController.netConnection.connect();
+
+        simParameters.handleTrajectoryData = onTrajectoryFileInfoChanged;
         setInterval(agentSimController.netConnection.checkForUpdates.bind(agentSimController.netConnection), 1000);
 
         if (this.vdomRef.current) {
@@ -179,7 +186,7 @@ class Viewport extends React.Component<ViewportProps> {
     public animate() {
         const {
             agentSimController,
-            onJsonDataArrived
+            onJsonDataArrived,
         } = this.props;
         const {
             simParameters,
