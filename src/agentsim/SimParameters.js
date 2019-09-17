@@ -46,7 +46,7 @@ class SimParameters {
     set guiNeedsUpdate(val) { this.mguiNeedsUpdate = val; }
 
     get numberOfCacheFrames() { return this.playbackNumberOfFrames; }
-    get cacheStepSize() { return this.playbackTimeStepSize; }
+    get cacheTimeStepSize() { return this.playbackTimeStepSize; }
 
     /**
     * Parameter Update Helper Functions
