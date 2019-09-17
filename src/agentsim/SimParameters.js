@@ -15,6 +15,8 @@ class SimParameters {
 
         this.trajectoryPlaybackFile = opts.trajectoryPlaybackFile || '';
         this.cachePlaybackFrame = opts.cachePlaybackFrame || 0;
+        this.playbackNumberOfFrames = 0;
+        this.playbackTimeStepSize = 0;
 
         this.gui = null;
 
@@ -35,13 +37,16 @@ class SimParameters {
 
     set playBackFile(val) {
         if (this.trajectoryPlaybackFile !== val) {
-            this.trajectoryPlaybackFile = val; 
+            this.trajectoryPlaybackFile = val;
         }
     }
 
     get guiNeedsUpdate() { return this.mguiNeedsUpdate; }
 
     set guiNeedsUpdate(val) { this.mguiNeedsUpdate = val; }
+
+    get numberOfCacheFrames() { return this.playbackNumberOfFrames; }
+    get cacheTimeStepSize() { return this.playbackTimeStepSize; }
 
     /**
     * Parameter Update Helper Functions
@@ -147,6 +152,11 @@ class SimParameters {
         this.timeStepSliderExponent = model.parameters['timestep-edit-exponent'];
         this.lastTimeStepSliderVal = -1; // flag for update
         this.guiNeedsUpdate = true;
+    }
+
+    setTrajectoryFileInfo(fileInfo) {
+        this.playbackNumberOfFrames = fileInfo.numberOfFrames;
+        this.playbackTimeStepSize = fileInfo.timeStepSize;
     }
 }
 

@@ -7,4 +7,3 @@ ReactDOM.render(
         <Viewer />,
     document.getElementById("root")
 );
-
