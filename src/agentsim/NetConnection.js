@@ -40,6 +40,7 @@ class NetConnection {
             ID_HEARTBEAT_PING: 10,
             ID_HEARTBEAT_PONG: 11,
             ID_PLAY_CACHE: 12,
+            ID_TRAJECTORY_FILE_INFO: 13,
         });
 
         this.mlogger = jsLogger.get('netconnection');
@@ -118,6 +119,10 @@ class NetConnection {
             case this.owner.msgTypes.ID_MODEL_DEFINITION:
                 logger.debug('Model Definition Arrived');
                 this.owner.simParameters.setParametersFromModel(msg);
+                break;
+            case this.owner.msgTypes.ID_TRAJECTORY_FILE_INFO:
+                logger.debug('Trajectory file info Arrived');
+                this.owner.simParameters.setTrajectoryFileInfo(msg);
                 break;
             default:
                 logger.debug('Web request recieved', msg.msgType);
