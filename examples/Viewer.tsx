@@ -21,11 +21,11 @@ import { CLIENT_RENEG_WINDOW } from "tls";
 //     ipServiceAddr: "http://a70fd6193bee611e9907a06c21ce3c1b-732404489.us-east-2.elb.amazonaws.com/"
 // }
 
-// could be a prop 
+// could be a prop
 const useIpService = false;
 
 const netConnectionSettings = {
-    useIpService, 
+    useIpService,
     serverIp: "52.15.70.94",
     serverPort: 9002,
     ipServiceAddr: null,
@@ -36,7 +36,7 @@ interface ViewerState {
     pauseOn: number;
     particleTypeIds: string[];
     currentFrame: number;
-    currentTime: number;   
+    currentTime: number;
     height: number;
     width: number;
 }
@@ -122,6 +122,9 @@ class Viewer extends React.Component<{}, ViewerState> {
             <button
                 onClick={() => agentSim.stop()}
             >stop</button>
+            <button
+                onClick={() => agentSim.initializeTrajectoryFile()}
+            >Init TrajectoryFile</button>
             <button
                 onClick={() => agentSim.changeFile('microtubules15.h5')}
             >
