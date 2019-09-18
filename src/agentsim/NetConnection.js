@@ -123,6 +123,10 @@ class NetConnection {
             case this.owner.msgTypes.ID_TRAJECTORY_FILE_INFO:
                 logger.debug('Trajectory file info Arrived');
                 this.owner.simParameters.setTrajectoryFileInfo(msg);
+                if (this.owner.simParameters.handleTrajectoryData) {
+                    // optional callback set through props in viewport
+                    this.owner.simParameters.handleTrajectoryData(msg)
+                }
                 break;
             default:
                 logger.debug('Web request recieved', msg.msgType);
@@ -235,14 +239,12 @@ class NetConnection {
         });
     }
 
-    StartRemoteSimulationAsync(queryParams, jsonData, description)
-    {
+    StartRemoteSimulationAsync(queryParams, jsonData, description) {
         let remoteStartPromise = new Promise((resolve, reject) => {
-            if(this.socketIsConnected())
-            {
+            if (this.socketIsConnected()) {
                 this.sendWebSocketRequest(jsonData, description);
-                resolve("Remote sim sucessfully started");
-                return;
+
+                return resolve("Remote sim sucessfully started");
             }
 
             let startPromise = this.useIpService ?
