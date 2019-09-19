@@ -9,6 +9,7 @@ export default class AgentSimController {
     pause(): void;
     numberOfFrames(): any;
     timeStepSize(): any;
+    initializeTrajectoryFile(fileNumber: any): void;
     playFromFrame(frameNumber: any): void;
     playFromTime(timeNs: any): void;
     playOneFrame(frameNumber: any): void;
