@@ -41,6 +41,8 @@ class NetConnection {
             ID_HEARTBEAT_PONG: 11,
             ID_PLAY_CACHE: 12,
             ID_TRAJECTORY_FILE_INFO: 13,
+            ID_GOTO_SIMULATION_TIME: 14,
+            ID_INIT_TRAJECTORY_FILE: 15
         });
 
         this.mlogger = jsLogger.get('netconnection');
@@ -415,14 +417,42 @@ class NetConnection {
         );
     }
 
+    // Loads a single frame nearest to timeNanoSeconds
+    //  and sets the client to paused
     playRemoteSimCacheFromTime(timeNanoSeconds) {
-        console.log(timeNanoSeconds);
         this.sendWebSocketRequest(
             {
                 msgType: this.msgTypes.ID_PLAY_CACHE,
                 time: timeNanoSeconds
             },
             "Play Simulation Cache from Time"
+        );
+    }
+
+    // Loads a single frame nearest to timeNanoSeconds
+    //  and sets the client to paused
+    //  effectivley, gets a single frame
+    gotoRemoteSimulationTime(timeNanoSeconds) {
+        this.sendWebSocketRequest(
+            {
+                msgType: this.msgTypes.ID_GOTO_SIMULATION_TIME,
+                time: timeNanoSeconds
+            },
+            "Load single frame at specified Time"
+        );
+    }
+
+    // The backend will send a message with information
+    //  about the trajectory file specified
+    //  this will also initiate loading for the trajectory file
+    //  this function should not be called before a websocket connection is established
+    requestTrajectoryFileInfo(fileName) {
+        this.sendWebSocketRequest(
+            {
+                msgType: this.msgTypes.ID_INIT_TRAJECTORY_FILE,
+                fileName: fileName
+            },
+            "Initialize trajectory file info"
         );
     }
 
@@ -454,6 +484,12 @@ class NetConnection {
         const frame = frameNumber || this.simParameters.cachePlaybackFrame
         this.playRemoteSimCacheFromFrame(
             frame
+        );
+    }
+
+    guiInitRemoteTrajectoryFile() {
+        this.requestTrajectoryFileInfo(
+            this.simParameters.trajectoryPlaybackFile
         );
     }
 

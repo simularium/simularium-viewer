@@ -39,6 +39,10 @@ export default class AgentSimController {
         return this.simParameters.cacheTimeStepSize;
     }
 
+    public initializeTrajectoryFile(fileNumber) {
+        this.netConnection.guiInitRemoteTrajectoryFile();
+    }
+
     public playFromFrame(frameNumber) {
         this.netConnection.playRemoteSimCacheFromFrame(frameNumber);
     }
