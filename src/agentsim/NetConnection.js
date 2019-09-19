@@ -443,7 +443,9 @@ class NetConnection {
     }
 
     // The backend will send a message with information
-    //  about the
+    //  about the trajectory file specified
+    //  this will also initiate loading for the trajectory file
+    //  this function should not be called before a websocket connection is established
     requestTrajectoryFileInfo(fileName) {
         this.sendWebSocketRequest(
             {
