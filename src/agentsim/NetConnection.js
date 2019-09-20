@@ -487,6 +487,17 @@ class NetConnection {
         );
     }
 
+    guiConnect() {
+        let fileName = this.simParameters.trajectoryPlaybackFile;
+        return this.connectToTrajectoryFileServer(fileName);
+    }
+
+    guiRequestTrajectoryInfo() {
+        let fileName = this.simParameters.trajectoryPlaybackFile;
+        this.remoteServerSim = fileName;
+        this.requestTrajectoryFileInfo(fileName);
+    }
+
     guiInitRemoteTrajectoryFile() {
         let fileName = this.simParameters.trajectoryPlaybackFile;
         this.remoteServerSim = fileName;

@@ -31,6 +31,10 @@ export default class AgentSimController {
         this.netConnection.pauseRemoteSim();
     }
 
+    public connect() {
+        return this.netConnection.guiConnect();
+    }
+
     public numberOfFrames() {
         return this.simParameters.numberOfCacheFrames;
     }
@@ -40,7 +44,7 @@ export default class AgentSimController {
     }
 
     public initializeTrajectoryFile() {
-        this.netConnection.guiInitRemoteTrajectoryFile();
+        this.netConnection.guiRequestTrajectoryInfo();
     }
 
     public playFromFrame(frameNumber) {

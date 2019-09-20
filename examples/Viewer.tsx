@@ -29,6 +29,7 @@ const netConnectionSettings = {
     serverIp: "52.15.70.94",
     serverPort: 9002,
     ipServiceAddr: null,
+    loadIntialData: true,
 }
 
 interface ViewerState {
@@ -123,9 +124,6 @@ class Viewer extends React.Component<{}, ViewerState> {
                 onClick={() => agentSim.stop()}
             >stop</button>
             <button
-                onClick={() => agentSim.initializeTrajectoryFile()}
-            >Init TrajectoryFile</button>
-            <button
                 onClick={() => agentSim.changeFile('microtubules15.h5')}
             >
                 microtubules file
@@ -160,6 +158,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                 onJsonDataArrived={this.handleJsonMeshData}
                 onTrajectoryFileInfoChanged={this.handleTrajectoryInfo}
                 highlightedParticleType={this.state.highlightId}
+                loadIntialData={true}
             />
         </div>)
     }
