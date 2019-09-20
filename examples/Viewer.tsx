@@ -29,7 +29,7 @@ const netConnectionSettings = {
     serverIp: "52.15.70.94",
     serverPort: 9002,
     ipServiceAddr: null,
-    loadIntialData: true,
+    loadInitialData: true,
 }
 
 interface ViewerState {
@@ -158,7 +158,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                 onJsonDataArrived={this.handleJsonMeshData}
                 onTrajectoryFileInfoChanged={this.handleTrajectoryInfo}
                 highlightedParticleType={this.state.highlightId}
-                loadIntialData={true}
+                loadInitialData={true}
             />
         </div>)
     }

@@ -26,7 +26,7 @@ interface ViewportProps {
     onJsonDataArrived: any;
     onTrajectoryFileInfoChanged: (cachedData: any) => void;
     highlightedParticleType: number | string;
-    loadIntialData: boolean;
+    loadInitialData: boolean;
 }
 
 interface TimeData {
@@ -51,7 +51,7 @@ class Viewport extends React.Component<ViewportProps> {
         width: 800,
         devgui: false,
         highlightedParticleType: -1,
-        loadIntialData: true,
+        loadInitialData: true,
     };
 
     private static isCustomEvent(event: Event): event is CustomEvent {
@@ -90,14 +90,14 @@ class Viewport extends React.Component<ViewportProps> {
         const {
             agentSimController,
             onTrajectoryFileInfoChanged,
-            loadIntialData,
+            loadInitialData,
         } = this.props;
         const {
             simParameters,
         } = agentSimController;
         this.visGeometry.reparent(this.vdomRef.current);
         agentSimController.connect().then(() => {
-                if (loadIntialData) {
+                if (loadInitialData) {
                     agentSimController.initializeTrajectoryFile();
                 }
         });
