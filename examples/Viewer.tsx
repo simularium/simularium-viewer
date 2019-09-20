@@ -29,7 +29,6 @@ const netConnectionSettings = {
     serverIp: "52.15.70.94",
     serverPort: 9002,
     ipServiceAddr: null,
-    loadInitialData: true,
 }
 
 interface ViewerState {
