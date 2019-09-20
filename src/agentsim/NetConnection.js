@@ -160,7 +160,7 @@ class NetConnection {
     * WebSocket Connect
     * */
     connect() {
-        const uri = `ws://${this.serverIp}:${this.serverPort}/`;
+        const uri = `wss://${this.serverIp}:${this.serverPort}/`;
         this.connectToUri(uri);
     }
 
