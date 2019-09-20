@@ -123,9 +123,6 @@ class Viewer extends React.Component<{}, ViewerState> {
                 onClick={() => agentSim.stop()}
             >stop</button>
             <button
-                onClick={() => agentSim.initializeTrajectoryFile()}
-            >Init TrajectoryFile</button>
-            <button
                 onClick={() => agentSim.changeFile('microtubules15.h5')}
             >
                 microtubules file
@@ -160,6 +157,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                 onJsonDataArrived={this.handleJsonMeshData}
                 onTrajectoryFileInfoChanged={this.handleTrajectoryInfo}
                 highlightedParticleType={this.state.highlightId}
+                loadInitialData={true}
             />
         </div>)
     }

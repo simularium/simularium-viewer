@@ -24,8 +24,9 @@ interface ViewportProps {
     onTimeChange: (timeData: TimeData) => void;
     agentSimController: AgentSimController;
     onJsonDataArrived: any;
-    onTrajectoryFileInfoChanged: (cachedData: any) => void; 
+    onTrajectoryFileInfoChanged: (cachedData: any) => void;
     highlightedParticleType: number | string;
+    loadInitialData: boolean;
 }
 
 interface TimeData {
@@ -40,7 +41,7 @@ class Viewport extends React.Component<ViewportProps> {
     private lastRenderTime: number;
     private vdomRef: React.RefObject<HTMLInputElement>;
     private handlers: { [key: string]: (e: any) => void };
-    
+
     private hit: boolean;
     private raycaster: THREE.Raycaster;
     private animationRequestID: number;
@@ -50,6 +51,7 @@ class Viewport extends React.Component<ViewportProps> {
         width: 800,
         devgui: false,
         highlightedParticleType: -1,
+        loadInitialData: true,
     };
 
     private static isCustomEvent(event: Event): event is CustomEvent {
@@ -88,12 +90,17 @@ class Viewport extends React.Component<ViewportProps> {
         const {
             agentSimController,
             onTrajectoryFileInfoChanged,
+            loadInitialData,
         } = this.props;
         const {
             simParameters,
         } = agentSimController;
         this.visGeometry.reparent(this.vdomRef.current);
-        agentSimController.netConnection.connect();
+        agentSimController.connect().then(() => {
+                if (loadInitialData) {
+                    agentSimController.initializeTrajectoryFile();
+                }
+        });
 
         simParameters.handleTrajectoryData = onTrajectoryFileInfoChanged;
         setInterval(agentSimController.netConnection.checkForUpdates.bind(agentSimController.netConnection), 1000);
@@ -240,10 +247,10 @@ class Viewport extends React.Component<ViewportProps> {
         // style is specified below so that the size
         // can be passed as a react property
         return (
-            <div 
+            <div
                 id="vdom"
                 style={
-                    { 
+                    {
                         height: height,
                         width: width,
                     }
@@ -251,7 +258,7 @@ class Viewport extends React.Component<ViewportProps> {
                 ref={this.vdomRef}
             >
                 {devgui && (
-                    <DevGUI 
+                    <DevGUI
                         simParams={simParameters}
                         visData={visData}
                         netConnection={netConnection}

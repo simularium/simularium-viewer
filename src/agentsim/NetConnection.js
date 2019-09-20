@@ -241,11 +241,9 @@ class NetConnection {
         });
     }
 
-    StartRemoteSimulationAsync(queryParams, jsonData, description) {
+    ConnectRemoteSimulationAsync(queryParams) {
         let remoteStartPromise = new Promise((resolve, reject) => {
             if (this.socketIsConnected()) {
-                this.sendWebSocketRequest(jsonData, description);
-
                 return resolve("Remote sim sucessfully started");
             }
 
@@ -258,7 +256,6 @@ class NetConnection {
                     () => {
                         if(this.socketIsConnected())
                         {
-                            this.sendWebSocketRequest(jsonData, description);
                             resolve("Remote sim sucessfully started");
                         }
                         else {
@@ -335,7 +332,10 @@ class NetConnection {
             "numTimeSteps": numTimeSteps,
         };
 
-        this.StartRemoteSimulationAsync("state=free", jsonData, "Start Simulation Pre-Run");
+        this.remoteServerSim = "Pre-Run";
+        this.ConnectRemoteSimulationAsync("state=free").then(() => {
+            this.sendWebSocketRequest(jsonData, "Start Simulation Pre-Run");
+        });
     }
 
     startRemoteSimLive() {
@@ -344,7 +344,23 @@ class NetConnection {
             mode: this.playbackTypes.ID_LIVE_SIMULATION,
         };
 
-        this.StartRemoteSimulationAsync("state=free", jsonData, "Start Simulation Live");
+        this.remoteServerSim = "Live";
+        this.ConnectRemoteSimulationAsync("state=free").then(() => {
+            this.sendWebSocketRequest(jsonData, "Start Simulation Live");
+        });
+    }
+
+    connectToTrajectoryFileServer(fileName) {
+        return this.ConnectRemoteSimulationAsync("simulation=" + fileName).catch(() => {
+            // if failed to find a remote server running the desired simulation,
+            //  request a new one
+            if(this.useIpService) {
+                return this.ConnectRemoteSimulationAsync("state=free");
+            }
+
+            // if the ip service is not being used, a second request won't change
+            //  the result
+        });
     }
 
     startRemoteTrajectoryPlayback(fileName) {
@@ -359,25 +375,9 @@ class NetConnection {
         };
 
         this.remoteServerSim = fileName;
-        this.StartRemoteSimulationAsync(
-            "simulation=" + fileName,
-            jsonData,
-            "Start Trajectory File Playback"
-        ).catch(() => {
-            // if failed to find a remote server running the desired simulation,
-            //  request a new one
-            if(this.useIpService) {
-                this.StartRemoteSimulationAsync(
-                    "state=free",
-                    jsonData,
-                    "Start Trajectory File Playback"
-                );
-            }
-
-            // if the ip service is not being used, a second request won't change
-            //  the result
-        }
-        );
+        this.connectToTrajectoryFileServer(fileName).then(() => {
+            this.sendWebSocketRequest(jsonData, "Start Trajectory File Playback");
+        });
     }
 
     playRemoteSimCacheFromFrame(cacheFrame) {
@@ -487,10 +487,23 @@ class NetConnection {
         );
     }
 
+    guiConnect() {
+        let fileName = this.simParameters.trajectoryPlaybackFile;
+        return this.connectToTrajectoryFileServer(fileName);
+    }
+
+    guiRequestTrajectoryInfo() {
+        let fileName = this.simParameters.trajectoryPlaybackFile;
+        this.remoteServerSim = fileName;
+        this.requestTrajectoryFileInfo(fileName);
+    }
+
     guiInitRemoteTrajectoryFile() {
-        this.requestTrajectoryFileInfo(
-            this.simParameters.trajectoryPlaybackFile
-        );
+        let fileName = this.simParameters.trajectoryPlaybackFile;
+        this.remoteServerSim = fileName;
+        this.connectToTrajectoryFileServer(fileName).then(() => {
+            this.requestTrajectoryFileInfo(fileName);
+        });
     }
 
     /**
