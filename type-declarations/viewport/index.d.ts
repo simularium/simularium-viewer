@@ -1,9 +1,5 @@
 import * as React from 'react';
-interface AgentSimController {
-    simParameters: any;
-    visData: any;
-    netConnection: any;
-}
+import AgentSimController from '../controller';
 interface ViewportProps {
     height: number;
     width: number;
@@ -14,6 +10,7 @@ interface ViewportProps {
     onJsonDataArrived: any;
     onTrajectoryFileInfoChanged: (cachedData: any) => void;
     highlightedParticleType: number | string;
+    loadInitialData: boolean;
 }
 interface TimeData {
     time: number;
@@ -32,6 +29,7 @@ declare class Viewport extends React.Component<ViewportProps> {
         width: number;
         devgui: boolean;
         highlightedParticleType: number;
+        loadInitialData: boolean;
     };
     private static isCustomEvent;
     constructor(props: ViewportProps);

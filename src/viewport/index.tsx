@@ -1,5 +1,7 @@
 import * as React from 'react';
 import jsLogger from 'js-logger';
+import AgentSimController from '../controller';
+
 import {
     forOwn,
 } from "lodash";
@@ -8,13 +10,6 @@ import {
 import * as THREE from  'three';
 
 import { VisGeometry, DevGUI } from "../agentsim";
-
-interface AgentSimController {
-    // NOTE: these can be typed in the future, but they may change signifantly and I dont want to at the moment. -MMRM
-    simParameters: any;
-    visData: any;
-    netConnection: any;
-}
 
 interface ViewportProps {
     height: number;
@@ -97,9 +92,9 @@ class Viewport extends React.Component<ViewportProps> {
         } = agentSimController;
         this.visGeometry.reparent(this.vdomRef.current);
         agentSimController.connect().then(() => {
-                if (loadInitialData) {
-                    agentSimController.initializeTrajectoryFile();
-                }
+            if (loadInitialData) {
+                agentSimController.initializeTrajectoryFile();
+            }
         });
 
         simParameters.handleTrajectoryData = onTrajectoryFileInfoChanged;
