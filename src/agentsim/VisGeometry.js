@@ -12,6 +12,8 @@ import './three/OrbitControls.js';
 
 import jsLogger from 'js-logger';
 
+const MAX_PATH_POINTS = 10000;
+
 class VisGeometry {
     constructor(loggerLevel) {
         this.visGeomMap = new Map();
@@ -29,6 +31,19 @@ class VisGeometry {
         this.mcolorVariant = 50;
         this.fixLightsToCamera = true;
         this.highlightedId = -1;
+
+        this.paths = [
+            {
+                numPoints: 0,
+                points: new Float32Array(MAX_PATH_POINTS * 3),
+                geometry: new THREE.BufferGeometry(),
+                material: new THREE.LineBasicMaterial({
+                    color: 0x0000ff,
+                    lineWidth: 1,
+                }),
+                line: null,
+            }
+        ];
 
         this.mlogger = jsLogger.get('visgeometry');
         this.mlogger.setLevel(loggerLevel);
@@ -378,6 +393,26 @@ class VisGeometry {
                     runtimeMesh.geometry = meshGeom.children[0].geometry;
                 } else {
                     runtimeMesh.geometry = this.getSphereGeom();
+                }
+
+                if (i === 49) {
+                    this.paths[0].points[this.paths[0].numPoints*3+0] = agentData.x;
+                    this.paths[0].points[this.paths[0].numPoints*3+1] = agentData.y;
+                    this.paths[0].points[this.paths[0].numPoints*3+2] = agentData.z;
+                    // TODO boundary condition
+                    this.paths[0].numPoints++;
+                    if (this.paths[0].line) {
+                        this.paths[0].line.geometry.setDrawRange( 0, this.paths[0].numPoints );
+                        this.paths[0].line.geometry.attributes.position.needsUpdate = true; // required after the first render
+                    }
+                    if (this.paths[0].numPoints === 2)  {
+                        console.log("ADDING LINE PATH");
+                        this.paths[0].geometry.addAttribute( 'position', new THREE.BufferAttribute( this.paths[0].points, 3 ) );
+                        this.paths[0].geometry.setDrawRange( 0, 2 );
+                        this.paths[0].line = new THREE.Line(this.paths[0].geometry, this.paths[0].material);
+                        this.scene.add(this.paths[0].line);
+                    }
+
                 }
             } else if (visType === visTypes.ID_VIS_TYPE_FIBER) {
                 const name = `Fiber_${fiberIndex.toString()}`;
