@@ -8,7 +8,7 @@ interface ViewportProps {
     onTimeChange: (timeData: TimeData) => void;
     agentSimController: AgentSimController;
     onJsonDataArrived: any;
-    onTrajectoryFileInfoChanged: (cachedData: any) => void;
+    onTrajectoryFileInfoChanged: (cachedData: any) => void | undefined;
     highlightedParticleType: number | string;
     loadInitialData: boolean;
 }

@@ -16,10 +16,10 @@ interface ViewportProps {
     width: number;
     devgui: boolean;
     loggerLevel: string;
-    onTimeChange: (timeData: TimeData) => void;
+    onTimeChange: (timeData: TimeData) => void | undefined;
     agentSimController: AgentSimController;
     onJsonDataArrived: any;
-    onTrajectoryFileInfoChanged: (cachedData: any) => void;
+    onTrajectoryFileInfoChanged: (cachedData: any) => void | undefined;
     highlightedParticleType: number | string;
     loadInitialData: boolean;
 }
