@@ -92,7 +92,7 @@ class VisGeometry {
 
         this.hemiLight = new THREE.HemisphereLight(0xffffff, 0x000000, 0.6);
         this.hemiLight.color.setHSL(0.095, 1, 0.75);
-        this.hemiLight.groundColor.setHSL(0.6, 1, 0.6); 
+        this.hemiLight.groundColor.setHSL(0.6, 1, 0.6);
         this.hemiLight.position.set(0, 1, 0);
         this.scene.add(this.hemiLight);
 
@@ -286,7 +286,7 @@ class VisGeometry {
         this.resetMapping();
         const jsonRequest = new Request(filePath);
         const self = this;
-        fetch(jsonRequest).then(
+        return fetch(jsonRequest).then(
             response => response.json(),
         ).then(
             (data) => {

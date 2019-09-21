@@ -98,6 +98,13 @@ class Viewport extends React.Component<ViewportProps> {
         this.visGeometry.reparent(this.vdomRef.current);
         agentSimController.connect().then(() => {
                 if (loadInitialData) {
+                    let fileName = agentSimController.getFile();
+                    this.visGeometry.mapFromJSON(
+                        `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${fileName}.json`
+                    ).then(() => {
+                        this.visGeometry.render();
+                        this.lastRenderTime = Date.now();
+                    });
                     agentSimController.initializeTrajectoryFile();
                 }
         });
