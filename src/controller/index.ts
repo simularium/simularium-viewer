@@ -66,4 +66,8 @@ export default class AgentSimController {
     public changeFile(newFile) {
         this.simParameters.playBackFile = newFile;
     }
+
+    public getFile() {
+        return this.simParameters.playBackFile;
+    }
 }
