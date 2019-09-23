@@ -91,6 +91,9 @@ class Viewport extends React.Component<ViewportProps> {
             simParameters,
         } = agentSimController;
         this.visGeometry.reparent(this.vdomRef.current);
+
+        simParameters.handleTrajectoryData = onTrajectoryFileInfoChanged;
+
         agentSimController.connect().then(() => {
             if (loadInitialData) {
                 let fileName = agentSimController.getFile();
@@ -104,7 +107,6 @@ class Viewport extends React.Component<ViewportProps> {
             }
         });
 
-        simParameters.handleTrajectoryData = onTrajectoryFileInfoChanged;
         setInterval(agentSimController.netConnection.checkForUpdates.bind(agentSimController.netConnection), 1000);
 
         if (this.vdomRef.current) {
