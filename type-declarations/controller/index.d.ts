@@ -16,4 +16,5 @@ export default class AgentSimController {
     playOneFrame(frameNumber: any): void;
     resume(): void;
     changeFile(newFile: any): void;
+    getFile(): any;
 }
