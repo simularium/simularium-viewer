@@ -35,6 +35,8 @@ class SimParameters {
 
     set paramList(val) { this.mparamList = val; }
 
+    get playBackFile() { return this.trajectoryPlaybackFile; }
+    
     set playBackFile(val) {
         if (this.trajectoryPlaybackFile !== val) {
             this.trajectoryPlaybackFile = val;
@@ -47,7 +49,6 @@ class SimParameters {
 
     get numberOfCacheFrames() { return this.playbackNumberOfFrames; }
     get cacheTimeStepSize() { return this.playbackTimeStepSize; }
-    get playBackFile() { return this.trajectoryPlaybackFile; }
 
     /**
     * Parameter Update Helper Functions
