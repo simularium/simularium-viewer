@@ -86,6 +86,7 @@ class Viewport extends React.Component<ViewportProps> {
             agentSimController,
             onTrajectoryFileInfoChanged,
             loadInitialData,
+            onJsonDataArrived
         } = this.props;
         const {
             simParameters,
@@ -98,7 +99,8 @@ class Viewport extends React.Component<ViewportProps> {
             if (loadInitialData) {
                 let fileName = agentSimController.getFile();
                 this.visGeometry.mapFromJSON(
-                    `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${fileName}.json`
+                    `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${fileName}.json`, onJsonDataArrived
+
                 ).then(() => {
                     this.visGeometry.render();
                     this.lastRenderTime = Date.now();
@@ -197,7 +199,6 @@ class Viewport extends React.Component<ViewportProps> {
     public animate() {
         const {
             agentSimController,
-            onJsonDataArrived,
         } = this.props;
         const {
             simParameters,
@@ -211,15 +212,9 @@ class Viewport extends React.Component<ViewportProps> {
             if (!netConnection.socketIsValid()) {
                 this.visGeometry.clear();
             }
-
             if (simParameters.newSimulationIsRunning) {
-                this.visGeometry.mapFromJSON(
-                    `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${simParameters.trajectoryPlaybackFile}.json`,
-                    onJsonDataArrived
-                );
                 simParameters.newSimulationIsRunning = false;
             }
-
             this.visGeometry.render();
             this.lastRenderTime = Date.now();
         }
