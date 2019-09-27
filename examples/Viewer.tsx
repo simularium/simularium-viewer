@@ -26,7 +26,7 @@ const useIpService = false;
 
 const netConnectionSettings = {
     useIpService,
-    serverIp: "127.0.0.1",
+    serverIp: "52.15.70.94",
     serverPort: 9002,
     ipServiceAddr: null,
 }
