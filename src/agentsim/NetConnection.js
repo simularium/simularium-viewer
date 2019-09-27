@@ -47,7 +47,7 @@ class NetConnection {
         });
 
         this.mlogger = jsLogger.get('netconnection');
-        this.mlogger.setLevel(loggerLevel);''
+        this.mlogger.setLevel(loggerLevel);
 
         // Frees the reserved backend in the event that the window closes w/o disconnecting
         window.addEventListener("beforeunload", this.onClose.bind(this));
