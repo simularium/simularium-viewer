@@ -9,6 +9,7 @@ class NetConnection {
             ID_TRAJECTORY_FILE_PLAYBACK: 2,
         });
 
+        this.mcurrentFrame = 0; // saved here for play next/previous functions
         this.webSocket = null;
         this.serverIp = opts.serverIp || '127.0.0.1';
         this.serverPort = opts.serverPort || '9002';
@@ -46,7 +47,7 @@ class NetConnection {
         });
 
         this.mlogger = jsLogger.get('netconnection');
-        this.mlogger.setLevel(loggerLevel);
+        this.mlogger.setLevel(loggerLevel);''
 
         // Frees the reserved backend in the event that the window closes w/o disconnecting
         window.addEventListener("beforeunload", this.onClose.bind(this));
@@ -59,6 +60,10 @@ class NetConnection {
     get msgTypes() { return this.mmsgTypes; }
 
     get logger() { return this.mlogger; }
+
+    get currentFrame() { return this.mcurrentFrame; }
+
+    set currentFrame(val) { this.mcurrentFrame = val; }
 
     /**
     * WebSocket State
@@ -100,6 +105,7 @@ class NetConnection {
         switch (msgType) {
             case this.owner.msgTypes.ID_VIS_DATA_ARRIVE:
                 this.owner.visData.parseAgentsFromNetData(msg);
+                this.owner.currentFrame = msg.frameNumber;
                 break;
             case this.owner.msgTypes.ID_UPDATE_TIME_STEP:
                 // the timestep has been updated from another client
@@ -127,7 +133,7 @@ class NetConnection {
                 this.owner.simParameters.setTrajectoryFileInfo(msg);
                 if (this.owner.simParameters.handleTrajectoryData) {
                     // optional callback set through props in viewport
-                    this.owner.simParameters.handleTrajectoryData(msg)
+                    this.owner.simParameters.handleTrajectoryData(msg);
                 }
                 break;
             default:
@@ -406,11 +412,11 @@ class NetConnection {
         this.disconnect();
     }
 
-    requestSingleFrame(startFrameNumber = 0) {
+    requestSingleFrame(startFrameNumber) {
         this.sendWebSocketRequest(
             {
                 msgType: this.msgTypes.ID_VIS_DATA_REQUEST,
-                count: 1,
+                mode: this.playbackTypes.ID_TRAJECTORY_FILE_PLAYBACK,
                 frameNumber: startFrameNumber
             },
             "Request Single Frame"
@@ -440,6 +446,14 @@ class NetConnection {
             },
             "Load single frame at specified Time"
         );
+    }
+
+    gotoNextFrame() {
+        this.requestSingleFrame(this.mcurrentFrame + 1);
+    }
+
+    gotoPreviousFrame() {
+        this.requestSingleFrame(this.mcurrentFrame - 1);
     }
 
     // The backend will send a message with information

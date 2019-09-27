@@ -26,7 +26,7 @@ const useIpService = false;
 
 const netConnectionSettings = {
     useIpService,
-    serverIp: "52.15.70.94",
+    serverIp: "127.0.0.1",
     serverPort: 9002,
     ipServiceAddr: null,
 }
@@ -123,16 +123,20 @@ class Viewer extends React.Component<{}, ViewerState> {
                 onClick={() => agentSim.stop()}
             >stop</button>
             <button
-                onClick={() => agentSim.changeFile('microtubules15.h5')}
-            >
-                microtubules file
-                </button>
+                onClick={() => agentSim.changeFile('microtubules19.h5')}
+            >microtubules file</button>
             <button
-                onClick={() => agentSim.changeFile('actin5-1.h5')}
+                onClick={() => agentSim.changeFile('actin19.h5')}
             >
                 actin file
                 </button>
             <input id="frame-number" type="text" />
+            <button
+                onClick={() => agentSim.gotoNextFrame()}
+            >Next Frame</button>
+            <button
+                onClick={() => agentSim.gotoPreviousFrame()}
+            >Previous Frame</button>
             <button
                 onClick={this.playOneFrame}
             >
