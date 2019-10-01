@@ -395,22 +395,58 @@ class VisGeometry {
                     runtimeMesh.geometry = this.getSphereGeom();
                 }
 
-                if (i === 49) {
-                    this.paths[0].points[this.paths[0].numPoints*3+0] = agentData.x;
-                    this.paths[0].points[this.paths[0].numPoints*3+1] = agentData.y;
-                    this.paths[0].points[this.paths[0].numPoints*3+2] = agentData.z;
-                    // TODO boundary condition
-                    this.paths[0].numPoints++;
-                    if (this.paths[0].line) {
-                        this.paths[0].line.geometry.setDrawRange( 0, this.paths[0].numPoints );
-                        this.paths[0].line.geometry.attributes.position.needsUpdate = true; // required after the first render
+                const MAX_PATH_LEN = 20;
+                const SKIP_PATH = 100;
+                if (i % SKIP_PATH === 0) {
+                    const idx = Math.round(i / SKIP_PATH);
+                    if (!this.paths[idx])    
+                    {
+                        // Create a new path for this particle
+                        this.paths[idx] = {
+                            numPoints: 0,
+                            points: new Float32Array(MAX_PATH_POINTS * 3),
+                            colors: new Float32Array(MAX_PATH_POINTS * 3),
+                            geometry: new THREE.BufferGeometry(),
+                            material: new THREE.LineBasicMaterial({
+                                vertexColors: THREE.VertexColors,
+                                // pick random color????
+                                //color: new THREE.Color().setHSL(Math.random(), 1.0, 0.5),
+                            }),
+                            line: null,
+                        };
+                        for (let ic = 0; ic < MAX_PATH_LEN; ++ic) {
+                            this.paths[idx].colors[ic*3+0] = 1.0;
+                            this.paths[idx].colors[ic*3+1] = 1.0-ic/(MAX_PATH_LEN-1);
+                            this.paths[idx].colors[ic*3+2] = 1.0-ic/(MAX_PATH_LEN-1);    
+                        }
+    
                     }
-                    if (this.paths[0].numPoints === 2)  {
+        
+                    if (this.paths[idx].numPoints === MAX_PATH_LEN) {
+                        // because we append to the end, we can copyWithin to move points up to the beginning
+                        // as a means of removing the first point in the path.
+                        // shift the points:
+                        this.paths[idx].points.copyWithin(0, 3, MAX_PATH_LEN*3);
+                        this.paths[idx].numPoints = MAX_PATH_LEN-1;
+                    }
+                    this.paths[idx].points[this.paths[idx].numPoints*3+0] = agentData.x;
+                    this.paths[idx].points[this.paths[idx].numPoints*3+1] = agentData.y;
+                    this.paths[idx].points[this.paths[idx].numPoints*3+2] = agentData.z;
+                    // TODO boundary condition
+                    this.paths[idx].numPoints++;
+
+
+                    if (this.paths[idx].line) {
+                        this.paths[idx].line.geometry.setDrawRange( 0, this.paths[idx].numPoints );
+                        this.paths[idx].line.geometry.attributes.position.needsUpdate = true; // required after the first render
+                    }
+                    if (this.paths[idx].numPoints === 2)  {
                         console.log("ADDING LINE PATH");
-                        this.paths[0].geometry.addAttribute( 'position', new THREE.BufferAttribute( this.paths[0].points, 3 ) );
-                        this.paths[0].geometry.setDrawRange( 0, 2 );
-                        this.paths[0].line = new THREE.Line(this.paths[0].geometry, this.paths[0].material);
-                        this.scene.add(this.paths[0].line);
+                        this.paths[idx].geometry.addAttribute( 'position', new THREE.BufferAttribute( this.paths[idx].points, 3 ) );
+                        this.paths[idx].geometry.addAttribute( 'color', new THREE.Float32BufferAttribute( this.paths[idx].colors, 3 ) );
+                        this.paths[idx].geometry.setDrawRange( 0, 2 );
+                        this.paths[idx].line = new THREE.Line(this.paths[idx].geometry, this.paths[idx].material);
+                        this.scene.add(this.paths[idx].line);
                     }
 
                 }
