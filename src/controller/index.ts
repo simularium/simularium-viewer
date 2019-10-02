@@ -59,6 +59,18 @@ export default class AgentSimController {
         this.netConnection.requestSingleFrame(frameNumber);
     }
 
+    public gotoFrameAtTime(timeNs) {
+        this.netConnection.gotoRemoteSimulationTime(timeNs);
+    }
+
+    public gotoNextFrame() {
+        this.netConnection.gotoNextFrame();
+    }
+
+    public gotoPreviousFrame() {
+        this.netConnection.gotoPreviousFrame();
+    }
+
     public resume() {
         this.netConnection.resumeRemoteSim();
     }
