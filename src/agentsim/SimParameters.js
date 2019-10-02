@@ -35,6 +35,8 @@ class SimParameters {
 
     set paramList(val) { this.mparamList = val; }
 
+    get playBackFile() { return this.trajectoryPlaybackFile; }
+    
     set playBackFile(val) {
         if (this.trajectoryPlaybackFile !== val) {
             this.trajectoryPlaybackFile = val;

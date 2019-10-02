@@ -1,9 +1,9 @@
 import { NetConnection, SimParameters, VisData } from "../agentsim";
 
 export default class AgentSimController {
-    private netConnection: any;
-    private simParameters: any;
-    private visData: any;
+    public netConnection: any;
+    public simParameters: any;
+    public visData: any;
 
     public constructor(netConnectionSettings, params) {
         this.visData = new VisData({});
@@ -65,5 +65,9 @@ export default class AgentSimController {
 
     public changeFile(newFile) {
         this.simParameters.playBackFile = newFile;
+    }
+
+    public getFile() {
+        return this.simParameters.playBackFile;
     }
 }

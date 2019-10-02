@@ -1,19 +1,16 @@
 import * as React from 'react';
-interface AgentSimController {
-    simParameters: any;
-    visData: any;
-    netConnection: any;
-}
+import AgentSimController from '../controller';
 interface ViewportProps {
     height: number;
     width: number;
     devgui: boolean;
     loggerLevel: string;
-    onTimeChange: (timeData: TimeData) => void;
+    onTimeChange: (timeData: TimeData) => void | undefined;
     agentSimController: AgentSimController;
     onJsonDataArrived: any;
-    onTrajectoryFileInfoChanged: (cachedData: any) => void;
+    onTrajectoryFileInfoChanged: (cachedData: any) => void | undefined;
     highlightedParticleType: number | string;
+    loadInitialData: boolean;
 }
 interface TimeData {
     time: number;
@@ -32,6 +29,7 @@ declare class Viewport extends React.Component<ViewportProps> {
         width: number;
         devgui: boolean;
         highlightedParticleType: number;
+        loadInitialData: boolean;
     };
     private static isCustomEvent;
     constructor(props: ViewportProps);

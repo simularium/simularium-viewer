@@ -1,5 +1,7 @@
 import * as React from 'react';
 import jsLogger from 'js-logger';
+import AgentSimController from '../controller';
+
 import {
     forOwn,
 } from "lodash";
@@ -9,22 +11,15 @@ import * as THREE from  'three';
 
 import { VisGeometry, DevGUI } from "../agentsim";
 
-interface AgentSimController {
-    // NOTE: these can be typed in the future, but they may change signifantly and I dont want to at the moment. -MMRM
-    simParameters: any;
-    visData: any;
-    netConnection: any;
-}
-
 interface ViewportProps {
     height: number;
     width: number;
     devgui: boolean;
     loggerLevel: string;
-    onTimeChange: (timeData: TimeData) => void;
+    onTimeChange: (timeData: TimeData) => void | undefined;
     agentSimController: AgentSimController;
     onJsonDataArrived: any;
-    onTrajectoryFileInfoChanged: (cachedData: any) => void;
+    onTrajectoryFileInfoChanged: (cachedData: any) => void | undefined;
     highlightedParticleType: number | string;
     loadInitialData: boolean;
 }
@@ -91,18 +86,29 @@ class Viewport extends React.Component<ViewportProps> {
             agentSimController,
             onTrajectoryFileInfoChanged,
             loadInitialData,
+            onJsonDataArrived
         } = this.props;
         const {
             simParameters,
         } = agentSimController;
         this.visGeometry.reparent(this.vdomRef.current);
-        agentSimController.connect().then(() => {
-                if (loadInitialData) {
-                    agentSimController.initializeTrajectoryFile();
-                }
-        });
 
         simParameters.handleTrajectoryData = onTrajectoryFileInfoChanged;
+
+        agentSimController.connect().then(() => {
+            if (loadInitialData) {
+                let fileName = agentSimController.getFile();
+                this.visGeometry.mapFromJSON(
+                    `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${fileName}.json`, onJsonDataArrived
+
+                ).then(() => {
+                    this.visGeometry.render();
+                    this.lastRenderTime = Date.now();
+                });
+                agentSimController.initializeTrajectoryFile();
+            }
+        });
+
         setInterval(agentSimController.netConnection.checkForUpdates.bind(agentSimController.netConnection), 1000);
 
         if (this.vdomRef.current) {
@@ -193,7 +199,6 @@ class Viewport extends React.Component<ViewportProps> {
     public animate() {
         const {
             agentSimController,
-            onJsonDataArrived,
         } = this.props;
         const {
             simParameters,
@@ -207,15 +212,9 @@ class Viewport extends React.Component<ViewportProps> {
             if (!netConnection.socketIsValid()) {
                 this.visGeometry.clear();
             }
-
             if (simParameters.newSimulationIsRunning) {
-                this.visGeometry.mapFromJSON(
-                    `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${simParameters.trajectoryPlaybackFile}.json`,
-                    onJsonDataArrived
-                );
                 simParameters.newSimulationIsRunning = false;
             }
-
             this.visGeometry.render();
             this.lastRenderTime = Date.now();
         }
