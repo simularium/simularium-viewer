@@ -12,9 +12,13 @@ import './three/OrbitControls.js';
 
 import jsLogger from 'js-logger';
 
-const MAX_PATH_BUFFER_POINTS = 10000;
 const MAX_PATH_LEN = 20;
 const SKIP_PATH = 100;
+const PATH_END_COLOR = {r:1.0, g:1.0, b:1.0};
+
+function lerp(x0, x1, alpha) {
+    return x0 + (x1 - x0) * alpha;
+}
 
 class VisGeometry {
     constructor(loggerLevel) {
@@ -388,7 +392,7 @@ class VisGeometry {
                 }
 
                 if (i % SKIP_PATH === 0) {
-                    const path = this.addPathForParticleIndex(i);
+                    const path = this.addPathForParticleIndex(i, materialType);
                     // check for paths at max length
                     if (path.numPoints === MAX_PATH_LEN) {
                         // because we append to the end, we can copyWithin to move points up to the beginning
@@ -404,19 +408,8 @@ class VisGeometry {
                     path.points[path.numPoints*3+2] = agentData.z;
                     path.numPoints++;
 
-
-                    if (path.line) {
-                        path.line.geometry.setDrawRange( 0, path.numPoints );
-                        path.line.geometry.attributes.position.needsUpdate = true; // required after the first render
-                    }
-                    if (path.numPoints === 2)  {
-                        console.log("ADDING LINE PATH");
-                        path.geometry.addAttribute( 'position', new THREE.BufferAttribute( path.points, 3 ) );
-                        path.geometry.addAttribute( 'color', new THREE.Float32BufferAttribute( path.colors, 3 ) );
-                        path.geometry.setDrawRange( 0, 2 );
-                        path.line = new THREE.Line(path.geometry, path.material);
-                        this.scene.add(path.line);
-                    }
+                    path.line.geometry.setDrawRange( 0, path.numPoints );
+                    path.line.geometry.attributes.position.needsUpdate = true; // required after the first render
 
                 }
             } else if (visType === visTypes.ID_VIS_TYPE_FIBER) {
@@ -477,7 +470,7 @@ class VisGeometry {
         }
     }
 
-    addPathForParticleIndex(idx) {
+    addPathForParticleIndex(idx, materialType) {
         // make sure the idx is not already in our list.
         // could be optimized...
         const foundpath = this.paths.find((path)=>{return path.particle===idx;});
@@ -497,13 +490,40 @@ class VisGeometry {
             // will create line "lazily" when the line has more than 1 point(?)
             line: null,
         };
+        // get the particle's color. is there a simpler way?
+        const mat = this.materials[Number(materialType) % this.materials.length]; 
+        const color = mat.color;
+        
+        // interpolate from color to white
         for (let ic = 0; ic < MAX_PATH_LEN; ++ic) {
-            pathdata.colors[ic*3+0] = 1.0;
-            pathdata.colors[ic*3+1] = 1.0-ic/(MAX_PATH_LEN-1);
-            pathdata.colors[ic*3+2] = 1.0-ic/(MAX_PATH_LEN-1);
+            const a = 1.0 - ic/(MAX_PATH_LEN-1);
+            pathdata.colors[ic*3+0] = lerp(color.r, PATH_END_COLOR.r, a);
+            pathdata.colors[ic*3+1] = lerp(color.g, PATH_END_COLOR.g, a);
+            pathdata.colors[ic*3+2] = lerp(color.b, PATH_END_COLOR.b, a);
         }
+
+        pathdata.geometry.addAttribute( 'position', new THREE.BufferAttribute( pathdata.points, 3 ) );
+        pathdata.geometry.addAttribute( 'color', new THREE.Float32BufferAttribute( pathdata.colors, 3 ) );
+        // path starts empty: draw range spans nothing
+        pathdata.geometry.setDrawRange( 0, 0 );
+        pathdata.line = new THREE.Line(pathdata.geometry, pathdata.material);
+        this.scene.add(pathdata.line);
+
+
         this.paths.push(pathdata);
         return pathdata;
+    }
+
+    removePathForParticleIndex(idx) {
+        const pathindex = this.paths.findIndex((path)=>{return path.particle===idx;});
+        if (pathindex === -1) {
+            console.log("attempted to remove path for particle " + idx + " that doesn't exist.");
+            return;
+        }
+        const path = this.paths[pathindex];
+        this.scene.remove(path.line);
+
+        this.paths.splice(pathindex, 1);
     }
 
     hideUnusedMeshes(numberOfAgents) {
