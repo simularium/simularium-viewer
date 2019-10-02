@@ -12,7 +12,9 @@ import './three/OrbitControls.js';
 
 import jsLogger from 'js-logger';
 
-const MAX_PATH_POINTS = 10000;
+const MAX_PATH_BUFFER_POINTS = 10000;
+const MAX_PATH_LEN = 20;
+const SKIP_PATH = 100;
 
 class VisGeometry {
     constructor(loggerLevel) {
@@ -32,18 +34,8 @@ class VisGeometry {
         this.fixLightsToCamera = true;
         this.highlightedId = -1;
 
-        this.paths = [
-            {
-                numPoints: 0,
-                points: new Float32Array(MAX_PATH_POINTS * 3),
-                geometry: new THREE.BufferGeometry(),
-                material: new THREE.LineBasicMaterial({
-                    color: 0x0000ff,
-                    lineWidth: 1,
-                }),
-                line: null,
-            }
-        ];
+        // will store data for all particles that are drawing paths
+        this.paths = [];
 
         this.mlogger = jsLogger.get('visgeometry');
         this.mlogger.setLevel(loggerLevel);
@@ -395,58 +387,35 @@ class VisGeometry {
                     runtimeMesh.geometry = this.getSphereGeom();
                 }
 
-                const MAX_PATH_LEN = 20;
-                const SKIP_PATH = 100;
                 if (i % SKIP_PATH === 0) {
-                    const idx = Math.round(i / SKIP_PATH);
-                    if (!this.paths[idx])    
-                    {
-                        // Create a new path for this particle
-                        this.paths[idx] = {
-                            numPoints: 0,
-                            points: new Float32Array(MAX_PATH_POINTS * 3),
-                            colors: new Float32Array(MAX_PATH_POINTS * 3),
-                            geometry: new THREE.BufferGeometry(),
-                            material: new THREE.LineBasicMaterial({
-                                vertexColors: THREE.VertexColors,
-                                // pick random color????
-                                //color: new THREE.Color().setHSL(Math.random(), 1.0, 0.5),
-                            }),
-                            line: null,
-                        };
-                        for (let ic = 0; ic < MAX_PATH_LEN; ++ic) {
-                            this.paths[idx].colors[ic*3+0] = 1.0;
-                            this.paths[idx].colors[ic*3+1] = 1.0-ic/(MAX_PATH_LEN-1);
-                            this.paths[idx].colors[ic*3+2] = 1.0-ic/(MAX_PATH_LEN-1);    
-                        }
-    
-                    }
-        
-                    if (this.paths[idx].numPoints === MAX_PATH_LEN) {
+                    const path = this.addPathForParticleIndex(i);
+                    // check for paths at max length
+                    if (path.numPoints === MAX_PATH_LEN) {
                         // because we append to the end, we can copyWithin to move points up to the beginning
                         // as a means of removing the first point in the path.
                         // shift the points:
-                        this.paths[idx].points.copyWithin(0, 3, MAX_PATH_LEN*3);
-                        this.paths[idx].numPoints = MAX_PATH_LEN-1;
+                        path.points.copyWithin(0, 3, MAX_PATH_LEN*3);
+                        path.numPoints = MAX_PATH_LEN-1;
                     }
-                    this.paths[idx].points[this.paths[idx].numPoints*3+0] = agentData.x;
-                    this.paths[idx].points[this.paths[idx].numPoints*3+1] = agentData.y;
-                    this.paths[idx].points[this.paths[idx].numPoints*3+2] = agentData.z;
-                    // TODO boundary condition
-                    this.paths[idx].numPoints++;
+                    // add a point
+                    // TODO check for periodic boundary condition
+                    path.points[path.numPoints*3+0] = agentData.x;
+                    path.points[path.numPoints*3+1] = agentData.y;
+                    path.points[path.numPoints*3+2] = agentData.z;
+                    path.numPoints++;
 
 
-                    if (this.paths[idx].line) {
-                        this.paths[idx].line.geometry.setDrawRange( 0, this.paths[idx].numPoints );
-                        this.paths[idx].line.geometry.attributes.position.needsUpdate = true; // required after the first render
+                    if (path.line) {
+                        path.line.geometry.setDrawRange( 0, path.numPoints );
+                        path.line.geometry.attributes.position.needsUpdate = true; // required after the first render
                     }
-                    if (this.paths[idx].numPoints === 2)  {
+                    if (path.numPoints === 2)  {
                         console.log("ADDING LINE PATH");
-                        this.paths[idx].geometry.addAttribute( 'position', new THREE.BufferAttribute( this.paths[idx].points, 3 ) );
-                        this.paths[idx].geometry.addAttribute( 'color', new THREE.Float32BufferAttribute( this.paths[idx].colors, 3 ) );
-                        this.paths[idx].geometry.setDrawRange( 0, 2 );
-                        this.paths[idx].line = new THREE.Line(this.paths[idx].geometry, this.paths[idx].material);
-                        this.scene.add(this.paths[idx].line);
+                        path.geometry.addAttribute( 'position', new THREE.BufferAttribute( path.points, 3 ) );
+                        path.geometry.addAttribute( 'color', new THREE.Float32BufferAttribute( path.colors, 3 ) );
+                        path.geometry.setDrawRange( 0, 2 );
+                        path.line = new THREE.Line(path.geometry, path.material);
+                        this.scene.add(path.line);
                     }
 
                 }
@@ -506,6 +475,35 @@ class VisGeometry {
             direction.normalize();
             this.camera.position.subVectors(this.controls.target, direction.multiplyScalar(-distance));
         }
+    }
+
+    addPathForParticleIndex(idx) {
+        // make sure the idx is not already in our list.
+        // could be optimized...
+        const foundpath = this.paths.find((path)=>{return path.particle===idx;});
+        if (foundpath) {
+            return foundpath;
+        }
+        const pathdata = {
+            particle: idx,
+            numPoints: 0,
+            points: new Float32Array(MAX_PATH_LEN * 3),
+            colors: new Float32Array(MAX_PATH_LEN * 3),
+            geometry: new THREE.BufferGeometry(),
+            material: new THREE.LineBasicMaterial({
+                // the line will be colored per-vertex
+                vertexColors: THREE.VertexColors,
+            }),
+            // will create line "lazily" when the line has more than 1 point(?)
+            line: null,
+        };
+        for (let ic = 0; ic < MAX_PATH_LEN; ++ic) {
+            pathdata.colors[ic*3+0] = 1.0;
+            pathdata.colors[ic*3+1] = 1.0-ic/(MAX_PATH_LEN-1);
+            pathdata.colors[ic*3+2] = 1.0-ic/(MAX_PATH_LEN-1);
+        }
+        this.paths.push(pathdata);
+        return pathdata;
     }
 
     hideUnusedMeshes(numberOfAgents) {
