@@ -66,7 +66,7 @@ class Viewport extends React.Component<ViewportProps> {
         this.animate = this.animate.bind(this);
         this.visGeometry.setupScene();
         this.visGeometry.createMaterials(agentSimController.visData.colors);
-        this.visGeometry.createMeshes(5000);
+        this.visGeometry.createMeshes();
         this.vdomRef = React.createRef();
         this.dispatchUpdatedTime = this.dispatchUpdatedTime.bind(this);
         this.handleTimeChange = this.handleTimeChange.bind(this);

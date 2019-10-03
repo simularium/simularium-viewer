@@ -15,6 +15,7 @@ import jsLogger from 'js-logger';
 const MAX_PATH_LEN = 20;
 const SKIP_PATH = 100;
 const PATH_END_COLOR = {r:1.0, g:1.0, b:1.0};
+const MAX_MESHES = 5000;
 
 function lerp(x0, x1, alpha) {
     return x0 + (x1 - x0) * alpha;
@@ -26,7 +27,7 @@ class VisGeometry {
         this.meshRegistry = new Map();
         this.meshLoadAttempted = new Map();
         this.scaleMapping = new Map();
-        this.geomCount = 100;
+        this.geomCount = MAX_MESHES;
         this.materials = [];
         this.desatMaterials = [];
         this.highlightMaterial = new THREE.MeshBasicMaterial({color: new THREE.Color(1,0,0)});
@@ -204,9 +205,9 @@ class VisGeometry {
         }
     }
 
-    createMeshes(geomCount) {
+    createMeshes() {
         const { scene } = this;
-        this.geomCount = geomCount;
+        this.geomCount = MAX_MESHES;
         const sphereGeom = this.getSphereGeom();
         const { materials } = this;
 
@@ -385,7 +386,7 @@ class VisGeometry {
 
                 const meshGeom = this.getGeomFromId(typeId);
 
-                if (meshGeom &&  meshGeom.children) {
+                if (meshGeom && meshGeom.children) {
                     runtimeMesh.geometry = meshGeom.children[0].geometry;
                 } else {
                     runtimeMesh.geometry = this.getSphereGeom();
@@ -393,24 +394,7 @@ class VisGeometry {
 
                 if (i % SKIP_PATH === 0) {
                     const path = this.addPathForParticleIndex(i, materialType);
-                    // check for paths at max length
-                    if (path.numPoints === MAX_PATH_LEN) {
-                        // because we append to the end, we can copyWithin to move points up to the beginning
-                        // as a means of removing the first point in the path.
-                        // shift the points:
-                        path.points.copyWithin(0, 3, MAX_PATH_LEN*3);
-                        path.numPoints = MAX_PATH_LEN-1;
-                    }
-                    // add a point
-                    // TODO check for periodic boundary condition
-                    path.points[path.numPoints*3+0] = agentData.x;
-                    path.points[path.numPoints*3+1] = agentData.y;
-                    path.points[path.numPoints*3+2] = agentData.z;
-                    path.numPoints++;
-
-                    path.line.geometry.setDrawRange( 0, path.numPoints );
-                    path.line.geometry.attributes.position.needsUpdate = true; // required after the first render
-
+                    this.addPointToPath(path, agentData.x, agentData.y, agentData.z);
                 }
             } else if (visType === visTypes.ID_VIS_TYPE_FIBER) {
                 const name = `Fiber_${fiberIndex.toString()}`;
@@ -526,9 +510,29 @@ class VisGeometry {
         this.paths.splice(pathindex, 1);
     }
 
+    addPointToPath(path, x, y, z) {
+        // check for paths at max length
+        if (path.numPoints === MAX_PATH_LEN) {
+            // because we append to the end, we can copyWithin to move points up to the beginning
+            // as a means of removing the first point in the path.
+            // shift the points:
+            path.points.copyWithin(0, 3, MAX_PATH_LEN*3);
+            path.numPoints = MAX_PATH_LEN-1;
+        }
+        // add a point
+        // TODO check for periodic boundary condition
+        path.points[path.numPoints*3+0] = x;
+        path.points[path.numPoints*3+1] = y;
+        path.points[path.numPoints*3+2] = z;
+        path.numPoints++;
+
+        path.line.geometry.setDrawRange( 0, path.numPoints );
+        path.line.geometry.attributes.position.needsUpdate = true; // required after the first render
+    }
+    
     hideUnusedMeshes(numberOfAgents) {
         let nMeshes = this.runTimeMeshes.length;
-        for (let i = numberOfAgents; i < 5000 && i < nMeshes; i += 1) {
+        for (let i = numberOfAgents; i < MAX_MESHES && i < nMeshes; i += 1) {
             const runtimeMesh = this.getMesh(i);
             if (runtimeMesh.visible === false) {
                 break;
