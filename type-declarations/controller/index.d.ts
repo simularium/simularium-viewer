@@ -14,6 +14,9 @@ export default class AgentSimController {
     playFromFrame(frameNumber: any): void;
     playFromTime(timeNs: any): void;
     playOneFrame(frameNumber: any): void;
+    gotoFrameAtTime(timeNs: any): void;
+    gotoNextFrame(): void;
+    gotoPreviousFrame(): void;
     resume(): void;
     changeFile(newFile: any): void;
     getFile(): any;
