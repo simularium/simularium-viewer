@@ -461,16 +461,27 @@ class VisGeometry {
         }
     }
 
+    findPathForParticleIndex(idx) {
+        return this.paths.find((path)=>{return path.particle===idx;});
+    }
+
     addPathForParticleIndex(idx, materialType) {
         // make sure the idx is not already in our list.
         // could be optimized...
-        const foundpath = this.paths.find((path)=>{return path.particle===idx;});
+        const foundpath = this.findPathForParticleIndex(idx);
         if (foundpath) {
+            foundpath.line.visible = true;
             return foundpath;
         }
+
+        // get the particle's color. is there a simpler way?
+        const mat = this.materials[Number(materialType) % this.materials.length]; 
+        const color = mat.color;
+
         const pathdata = {
             particle: idx,
             numSegments: 0,
+            color: mat.color,
             points: new Float32Array(MAX_PATH_LEN * 3 * 2),
             colors: new Float32Array(MAX_PATH_LEN * 3 * 2),
             geometry: new THREE.BufferGeometry(),
@@ -481,27 +492,9 @@ class VisGeometry {
             // will create line "lazily" when the line has more than 1 point(?)
             line: null,
         };
-        // get the particle's color. is there a simpler way?
-        const mat = this.materials[Number(materialType) % this.materials.length]; 
-        const color = mat.color;
         
-        // interpolate from color to white
-        for (let ic = 0; ic < MAX_PATH_LEN; ++ic) {
-            // the very first point should be a=1
-            const a = 1.0 - (ic)/(MAX_PATH_LEN);
-            pathdata.colors[ic*6+0] = lerp(color.r, PATH_END_COLOR.r, a);
-            pathdata.colors[ic*6+1] = lerp(color.g, PATH_END_COLOR.g, a);
-            pathdata.colors[ic*6+2] = lerp(color.b, PATH_END_COLOR.b, a);
-
-            const b = 1.0 - (ic+1)/(MAX_PATH_LEN); 
-            // the last point should be b=0
-            pathdata.colors[ic*6+3] = lerp(color.r, PATH_END_COLOR.r, b);
-            pathdata.colors[ic*6+4] = lerp(color.g, PATH_END_COLOR.g, b);
-            pathdata.colors[ic*6+5] = lerp(color.b, PATH_END_COLOR.b, b);
-        }
-
         pathdata.geometry.addAttribute( 'position', new THREE.BufferAttribute( pathdata.points, 3 ) );
-        pathdata.geometry.addAttribute( 'color', new THREE.Float32BufferAttribute( pathdata.colors, 3 ) );
+        pathdata.geometry.addAttribute( 'color', new THREE.BufferAttribute( pathdata.colors, 3 ) );
         // path starts empty: draw range spans nothing
         pathdata.geometry.setDrawRange( 0, 0 );
         pathdata.line = new THREE.LineSegments(pathdata.geometry, pathdata.material);
@@ -549,6 +542,23 @@ class VisGeometry {
             path.points.copyWithin(0, 3*2, MAX_PATH_LEN*3*2);
             path.numSegments = MAX_PATH_LEN-1;
         }
+        else {
+            // rewrite all the colors. this might be prohibitive for lots of long paths.
+            for (let ic = 0; ic < path.numSegments+1; ++ic) {
+                // the very first point should be a=1
+                const a = 1.0 - (ic)/(path.numSegments+1);
+                path.colors[ic*6+0] = lerp(path.color.r, PATH_END_COLOR.r, a);
+                path.colors[ic*6+1] = lerp(path.color.g, PATH_END_COLOR.g, a);
+                path.colors[ic*6+2] = lerp(path.color.b, PATH_END_COLOR.b, a);
+
+                // the very last point should be b=0
+                const b = 1.0 - (ic+1)/(path.numSegments+1); 
+                path.colors[ic*6+3] = lerp(path.color.r, PATH_END_COLOR.r, b);
+                path.colors[ic*6+4] = lerp(path.color.g, PATH_END_COLOR.g, b);
+                path.colors[ic*6+5] = lerp(path.color.b, PATH_END_COLOR.b, b);
+            }
+            path.line.geometry.attributes.color.needsUpdate = true;
+        }
         // add a segment to this line
         path.points[path.numSegments*2*3+0] = x-dx;
         path.points[path.numSegments*2*3+1] = y-dy;
@@ -556,15 +566,31 @@ class VisGeometry {
         path.points[path.numSegments*2*3+3] = x;
         path.points[path.numSegments*2*3+4] = y;
         path.points[path.numSegments*2*3+5] = z;
+
         path.numSegments++;
 
         path.line.geometry.setDrawRange( 0, path.numSegments*2 );
         path.line.geometry.attributes.position.needsUpdate = true; // required after the first render
     }
-    
-    showAllPaths(visible) {
+
+    setShowPaths(showPaths) {
         for (let i = 0; i < this.paths.length; ++i) {
-            this.paths[i].line.visible = visible;
+            this.paths[i].line.visible = showPaths;
+        }
+    }
+
+    setShowMeshes(showMeshes) {
+        let nMeshes = this.runTimeMeshes.length;
+        for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
+            const runtimeMesh = this.getMesh(i);
+            runtimeMesh.visible = showMeshes;
+        }
+    }
+
+    showPathForParticleIndex(idx, visible) {
+        const path = this.findPathForParticleIndex(idx);
+        if (path) {
+            path.line.visible = visible;
         }
     }
 
@@ -577,6 +603,7 @@ class VisGeometry {
             }
 
             runtimeMesh.visible = false;
+            this.showPathForParticleIndex(i, false);
         }
     }
 
@@ -590,6 +617,7 @@ class VisGeometry {
 
         if (this.lastNumberOfAgents > numberOfAgents) {
             this.hideUnusedMeshes(numberOfAgents);
+
         }
 
         this.lastNumberOfAgents = numberOfAgents;
