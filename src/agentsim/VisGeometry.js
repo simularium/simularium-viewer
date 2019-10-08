@@ -12,10 +12,11 @@ import './three/OrbitControls.js';
 
 import jsLogger from 'js-logger';
 
-const MAX_PATH_LEN = 20;
+const MAX_PATH_LEN = 32;
 const SKIP_PATH = 100;
-const PATH_END_COLOR = {r:1.0, g:1.0, b:1.0};
 const MAX_MESHES = 5000;
+const BACKGROUND_COLOR = new THREE.Color(0xcccccc);
+const PATH_END_COLOR = BACKGROUND_COLOR;
 // FIXME Hard-coded for actin simulation.  needs to be data coming from backend.
 const VOLUME_DIMS = new THREE.Vector3(300, 300, 300);
 
@@ -112,7 +113,7 @@ class VisGeometry {
 
         this.renderer = new THREE.WebGLRenderer();
         this.renderer.setSize(initWidth, initHeight); // expected to change when reparented
-        this.renderer.setClearColor(new THREE.Color(0xcccccc), 1);
+        this.renderer.setClearColor(BACKGROUND_COLOR, 1);
         this.renderer.clear();
 
         this.camera.position.z = 5;
@@ -534,8 +535,10 @@ class VisGeometry {
             // now what?
             // TODO: clip line segment from x-dx to x against the bounds,
             // compute new line segments from x-dx to bound, and from x to opposite bound
-            // For now, simply do not add this segment to this particle's path
-            return;
+            // For now, add a degenerate line segment 
+            dx = 0;
+            dy = 0;
+            dz = 0;
         }
 
         // check for paths at max length
@@ -555,7 +558,7 @@ class VisGeometry {
         path.points[path.numSegments*2*3+5] = z;
         path.numSegments++;
 
-        path.line.geometry.setDrawRange( 0, path.numSegments );
+        path.line.geometry.setDrawRange( 0, path.numSegments*2 );
         path.line.geometry.attributes.position.needsUpdate = true; // required after the first render
     }
     
