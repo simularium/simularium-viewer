@@ -368,7 +368,6 @@ class VisGeometry {
                 const materialType = (typeId + 1) * this.colorVariant;
                 const runtimeMesh = this.getMesh(i);
                 if (!runtimeMesh.userData) {
-                    // assumes this will not change with later updates.
                     runtimeMesh.userData = { 
                         baseMaterial: this.getMaterial(materialType, typeId),
                     }
@@ -623,6 +622,7 @@ class VisGeometry {
             }
 
             runtimeMesh.visible = false;
+            // hide the path if we're hiding the agent. should we remove the path here?
             this.showPathForAgentIndex(i, false);
         }
     }
@@ -639,7 +639,6 @@ class VisGeometry {
             this.hideUnusedMeshes(numberOfAgents);
 
         }
-
         this.lastNumberOfAgents = numberOfAgents;
     }
 }
