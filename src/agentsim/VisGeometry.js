@@ -373,6 +373,9 @@ class VisGeometry {
                         baseMaterial: this.getMaterial(materialType, typeId),
                     }
                 }
+                else {
+                    runtimeMesh.userData.baseMaterial = this.getMaterial(materialType, typeId);
+                }
 
                 dx = agentData.x - runtimeMesh.position.x; 
                 dy = agentData.y - runtimeMesh.position.y; 
@@ -390,7 +393,7 @@ class VisGeometry {
                     runtimeMesh.material = this.highlightMaterial;
                 }
                 else {
-                    runtimeMesh.material = this.getMaterial(materialType, typeId);
+                    runtimeMesh.material = runtimeMesh.userData.baseMaterial;
                 }
 
                 runtimeMesh.scale.x = agentData.cr * scale;
