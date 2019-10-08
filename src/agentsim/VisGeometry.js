@@ -476,7 +476,6 @@ class VisGeometry {
 
         // get the particle's color. is there a simpler way?
         const mat = this.materials[Number(materialType) % this.materials.length]; 
-        const color = mat.color;
 
         const pathdata = {
             particle: idx,
