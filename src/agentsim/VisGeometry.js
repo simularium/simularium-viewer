@@ -16,6 +16,8 @@ const MAX_PATH_LEN = 20;
 const SKIP_PATH = 100;
 const PATH_END_COLOR = {r:1.0, g:1.0, b:1.0};
 const MAX_MESHES = 5000;
+// FIXME Hard-coded for actin simulation.  needs to be data coming from backend.
+const VOLUME_DIMS = new THREE.Vector3(300, 300, 300);
 
 function lerp(x0, x1, alpha) {
     return x0 + (x1 - x0) * alpha;
@@ -353,6 +355,7 @@ class VisGeometry {
             ID_VIS_TYPE_FIBER: 1001,
         });
 
+        let dx, dy, dz;
         // The agents sent over are mapped by an integer id
         agents.forEach((agentData, i) => {
 
@@ -364,6 +367,9 @@ class VisGeometry {
                 const materialType = (typeId + 1) * this.colorVariant;
                 const runtimeMesh = this.getMesh(i);
 
+                dx = agentData.x - runtimeMesh.position.x; 
+                dy = agentData.y - runtimeMesh.position.y; 
+                dz = agentData.z - runtimeMesh.position.z; 
                 runtimeMesh.position.x = agentData.x;
                 runtimeMesh.position.y = agentData.y;
                 runtimeMesh.position.z = agentData.z;
@@ -394,7 +400,7 @@ class VisGeometry {
 
                 if (i % SKIP_PATH === 0) {
                     const path = this.addPathForParticleIndex(i, materialType);
-                    this.addPointToPath(path, agentData.x, agentData.y, agentData.z);
+                    this.addPointToPath(path, agentData.x, agentData.y, agentData.z, dx, dy, dz);
                 }
             } else if (visType === visTypes.ID_VIS_TYPE_FIBER) {
                 const name = `Fiber_${fiberIndex.toString()}`;
@@ -463,9 +469,9 @@ class VisGeometry {
         }
         const pathdata = {
             particle: idx,
-            numPoints: 0,
-            points: new Float32Array(MAX_PATH_LEN * 3),
-            colors: new Float32Array(MAX_PATH_LEN * 3),
+            numSegments: 0,
+            points: new Float32Array(MAX_PATH_LEN * 3 * 2),
+            colors: new Float32Array(MAX_PATH_LEN * 3 * 2),
             geometry: new THREE.BufferGeometry(),
             material: new THREE.LineBasicMaterial({
                 // the line will be colored per-vertex
@@ -480,17 +486,24 @@ class VisGeometry {
         
         // interpolate from color to white
         for (let ic = 0; ic < MAX_PATH_LEN; ++ic) {
-            const a = 1.0 - ic/(MAX_PATH_LEN-1);
-            pathdata.colors[ic*3+0] = lerp(color.r, PATH_END_COLOR.r, a);
-            pathdata.colors[ic*3+1] = lerp(color.g, PATH_END_COLOR.g, a);
-            pathdata.colors[ic*3+2] = lerp(color.b, PATH_END_COLOR.b, a);
+            // the very first point should be a=1
+            const a = 1.0 - (ic)/(MAX_PATH_LEN);
+            pathdata.colors[ic*6+0] = lerp(color.r, PATH_END_COLOR.r, a);
+            pathdata.colors[ic*6+1] = lerp(color.g, PATH_END_COLOR.g, a);
+            pathdata.colors[ic*6+2] = lerp(color.b, PATH_END_COLOR.b, a);
+
+            const b = 1.0 - (ic+1)/(MAX_PATH_LEN); 
+            // the last point should be b=0
+            pathdata.colors[ic*6+3] = lerp(color.r, PATH_END_COLOR.r, b);
+            pathdata.colors[ic*6+4] = lerp(color.g, PATH_END_COLOR.g, b);
+            pathdata.colors[ic*6+5] = lerp(color.b, PATH_END_COLOR.b, b);
         }
 
         pathdata.geometry.addAttribute( 'position', new THREE.BufferAttribute( pathdata.points, 3 ) );
         pathdata.geometry.addAttribute( 'color', new THREE.Float32BufferAttribute( pathdata.colors, 3 ) );
         // path starts empty: draw range spans nothing
         pathdata.geometry.setDrawRange( 0, 0 );
-        pathdata.line = new THREE.Line(pathdata.geometry, pathdata.material);
+        pathdata.line = new THREE.LineSegments(pathdata.geometry, pathdata.material);
         this.scene.add(pathdata.line);
 
 
@@ -510,26 +523,48 @@ class VisGeometry {
         this.paths.splice(pathindex, 1);
     }
 
-    addPointToPath(path, x, y, z) {
+    addPointToPath(path, x, y, z, dx, dy, dz) {
+        if ((x === dx) && (y === dy) && (z === dz)) {
+            return;
+        }
+        // Check for periodic boundary condition:
+        // if any particle moved more than half the volume size in one step, 
+        // assume it jumped the boundary going the other way.
+        if (Math.abs(dx) > VOLUME_DIMS.x/2 || Math.abs(dy) > VOLUME_DIMS.y/2 || Math.abs(dz) > VOLUME_DIMS.z/2) {
+            // now what?
+            // TODO: clip line segment from x-dx to x against the bounds,
+            // compute new line segments from x-dx to bound, and from x to opposite bound
+            // For now, simply do not add this segment to this particle's path
+            return;
+        }
+
         // check for paths at max length
-        if (path.numPoints === MAX_PATH_LEN) {
+        if (path.numSegments === MAX_PATH_LEN) {
             // because we append to the end, we can copyWithin to move points up to the beginning
             // as a means of removing the first point in the path.
             // shift the points:
-            path.points.copyWithin(0, 3, MAX_PATH_LEN*3);
-            path.numPoints = MAX_PATH_LEN-1;
+            path.points.copyWithin(0, 3*2, MAX_PATH_LEN*3*2);
+            path.numSegments = MAX_PATH_LEN-1;
         }
-        // add a point
-        // TODO check for periodic boundary condition
-        path.points[path.numPoints*3+0] = x;
-        path.points[path.numPoints*3+1] = y;
-        path.points[path.numPoints*3+2] = z;
-        path.numPoints++;
+        // add a segment to this line
+        path.points[path.numSegments*2*3+0] = x-dx;
+        path.points[path.numSegments*2*3+1] = y-dy;
+        path.points[path.numSegments*2*3+2] = z-dz;
+        path.points[path.numSegments*2*3+3] = x;
+        path.points[path.numSegments*2*3+4] = y;
+        path.points[path.numSegments*2*3+5] = z;
+        path.numSegments++;
 
-        path.line.geometry.setDrawRange( 0, path.numPoints );
+        path.line.geometry.setDrawRange( 0, path.numSegments );
         path.line.geometry.attributes.position.needsUpdate = true; // required after the first render
     }
     
+    showAllPaths(visible) {
+        for (let i = 0; i < this.paths.length; ++i) {
+            this.paths[i].line.visible = visible;
+        }
+    }
+
     hideUnusedMeshes(numberOfAgents) {
         let nMeshes = this.runTimeMeshes.length;
         for (let i = numberOfAgents; i < MAX_MESHES && i < nMeshes; i += 1) {
