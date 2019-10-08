@@ -42,7 +42,7 @@ class VisGeometry {
         this.fixLightsToCamera = true;
         this.highlightedId = -1;
 
-        // will store data for all particles that are drawing paths
+        // will store data for all agents that are drawing paths
         this.paths = [];
 
         this.mlogger = jsLogger.get('visgeometry');
@@ -367,6 +367,12 @@ class VisGeometry {
             if (visType === visTypes.ID_VIS_TYPE_DEFAULT) {
                 const materialType = (typeId + 1) * this.colorVariant;
                 const runtimeMesh = this.getMesh(i);
+                if (!runtimeMesh.userData) {
+                    // assumes this will not change with later updates.
+                    runtimeMesh.userData = { 
+                        baseMaterial: this.getMaterial(materialType, typeId),
+                    }
+                }
 
                 dx = agentData.x - runtimeMesh.position.x; 
                 dy = agentData.y - runtimeMesh.position.y; 
@@ -400,7 +406,7 @@ class VisGeometry {
                 }
 
                 if (i % SKIP_PATH === 0) {
-                    const path = this.addPathForParticleIndex(i, materialType);
+                    const path = this.addPathForAgentIndex(i);
                     this.addPointToPath(path, agentData.x, agentData.y, agentData.z, dx, dy, dz);
                 }
             } else if (visType === visTypes.ID_VIS_TYPE_FIBER) {
@@ -461,26 +467,38 @@ class VisGeometry {
         }
     }
 
-    findPathForParticleIndex(idx) {
-        return this.paths.find((path)=>{return path.particle===idx;});
+    getMaterialOfAgentIndex(idx) {
+        const runtimeMesh = this.getMesh(idx);
+        if (runtimeMesh.userData) {
+            return runtimeMesh.userData.baseMaterial;
+        }
+        return undefined;
     }
 
-    addPathForParticleIndex(idx, materialType) {
+    findPathForAgentIndex(idx) {
+        return this.paths.find((path)=>{return path.agent===idx;});
+    }
+
+    // assumes color is a threejs color, or null/undefined
+    addPathForAgentIndex(idx, color) {
         // make sure the idx is not already in our list.
         // could be optimized...
-        const foundpath = this.findPathForParticleIndex(idx);
+        const foundpath = this.findPathForAgentIndex(idx);
         if (foundpath) {
             foundpath.line.visible = true;
             return foundpath;
         }
 
-        // get the particle's color. is there a simpler way?
-        const mat = this.materials[Number(materialType) % this.materials.length]; 
+        if (!color) {
+            // get the agent's color. is there a simpler way?
+            const mat = this.getMaterialOfAgentIndex(idx);
+            color = mat ? mat.color.clone() : new THREE.Color(0xffffff);
+        }
 
         const pathdata = {
-            particle: idx,
+            agent: idx,
             numSegments: 0,
-            color: mat.color,
+            color: color,
             points: new Float32Array(MAX_PATH_LEN * 3 * 2),
             colors: new Float32Array(MAX_PATH_LEN * 3 * 2),
             geometry: new THREE.BufferGeometry(),
@@ -504,10 +522,10 @@ class VisGeometry {
         return pathdata;
     }
 
-    removePathForParticleIndex(idx) {
-        const pathindex = this.paths.findIndex((path)=>{return path.particle===idx;});
+    removePathForAgentIndex(idx) {
+        const pathindex = this.paths.findIndex((path)=>{return path.agent===idx;});
         if (pathindex === -1) {
-            console.log("attempted to remove path for particle " + idx + " that doesn't exist.");
+            console.log("attempted to remove path for agent " + idx + " that doesn't exist.");
             return;
         }
         const path = this.paths[pathindex];
@@ -521,7 +539,7 @@ class VisGeometry {
             return;
         }
         // Check for periodic boundary condition:
-        // if any particle moved more than half the volume size in one step, 
+        // if any agent moved more than half the volume size in one step, 
         // assume it jumped the boundary going the other way.
         if (Math.abs(dx) > VOLUME_DIMS.x/2 || Math.abs(dy) > VOLUME_DIMS.y/2 || Math.abs(dz) > VOLUME_DIMS.z/2) {
             // now what?
@@ -586,8 +604,8 @@ class VisGeometry {
         }
     }
 
-    showPathForParticleIndex(idx, visible) {
-        const path = this.findPathForParticleIndex(idx);
+    showPathForAgentIndex(idx, visible) {
+        const path = this.findPathForAgentIndex(idx);
         if (path) {
             path.line.visible = visible;
         }
@@ -602,7 +620,7 @@ class VisGeometry {
             }
 
             runtimeMesh.visible = false;
-            this.showPathForParticleIndex(i, false);
+            this.showPathForAgentIndex(i, false);
         }
     }
 
