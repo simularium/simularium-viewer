@@ -22,6 +22,8 @@ interface ViewportProps {
     onTrajectoryFileInfoChanged: (cachedData: any) => void | undefined;
     highlightedParticleType: number | string;
     loadInitialData: boolean;
+    showMeshes: boolean;
+    showPaths: boolean;
 }
 
 interface TimeData {
@@ -47,6 +49,8 @@ class Viewport extends React.Component<ViewportProps> {
         devgui: false,
         highlightedParticleType: -1,
         loadInitialData: true,
+        showMeshes: true,
+        showPaths: true,
     };
 
     private static isCustomEvent(event: Event): event is CustomEvent {
@@ -129,8 +133,10 @@ class Viewport extends React.Component<ViewportProps> {
     }
 
     public componentDidUpdate(prevProps: ViewportProps) {
-        const { height, width } = this.props;
+        const { height, width, showMeshes, showPaths } = this.props;
         this.visGeometry.setHighlightById(this.props.highlightedParticleType);
+        this.visGeometry.setShowMeshes(showMeshes);
+        this.visGeometry.setShowPaths(showPaths);
         if (prevProps.height !== height || prevProps.width !== width) {
             this.visGeometry.resize(width, height);
         }

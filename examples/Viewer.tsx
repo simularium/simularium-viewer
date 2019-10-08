@@ -39,6 +39,8 @@ interface ViewerState {
     currentTime: number;
     height: number;
     width: number;
+    showMeshes: boolean;
+    showPaths: boolean;
 }
 
 const agentSim = new AgentSimController(netConnectionSettings, { trajectoryPlaybackFile: "actin5-1.h5" })
@@ -55,6 +57,8 @@ const intialState = {
     currentTime: 0,
     height: 800,
     width: 800,
+    showMeshes: true,
+    showPaths: true,
 }
 
 
@@ -129,7 +133,8 @@ class Viewer extends React.Component<{}, ViewerState> {
                 onClick={() => agentSim.changeFile('actin19.h5')}
             >
                 actin file
-                </button>
+            </button>
+            <br/>
             <input id="frame-number" type="text" />
             <button
                 onClick={() => agentSim.gotoNextFrame()}
@@ -141,8 +146,8 @@ class Viewer extends React.Component<{}, ViewerState> {
                 onClick={this.playOneFrame}
             >
                 Play one frame
-                </button>
-
+            </button>
+            <br/>
             <select
                 onChange={(event) => this.highlightParticleType(event.target.value)}
             >
@@ -151,6 +156,13 @@ class Viewer extends React.Component<{}, ViewerState> {
                     return (<option key={id} value={id}>{id}</option>);
                 })}
             </select>
+            <button
+                onClick={() => this.setState({showMeshes: !this.state.showMeshes})}
+            >ShowMeshes</button>
+            <button
+                onClick={() => this.setState({showPaths: !this.state.showPaths})}
+            >ShowPaths</button>
+
             <AgentVizViewer
                 height={this.state.height}
                 width={this.state.width}
@@ -162,6 +174,8 @@ class Viewer extends React.Component<{}, ViewerState> {
                 onTrajectoryFileInfoChanged={this.handleTrajectoryInfo}
                 highlightedParticleType={this.state.highlightId}
                 loadInitialData={true}
+                showMeshes={this.state.showMeshes}
+                showPaths={this.state.showPaths}
             />
         </div>)
     }
