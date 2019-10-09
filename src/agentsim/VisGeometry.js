@@ -373,11 +373,13 @@ class VisGeometry {
                 const runtimeMesh = this.getMesh(i);
                 if (!runtimeMesh.userData) {
                     runtimeMesh.userData = { 
+                        active: true,
                         baseMaterial: this.getMaterial(materialType, typeId),
                         index: i,
                     }
                 }
                 else {
+                    runtimeMesh.userData.active = true;
                     runtimeMesh.userData.baseMaterial = this.getMaterial(materialType, typeId);
                     runtimeMesh.userData.index = i;
                 }
@@ -626,7 +628,9 @@ class VisGeometry {
         let nMeshes = this.runTimeMeshes.length;
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
             const runtimeMesh = this.getMesh(i);
-            runtimeMesh.visible = showMeshes;
+            if (runtimeMesh.userData && runtimeMesh.userData.active) {
+                runtimeMesh.visible = showMeshes;
+            }
         }
     }
 
@@ -646,6 +650,10 @@ class VisGeometry {
             }
 
             runtimeMesh.visible = false;
+            if (runtimeMesh.userData) {
+                runtimeMesh.userData.active = false;
+            }
+
             // hide the path if we're hiding the agent. should we remove the path here?
             this.showPathForAgentIndex(i, false);
         }
