@@ -61,6 +61,10 @@ class VisGeometry {
 
     get renderDom() { return this.renderer.domElement; }
 
+    getFollowObject() {
+        return this.followObject;
+    }
+
     setFollowObject(obj) {
         this.followObject = obj;
         // put the camera on it
@@ -370,10 +374,12 @@ class VisGeometry {
                 if (!runtimeMesh.userData) {
                     runtimeMesh.userData = { 
                         baseMaterial: this.getMaterial(materialType, typeId),
+                        index: i,
                     }
                 }
                 else {
                     runtimeMesh.userData.baseMaterial = this.getMaterial(materialType, typeId);
+                    runtimeMesh.userData.index = i;
                 }
 
                 dx = agentData.x - runtimeMesh.position.x; 
@@ -407,8 +413,8 @@ class VisGeometry {
                     runtimeMesh.geometry = this.getSphereGeom();
                 }
 
-                if (i % SKIP_PATH === 0) {
-                    const path = this.addPathForAgentIndex(i);
+                const path = this.findPathForAgentIndex(i);
+                if (path) {
                     this.addPointToPath(path, agentData.x, agentData.y, agentData.z, dx, dy, dz);
                 }
             } else if (visType === visTypes.ID_VIS_TYPE_FIBER) {
@@ -481,14 +487,30 @@ class VisGeometry {
         return this.paths.find((path)=>{return path.agent===idx;});
     }
 
+    removePathForObject(obj) {
+        if (obj && obj.userData && obj.userData.index !== undefined) {
+            this.removePathForAgentIndex(obj.userData.index);
+        }
+    }
+
+    addPathForObject(obj) {
+        if (obj && obj.userData && obj.userData.index !== undefined) {
+            this.addPathForAgentIndex(obj.userData.index);
+        }
+    }
+
     // assumes color is a threejs color, or null/undefined
-    addPathForAgentIndex(idx, color) {
+    addPathForAgentIndex(idx, maxSegments, color) {
         // make sure the idx is not already in our list.
         // could be optimized...
         const foundpath = this.findPathForAgentIndex(idx);
         if (foundpath) {
             foundpath.line.visible = true;
             return foundpath;
+        }
+
+        if (!maxSegments) {
+            maxSegments = MAX_PATH_LEN;
         }
 
         if (!color) {
@@ -500,9 +522,10 @@ class VisGeometry {
         const pathdata = {
             agent: idx,
             numSegments: 0,
+            maxSegments: maxSegments,
             color: color,
-            points: new Float32Array(MAX_PATH_LEN * 3 * 2),
-            colors: new Float32Array(MAX_PATH_LEN * 3 * 2),
+            points: new Float32Array(maxSegments * 3 * 2),
+            colors: new Float32Array(maxSegments * 3 * 2),
             geometry: new THREE.BufferGeometry(),
             material: new THREE.LineBasicMaterial({
                 // the line will be colored per-vertex
@@ -517,6 +540,7 @@ class VisGeometry {
         // path starts empty: draw range spans nothing
         pathdata.geometry.setDrawRange( 0, 0 );
         pathdata.line = new THREE.LineSegments(pathdata.geometry, pathdata.material);
+        pathdata.line.frustumCulled = false;
         this.scene.add(pathdata.line);
 
 
@@ -554,12 +578,12 @@ class VisGeometry {
         }
 
         // check for paths at max length
-        if (path.numSegments === MAX_PATH_LEN) {
+        if (path.numSegments === path.maxSegments) {
             // because we append to the end, we can copyWithin to move points up to the beginning
             // as a means of removing the first point in the path.
             // shift the points:
-            path.points.copyWithin(0, 3*2, MAX_PATH_LEN*3*2);
-            path.numSegments = MAX_PATH_LEN-1;
+            path.points.copyWithin(0, 3*2, path.maxSegments*3*2);
+            path.numSegments = path.maxSegments-1;
         }
         else {
             // rewrite all the colors. this might be prohibitive for lots of long paths.

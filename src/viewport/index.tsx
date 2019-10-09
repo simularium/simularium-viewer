@@ -167,14 +167,24 @@ class Viewport extends React.Component<ViewportProps> {
         this.raycaster.setFromCamera(mouse, this.visGeometry.camera);
         // TODO: intersect with scene's children not including lights?
         // can we select a smaller number of things to hit test?
+        const oldFollowObject = this.visGeometry.getFollowObject();
         this.visGeometry.setFollowObject(null);
         const intersects = this.raycaster.intersectObjects(this.visGeometry.scene.children, true);
         if (intersects && intersects.length) {
             const obj = intersects[0].object;
             this.hit = true;
+            if (oldFollowObject !== obj) {
+                this.visGeometry.removePathForObject(oldFollowObject);
+            }
             this.visGeometry.setFollowObject(obj);
-        } else if (this.hit) {
-            this.hit = false;
+            this.visGeometry.addPathForObject(obj);
+        } else {
+            if (oldFollowObject) {
+                this.visGeometry.removePathForObject(oldFollowObject);
+            }
+            if (this.hit) {
+                this.hit = false;
+            }
         }
     }
 
