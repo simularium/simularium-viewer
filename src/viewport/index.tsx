@@ -36,6 +36,7 @@ class Viewport extends React.Component<ViewportProps> {
     // NOTE: this can be typed in the future, but they may change signifantly and I dont want to at the moment. -MMRM
     private visGeometry: any;
     private lastRenderTime: number;
+    private startTime: number;
     private vdomRef: React.RefObject<HTMLInputElement>;
     private handlers: { [key: string]: (e: any) => void };
 
@@ -75,6 +76,7 @@ class Viewport extends React.Component<ViewportProps> {
         this.dispatchUpdatedTime = this.dispatchUpdatedTime.bind(this);
         this.handleTimeChange = this.handleTimeChange.bind(this);
         this.lastRenderTime = Date.now();
+        this.startTime = Date.now();
         this.onPickObject = this.onPickObject.bind(this);
 
         this.handlers = {
@@ -120,6 +122,7 @@ class Viewport extends React.Component<ViewportProps> {
         }
         this.addEventHandlersToCanvas();
 
+        this.startTime = Date.now();
         this.animate();
     }
 
@@ -223,7 +226,9 @@ class Viewport extends React.Component<ViewportProps> {
         } = agentSimController;
         const framesPerSecond = 60; // how often the view-port rendering is refreshed per second
         const timePerFrame = 1000 / framesPerSecond; // the time interval at which to re-render
-        const elapsedTime = Date.now() - this.lastRenderTime;
+        const now = Date.now();
+        const elapsedTime = now - this.lastRenderTime;
+        const totalElapsedTime = now - this.startTime;
         if (elapsedTime > timePerFrame) {
             if (!netConnection.socketIsValid()) {
                 this.visGeometry.clear();
@@ -231,7 +236,7 @@ class Viewport extends React.Component<ViewportProps> {
             if (simParameters.newSimulationIsRunning) {
                 simParameters.newSimulationIsRunning = false;
             }
-            this.visGeometry.render();
+            this.visGeometry.render(totalElapsedTime);
             this.lastRenderTime = Date.now();
         }
 

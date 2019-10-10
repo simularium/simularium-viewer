@@ -1,5 +1,6 @@
 
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const path = require('path');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
@@ -16,6 +17,10 @@ module.exports = {
             template: './examples/index.html'
         }),
         new MiniCssExtractPlugin({ filename: 'style.[contenthash].css' }),
+        new CopyWebpackPlugin([
+            { from: 'examples/assets', to: path.resolve(__dirname, 'public/assets') },
+            { from: 'src/agentsim/assets', to: path.resolve(__dirname, 'public/assets') },
+        ]),
     ],
     devServer: {
         publicPath: '/public/',

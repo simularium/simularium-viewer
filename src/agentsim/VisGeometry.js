@@ -12,8 +12,10 @@ import './three/OrbitControls.js';
 
 import jsLogger from 'js-logger';
 
+//import MembraneShader from './MembraneShader.js';
+import MembraneShader from './MembraneShader2.js';
+
 const MAX_PATH_LEN = 32;
-const SKIP_PATH = 100;
 const MAX_MESHES = 5000;
 const BACKGROUND_COLOR = new THREE.Color(0xcccccc);
 const PATH_END_COLOR = BACKGROUND_COLOR;
@@ -45,6 +47,12 @@ class VisGeometry {
         // will store data for all agents that are drawing paths
         this.paths = [];
 
+        this.membrane = {
+            center: new THREE.Vector3(0,0,300),
+            radius: 300,
+            thickness: 10
+        };
+        
         this.mlogger = jsLogger.get('visgeometry');
         this.mlogger.setLevel(loggerLevel);
     }
@@ -176,8 +184,14 @@ class VisGeometry {
         this.controls.enabled = true;
     }
 
-    render() {
+    render(time) {
         if(this.runTimeMeshes.length == 0) { return; }
+
+        var elapsedSeconds = time / 1000.;
+        if (this.membraneInner) {
+            this.membraneInner.mesh.material.uniforms.iTime.value = elapsedSeconds;
+            this.membraneOuter.mesh.material.uniforms.iTime.value = elapsedSeconds;
+        }
 
         this.controls.update();
 
@@ -269,6 +283,50 @@ class VisGeometry {
         return matArray[Number(index) % matArray.length];
     }
 
+    setupMembrane(membraneData) {
+        if (!membraneData) {
+            return;
+        }
+
+        const phiMin = 235 * Math.PI / 180;
+        const phiMax = 305 * Math.PI / 180;
+        const thetaMin = 60 * Math.PI / 180;
+        const thetaMax = 120 * Math.PI / 180;
+
+        const tex = new THREE.TextureLoader().load('assets/colornoise.png');
+
+        const materialOuter = MembraneShader.clone();
+        materialOuter.uniforms.color.value = new THREE.Color(0x4444ff);
+        materialOuter.uniforms.iChannel0.value = tex;
+        //materialOuter.side = THREE.FrontSide;
+
+        this.membraneOuter = {
+            data: membraneData,
+            mesh: new THREE.Mesh(
+                new THREE.SphereBufferGeometry(membraneData.radius + membraneData.thickness, 128, 128,
+                    phiMin, phiMax-phiMin, thetaMin, thetaMax-thetaMin),
+                materialOuter
+            ),
+        };
+
+        const materialInner = MembraneShader.clone();
+        materialInner.uniforms.color.value = new THREE.Color(0x44ff44);
+        materialInner.uniforms.iChannel0.value = tex;
+        //materialInner.side = THREE.BackSide;
+
+        this.membraneInner = {
+            data: membraneData,
+            mesh: new THREE.Mesh(
+                new THREE.SphereBufferGeometry(membraneData.radius - membraneData.thickness, 128, 128,
+                    phiMin, phiMax-phiMin, thetaMin, thetaMax-thetaMin),
+                materialInner
+            ),
+        };
+        this.membraneOuter.mesh.position.set(membraneData.center.x, membraneData.center.y, membraneData.center.z);
+        this.membraneInner.mesh.position.set(membraneData.center.x, membraneData.center.y, membraneData.center.z);
+        this.scene.add(this.membraneInner.mesh);
+        this.scene.add(this.membraneOuter.mesh);
+    }
     /**
     *   Data Management
     */
@@ -316,6 +374,7 @@ class VisGeometry {
                     self.mapIdToGeom(Number(id), entry.mesh);
                     self.setScaleForId(Number(id), entry.scale);
                 });
+                self.setupMembrane(self.membrane);
                 if (callback) {
                     callback(jsonData);
                 }
