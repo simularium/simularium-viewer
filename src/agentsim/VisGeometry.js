@@ -12,13 +12,25 @@ import './three/OrbitControls.js';
 
 import jsLogger from 'js-logger';
 
+const MAX_PATH_LEN = 32;
+const SKIP_PATH = 100;
+const MAX_MESHES = 5000;
+const BACKGROUND_COLOR = new THREE.Color(0xcccccc);
+const PATH_END_COLOR = BACKGROUND_COLOR;
+// FIXME Hard-coded for actin simulation.  needs to be data coming from backend.
+const VOLUME_DIMS = new THREE.Vector3(300, 300, 300);
+
+function lerp(x0, x1, alpha) {
+    return x0 + (x1 - x0) * alpha;
+}
+
 class VisGeometry {
     constructor(loggerLevel) {
         this.visGeomMap = new Map();
         this.meshRegistry = new Map();
         this.meshLoadAttempted = new Map();
         this.scaleMapping = new Map();
-        this.geomCount = 100;
+        this.geomCount = MAX_MESHES;
         this.materials = [];
         this.desatMaterials = [];
         this.highlightMaterial = new THREE.MeshBasicMaterial({color: new THREE.Color(1,0,0)});
@@ -29,6 +41,9 @@ class VisGeometry {
         this.mcolorVariant = 50;
         this.fixLightsToCamera = true;
         this.highlightedId = -1;
+
+        // will store data for all agents that are drawing paths
+        this.paths = [];
 
         this.mlogger = jsLogger.get('visgeometry');
         this.mlogger.setLevel(loggerLevel);
@@ -45,6 +60,10 @@ class VisGeometry {
     set colorVariant(val) { this.mcolorVariant = val; }
 
     get renderDom() { return this.renderer.domElement; }
+
+    getFollowObject() {
+        return this.followObject;
+    }
 
     setFollowObject(obj) {
         this.followObject = obj;
@@ -98,7 +117,7 @@ class VisGeometry {
 
         this.renderer = new THREE.WebGLRenderer();
         this.renderer.setSize(initWidth, initHeight); // expected to change when reparented
-        this.renderer.setClearColor(new THREE.Color(0xcccccc), 1);
+        this.renderer.setClearColor(BACKGROUND_COLOR, 1);
         this.renderer.clear();
 
         this.camera.position.z = 5;
@@ -193,9 +212,9 @@ class VisGeometry {
         }
     }
 
-    createMeshes(geomCount) {
+    createMeshes() {
         const { scene } = this;
-        this.geomCount = geomCount;
+        this.geomCount = MAX_MESHES;
         const sphereGeom = this.getSphereGeom();
         const { materials } = this;
 
@@ -341,6 +360,7 @@ class VisGeometry {
             ID_VIS_TYPE_FIBER: 1001,
         });
 
+        let dx, dy, dz;
         // The agents sent over are mapped by an integer id
         agents.forEach((agentData, i) => {
 
@@ -351,7 +371,22 @@ class VisGeometry {
             if (visType === visTypes.ID_VIS_TYPE_DEFAULT) {
                 const materialType = (typeId + 1) * this.colorVariant;
                 const runtimeMesh = this.getMesh(i);
+                if (!runtimeMesh.userData) {
+                    runtimeMesh.userData = { 
+                        active: true,
+                        baseMaterial: this.getMaterial(materialType, typeId),
+                        index: i,
+                    }
+                }
+                else {
+                    runtimeMesh.userData.active = true;
+                    runtimeMesh.userData.baseMaterial = this.getMaterial(materialType, typeId);
+                    runtimeMesh.userData.index = i;
+                }
 
+                dx = agentData.x - runtimeMesh.position.x; 
+                dy = agentData.y - runtimeMesh.position.y; 
+                dz = agentData.z - runtimeMesh.position.z; 
                 runtimeMesh.position.x = agentData.x;
                 runtimeMesh.position.y = agentData.y;
                 runtimeMesh.position.z = agentData.z;
@@ -365,7 +400,7 @@ class VisGeometry {
                     runtimeMesh.material = this.highlightMaterial;
                 }
                 else {
-                    runtimeMesh.material = this.getMaterial(materialType, typeId);
+                    runtimeMesh.material = runtimeMesh.userData.baseMaterial;
                 }
 
                 runtimeMesh.scale.x = agentData.cr * scale;
@@ -374,10 +409,15 @@ class VisGeometry {
 
                 const meshGeom = this.getGeomFromId(typeId);
 
-                if (meshGeom &&  meshGeom.children) {
+                if (meshGeom && meshGeom.children) {
                     runtimeMesh.geometry = meshGeom.children[0].geometry;
                 } else {
                     runtimeMesh.geometry = this.getSphereGeom();
+                }
+
+                const path = this.findPathForAgentIndex(i);
+                if (path) {
+                    this.addPointToPath(path, agentData.x, agentData.y, agentData.z, dx, dy, dz);
                 }
             } else if (visType === visTypes.ID_VIS_TYPE_FIBER) {
                 const name = `Fiber_${fiberIndex.toString()}`;
@@ -437,15 +477,185 @@ class VisGeometry {
         }
     }
 
+    getMaterialOfAgentIndex(idx) {
+        const runtimeMesh = this.getMesh(idx);
+        if (runtimeMesh.userData) {
+            return runtimeMesh.userData.baseMaterial;
+        }
+        return undefined;
+    }
+
+    findPathForAgentIndex(idx) {
+        return this.paths.find((path)=>{return path.agent===idx;});
+    }
+
+    removePathForObject(obj) {
+        if (obj && obj.userData && obj.userData.index !== undefined) {
+            this.removePathForAgentIndex(obj.userData.index);
+        }
+    }
+
+    addPathForObject(obj) {
+        if (obj && obj.userData && obj.userData.index !== undefined) {
+            this.addPathForAgentIndex(obj.userData.index);
+        }
+    }
+
+    // assumes color is a threejs color, or null/undefined
+    addPathForAgentIndex(idx, maxSegments, color) {
+        // make sure the idx is not already in our list.
+        // could be optimized...
+        const foundpath = this.findPathForAgentIndex(idx);
+        if (foundpath) {
+            foundpath.line.visible = true;
+            return foundpath;
+        }
+
+        if (!maxSegments) {
+            maxSegments = MAX_PATH_LEN;
+        }
+
+        if (!color) {
+            // get the agent's color. is there a simpler way?
+            const mat = this.getMaterialOfAgentIndex(idx);
+            color = mat ? mat.color.clone() : new THREE.Color(0xffffff);
+        }
+
+        const pathdata = {
+            agent: idx,
+            numSegments: 0,
+            maxSegments: maxSegments,
+            color: color,
+            points: new Float32Array(maxSegments * 3 * 2),
+            colors: new Float32Array(maxSegments * 3 * 2),
+            geometry: new THREE.BufferGeometry(),
+            material: new THREE.LineBasicMaterial({
+                // the line will be colored per-vertex
+                vertexColors: THREE.VertexColors,
+            }),
+            // will create line "lazily" when the line has more than 1 point(?)
+            line: null,
+        };
+        
+        pathdata.geometry.addAttribute( 'position', new THREE.BufferAttribute( pathdata.points, 3 ) );
+        pathdata.geometry.addAttribute( 'color', new THREE.BufferAttribute( pathdata.colors, 3 ) );
+        // path starts empty: draw range spans nothing
+        pathdata.geometry.setDrawRange( 0, 0 );
+        pathdata.line = new THREE.LineSegments(pathdata.geometry, pathdata.material);
+        pathdata.line.frustumCulled = false;
+        this.scene.add(pathdata.line);
+
+
+        this.paths.push(pathdata);
+        return pathdata;
+    }
+
+    removePathForAgentIndex(idx) {
+        const pathindex = this.paths.findIndex((path)=>{return path.agent===idx;});
+        if (pathindex === -1) {
+            console.log("attempted to remove path for agent " + idx + " that doesn't exist.");
+            return;
+        }
+        const path = this.paths[pathindex];
+        this.scene.remove(path.line);
+
+        this.paths.splice(pathindex, 1);
+    }
+
+    addPointToPath(path, x, y, z, dx, dy, dz) {
+        if ((x === dx) && (y === dy) && (z === dz)) {
+            return;
+        }
+        // Check for periodic boundary condition:
+        // if any agent moved more than half the volume size in one step, 
+        // assume it jumped the boundary going the other way.
+        if (Math.abs(dx) > VOLUME_DIMS.x/2 || Math.abs(dy) > VOLUME_DIMS.y/2 || Math.abs(dz) > VOLUME_DIMS.z/2) {
+            // now what?
+            // TODO: clip line segment from x-dx to x against the bounds,
+            // compute new line segments from x-dx to bound, and from x to opposite bound
+            // For now, add a degenerate line segment 
+            dx = 0;
+            dy = 0;
+            dz = 0;
+        }
+
+        // check for paths at max length
+        if (path.numSegments === path.maxSegments) {
+            // because we append to the end, we can copyWithin to move points up to the beginning
+            // as a means of removing the first point in the path.
+            // shift the points:
+            path.points.copyWithin(0, 3*2, path.maxSegments*3*2);
+            path.numSegments = path.maxSegments-1;
+        }
+        else {
+            // rewrite all the colors. this might be prohibitive for lots of long paths.
+            for (let ic = 0; ic < path.numSegments+1; ++ic) {
+                // the very first point should be a=1
+                const a = 1.0 - (ic)/(path.numSegments+1);
+                path.colors[ic*6+0] = lerp(path.color.r, PATH_END_COLOR.r, a);
+                path.colors[ic*6+1] = lerp(path.color.g, PATH_END_COLOR.g, a);
+                path.colors[ic*6+2] = lerp(path.color.b, PATH_END_COLOR.b, a);
+
+                // the very last point should be b=0
+                const b = 1.0 - (ic+1)/(path.numSegments+1); 
+                path.colors[ic*6+3] = lerp(path.color.r, PATH_END_COLOR.r, b);
+                path.colors[ic*6+4] = lerp(path.color.g, PATH_END_COLOR.g, b);
+                path.colors[ic*6+5] = lerp(path.color.b, PATH_END_COLOR.b, b);
+            }
+            path.line.geometry.attributes.color.needsUpdate = true;
+        }
+        // add a segment to this line
+        path.points[path.numSegments*2*3+0] = x-dx;
+        path.points[path.numSegments*2*3+1] = y-dy;
+        path.points[path.numSegments*2*3+2] = z-dz;
+        path.points[path.numSegments*2*3+3] = x;
+        path.points[path.numSegments*2*3+4] = y;
+        path.points[path.numSegments*2*3+5] = z;
+
+        path.numSegments++;
+
+        path.line.geometry.setDrawRange( 0, path.numSegments*2 );
+        path.line.geometry.attributes.position.needsUpdate = true; // required after the first render
+    }
+
+    setShowPaths(showPaths) {
+        for (let i = 0; i < this.paths.length; ++i) {
+            this.paths[i].line.visible = showPaths;
+        }
+    }
+
+    setShowMeshes(showMeshes) {
+        let nMeshes = this.runTimeMeshes.length;
+        for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
+            const runtimeMesh = this.getMesh(i);
+            if (runtimeMesh.userData && runtimeMesh.userData.active) {
+                runtimeMesh.visible = showMeshes;
+            }
+        }
+    }
+
+    showPathForAgentIndex(idx, visible) {
+        const path = this.findPathForAgentIndex(idx);
+        if (path) {
+            path.line.visible = visible;
+        }
+    }
+
     hideUnusedMeshes(numberOfAgents) {
         let nMeshes = this.runTimeMeshes.length;
-        for (let i = numberOfAgents; i < 5000 && i < nMeshes; i += 1) {
+        for (let i = numberOfAgents; i < MAX_MESHES && i < nMeshes; i += 1) {
             const runtimeMesh = this.getMesh(i);
             if (runtimeMesh.visible === false) {
                 break;
             }
 
             runtimeMesh.visible = false;
+            if (runtimeMesh.userData) {
+                runtimeMesh.userData.active = false;
+            }
+
+            // hide the path if we're hiding the agent. should we remove the path here?
+            this.showPathForAgentIndex(i, false);
         }
     }
 
@@ -459,8 +669,8 @@ class VisGeometry {
 
         if (this.lastNumberOfAgents > numberOfAgents) {
             this.hideUnusedMeshes(numberOfAgents);
-        }
 
+        }
         this.lastNumberOfAgents = numberOfAgents;
     }
 }

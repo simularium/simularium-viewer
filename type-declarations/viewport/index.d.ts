@@ -11,6 +11,8 @@ interface ViewportProps {
     onTrajectoryFileInfoChanged: (cachedData: any) => void | undefined;
     highlightedParticleType: number | string;
     loadInitialData: boolean;
+    showMeshes: boolean;
+    showPaths: boolean;
 }
 interface TimeData {
     time: number;
@@ -30,6 +32,8 @@ declare class Viewport extends React.Component<ViewportProps> {
         devgui: boolean;
         highlightedParticleType: number;
         loadInitialData: boolean;
+        showMeshes: boolean;
+        showPaths: boolean;
     };
     private static isCustomEvent;
     constructor(props: ViewportProps);

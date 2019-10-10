@@ -22,6 +22,8 @@ interface ViewportProps {
     onTrajectoryFileInfoChanged: (cachedData: any) => void | undefined;
     highlightedParticleType: number | string;
     loadInitialData: boolean;
+    showMeshes: boolean;
+    showPaths: boolean;
 }
 
 interface TimeData {
@@ -47,6 +49,8 @@ class Viewport extends React.Component<ViewportProps> {
         devgui: false,
         highlightedParticleType: -1,
         loadInitialData: true,
+        showMeshes: true,
+        showPaths: true,
     };
 
     private static isCustomEvent(event: Event): event is CustomEvent {
@@ -66,7 +70,7 @@ class Viewport extends React.Component<ViewportProps> {
         this.animate = this.animate.bind(this);
         this.visGeometry.setupScene();
         this.visGeometry.createMaterials(agentSimController.visData.colors);
-        this.visGeometry.createMeshes(5000);
+        this.visGeometry.createMeshes();
         this.vdomRef = React.createRef();
         this.dispatchUpdatedTime = this.dispatchUpdatedTime.bind(this);
         this.handleTimeChange = this.handleTimeChange.bind(this);
@@ -129,8 +133,10 @@ class Viewport extends React.Component<ViewportProps> {
     }
 
     public componentDidUpdate(prevProps: ViewportProps) {
-        const { height, width } = this.props;
+        const { height, width, showMeshes, showPaths } = this.props;
         this.visGeometry.setHighlightById(this.props.highlightedParticleType);
+        this.visGeometry.setShowMeshes(showMeshes);
+        this.visGeometry.setShowPaths(showPaths);
         if (prevProps.height !== height || prevProps.width !== width) {
             this.visGeometry.resize(width, height);
         }
@@ -161,14 +167,24 @@ class Viewport extends React.Component<ViewportProps> {
         this.raycaster.setFromCamera(mouse, this.visGeometry.camera);
         // TODO: intersect with scene's children not including lights?
         // can we select a smaller number of things to hit test?
+        const oldFollowObject = this.visGeometry.getFollowObject();
         this.visGeometry.setFollowObject(null);
         const intersects = this.raycaster.intersectObjects(this.visGeometry.scene.children, true);
         if (intersects && intersects.length) {
             const obj = intersects[0].object;
             this.hit = true;
+            if (oldFollowObject !== obj) {
+                this.visGeometry.removePathForObject(oldFollowObject);
+            }
             this.visGeometry.setFollowObject(obj);
-        } else if (this.hit) {
-            this.hit = false;
+            this.visGeometry.addPathForObject(obj);
+        } else {
+            if (oldFollowObject) {
+                this.visGeometry.removePathForObject(oldFollowObject);
+            }
+            if (this.hit) {
+                this.hit = false;
+            }
         }
     }
 

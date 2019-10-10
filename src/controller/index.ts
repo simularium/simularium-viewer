@@ -1,4 +1,7 @@
 import { NetConnection, SimParameters, VisData } from "../agentsim";
+import jsLogger from "js-logger";
+
+jsLogger.setHandler(jsLogger.createDefaultHandler());
 
 export default class AgentSimController {
     public netConnection: any;
@@ -6,12 +9,15 @@ export default class AgentSimController {
     public visData: any;
 
     public constructor(netConnectionSettings, params) {
+        const loggerLevel =
+            params.loggerLevel === "debug" ? jsLogger.DEBUG : jsLogger.OFF;
         this.visData = new VisData({});
         this.simParameters = new SimParameters(params);
         this.netConnection = new NetConnection(
             this.simParameters,
             this.visData,
-            netConnectionSettings
+            netConnectionSettings,
+            loggerLevel
         );
     }
 
