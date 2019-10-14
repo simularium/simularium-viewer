@@ -13,7 +13,8 @@ import './three/OrbitControls.js';
 import jsLogger from 'js-logger';
 
 //import MembraneShader from './MembraneShader.js';
-import MembraneShader from './MembraneShader2.js';
+//import MembraneShader from './MembraneShader2.js';
+import MembraneShader from './MembraneShader3.js';
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 5000;
@@ -50,7 +51,8 @@ class VisGeometry {
         this.membrane = {
             center: new THREE.Vector3(0,0,300),
             radius: 300,
-            thickness: 10
+            thickness: 10,
+            sim: new MembraneShader.MembraneShader3Sim(),
         };
         
         this.mlogger = jsLogger.get('visgeometry');
@@ -152,6 +154,7 @@ class VisGeometry {
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(width, height);
+        this.membrane.sim.resize(width, height);
     }
 
     reparent(parent) {
@@ -187,10 +190,16 @@ class VisGeometry {
     render(time) {
         if(this.runTimeMeshes.length == 0) { return; }
 
+        this.membrane.sim.render(this.renderer);
+
+
         var elapsedSeconds = time / 1000.;
         if (this.membraneInner) {
             this.membraneInner.mesh.material.uniforms.iTime.value = elapsedSeconds;
             this.membraneOuter.mesh.material.uniforms.iTime.value = elapsedSeconds;
+
+            this.membraneInner.mesh.material.uniforms.iChannel0.value = this.membrane.sim.tgt2.texture;
+            this.membraneOuter.mesh.material.uniforms.iChannel0.value = this.membrane.sim.tgt2.texture;
         }
 
         this.controls.update();
@@ -295,7 +304,7 @@ class VisGeometry {
 
         const tex = new THREE.TextureLoader().load('assets/colornoise.png');
 
-        const materialOuter = MembraneShader.clone();
+        const materialOuter = MembraneShader.MembraneShader.clone();
         materialOuter.uniforms.color.value = new THREE.Color(0x4444ff);
         materialOuter.uniforms.iChannel0.value = tex;
         //materialOuter.side = THREE.FrontSide;
@@ -309,7 +318,7 @@ class VisGeometry {
             ),
         };
 
-        const materialInner = MembraneShader.clone();
+        const materialInner = MembraneShader.MembraneShader.clone();
         materialInner.uniforms.color.value = new THREE.Color(0x44ff44);
         materialInner.uniforms.iChannel0.value = tex;
         //materialInner.side = THREE.BackSide;
