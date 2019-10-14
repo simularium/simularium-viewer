@@ -14,7 +14,8 @@ import jsLogger from 'js-logger';
 
 //import MembraneShader from './MembraneShader.js';
 //import MembraneShader from './MembraneShader2.js';
-import MembraneShader from './MembraneShader3.js';
+//import MembraneShader from './MembraneShader3.js';
+import MembraneShader from './MembraneShader4.js';
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 5000;
@@ -168,8 +169,10 @@ class VisGeometry {
 
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
-        this.renderer.setSize(width, height);
+        this.renderer.setSize(width, height);        
         this.renderer.clear();
+
+        this.membrane.sim.resize(width, height);
 
         this.renderer.domElement.position = "absolute";
         this.renderer.domElement.top = "0px";
@@ -190,16 +193,22 @@ class VisGeometry {
     render(time) {
         if(this.runTimeMeshes.length == 0) { return; }
 
-        this.membrane.sim.render(this.renderer);
-
-
         var elapsedSeconds = time / 1000.;
+
+        this.membrane.sim.render(this.renderer, elapsedSeconds);
+
         if (this.membraneInner) {
             this.membraneInner.mesh.material.uniforms.iTime.value = elapsedSeconds;
             this.membraneOuter.mesh.material.uniforms.iTime.value = elapsedSeconds;
 
             this.membraneInner.mesh.material.uniforms.iChannel0.value = this.membrane.sim.tgt2.texture;
             this.membraneOuter.mesh.material.uniforms.iChannel0.value = this.membrane.sim.tgt2.texture;
+            this.membraneInner.mesh.material.uniforms.iChannelResolution0.value = new THREE.Vector2(this.membrane.sim.tgt2.width, this.membrane.sim.tgt2.height);
+            this.membraneOuter.mesh.material.uniforms.iChannelResolution0.value = new THREE.Vector2(this.membrane.sim.tgt2.width, this.membrane.sim.tgt2.height);
+
+            this.membraneInner.mesh.material.uniforms.iResolution.value = new THREE.Vector2(this.renderer.width, this.renderer.height);
+            this.membraneOuter.mesh.material.uniforms.iResolution.value = new THREE.Vector2(this.renderer.width, this.renderer.height);
+
         }
 
         this.controls.update();

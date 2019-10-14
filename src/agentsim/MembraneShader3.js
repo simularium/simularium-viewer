@@ -22,7 +22,7 @@ class MembraneShader3Sim {
 			uniform vec2 iChannelResolution0;
 			varying vec2 vUv;
 			void main() {
-				gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+				gl_FragColor = vec4(1.0*sin(iTime), 0.0, 0.0, 1.0);
 			}
 			`
 		});
@@ -107,8 +107,9 @@ class MembraneShader3Sim {
 		this.tgt2.clear();
 	}
 	
-	render(renderer) {
+	render(renderer, time) {
 		this.pass0.material.uniforms.iChannel0.value = this.tgt2.texture;
+		this.pass0.material.uniforms.iTime.value = time;
 	
 		this.pass0.render(renderer, this.tgt0);
 	
