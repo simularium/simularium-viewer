@@ -5,6 +5,10 @@ global.THREE = THREE;
 
 import RenderToBuffer from "./RenderToBuffer.js";
 
+const nMolEdge = 196-4;
+// set dataTextureSize > nMolEdge so there is a border for things to bounce.
+// TODO if can force equal, then the code can be simplified/optimized.
+const dataTextureSize = nMolEdge+4;
 
 class MembraneShader3Sim {
 	constructor() {
@@ -12,11 +16,11 @@ class MembraneShader3Sim {
 
 		this.pass0 = new RenderToBuffer({
 			uniforms: {
-				iResolution: { value: new THREE.Vector2(2,2) },
+				iResolution: { value: new THREE.Vector2(dataTextureSize, dataTextureSize) },
 				iFrame: { value: 0 },
 				iTime: { value: 0.0 },
 				iChannel0: {type:'t', value: null },
-				iChannelResolution0: { value: new THREE.Vector2(2,2) }
+				iChannelResolution0: { value: new THREE.Vector2(dataTextureSize, dataTextureSize) }
 			},
 			fragmentShader: `
 			uniform int iFrame;
@@ -39,7 +43,7 @@ class MembraneShader3Sim {
 			  return fract (sin (p) * cHashM);
 			}
 			
-			const float txRow = 32.;
+			const float txRow = ${dataTextureSize}.;
 			
 			vec4 Loadv4 (int idVar)
 			{
@@ -55,7 +59,7 @@ class MembraneShader3Sim {
 			  if (max (d.x, d.y) < 0.5) fCol = val;
 			}
 			
-			const int nMolEdge = 20;
+			const int nMolEdge = ${nMolEdge};
 			const int nMol = nMolEdge * nMolEdge;
 			float bFac;
 			
@@ -142,11 +146,11 @@ class MembraneShader3Sim {
 		
 		this.pass1 = new RenderToBuffer({
 			uniforms: {
-				iResolution: { value: new THREE.Vector2(2,2) },
+				iResolution: { value: new THREE.Vector2(dataTextureSize, dataTextureSize) },
 				iFrame: { value: 0 },
 				iTime: { value: 0.0 },
 				iChannel0: {type:'t', value: null },
-				iChannelResolution0: { value: new THREE.Vector2(2,2) }
+				iChannelResolution0: { value: new THREE.Vector2(dataTextureSize, dataTextureSize) }
 			},
 			fragmentShader: `
 			uniform int iFrame;
@@ -169,7 +173,7 @@ class MembraneShader3Sim {
 			  return fract (sin (p) * cHashM);
 			}
 			
-			const float txRow = 32.;
+			const float txRow = ${dataTextureSize}.;
 			
 			vec4 Loadv4 (int idVar)
 			{
@@ -185,7 +189,7 @@ class MembraneShader3Sim {
 			  if (max (d.x, d.y) < 0.5) fCol = val;
 			}
 			
-			const int nMolEdge = 20;
+			const int nMolEdge = ${nMolEdge};
 			const int nMol = nMolEdge * nMolEdge;
 			float bFac;
 			
@@ -272,11 +276,11 @@ class MembraneShader3Sim {
 		
 		this.pass2 = new RenderToBuffer({
 			uniforms: {
-				iResolution: { value: new THREE.Vector2(2,2) },
+				iResolution: { value: new THREE.Vector2(dataTextureSize, dataTextureSize) },
 				iFrame: { value: 0 },
 				iTime: { value: 0.0 },
 				iChannel0: {type:'t', value: null },
-				iChannelResolution0: { value: new THREE.Vector2(2,2) }
+				iChannelResolution0: { value: new THREE.Vector2(dataTextureSize, dataTextureSize) }
 			},
 			fragmentShader: `
 			uniform int iFrame;
@@ -299,7 +303,7 @@ class MembraneShader3Sim {
 			  return fract (sin (p) * cHashM);
 			}
 			
-			const float txRow = 32.;
+			const float txRow = ${dataTextureSize}.;
 			
 			vec4 Loadv4 (int idVar)
 			{
@@ -315,7 +319,7 @@ class MembraneShader3Sim {
 			  if (max (d.x, d.y) < 0.5) fCol = val;
 			}
 			
-			const int nMolEdge = 20;
+			const int nMolEdge = ${nMolEdge};
 			const int nMol = nMolEdge * nMolEdge;
 			float bFac;
 			
@@ -400,7 +404,7 @@ class MembraneShader3Sim {
 			`
 		});
 		
-		this.tgt0 = new THREE.WebGLRenderTarget(2, 2, {
+		this.tgt0 = new THREE.WebGLRenderTarget(dataTextureSize, dataTextureSize, {
 			minFilter: THREE.NearestFilter,
 			magFilter: THREE.NearestFilter,
 			format: THREE.RGBAFormat,
@@ -410,7 +414,7 @@ class MembraneShader3Sim {
 		});
 		this.tgt0.texture.generateMipmaps = false;
 		
-		this.tgt1 = new THREE.WebGLRenderTarget(2, 2, {
+		this.tgt1 = new THREE.WebGLRenderTarget(dataTextureSize, dataTextureSize, {
 			minFilter: THREE.NearestFilter,
 			magFilter: THREE.NearestFilter,
 			format: THREE.RGBAFormat,
@@ -420,7 +424,7 @@ class MembraneShader3Sim {
 		});
 		this.tgt1.texture.generateMipmaps = false;
 		
-		this.tgt2 = new THREE.WebGLRenderTarget(2, 2, {
+		this.tgt2 = new THREE.WebGLRenderTarget(dataTextureSize, dataTextureSize, {
 			minFilter: THREE.NearestFilter,
 			magFilter: THREE.NearestFilter,
 			format: THREE.RGBAFormat,
@@ -438,20 +442,20 @@ class MembraneShader3Sim {
 	}
 
 	resize(x,y) {
-		this.tgt0.setSize(x,y);
-		this.tgt1.setSize(x,y);
-		this.tgt2.setSize(x,y);
+		//this.tgt0.setSize(x,y);
+		//this.tgt1.setSize(x,y);
+		//this.tgt2.setSize(x,y);
 
-		this.pass0.material.uniforms.iResolution.value = new THREE.Vector2(x,y);
-		this.pass1.material.uniforms.iResolution.value = new THREE.Vector2(x,y);
-		this.pass2.material.uniforms.iResolution.value = new THREE.Vector2(x,y);
+		this.pass0.material.uniforms.iResolution.value = new THREE.Vector2(this.tgt0.width, this.tgt0.height);
+		this.pass1.material.uniforms.iResolution.value = new THREE.Vector2(this.tgt1.width, this.tgt1.height);
+		this.pass2.material.uniforms.iResolution.value = new THREE.Vector2(this.tgt2.width, this.tgt2.height);
 
 		// gets tgt2 size
-		this.pass0.material.uniforms.iChannelResolution0.value = new THREE.Vector2(x,y);
+		this.pass0.material.uniforms.iChannelResolution0.value = new THREE.Vector2(this.tgt2.width, this.tgt2.height);
 		// gets tgt0 size
-		this.pass1.material.uniforms.iChannelResolution0.value = new THREE.Vector2(x,y);
+		this.pass1.material.uniforms.iChannelResolution0.value = new THREE.Vector2(this.tgt0.width, this.tgt0.height);
 		// gets tgt1 size
-		this.pass2.material.uniforms.iChannelResolution0.value = new THREE.Vector2(x,y);
+		this.pass2.material.uniforms.iChannelResolution0.value = new THREE.Vector2(this.tgt1.width, this.tgt1.height);
 
 		//this.tgt0.clear();
 		//this.tgt1.clear();
@@ -534,7 +538,7 @@ Mouse click restarts run.
 #define txBuf iChannel0
 #define txSize iChannelResolution0.xy
 
-const float txRow = 32.;
+const float txRow = ${dataTextureSize}.;
 
 vec4 Loadv4 (int idVar)
 {
@@ -543,8 +547,10 @@ vec4 Loadv4 (int idVar)
      txSize);
 }
 
-const int nMolEdge = 20;
+const int nMolEdge = ${nMolEdge};
 const int nMol = nMolEdge * nMolEdge;
+
+#define hue(v)  ( .6 + .6 * cos( 6.3*(v)  + vec3(0,23,21)  ) )  // https://www.shadertoy.com/view/ll2cDc
 
 void main()
 {
@@ -553,10 +559,11 @@ void main()
   float bFac, dMin, b;
   //uv = 2. * gl_FragCoord.xy / iResolution.xy - 1.;
   //uv.x *= iResolution.x / iResolution.y;
-  uv = vUv;
-  ut = abs (uv) - vec2 (1.);
-  b = max (ut.x, ut.y);
-  ut = abs (ut);
+  uv = 2. * vUv - 1.;
+  //uv = uv / vec2(${dataTextureSize}.*0.5, ${dataTextureSize}.*0.5);
+  //ut = abs (uv) - vec2 (1.);
+  //b = max (ut.x, ut.y);
+  //ut = abs (ut);
   //if (b > 0.003) col = vec3 (0.82);
   //else if (b < 0. && min (ut.x, ut.y) < 0.01) col = vec3 (0.3, 0.3, 1.);
   //else
@@ -564,9 +571,22 @@ void main()
     bFac = Loadv4 (nMol).y;
     q = 0.5 * (bFac * float (nMolEdge) + 0.5) * uv;
     dMin = 1000.;
-    for (int n = 0; n < nMol; n ++)
+	
+	// rendering strategy 1:
+	// find distance from fragment location q to nearest particle
+	for (int n = 0; n < nMol; n ++)
        dMin = min (dMin, length (q - Loadv4 (n).xy));
-    col = mix (vec3 (0.2),  vec3 (0., 1., 0.), 1. - smoothstep (0.4, 0.5, dMin));
+	col = mix (vec3 (0.2),  vec3 (0., 1., 0.), 1. - smoothstep (0.4, 0.5, dMin));
+	
+
+	// rendering strategy 2:
+	//int nn;
+    //for (int n = 0; n < nMol; n ++) {
+	//  float v = length (q - Loadv4 (n).xy);
+	//  if ( v < dMin ) dMin = v, nn=n;
+    //}
+	//col = hue(float(nn)/float(nMol))* smoothstep (0.5, 0.4, dMin);
+
   }
   gl_FragColor = vec4 (col, 1.);
 }
@@ -579,7 +599,7 @@ const MembraneShader = new THREE.ShaderMaterial({
         iTime: { value: 1.0 },
         iResolution: { value: new THREE.Vector2() },
 		iChannel0: {type:'t', value: null },
-		iChannelResolution0: { value: new THREE.Vector2() },
+		iChannelResolution0: { value: new THREE.Vector2(dataTextureSize, dataTextureSize) },
     },        
     vertexShader: vertexShader,
     fragmentShader: fragmentShader,
