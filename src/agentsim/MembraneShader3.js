@@ -6,7 +6,7 @@ global.THREE = THREE;
 import RenderToBuffer from "./RenderToBuffer.js";
 
 
-class MembraneShader3Sim {
+class MembraneShaderSim {
 	constructor() {
 		this.pass0 = new RenderToBuffer({
 			uniforms: {
@@ -175,6 +175,6 @@ const MembraneShader = new THREE.ShaderMaterial({
 });
 
 export default { 
-	MembraneShader3Sim: MembraneShader3Sim,
+	MembraneShaderSim: MembraneShaderSim,
 	MembraneShader: MembraneShader
 };

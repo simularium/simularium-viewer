@@ -5,7 +5,7 @@ global.THREE = THREE;
 
 import RenderToBuffer from "./RenderToBuffer.js";
 
-const nMolEdge = 196-4;
+const nMolEdge = 64-4;
 // set dataTextureSize > nMolEdge so there is a border for things to bounce.
 // TODO if can force equal, then the code can be simplified/optimized.
 const dataTextureSize = nMolEdge+4;
@@ -512,6 +512,7 @@ const fragmentShader = `
     uniform vec2 iResolution;
     uniform sampler2D iChannel0;
     uniform vec2 iChannelResolution0;
+    uniform sampler2D splat;
 
     varying vec2 vUv;
     varying vec3 n;
@@ -574,9 +575,18 @@ void main()
 	
 	// rendering strategy 1:
 	// find distance from fragment location q to nearest particle
-	for (int n = 0; n < nMol; n ++)
-       dMin = min (dMin, length (q - Loadv4 (n).xy));
-	col = mix (vec3 (0.2),  vec3 (0., 1., 0.), 1. - smoothstep (0.4, 0.5, dMin));
+	int nn;
+	vec2 delta;
+	for (int n = 0; n < nMol; n ++) {
+		vec2 dd = q - Loadv4 (n).xy;
+		float v = length (dd);
+		if ( v < dMin ) dMin = v, nn=n, delta=dd;	
+	}
+	float mixture = 1. - smoothstep (0.4, 0.5, dMin);
+	//col = mix (vec3 (0.2),  vec3 (0., 1., 0.), mixture);
+//	col = mix (vec3 (0.2),  texture2D(splat, (delta+0.5)).rgb, mixture);
+	col = mix (vec3 (0.2),  vec3(delta+0.5, 0.0)*texture2D(splat, (delta+0.5)).rgb, mixture);
+//	col = mix (vec3 (0.2),  vec3(delta+0.5, 0.0), mixture);
 	
 
 	// rendering strategy 2:
@@ -600,6 +610,7 @@ const MembraneShader = new THREE.ShaderMaterial({
         iResolution: { value: new THREE.Vector2() },
 		iChannel0: {type:'t', value: null },
 		iChannelResolution0: { value: new THREE.Vector2(dataTextureSize, dataTextureSize) },
+		splat: {type:'t', value: new THREE.TextureLoader().load("assets/splat.png") },
     },        
     vertexShader: vertexShader,
     fragmentShader: fragmentShader,

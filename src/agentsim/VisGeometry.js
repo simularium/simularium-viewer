@@ -15,7 +15,7 @@ import jsLogger from 'js-logger';
 //import MembraneShader from './MembraneShader.js';
 //import MembraneShader from './MembraneShader2.js';
 //import MembraneShader from './MembraneShader3.js';
-import MembraneShader from './MembraneShader4.js';
+import MembraneShader from './MembraneShader5.js';
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 5000;
@@ -53,7 +53,7 @@ class VisGeometry {
             center: new THREE.Vector3(0,0,300),
             radius: 300,
             thickness: 10,
-            sim: new MembraneShader.MembraneShader3Sim(),
+            sim: new MembraneShader.MembraneShaderSim(),
         };
         
         this.mlogger = jsLogger.get('visgeometry');
@@ -312,10 +312,12 @@ class VisGeometry {
         const thetaMax = 120 * Math.PI / 180;
 
         const tex = new THREE.TextureLoader().load('assets/colornoise.png');
+		const texsplat = new THREE.TextureLoader().load("assets/splat.png");
 
         const materialOuter = MembraneShader.MembraneShader.clone();
         materialOuter.uniforms.color.value = new THREE.Color(0x4444ff);
         materialOuter.uniforms.iChannel0.value = tex;
+        materialOuter.uniforms.splat.value = texsplat;
         //materialOuter.side = THREE.FrontSide;
 
         this.membraneOuter = {
@@ -330,6 +332,7 @@ class VisGeometry {
         const materialInner = MembraneShader.MembraneShader.clone();
         materialInner.uniforms.color.value = new THREE.Color(0x44ff44);
         materialInner.uniforms.iChannel0.value = tex;
+        materialInner.uniforms.splat.value = texsplat;
         //materialInner.side = THREE.BackSide;
 
         this.membraneInner = {
