@@ -14,9 +14,9 @@ import jsLogger from 'js-logger';
 
 //import MembraneShader from './MembraneShader.js';
 //import MembraneShader from './MembraneShader2.js';
-import MembraneShader from './MembraneShader3.js';
+//import MembraneShader from './MembraneShader3.js';
 //import MembraneShader from './MembraneShader4.js';
-//import MembraneShader from './MembraneShader5.js';
+import MembraneShader from './MembraneShader5.js';
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 5000;
