@@ -10,12 +10,12 @@ const dataTextureSize = 32;
 
 const common = `
 // play values:
-#define GridX 800.          // any value between 20 to 300 is fine
+#define GridX 128.          // any value between 20 to 300 is fine
 #define Bouncefac 1.0     // try 0.5 for nonelastic collisions
 #define Gravity -0.0000     // try -0.0003
 
 // fixed values
-#define GridY floor(GridX*9./16.)
+#define GridY floor(GridX*0.5) // floor(GridX*9./16.)
 #define Radius 1.0 // minimum value would be sqrt(1*1 + 1*1)/2.0 + max_velocity * 2.  so 1.0 is a safe value
 #define getColorSize(grid) textureLod(iChannel0,(grid*vec2(1.,2.0)+vec2(5.1,11.1))/iResolution.xy,0.)
 #define getPos(grid) textureLod(iChannel0,(grid*vec2(1.,2.0)+vec2(5.1,10.1))/iResolution.xy,0.).xy
@@ -46,7 +46,7 @@ class MembraneShaderSim {
 			void main()
 			{
 				vec2 grid = floor(gl_FragCoord.xy/vec2(1.0,2.0)-vec2(5.,5.));
-				   float datai = floor(fract(gl_FragCoord.y/2.0)*2.0);
+				float datai = floor(fract(gl_FragCoord.y/2.0)*2.0);
 				if (grid.x>=float(GridX) || grid.y>=float(GridY) || grid.x<0. || grid.y<0.) {
 					gl_FragColor = vec4(0.,0.,0.,0.);
 					return;
@@ -59,21 +59,22 @@ class MembraneShaderSim {
 				
 				if (iFrame<5) // init
 				{
-					if (mod(grid.x,2.0)==1. && mod(grid.y,3.0)==1.)
+					if (mod(grid.x,2.0)==1. && mod(grid.y,2.0)==1.)
 					{
 						newpos  = vec2(sin(grid.y)*0.5+0.5,sin(grid.x)*0.7+0.5)+grid; // middle of the grid
-						newvel = vec2(sin(grid.y),cos(grid.x*1.2))*0.3;
+						newvel = vec2(sin(grid.y),cos(grid.x))*0.1;
 						
 						
 						float diskrad = GridX*0.24;
-						if (length(grid-vec2(diskrad,diskrad*0.5))<diskrad) 
+						if (length(grid-vec2(diskrad,diskrad))<diskrad) 
 						{
-							newcolorsize = vec4(0.1,0.8,1.0,1.0);
-							newvel = vec2(0.,0.); // cold gas
+							newcolorsize = vec4(0.6, 0.6, 0.0, 1.0);
+							//newvel = vec2(0.,0.); // cold gas
 						}
 						if (length(grid-vec2(GridX-diskrad,diskrad))<diskrad)
 						{
-							newcolorsize = vec4(1.0,0.9,0.2,1.0);
+//							newcolorsize = vec4(0.8, 0.8, 0.8, 1.0);
+							newcolorsize = vec4(0.6, 0.6, 0.0, 1.0);
 						}
 						
 						if (newcolorsize.a==0.0) newpos = vec2(0.,0.);
@@ -250,9 +251,27 @@ const fragmentShader = common + `
 		vec2 pixel = uv*vec2(float(GridX),float(GridY));
 		vec2 grid = floor(uv*vec2(float(GridX),float(GridY)));
 		float pixelsize = float(GridX)/iResolution.x;
-		vec3 col = vec3(0.0,0.,0.3);
-	
+
+
+		//vec3 lightbg = vec3(1.0, 1.0, 1.0);
+		vec3 bg = vec3(0.5, 0.5, 0.5);
+
+		vec2 bguv = ((pixel*0.5));
+
+		// distort the background with slow waving
+		bguv.x += cos(uv.y*20.2+iTime*10.4)/10.0;
+		bguv.y += sin(uv.x*20.1+iTime*10.4)/10.0;
+
+		//vec3 lightbg = vec3(fract(bguv), 0.0);
+		float lightbg = length(fract(bguv));
+
+		vec3 col = vec3(0.6, 0.6, 0.0)*smoothstep(0.5, 0.4, length(fract(bguv)-0.5));
+		//vec3 col = texture2D(splat, bguv ).rgb;
+
 		float minrad = Radius;
+		vec2 minvec = vec2(0.0,0.0);
+		vec3 moleculecolor = bg;
+		float aa = 0.0;
 		for(int y=-1;y<=1;y++) // check surrounding grids for particle
 			for(int x=-1;x<=1;x++)
 			{
@@ -261,17 +280,23 @@ const fragmentShader = common + `
 				float d = length(pixel-pos);
 				if (d<minrad && pos.x!=0.0)
 				{
-					float aa = min((minrad-d)/pixelsize,1.);
+					minvec = pixel-pos;
+					aa = min((minrad-d)/pixelsize,1.);
 					minrad = d;
-					vec3 moleculecolor = getColorSize(grid2).xyz;
+					moleculecolor = getColorSize(grid2).xyz;
 					
-					// show buggy joint particles blinking
-					if (getColorSize(grid2).a>1.0) moleculecolor = vec3(1.,0.,0.);
+					// show buggy joint particles with different color
+//					if (getColorSize(grid2).a>1.0) moleculecolor = vec3(1.,0.,0.);
 					
-					col = mix(col,moleculecolor,aa);
+//					col = mix(col*lightbg,moleculecolor*texture2D(splat, (minvec/2.0 - 0.5) ).rgb,aa);
 				}
 			}
-	
+
+			float lightfg = length(minvec*0.5+0.5);
+			//vec3 lightfg = vec3((minvec*0.5 + 0.5), 1.0);
+			//		col = mix(col*lightbg,lightfg*moleculecolor*texture2D(splat, (minvec*0.5 + 0.5) ).rgb,aa);
+		col = mix(col*lightbg,lightfg*moleculecolor*smoothstep(0.5, 0.4, length(minvec*0.5) ),aa);
+			
 	  // debug grids in use  
 		//if (getColorSize(grid).a!=0.0) col=mix(col,vec3(1.,1.,1.),getColorSize(grid).a*0.3);
 		
