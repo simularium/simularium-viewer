@@ -12,7 +12,7 @@ class MembraneShaderSim {
 			uniforms: {
 				iResolution: { value: new THREE.Vector2(2,2) },
 				iTime: { value: 0.0 },
-				iChannel0: {type:'t', value: null },
+				iChannel0: { value: null },
 				iChannelResolution0: { value: new THREE.Vector2(2,2) }
 			},
 			fragmentShader: `
@@ -31,7 +31,7 @@ class MembraneShaderSim {
 			uniforms: {
 				iResolution: { value: new THREE.Vector2(2,2) },
 				iTime: { value: 0.0 },
-				iChannel0: {type:'t', value: null },
+				iChannel0: { value: null },
 				iChannelResolution0: { value: new THREE.Vector2(2,2) }
 			},
 			fragmentShader: `
@@ -50,7 +50,7 @@ class MembraneShaderSim {
 			uniforms: {
 				iResolution: { value: new THREE.Vector2(2,2) },
 				iTime: { value: 0.0 },
-				iChannel0: {type:'t', value: null },
+				iChannel0: { value: null },
 				iChannelResolution0: { value: new THREE.Vector2(2,2) }
 			},
 			fragmentShader: `
@@ -101,10 +101,6 @@ class MembraneShaderSim {
 		this.tgt0.setSize(x,y);
 		this.tgt1.setSize(x,y);
 		this.tgt2.setSize(x,y);
-	
-		this.tgt0.clear();
-		this.tgt1.clear();
-		this.tgt2.clear();
 	}
 	
 	render(renderer, time) {
@@ -166,8 +162,10 @@ const MembraneShader = new THREE.ShaderMaterial({
         color: { value: new THREE.Color(0x44ff44)},
         iTime: { value: 1.0 },
         iResolution: { value: new THREE.Vector2() },
-        iChannel0: {type:'t', value: null },
-    },        
+        iChannel0: { value: null },
+		iChannelResolution0: { value: new THREE.Vector2(2, 2) },
+		splat: { value: new THREE.TextureLoader().load("assets/splat.png") },
+	},        
     vertexShader: vertexShader,
     fragmentShader: fragmentShader,
     side: THREE.DoubleSide,

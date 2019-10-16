@@ -5,7 +5,7 @@ global.THREE = THREE;
 
 import RenderToBuffer from "./RenderToBuffer.js";
 
-const nMolEdge = 64-4;
+const nMolEdge = 32-4;
 // set dataTextureSize > nMolEdge so there is a border for things to bounce.
 // TODO if can force equal, then the code can be simplified/optimized.
 const dataTextureSize = nMolEdge+4;
@@ -19,7 +19,7 @@ class MembraneShaderSim {
 				iResolution: { value: new THREE.Vector2(dataTextureSize, dataTextureSize) },
 				iFrame: { value: 0 },
 				iTime: { value: 0.0 },
-				iChannel0: {type:'t', value: null },
+				iChannel0: { value: null },
 				iChannelResolution0: { value: new THREE.Vector2(dataTextureSize, dataTextureSize) }
 			},
 			fragmentShader: `
@@ -149,7 +149,7 @@ class MembraneShaderSim {
 				iResolution: { value: new THREE.Vector2(dataTextureSize, dataTextureSize) },
 				iFrame: { value: 0 },
 				iTime: { value: 0.0 },
-				iChannel0: {type:'t', value: null },
+				iChannel0: { value: null },
 				iChannelResolution0: { value: new THREE.Vector2(dataTextureSize, dataTextureSize) }
 			},
 			fragmentShader: `
@@ -279,7 +279,7 @@ class MembraneShaderSim {
 				iResolution: { value: new THREE.Vector2(dataTextureSize, dataTextureSize) },
 				iFrame: { value: 0 },
 				iTime: { value: 0.0 },
-				iChannel0: {type:'t', value: null },
+				iChannel0: { value: null },
 				iChannelResolution0: { value: new THREE.Vector2(dataTextureSize, dataTextureSize) }
 			},
 			fragmentShader: `
@@ -608,9 +608,9 @@ const MembraneShader = new THREE.ShaderMaterial({
         color: { value: new THREE.Color(0x44ff44)},
         iTime: { value: 1.0 },
         iResolution: { value: new THREE.Vector2() },
-		iChannel0: {type:'t', value: null },
+		iChannel0: { value: null },
 		iChannelResolution0: { value: new THREE.Vector2(dataTextureSize, dataTextureSize) },
-		splat: {type:'t', value: new THREE.TextureLoader().load("assets/splat.png") },
+		splat: { value: new THREE.TextureLoader().load("assets/splat.png") },
     },        
     vertexShader: vertexShader,
     fragmentShader: fragmentShader,

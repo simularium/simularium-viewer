@@ -336,7 +336,10 @@ const material = new THREE.ShaderMaterial({
         color: { value: new THREE.Color(0x44ff44)},
         iTime: { value: 1.0 },
         iResolution: { value: new THREE.Vector2() },
-        iChannel0: {type:'t', value: new THREE.TextureLoader().load('assets/colornoise.png') },
+        iChannel0: { value: new THREE.TextureLoader().load('assets/colornoise.png') },
+		iChannel0: { value: null },
+		iChannelResolution0: { value: new THREE.Vector2(2, 2) },
+		splat: { value: new THREE.TextureLoader().load("assets/splat.png") },
 
         ambientLightColor: {},
         lightProbe: {},
@@ -367,4 +370,7 @@ const material = new THREE.ShaderMaterial({
 // // pass.renderToScreen = true;
 // composer.addPass(pass);
 
-export default material;
+export default { 
+	MembraneShaderSim: null,
+	MembraneShader: material
+};

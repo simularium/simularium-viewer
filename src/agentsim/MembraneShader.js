@@ -33,6 +33,9 @@ const material = new THREE.ShaderMaterial({
         color: { value: new THREE.Color(0x44ff44)},
         iTime: { value: 1.0 },
         iResolution: { value: new THREE.Vector2() },
+		iChannel0: { value: null },
+		iChannelResolution0: { value: new THREE.Vector2(2, 2) },
+		splat: { value: new THREE.TextureLoader().load("assets/splat.png") },
     },        
     vertexShader: vertexShader,
     fragmentShader: fragmentShader,
@@ -40,4 +43,8 @@ const material = new THREE.ShaderMaterial({
     transparent: true,
 });
 
-export default material;
+export default { 
+	MembraneShaderSim: null,
+	MembraneShader: material
+};
+
