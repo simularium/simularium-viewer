@@ -120,6 +120,10 @@ class MembraneShaderSim {
 		// restore original framebuffer canvas
 		renderer.setRenderTarget(null);
 	}
+
+	getOutputTarget() {
+		return this.tgt2;
+	}
 	
 }
 

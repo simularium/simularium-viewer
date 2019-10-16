@@ -14,12 +14,12 @@ import './three/OrbitControls.js';
 
 import jsLogger from 'js-logger';
 
-//import MembraneShader from './MembraneShader.js';
-//import MembraneShader from './MembraneShader2.js';
-//import MembraneShader from './MembraneShader3.js';
-//import MembraneShader from './MembraneShader4.js';
-//import MembraneShader from './MembraneShader5.js';
-import MembraneShader from './MembraneShader6.js';
+import MembraneShader0 from './MembraneShader.js';
+import MembraneShader2 from './MembraneShader2.js';
+import MembraneShader3 from './MembraneShader3.js';
+import MembraneShader4 from './MembraneShader4.js';
+import MembraneShader5 from './MembraneShader5.js';
+import MembraneShader6 from './MembraneShader6.js';
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 5000;
@@ -57,11 +57,44 @@ class VisGeometry {
             center: new THREE.Vector3(0,0,300),
             radius: 300,
             thickness: 10,
-            sim: MembraneShader.MembraneShaderSim ? new MembraneShader.MembraneShaderSim() : null,
+            sim: MembraneShader0.MembraneShaderSim ? new MembraneShader0.MembraneShaderSim() : null,
+            MembraneShader: MembraneShader0.MembraneShader,
         };
         
         this.mlogger = jsLogger.get('visgeometry');
         this.mlogger.setLevel(loggerLevel);
+    }
+
+    setMembraneType(membraneType) {
+        let MembraneShader;
+        if (membraneType === 0) {
+            MembraneShader = MembraneShader0;
+        }
+        else if (membraneType === 1) {
+            MembraneShader = MembraneShader2;
+        }
+        else if (membraneType === 2) {
+            MembraneShader = MembraneShader3;
+        }
+        else if (membraneType === 3) {
+            MembraneShader = MembraneShader4;
+        }
+        else if (membraneType === 4) {
+            MembraneShader = MembraneShader5;
+        }
+        else if (membraneType === 5) {
+            MembraneShader = MembraneShader6;
+        }
+        this.membrane.sim = MembraneShader.MembraneShaderSim ? new MembraneShader.MembraneShaderSim() : null;
+        if (this.membrane.sim) {
+            const v = new THREE.Vector2();
+            this.renderer.getDrawingBufferSize(v);
+
+            this.membrane.sim.resize(v.x, v.y);
+        }
+        this.membrane.MembraneShader = MembraneShader.MembraneShader;
+
+        this.setupMembrane(this.membrane);
     }
 
     get logger() { return this.mlogger; }
@@ -222,9 +255,6 @@ class VisGeometry {
         }
 
         if (this.membraneInner && this.membraneOuter) {
-            if (!this.membraneInner.mesh.material.uniforms) {
-                console.log(this.membraneInner.mesh.material);
-            }
             this.membraneInner.mesh.material.uniforms.iTime.value = elapsedSeconds;
             this.membraneOuter.mesh.material.uniforms.iTime.value = elapsedSeconds;
 
@@ -334,6 +364,13 @@ class VisGeometry {
             return;
         }
 
+        if (this.membraneInner && this.membraneInner.mesh) {
+            this.scene.remove(this.membraneInner.mesh);
+        }
+        if (this.membraneOuter && this.membraneOuter.mesh) {
+            this.scene.remove(this.membraneOuter.mesh);
+        }
+
         const phiMin = 235 * Math.PI / 180;
         const phiMax = 305 * Math.PI / 180;
         const thetaMin = 60 * Math.PI / 180;
@@ -344,7 +381,7 @@ class VisGeometry {
         texsplat.wrapS = THREE.RepeatWrapping;
         texsplat.wrapT = THREE.RepeatWrapping;
 
-        const materialOuter = MembraneShader.MembraneShader.clone();
+        const materialOuter = this.membrane.MembraneShader.clone();
         materialOuter.uniforms.color.value = new THREE.Color(0x4444ff);
         materialOuter.uniforms.iChannel0.value = tex;
         materialOuter.uniforms.splat.value = texsplat;
@@ -359,7 +396,7 @@ class VisGeometry {
             ),
         };
 
-        const materialInner = MembraneShader.MembraneShader.clone();
+        const materialInner = this.membrane.MembraneShader.clone();
         materialInner.uniforms.color.value = new THREE.Color(0x44ff44);
         materialInner.uniforms.iChannel0.value = tex;
         materialInner.uniforms.splat.value = texsplat;

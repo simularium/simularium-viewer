@@ -487,6 +487,10 @@ class MembraneShaderSim {
 
 		this.frame++;
 	}
+
+	getOutputTarget() {
+		return this.tgt2;
+	}
 	
 }
 
