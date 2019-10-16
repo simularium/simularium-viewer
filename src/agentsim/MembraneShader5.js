@@ -585,7 +585,14 @@ void main()
 	float mixture = 1. - smoothstep (0.4, 0.5, dMin);
 	//col = mix (vec3 (0.2),  vec3 (0., 1., 0.), mixture);
 //	col = mix (vec3 (0.2),  texture2D(splat, (delta+0.5)).rgb, mixture);
-	col = mix (vec3 (0.2),  vec3(delta+0.5, 0.0)*texture2D(splat, (delta+0.5)).rgb, mixture);
+vec3 bg = vec3(0.5, 0.5, 0.0);
+vec3 fg = vec3(0.6, 0.6, 0.0);
+vec3 lightfg = vec3(delta+0.5, 0.0);
+vec3 lightbg = vec3(1.0, 1.0, 1.0);
+col = mix (bg,  lightfg*fg, mixture);
+
+//col = mix (vec3(fract(vUv*float (nMolEdge+4)), 0.0)*texture2D(splat, vUv*float (nMolEdge+4)).rgb, vec3(delta+0.5, 0.0)*texture2D(splat, (delta+0.5)).rgb, mixture);
+//col = mix (vec3 (0.2),  vec3(delta+0.5, 0.0)*texture2D(splat, (delta+0.5)).rgb, mixture);
 //	col = mix (vec3 (0.2),  vec3(delta+0.5, 0.0), mixture);
 	
 

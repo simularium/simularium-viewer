@@ -7,6 +7,8 @@
 import * as THREE from  'three';
 global.THREE = THREE;
 
+import { WEBGL } from 'three/examples/jsm/WebGL.js';
+
 import './three/OBJLoader.js';
 import './three/OrbitControls.js';
 
@@ -16,7 +18,8 @@ import jsLogger from 'js-logger';
 //import MembraneShader from './MembraneShader2.js';
 //import MembraneShader from './MembraneShader3.js';
 //import MembraneShader from './MembraneShader4.js';
-import MembraneShader from './MembraneShader5.js';
+//import MembraneShader from './MembraneShader5.js';
+import MembraneShader from './MembraneShader6.js';
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 5000;
@@ -78,6 +81,12 @@ class VisGeometry {
     }
 
     setFollowObject(obj) {
+        if (obj === this.membraneInner.mesh) {
+            return;
+        }
+        if (obj === this.membraneOuter.mesh) {
+            return;
+        }
         this.followObject = obj;
         // put the camera on it
         if (obj) {
@@ -127,7 +136,15 @@ class VisGeometry {
         this.hemiLight.position.set(0, 1, 0);
         this.scene.add(this.hemiLight);
 
-        this.renderer = new THREE.WebGLRenderer();
+        if ( WEBGL.isWebGL2Available() === false ) {
+            this.renderer = new THREE.WebGLRenderer();
+        }
+        else {
+            const canvas = document.createElement( 'canvas' );
+            const context = canvas.getContext( 'webgl2', { alpha: false } );
+            this.renderer = new THREE.WebGLRenderer( { canvas: canvas, context: context } );
+        }
+
         this.renderer.setSize(initWidth, initHeight); // expected to change when reparented
         this.renderer.setClearColor(BACKGROUND_COLOR, 1);
         this.renderer.clear();
@@ -204,20 +221,22 @@ class VisGeometry {
             this.membrane.sim.render(this.renderer, elapsedSeconds);
         }
 
-        if (this.membraneInner) {
+        if (this.membraneInner && this.membraneOuter) {
+            if (!this.membraneInner.mesh.material.uniforms) {
+                console.log(this.membraneInner.mesh.material);
+            }
             this.membraneInner.mesh.material.uniforms.iTime.value = elapsedSeconds;
             this.membraneOuter.mesh.material.uniforms.iTime.value = elapsedSeconds;
 
             if (this.membrane.sim) {
-                this.membraneInner.mesh.material.uniforms.iChannel0.value = this.membrane.sim.tgt2.texture;
-                this.membraneOuter.mesh.material.uniforms.iChannel0.value = this.membrane.sim.tgt2.texture;
-                this.membraneInner.mesh.material.uniforms.iChannelResolution0.value = new THREE.Vector2(this.membrane.sim.tgt2.width, this.membrane.sim.tgt2.height);
-                this.membraneOuter.mesh.material.uniforms.iChannelResolution0.value = new THREE.Vector2(this.membrane.sim.tgt2.width, this.membrane.sim.tgt2.height);    
+                this.membraneInner.mesh.material.uniforms.iChannel0.value = this.membrane.sim.getOutputTarget().texture;
+                this.membraneOuter.mesh.material.uniforms.iChannel0.value = this.membrane.sim.getOutputTarget().texture;
+                this.membraneInner.mesh.material.uniforms.iChannelResolution0.value = new THREE.Vector2(this.membrane.sim.getOutputTarget().width, this.membrane.sim.getOutputTarget().height);
+                this.membraneOuter.mesh.material.uniforms.iChannelResolution0.value = new THREE.Vector2(this.membrane.sim.getOutputTarget().width, this.membrane.sim.getOutputTarget().height);    
             }
 
-            this.membraneInner.mesh.material.uniforms.iResolution.value = new THREE.Vector2(this.renderer.width, this.renderer.height);
-            this.membraneOuter.mesh.material.uniforms.iResolution.value = new THREE.Vector2(this.renderer.width, this.renderer.height);
-
+            this.renderer.getDrawingBufferSize(this.membraneInner.mesh.material.uniforms.iResolution.value);
+            this.renderer.getDrawingBufferSize(this.membraneOuter.mesh.material.uniforms.iResolution.value);
         }
 
         this.controls.update();
@@ -321,7 +340,9 @@ class VisGeometry {
         const thetaMax = 120 * Math.PI / 180;
 
         const tex = new THREE.TextureLoader().load('assets/colornoise.png');
-		const texsplat = new THREE.TextureLoader().load("assets/splat.png");
+        const texsplat = new THREE.TextureLoader().load("assets/splat.png");
+        texsplat.wrapS = THREE.RepeatWrapping;
+        texsplat.wrapT = THREE.RepeatWrapping;
 
         const materialOuter = MembraneShader.MembraneShader.clone();
         materialOuter.uniforms.color.value = new THREE.Color(0x4444ff);
