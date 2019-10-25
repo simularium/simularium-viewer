@@ -78,11 +78,18 @@ class Viewport extends React.Component<ViewportProps> {
         this.onPickObject = this.onPickObject.bind(this);
 
         this.handlers = {
-            contextmenu: this.onPickObject
+            contextmenu: this.onPickObject,
+            dragover: this.onDragOver,
+            drop: this.onDrop
         };
         this.hit = false;
         this.raycaster = new THREE.Raycaster();
         this.animationRequestID = 0;
+
+        this.renderFromJSON = (json) => {
+            agentSimController.renderFromJSON(json);
+            this.visGeometry.render();
+        }
     }
 
     public componentDidMount() {
@@ -139,6 +146,26 @@ class Viewport extends React.Component<ViewportProps> {
         this.visGeometry.setShowPaths(showPaths);
         if (prevProps.height !== height || prevProps.width !== width) {
             this.visGeometry.resize(width, height);
+        }
+    }
+
+    public onDragOver = (e) => {
+        let event = e as Event;
+        if(event.stopPropogation) { event.stopPropogation() };
+        event.preventDefault();
+    }
+
+    public onDrop = (e) => {
+        this.onDragOver(e);
+        let files = e.target.files || e.dataTransfer.files;
+
+        for(let i = 0, f; f = files[i]; i++)
+        {
+            let file = files[i];
+            file.text().then((text) => {
+                let json = JSON.parse(text);
+                this.renderFromJSON(json);
+            });
         }
     }
 
