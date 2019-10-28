@@ -92,4 +92,8 @@ export default class AgentSimController {
     public cacheJSON(json) {
         this.visData.parseAgentsFromNetData(json);
     }
+
+    public clearLocahCache() {
+        this.visData.reset();
+    }
 }

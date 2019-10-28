@@ -75,8 +75,6 @@ class VisData {
     }
 
     constructor() {
-        this.currentAgentDataFrame = null;
-        this.agentsUpdated = false;
         this.mcolorVariant = 50;
 
         this.webWorker = util.ThreadUtil.createWebWorkerFromFunction(
@@ -84,9 +82,8 @@ class VisData {
         );
 
         this.webWorker.onmessage = (event) => {
-            this.agentsUpdated = true;
-            this.currentTimeAndFrame = event.data.frameData;
-            this.currentAgentDataFrame = event.data.parsedAgentData;
+            this.mframeDataCache.push(event.data.frameData);
+            this.mframeCache.push(event.data.parsedAgentData);
         };
 
         this.mcolors = [
@@ -105,14 +102,14 @@ class VisData {
             0xff0000,
         ];
 
-        this.mcache = [];
+        this.mframeCache = [];
+        this.mframeDataCache = [];
+        this.mcacheFrame = 0;
     }
 
     get colors() { return this.mcolors; }
 
-    get agents() { return this.currentAgentDataFrame; }
-
-    get time() { return this.currentTimeAndFrame }
+    get time() { return this.mcacheFrame < this.mframeDataCache.length ? this.mframeDataCache[this.mcacheFrame] : -1 }
 
     get colorVariant() { return this.mcolorVariant; }
 
@@ -121,39 +118,42 @@ class VisData {
     /**
     *   Functions to check update
     * */
-    hasNewData() {
-        return this.agentsUpdated;
+    atLatestFrame() {
+        return this.mcacheFrame >= (this.mframeCache.length - 1);
     }
 
-    newDataHasBeenHandled() {
-        this.agentsUpdated = false;
+    currentFrame() {
+        return this.mcacheFrame < this.mframeCache.length ? this.mframeCache[this.mcacheFrame] : {};
+    }
+
+    gotoNextFrame() {
+        if(!this.atLatestFrame())
+        {
+            this.mcacheFrame = this.mcacheFrame + 1;
+        }
     }
 
     /**
     * Data management
     * */
-    reset() {
-        this.agentsUpdated = false;
-        this.currentAgentDataFrame = null;
-        this.clearCache();
-    }
-
     cacheJSON(visDataFrame) {
         let frame = VisData.parse(visDataFrame);
-        this.mcache.push(frame);
+        this.mframeCache.push(frame);
     }
 
     clearCache() {
-        this.mcache = [];
+        this.mframeCache = [];
+        this.mframeDataCache = [];
+        this.mcacheFrame = 0;
     }
 
     parseAgentsFromNetData(visDataMsg) {
-        if (this.agentsUpdated) { return; } // last update not handled yet
         if (util.ThreadUtil.browserSupportsWebWorkers()) {
             this.webWorker.postMessage(visDataMsg);
         } else {
-            this.currentAgentDataFrame = VisData.parse(visDataMsg);
-            this.agentsUpdated = true;
+            let newFrame = VisData.parse(visDataMsg);
+            this.mframeCache.push(newFrame.parsedAgentData);
+            this.mframeDataCache.push(newFrame.frameData);
         }
     }
 

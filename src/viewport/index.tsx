@@ -90,6 +90,10 @@ class Viewport extends React.Component<ViewportProps> {
             agentSimController.cacheJSON(json);
             this.visGeometry.render();
         }
+
+        this.clearCache = () => {
+            agentSimController.clearCache();
+        }
     }
 
     public componentDidMount() {
@@ -158,6 +162,7 @@ class Viewport extends React.Component<ViewportProps> {
     public onDrop = (e) => {
         this.onDragOver(e);
         let files = e.target.files || e.dataTransfer.files;
+        this.clearCache();
 
         for(let i = 0, f; f = files[i]; i++)
         {
@@ -262,11 +267,11 @@ class Viewport extends React.Component<ViewportProps> {
             this.lastRenderTime = Date.now();
         }
 
-        if (visData.hasNewData()) {
+        if (!visData.atLatestFrame()) {
             this.visGeometry.colorVariant = visData.colorVariant;
-            this.visGeometry.update(visData.agents);
+            this.visGeometry.update(visData.currentFrame());
             this.dispatchUpdatedTime(visData.time);
-            visData.newDataHasBeenHandled();
+            visData.gotoNextFrame();
         }
 
         this.animationRequestID = requestAnimationFrame(this.animate);
