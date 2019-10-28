@@ -92,7 +92,7 @@ class Viewport extends React.Component<ViewportProps> {
         }
 
         this.clearCache = () => {
-            agentSimController.clearCache();
+            agentSimController.clearLocahCache();
         }
     }
 
