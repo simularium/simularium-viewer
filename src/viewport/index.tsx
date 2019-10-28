@@ -86,8 +86,8 @@ class Viewport extends React.Component<ViewportProps> {
         this.raycaster = new THREE.Raycaster();
         this.animationRequestID = 0;
 
-        this.renderFromJSON = (json) => {
-            agentSimController.renderFromJSON(json);
+        this.cacheJSON = (json) => {
+            agentSimController.cacheJSON(json);
             this.visGeometry.render();
         }
     }
@@ -164,7 +164,7 @@ class Viewport extends React.Component<ViewportProps> {
             let file = files[i];
             file.text().then((text) => {
                 let json = JSON.parse(text);
-                this.renderFromJSON(json);
+                this.cacheJSON(json);
             });
         }
     }

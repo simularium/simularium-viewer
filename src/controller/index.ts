@@ -89,7 +89,7 @@ export default class AgentSimController {
         return this.simParameters.playBackFile;
     }
 
-    public renderFromJSON(json) {
+    public cacheJSON(json) {
         this.visData.parseAgentsFromNetData(json);
     }
 }

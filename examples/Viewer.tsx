@@ -173,7 +173,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                 onJsonDataArrived={this.handleJsonMeshData}
                 onTrajectoryFileInfoChanged={this.handleTrajectoryInfo}
                 highlightedParticleType={this.state.highlightId}
-                loadInitialData={true}
+                loadInitialData={false}
                 showMeshes={this.state.showMeshes}
                 showPaths={this.state.showPaths}
             />

@@ -33,13 +33,13 @@ class VisData {
     * */
 
     static parse(visDataMsg) {
-        // IMPORTANT: Order of this array needs to perfectly match the incoming data. 
+        // IMPORTANT: Order of this array needs to perfectly match the incoming data.
         const agentObjectKeys = ['vis-type', 'type', 'x', 'y', 'z', 'xrot', 'yrot', 'zrot', 'cr', 'nSubPoints'];
         const visData = visDataMsg.data;
         const parsedAgentData = [];
         const nSubPointsIndex = agentObjectKeys.findIndex((ele) => ele === 'nSubPoints');
 
-    
+
         const parseOneAgent = (agentArray) => {
             return agentArray.reduce((agentData, cur, i) => {
                 let key;
@@ -104,6 +104,8 @@ class VisData {
             0xff0088, 0xff0066, 0xff0044, 0xff0022,
             0xff0000,
         ];
+
+        this.mcache = [];
     }
 
     get colors() { return this.mcolors; }
@@ -133,6 +135,16 @@ class VisData {
     reset() {
         this.agentsUpdated = false;
         this.currentAgentDataFrame = null;
+        this.clearCache();
+    }
+
+    cacheJSON(visDataFrame) {
+        let frame = VisData.parse(visDataFrame);
+        this.mcache.push(frame);
+    }
+
+    clearCache() {
+        this.mcache = [];
     }
 
     parseAgentsFromNetData(visDataMsg) {
