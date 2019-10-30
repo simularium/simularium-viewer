@@ -58,7 +58,20 @@ export default class AgentSimController {
     }
 
     public playFromTime(timeNs) {
-        this.netConnection.playRemoteSimCacheFromTime(timeNs);
+        // If there is a locally cached frame, use it
+        if (this.visData.hasLocalCacheForTime(timeNs)) {
+            this.visData.playFromTime(timeNs);
+            let latestTime = this.visData.latestSimTimeCachedLocally();
+
+            // set the remote simulation to continue broadcasting from
+            //  the latest point in the cache
+            this.netConnection.playRemoteSimCacheFromTime(latestTime);
+        } else {
+            // else reset the local cache,
+            //  and play remotely from the desired simulation time
+            this.visData.clearCache();
+            this.netConnection.playRemoteSimCacheFromTime(timeNs);
+        }
     }
 
     public playOneFrame(frameNumber) {
@@ -94,6 +107,6 @@ export default class AgentSimController {
     }
 
     public clearLocahCache() {
-        this.visData.reset();
+        this.visData.clearCache();
     }
 }

@@ -118,8 +118,39 @@ class VisData {
     /**
     *   Functions to check update
     * */
+    hasLocalCacheForTime(timeNs) {
+        if(this.mframeDataCache.length < 2) { return false; }
+
+        let start = this.mframeDataCache[0].time;
+        let end = this.mframeDataCache[this.mframeDataCache.length - 1].time;
+
+        return this.mframeDataCache[0].time < timeNs &&
+            this.mframeDataCache[this.mframeDataCache.length - 1].time > timeNs;
+    }
+
+    playFromTime(timeNs) {
+        this.mcacheFrame = 0;
+
+        for(let frame = 0, numFrames = this.mframeDataCache.length;
+            frame < numFrames;
+            frame++)
+        {
+            let frameTime = this.mframeDataCache[frame].time;
+            if(timeNs < frameTime)
+            {
+                this.mcacheFrame = frame;
+                break;
+            }
+        }
+    }
+
     atLatestFrame() {
         return this.mcacheFrame >= (this.mframeCache.length - 1);
+    }
+
+    latestSimTimeCachedLocally() {
+        if(this.mframeDataCache === null || this.mframeDataCache.length == 0) { return -1; }
+        return this.mframeDataCache[this.mframeDataCache.length -1].time;
     }
 
     currentFrame() {
