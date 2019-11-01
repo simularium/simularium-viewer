@@ -32,14 +32,14 @@ interface TimeData {
 }
 
 interface FrameJSON {
-    frameNumber : number;
+    frameNumber: number;
 }
 
 interface FileHTML extends File {
     text: Function;
 }
 
-function parseFrames(files : Array<FileHTML>, outParsedFiles : Array<object>) : Promise<void> {
+function parseFrames(files: FileHTML[], outParsedFiles: object[]): Promise<void> {
     var p = Promise.resolve();
     files.forEach(file => {
         p = p.then(() => {
@@ -52,7 +52,7 @@ function parseFrames(files : Array<FileHTML>, outParsedFiles : Array<object>) : 
     return p;
 }
 
-function sortFrames(a : FrameJSON, b : FrameJSON) : number {
+function sortFrames(a: FrameJSON, b: FrameJSON): number {
     return a.frameNumber > b.frameNumber ? 1 : -1;
 }
 
@@ -67,8 +67,8 @@ class Viewport extends React.Component<ViewportProps> {
     private raycaster: THREE.Raycaster;
     private animationRequestID: number;
 
-    private cacheJSON : Function;
-    private clearCache : Function;
+    private cacheJSON: Function;
+    private clearCache: Function;
 
     public static defaultProps = {
         height: 800,
@@ -192,7 +192,7 @@ class Viewport extends React.Component<ViewportProps> {
         this.clearCache();
 
         let parsedFiles = [];
-        let filesArr: Array<FileHTML> = Array.from(files);
+        let filesArr: FileHTML[] = Array.from(files);
         let p = parseFrames(filesArr, parsedFiles);
 
         p.then(() => {
@@ -296,7 +296,7 @@ class Viewport extends React.Component<ViewportProps> {
             }
 
             //if (!netConnection.socketIsValid()) {
-                //this.visGeometry.clear();
+            //this.visGeometry.clear();
             //}
 
             this.visGeometry.render();
