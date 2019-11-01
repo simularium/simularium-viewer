@@ -147,6 +147,11 @@ class Viewer extends React.Component<{}, ViewerState> {
             >
                 Play one frame
             </button>
+            <button
+                onClick={() => agentSim.playFromTime(0)}
+            >
+                Play from time 0ns
+            </button>
             <br/>
             <select
                 onChange={(event) => this.highlightParticleType(event.target.value)}

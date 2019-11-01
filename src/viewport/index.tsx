@@ -31,6 +31,30 @@ interface TimeData {
     frameNumber: number;
 }
 
+interface FrameJSON {
+    frameNumber : number;
+}
+
+interface FileHTML extends File {
+    text: Function;
+}
+
+function parseFrames(files : Array<FileHTML>, outParsedFiles : Array<object>) : Promise<void> {
+    var p = Promise.resolve();
+    files.forEach(file => {
+        p = p.then(() => {
+            return file.text().then((text) => {
+                let json = JSON.parse(text);
+                outParsedFiles.push(json);
+            });
+        })
+    });
+    return p;
+}
+
+function sortFrames(a : FrameJSON, b : FrameJSON) : number {
+    return a.frameNumber > b.frameNumber ? 1 : -1;
+}
 
 class Viewport extends React.Component<ViewportProps> {
     // NOTE: this can be typed in the future, but they may change signifantly and I dont want to at the moment. -MMRM
@@ -42,6 +66,9 @@ class Viewport extends React.Component<ViewportProps> {
     private hit: boolean;
     private raycaster: THREE.Raycaster;
     private animationRequestID: number;
+
+    private cacheJSON : Function;
+    private clearCache : Function;
 
     public static defaultProps = {
         height: 800,
@@ -88,12 +115,12 @@ class Viewport extends React.Component<ViewportProps> {
 
         this.cacheJSON = (json) => {
             agentSimController.cacheJSON(json);
-            this.visGeometry.render();
         }
 
         this.clearCache = () => {
             agentSimController.clearLocahCache();
         }
+
     }
 
     public componentDidMount() {
@@ -155,7 +182,7 @@ class Viewport extends React.Component<ViewportProps> {
 
     public onDragOver = (e) => {
         let event = e as Event;
-        if(event.stopPropogation) { event.stopPropogation() };
+        if(event.stopPropagation) { event.stopPropagation() };
         event.preventDefault();
     }
 
@@ -164,14 +191,18 @@ class Viewport extends React.Component<ViewportProps> {
         let files = e.target.files || e.dataTransfer.files;
         this.clearCache();
 
-        for(let i = 0, f; f = files[i]; i++)
-        {
-            let file = files[i];
-            file.text().then((text) => {
-                let json = JSON.parse(text);
-                this.cacheJSON(json);
-            });
-        }
+        let parsedFiles = [];
+        let filesArr: Array<FileHTML> = Array.from(files);
+        let p = parseFrames(filesArr, parsedFiles);
+
+        p.then(() => {
+            parsedFiles.sort(sortFrames);
+            for(let i = 0, l = parsedFiles.length; i < l; ++i)
+            {
+                let frameJSON = parsedFiles[i];
+                this.cacheJSON(frameJSON);
+            }
+        });
     }
 
     public addEventHandlersToCanvas() {
@@ -257,21 +288,19 @@ class Viewport extends React.Component<ViewportProps> {
         const timePerFrame = 1000 / framesPerSecond; // the time interval at which to re-render
         const elapsedTime = Date.now() - this.lastRenderTime;
         if (elapsedTime > timePerFrame) {
-            if (!netConnection.socketIsValid()) {
-                this.visGeometry.clear();
+            if (!visData.atLatestFrame()) {
+                this.visGeometry.colorVariant = visData.colorVariant;
+                this.visGeometry.update(visData.currentFrame());
+                this.dispatchUpdatedTime(visData.time);
+                visData.gotoNextFrame();
             }
-            if (simParameters.newSimulationIsRunning) {
-                simParameters.newSimulationIsRunning = false;
-            }
+
+            //if (!netConnection.socketIsValid()) {
+                //this.visGeometry.clear();
+            //}
+
             this.visGeometry.render();
             this.lastRenderTime = Date.now();
-        }
-
-        if (!visData.atLatestFrame()) {
-            this.visGeometry.colorVariant = visData.colorVariant;
-            this.visGeometry.update(visData.currentFrame());
-            this.dispatchUpdatedTime(visData.time);
-            visData.gotoNextFrame();
         }
 
         this.animationRequestID = requestAnimationFrame(this.animate);

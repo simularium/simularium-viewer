@@ -119,13 +119,15 @@ class VisData {
     *   Functions to check update
     * */
     hasLocalCacheForTime(timeNs) {
+        if(this.mframeDataCache.length == 1 && timeNs == 0) { return true; }
+
         if(this.mframeDataCache.length < 2) { return false; }
 
         let start = this.mframeDataCache[0].time;
         let end = this.mframeDataCache[this.mframeDataCache.length - 1].time;
 
-        return this.mframeDataCache[0].time < timeNs &&
-            this.mframeDataCache[this.mframeDataCache.length - 1].time > timeNs;
+        return this.mframeDataCache[0].time <= timeNs &&
+            this.mframeDataCache[this.mframeDataCache.length - 1].time >= timeNs;
     }
 
     playFromTime(timeNs) {
@@ -169,7 +171,8 @@ class VisData {
     * */
     cacheJSON(visDataFrame) {
         let frame = VisData.parse(visDataFrame);
-        this.mframeCache.push(frame);
+        this.mframeCache.push(frame.parsedAgentData);
+        this.mframeDataCache.push(frame.frameData);
     }
 
     clearCache() {

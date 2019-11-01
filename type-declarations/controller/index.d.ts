@@ -20,4 +20,6 @@ export default class AgentSimController {
     resume(): void;
     changeFile(newFile: any): void;
     getFile(): any;
+    cacheJSON(json: any): void;
+    clearLocahCache(): void;
 }

@@ -26,6 +26,8 @@ declare class Viewport extends React.Component<ViewportProps> {
     private hit;
     private raycaster;
     private animationRequestID;
+    private cacheJSON;
+    private clearCache;
     static defaultProps: {
         height: number;
         width: number;
@@ -40,6 +42,8 @@ declare class Viewport extends React.Component<ViewportProps> {
     componentDidMount(): void;
     componentWillUnmount(): void;
     componentDidUpdate(prevProps: ViewportProps): void;
+    onDragOver: (e: any) => void;
+    onDrop: (e: any) => void;
     addEventHandlersToCanvas(): void;
     removeEventHandlersFromCanvas(): void;
     onPickObject(event: MouseEvent): void;
