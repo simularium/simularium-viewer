@@ -26,7 +26,7 @@ const useIpService = false;
 
 const netConnectionSettings = {
     useIpService,
-    serverIp: "52.15.70.94",
+    serverIp: "staging.node1-agentviz-backend.cellexplore.net",
     serverPort: 9002,
     ipServiceAddr: null,
 }
