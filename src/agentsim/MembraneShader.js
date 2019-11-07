@@ -8,7 +8,7 @@ const vertexShader = `
     uniform vec2 iResolution;
     varying vec2 vUv;
     void main()	{
-        vec3 p = position.xyz + vec3(sin(iTime*4.0 + position.x)*6.0, cos(iTime*3.0 + position.y)*6.0, sin(iTime*5.0 + position.z)*6.0);
+        vec3 p = position.xyz + vec3(sin(iTime*4.1 + position.x*1.1)*6.0, cos(iTime*3.2 + position.y*1.7)*6.1, sin(iTime*5.1 + position.z*2.1)*6.2);
         vec4 modelViewPosition = modelViewMatrix * vec4(p, 1.0);
         vUv = uv;
         gl_Position = projectionMatrix * modelViewPosition;

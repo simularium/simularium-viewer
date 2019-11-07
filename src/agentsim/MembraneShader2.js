@@ -10,11 +10,16 @@ const vertexShader = `
     varying vec3 n;
     varying vec3 eye;
     void main()	{
-        vec3 p = position.xyz;
+		vec3 p = position.xyz;
+//		vec3 p = position.xyz + vec3(sin(iTime*4.1 + position.x*1.1)*3.0, cos(iTime*3.2 + position.y*1.7)*3.1, sin(iTime*5.1 + position.z*2.1)*3.2);
+
         //vec3 p = position.xyz + vec3(sin(iTime*4.0 + position.x)*6.0, cos(iTime*3.0 + position.y)*6.0, sin(iTime*5.0 + position.z)*6.0);
         vec4 modelViewPosition = modelViewMatrix * vec4(p, 1.0);
         vUv = uv;
-        n = normalMatrix * normal;
+		vUv.x += cos(uv.y*5.2+iTime*1.4)/25.0;
+		vUv.y += sin(uv.x*5.1+iTime*1.4)/25.0;
+
+		n = normalMatrix * normal;
         eye = modelViewPosition.xyz;
         gl_Position = projectionMatrix * modelViewPosition;
     }
