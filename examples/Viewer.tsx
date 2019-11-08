@@ -43,7 +43,7 @@ interface ViewerState {
     showPaths: boolean;
 }
 
-const agentSim = new AgentSimController(netConnectionSettings, { trajectoryPlaybackFile: "actin5-1.h5" })
+const agentSim = new AgentSimController(netConnectionSettings, { trajectoryPlaybackFile: "actin34_0.h5" })
 let currentFrame = 0;
 let currentTime = 0;
 
@@ -178,7 +178,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                 onJsonDataArrived={this.handleJsonMeshData}
                 onTrajectoryFileInfoChanged={this.handleTrajectoryInfo}
                 highlightedParticleType={this.state.highlightId}
-                loadInitialData={false}
+                loadInitialData={true}
                 showMeshes={this.state.showMeshes}
                 showPaths={this.state.showPaths}
             />

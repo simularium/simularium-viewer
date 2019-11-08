@@ -104,7 +104,7 @@ class VisData {
 
         this.mframeCache = [];
         this.mframeDataCache = [];
-        this.mcacheFrame = 0;
+        this.mcacheFrame = -1;
     }
 
     get colors() { return this.mcolors; }
@@ -131,7 +131,7 @@ class VisData {
     }
 
     playFromTime(timeNs) {
-        this.mcacheFrame = 0;
+        this.mcacheFrame = -1;
 
         for(let frame = 0, numFrames = this.mframeDataCache.length;
             frame < numFrames;
@@ -147,6 +147,8 @@ class VisData {
     }
 
     atLatestFrame() {
+        if(this.mcacheFrame === -1 && this.mframeCache.length > 0) { return false; }
+
         return this.mcacheFrame >= (this.mframeCache.length - 1);
     }
 
@@ -156,6 +158,8 @@ class VisData {
     }
 
     currentFrame() {
+        if(this.mcacheFrame === -1 && this.mframeCache.length > 0) { this.mcacheFrame = 0;  }
+
         return this.mcacheFrame < this.mframeCache.length ? this.mframeCache[this.mcacheFrame] : {};
     }
 
