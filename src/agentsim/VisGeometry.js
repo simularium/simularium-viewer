@@ -190,6 +190,7 @@ class VisGeometry {
                 `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/meshes/obj/${meshName}`,
                 (object) => {
                     this.logger.debug('Finished loading mesh: ', meshName);
+                    this.render(); // new geometry -> redraw the scene
                     this.addMesh(meshName, object);
                 },
                 (xhr) => {

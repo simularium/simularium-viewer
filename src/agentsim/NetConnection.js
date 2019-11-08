@@ -11,7 +11,7 @@ class NetConnection {
 
         this.mcurrentFrame = 0; // saved here for play next/previous functions
         this.webSocket = null;
-        this.serverIp = opts.serverIp || '127.0.0.1';
+        this.serverIp = opts.serverIp || 'localhost';
         this.serverPort = opts.serverPort || '9002';
         this.remoteServerName = ""; // only used for cleanup on remote machines
         this.remoteServerSim = ""; // only used for cleanup on remote machines
@@ -197,7 +197,7 @@ class NetConnection {
     }
 
     getIp() {
-        return `ws://${this.serverIp}:${this.serverPort}/`
+        return `wss://${this.serverIp}:${this.serverPort}/`
     }
 
     requestServerInfo(queryParams) {
@@ -207,7 +207,7 @@ class NetConnection {
         );
 
         const localServer = {
-            ip: "127.0.0.1:9002",
+            ip: "localhost:9002",
             name: "localhost"
         };
 
@@ -241,7 +241,7 @@ class NetConnection {
         return connectPromise.then((jsonData) => {
             if(!this.socketIsValid())
             {
-                this.connectToUri('ws://' + jsonData.ip)
+                this.connectToUri('wss://' + jsonData.ip)
                 this.setServerName(jsonData.name);
             }
         });
