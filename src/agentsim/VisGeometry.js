@@ -54,11 +54,11 @@ class VisGeometry {
         this.paths = [];
 
         this.membrane = {
-            center: new THREE.Vector3(0,0,300),
-            radius: 300,
-            thickness: 10,
+            // assume only one membrane mesh 
+            mesh: null,
             sim: MembraneShader0.MembraneShaderSim ? new MembraneShader0.MembraneShaderSim() : null,
             MembraneShader: MembraneShader0.MembraneShader,
+            material: null
         };
         
         this.mlogger = jsLogger.get('visgeometry');
@@ -114,10 +114,7 @@ class VisGeometry {
     }
 
     setFollowObject(obj) {
-        if (obj === this.membraneInner.mesh) {
-            return;
-        }
-        if (obj === this.membraneOuter.mesh) {
+        if (obj === this.membrane.mesh) {
             return;
         }
         this.followObject = obj;
@@ -255,19 +252,15 @@ class VisGeometry {
             this.membrane.sim.render(this.renderer, elapsedSeconds);
         }
 
-        if (this.membraneInner && this.membraneOuter) {
-            this.membraneInner.mesh.material.uniforms.iTime.value = elapsedSeconds;
-            this.membraneOuter.mesh.material.uniforms.iTime.value = elapsedSeconds;
+        if (this.membrane.mesh && this.membrane.material) {
+            this.membrane.material.uniforms.iTime.value = elapsedSeconds;
 
             if (this.membrane.sim) {
-                this.membraneInner.mesh.material.uniforms.iChannel0.value = this.membrane.sim.getOutputTarget().texture;
-                this.membraneOuter.mesh.material.uniforms.iChannel0.value = this.membrane.sim.getOutputTarget().texture;
-                this.membraneInner.mesh.material.uniforms.iChannelResolution0.value = new THREE.Vector2(this.membrane.sim.getOutputTarget().width, this.membrane.sim.getOutputTarget().height);
-                this.membraneOuter.mesh.material.uniforms.iChannelResolution0.value = new THREE.Vector2(this.membrane.sim.getOutputTarget().width, this.membrane.sim.getOutputTarget().height);    
+                this.membrane.material.uniforms.iChannel0.value = this.membrane.sim.getOutputTarget().texture;
+                this.membrane.material.uniforms.iChannelResolution0.value = new THREE.Vector2(this.membrane.sim.getOutputTarget().width, this.membrane.sim.getOutputTarget().height);
             }
 
-            this.renderer.getDrawingBufferSize(this.membraneInner.mesh.material.uniforms.iResolution.value);
-            this.renderer.getDrawingBufferSize(this.membraneOuter.mesh.material.uniforms.iResolution.value);
+            this.renderer.getDrawingBufferSize(this.membrane.material.uniforms.iResolution.value);
         }
 
         this.controls.update();
@@ -343,6 +336,9 @@ class VisGeometry {
 
     addMesh(meshName, mesh) {
         this.meshRegistry.set(meshName, mesh);
+        if (meshName.includes("membrane")) {
+            this.membrane.mesh = mesh;
+        }
     }
 
     getMesh(index) {
@@ -365,57 +361,24 @@ class VisGeometry {
             return;
         }
 
-        if (this.membraneInner && this.membraneInner.mesh) {
-            this.scene.remove(this.membraneInner.mesh);
+        if (this.membrane && this.membrane.mesh) {
+            this.scene.remove(this.membrane.mesh);
         }
-        if (this.membraneOuter && this.membraneOuter.mesh) {
-            this.scene.remove(this.membraneOuter.mesh);
-        }
-
-        const phiMin = 235 * Math.PI / 180;
-        const phiMax = 305 * Math.PI / 180;
-        const thetaMin = 60 * Math.PI / 180;
-        const thetaMax = 120 * Math.PI / 180;
 
         const tex = new THREE.TextureLoader().load('assets/colornoise.png');
         const texsplat = new THREE.TextureLoader().load("assets/splat.png");
         texsplat.wrapS = THREE.RepeatWrapping;
         texsplat.wrapT = THREE.RepeatWrapping;
 
-        const materialOuter = this.membrane.MembraneShader.clone();
-        materialOuter.uniforms.color.value = new THREE.Color(0x4444ff);
-        materialOuter.uniforms.iChannel0.value = tex;
-        materialOuter.uniforms.splat.value = texsplat;
-        //materialOuter.side = THREE.FrontSide;
+        const material = this.membrane.MembraneShader.clone();
+        material.uniforms.color.value = new THREE.Color(0x4444ff);
+        material.uniforms.iChannel0.value = tex;
+        material.uniforms.splat.value = texsplat;
+        //material.side = THREE.FrontSide;
 
-        this.membraneOuter = {
-            data: membraneData,
-            mesh: new THREE.Mesh(
-                new THREE.SphereBufferGeometry(membraneData.radius + membraneData.thickness, 128, 128,
-                    phiMin, phiMax-phiMin, thetaMin, thetaMax-thetaMin),
-                materialOuter
-            ),
-        };
-
-        const materialInner = this.membrane.MembraneShader.clone();
-        materialInner.uniforms.color.value = new THREE.Color(0x44ff44);
-        materialInner.uniforms.iChannel0.value = tex;
-        materialInner.uniforms.splat.value = texsplat;
-        //materialInner.side = THREE.BackSide;
-
-        this.membraneInner = {
-            data: membraneData,
-            mesh: new THREE.Mesh(
-                new THREE.SphereBufferGeometry(membraneData.radius - membraneData.thickness, 128, 128,
-                    phiMin, phiMax-phiMin, thetaMin, thetaMax-thetaMin),
-                materialInner
-            ),
-        };
-        this.membraneOuter.mesh.position.set(membraneData.center.x, membraneData.center.y, membraneData.center.z);
-        this.membraneInner.mesh.position.set(membraneData.center.x, membraneData.center.y, membraneData.center.z);
-        this.scene.add(this.membraneInner.mesh);
-        this.scene.add(this.membraneOuter.mesh);
+        this.membrane.material = material;
     }
+
     /**
     *   Data Management
     */
@@ -559,6 +522,9 @@ class VisGeometry {
 
                 if (meshGeom && meshGeom.children) {
                     runtimeMesh.geometry = meshGeom.children[0].geometry;
+                    if (this.membrane.mesh === meshGeom) {
+                        runtimeMesh.material = this.membrane.material;
+                    }
                 } else {
                     runtimeMesh.geometry = this.getSphereGeom();
                 }
