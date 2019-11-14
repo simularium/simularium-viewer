@@ -20,6 +20,7 @@ import MembraneShader3 from './MembraneShader3.js';
 import MembraneShader4 from './MembraneShader4.js';
 import MembraneShader5 from './MembraneShader5.js';
 import MembraneShader6 from './MembraneShader6.js';
+import MoleculeBuffer from './MoleculeShader.js';
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 5000;
@@ -63,6 +64,8 @@ class VisGeometry {
         
         this.mlogger = jsLogger.get('visgeometry');
         this.mlogger.setLevel(loggerLevel);
+
+        this.moleculeBuffer = new MoleculeBuffer();
     }
 
     setMembraneType(membraneType) {
@@ -361,6 +364,7 @@ class VisGeometry {
     }
 
     setupMembrane(membraneData) {
+        return;
         if (!membraneData) {
             return;
         }
@@ -510,6 +514,9 @@ class VisGeometry {
 
         let dx, dy, dz;
         // The agents sent over are mapped by an integer id
+        
+        const buf = new Float32Array(3*agents.length);
+
         agents.forEach((agentData, i) => {
 
             const visType = agentData['vis-type'];
@@ -538,6 +545,10 @@ class VisGeometry {
                 runtimeMesh.position.x = agentData.x;
                 runtimeMesh.position.y = agentData.y;
                 runtimeMesh.position.z = agentData.z;
+
+                buf[i*3 + 0] = agentData.x;
+                buf[i*3 + 1] = agentData.y;
+                buf[i*3 + 2] = agentData.z;
 
                 runtimeMesh.rotation.x = agentData.xrot;
                 runtimeMesh.rotation.y = agentData.yrot;
@@ -612,6 +623,10 @@ class VisGeometry {
                 fiberIndex += 1;
             }
         });
+
+        this.moleculeBuffer.update(buf);
+        this.moleculeBuffer.particles.visible = true;
+
         if (this.followObject) {
             // keep camera at same distance from target.
             const direction = new THREE.Vector3().subVectors( this.camera.position, this.controls.target );
