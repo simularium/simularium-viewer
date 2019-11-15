@@ -119,7 +119,7 @@ class VisData {
     *   Functions to check update
     * */
     hasLocalCacheForTime(timeNs) {
-        if(this.mframeDataCache.length == 1 && timeNs == 0) { return true; }
+        if(this.mframeDataCache.length === 1 && timeNs === 0) { return true; }
 
         if(this.mframeDataCache.length < 2) { return false; }
 
@@ -153,7 +153,7 @@ class VisData {
     }
 
     latestSimTimeCachedLocally() {
-        if(this.mframeDataCache === null || this.mframeDataCache.length == 0) { return -1; }
+        if(this.mframeDataCache === null || this.mframeDataCache.length === 0) { return -1; }
         return this.mframeDataCache[this.mframeDataCache.length -1].time;
     }
 
