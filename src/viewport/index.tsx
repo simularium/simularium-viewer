@@ -118,6 +118,7 @@ class Viewport extends React.Component<ViewportProps> {
         }
 
         this.clearCache = () => {
+            agentSimController.disableNetworkCommands();
             agentSimController.clearLocahCache();
         }
 
@@ -288,7 +289,7 @@ class Viewport extends React.Component<ViewportProps> {
         const timePerFrame = 1000 / framesPerSecond; // the time interval at which to re-render
         const elapsedTime = Date.now() - this.lastRenderTime;
         if (elapsedTime > timePerFrame) {
-            if (!visData.atLatestFrame()) {
+            if (!visData.atLatestFrame() && !agentSimController.paused()) {
                 this.visGeometry.colorVariant = visData.colorVariant;
                 this.visGeometry.update(visData.currentFrame());
                 this.dispatchUpdatedTime(visData.time);

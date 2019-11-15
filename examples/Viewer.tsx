@@ -121,6 +121,9 @@ class Viewer extends React.Component<{}, ViewerState> {
                 onClick={() => agentSim.pause()}
             >Pause</button>
             <button
+                onClick={() => agentSim.resume()}
+            >Resume</button>
+            <button
                 onClick={() => agentSim.playFromFrame(currentFrame)}
             >Play from cache</button>
             <button
