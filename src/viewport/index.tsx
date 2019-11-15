@@ -35,13 +35,16 @@ interface FrameJSON {
     frameNumber: number;
 }
 
+// Typescript's File definition is missing this function
+//  which is part of the HTML standard on all browsers
+//  and needed below
 interface FileHTML extends File {
     text: Function;
 }
 
 // This function returns a promise that resolves after all of the objects in
 //  the 'files' parameter have been parsed into text and put in the `outParsedFiles` parameter
-function parseFiles(files: FileHTML[], outParsedFiles: object[]): Promise<void> {
+function parseFilesToText(files: FileHTML[], outParsedFiles: object[]): Promise<void> {
     var p = Promise.resolve();
     files.forEach(file => {
         p = p.then(() => {
@@ -196,7 +199,7 @@ class Viewport extends React.Component<ViewportProps> {
 
         let parsedFiles = [];
         let filesArr: FileHTML[] = Array.from(files);
-        let p = parseFiles(filesArr, parsedFiles);
+        let p = parseFilesToText(filesArr, parsedFiles);
 
         p.then(() => {
             parsedFiles.sort(sortFrames);
