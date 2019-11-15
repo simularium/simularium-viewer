@@ -39,7 +39,9 @@ interface FileHTML extends File {
     text: Function;
 }
 
-function parseFrames(files: FileHTML[], outParsedFiles: object[]): Promise<void> {
+// This function returns a promise that resolves after all of the objects in
+//  the 'files' parameter have been parsed into text and put in the `outParsedFiles` parameter
+function parseFiles(files: FileHTML[], outParsedFiles: object[]): Promise<void> {
     var p = Promise.resolve();
     files.forEach(file => {
         p = p.then(() => {
@@ -194,7 +196,7 @@ class Viewport extends React.Component<ViewportProps> {
 
         let parsedFiles = [];
         let filesArr: FileHTML[] = Array.from(files);
-        let p = parseFrames(filesArr, parsedFiles);
+        let p = parseFiles(filesArr, parsedFiles);
 
         p.then(() => {
             parsedFiles.sort(sortFrames);
