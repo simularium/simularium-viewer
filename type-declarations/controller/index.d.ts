@@ -25,5 +25,5 @@ export default class AgentSimController {
     getFile(): any;
     disableNetworkCommands(): void;
     cacheJSON(json: any): void;
-    clearLocahCache(): void;
+    clearLocalCache(): void;
 }

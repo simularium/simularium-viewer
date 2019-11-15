@@ -119,7 +119,7 @@ class Viewport extends React.Component<ViewportProps> {
 
         this.clearCache = () => {
             agentSimController.disableNetworkCommands();
-            agentSimController.clearLocahCache();
+            agentSimController.clearLocalCache();
         }
 
     }
