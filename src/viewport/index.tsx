@@ -31,6 +31,35 @@ interface TimeData {
     frameNumber: number;
 }
 
+interface FrameJSON {
+    frameNumber: number;
+}
+
+// Typescript's File definition is missing this function
+//  which is part of the HTML standard on all browsers
+//  and needed below
+interface FileHTML extends File {
+    text: Function;
+}
+
+// This function returns a promise that resolves after all of the objects in
+//  the 'files' parameter have been parsed into text and put in the `outParsedFiles` parameter
+function parseFilesToText(files: FileHTML[], outParsedFiles: object[]): Promise<void> {
+    var p = Promise.resolve();
+    files.forEach(file => {
+        p = p.then(() => {
+            return file.text().then((text) => {
+                let json = JSON.parse(text);
+                outParsedFiles.push(json);
+            });
+        })
+    });
+    return p;
+}
+
+function sortFrames(a: FrameJSON, b: FrameJSON): number {
+    return a.frameNumber > b.frameNumber ? 1 : -1;
+}
 
 class Viewport extends React.Component<ViewportProps> {
     // NOTE: this can be typed in the future, but they may change signifantly and I dont want to at the moment. -MMRM
@@ -78,7 +107,9 @@ class Viewport extends React.Component<ViewportProps> {
         this.onPickObject = this.onPickObject.bind(this);
 
         this.handlers = {
-            contextmenu: this.onPickObject
+            contextmenu: this.onPickObject,
+            dragover: this.onDragOver,
+            drop: this.onDrop
         };
         this.hit = false;
         this.raycaster = new THREE.Raycaster();
@@ -140,6 +171,40 @@ class Viewport extends React.Component<ViewportProps> {
         if (prevProps.height !== height || prevProps.width !== width) {
             this.visGeometry.resize(width, height);
         }
+    }
+
+    private cacheJSON = (json) => {
+        this.props.agentSimController.cacheJSON(json);
+    }
+
+    private clearCache = () => {
+        this.props.agentSimController.disableNetworkCommands();
+        this.props.agentSimController.clearLocalCache();
+    }
+
+    public onDragOver = (e) => {
+        let event = e as Event;
+        if(event.stopPropagation) { event.stopPropagation() };
+        event.preventDefault();
+    }
+
+    public onDrop = (e) => {
+        this.onDragOver(e);
+        let files = e.target.files || e.dataTransfer.files;
+        this.clearCache();
+
+        let parsedFiles = [];
+        let filesArr: FileHTML[] = Array.from(files);
+        let p = parseFilesToText(filesArr, parsedFiles);
+
+        p.then(() => {
+            parsedFiles.sort(sortFrames);
+            for(let i = 0, l = parsedFiles.length; i < l; ++i)
+            {
+                let frameJSON = parsedFiles[i];
+                this.cacheJSON(frameJSON);
+            }
+        });
     }
 
     public addEventHandlersToCanvas() {
@@ -225,21 +290,19 @@ class Viewport extends React.Component<ViewportProps> {
         const timePerFrame = 1000 / framesPerSecond; // the time interval at which to re-render
         const elapsedTime = Date.now() - this.lastRenderTime;
         if (elapsedTime > timePerFrame) {
-            if (!netConnection.socketIsValid()) {
-                this.visGeometry.clear();
+            if (!visData.atLatestFrame() && !agentSimController.paused()) {
+                this.visGeometry.colorVariant = visData.colorVariant;
+                this.visGeometry.update(visData.currentFrame());
+                this.dispatchUpdatedTime(visData.time);
+                visData.gotoNextFrame();
             }
-            if (simParameters.newSimulationIsRunning) {
-                simParameters.newSimulationIsRunning = false;
-            }
+
+            //if (!netConnection.socketIsValid()) {
+            //this.visGeometry.clear();
+            //}
+
             this.visGeometry.render();
             this.lastRenderTime = Date.now();
-        }
-
-        if (visData.hasNewData()) {
-            this.visGeometry.colorVariant = visData.colorVariant;
-            this.visGeometry.update(visData.agents);
-            this.dispatchUpdatedTime(visData.time);
-            visData.newDataHasBeenHandled();
         }
 
         this.animationRequestID = requestAnimationFrame(this.animate);

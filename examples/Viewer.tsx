@@ -43,7 +43,7 @@ interface ViewerState {
     showPaths: boolean;
 }
 
-const agentSim = new AgentSimController(netConnectionSettings, { trajectoryPlaybackFile: "actin5-1.h5" })
+const agentSim = new AgentSimController(netConnectionSettings, { trajectoryPlaybackFile: "actin34_0.h5" })
 let currentFrame = 0;
 let currentTime = 0;
 
@@ -121,6 +121,9 @@ class Viewer extends React.Component<{}, ViewerState> {
                 onClick={() => agentSim.pause()}
             >Pause</button>
             <button
+                onClick={() => agentSim.resume()}
+            >Resume</button>
+            <button
                 onClick={() => agentSim.playFromFrame(currentFrame)}
             >Play from cache</button>
             <button
@@ -146,6 +149,11 @@ class Viewer extends React.Component<{}, ViewerState> {
                 onClick={this.playOneFrame}
             >
                 Play one frame
+            </button>
+            <button
+                onClick={() => agentSim.playFromTime(0)}
+            >
+                Play from time 0ns
             </button>
             <br/>
             <select
