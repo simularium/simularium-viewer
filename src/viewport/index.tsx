@@ -72,9 +72,6 @@ class Viewport extends React.Component<ViewportProps> {
     private raycaster: THREE.Raycaster;
     private animationRequestID: number;
 
-    private cacheJSON: Function;
-    private clearCache: Function;
-
     public static defaultProps = {
         height: 800,
         width: 800,
@@ -117,16 +114,6 @@ class Viewport extends React.Component<ViewportProps> {
         this.hit = false;
         this.raycaster = new THREE.Raycaster();
         this.animationRequestID = 0;
-
-        this.cacheJSON = (json) => {
-            agentSimController.cacheJSON(json);
-        }
-
-        this.clearCache = () => {
-            agentSimController.disableNetworkCommands();
-            agentSimController.clearLocalCache();
-        }
-
     }
 
     public componentDidMount() {
@@ -184,6 +171,15 @@ class Viewport extends React.Component<ViewportProps> {
         if (prevProps.height !== height || prevProps.width !== width) {
             this.visGeometry.resize(width, height);
         }
+    }
+
+    private cacheJSON = (json) => {
+        this.props.agentSimController.cacheJSON(json);
+    }
+
+    private clearCache = () => {
+        this.props.agentSimController.disableNetworkCommands();
+        this.props.agentSimController.clearLocalCache();
     }
 
     public onDragOver = (e) => {
