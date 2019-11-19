@@ -3,7 +3,7 @@
 import * as THREE from  'three';
 global.THREE = THREE;
 
-import RenderToBuffer from "./RenderToBuffer.js";
+import RenderToBuffer from "./rendering/RenderToBuffer.js";
 import { throwStatement } from '@babel/types';
 
 const dataTextureSize = 32;

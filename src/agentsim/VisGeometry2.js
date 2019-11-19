@@ -20,6 +20,7 @@ import MembraneShader3 from './MembraneShader3.js';
 import MembraneShader4 from './MembraneShader4.js';
 import MembraneShader5 from './MembraneShader5.js';
 import MembraneShader6 from './MembraneShader6.js';
+import MoleculeRenderer from './rendering/MoleculeRenderer.js';
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 5000;
@@ -32,13 +33,17 @@ function lerp(x0, x1, alpha) {
     return x0 + (x1 - x0) * alpha;
 }
 
-class VisGeometry {
+class VisGeometry2 {
     constructor(loggerLevel) {
+        // map particle type id to its mesh file name
         this.visGeomMap = new Map();
         this.meshRegistry = new Map();
         this.meshLoadAttempted = new Map();
+        // map particle type id to its mesh uniform scale value
         this.scaleMapping = new Map();
         this.geomCount = MAX_MESHES;
+        this.colors = [];
+        this.desatColors = [];
         this.materials = [];
         this.desatMaterials = [];
         this.highlightMaterial = new THREE.MeshBasicMaterial({color: new THREE.Color(1,0,0)});
@@ -60,6 +65,8 @@ class VisGeometry {
             sim: MembraneShader0.MembraneShaderSim ? new MembraneShader0.MembraneShaderSim() : null,
             MembraneShader: MembraneShader0.MembraneShader,
         };
+
+        this.moleculeRenderer = new MoleculeRenderer();
         
         this.mlogger = jsLogger.get('visgeometry');
         this.mlogger.setLevel(loggerLevel);
@@ -150,7 +157,7 @@ class VisGeometry {
         let initHeight = 100;
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(
-            75, initWidth / initHeight, 0.1, 10000,
+            75, initWidth / initHeight, 0.1, 1000,
         );
         this.controls = new THREE.OrbitControls(this.camera);
         this.controls.maxDistance = 750;
@@ -158,16 +165,16 @@ class VisGeometry {
         this.controls.zoomSpeed = 5;
         this.controls.enablePan = false;
 
-        this.dl = null;
-        this.dl = new THREE.DirectionalLight(0xffffff, 0.6);
-        this.dl.position.set(0, 0, 1);
-        this.scene.add(this.dl);
+        // this.dl = null;
+        // this.dl = new THREE.DirectionalLight(0xffffff, 0.6);
+        // this.dl.position.set(0, 0, 1);
+        // this.scene.add(this.dl);
 
-        this.hemiLight = new THREE.HemisphereLight(0xffffff, 0x000000, 0.6);
-        this.hemiLight.color.setHSL(0.095, 1, 0.75);
-        this.hemiLight.groundColor.setHSL(0.6, 1, 0.6);
-        this.hemiLight.position.set(0, 1, 0);
-        this.scene.add(this.hemiLight);
+        // this.hemiLight = new THREE.HemisphereLight(0xffffff, 0x000000, 0.6);
+        // this.hemiLight.color.setHSL(0.095, 1, 0.75);
+        // this.hemiLight.groundColor.setHSL(0.6, 1, 0.6);
+        // this.hemiLight.position.set(0, 1, 0);
+        // this.scene.add(this.hemiLight);
 
         if ( WEBGL.isWebGL2Available() === false ) {
             this.renderer = new THREE.WebGLRenderer();
@@ -183,24 +190,24 @@ class VisGeometry {
         this.renderer.clear();
 
         this.camera.position.z = 5;
+    }
 
-        this.loadObj = (meshName) => {
-            const objLoader = new THREE.OBJLoader();
-            objLoader.load(
-                `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/meshes/obj/${meshName}`,
-                (object) => {
-                    this.logger.debug('Finished loading mesh: ', meshName);
-                    this.render(); // new geometry -> redraw the scene
-                    this.addMesh(meshName, object);
-                },
-                (xhr) => {
-                    this.logger.debug(meshName, ' ', `${xhr.loaded / xhr.total * 100}% loaded`);
-                },
-                (error) => {
-                    this.logger.debug('Failed to load mesh: ', error, meshName);
-                },
-            );
-        };
+    loadObj(meshName) {
+        const objLoader = new THREE.OBJLoader();
+        objLoader.load(
+            `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/meshes/obj/${meshName}`,
+            (object) => {
+                this.logger.debug('Finished loading mesh: ', meshName);
+                this.render(); // new geometry -> redraw the scene
+                this.addMesh(meshName, object);
+            },
+            (xhr) => {
+                this.logger.debug(meshName, ' ', `${xhr.loaded / xhr.total * 100}% loaded`);
+            },
+            (error) => {
+                this.logger.debug('Failed to load mesh: ', error, meshName);
+            },
+        );
     }
 
     resize(width, height) {
@@ -210,6 +217,7 @@ class VisGeometry {
         if (this.membrane.sim) {
             this.membrane.sim.resize(width, height);
         }
+        this.moleculeRenderer.resize(width, height);
     }
 
     reparent(parent) {
@@ -229,6 +237,7 @@ class VisGeometry {
         if (this.membrane.sim) {
             this.membrane.sim.resize(width, height);
         }
+        this.moleculeRenderer.resize(width, height);
 
         this.renderer.domElement.position = "absolute";
         this.renderer.domElement.top = "0px";
@@ -247,7 +256,7 @@ class VisGeometry {
     }
 
     render(time) {
-        if(this.runTimeMeshes.length == 0) { return; }
+        //if(this.runTimeMeshes.length == 0) { return; }
 
         var elapsedSeconds = time / 1000.;
 
@@ -272,22 +281,24 @@ class VisGeometry {
 
         this.controls.update();
 
-        if (this.dl && this.fixLightsToCamera) {
-            // position directional light at camera (facing scene, as headlight!)
-            this.dl.position.copy(this.camera.position);
-        }
-        if (this.hemiLight && this.fixLightsToCamera) {
-            // make hemi light come down from vertical of screen (camera up)
-            this.hemiLight.position.setFromMatrixColumn(this.camera.matrixWorld, 1);
-        }
+        // if (this.dl && this.fixLightsToCamera) {
+        //     // position directional light at camera (facing scene, as headlight!)
+        //     this.dl.position.copy(this.camera.position);
+        // }
+        // if (this.hemiLight && this.fixLightsToCamera) {
+        //     // make hemi light come down from vertical of screen (camera up)
+        //     this.hemiLight.position.setFromMatrixColumn(this.camera.matrixWorld, 1);
+        // }
 
-        this.renderer.render(this.scene, this.camera);
+        this.moleculeRenderer.render(this.renderer, this.camera, null);
+        //this.renderer.render(this.scene, this.camera);
     }
 
     /**
     *   Run Time Mesh functions
     */
     createMaterials(colors) {
+        this.colors = [];
         const numColors = colors.length;
         for (let i = 0; i < numColors; i += 1) {
             this.materials.push(
@@ -297,6 +308,8 @@ class VisGeometry {
             const desatColor = new THREE.Color(colors[i]);
             hsl = desatColor.getHSL(hsl);
             desatColor.setHSL(hsl.h, 0.5*hsl.s, hsl.l);
+            this.colors.push(colors[i]);
+            this.desatColors.push(desatColor);
             this.desatMaterials.push(
                 new THREE.MeshLambertMaterial({ color: desatColor, opacity: 0.25, transparent: true }),
             );
@@ -309,14 +322,16 @@ class VisGeometry {
         const sphereGeom = this.getSphereGeom();
         const { materials } = this;
 
+        // empty buffer of molecule positions, to be filled. (init all to origin)
+        // currently one "atom" per molecule per geomCount
+        this.moleculeRenderer.createMoleculeBuffer(this.geomCount);
+
+        //multipass render:
+        // draw moleculebuffer into several render targets to store depth, normals, colors
+        // draw quad to composite the buffers into final frame
+
+        // create placeholder fibers
         for (let i = 0; i < this.geomCount; i += 1) {
-            const runtimeMesh = new THREE.Mesh(sphereGeom, materials[0]);
-
-            runtimeMesh.name = `Mesh_${i.toString()}`;
-            runtimeMesh.visible = false;
-            this.runTimeMeshes[i] = runtimeMesh;
-            scene.add(runtimeMesh);
-
             const fibercurve = new THREE.LineCurve3(
                 new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 1, 1),
             );
@@ -430,7 +445,7 @@ class VisGeometry {
     /**
     *   Map Type ID -> Geometry
     */
-    mapIdToGeom(id, meshName) {
+    mapTypeIdToGeom(id, meshName) {
         this.logger.debug('Mesh for id ', id, ' set to ', meshName);
         this.visGeomMap.set(id, meshName);
 
@@ -440,7 +455,7 @@ class VisGeometry {
         }
     }
 
-    getGeomFromId(id) {
+    getGeomFromTypeId(id) {
         if (this.visGeomMap.has(id)) {
             const meshName = this.visGeomMap.get(id);
             return this.meshRegistry.get(meshName);
@@ -461,8 +476,8 @@ class VisGeometry {
                 self.logger.debug('JSON Mesh mapping loaded: ', jsonData);
                 Object.keys(jsonData).forEach((id) => {
                     const entry = jsonData[id];
-                    self.mapIdToGeom(Number(id), entry.mesh);
-                    self.setScaleForId(Number(id), entry.scale);
+                    self.mapTypeIdToGeom(Number(id), entry.mesh);
+                    self.setScaleForTypeId(Number(id), entry.scale);
                 });
                 self.setupMembrane(self.membrane);
                 if (callback) {
@@ -472,12 +487,12 @@ class VisGeometry {
         );
     }
 
-    setScaleForId(id, scale) {
+    setScaleForTypeId(id, scale) {
         this.logger.debug('Scale for id ', id, ' set to ', scale);
         this.scaleMapping.set(id, scale);
     }
 
-    getScaleForId(id) {
+    getScaleForTypeId(id) {
         if (this.scaleMapping.has(id)) {
             return this.scaleMapping.get(id);
         }
@@ -518,58 +533,58 @@ class VisGeometry {
 
             const visType = agentData['vis-type'];
             const typeId = agentData.type;
-            const scale = this.getScaleForId(typeId);
+            const scale = this.getScaleForTypeId(typeId);
 
             if (visType === visTypes.ID_VIS_TYPE_DEFAULT) {
                 const materialType = (typeId + 1) * this.colorVariant;
                 const runtimeMesh = this.getMesh(i);
-                if (!runtimeMesh.userData) {
-                    runtimeMesh.userData = { 
-                        active: true,
-                        baseMaterial: this.getMaterial(materialType, typeId),
-                        index: i,
-                    }
-                }
-                else {
-                    runtimeMesh.userData.active = true;
-                    runtimeMesh.userData.baseMaterial = this.getMaterial(materialType, typeId);
-                    runtimeMesh.userData.index = i;
-                }
+                // if (!runtimeMesh.userData) {
+                //     runtimeMesh.userData = { 
+                //         active: true,
+                //         baseMaterial: this.getMaterial(materialType, typeId),
+                //         index: i,
+                //     }
+                // }
+                // else {
+                //     runtimeMesh.userData.active = true;
+                //     runtimeMesh.userData.baseMaterial = this.getMaterial(materialType, typeId);
+                //     runtimeMesh.userData.index = i;
+                // }
 
-                dx = agentData.x - runtimeMesh.position.x; 
-                dy = agentData.y - runtimeMesh.position.y; 
-                dz = agentData.z - runtimeMesh.position.z; 
-                runtimeMesh.position.x = agentData.x;
-                runtimeMesh.position.y = agentData.y;
-                runtimeMesh.position.z = agentData.z;
+                // dx = agentData.x - runtimeMesh.position.x; 
+                // dy = agentData.y - runtimeMesh.position.y; 
+                // dz = agentData.z - runtimeMesh.position.z; 
+                // runtimeMesh.position.x = agentData.x;
+                // runtimeMesh.position.y = agentData.y;
+                // runtimeMesh.position.z = agentData.z;
 
                 buf[i*3 + 0] = agentData.x;
                 buf[i*3 + 1] = agentData.y;
                 buf[i*3 + 2] = agentData.z;
 
-                runtimeMesh.rotation.x = agentData.xrot;
-                runtimeMesh.rotation.y = agentData.yrot;
-                runtimeMesh.rotation.z = agentData.zrot;
+                // runtimeMesh.rotation.x = agentData.xrot;
+                // runtimeMesh.rotation.y = agentData.yrot;
+                // runtimeMesh.rotation.z = agentData.zrot;
 
-                runtimeMesh.visible = true;
-                if (runtimeMesh === this.followObject) {
-                    runtimeMesh.material = this.highlightMaterial;
-                }
-                else {
-                    runtimeMesh.material = runtimeMesh.userData.baseMaterial;
-                }
+                // runtimeMesh.visible = true;
+                // if (runtimeMesh === this.followObject) {
+                //     runtimeMesh.material = this.highlightMaterial;
+                // }
+                // else {
+                //     runtimeMesh.material = runtimeMesh.userData.baseMaterial;
+                // }
 
-                runtimeMesh.scale.x = agentData.cr * scale;
-                runtimeMesh.scale.y = agentData.cr * scale;
-                runtimeMesh.scale.z = agentData.cr * scale;
+                // runtimeMesh.scale.x = agentData.cr * scale;
+                // runtimeMesh.scale.y = agentData.cr * scale;
+                // runtimeMesh.scale.z = agentData.cr * scale;
 
-                const meshGeom = this.getGeomFromId(typeId);
+                const meshGeom = this.getGeomFromTypeId(typeId);
 
-                if (meshGeom && meshGeom.children) {
-                    runtimeMesh.geometry = meshGeom.children[0].geometry;
-                } else {
-                    runtimeMesh.geometry = this.getSphereGeom();
-                }
+                // if (meshGeom && meshGeom.children) {
+                //     runtimeMesh.geometry = meshGeom.children[0].geometry;
+                // } else {
+                //     runtimeMesh.geometry = this.getSphereGeom();
+                // }
 
                 const path = this.findPathForAgentIndex(i);
                 if (path) {
@@ -620,6 +635,8 @@ class VisGeometry {
                 fiberIndex += 1;
             }
         });
+
+        this.moleculeRenderer.updateMolecules(buf, agents.length);
 
         if (this.followObject) {
             // keep camera at same distance from target.
@@ -694,8 +711,8 @@ class VisGeometry {
             line: null,
         };
         
-        pathdata.geometry.addAttribute( 'position', new THREE.BufferAttribute( pathdata.points, 3 ) );
-        pathdata.geometry.addAttribute( 'color', new THREE.BufferAttribute( pathdata.colors, 3 ) );
+        pathdata.geometry.setAttribute( 'position', new THREE.BufferAttribute( pathdata.points, 3 ) );
+        pathdata.geometry.setAttribute( 'color', new THREE.BufferAttribute( pathdata.colors, 3 ) );
         // path starts empty: draw range spans nothing
         pathdata.geometry.setDrawRange( 0, 0 );
         pathdata.line = new THREE.LineSegments(pathdata.geometry, pathdata.material);
@@ -832,5 +849,5 @@ class VisGeometry {
     }
 }
 
-export { VisGeometry };
-export default VisGeometry;
+export { VisGeometry2 };
+export default VisGeometry2;

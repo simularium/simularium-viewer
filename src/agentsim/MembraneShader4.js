@@ -3,7 +3,7 @@
 import * as THREE from  'three';
 global.THREE = THREE;
 
-import RenderToBuffer from "./RenderToBuffer.js";
+import RenderToBuffer from "./rendering/RenderToBuffer.js";
 
 const nMolEdge = 196-4;
 // set dataTextureSize > nMolEdge so there is a border for things to bounce.

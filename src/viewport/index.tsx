@@ -9,7 +9,7 @@ import {
 //  such as OrbitControls.js below
 import * as THREE from  'three';
 
-import { VisGeometry, DevGUI } from "../agentsim";
+import { VisGeometry, VisGeometry2, DevGUI } from "../agentsim";
 
 interface ViewportProps {
     height: number;
@@ -69,7 +69,7 @@ class Viewport extends React.Component<ViewportProps> {
             agentSimController,
         } = this.props;
 
-        this.visGeometry = new VisGeometry(loggerLevel);
+        this.visGeometry = new VisGeometry2(loggerLevel);
         this.animate = this.animate.bind(this);
         this.visGeometry.setupScene();
         this.visGeometry.createMaterials(agentSimController.visData.colors);
@@ -106,7 +106,7 @@ class Viewport extends React.Component<ViewportProps> {
         agentSimController.connect().then(() => {
             if (loadInitialData) {
                 let fileName = agentSimController.getFile();
-                this.visGeometry.mapFromJSON(
+                this.visGeometry.fetchGeometryData(
                     `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${fileName}.json`, onJsonDataArrived
 
                 ).then(() => {
@@ -139,7 +139,7 @@ class Viewport extends React.Component<ViewportProps> {
 
     public componentDidUpdate(prevProps: ViewportProps) {
         const { height, width, showMeshes, showPaths, membraneType } = this.props;
-        this.visGeometry.setHighlightById(this.props.highlightedParticleType);
+        this.visGeometry.setHighlightByTypeId(this.props.highlightedParticleType);
         this.visGeometry.setShowMeshes(showMeshes);
         this.visGeometry.setShowPaths(showPaths);
         if (prevProps.membraneType !== membraneType) {

@@ -1,4 +1,5 @@
 export declare var VisGeometry: any;
+export declare var VisGeometry2: any;
 
 export declare var VisData: any;
 
