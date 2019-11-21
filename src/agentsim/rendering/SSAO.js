@@ -1,21 +1,22 @@
 import RenderToBuffer from "./RenderToBuffer.js";
 
 class SSAO1Pass {
-    constructor() {
+    constructor(radius, threshold, falloff) {
         this.pass = new RenderToBuffer({
             uniforms: {
                 iResolution: { value: new THREE.Vector2(2,2) },
                 iTime: { value: 0.0 },
                 normalTex: { value: null },
                 viewPosTex: { value: null },
-                noiseTex: { value: null },
+                noiseTex: { value: this.createNoiseTex() },
                 iChannelResolution0: { value: new THREE.Vector2(2,2) },
                 projectionMatrix: { value: new THREE.Matrix4() },
                 width: { value: 2 },
                 height: { value: 2 },
-                radius: { value: 1 },
-                ssao_threshold: { value: 0.5 }, // = 0.5;
-                ssao_falloff: { value: 0.1 }, // = 0.1;
+                radius: { value: radius },
+                ssao_threshold: { value: threshold }, // = 0.5;
+                ssao_falloff: { value: falloff }, // = 0.1;
+                samples: { value: this.createSSAOSamples() }
             },
             fragmentShader: `
             uniform float iTime;
@@ -93,8 +94,35 @@ class SSAO1Pass {
         this.pass.material.uniforms.width.value = x;
         this.pass.material.uniforms.height.value = y;
     }
-    render(renderer) {
-        this.pass.render(renderer, null);
+    render(renderer, camera, target, normals, positions) {
+        this.pass.material.uniforms.projectionMatrix.value = camera.projectionMatrix;
+        this.pass.material.uniforms.viewPosTex.value = positions.texture;
+        this.pass.material.uniforms.normalTex.value = normals.texture;
+
+        this.pass.render(renderer, target);
+    }
+
+    createNoiseTex() {
+        const noisedata = new Float32Array(16*3);
+        for (let i = 0; i < 16; i++)
+        {
+            noisedata[i*3+0] = Math.random()*2.0 - 1.0;
+            noisedata[i*3+1] = Math.random()*2.0 - 1.0;
+            noisedata[i*3+2] = 0;
+        }
+        // TODO half float type?
+        return new THREE.DataTexture( noisedata, 4, 4, THREE.RGBFormat, THREE.FloatType );
+    }
+
+    createSSAOSamples() {
+        const samples = [];
+        for (let i = 0; i < 64; i++) {
+            const sample = new THREE.Vector3(Math.random() * 2.0 - 1.0, Math.random() * 2.0 - 1.0, Math.random());
+            sample.normalize();
+            sample.multiplyScalar(Math.random());
+            samples.push(sample);
+        }
+        return samples;
     }
 }
 

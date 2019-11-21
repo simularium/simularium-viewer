@@ -25,20 +25,19 @@ class CompositePass {
             
             uniform float zNear;
             uniform float zFar;
-            //uniform int somethingIsSelected;
             
-            layout(std430) buffer;
-            layout(binding = 0) buffer INPUT0 {
-              vec4 AtomInfos[];
-            };
+            // layout(std430) buffer;
+            // layout(binding = 0) buffer INPUT0 {
+            //   vec4 AtomInfos[];
+            // };
             
-            layout(binding = 1) buffer INPUT1 {
-              vec4 ProteinInstanceInfo[];
-            };
+            // layout(binding = 1) buffer INPUT1 {
+            //   vec4 ProteinInstanceInfo[];
+            // };
             
-            layout(binding = 2) buffer INPUT2 {
-               vec4 IngredientInfo[];
-             };
+            // layout(binding = 2) buffer INPUT2 {
+            //    vec4 IngredientInfo[];
+            //  };
             
             //_ProteinAtomInfos
             
@@ -51,9 +50,9 @@ class CompositePass {
             
             float d3_xyz_rgb(float r)
             {
-                return round(255 * (r <= 0.00304 ? 12.92 * r : 1.055 * pow(r, 1.0 / 2.4) - 0.055));
+                return round(255.0 * (r <= 0.00304 ? 12.92 * r : 1.055 * pow(r, 1.0 / 2.4) - 0.055));
             }
-            
+
             vec3 d3_lab_rgb(float l, float a, float b)
             {
                 float y = (l + 16.0) / 116.0;
@@ -74,7 +73,7 @@ class CompositePass {
             vec3 d3_hcl_lab(float h, float c, float l)
             {
                 float d3_radians = 0.01745329252;
-                return d3_lab_rgb(l, cos(h * d3_radians) * c, sin(h * d3_radians) * c) / 255;
+                return d3_lab_rgb(l, cos(h * d3_radians) * c, sin(h * d3_radians) * c) / 255.0;
             }
             
             vec3 IngredientColor[47] = vec3[](
@@ -379,8 +378,12 @@ class CompositePass {
     resize(x, y) {
 
     }
-    render(renderer) {
+    render(renderer, target, ssaoBuffer1, ssaoBuffer2, colorBuffer) {
+        this.pass.material.uniforms.colorTex.value = colorBuffer.texture;
+        this.pass.material.uniforms.ssaoTex1.value = ssaoBuffer1.texture;
+        this.pass.material.uniforms.ssaoTex2.value = ssaoBuffer2.texture;
 
+        this.pass.render(renderer, target);
     }
 }
 

@@ -6,10 +6,10 @@ import CompositePass from "./CompositePass";
 class MoleculeRenderer {
     constructor() {
         this.gbufferPass = new MoleculePass();
-        this.ssao1Pass = new SSAO1Pass();
-        this.ssao2Pass = new SSAO1Pass();
-        this.blur1Pass = new BlurPass();
-        this.blur2Pass = new BlurPass();
+        this.ssao1Pass = new SSAO1Pass(0.00005, 0.38505, 0.08333);
+        this.ssao2Pass = new SSAO1Pass(0.00125, 1.05714, 0.15188);
+        this.blur1Pass = new BlurPass(1);
+        this.blur2Pass = new BlurPass(1);
         this.compositePass = new CompositePass();
 
         // buffers:
@@ -126,10 +126,10 @@ class MoleculeRenderer {
         this.gbufferPass.render(renderer, camera, this.colorBuffer, this.normalBuffer, this.positionBuffer);
 
         // 2 render ssao
-        this.ssao1Pass.render(renderer, this.ssaoBuffer, this.normalBuffer, this.positionBuffer);
+        this.ssao1Pass.render(renderer, camera, this.ssaoBuffer, this.normalBuffer, this.positionBuffer);
         this.blur1Pass.render(renderer, this.ssaoBufferBlurred, this.ssaoBuffer, this.positionBuffer, this.blurIntermediateBuffer);
 
-        this.ssao2Pass.render(renderer, this.ssaoBuffer2, this.normalBuffer, this.positionBuffer);
+        this.ssao2Pass.render(renderer, camera, this.ssaoBuffer2, this.normalBuffer, this.positionBuffer);
         this.blur2Pass.render(renderer, this.ssaoBufferBlurred2, this.ssaoBuffer2, this.positionBuffer, this.blurIntermediateBuffer);
 
         // render into default render target
