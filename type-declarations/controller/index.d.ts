@@ -2,11 +2,14 @@ export default class AgentSimController {
     netConnection: any;
     simParameters: any;
     visData: any;
+    private networkEnabled;
+    private isPaused;
     constructor(netConnectionSettings: any, params: any);
     start(): void;
     time(): void;
     stop(): void;
     pause(): void;
+    paused(): boolean;
     connect(): any;
     numberOfFrames(): any;
     timeStepSize(): any;
@@ -20,4 +23,7 @@ export default class AgentSimController {
     resume(): void;
     changeFile(newFile: any): void;
     getFile(): any;
+    disableNetworkCommands(): void;
+    cacheJSON(json: any): void;
+    clearLocalCache(): void;
 }

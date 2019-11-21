@@ -7,6 +7,8 @@ export default class AgentSimController {
     public netConnection: any;
     public simParameters: any;
     public visData: any;
+    private networkEnabled: boolean;
+    private isPaused: boolean;
 
     public constructor(netConnectionSettings, params) {
         const loggerLevel =
@@ -19,9 +21,17 @@ export default class AgentSimController {
             netConnectionSettings,
             loggerLevel
         );
+
+        this.networkEnabled = true;
+        this.isPaused = false;
     }
 
     public start() {
+        // switch back to 'networked' playback
+        this.networkEnabled = true;
+        this.isPaused = false;
+        this.visData.clearCache();
+
         this.netConnection.guiStartRemoteTrajectoryPlayback();
     }
 
@@ -34,7 +44,15 @@ export default class AgentSimController {
     }
 
     public pause() {
-        this.netConnection.pauseRemoteSim();
+        if (this.networkEnabled) {
+            this.netConnection.pauseRemoteSim();
+        } else {
+            this.isPaused = true;
+        }
+    }
+
+    public paused() {
+        return this.isPaused;
     }
 
     public connect() {
@@ -58,7 +76,18 @@ export default class AgentSimController {
     }
 
     public playFromTime(timeNs) {
-        this.netConnection.playRemoteSimCacheFromTime(timeNs);
+        // If there is a locally cached frame, use it
+        if (this.visData.hasLocalCacheForTime(timeNs)) {
+            this.visData.playFromTime(timeNs);
+            // @TODO: Does the networked state need to change? (need an explicit play command?)
+        } else {
+            if (this.networkEnabled) {
+                // else reset the local cache,
+                //  and play remotely from the desired simulation time
+                this.visData.clearCache();
+                this.netConnection.playRemoteSimCacheFromTime(timeNs);
+            }
+        }
     }
 
     public playOneFrame(frameNumber) {
@@ -78,7 +107,11 @@ export default class AgentSimController {
     }
 
     public resume() {
-        this.netConnection.resumeRemoteSim();
+        if (this.networkEnabled) {
+            this.netConnection.resumeRemoteSim();
+        } else {
+            this.isPaused = false;
+        }
     }
 
     public changeFile(newFile) {
@@ -87,5 +120,21 @@ export default class AgentSimController {
 
     public getFile() {
         return this.simParameters.playBackFile;
+    }
+
+    public disableNetworkCommands() {
+        this.networkEnabled = false;
+
+        if (this.netConnection.socketIsValid()) {
+            this.netConnection.disconnect();
+        }
+    }
+
+    public cacheJSON(json) {
+        this.visData.parseAgentsFromNetData(json);
+    }
+
+    public clearLocalCache() {
+        this.visData.clearCache();
     }
 }
