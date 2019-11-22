@@ -20,6 +20,7 @@ import MembraneShader3 from './MembraneShader3.js';
 import MembraneShader4 from './MembraneShader4.js';
 import MembraneShader5 from './MembraneShader5.js';
 import MembraneShader6 from './MembraneShader6.js';
+import MembraneShader7 from './MembraneShader7.js';
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 5000;
@@ -88,6 +89,9 @@ class VisGeometry {
         }
         else if (membraneType === 5) {
             MembraneShader = MembraneShader6;
+        }
+        else if (membraneType === 6) {
+            MembraneShader = MembraneShader7;
         }
         this.membrane.sim = MembraneShader.MembraneShaderSim ? new MembraneShader.MembraneShaderSim() : null;
         if (this.membrane.sim) {
