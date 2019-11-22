@@ -311,7 +311,7 @@ class Viewport extends React.Component<ViewportProps> {
             //this.visGeometry.clear();
             //}
 
-            this.visGeometry.render();
+            this.visGeometry.render(totalElapsedTime);
             this.lastRenderTime = Date.now();
         }
 
