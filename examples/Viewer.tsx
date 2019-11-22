@@ -44,7 +44,7 @@ interface ViewerState {
     membraneType: number;
 }
 
-const agentSim = new AgentSimController(netConnectionSettings, { trajectoryPlaybackFile: "actin34_0.h5" })
+const agentSim = new AgentSimController(netConnectionSettings, { trajectoryPlaybackFile: "ATPsynthase_9.h5" })
 let currentFrame = 0;
 let currentTime = 0;
 
