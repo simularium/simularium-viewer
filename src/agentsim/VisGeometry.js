@@ -14,13 +14,13 @@ import './three/OrbitControls.js';
 
 import jsLogger from 'js-logger';
 
-import MembraneShader0 from './MembraneShader.js';
-import MembraneShader2 from './MembraneShader2.js';
-import MembraneShader3 from './MembraneShader3.js';
-import MembraneShader4 from './MembraneShader4.js';
-import MembraneShader5 from './MembraneShader5.js';
-import MembraneShader6 from './MembraneShader6.js';
-import MembraneShader7 from './MembraneShader7.js';
+import MembraneShader0 from './rendering/MembraneShader.js';
+import MembraneShader2 from './rendering/MembraneShader2.js';
+import MembraneShader3 from './rendering/MembraneShader3.js';
+import MembraneShader4 from './rendering/MembraneShader4.js';
+import MembraneShader5 from './rendering/MembraneShader5.js';
+import MembraneShader6 from './rendering/MembraneShader6.js';
+import MembraneShader7 from './rendering/MembraneShader7.js';
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 5000;
