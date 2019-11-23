@@ -244,7 +244,12 @@ class Viewport extends React.Component<ViewportProps> {
         this.visGeometry.setFollowObject(null);
         const intersects = this.raycaster.intersectObjects(this.visGeometry.scene.children, true);
         if (intersects && intersects.length) {
-            const obj = intersects[0].object;
+            let obj = intersects[0].object;
+            // if the object has a parent and the parent is not the scene, use that.
+            // assumption: only one level of object hierarchy.
+            if (obj.parent && !(obj.parent instanceof THREE.Scene)) {
+                obj = obj.parent;
+            }
             this.hit = true;
             if (oldFollowObject !== obj) {
                 this.visGeometry.removePathForObject(oldFollowObject);

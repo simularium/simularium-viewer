@@ -122,14 +122,17 @@ class VisGeometry {
     }
 
     setFollowObject(obj) {
-        if (obj === this.membrane.mesh) {
+        if (obj && obj.userData && obj.userData.index === this.membrane.runtimeMeshIndex) {
             return;
+        }
+        if (this.followObject) {
+            this.assignMaterial(this.followObject, this.followObject.userData.baseMaterial);
         }
         this.followObject = obj;
         // put the camera on it
         if (obj) {
             this.controls.target.copy(obj.position);
-            obj.material = this.highlightMaterial;
+            this.assignMaterial(obj, this.highlightMaterial);
         }
     }
 
