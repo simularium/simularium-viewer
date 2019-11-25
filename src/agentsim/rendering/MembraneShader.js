@@ -414,7 +414,6 @@ const fragmentShader = common + `
 
 const MembraneShader = new THREE.ShaderMaterial({
     uniforms: {
-        color: { value: new THREE.Color(0x44ff44)},
         iTime: { value: 1.0 },
         iResolution: { value: new THREE.Vector2() },
         iChannel0: { value: null },
