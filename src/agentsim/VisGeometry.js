@@ -575,6 +575,7 @@ class VisGeometry {
                 if (runtimeMesh.geometry === sphereGeometry) {
                     const meshGeom = this.getGeomFromId(typeId);
                     if (meshGeom && meshGeom.children) {
+                        // in theory this code should never be hit, due to the way the mesh geometry is updated in loadObj
                         runtimeMesh = this.setupMeshGeometry(i, runtimeMesh, meshGeom, isFollowedObject);
                     }
                 }
