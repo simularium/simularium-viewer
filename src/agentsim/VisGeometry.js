@@ -142,12 +142,51 @@ class VisGeometry {
     }
 
     setHighlightById(id) {
+        if (this.highlightedId === id) {
+            return;
+        }
         this.highlightedId = id;
+
+        // go over all objects and update material
+        let nMeshes = this.runTimeMeshes.length;
+        for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
+            const runtimeMesh = this.getMesh(i);
+            if (runtimeMesh.userData && runtimeMesh.userData.active) {
+                runtimeMesh.userData.baseMaterial = this.getMaterial(runtimeMesh.userData.materialType, runtimeMesh.userData.typeId);
+                this.assignMaterial(runtimeMesh, runtimeMesh.userData.baseMaterial);
+            }
+        }
     }
 
-    // equivalent to setHighlightById(-1)
     dehighlight() {
-        this.highlightedId = -1;
+        this.setHighlightById(-1);
+    }
+
+    onNewRuntimeGeometryType(meshName) {
+        // find all typeIds for this meshName
+        let typeIds = [...this.visGeomMap.entries()]
+            .filter(({ 1: v }) => v === meshName)
+            .map(([k]) => k);
+
+        // assuming the meshGeom has already been added to the registry
+        const meshGeom = this.meshRegistry.get(meshName);
+
+        // go over all objects and update mesh of this typeId
+        let nMeshes = this.runTimeMeshes.length;
+        for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
+            let runtimeMesh = this.getMesh(i);
+            if (runtimeMesh.userData && typeIds.includes(runtimeMesh.userData.typeId)) {
+                const isFollowedObject = (runtimeMesh === this.followObject);
+
+                const p = runtimeMesh.position;
+                const r = runtimeMesh.rotation;
+                const s = runtimeMesh.scale;
+                runtimeMesh = this.setupMeshGeometry(i, runtimeMesh, meshGeom, isFollowedObject);
+                runtimeMesh.position.copy(p);
+                runtimeMesh.rotation.copy(r);
+                runtimeMesh.scale.copy(s);
+            }
+        }
     }
 
     /**
@@ -198,8 +237,8 @@ class VisGeometry {
                 `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/meshes/obj/${meshName}`,
                 (object) => {
                     this.logger.debug('Finished loading mesh: ', meshName);
-                    this.render(); // new geometry -> redraw the scene
                     this.addMesh(meshName, object);
+                    this.onNewRuntimeGeometryType(meshName);
                 },
                 (xhr) => {
                     this.logger.debug(meshName, ' ', `${xhr.loaded / xhr.total * 100}% loaded`);
@@ -367,7 +406,14 @@ class VisGeometry {
     getMaterial(index, typeId) {
         // if no highlight, or if this is the highlighed type, then use regular material, otherwise use desaturated.
         // todo strings or numbers for these ids?????
-        let matArray = (this.highlightedId == -1 || this.highlightedId == typeId) ? this.materials : this.desatMaterials;
+        const isHighlighted = (this.highlightedId == -1 || this.highlightedId == typeId);
+
+        // membrane is special
+        if (typeId === this.membrane.typeId) {
+            return isHighlighted ? this.membrane.material : this.desatMaterials[0];
+        }
+
+        let matArray = isHighlighted ? this.materials : this.desatMaterials;
         return matArray[Number(index) % matArray.length];
     }
 
@@ -415,6 +461,9 @@ class VisGeometry {
     mapIdToGeom(id, meshName) {
         this.logger.debug('Mesh for id ', id, ' set to ', meshName);
         this.visGeomMap.set(id, meshName);
+        if (meshName.includes("membrane")) {
+            this.membrane.typeId = id;
+        }
 
         if (!this.meshRegistry.has(meshName) && !this.meshLoadAttempted.get(meshName)) {
             this.loadObj(meshName);
@@ -511,18 +560,22 @@ class VisGeometry {
                         active: true,
                         baseMaterial: this.getMaterial(materialType, typeId),
                         index: i,
+                        typeId: typeId,
+                        materialType: materialType
                     }
                 }
                 else {
                     runtimeMesh.userData.active = true;
                     runtimeMesh.userData.baseMaterial = this.getMaterial(materialType, typeId);
                     runtimeMesh.userData.index = i;
+                    runtimeMesh.userData.typeId = typeId;
+                    runtimeMesh.userData.materialType = materialType;
                 }
 
                 if (runtimeMesh.geometry === sphereGeometry) {
                     const meshGeom = this.getGeomFromId(typeId);
                     if (meshGeom && meshGeom.children) {
-                        runtimeMesh = this.lazySetupMeshGeometry(i, runtimeMesh, meshGeom, isFollowedObject);
+                        runtimeMesh = this.setupMeshGeometry(i, runtimeMesh, meshGeom, isFollowedObject);
                     }
                 }
 
@@ -605,9 +658,10 @@ class VisGeometry {
         }
     }
 
-    lazySetupMeshGeometry(i, runtimeMesh, meshGeom, isFollowedObject) {
+    setupMeshGeometry(i, runtimeMesh, meshGeom, isFollowedObject) {
         if (this.membrane.mesh === meshGeom) {
             if (this.membrane.mesh && runtimeMesh.children.length !== this.membrane.mesh.children.length) {
+                // to avoid a deep clone of userData, just reuse the instance
                 const userData = runtimeMesh.userData;
                 runtimeMesh.userData = null;
                 this.scene.remove(runtimeMesh);
@@ -620,6 +674,7 @@ class VisGeometry {
             }
         }
         else {
+            // to avoid a deep clone of userData, just reuse the instance
             const userData = runtimeMesh.userData;
             runtimeMesh.userData = null;
             this.scene.remove(runtimeMesh);
@@ -693,7 +748,7 @@ class VisGeometry {
         if (!color) {
             // get the agent's color. is there a simpler way?
             const mat = this.getMaterialOfAgentIndex(idx);
-            color = mat ? mat.color.clone() : new THREE.Color(0xffffff);
+            color = (mat && mat.color) ? mat.color.clone() : new THREE.Color(0xffffff);
         }
 
         const pathdata = {
