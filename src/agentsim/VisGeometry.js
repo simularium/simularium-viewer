@@ -14,13 +14,7 @@ import './three/OrbitControls.js';
 
 import jsLogger from 'js-logger';
 
-import MembraneShader0 from './rendering/MembraneShader.js';
-import MembraneShader2 from './rendering/MembraneShader2.js';
-import MembraneShader3 from './rendering/MembraneShader3.js';
-import MembraneShader4 from './rendering/MembraneShader4.js';
-import MembraneShader5 from './rendering/MembraneShader5.js';
-import MembraneShader6 from './rendering/MembraneShader6.js';
-import MembraneShader7 from './rendering/MembraneShader7.js';
+import MembraneShader from './rendering/MembraneShader.js';
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 5000;
@@ -60,49 +54,14 @@ class VisGeometry {
         this.membrane = {
             // assume only one membrane mesh 
             mesh: null,
-            sim: MembraneShader0.MembraneShaderSim ? new MembraneShader0.MembraneShaderSim() : null,
-            MembraneShader: MembraneShader0.MembraneShader,
+            sim: MembraneShader.MembraneShaderSim ? new MembraneShader.MembraneShaderSim() : null,
+            MembraneShader: MembraneShader.MembraneShader,
             material: null,
             runtimeMeshIndex: -1,
         };
         
         this.mlogger = jsLogger.get('visgeometry');
         this.mlogger.setLevel(loggerLevel);
-    }
-
-    setMembraneType(membraneType) {
-        let MembraneShader;
-        if (membraneType === 0) {
-            MembraneShader = MembraneShader0;
-        }
-        else if (membraneType === 1) {
-            MembraneShader = MembraneShader2;
-        }
-        else if (membraneType === 2) {
-            MembraneShader = MembraneShader3;
-        }
-        else if (membraneType === 3) {
-            MembraneShader = MembraneShader4;
-        }
-        else if (membraneType === 4) {
-            MembraneShader = MembraneShader5;
-        }
-        else if (membraneType === 5) {
-            MembraneShader = MembraneShader6;
-        }
-        else if (membraneType === 6) {
-            MembraneShader = MembraneShader7;
-        }
-        this.membrane.sim = MembraneShader.MembraneShaderSim ? new MembraneShader.MembraneShaderSim() : null;
-        if (this.membrane.sim) {
-            const v = new THREE.Vector2();
-            this.renderer.getDrawingBufferSize(v);
-
-            this.membrane.sim.resize(v.x, v.y);
-        }
-        this.membrane.MembraneShader = MembraneShader.MembraneShader;
-
-        this.setupMembrane(this.membrane);
     }
 
     get logger() { return this.mlogger; }
