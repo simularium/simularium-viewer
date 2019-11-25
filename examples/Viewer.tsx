@@ -41,10 +41,9 @@ interface ViewerState {
     width: number;
     showMeshes: boolean;
     showPaths: boolean;
-    membraneType: number;
 }
 
-const agentSim = new AgentSimController(netConnectionSettings, { trajectoryPlaybackFile: "actin34_0.h5" })
+const agentSim = new AgentSimController(netConnectionSettings, { trajectoryPlaybackFile: "ATPsynthase_9.h5" })
 let currentFrame = 0;
 let currentTime = 0;
 
@@ -60,7 +59,6 @@ const intialState = {
     width: 800,
     showMeshes: true,
     showPaths: true,
-    membraneType: 0,
 }
 
 
@@ -172,16 +170,6 @@ class Viewer extends React.Component<{}, ViewerState> {
             <button
                 onClick={() => this.setState({showPaths: !this.state.showPaths})}
             >ShowPaths</button>
-            <select
-                onChange={(event) => this.setState({membraneType: parseInt(event.target.value)})}
-            >
-                <option value="0">0</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-            </select>
 
             <AgentVizViewer
                 height={this.state.height}
@@ -196,7 +184,6 @@ class Viewer extends React.Component<{}, ViewerState> {
                 loadInitialData={true}
                 showMeshes={this.state.showMeshes}
                 showPaths={this.state.showPaths}
-                membraneType={this.state.membraneType}
             />
         </div>)
     }
