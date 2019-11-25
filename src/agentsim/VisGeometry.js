@@ -385,16 +385,12 @@ class VisGeometry {
             this.scene.remove(this.membrane.mesh);
         }
 
-        const tex = new THREE.TextureLoader().load('assets/colornoise.png');
         const texsplat = new THREE.TextureLoader().load("assets/splat.png");
         texsplat.wrapS = THREE.RepeatWrapping;
         texsplat.wrapT = THREE.RepeatWrapping;
 
         const material = this.membrane.MembraneShader.clone();
-        material.uniforms.color.value = new THREE.Color(0x4444ff);
-        material.uniforms.iChannel0.value = tex;
         material.uniforms.splat.value = texsplat;
-        //material.side = THREE.FrontSide;
 
         this.membrane.material = material;
 
