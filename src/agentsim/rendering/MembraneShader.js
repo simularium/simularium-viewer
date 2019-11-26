@@ -166,7 +166,7 @@ class MembraneShaderSim {
         this.tgt1.setSize(x,y);
     }
     
-    render(renderer, time, frame) {
+    render(renderer) {
         const old = renderer.autoClear;
         renderer.autoClear = false;
 
