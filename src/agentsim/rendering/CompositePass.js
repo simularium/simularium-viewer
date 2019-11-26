@@ -41,7 +41,7 @@ class CompositePass {
             
             //_ProteinAtomInfos
             
-            out vec4 out_color;
+            //out vec4 out_color;
             
             float d3_lab_xyz(float x)
             {
@@ -229,7 +229,7 @@ class CompositePass {
                 vec4 P = (rgb.g < rgb.b) ? vec4(rgb.bg, -1.0, 2.0/3.0) : vec4(rgb.gb, 0.0, -1.0/3.0);
                 vec4 Q = (rgb.r < P.x) ? vec4(P.xyw, rgb.r) : vec4(rgb.r, P.yzx);
                 float C = Q.x - min(Q.w, Q.y);
-                float H = abs((Q.w - Q.y) / (6 * C + HCV_EPSILON) + Q.z);
+                float H = abs((Q.w - Q.y) / (6.0 * C + HCV_EPSILON) + Q.z);
                 return vec3(H, C, Q.x);
             }
             
@@ -255,7 +255,7 @@ class CompositePass {
                 if(instanceId < 0)
                     discard;
             
-                vec4 instanceInfo = ProteinInstanceInfo[instanceId];
+                vec4 instanceInfo = vec4(0.0,0.0,0.0,0.0);//ProteinInstanceInfo[instanceId];
                 int ingredientId = int(instanceInfo.x);
             
                 col = vec4(IngredientColor[ingredientId],1.0);
@@ -263,14 +263,15 @@ class CompositePass {
                 float z_b = texture(depthBufferTex, texCoords).r;
                 float eyeDepth = LinearEyeDepth(z_b);
             
-                vec4 atomInfo = AtomInfos[atomId];
+                vec4 atomInfo = vec4(0.0,0.0,0.0,0.0);//AtomInfos[atomId];
             
                 int secondaryStructure = int(atomInfo.x);
                 int atomSymbolId = int(atomInfo.y);
                 int residueSymbolId = int(atomInfo.z);
                 int chainSymbolId = int(atomInfo.w);
             
-                int numChains = int(IngredientInfo[ingredientId].y);
+                //int numChains = int(IngredientInfo[ingredientId].y);
+                int numChains = 1;
             
                 //predefined colors
                 //atomSymbolId = 2;
@@ -293,13 +294,13 @@ class CompositePass {
                 float c = ingredientGroupsColorValues.y + (ingredientGroupsColorRanges.y) * (ingredientLocalIndex - 0.5f);
                 float l = ingredientGroupsColorValues.z + (ingredientGroupsColorRanges.z) * (ingredientLocalIndex - 0.5f);
             
-                vec3 hcl = rgb_to_hcv(col.xyz*20);
+                vec3 hcl = rgb_to_hcv(col.xyz*20.0);
                 h = hcl.r;
-                c = hcl.g+10;
-                l = hcl.b+10;
-                //h = 120;
-                //c = 80;
-                //l = 50;
+                c = hcl.g+10.0;
+                l = hcl.b+10.0;
+                //h = 120.0;
+                //c = 80.0;
+                //l = 50.0;
             
                 h = IngredientColorHCL[ingredientId].x;
                 c = IngredientColorHCL[ingredientId].y;
@@ -309,48 +310,48 @@ class CompositePass {
                 //if(false)
                 if(eyeDepth < chainBeginDistance)
                 {
-                    float cc = max(eyeDepth - atomicBeginDistance, 0);
+                    float cc = max(eyeDepth - atomicBeginDistance, 0.0);
                     float dd = chainBeginDistance - atomicBeginDistance;
-                    float ddd = (1-(cc/dd));
-                    if(atomSymbolId > 0) l -= 13 * ddd;
+                    float ddd = (1.0-(cc/dd));
+                    if(atomSymbolId > 0) l -= 13.0 * ddd;
                 }
             
                 //if(false)
                 if(eyeDepth < chainBeginDistance && numChains > 1)
                 {
-                    float cc = max(eyeDepth - atomicBeginDistance, 0);
+                    float cc = max(eyeDepth - atomicBeginDistance, 0.0);
                     float dd = chainBeginDistance - atomicBeginDistance;
-                    float ddd = (1-(cc/dd));
+                    float ddd = (1.0-(cc/dd));
             
-                    float wedge = min(50 * numChains, 180);
+                    float wedge = min(50.0 * float(numChains), 180.0);
                     // float hueShift = wedge / numChains;
                     // hueShift *= ddd;
-                    float hueShift = 50;
-                    hueShift = numChains >= 3 ? 50 : hueShift;
-                    hueShift = numChains >= 4 ? 50 : hueShift;
-                    hueShift = numChains >= 5 ? 50 : hueShift;
-                    hueShift = numChains >= 6 ? 50 : hueShift;
-                    hueShift = numChains >= 7 ? 40 : hueShift;
-                    hueShift = numChains >= 8 ? 30 : hueShift;
-                    hueShift = numChains >= 9 ? 30 : hueShift;
-                    hueShift = numChains >= 10 ? 15 : hueShift;
-                    hueShift = numChains >= 11 ? 10 : hueShift;
-                    hueShift = numChains >= 12 ? 10 : hueShift;
-                    hueShift *= (1-(cc/dd));
+                    float hueShift = 50.0;
+                    hueShift = numChains >= 3 ? 50.0 : hueShift;
+                    hueShift = numChains >= 4 ? 50.0 : hueShift;
+                    hueShift = numChains >= 5 ? 50.0 : hueShift;
+                    hueShift = numChains >= 6 ? 50.0 : hueShift;
+                    hueShift = numChains >= 7 ? 40.0 : hueShift;
+                    hueShift = numChains >= 8 ? 30.0 : hueShift;
+                    hueShift = numChains >= 9 ? 30.0 : hueShift;
+                    hueShift = numChains >= 10 ? 15.0 : hueShift;
+                    hueShift = numChains >= 11 ? 10.0 : hueShift;
+                    hueShift = numChains >= 12 ? 10.0 : hueShift;
+                    hueShift *= (1.0-(cc/dd));
             
-                    float hueLength = hueShift * (numChains - 1);
+                    float hueLength = hueShift * float(numChains - 1);
                     float hueOffset = hueLength * 0.5;
             
                     h -=  hueOffset;
-                    h += (chainSymbolId * hueShift);
+                    h += (float(chainSymbolId) * hueShift);
                 }
             
-              c -= 15;
+              c -= 15.0;
             
                 vec3 color;
                 color = d3_hcl_lab(h, c, l);
-                color = max(color, vec3(0,0,0));
-                color = min(color, vec3(1,1,1));
+                color = max(color, vec3(0.0,0.0,0.0));
+                color = min(color, vec3(1.0,1.0,1.0));
             
                 if(eyeDepth < atomicBeginDistance)
                 {
@@ -360,7 +361,7 @@ class CompositePass {
                     //color.xyz = atomColor;
                 }
             
-              out_color = vec4(occ1 * occ2 * color.xyz, 1.0);
+              gl_FragColor = vec4(occ1 * occ2 * color.xyz, 1.0);
               //~ for debug: depth
               //out_color = vec4(eyeDepth, eyeDepth, eyeDepth, 1.0);
               //out_color = vec4(occ1 * occ2 * col.xyz, 1.0);
