@@ -148,20 +148,28 @@ class BlurPass {
         this.blurYpass.pass.material.uniforms.amount.value = r;
     }
     render(renderer, target, source, positions, intermediateBuffer) {
+
+        const c = renderer.getClearColor();
+        const a = renderer.getClearAlpha();
+        renderer.setClearColor(new THREE.Color(1.0, 1.0, 1.0), 1.0);
+
+
         // blur src into dest in two passes with an intermediate buffer (separable filter)
 
         // x = ( src,  viewpos ) --> intermediate
         // y = ( intermediate, viewpos ) --> dest
 
-        this.blurXpass.colorTex = source.texture;
-        this.blurXpass.viewPosTex = positions;
+        this.blurXpass.pass.material.uniforms.colorTex.value = source.texture;
+        this.blurXpass.pass.material.uniforms.viewPosTex.value = positions.texture;
 
         this.blurXpass.render(renderer, intermediateBuffer);
 
-        this.blurYpass.colorTex = intermediateBuffer.texture;
-        this.blurYpass.viewPosTex = positions;
+        this.blurYpass.pass.material.uniforms.colorTex.value = intermediateBuffer.texture;
+        this.blurYpass.pass.material.uniforms.viewPosTex.value = positions.texture;
 
         this.blurYpass.render(renderer, target);
+
+        renderer.setClearColor(c, a);
     }
 }
 

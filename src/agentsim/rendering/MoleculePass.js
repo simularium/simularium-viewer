@@ -294,6 +294,10 @@ class MoleculePass {
     }
 
     render(renderer, camera, colorBuffer, normalBuffer, positionBuffer) {
+        const c = renderer.getClearColor();
+        const a = renderer.getClearAlpha();
+        renderer.setClearColor(new THREE.Color(-1.0, -1.0, -1.0), 0.0);
+
         // TODO : MRT
         renderer.setRenderTarget(colorBuffer);
         this.particles.material = this.colorMaterial;
@@ -316,6 +320,8 @@ class MoleculePass {
           this.scene,
           camera
         );  
+
+        renderer.setClearColor(c, a);
     }
 }
 
