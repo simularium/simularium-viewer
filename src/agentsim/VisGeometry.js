@@ -377,7 +377,6 @@ class VisGeometry {
     }
 
     setupMembrane(membraneData) {
-        return;
         if (!membraneData) {
             return;
         }
@@ -427,7 +426,7 @@ class VisGeometry {
         }
     }
 
-    getGeomFromId(id) {
+    getGeomFromTypeId(id) {
         if (this.visGeomMap.has(id)) {
             const meshName = this.visGeomMap.get(id);
             return this.meshRegistry.get(meshName);
@@ -436,7 +435,7 @@ class VisGeometry {
         return null;
     }
 
-    mapFromJSON(filePath, callback) {
+    fetchGeometryData(filePath, callback) {
         const jsonRequest = new Request(filePath);
         const self = this;
         return fetch(jsonRequest).then(
@@ -459,12 +458,12 @@ class VisGeometry {
         );
     }
 
-    setScaleForId(id, scale) {
+    setScaleForTypeId(id, scale) {
         this.logger.debug('Scale for id ', id, ' set to ', scale);
         this.scaleMapping.set(id, scale);
     }
 
-    getScaleForId(id) {
+    getScaleForTypeId(id) {
         if (this.scaleMapping.has(id)) {
             return this.scaleMapping.get(id);
         }
@@ -478,7 +477,6 @@ class VisGeometry {
     getSphereGeom() {
         const sphereId = -1;
         if (!this.meshRegistry.has(sphereId)) {
-
             this.meshRegistry.set(sphereId, this.sphereGeometry);
         }
 

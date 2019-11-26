@@ -14,12 +14,7 @@ import './three/OrbitControls.js';
 
 import jsLogger from 'js-logger';
 
-import MembraneShader0 from './MembraneShader.js';
-import MembraneShader2 from './MembraneShader2.js';
-import MembraneShader3 from './MembraneShader3.js';
-import MembraneShader4 from './MembraneShader4.js';
-import MembraneShader5 from './MembraneShader5.js';
-import MembraneShader6 from './MembraneShader6.js';
+import MembraneShader from './rendering/MembraneShader.js';
 import MoleculeRenderer from './rendering/MoleculeRenderer.js';
 
 const MAX_PATH_LEN = 32;
@@ -58,50 +53,22 @@ class VisGeometry2 {
         // will store data for all agents that are drawing paths
         this.paths = [];
 
+        // the canonical default geometry instance
+        this.sphereGeometry = new THREE.SphereBufferGeometry(1, 32, 32);
+
         this.membrane = {
-            center: new THREE.Vector3(0,0,300),
-            radius: 300,
-            thickness: 10,
-            sim: MembraneShader0.MembraneShaderSim ? new MembraneShader0.MembraneShaderSim() : null,
-            MembraneShader: MembraneShader0.MembraneShader,
+            // assume only one membrane mesh 
+            mesh: null,
+            sim: MembraneShader.MembraneShaderSim ? new MembraneShader.MembraneShaderSim() : null,
+            MembraneShader: MembraneShader.MembraneShader,
+            material: null,
+            runtimeMeshIndex: -1,
         };
 
         this.moleculeRenderer = new MoleculeRenderer();
         
         this.mlogger = jsLogger.get('visgeometry');
         this.mlogger.setLevel(loggerLevel);
-    }
-
-    setMembraneType(membraneType) {
-        let MembraneShader;
-        if (membraneType === 0) {
-            MembraneShader = MembraneShader0;
-        }
-        else if (membraneType === 1) {
-            MembraneShader = MembraneShader2;
-        }
-        else if (membraneType === 2) {
-            MembraneShader = MembraneShader3;
-        }
-        else if (membraneType === 3) {
-            MembraneShader = MembraneShader4;
-        }
-        else if (membraneType === 4) {
-            MembraneShader = MembraneShader5;
-        }
-        else if (membraneType === 5) {
-            MembraneShader = MembraneShader6;
-        }
-        this.membrane.sim = MembraneShader.MembraneShaderSim ? new MembraneShader.MembraneShaderSim() : null;
-        if (this.membrane.sim) {
-            const v = new THREE.Vector2();
-            this.renderer.getDrawingBufferSize(v);
-
-            this.membrane.sim.resize(v.x, v.y);
-        }
-        this.membrane.MembraneShader = MembraneShader.MembraneShader;
-
-        this.setupMembrane(this.membrane);
     }
 
     get logger() { return this.mlogger; }
@@ -121,17 +88,17 @@ class VisGeometry2 {
     }
 
     setFollowObject(obj) {
-        if (obj === this.membraneInner.mesh) {
+        if (obj && obj.userData && obj.userData.index === this.membrane.runtimeMeshIndex) {
             return;
         }
-        if (obj === this.membraneOuter.mesh) {
-            return;
+        if (this.followObject) {
+            this.assignMaterial(this.followObject, this.followObject.userData.baseMaterial);
         }
         this.followObject = obj;
         // put the camera on it
         if (obj) {
             this.controls.target.copy(obj.position);
-            obj.material = this.highlightMaterial;
+            this.assignMaterial(obj, this.highlightMaterial);
         }
     }
 
@@ -140,13 +107,52 @@ class VisGeometry2 {
         this.followObject = null;
     }
 
-    setHighlightByTypeId(id) {
+    setHighlightById(id) {
+        if (this.highlightedId === id) {
+            return;
+        }
         this.highlightedId = id;
+
+        // go over all objects and update material
+        let nMeshes = this.runTimeMeshes.length;
+        for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
+            const runtimeMesh = this.getMesh(i);
+            if (runtimeMesh.userData && runtimeMesh.userData.active) {
+                runtimeMesh.userData.baseMaterial = this.getMaterial(runtimeMesh.userData.materialType, runtimeMesh.userData.typeId);
+                this.assignMaterial(runtimeMesh, runtimeMesh.userData.baseMaterial);
+            }
+        }
     }
 
-    // equivalent to setHighlightByTypeId(-1)
     dehighlight() {
-        this.highlightedId = -1;
+        this.setHighlightById(-1);
+    }
+
+    onNewRuntimeGeometryType(meshName) {
+        // find all typeIds for this meshName
+        let typeIds = [...this.visGeomMap.entries()]
+            .filter(({ 1: v }) => v === meshName)
+            .map(([k]) => k);
+
+        // assuming the meshGeom has already been added to the registry
+        const meshGeom = this.meshRegistry.get(meshName);
+
+        // go over all objects and update mesh of this typeId
+        let nMeshes = this.runTimeMeshes.length;
+        for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
+            let runtimeMesh = this.getMesh(i);
+            if (runtimeMesh.userData && typeIds.includes(runtimeMesh.userData.typeId)) {
+                const isFollowedObject = (runtimeMesh === this.followObject);
+
+                const p = runtimeMesh.position;
+                const r = runtimeMesh.rotation;
+                const s = runtimeMesh.scale;
+                runtimeMesh = this.setupMeshGeometry(i, runtimeMesh, meshGeom, isFollowedObject);
+                runtimeMesh.position.copy(p);
+                runtimeMesh.rotation.copy(r);
+                runtimeMesh.scale.copy(s);
+            }
+        }
     }
 
     /**
@@ -198,8 +204,8 @@ class VisGeometry2 {
             `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/meshes/obj/${meshName}`,
             (object) => {
                 this.logger.debug('Finished loading mesh: ', meshName);
-                this.render(); // new geometry -> redraw the scene
                 this.addMesh(meshName, object);
+                this.onNewRuntimeGeometryType(meshName);
             },
             (xhr) => {
                 this.logger.debug(meshName, ' ', `${xhr.loaded / xhr.total * 100}% loaded`);
@@ -264,19 +270,15 @@ class VisGeometry2 {
             this.membrane.sim.render(this.renderer, elapsedSeconds);
         }
 
-        if (this.membraneInner && this.membraneOuter) {
-            this.membraneInner.mesh.material.uniforms.iTime.value = elapsedSeconds;
-            this.membraneOuter.mesh.material.uniforms.iTime.value = elapsedSeconds;
+        if (this.membrane.mesh && this.membrane.material) {
+            this.membrane.material.uniforms.iTime.value = elapsedSeconds;
 
             if (this.membrane.sim) {
-                this.membraneInner.mesh.material.uniforms.iChannel0.value = this.membrane.sim.getOutputTarget().texture;
-                this.membraneOuter.mesh.material.uniforms.iChannel0.value = this.membrane.sim.getOutputTarget().texture;
-                this.membraneInner.mesh.material.uniforms.iChannelResolution0.value = new THREE.Vector2(this.membrane.sim.getOutputTarget().width, this.membrane.sim.getOutputTarget().height);
-                this.membraneOuter.mesh.material.uniforms.iChannelResolution0.value = new THREE.Vector2(this.membrane.sim.getOutputTarget().width, this.membrane.sim.getOutputTarget().height);    
+                this.membrane.material.uniforms.iChannel0.value = this.membrane.sim.getOutputTarget().texture;
+                this.membrane.material.uniforms.iChannelResolution0.value = new THREE.Vector2(this.membrane.sim.getOutputTarget().width, this.membrane.sim.getOutputTarget().height);
             }
 
-            this.renderer.getDrawingBufferSize(this.membraneInner.mesh.material.uniforms.iResolution.value);
-            this.renderer.getDrawingBufferSize(this.membraneOuter.mesh.material.uniforms.iResolution.value);
+            this.renderer.getDrawingBufferSize(this.membrane.material.uniforms.iResolution.value);
         }
 
         this.controls.update();
@@ -330,8 +332,15 @@ class VisGeometry2 {
         // draw moleculebuffer into several render targets to store depth, normals, colors
         // draw quad to composite the buffers into final frame
 
-        // create placeholder fibers
+        // create placeholder meshes and fibers
         for (let i = 0; i < this.geomCount; i += 1) {
+            const runtimeMesh = new THREE.Mesh(sphereGeom, materials[0]);
+
+            runtimeMesh.name = `Mesh_${i.toString()}`;
+            runtimeMesh.visible = false;
+            this.runTimeMeshes[i] = runtimeMesh;
+            scene.add(runtimeMesh);
+
             const fibercurve = new THREE.LineCurve3(
                 new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 1, 1),
             );
@@ -358,10 +367,17 @@ class VisGeometry2 {
 
     addMesh(meshName, mesh) {
         this.meshRegistry.set(meshName, mesh);
+        if (meshName.includes("membrane")) {
+            this.membrane.mesh = mesh;
+        }
     }
 
     getMesh(index) {
         return this.runTimeMeshes[index];
+    }
+
+    resetMesh(index, obj) {
+        this.runTimeMeshes[index] = obj;
     }
 
     getFiberMesh(name) {
@@ -371,67 +387,41 @@ class VisGeometry2 {
     getMaterial(index, typeId) {
         // if no highlight, or if this is the highlighed type, then use regular material, otherwise use desaturated.
         // todo strings or numbers for these ids?????
-        let matArray = (this.highlightedId == -1 || this.highlightedId == typeId) ? this.materials : this.desatMaterials;
+        const isHighlighted = (this.highlightedId == -1 || this.highlightedId == typeId);
+
+        // membrane is special
+        if (typeId === this.membrane.typeId) {
+            return isHighlighted ? this.membrane.material : this.desatMaterials[0];
+        }
+
+        let matArray = isHighlighted ? this.materials : this.desatMaterials;
         return matArray[Number(index) % matArray.length];
     }
 
     setupMembrane(membraneData) {
-        return;
         if (!membraneData) {
             return;
         }
 
-        if (this.membraneInner && this.membraneInner.mesh) {
-            this.scene.remove(this.membraneInner.mesh);
-        }
-        if (this.membraneOuter && this.membraneOuter.mesh) {
-            this.scene.remove(this.membraneOuter.mesh);
+        if (this.membrane && this.membrane.mesh) {
+            this.scene.remove(this.membrane.mesh);
         }
 
-        const phiMin = 235 * Math.PI / 180;
-        const phiMax = 305 * Math.PI / 180;
-        const thetaMin = 60 * Math.PI / 180;
-        const thetaMax = 120 * Math.PI / 180;
-
-        const tex = new THREE.TextureLoader().load('assets/colornoise.png');
         const texsplat = new THREE.TextureLoader().load("assets/splat.png");
         texsplat.wrapS = THREE.RepeatWrapping;
         texsplat.wrapT = THREE.RepeatWrapping;
 
-        const materialOuter = this.membrane.MembraneShader.clone();
-        materialOuter.uniforms.color.value = new THREE.Color(0x4444ff);
-        materialOuter.uniforms.iChannel0.value = tex;
-        materialOuter.uniforms.splat.value = texsplat;
-        //materialOuter.side = THREE.FrontSide;
+        const material = this.membrane.MembraneShader.clone();
+        material.uniforms.splat.value = texsplat;
 
-        this.membraneOuter = {
-            data: membraneData,
-            mesh: new THREE.Mesh(
-                new THREE.SphereBufferGeometry(membraneData.radius + membraneData.thickness, 128, 128,
-                    phiMin, phiMax-phiMin, thetaMin, thetaMax-thetaMin),
-                materialOuter
-            ),
-        };
+        this.membrane.material = material;
 
-        const materialInner = this.membrane.MembraneShader.clone();
-        materialInner.uniforms.color.value = new THREE.Color(0x44ff44);
-        materialInner.uniforms.iChannel0.value = tex;
-        materialInner.uniforms.splat.value = texsplat;
-        //materialInner.side = THREE.BackSide;
-
-        this.membraneInner = {
-            data: membraneData,
-            mesh: new THREE.Mesh(
-                new THREE.SphereBufferGeometry(membraneData.radius - membraneData.thickness, 128, 128,
-                    phiMin, phiMax-phiMin, thetaMin, thetaMax-thetaMin),
-                materialInner
-            ),
-        };
-        this.membraneOuter.mesh.position.set(membraneData.center.x, membraneData.center.y, membraneData.center.z);
-        this.membraneInner.mesh.position.set(membraneData.center.x, membraneData.center.y, membraneData.center.z);
-        this.scene.add(this.membraneInner.mesh);
-        this.scene.add(this.membraneOuter.mesh);
+        if (this.membrane.runtimeMeshIndex !== -1) {
+            const m = this.getMesh(this.membrane.runtimeMeshIndex);
+            this.assignMaterial(m, this.membrane.material);
+        }
     }
+
     /**
     *   Data Management
     */
@@ -448,6 +438,9 @@ class VisGeometry2 {
     mapTypeIdToGeom(id, meshName) {
         this.logger.debug('Mesh for id ', id, ' set to ', meshName);
         this.visGeomMap.set(id, meshName);
+        if (meshName.includes("membrane")) {
+            this.membrane.typeId = id;
+        }
 
         if (!this.meshRegistry.has(meshName) && !this.meshLoadAttempted.get(meshName)) {
             this.loadObj(meshName);
@@ -465,13 +458,13 @@ class VisGeometry2 {
     }
 
     fetchGeometryData(filePath, callback) {
-        this.resetMapping();
         const jsonRequest = new Request(filePath);
         const self = this;
         return fetch(jsonRequest).then(
             response => response.json(),
         ).then(
             (data) => {
+                self.resetMapping();
                 const jsonData = data;
                 self.logger.debug('JSON Mesh mapping loaded: ', jsonData);
                 Object.keys(jsonData).forEach((id) => {
@@ -506,7 +499,7 @@ class VisGeometry2 {
     getSphereGeom() {
         const sphereId = -1;
         if (!this.meshRegistry.has(sphereId)) {
-            this.meshRegistry.set(sphereId, new THREE.SphereBufferGeometry(1, 32, 32));
+            this.meshRegistry.set(sphereId, this.sphereGeometry);
         }
 
         return this.meshRegistry.get(sphereId);
@@ -516,6 +509,7 @@ class VisGeometry2 {
     *   Update Scene
     * */
     updateScene(agents) {
+        const sphereGeometry = this.getSphereGeom();
         let fiberIndex = 0;
 
         // these have been set to correspond to backend values
@@ -536,19 +530,33 @@ class VisGeometry2 {
             const scale = this.getScaleForTypeId(typeId);
 
             if (visType === visTypes.ID_VIS_TYPE_DEFAULT) {
-                const materialType = (typeId + 1) * this.colorVariant;
-                const runtimeMesh = this.getMesh(i);
+                // const materialType = (typeId + 1) * this.colorVariant;
+                // let runtimeMesh = this.getMesh(i);
+                // const isFollowedObject = (runtimeMesh === this.followObject);
+
                 // if (!runtimeMesh.userData) {
                 //     runtimeMesh.userData = { 
                 //         active: true,
                 //         baseMaterial: this.getMaterial(materialType, typeId),
                 //         index: i,
+                //         typeId: typeId,
+                //         materialType: materialType
                 //     }
                 // }
                 // else {
                 //     runtimeMesh.userData.active = true;
                 //     runtimeMesh.userData.baseMaterial = this.getMaterial(materialType, typeId);
                 //     runtimeMesh.userData.index = i;
+                //     runtimeMesh.userData.typeId = typeId;
+                //     runtimeMesh.userData.materialType = materialType;
+                // }
+
+                // if (runtimeMesh.geometry === sphereGeometry) {
+                //     const meshGeom = this.getGeomFromId(typeId);
+                //     if (meshGeom && meshGeom.children) {
+                //         // in theory this code should never be hit, due to the way the mesh geometry is updated in loadObj
+                //         runtimeMesh = this.setupMeshGeometry(i, runtimeMesh, meshGeom, isFollowedObject);
+                //     }
                 // }
 
                 // dx = agentData.x - runtimeMesh.position.x; 
@@ -567,29 +575,15 @@ class VisGeometry2 {
                 // runtimeMesh.rotation.z = agentData.zrot;
 
                 // runtimeMesh.visible = true;
-                // if (runtimeMesh === this.followObject) {
-                //     runtimeMesh.material = this.highlightMaterial;
-                // }
-                // else {
-                //     runtimeMesh.material = runtimeMesh.userData.baseMaterial;
-                // }
 
                 // runtimeMesh.scale.x = agentData.cr * scale;
                 // runtimeMesh.scale.y = agentData.cr * scale;
                 // runtimeMesh.scale.z = agentData.cr * scale;
 
-                const meshGeom = this.getGeomFromTypeId(typeId);
-
-                // if (meshGeom && meshGeom.children) {
-                //     runtimeMesh.geometry = meshGeom.children[0].geometry;
-                // } else {
-                //     runtimeMesh.geometry = this.getSphereGeom();
+                // const path = this.findPathForAgentIndex(i);
+                // if (path) {
+                //     this.addPointToPath(path, agentData.x, agentData.y, agentData.z, dx, dy, dz);
                 // }
-
-                const path = this.findPathForAgentIndex(i);
-                if (path) {
-                    this.addPointToPath(path, agentData.x, agentData.y, agentData.z, dx, dy, dz);
-                }
             } else if (visType === visTypes.ID_VIS_TYPE_FIBER) {
                 const name = `Fiber_${fiberIndex.toString()}`;
 
@@ -648,6 +642,55 @@ class VisGeometry2 {
 
             direction.normalize();
             this.camera.position.subVectors(this.controls.target, direction.multiplyScalar(-distance));
+        }
+    }
+
+    setupMeshGeometry(i, runtimeMesh, meshGeom, isFollowedObject) {
+        if (this.membrane.mesh === meshGeom) {
+            if (this.membrane.mesh && runtimeMesh.children.length !== this.membrane.mesh.children.length) {
+                // to avoid a deep clone of userData, just reuse the instance
+                const userData = runtimeMesh.userData;
+                runtimeMesh.userData = null;
+                this.scene.remove(runtimeMesh);
+                runtimeMesh = this.membrane.mesh.clone();
+                runtimeMesh.userData = userData;
+                this.assignMaterial(runtimeMesh, this.membrane.material || runtimeMesh.userData.baseMaterial);
+                this.scene.add(runtimeMesh);
+                this.resetMesh(i, runtimeMesh);
+                this.membrane.runtimeMeshIndex = i;
+            }
+        }
+        else {
+            // to avoid a deep clone of userData, just reuse the instance
+            const userData = runtimeMesh.userData;
+            runtimeMesh.userData = null;
+            this.scene.remove(runtimeMesh);
+            runtimeMesh = meshGeom.clone();
+            runtimeMesh.userData = userData;
+            this.scene.add(runtimeMesh);
+            this.resetMesh(i, runtimeMesh);
+
+            if (isFollowedObject) {
+                this.assignMaterial(runtimeMesh, this.highlightMaterial);
+            }
+            else {
+                this.assignMaterial(runtimeMesh, runtimeMesh.userData.baseMaterial);
+            }
+
+        }
+        return runtimeMesh;
+    }
+
+    assignMaterial(runtimeMesh, material) {
+        if (runtimeMesh instanceof THREE.Mesh) {
+            runtimeMesh.material = material;
+        }
+        else {
+            runtimeMesh.traverse( (child) => {
+                if ( child instanceof THREE.Mesh ) {
+                    child.material = material;
+                }
+            });
         }
     }
 
