@@ -1,6 +1,6 @@
 // Three JS is assumed to be in the global scope in extensions
 //  such as OrbitControls.js below
-import * as THREE from  'three';
+import * as THREE from "three";
 global.THREE = THREE;
 
 import RenderToBuffer from "./RenderToBuffer.js";
@@ -27,13 +27,19 @@ class MembraneShaderSim {
 
         this.pass0 = new RenderToBuffer({
             uniforms: {
-                iResolution: { value: new THREE.Vector2(dataTextureSize, dataTextureSize) },
+                iResolution: {
+                    value: new THREE.Vector2(dataTextureSize, dataTextureSize),
+                },
                 iFrame: { value: 0 },
                 iTime: { value: 0.0 },
                 iChannel0: { value: null },
-                iChannelResolution0: { value: new THREE.Vector2(dataTextureSize, dataTextureSize) }
+                iChannelResolution0: {
+                    value: new THREE.Vector2(dataTextureSize, dataTextureSize),
+                },
             },
-            fragmentShader: common + `
+            fragmentShader:
+                common +
+                `
             uniform int iFrame;
             uniform float iTime;
             uniform vec2 iResolution;
@@ -137,35 +143,43 @@ class MembraneShaderSim {
                 
                 gl_FragColor = (datai==0.0) ? vec4(newpos, newvel) : newcolorsize;
             }
-            `
+            `,
         });
-        
-        this.tgt0 = new THREE.WebGLRenderTarget(dataTextureSize, dataTextureSize, {
-            minFilter: THREE.NearestFilter,
-            magFilter: THREE.NearestFilter,
-            format: THREE.RGBAFormat,
-            type: THREE.FloatType,
-            depthBuffer: false,
-            stencilBuffer: false,
-        });
+
+        this.tgt0 = new THREE.WebGLRenderTarget(
+            dataTextureSize,
+            dataTextureSize,
+            {
+                minFilter: THREE.NearestFilter,
+                magFilter: THREE.NearestFilter,
+                format: THREE.RGBAFormat,
+                type: THREE.FloatType,
+                depthBuffer: false,
+                stencilBuffer: false,
+            }
+        );
         this.tgt0.texture.generateMipmaps = false;
-        
-        this.tgt1 = new THREE.WebGLRenderTarget(dataTextureSize, dataTextureSize, {
-            minFilter: THREE.NearestFilter,
-            magFilter: THREE.NearestFilter,
-            format: THREE.RGBAFormat,
-            type: THREE.FloatType,
-            depthBuffer: false,
-            stencilBuffer: false,
-        });
+
+        this.tgt1 = new THREE.WebGLRenderTarget(
+            dataTextureSize,
+            dataTextureSize,
+            {
+                minFilter: THREE.NearestFilter,
+                magFilter: THREE.NearestFilter,
+                format: THREE.RGBAFormat,
+                type: THREE.FloatType,
+                depthBuffer: false,
+                stencilBuffer: false,
+            }
+        );
         this.tgt1.texture.generateMipmaps = false;
     }
 
-    resize(x,y) {
-        this.tgt0.setSize(x,y);
-        this.tgt1.setSize(x,y);
+    resize(x, y) {
+        this.tgt0.setSize(x, y);
+        this.tgt1.setSize(x, y);
     }
-    
+
     render(renderer) {
         const old = renderer.autoClear;
         renderer.autoClear = false;
@@ -176,12 +190,18 @@ class MembraneShaderSim {
 
         this.pass0.material.uniforms.iFrame.value = this.frame;
         this.pass0.material.uniforms.iChannel0.value = srcTgt.texture;
-        this.pass0.material.uniforms.iChannelResolution0.value = new THREE.Vector2(srcTgt.width, srcTgt.height);
-        this.pass0.material.uniforms.iResolution.value = new THREE.Vector2(tgt.width, tgt.height);
+        this.pass0.material.uniforms.iChannelResolution0.value = new THREE.Vector2(
+            srcTgt.width,
+            srcTgt.height
+        );
+        this.pass0.material.uniforms.iResolution.value = new THREE.Vector2(
+            tgt.width,
+            tgt.height
+        );
 
         this.pass0.render(renderer, tgt);
         this.outputTarget = tgt;
-    
+
         // restore original framebuffer canvas
         renderer.setRenderTarget(null);
         renderer.autoClear = old;
@@ -192,7 +212,6 @@ class MembraneShaderSim {
     getOutputTarget() {
         return this.outputTarget;
     }
-    
 }
 
 const vertexShader = `
@@ -209,7 +228,9 @@ const vertexShader = `
     }
 `;
 
-const fragmentShader = common + `
+const fragmentShader =
+    common +
+    `
     uniform float iTime;
     uniform vec2 iResolution;
     uniform sampler2D iChannel0;
@@ -417,16 +438,18 @@ const MembraneShader = new THREE.ShaderMaterial({
         iTime: { value: 1.0 },
         iResolution: { value: new THREE.Vector2() },
         iChannel0: { value: null },
-        iChannelResolution0: { value: new THREE.Vector2(dataTextureSize, dataTextureSize) },
+        iChannelResolution0: {
+            value: new THREE.Vector2(dataTextureSize, dataTextureSize),
+        },
         splat: { value: new THREE.TextureLoader().load("assets/splat.png") },
-    },        
+    },
     vertexShader: vertexShader,
     fragmentShader: fragmentShader,
     side: THREE.DoubleSide,
     transparent: true,
 });
 
-export default { 
+export default {
     MembraneShaderSim: MembraneShaderSim,
-    MembraneShader: MembraneShader
+    MembraneShader: MembraneShader,
 };
