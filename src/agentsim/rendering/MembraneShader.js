@@ -386,7 +386,7 @@ const fragmentShader =
         n = simplex3D(vec3(time,vec2(uv)))*0.5+0.5;
     
 //        col = n * NOISE_COLOR;
-        col = mix(NOISE_BACKGROUND_COLOR, NOISE_COLOR, n);
+        col = mix(NOISE_BACKGROUND_COLOR, NOISE_COLOR, n*n);
         col = mix(col, NOISE_BACKGROUND_COLOR, 0.5*sin(time)-0.5);
 
         // 2. second layer: read from the particle simulation
