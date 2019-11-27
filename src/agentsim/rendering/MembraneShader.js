@@ -233,8 +233,10 @@ const fragmentShader =
     `
     uniform float iTime;
     uniform vec2 iResolution;
+#if USE_SIM
     uniform sampler2D iChannel0;
     uniform vec2 iChannelResolution0;
+#endif
     uniform sampler2D splat;
 
     varying vec2 vUv;
@@ -363,7 +365,7 @@ const fragmentShader =
 
 #define NOISE_SCALE 10.0	
 #define NOISE_COLOR vec3(0.1, 0.7, 0.8)
-#define NOISE_BACKGROUND_COLOR vec3(0.5, 0.5, 0.4)
+#define NOISE_BACKGROUND_COLOR vec3(0.0, 0.3, 0.25)
 #define LIGHT_DIR_UV vec3(0.0, 0.0, 1.0)
 
     void main( )
@@ -383,11 +385,12 @@ const fragmentShader =
         float n;
         n = simplex3D(vec3(time,vec2(uv)))*0.5+0.5;
     
-        col = n * NOISE_COLOR;
+//        col = n * NOISE_COLOR;
+        col = mix(NOISE_BACKGROUND_COLOR, NOISE_COLOR, n);
         col = mix(col, NOISE_BACKGROUND_COLOR, 0.5*sin(time)-0.5);
 
         // 2. second layer: read from the particle simulation
-
+#if USE_SIM
         uv = vUv;
 
         vec2 pixel = uv*vec2(float(GridX),float(GridY));
@@ -428,7 +431,13 @@ const fragmentShader =
             
         // debug grids in use  
         //if (getColorSize(grid).a!=0.0) col=mix(col,vec3(1.,1.,1.),getColorSize(grid).a*0.3);
-        
+#else
+        vec3 normal = vec3(dFdx(n), dFdy(n), n);
+        normal = normalize(normal*normal);
+        float lightfg = dot(normal, LIGHT_DIR_UV);
+        // final color mix:
+        col = col*lightfg;
+#endif
         gl_FragColor = vec4(col,1.0);
     }
 `;
@@ -441,15 +450,16 @@ const MembraneShader = new THREE.ShaderMaterial({
         iChannelResolution0: {
             value: new THREE.Vector2(dataTextureSize, dataTextureSize),
         },
-        splat: { value: new THREE.TextureLoader().load("assets/splat.png") },
+        splat: { value: null },
     },
     vertexShader: vertexShader,
     fragmentShader: fragmentShader,
-    side: THREE.DoubleSide,
-    transparent: true,
+    defines: {
+        "USE_SIM": "0"
+    }
 });
 
 export default {
-    MembraneShaderSim: MembraneShaderSim,
+    MembraneShaderSim: null,
     MembraneShader: MembraneShader,
 };
