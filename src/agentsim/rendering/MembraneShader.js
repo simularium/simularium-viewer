@@ -217,13 +217,77 @@ class MembraneShaderSim {
 const vertexShader = `
     uniform float iTime;
     uniform vec2 iResolution;
+
     varying vec2 vUv;
     varying vec3 n;
+    varying vec3 vLightFront;
+    varying vec3 vIndirectFront;
+
+    #define saturate(a) clamp( a, 0.0, 1.0 )
+
+    struct GeometricContext {
+        vec3 position;
+        vec3 normal;
+        vec3 viewDir;
+    };
+    struct IncidentLight {
+        vec3 color;
+        vec3 direction;
+        bool visible;
+    };
+
+    struct DirectionalLight {
+        vec3 direction;
+        vec3 color;
+        int shadow;
+        float shadowBias;
+        float shadowRadius;
+        vec2 shadowMapSize;
+    };
+    uniform DirectionalLight directionalLights[ 1 ];
+    void getDirectionalDirectLightIrradiance( const in DirectionalLight directionalLight, const in GeometricContext geometry, out IncidentLight directLight ) {
+        directLight.color = directionalLight.color;
+        directLight.direction = directionalLight.direction;
+        directLight.visible = true;
+    }
+
+    struct HemisphereLight {
+        vec3 direction;
+        vec3 skyColor;
+        vec3 groundColor;
+    };
+    uniform HemisphereLight hemisphereLights[ 1 ];
+    vec3 getHemisphereLightIrradiance( const in HemisphereLight hemiLight, const in GeometricContext geometry ) {
+        float dotNL = dot( geometry.normal, hemiLight.direction );
+        float hemiDiffuseWeight = 0.5 * dotNL + 0.5;
+        vec3 irradiance = mix( hemiLight.groundColor, hemiLight.skyColor, hemiDiffuseWeight );
+        #ifndef PHYSICALLY_CORRECT_LIGHTS
+            irradiance *= PI;
+        #endif
+        return irradiance;
+    }
+
     void main()	{
         vec3 p = position.xyz;
         vec4 modelViewPosition = modelViewMatrix * vec4(p, 1.0);
         vUv = uv;
         n = normalMatrix * normal;
+
+        GeometricContext geometry;
+        geometry.position = modelViewPosition.xyz;
+        geometry.normal = normalize( n );
+        geometry.viewDir = normalize( -modelViewPosition.xyz );
+
+        // per-vertex lighting compatible with the rest of three.js
+        vLightFront = vec3(0.0);
+        
+        IncidentLight directLight;
+        getDirectionalDirectLightIrradiance( directionalLights[ 0 ], geometry, directLight );
+        float dotNL = dot( geometry.normal, directLight.direction );
+        vec3 directLightColor_Diffuse = PI * directLight.color;
+        vLightFront += saturate( dotNL ) * directLightColor_Diffuse;
+        vIndirectFront += getHemisphereLightIrradiance( hemisphereLights[ 0 ], geometry );
+
         gl_Position = projectionMatrix * modelViewPosition;
     }
 `;
@@ -240,8 +304,27 @@ const fragmentShader =
 #endif
     uniform sampler2D splat;
 
+    uniform vec3 ambientLightColor;
+
     varying vec2 vUv;
     varying vec3 n;
+    varying vec3 vLightFront;
+    varying vec3 vIndirectFront;
+
+    struct ReflectedLight {
+        vec3 directDiffuse;
+        vec3 directSpecular;
+        vec3 indirectDiffuse;
+        vec3 indirectSpecular;
+    };
+
+    vec3 getAmbientLightIrradiance( const in vec3 ambientLightColor ) {
+        vec3 irradiance = ambientLightColor;
+        #ifndef PHYSICALLY_CORRECT_LIGHTS
+            irradiance *= PI;
+        #endif
+        return irradiance;
+    }
 
     float noise3D(vec3 p)
     {
@@ -364,8 +447,8 @@ const fragmentShader =
     
     */
 
-#define NOISE_COLOR vec3(0.1, 0.7, 0.8)
-#define NOISE_BACKGROUND_COLOR vec3(0.0, 0.3, 0.25)
+#define NOISE_COLOR vec3(0.05, 0.25, 0.3)
+#define NOISE_BACKGROUND_COLOR vec3(0.0, 0.075, 0.0625)
 #define LIGHT_DIR_UV vec3(0.0, 0.0, 1.0)
 
     void main( )
@@ -432,12 +515,20 @@ const fragmentShader =
         // debug grids in use  
         //if (getColorSize(grid).a!=0.0) col=mix(col,vec3(1.,1.,1.),getColorSize(grid).a*0.3);
 #else
+
         vec3 normal = vec3(dFdx(n), dFdy(n), n);
         normal = normalize(normal*normal);
         float lightfg = dot(normal, LIGHT_DIR_UV);
         // final color mix:
-        col = col*lightfg;
+        //col = col*lightfg;
 #endif
+        ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );
+        reflectedLight.indirectDiffuse = getAmbientLightIrradiance( ambientLightColor );
+        reflectedLight.indirectDiffuse += vIndirectFront;
+        reflectedLight.directDiffuse = vLightFront * col;
+        vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse;
+        col = outgoingLight;
+
         gl_FragColor = vec4(col,1.0);
     }
 `;
@@ -452,12 +543,29 @@ const MembraneShader = new THREE.ShaderMaterial({
             value: new THREE.Vector2(dataTextureSize, dataTextureSize),
         },
         splat: { value: null },
+        ///// LIGHTING
+        ambientLightColor: {value:null},
+        lightProbe: {value:null},
+        directionalLights: {value:null},
+        spotLights: {value:null},
+        rectAreaLights: {value:null},
+        pointLights: {value:null},
+        hemisphereLights: {value:null},
+        directionalShadowMap: {value:null},
+        directionalShadowMatrix: {value:null},
+        spotShadowMap: {value:null},
+        spotShadowMatrix: {value:null},
+        pointShadowMap: {value:null},
+        pointShadowMatrix: {value:null},
     },
     vertexShader: vertexShader,
     fragmentShader: fragmentShader,
     defines: {
-        "USE_SIM": "0"
-    }
+        "PI": "3.14159265359",
+        "USE_SIM": "0",
+        "PHYSICALLY_CORRECT_LIGHTS": "1",
+    },
+    lights: true
 });
 
 export default {
