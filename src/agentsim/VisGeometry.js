@@ -55,10 +55,24 @@ class VisGeometry {
             // assume only one membrane mesh 
             mesh: null,
             sim: MembraneShader.MembraneShaderSim ? new MembraneShader.MembraneShaderSim() : null,
-            MembraneShader: MembraneShader.MembraneShader,
             material: null,
             runtimeMeshIndex: -1,
+            faces: [
+                {name:"curved_5nm_Right"},
+                {name:"curved_5nm_Left"}
+            ],
+            sides: [
+                {name:"curved_5nm_Bottom"},
+                {name:"curved_5nm_Top"},
+                {name:"curved_5nm_Back"},
+                {name:"curved_5nm_Front"}
+            ],
+            facesMaterial: MembraneShader.MembraneShader.clone(),
+            sidesMaterial: MembraneShader.MembraneShader.clone()
         };
+        this.membrane.facesMaterial.uniforms.uvscale.value = new THREE.Vector2(10.0, 10.0);
+        this.membrane.sidesMaterial.uniforms.uvscale.value = new THREE.Vector2(2.0, 10.0);
+
         
         this.mlogger = jsLogger.get('visgeometry');
         this.mlogger.setLevel(loggerLevel);
@@ -255,15 +269,17 @@ class VisGeometry {
             this.membrane.sim.render(this.renderer, elapsedSeconds);
         }
 
-        if (this.membrane.mesh && this.membrane.material) {
-            this.membrane.material.uniforms.iTime.value = elapsedSeconds;
+        if (this.membrane.mesh) {
+            this.membrane.facesMaterial.uniforms.iTime.value = elapsedSeconds;
+            this.membrane.sidesMaterial.uniforms.iTime.value = elapsedSeconds;
 
             if (this.membrane.sim) {
                 this.membrane.material.uniforms.iChannel0.value = this.membrane.sim.getOutputTarget().texture;
                 this.membrane.material.uniforms.iChannelResolution0.value = new THREE.Vector2(this.membrane.sim.getOutputTarget().width, this.membrane.sim.getOutputTarget().height);
             }
 
-            this.renderer.getDrawingBufferSize(this.membrane.material.uniforms.iResolution.value);
+            this.renderer.getDrawingBufferSize(this.membrane.facesMaterial.uniforms.iResolution.value);
+            this.renderer.getDrawingBufferSize(this.membrane.sidesMaterial.uniforms.iResolution.value);
         }
 
         this.controls.update();
@@ -339,8 +355,12 @@ class VisGeometry {
 
     addMesh(meshName, mesh) {
         this.meshRegistry.set(meshName, mesh);
+        if (!mesh.name) {
+            mesh.name = meshName;
+        }
         if (meshName.includes("membrane")) {
             this.membrane.mesh = mesh;
+            this.assignMaterial(mesh);
         }
     }
 
@@ -363,35 +383,11 @@ class VisGeometry {
 
         // membrane is special
         if (typeId === this.membrane.typeId) {
-            return isHighlighted ? this.membrane.material : this.desatMaterials[0];
+            return isHighlighted ? this.membrane.facesMaterial : this.desatMaterials[0];
         }
 
         let matArray = isHighlighted ? this.materials : this.desatMaterials;
         return matArray[Number(index) % matArray.length];
-    }
-
-    setupMembrane(membraneData) {
-        if (!membraneData) {
-            return;
-        }
-
-        if (this.membrane && this.membrane.mesh) {
-            this.scene.remove(this.membrane.mesh);
-        }
-
-        const texsplat = new THREE.TextureLoader().load("assets/splat.png");
-        texsplat.wrapS = THREE.RepeatWrapping;
-        texsplat.wrapT = THREE.RepeatWrapping;
-
-        const material = this.membrane.MembraneShader.clone();
-        material.uniforms.splat.value = texsplat;
-
-        this.membrane.material = material;
-
-        if (this.membrane.runtimeMeshIndex !== -1) {
-            const m = this.getMesh(this.membrane.runtimeMeshIndex);
-            this.assignMaterial(m, this.membrane.material);
-        }
     }
 
     /**
@@ -444,7 +440,6 @@ class VisGeometry {
                     self.mapIdToGeom(Number(id), entry.mesh);
                     self.setScaleForId(Number(id), entry.scale);
                 });
-                self.setupMembrane(self.membrane);
                 if (callback) {
                     callback(jsonData);
                 }
@@ -622,7 +617,7 @@ class VisGeometry {
                 this.scene.remove(runtimeMesh);
                 runtimeMesh = this.membrane.mesh.clone();
                 runtimeMesh.userData = userData;
-                this.assignMaterial(runtimeMesh, this.membrane.material || runtimeMesh.userData.baseMaterial);
+                this.assignMaterial(runtimeMesh);
                 this.scene.add(runtimeMesh);
                 this.resetMesh(i, runtimeMesh);
                 this.membrane.runtimeMeshIndex = i;
@@ -656,6 +651,10 @@ class VisGeometry {
     }
 
     assignMaterial(runtimeMesh, material) {
+        if (runtimeMesh.name.includes("membrane")) {
+            return this.assignMembraneMaterial(runtimeMesh);
+        }
+
         if (runtimeMesh instanceof THREE.Mesh) {
             runtimeMesh.material = material;
         }
@@ -663,6 +662,33 @@ class VisGeometry {
             runtimeMesh.traverse( (child) => {
                 if ( child instanceof THREE.Mesh ) {
                     child.material = material;
+                }
+            });
+        }
+    }
+
+    assignMembraneMaterial(runtimeMesh) {
+        const isHighlighted = (this.highlightedId == -1 || this.highlightedId == runtimeMesh.userData.typeId);
+
+        if (isHighlighted) {
+            // at this time, assign separate material parameters to the faces and sides of the membrane
+            const faceNames = this.membrane.faces.map((el)=>{return el.name});
+            const sideNames = this.membrane.sides.map((el)=>{return el.name});
+            runtimeMesh.traverse( (child) => {
+                if ( child instanceof THREE.Mesh ) {
+                    if (faceNames.includes(child.name)){
+                        child.material = this.membrane.facesMaterial;
+                    }
+                    else if (sideNames.includes(child.name)) {
+                        child.material = this.membrane.sidesMaterial;
+                    }
+                }
+            });
+        }
+        else {
+            runtimeMesh.traverse( (child) => {
+                if ( child instanceof THREE.Mesh ) {
+                    child.material = this.desatMaterials[0];
                 }
             });
         }

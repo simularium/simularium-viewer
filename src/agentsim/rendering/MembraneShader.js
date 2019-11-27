@@ -233,6 +233,7 @@ const fragmentShader =
     `
     uniform float iTime;
     uniform vec2 iResolution;
+    uniform vec2 uvscale;
 #if USE_SIM
     uniform sampler2D iChannel0;
     uniform vec2 iChannelResolution0;
@@ -363,7 +364,6 @@ const fragmentShader =
     
     */
 
-#define NOISE_SCALE 10.0	
 #define NOISE_COLOR vec3(0.1, 0.7, 0.8)
 #define NOISE_BACKGROUND_COLOR vec3(0.0, 0.3, 0.25)
 #define LIGHT_DIR_UV vec3(0.0, 0.0, 1.0)
@@ -378,7 +378,7 @@ const fragmentShader =
         vec2 uv = vUv*2.0-1.0;
         
         // zoom scaling of the noise effect
-        uv *= NOISE_SCALE;
+        uv *= uvscale;
 
         float time = iTime * 0.5;
         vec3 col = vec3(0.0);
@@ -446,6 +446,7 @@ const MembraneShader = new THREE.ShaderMaterial({
     uniforms: {
         iTime: { value: 1.0 },
         iResolution: { value: new THREE.Vector2() },
+        uvscale: { value: new THREE.Vector2(1.0, 1.0) },
         iChannel0: { value: null },
         iChannelResolution0: {
             value: new THREE.Vector2(dataTextureSize, dataTextureSize),
