@@ -137,13 +137,7 @@ class VisGeometry {
             if (runtimeMesh.userData && typeIds.includes(runtimeMesh.userData.typeId)) {
                 const isFollowedObject = (runtimeMesh === this.followObject);
 
-                const p = runtimeMesh.position;
-                const r = runtimeMesh.rotation;
-                const s = runtimeMesh.scale;
                 runtimeMesh = this.setupMeshGeometry(i, runtimeMesh, meshGeom, isFollowedObject);
-                runtimeMesh.position.copy(p);
-                runtimeMesh.rotation.copy(r);
-                runtimeMesh.scale.copy(s);
             }
         }
     }
@@ -615,6 +609,11 @@ class VisGeometry {
     }
 
     setupMeshGeometry(i, runtimeMesh, meshGeom, isFollowedObject) {
+        // remember current transform
+        const p = runtimeMesh.position;
+        const r = runtimeMesh.rotation;
+        const s = runtimeMesh.scale;
+
         if (this.membrane.mesh === meshGeom) {
             if (this.membrane.mesh && runtimeMesh.children.length !== this.membrane.mesh.children.length) {
                 // to avoid a deep clone of userData, just reuse the instance
@@ -647,6 +646,12 @@ class VisGeometry {
             }
 
         }
+
+        // restore transform
+        runtimeMesh.position.copy(p);
+        runtimeMesh.rotation.copy(r);
+        runtimeMesh.scale.copy(s);
+
         return runtimeMesh;
     }
 
