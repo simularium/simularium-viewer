@@ -381,7 +381,7 @@ class NetConnection {
         };
 
         this.remoteServerSim = fileName;
-        this.connectToTrajectoryFileServer(fileName).then(() => {
+        return this.connectToTrajectoryFileServer(fileName).then(() => {
             this.sendWebSocketRequest(jsonData, "Start Trajectory File Playback");
         });
     }
@@ -488,10 +488,10 @@ class NetConnection {
     }
 
     guiStartRemoteTrajectoryPlayback() {
-        this.startRemoteTrajectoryPlayback(
+        this.simParameters.newSimulationIsRunning = true;
+        return this.startRemoteTrajectoryPlayback(
             this.simParameters.trajectoryPlaybackFile,
         );
-        this.simParameters.newSimulationIsRunning = true;
     }
 
     guiPlayRemoteSimCache(frameNumber) {

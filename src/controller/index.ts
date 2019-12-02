@@ -9,6 +9,7 @@ export default class AgentSimController {
     public visData: any;
     private networkEnabled: boolean;
     private isPaused: boolean;
+    private mhasChangedFile: boolean;
 
     public constructor(netConnectionSettings, params) {
         const loggerLevel =
@@ -24,6 +25,7 @@ export default class AgentSimController {
 
         this.networkEnabled = true;
         this.isPaused = false;
+        this.mhasChangedFile = false;
     }
 
     public start() {
@@ -32,7 +34,7 @@ export default class AgentSimController {
         this.isPaused = false;
         this.visData.clearCache();
 
-        this.netConnection.guiStartRemoteTrajectoryPlayback();
+        return this.netConnection.guiStartRemoteTrajectoryPlayback();
     }
 
     public time() {
@@ -115,7 +117,24 @@ export default class AgentSimController {
     }
 
     public changeFile(newFile) {
-        this.simParameters.playBackFile = newFile;
+        if (newFile !== this.simParameters.playBackFile) {
+            this.mhasChangedFile = true;
+            this.simParameters.playBackFile = newFile;
+            let startPromise = this.start();
+
+            console.log(startPromise);
+            startPromise.then(() => {
+                this.playOneFrame(0);
+            });
+        }
+    }
+
+    public hasChangedFile() {
+        return this.mhasChangedFile;
+    }
+
+    public handleChangedFile() {
+        this.mhasChangedFile = false;
     }
 
     public getFile() {
