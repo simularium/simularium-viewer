@@ -291,7 +291,6 @@ class Viewport extends React.Component<ViewportProps> {
         const elapsedTime = Date.now() - this.lastRenderTime;
         if (elapsedTime > timePerFrame) {
             if(agentSimController.hasChangedFile()) {
-                console.log("File changed");
                 this.visGeometry.mapFromJSON(
                     `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${agentSimController.getFile()}.json`
                 );
