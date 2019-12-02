@@ -123,7 +123,6 @@ export default class AgentSimController {
             this.stop();
             let startPromise = this.start();
 
-            console.log(startPromise);
             startPromise.then(() => {
                 this.playOneFrame(0);
             });
