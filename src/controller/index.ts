@@ -120,6 +120,7 @@ export default class AgentSimController {
         if (newFile !== this.simParameters.playBackFile) {
             this.mhasChangedFile = true;
             this.simParameters.playBackFile = newFile;
+            this.stop();
             let startPromise = this.start();
 
             console.log(startPromise);
