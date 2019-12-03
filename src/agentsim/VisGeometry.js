@@ -70,8 +70,8 @@ class VisGeometry {
             facesMaterial: MembraneShader.MembraneShader.clone(),
             sidesMaterial: MembraneShader.MembraneShader.clone()
         };
-        this.membrane.facesMaterial.uniforms.uvscale.value = new THREE.Vector2(20.0, 20.0);
-        this.membrane.sidesMaterial.uniforms.uvscale.value = new THREE.Vector2(2.0, 20.0);
+        this.membrane.facesMaterial.uniforms.uvscale.value = new THREE.Vector2(40.0, 40.0);
+        this.membrane.sidesMaterial.uniforms.uvscale.value = new THREE.Vector2(2.0, 40.0);
 
         
         this.mlogger = jsLogger.get('visgeometry');
