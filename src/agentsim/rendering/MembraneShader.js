@@ -531,10 +531,10 @@ const fragmentShader =
         // debug grids in use  
         //if (getColorSize(grid).a!=0.0) col=mix(col,vec3(1.,1.,1.),getColorSize(grid).a*0.3);
 #else
+        float bumpFactor = 5.0;
+        vec3 normal = vec3(dFdx(ns), dFdy(ns), 0.0);
+        normal = normalize(normal*bumpFactor + n);
 
-        vec3 normal = vec3(dFdx(ns), dFdy(ns), ns);
-        normal.z = sqrt(1.0 - normal.x*normal.x - normal.y*normal.y);
-        normal = normalize(normal);
         // TODO transform this normal back into world space for proper lighting?
 
         float lightfg = dot(normal, directionalLights[0].direction);
@@ -543,7 +543,7 @@ const fragmentShader =
 #endif
         ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );
         reflectedLight.indirectDiffuse = getAmbientLightIrradiance( ambientLightColor );
-        reflectedLight.indirectDiffuse += vIndirectFront*col;
+        reflectedLight.indirectDiffuse += vIndirectFront;//*col;
         reflectedLight.directDiffuse = vLightFront * col;
         vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse;
         col = outgoingLight;
