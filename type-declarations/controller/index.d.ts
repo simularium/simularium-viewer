@@ -4,7 +4,7 @@ export default class AgentSimController {
     visData: any;
     private networkEnabled;
     private isPaused;
-    private mhasChangedFile;
+    private fileChanged;
     constructor(netConnectionSettings: any, params: any);
     readonly hasChangedFile: boolean;
     start(): any;
