@@ -177,7 +177,7 @@ class VisGeometry {
         this.dl.position.set(0, 0, 1);
         this.scene.add(this.dl);
 
-        this.hemiLight = new THREE.HemisphereLight(0xffffff, 0x000000, 0.6);
+        this.hemiLight = new THREE.HemisphereLight(0xffffff, 0x000000, 0.5);
         this.hemiLight.color.setHSL(0.095, 1, 0.75);
         this.hemiLight.groundColor.setHSL(0.6, 1, 0.6);
         this.hemiLight.position.set(0, 1, 0);
@@ -286,7 +286,9 @@ class VisGeometry {
 
         if (this.dl && this.fixLightsToCamera) {
             // position directional light at camera (facing scene, as headlight!)
-            this.dl.position.copy(this.camera.position);
+            this.dl.position.setFromMatrixColumn(this.camera.matrixWorld, 2);
+
+            //this.dl.position.copy(this.camera.position);
         }
         if (this.hemiLight && this.fixLightsToCamera) {
             // make hemi light come down from vertical of screen (camera up)

@@ -325,6 +325,21 @@ const fragmentShader =
         #endif
         return irradiance;
     }
+    struct IncidentLight {
+        vec3 color;
+        vec3 direction;
+        bool visible;
+    };
+
+    struct DirectionalLight {
+        vec3 direction;
+        vec3 color;
+        int shadow;
+        float shadowBias;
+        float shadowRadius;
+        vec2 shadowMapSize;
+    };
+    uniform DirectionalLight directionalLights[ 1 ];
 
     float noise3D(vec3 p)
     {
@@ -465,12 +480,13 @@ const fragmentShader =
 
         float time = iTime * 0.5;
         vec3 col = vec3(0.0);
-        float n;
-        n = simplex3D(vec3(time,vec2(uv)))*0.5+0.5;
+        float ns;
+        ns = simplex3D(vec3(time,vec2(uv)))*0.5+0.5;
     
-//        col = n * NOISE_COLOR;
-        col = mix(NOISE_BACKGROUND_COLOR, NOISE_COLOR, n*n);
-        col = mix(col, NOISE_BACKGROUND_COLOR, 0.5*sin(time)-0.5);
+        ns = ns*ns;
+        col = mix(NOISE_BACKGROUND_COLOR, NOISE_COLOR, ns);
+        //col = mix(col, NOISE_BACKGROUND_COLOR, 0.5*sin(time)-0.5);
+        col = mix(col, NOISE_BACKGROUND_COLOR, -0.75);
 
         // 2. second layer: read from the particle simulation
 #if USE_SIM
@@ -516,15 +532,18 @@ const fragmentShader =
         //if (getColorSize(grid).a!=0.0) col=mix(col,vec3(1.,1.,1.),getColorSize(grid).a*0.3);
 #else
 
-        vec3 normal = vec3(dFdx(n), dFdy(n), n);
-        normal = normalize(normal*normal);
-        float lightfg = dot(normal, LIGHT_DIR_UV);
+        vec3 normal = vec3(dFdx(ns), dFdy(ns), ns);
+        normal.z = sqrt(1.0 - normal.x*normal.x - normal.y*normal.y);
+        normal = normalize(normal);
+        // TODO transform this normal back into world space for proper lighting?
+
+        float lightfg = dot(normal, directionalLights[0].direction);
         // final color mix:
-        //col = col*lightfg;
+        col = col*lightfg;
 #endif
         ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );
         reflectedLight.indirectDiffuse = getAmbientLightIrradiance( ambientLightColor );
-        reflectedLight.indirectDiffuse += vIndirectFront;
+        reflectedLight.indirectDiffuse += vIndirectFront*col;
         reflectedLight.directDiffuse = vLightFront * col;
         vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse;
         col = outgoingLight;
