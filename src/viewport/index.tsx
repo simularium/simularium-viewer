@@ -65,6 +65,7 @@ class Viewport extends React.Component<ViewportProps> {
     // NOTE: this can be typed in the future, but they may change signifantly and I dont want to at the moment. -MMRM
     private visGeometry: any;
     private lastRenderTime: number;
+    private startTime: number;
     private vdomRef: React.RefObject<HTMLInputElement>;
     private handlers: { [key: string]: (e: any) => void };
 
@@ -104,6 +105,7 @@ class Viewport extends React.Component<ViewportProps> {
         this.dispatchUpdatedTime = this.dispatchUpdatedTime.bind(this);
         this.handleTimeChange = this.handleTimeChange.bind(this);
         this.lastRenderTime = Date.now();
+        this.startTime = Date.now();
         this.onPickObject = this.onPickObject.bind(this);
 
         this.handlers = {
@@ -151,6 +153,7 @@ class Viewport extends React.Component<ViewportProps> {
         }
         this.addEventHandlersToCanvas();
 
+        this.startTime = Date.now();
         this.animate();
     }
 
@@ -236,7 +239,12 @@ class Viewport extends React.Component<ViewportProps> {
         this.visGeometry.setFollowObject(null);
         const intersects = this.raycaster.intersectObjects(this.visGeometry.scene.children, true);
         if (intersects && intersects.length) {
-            const obj = intersects[0].object;
+            let obj = intersects[0].object;
+            // if the object has a parent and the parent is not the scene, use that.
+            // assumption: only one level of object hierarchy.
+            if (obj.parent && !(obj.parent instanceof THREE.Scene)) {
+                obj = obj.parent;
+            }
             this.hit = true;
             if (oldFollowObject !== obj) {
                 this.visGeometry.removePathForObject(oldFollowObject);
@@ -288,7 +296,9 @@ class Viewport extends React.Component<ViewportProps> {
         } = agentSimController;
         const framesPerSecond = 60; // how often the view-port rendering is refreshed per second
         const timePerFrame = 1000 / framesPerSecond; // the time interval at which to re-render
-        const elapsedTime = Date.now() - this.lastRenderTime;
+        const now = Date.now();
+        const elapsedTime = now - this.lastRenderTime;
+        const totalElapsedTime = now - this.startTime;
         if (elapsedTime > timePerFrame) {
             if (!visData.atLatestFrame() && !agentSimController.paused()) {
                 this.visGeometry.colorVariant = visData.colorVariant;
@@ -301,7 +311,7 @@ class Viewport extends React.Component<ViewportProps> {
             //this.visGeometry.clear();
             //}
 
-            this.visGeometry.render();
+            this.visGeometry.render(totalElapsedTime);
             this.lastRenderTime = Date.now();
         }
 
