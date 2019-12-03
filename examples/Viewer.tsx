@@ -130,7 +130,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                 onClick={() => agentSim.stop()}
             >stop</button>
             <button onClick={() => agentSim.changeFile('actin34.h5')}>Actin 34</button>
-            <button onClick={() => agentSim.changeFile('microtubules30.h5')}>MT 30</button>
+            <button onClick={() => agentSim.changeFile('microtubules30_1.h5')}>MT 30</button>
             <button onClick={() => agentSim.changeFile('ATPsynthase_1.h5')}>ATP 1</button>
             <button onClick={() => agentSim.changeFile('ATPsynthase_2.h5')}>ATP 2</button>
             <button onClick={() => agentSim.changeFile('ATPsynthase_3.h5')}>ATP 3</button>
