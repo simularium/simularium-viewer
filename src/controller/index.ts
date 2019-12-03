@@ -125,15 +125,13 @@ export default class AgentSimController {
             this.fileChanged = true;
             this.simParameters.playBackFile = newFile;
             this.stop();
-            let startPromise = this.start();
-
-            startPromise.then(() => {
+            this.start().then(() => {
                 this.playOneFrame(0);
             });
         }
     }
 
-    public handleChangedFile() {
+    public markFileChangeAsHandled() {
         this.fileChanged = false;
     }
 

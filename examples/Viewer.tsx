@@ -61,7 +61,7 @@ const intialState = {
     showPaths: true,
 }
 
-
+const changeFile = (file: string) => () => agentSim.changeFile(file);
 
 class Viewer extends React.Component<{}, ViewerState> {
     constructor(props) {
@@ -129,18 +129,18 @@ class Viewer extends React.Component<{}, ViewerState> {
             <button
                 onClick={() => agentSim.stop()}
             >stop</button>
-            <button onClick={() => agentSim.changeFile('actin34.h5')}>Actin 34</button>
-            <button onClick={() => agentSim.changeFile('microtubules30_1.h5')}>MT 30</button>
-            <button onClick={() => agentSim.changeFile('ATPsynthase_1.h5')}>ATP 1</button>
-            <button onClick={() => agentSim.changeFile('ATPsynthase_2.h5')}>ATP 2</button>
-            <button onClick={() => agentSim.changeFile('ATPsynthase_3.h5')}>ATP 3</button>
-            <button onClick={() => agentSim.changeFile('ATPsynthase_4.h5')}>ATP 4</button>
-            <button onClick={() => agentSim.changeFile('ATPsynthase_5.h5')}>ATP 5</button>
-            <button onClick={() => agentSim.changeFile('ATPsynthase_6.h5')}>ATP 6</button>
-            <button onClick={() => agentSim.changeFile('ATPsynthase_7.h5')}>ATP 7</button>
-            <button onClick={() => agentSim.changeFile('ATPsynthase_8.h5')}>ATP 8</button>
-            <button onClick={() => agentSim.changeFile('ATPsynthase_9.h5')}>ATP 9</button>
-            <button onClick={() => agentSim.changeFile('ATPsynthase_10.h5')}>ATP 10</button>
+            <button onClick={changeFile('actin34.h5')}>Actin 34</button>
+            <button onClick={changeFile('microtubules30_1.h5')}>MT 30</button>
+            <button onClick={changeFile('ATPsynthase_1.h5')}>ATP 1</button>
+            <button onClick={changeFile('ATPsynthase_2.h5')}>ATP 2</button>
+            <button onClick={changeFile('ATPsynthase_3.h5')}>ATP 3</button>
+            <button onClick={changeFile('ATPsynthase_4.h5')}>ATP 4</button>
+            <button onClick={changeFile('ATPsynthase_5.h5')}>ATP 5</button>
+            <button onClick={changeFile('ATPsynthase_6.h5')}>ATP 6</button>
+            <button onClick={changeFile('ATPsynthase_7.h5')}>ATP 7</button>
+            <button onClick={changeFile('ATPsynthase_8.h5')}>ATP 8</button>
+            <button onClick={changeFile('ATPsynthase_9.h5')}>ATP 9</button>
+            <button onClick={changeFile('ATPsynthase_10.h5')}>ATP 10</button>
             <br/>
             <input id="frame-number" type="text" />
             <button

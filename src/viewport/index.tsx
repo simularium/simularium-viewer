@@ -294,7 +294,7 @@ class Viewport extends React.Component<ViewportProps> {
                 this.visGeometry.mapFromJSON(
                     `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${agentSimController.getFile()}.json`
                 );
-                agentSimController.handleChangedFile();
+                agentSimController.markFileChangeAsHandled();
             }
 
             if (!visData.atLatestFrame() && !agentSimController.paused()) {

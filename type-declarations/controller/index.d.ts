@@ -24,7 +24,7 @@ export default class AgentSimController {
     gotoPreviousFrame(): void;
     resume(): void;
     changeFile(newFile: any): void;
-    handleChangedFile(): void;
+    markFileChangeAsHandled(): void;
     getFile(): any;
     disableNetworkCommands(): void;
     cacheJSON(json: any): void;
