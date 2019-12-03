@@ -28,6 +28,10 @@ export default class AgentSimController {
         this.mhasChangedFile = false;
     }
 
+    get hasChangedFile() {
+        return this.mhasChangedFile;
+    }
+
     public start() {
         // switch back to 'networked' playback
         this.networkEnabled = true;
@@ -127,10 +131,6 @@ export default class AgentSimController {
                 this.playOneFrame(0);
             });
         }
-    }
-
-    public hasChangedFile() {
-        return this.mhasChangedFile;
     }
 
     public handleChangedFile() {
