@@ -300,6 +300,13 @@ class Viewport extends React.Component<ViewportProps> {
         const elapsedTime = now - this.lastRenderTime;
         const totalElapsedTime = now - this.startTime;
         if (elapsedTime > timePerFrame) {
+            if(agentSimController.hasChangedFile) {
+                this.visGeometry.mapFromJSON(
+                    `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${agentSimController.getFile()}.json`
+                );
+                agentSimController.markFileChangeAsHandled();
+            }
+
             if (!visData.atLatestFrame() && !agentSimController.paused()) {
                 this.visGeometry.colorVariant = visData.colorVariant;
                 this.visGeometry.update(visData.currentFrame());
