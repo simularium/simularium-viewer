@@ -222,6 +222,10 @@ class Viewport extends React.Component<ViewportProps> {
         );
     }
 
+    public resetCamera() {
+        this.visGeometry.resetCamera();
+    }
+
     public onPickObject(event: MouseEvent) {
         const size = new THREE.Vector2();
         this.visGeometry.renderer.getSize(size);
