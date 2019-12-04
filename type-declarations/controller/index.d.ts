@@ -4,8 +4,10 @@ export default class AgentSimController {
     visData: any;
     private networkEnabled;
     private isPaused;
+    private fileChanged;
     constructor(netConnectionSettings: any, params: any);
-    start(): void;
+    readonly hasChangedFile: boolean;
+    start(): any;
     time(): void;
     stop(): void;
     pause(): void;
@@ -22,6 +24,7 @@ export default class AgentSimController {
     gotoPreviousFrame(): void;
     resume(): void;
     changeFile(newFile: any): void;
+    markFileChangeAsHandled(): void;
     getFile(): any;
     disableNetworkCommands(): void;
     cacheJSON(json: any): void;
