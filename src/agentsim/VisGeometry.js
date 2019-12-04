@@ -145,6 +145,7 @@ class VisGeometry {
         const meshGeom = this.meshRegistry.get(meshName);
 
         // go over all objects and update mesh of this typeId
+        // if this happens before the first updateScene, then the runtimeMeshes don't have type id's yet.
         let nMeshes = this.runTimeMeshes.length;
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
             let runtimeMesh = this.getMesh(i);
@@ -501,6 +502,7 @@ class VisGeometry {
                 let runtimeMesh = this.getMesh(i);
                 const isFollowedObject = (runtimeMesh === this.followObject);
 
+                const lastTypeId = runtimeMesh.userData ? runtimeMesh.userData.typeId : -1;
                 if (!runtimeMesh.userData) {
                     runtimeMesh.userData = { 
                         active: true,
@@ -518,10 +520,9 @@ class VisGeometry {
                     runtimeMesh.userData.materialType = materialType;
                 }
 
-                if (runtimeMesh.geometry === sphereGeometry) {
+                if (runtimeMesh.geometry === sphereGeometry || typeId !== lastTypeId) {
                     const meshGeom = this.getGeomFromId(typeId);
                     if (meshGeom && meshGeom.children) {
-                        // in theory this code should never be hit, due to the way the mesh geometry is updated in loadObj
                         runtimeMesh = this.setupMeshGeometry(i, runtimeMesh, meshGeom, isFollowedObject);
                     }
                 }

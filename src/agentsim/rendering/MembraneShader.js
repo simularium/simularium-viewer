@@ -461,8 +461,8 @@ const fragmentShader =
     Buffer B can measure and display the total kinetic energy of the particles.
     
     */
-
-#define NOISE_COLOR vec3(0.05, 0.25, 0.3)
+   
+#define NOISE_COLOR vec3(0.07, 0.33, 0.4)
 #define NOISE_BACKGROUND_COLOR vec3(0.0, 0.075, 0.0625)
 #define LIGHT_DIR_UV vec3(0.0, 0.0, 1.0)
 
@@ -478,15 +478,34 @@ const fragmentShader =
         // zoom scaling of the noise effect
         uv *= uvscale;
 
-        float time = iTime * 0.5;
+        float time = iTime * 1.0;
         vec3 col = vec3(0.0);
         float ns;
         ns = simplex3D(vec3(time,vec2(uv)))*0.5+0.5;
     
         ns = ns*ns;
-        col = mix(NOISE_BACKGROUND_COLOR, NOISE_COLOR, ns);
-        //col = mix(col, NOISE_BACKGROUND_COLOR, 0.5*sin(time)-0.5);
-        col = mix(col, NOISE_BACKGROUND_COLOR, -0.75);
+
+        float delta = 0.01;
+        float nsx = simplex3D(vec3(time,vec2(uv)+vec2(delta, 0.0)))*0.5+0.5;
+        nsx = nsx*nsx;
+        float nsy = simplex3D(vec3(time,vec2(uv)+vec2(0.0, delta)))*0.5+0.5;
+        nsy = nsy*nsy;
+        float dnx = (nsx-(ns))/delta;
+        float dny = (nsy-(ns))/delta;
+        float bumpFactor = 8.0;
+
+//        float dnx = dFdx(ns);
+//        float dny = dFdy(ns);
+//        float bumpFactor = 128.0;
+
+        vec3 normal = vec3(dnx, dny, 0.0)*bumpFactor;
+        // transform this normal back into world space for proper lighting?
+        normal = (mat3(viewMatrix)) * normal;
+        normal = normalize(normal + n);
+
+        float lightfg = clamp(dot(normal, directionalLights[0].direction), 0.0, 1.0);
+
+        col = mix(NOISE_BACKGROUND_COLOR, NOISE_COLOR, 1.0 - (1.0-ns)*(1.0-ns)*lightfg);
 
         // 2. second layer: read from the particle simulation
 #if USE_SIM
@@ -530,20 +549,10 @@ const fragmentShader =
             
         // debug grids in use  
         //if (getColorSize(grid).a!=0.0) col=mix(col,vec3(1.,1.,1.),getColorSize(grid).a*0.3);
-#else
-
-        vec3 normal = vec3(dFdx(ns), dFdy(ns), ns);
-        normal.z = sqrt(1.0 - normal.x*normal.x - normal.y*normal.y);
-        normal = normalize(normal);
-        // TODO transform this normal back into world space for proper lighting?
-
-        float lightfg = dot(normal, directionalLights[0].direction);
-        // final color mix:
-        col = col*lightfg;
 #endif
         ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );
         reflectedLight.indirectDiffuse = getAmbientLightIrradiance( ambientLightColor );
-        reflectedLight.indirectDiffuse += vIndirectFront*col;
+        reflectedLight.indirectDiffuse += vIndirectFront;
         reflectedLight.directDiffuse = vLightFront * col;
         vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse;
         col = outgoingLight;
