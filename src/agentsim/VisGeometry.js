@@ -90,6 +90,10 @@ class VisGeometry {
 
     get renderDom() { return this.renderer.domElement; }
 
+    resetCamera() {
+        this.controls.reset();
+    }
+
     getFollowObject() {
         return this.followObject;
     }

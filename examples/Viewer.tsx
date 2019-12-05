@@ -64,8 +64,11 @@ const intialState = {
 const changeFile = (file: string) => () => agentSim.changeFile(file);
 
 class Viewer extends React.Component<{}, ViewerState> {
+    private viewerRef: React.RefObject<AgentVizViewer>;
+
     constructor(props) {
         super(props)
+        this.viewerRef = React.createRef();
         this.handleJsonMeshData = this.handleJsonMeshData.bind(this);
         this.handleTimeChange = this.handleTimeChange.bind(this);
         this.playOneFrame = this.playOneFrame.bind(this);
@@ -174,8 +177,12 @@ class Viewer extends React.Component<{}, ViewerState> {
             <button
                 onClick={() => this.setState({showPaths: !this.state.showPaths})}
             >ShowPaths</button>
+            <button
+                onClick={() => this.viewerRef.current.resetCamera()}
+            >ResetCamera</button>
 
             <AgentVizViewer
+                ref={this.viewerRef}
                 height={this.state.height}
                 width={this.state.width}
                 devgui={false}
