@@ -21,6 +21,7 @@ interface TimeData {
 declare class Viewport extends React.Component<ViewportProps> {
     private visGeometry;
     private lastRenderTime;
+    private startTime;
     private vdomRef;
     private handlers;
     private hit;

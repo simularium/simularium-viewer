@@ -161,6 +161,14 @@ class VisGeometry {
         }
     }
 
+    setUpControls(element) {
+        this.controls = new THREE.OrbitControls(this.camera, element);
+        this.controls.maxDistance = 750;
+        this.controls.minDistance = 5;
+        this.controls.zoomSpeed = 2;
+        this.controls.enablePan = false;
+    }
+
     /**
     *   Setup ThreeJS Scene
     * */
@@ -171,11 +179,7 @@ class VisGeometry {
         this.camera = new THREE.PerspectiveCamera(
             75, initWidth / initHeight, 0.1, 10000,
         );
-        this.controls = new THREE.OrbitControls(this.camera);
-        this.controls.maxDistance = 750;
-        this.controls.minDistance = 5;
-        this.controls.zoomSpeed = 5;
-        this.controls.enablePan = false;
+
 
         this.dl = null;
         this.dl = new THREE.DirectionalLight(0xffffff, 0.6);
@@ -239,7 +243,7 @@ class VisGeometry {
         let height = parent.scrollHeight;
         let width = parent.scrollWidth;
         parent.appendChild(this.renderer.domElement);
-
+        this.setUpControls(this.renderer.domElement);
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(width, height);        
