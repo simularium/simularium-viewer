@@ -405,6 +405,8 @@ class VisGeometry {
     *   Data Management
     */
     resetMapping() {
+        this.resetAllGeometry();
+
         this.visGeomMap.clear();
         this.meshRegistry.clear();
         this.meshLoadAttempted.clear();
@@ -624,10 +626,12 @@ class VisGeometry {
             if (this.membrane.mesh && runtimeMesh.children.length !== this.membrane.mesh.children.length) {
                 // to avoid a deep clone of userData, just reuse the instance
                 const userData = runtimeMesh.userData;
+                const visible = runtimeMesh.visible;
                 runtimeMesh.userData = null;
                 this.scene.remove(runtimeMesh);
                 runtimeMesh = this.membrane.mesh.clone();
                 runtimeMesh.userData = userData;
+                runtimeMesh.visible = visible;
                 this.assignMaterial(runtimeMesh);
                 this.scene.add(runtimeMesh);
                 this.resetMesh(i, runtimeMesh);
@@ -637,10 +641,12 @@ class VisGeometry {
         else {
             // to avoid a deep clone of userData, just reuse the instance
             const userData = runtimeMesh.userData;
+            const visible = runtimeMesh.visible;
             runtimeMesh.userData = null;
             this.scene.remove(runtimeMesh);
             runtimeMesh = meshGeom.clone();
             runtimeMesh.userData = userData;
+            runtimeMesh.visible = visible;
             this.scene.add(runtimeMesh);
             this.resetMesh(i, runtimeMesh);
 
@@ -889,6 +895,18 @@ class VisGeometry {
 
     clear() {
         this.hideUnusedMeshes(0);
+    }
+
+    resetAllGeometry() {
+        // set all runtime meshes back to spheres.
+        const sphereGeom = this.getSphereGeom();
+        let nMeshes = this.runTimeMeshes.length;
+        for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
+            if (this.runTimeMeshes[i].userData) {
+                const runtimeMesh = this.setupMeshGeometry(i, this.runTimeMeshes[i], new THREE.Mesh(sphereGeom), false);
+                this.assignMaterial(runtimeMesh, new THREE.MeshLambertMaterial({ color: 0xFF00FF }));
+            }
+        }
     }
 
     update(agents) {
