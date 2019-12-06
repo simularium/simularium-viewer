@@ -18,7 +18,7 @@ import MembraneShader from './rendering/MembraneShader.js';
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 5000;
-const BACKGROUND_COLOR = new THREE.Color(0xcccccc);
+const BACKGROUND_COLOR = new THREE.Color(0xffffff);
 const PATH_END_COLOR = BACKGROUND_COLOR;
 // FIXME Hard-coded for actin simulation.  needs to be data coming from backend.
 const VOLUME_DIMS = new THREE.Vector3(300, 300, 300);
@@ -205,7 +205,7 @@ class VisGeometry {
         this.renderer.setClearColor(BACKGROUND_COLOR, 1);
         this.renderer.clear();
 
-        this.camera.position.z = 5;
+        this.camera.position.z = 120;
 
         this.loadObj = (meshName) => {
             const objLoader = new THREE.OBJLoader();
