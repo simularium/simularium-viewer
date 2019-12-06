@@ -24,6 +24,7 @@ interface ViewportProps {
     loadInitialData: boolean;
     showMeshes: boolean;
     showPaths: boolean;
+    showBounds: boolean;
 }
 
 interface TimeData {
@@ -81,6 +82,7 @@ class Viewport extends React.Component<ViewportProps> {
         loadInitialData: true,
         showMeshes: true,
         showPaths: true,
+        showBounds: true,
     };
 
     private static isCustomEvent(event: Event): event is CustomEvent {
@@ -167,10 +169,11 @@ class Viewport extends React.Component<ViewportProps> {
     }
 
     public componentDidUpdate(prevProps: ViewportProps) {
-        const { height, width, showMeshes, showPaths } = this.props;
+        const { height, width, showMeshes, showPaths, showBounds } = this.props;
         this.visGeometry.setHighlightById(this.props.highlightedParticleType);
         this.visGeometry.setShowMeshes(showMeshes);
         this.visGeometry.setShowPaths(showPaths);
+        this.visGeometry.setShowBounds(showBounds);
         if (prevProps.height !== height || prevProps.width !== width) {
             this.visGeometry.resize(width, height);
         }

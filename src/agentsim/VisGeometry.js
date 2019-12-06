@@ -22,6 +22,7 @@ const BACKGROUND_COLOR = new THREE.Color(0xffffff);
 const PATH_END_COLOR = BACKGROUND_COLOR;
 // FIXME Hard-coded for actin simulation.  needs to be data coming from backend.
 const VOLUME_DIMS = new THREE.Vector3(300, 300, 300);
+const BOUNDING_BOX_COLOR = new THREE.Color(0xff0000);
 
 function lerp(x0, x1, alpha) {
     return x0 + (x1 - x0) * alpha;
@@ -50,6 +51,12 @@ class VisGeometry {
 
         // the canonical default geometry instance
         this.sphereGeometry = new THREE.SphereBufferGeometry(1, 32, 32);
+
+        // the geometry for a line box to bound the scene
+        this.boundingBoxGeometry = new THREE.BoxBufferGeometry( VOLUME_DIMS.x, VOLUME_DIMS.y, VOLUME_DIMS.z );
+        var edges = new THREE.EdgesGeometry( this.boundingBoxGeometry );
+        this.boundingBoxMesh = new THREE.LineSegments(
+            edges, new THREE.LineBasicMaterial( { color: BOUNDING_BOX_COLOR } ) );
 
         this.membrane = {
             // assume only one membrane mesh 
@@ -180,6 +187,7 @@ class VisGeometry {
             75, initWidth / initHeight, 0.1, 10000,
         );
 
+        this.scene.add(this.boundingBoxMesh);
 
         this.dl = null;
         this.dl = new THREE.DirectionalLight(0xffffff, 0.6);
@@ -866,6 +874,10 @@ class VisGeometry {
                 runtimeMesh.visible = showMeshes;
             }
         }
+    }
+
+    setShowBounds(showBounds) {
+        this.boundingBoxMesh.visible = showBounds;
     }
 
     showPathForAgentIndex(idx, visible) {
