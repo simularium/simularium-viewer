@@ -62,6 +62,10 @@ function sortFrames(a: FrameJSON, b: FrameJSON): number {
     return a.frameNumber > b.frameNumber ? 1 : -1;
 }
 
+function getJsonUrl(trajectoryName) {
+    return `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${trajectoryName}.json`;
+}
+
 class Viewport extends React.Component<ViewportProps> {
     // NOTE: this can be typed in the future, but they may change signifantly and I dont want to at the moment. -MMRM
     private visGeometry: any;
@@ -138,8 +142,9 @@ class Viewport extends React.Component<ViewportProps> {
             if (loadInitialData) {
                 let fileName = agentSimController.getFile();
                 this.visGeometry.mapFromJSON(
-                    `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${fileName}.json`, onJsonDataArrived
-
+                    fileName, 
+                    getJsonUrl(fileName),
+                    onJsonDataArrived
                 ).then(() => {
                     this.visGeometry.render();
                     this.lastRenderTime = Date.now();
@@ -310,7 +315,8 @@ class Viewport extends React.Component<ViewportProps> {
             if(agentSimController.hasChangedFile) {
                 this.visGeometry.clear();
                 this.visGeometry.mapFromJSON(
-                    `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${agentSimController.getFile()}.json`
+                    agentSimController.getFile(),
+                    getJsonUrl(agentSimController.getFile()),
                 );
                 agentSimController.markFileChangeAsHandled();
             }

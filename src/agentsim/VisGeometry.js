@@ -20,9 +20,8 @@ const MAX_PATH_LEN = 32;
 const MAX_MESHES = 5000;
 const BACKGROUND_COLOR = new THREE.Color(0xffffff);
 const PATH_END_COLOR = BACKGROUND_COLOR;
-// FIXME Hard-coded for actin simulation.  needs to be data coming from backend.
-const VOLUME_DIMS = new THREE.Vector3(300, 300, 300);
-const BOUNDING_BOX_COLOR = new THREE.Color(0xff0000);
+const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
+const BOUNDING_BOX_COLOR = new THREE.Color(0x6e6e6e);
 
 function lerp(x0, x1, alpha) {
     return x0 + (x1 - x0) * alpha;
@@ -51,12 +50,6 @@ class VisGeometry {
 
         // the canonical default geometry instance
         this.sphereGeometry = new THREE.SphereBufferGeometry(1, 32, 32);
-
-        // the geometry for a line box to bound the scene
-        this.boundingBoxGeometry = new THREE.BoxBufferGeometry( VOLUME_DIMS.x, VOLUME_DIMS.y, VOLUME_DIMS.z );
-        var edges = new THREE.EdgesGeometry( this.boundingBoxGeometry );
-        this.boundingBoxMesh = new THREE.LineSegments(
-            edges, new THREE.LineBasicMaterial( { color: BOUNDING_BOX_COLOR } ) );
 
         this.membrane = {
             // assume only one membrane mesh 
@@ -187,7 +180,7 @@ class VisGeometry {
             75, initWidth / initHeight, 0.1, 10000,
         );
 
-        this.scene.add(this.boundingBoxMesh);
+        this.resetBounds(DEFAULT_VOLUME_BOUNDS);
 
         this.dl = null;
         this.dl = new THREE.DirectionalLight(0xffffff, 0.6);
@@ -446,7 +439,7 @@ class VisGeometry {
         return null;
     }
 
-    mapFromJSON(filePath, callback) {
+    mapFromJSON(name, filePath, callback) {
         const jsonRequest = new Request(filePath);
         const self = this;
         return fetch(jsonRequest).then(
@@ -458,14 +451,44 @@ class VisGeometry {
                 self.logger.debug('JSON Mesh mapping loaded: ', jsonData);
                 Object.keys(jsonData).forEach((id) => {
                     const entry = jsonData[id];
-                    self.mapIdToGeom(Number(id), entry.mesh);
-                    self.setScaleForId(Number(id), entry.scale);
+                    if (id === "size") {
+                        self.resetBounds(-entry.x/2, -entry.y/2, -entry.z/2, entry.x/2, entry.y/2, entry.z/2);
+                    }
+                    else {
+                        self.mapIdToGeom(Number(id), entry.mesh);
+                        self.setScaleForId(Number(id), entry.scale);
+                    }
                 });
                 if (callback) {
                     callback(jsonData);
                 }
             },
         );
+    }
+
+    resetBounds(boundsAsArray) {
+        if (!boundsAsArray) {
+            console.log("invalid bounds received");
+            return;
+        }
+        const visible = this.boundingBoxMesh ? this.boundingBoxMesh.visible : true;
+        this.scene.remove(this.boundingBoxMesh);
+        // array is minx,miny,minz, maxx,maxy,maxz
+        this.boundingBox = new THREE.Box3(
+            new THREE.Vector3(boundsAsArray[0], boundsAsArray[1], boundsAsArray[2]),
+            new THREE.Vector3(boundsAsArray[3], boundsAsArray[4], boundsAsArray[5])
+        );
+        this.boundingBoxGeometry = new THREE.BoxBufferGeometry(
+            boundsAsArray[3]-boundsAsArray[0],
+            boundsAsArray[4]-boundsAsArray[1],
+            boundsAsArray[5]-boundsAsArray[2]
+        );
+        // assuming symmetric for now (minx === -maxx etc), so can keep mesh positioned at 0,0,0
+        var edges = new THREE.EdgesGeometry( this.boundingBoxGeometry );
+        this.boundingBoxMesh = new THREE.LineSegments(
+            edges, new THREE.LineBasicMaterial( { color: BOUNDING_BOX_COLOR } ) );
+        this.boundingBoxMesh.visible = visible;
+        this.scene.add(this.boundingBoxMesh);
     }
 
     setScaleForId(id, scale) {
@@ -811,7 +834,9 @@ class VisGeometry {
         // Check for periodic boundary condition:
         // if any agent moved more than half the volume size in one step, 
         // assume it jumped the boundary going the other way.
-        if (Math.abs(dx) > VOLUME_DIMS.x/2 || Math.abs(dy) > VOLUME_DIMS.y/2 || Math.abs(dz) > VOLUME_DIMS.z/2) {
+        const volumeSize = new THREE.Vector3();
+        this.boundingBox.getSize(volumeSize);
+        if (Math.abs(dx) > volumeSize.x/2 || Math.abs(dy) > volumeSize.y/2 || Math.abs(dz) > volumeSize.z/2) {
             // now what?
             // TODO: clip line segment from x-dx to x against the bounds,
             // compute new line segments from x-dx to bound, and from x to opposite bound
