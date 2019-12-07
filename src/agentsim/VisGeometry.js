@@ -483,15 +483,7 @@ class VisGeometry {
             new THREE.Vector3(boundsAsArray[0], boundsAsArray[1], boundsAsArray[2]),
             new THREE.Vector3(boundsAsArray[3], boundsAsArray[4], boundsAsArray[5])
         );
-        this.boundingBoxGeometry = new THREE.BoxBufferGeometry(
-            boundsAsArray[3]-boundsAsArray[0],
-            boundsAsArray[4]-boundsAsArray[1],
-            boundsAsArray[5]-boundsAsArray[2]
-        );
-        // assuming symmetric for now (minx === -maxx etc), so can keep mesh positioned at 0,0,0
-        var edges = new THREE.EdgesGeometry( this.boundingBoxGeometry );
-        this.boundingBoxMesh = new THREE.LineSegments(
-            edges, new THREE.LineBasicMaterial( { color: BOUNDING_BOX_COLOR } ) );
+        this.boundingBoxMesh = new THREE.Box3Helper( this.boundingBox, BOUNDING_BOX_COLOR );
         this.boundingBoxMesh.visible = visible;
         this.scene.add(this.boundingBoxMesh);
     }
