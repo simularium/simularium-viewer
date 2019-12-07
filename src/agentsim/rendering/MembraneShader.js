@@ -462,8 +462,8 @@ const fragmentShader =
     
     */
    
-#define NOISE_COLOR vec3(0.07, 0.33, 0.4)
-#define NOISE_BACKGROUND_COLOR vec3(0.0, 0.075, 0.0625)
+#define NOISE_COLOR vec3(0.4, 0.33, 0.07)
+#define NOISE_BACKGROUND_COLOR vec3(0.075, 0.0625, 0.0)
 #define LIGHT_DIR_UV vec3(0.0, 0.0, 1.0)
 
     void main( )
