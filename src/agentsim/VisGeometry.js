@@ -424,7 +424,7 @@ class VisGeometry {
             this.membrane.typeId = id;
         }
 
-        if (!this.meshRegistry.has(meshName) && !this.meshLoadAttempted.get(meshName)) {
+        if (meshName && !this.meshRegistry.has(meshName) && !this.meshLoadAttempted.get(meshName)) {
             this.loadObj(meshName);
             this.meshLoadAttempted.set(meshName, true);
         }
