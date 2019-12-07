@@ -449,16 +449,21 @@ class VisGeometry {
                 self.resetMapping();
                 const jsonData = data;
                 self.logger.debug('JSON Mesh mapping loaded: ', jsonData);
+                let foundBounds = false;
                 Object.keys(jsonData).forEach((id) => {
                     const entry = jsonData[id];
                     if (id === "size") {
-                        self.resetBounds(-entry.x/2, -entry.y/2, -entry.z/2, entry.x/2, entry.y/2, entry.z/2);
+                        self.resetBounds([-entry.x/2, -entry.y/2, -entry.z/2, entry.x/2, entry.y/2, entry.z/2]);
+                        foundBounds = true;
                     }
                     else {
                         self.mapIdToGeom(Number(id), entry.mesh);
                         self.setScaleForId(Number(id), entry.scale);
                     }
                 });
+                if (!foundBounds) {
+                    self.resetBounds(DEFAULT_VOLUME_BOUNDS);
+                }
                 if (callback) {
                     callback(jsonData);
                 }
