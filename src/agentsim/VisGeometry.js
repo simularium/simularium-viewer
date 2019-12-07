@@ -20,8 +20,8 @@ const MAX_PATH_LEN = 32;
 const MAX_MESHES = 5000;
 const BACKGROUND_COLOR = new THREE.Color(0xffffff);
 const PATH_END_COLOR = BACKGROUND_COLOR;
-// FIXME Hard-coded for actin simulation.  needs to be data coming from backend.
-const VOLUME_DIMS = new THREE.Vector3(300, 300, 300);
+const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
+const BOUNDING_BOX_COLOR = new THREE.Color(0x6e6e6e);
 
 function lerp(x0, x1, alpha) {
     return x0 + (x1 - x0) * alpha;
@@ -180,6 +180,7 @@ class VisGeometry {
             75, initWidth / initHeight, 0.1, 10000,
         );
 
+        this.resetBounds(DEFAULT_VOLUME_BOUNDS);
 
         this.dl = null;
         this.dl = new THREE.DirectionalLight(0xffffff, 0.6);
@@ -423,7 +424,7 @@ class VisGeometry {
             this.membrane.typeId = id;
         }
 
-        if (!this.meshRegistry.has(meshName) && !this.meshLoadAttempted.get(meshName)) {
+        if (meshName && !this.meshRegistry.has(meshName) && !this.meshLoadAttempted.get(meshName)) {
             this.loadObj(meshName);
             this.meshLoadAttempted.set(meshName, true);
         }
@@ -438,7 +439,7 @@ class VisGeometry {
         return null;
     }
 
-    mapFromJSON(filePath, callback) {
+    mapFromJSON(name, filePath, callback) {
         const jsonRequest = new Request(filePath);
         const self = this;
         return fetch(jsonRequest).then(
@@ -448,16 +449,43 @@ class VisGeometry {
                 self.resetMapping();
                 const jsonData = data;
                 self.logger.debug('JSON Mesh mapping loaded: ', jsonData);
+                let foundBounds = false;
                 Object.keys(jsonData).forEach((id) => {
                     const entry = jsonData[id];
-                    self.mapIdToGeom(Number(id), entry.mesh);
-                    self.setScaleForId(Number(id), entry.scale);
+                    if (id === "size") {
+                        self.resetBounds([-entry.x/2, -entry.y/2, -entry.z/2, entry.x/2, entry.y/2, entry.z/2]);
+                        foundBounds = true;
+                    }
+                    else {
+                        self.mapIdToGeom(Number(id), entry.mesh);
+                        self.setScaleForId(Number(id), entry.scale);
+                    }
                 });
+                if (!foundBounds) {
+                    self.resetBounds(DEFAULT_VOLUME_BOUNDS);
+                }
                 if (callback) {
                     callback(jsonData);
                 }
             },
         );
+    }
+
+    resetBounds(boundsAsArray) {
+        if (!boundsAsArray) {
+            console.log("invalid bounds received");
+            return;
+        }
+        const visible = this.boundingBoxMesh ? this.boundingBoxMesh.visible : true;
+        this.scene.remove(this.boundingBoxMesh);
+        // array is minx,miny,minz, maxx,maxy,maxz
+        this.boundingBox = new THREE.Box3(
+            new THREE.Vector3(boundsAsArray[0], boundsAsArray[1], boundsAsArray[2]),
+            new THREE.Vector3(boundsAsArray[3], boundsAsArray[4], boundsAsArray[5])
+        );
+        this.boundingBoxMesh = new THREE.Box3Helper( this.boundingBox, BOUNDING_BOX_COLOR );
+        this.boundingBoxMesh.visible = visible;
+        this.scene.add(this.boundingBoxMesh);
     }
 
     setScaleForId(id, scale) {
@@ -803,7 +831,9 @@ class VisGeometry {
         // Check for periodic boundary condition:
         // if any agent moved more than half the volume size in one step, 
         // assume it jumped the boundary going the other way.
-        if (Math.abs(dx) > VOLUME_DIMS.x/2 || Math.abs(dy) > VOLUME_DIMS.y/2 || Math.abs(dz) > VOLUME_DIMS.z/2) {
+        const volumeSize = new THREE.Vector3();
+        this.boundingBox.getSize(volumeSize);
+        if (Math.abs(dx) > volumeSize.x/2 || Math.abs(dy) > volumeSize.y/2 || Math.abs(dz) > volumeSize.z/2) {
             // now what?
             // TODO: clip line segment from x-dx to x against the bounds,
             // compute new line segments from x-dx to bound, and from x to opposite bound
@@ -866,6 +896,10 @@ class VisGeometry {
                 runtimeMesh.visible = showMeshes;
             }
         }
+    }
+
+    setShowBounds(showBounds) {
+        this.boundingBoxMesh.visible = showBounds;
     }
 
     showPathForAgentIndex(idx, visible) {

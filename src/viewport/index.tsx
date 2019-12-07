@@ -24,6 +24,7 @@ interface ViewportProps {
     loadInitialData: boolean;
     showMeshes: boolean;
     showPaths: boolean;
+    showBounds: boolean;
 }
 
 interface TimeData {
@@ -61,6 +62,10 @@ function sortFrames(a: FrameJSON, b: FrameJSON): number {
     return a.frameNumber > b.frameNumber ? 1 : -1;
 }
 
+function getJsonUrl(trajectoryName) {
+    return `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${trajectoryName}.json`;
+}
+
 class Viewport extends React.Component<ViewportProps> {
     // NOTE: this can be typed in the future, but they may change signifantly and I dont want to at the moment. -MMRM
     private visGeometry: any;
@@ -81,6 +86,7 @@ class Viewport extends React.Component<ViewportProps> {
         loadInitialData: true,
         showMeshes: true,
         showPaths: true,
+        showBounds: true,
     };
 
     private static isCustomEvent(event: Event): event is CustomEvent {
@@ -136,8 +142,9 @@ class Viewport extends React.Component<ViewportProps> {
             if (loadInitialData) {
                 let fileName = agentSimController.getFile();
                 this.visGeometry.mapFromJSON(
-                    `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${fileName}.json`, onJsonDataArrived
-
+                    fileName, 
+                    getJsonUrl(fileName),
+                    onJsonDataArrived
                 ).then(() => {
                     this.visGeometry.render();
                     this.lastRenderTime = Date.now();
@@ -167,10 +174,11 @@ class Viewport extends React.Component<ViewportProps> {
     }
 
     public componentDidUpdate(prevProps: ViewportProps) {
-        const { height, width, showMeshes, showPaths } = this.props;
+        const { height, width, showMeshes, showPaths, showBounds } = this.props;
         this.visGeometry.setHighlightById(this.props.highlightedParticleType);
         this.visGeometry.setShowMeshes(showMeshes);
         this.visGeometry.setShowPaths(showPaths);
+        this.visGeometry.setShowBounds(showBounds);
         if (prevProps.height !== height || prevProps.width !== width) {
             this.visGeometry.resize(width, height);
         }
@@ -307,7 +315,8 @@ class Viewport extends React.Component<ViewportProps> {
             if(agentSimController.hasChangedFile) {
                 this.visGeometry.clear();
                 this.visGeometry.mapFromJSON(
-                    `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${agentSimController.getFile()}.json`
+                    agentSimController.getFile(),
+                    getJsonUrl(agentSimController.getFile()),
                 );
                 agentSimController.markFileChangeAsHandled();
             }
