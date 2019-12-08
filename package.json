@@ -1,6 +1,6 @@
 {
   "name": "agentviz-viewer",
-  "version": "1.1.11",
+  "version": "1.2.1",
   "description": "An npm package to view simulations.",
   "main": "lib/index.js",
   "module": "es/index.js",
@@ -15,9 +15,6 @@
     "README.md",
     "package.json"
   ],
-  "publishConfig": {
-    "registry": "https://artifactory.corp.alleninstitute.org/artifactory/api/npm/npm-local/"
-  },
   "author": "",
   "license": "MIT",
   "devDependencies": {
