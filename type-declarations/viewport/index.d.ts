@@ -13,6 +13,7 @@ interface ViewportProps {
     loadInitialData: boolean;
     showMeshes: boolean;
     showPaths: boolean;
+    showBounds: boolean;
 }
 interface TimeData {
     time: number;
@@ -35,6 +36,7 @@ declare class Viewport extends React.Component<ViewportProps> {
         loadInitialData: boolean;
         showMeshes: boolean;
         showPaths: boolean;
+        showBounds: boolean;
     };
     private static isCustomEvent;
     constructor(props: ViewportProps);
