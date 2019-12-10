@@ -408,8 +408,7 @@ class NetConnection {
 
     abortRemoteSim() {
         if (!this.socketIsValid()) { return; }
-        this.sendWebSocketRequest({ msgType: this.msgTypes.ID_VIS_DATA_ABORT }, 'Abort Simulation');
-        this.disconnect();
+        this.sendWebSocketRequest({ msgType: this.msgTypes.ID_VIS_DATA_ABORT }, 'Abort Simulation');;
     }
 
     requestSingleFrame(startFrameNumber) {
