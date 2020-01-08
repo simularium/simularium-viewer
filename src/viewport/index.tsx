@@ -320,7 +320,7 @@ class Viewport extends React.Component<ViewportProps> {
                     agentSimController.getFile(),
                     getJsonUrl(agentSimController.getFile()),
                 ).then(() => {
-                    this.visGeometry.render();
+                    this.visGeometry.render(totalElapsedTime);
                     this.lastRenderTime = Date.now();
                     this.animationRequestID = requestAnimationFrame(this.animate);
                 });
