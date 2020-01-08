@@ -87,26 +87,26 @@ class VisData {
         };
 
         this.mcolors = [
-            0x6ac1e5, 
-            0xff2200, 
-            0xee7967, 
+            0x6ac1e5,
+            0xff2200,
+            0xee7967,
             0xff6600,
-            0xd94d49, 
-            0xffaa00, 
+            0xd94d49,
+            0xffaa00,
             0xffcc00,
-            0x00ccff, 
+            0x00ccff,
             0x00aaff,
-            0x8048f3, 
-            0x07f4ec, 
+            0x8048f3,
+            0x07f4ec,
             0x79bd8f,
-            0x8800ff, 
-            0xaa00ff, 
+            0x8800ff,
+            0xaa00ff,
             0xcc00ff,
-            0xff00cc, 
+            0xff00cc,
             0xff00aa,
-            0xff0088, 
-            0xff0066, 
-            0xff0044, 
+            0xff0088,
+            0xff0066,
+            0xff0044,
             0xff0022,
             0xff0000,
             0xccff00,
@@ -119,14 +119,17 @@ class VisData {
             0x00ffaa,
             0x00ff88,
             0x00ffaa,
-            0x00ffff, 
-            0x0066ff, 
+            0x00ffff,
+            0x0066ff,
 
         ];
 
         this.mframeCache = [];
         this.mframeDataCache = [];
         this.mcacheFrame = -1;
+
+        this.frameToWaitFor = 0;
+        this.lockedForFrame = false;
     }
 
     get colors() { return this.mcolors; }
@@ -195,6 +198,11 @@ class VisData {
     /**
     * Data management
     * */
+    WaitForFrame(frameNumber) {
+        this.frameToWaitFor = frameNumber;
+        this.lockedForFrame = true;
+    }
+
     cacheJSON(visDataFrame) {
         let frame = VisData.parse(visDataFrame);
         this.mframeCache.push(frame.parsedAgentData);
@@ -208,6 +216,17 @@ class VisData {
     }
 
     parseAgentsFromNetData(visDataMsg) {
+        if(this.lockedForFrame === true)
+        {
+            if(visDataMsg.frameNumber !== this.frameToWaitFor) {
+                console.log("Frame ", visDataMsg.frameNumber, " doesn't match ", this.frameToWaitFor);
+                return;
+            } else {
+                this.lockedForFrame = false;
+                this.frameToWaitFor = 0;
+            }
+        }
+
         if (util.ThreadUtil.browserSupportsWebWorkers()) {
             this.webWorker.postMessage(visDataMsg);
         } else {

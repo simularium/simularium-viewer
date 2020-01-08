@@ -142,7 +142,7 @@ class Viewport extends React.Component<ViewportProps> {
             if (loadInitialData) {
                 let fileName = agentSimController.getFile();
                 this.visGeometry.mapFromJSON(
-                    fileName, 
+                    fileName,
                     getJsonUrl(fileName),
                     onJsonDataArrived
                 ).then(() => {
@@ -314,11 +314,19 @@ class Viewport extends React.Component<ViewportProps> {
         if (elapsedTime > timePerFrame) {
             if(agentSimController.hasChangedFile) {
                 this.visGeometry.clear();
+                this.visGeometry.resetAllGeometry();
+
                 this.visGeometry.mapFromJSON(
                     agentSimController.getFile(),
                     getJsonUrl(agentSimController.getFile()),
-                );
+                ).then(() => {
+                    this.visGeometry.render(totalElapsedTime);
+                    this.lastRenderTime = Date.now();
+                    this.animationRequestID = requestAnimationFrame(this.animate);
+                });
                 agentSimController.markFileChangeAsHandled();
+
+                return;
             }
             if (!visData.atLatestFrame() && !agentSimController.paused()) {
                 this.visGeometry.colorVariant = visData.colorVariant;
@@ -326,10 +334,6 @@ class Viewport extends React.Component<ViewportProps> {
                 this.dispatchUpdatedTime(visData.time);
                 visData.gotoNextFrame();
             }
-
-            //if (!netConnection.socketIsValid()) {
-            //this.visGeometry.clear();
-            //}
 
             this.visGeometry.render(totalElapsedTime);
             this.lastRenderTime = Date.now();

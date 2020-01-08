@@ -124,6 +124,10 @@ export default class AgentSimController {
         if (newFile !== this.simParameters.playBackFile) {
             this.fileChanged = true;
             this.simParameters.playBackFile = newFile;
+
+            this.visData.WaitForFrame(0);
+            this.visData.clearCache();
+
             this.stop();
             this.start().then(() => {
                 this.playOneFrame(0);
