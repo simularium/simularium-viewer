@@ -52,9 +52,9 @@ export default class AgentSimController {
     public pause() {
         if (this.networkEnabled) {
             this.netConnection.pauseRemoteSim();
-        } else {
-            this.isPaused = true;
         }
+
+        this.isPaused = true;
     }
 
     public paused() {
@@ -115,9 +115,9 @@ export default class AgentSimController {
     public resume() {
         if (this.networkEnabled) {
             this.netConnection.resumeRemoteSim();
-        } else {
-            this.isPaused = false;
         }
+
+        this.isPaused = false;
     }
 
     public changeFile(newFile) {
