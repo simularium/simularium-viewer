@@ -216,9 +216,21 @@ class VisData {
     }
 
     parseAgentsFromNetData(visDataMsg) {
+        /**
+        *   visDataMsg = {
+        *       ...
+        *       bundleSize : Number
+        *       bundleStart : Number
+        *       bundleData : [
+        *           {data : Number[], frameNumber : Number, time : Number},
+        *           {...}, {...}, ...
+        *       ]
+        *   }
+        */
+
         if(this.lockedForFrame === true)
         {
-            if(visDataMsg.frameNumber !== this.frameToWaitFor) {
+            if(visDataMsg.bundleData[0].frameNumber !== this.frameToWaitFor) {
                 console.log("Frame ", visDataMsg.frameNumber, " doesn't match ", this.frameToWaitFor);
                 return;
             } else {
@@ -227,13 +239,15 @@ class VisData {
             }
         }
 
-        if (util.ThreadUtil.browserSupportsWebWorkers()) {
-            this.webWorker.postMessage(visDataMsg);
-        } else {
-            let newFrame = VisData.parse(visDataMsg);
-            this.mframeCache.push(newFrame.parsedAgentData);
-            this.mframeDataCache.push(newFrame.frameData);
-        }
+        visDataMsg.bundleData.forEach((dataFrame) => {
+            if (util.ThreadUtil.browserSupportsWebWorkers()) {
+                this.webWorker.postMessage(dataFrame);
+            } else {
+                let newFrame = VisData.parse(dataFrame);
+                this.mframeCache.push(newFrame.parsedAgentData);
+                this.mframeDataCache.push(newFrame.frameData);
+            }
+        });
     }
 
     numberOfAgents() {
