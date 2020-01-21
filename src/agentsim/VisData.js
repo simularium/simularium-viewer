@@ -216,6 +216,18 @@ class VisData {
     }
 
     parseAgentsFromNetData(visDataMsg) {
+        /**
+        *   visDataMsg = {
+        *       ...
+        *       bundleSize : Number
+        *       bundleStart : Number
+        *       bundleData : [
+        *           {data : Number[], frameNumber : Number, time : Number},
+        *           {...}, {...}, ...
+        *       ]
+        *   }
+        */
+
         if(this.lockedForFrame === true)
         {
             if(visDataMsg.bundleData[0].frameNumber !== this.frameToWaitFor) {
