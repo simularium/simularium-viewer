@@ -231,7 +231,7 @@ class VisData {
         if(this.lockedForFrame === true)
         {
             if(visDataMsg.bundleData[0].frameNumber !== this.frameToWaitFor) {
-                console.log("Frame ", visDataMsg.frameNumber, " doesn't match ", this.frameToWaitFor);
+                console.log("Frame ", visDataMsg.bundleData[0].frameNumber, " doesn't match ", this.frameToWaitFor);
                 return;
             } else {
                 this.lockedForFrame = false;
