@@ -1,5 +1,5 @@
 {
-  "name": "@aicsnpm/agentviz-viewer",
+  "name": "@aics/agentviz-viewer",
   "version": "1.2.2",
   "description": "An npm package to view simulations.",
   "main": "lib/index.js",
