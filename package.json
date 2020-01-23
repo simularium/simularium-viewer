@@ -1,5 +1,5 @@
 {
-  "name": "@aics/simularium-viewer",
+  "name": "@aicsnpm/agentviz-viewer",
   "version": "1.2.2",
   "description": "An npm package to view simulations.",
   "main": "lib/index.js",
@@ -16,7 +16,8 @@
     "package.json"
   ],
   "publishConfig": {
-    "registry": "public"
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
   },
   "author": "",
   "license": "MIT",
