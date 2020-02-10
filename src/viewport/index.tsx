@@ -316,14 +316,23 @@ class Viewport extends React.Component<ViewportProps> {
                 this.visGeometry.clear();
                 this.visGeometry.resetAllGeometry();
 
-                this.visGeometry.mapFromJSON(
+                let p = this.visGeometry.mapFromJSON(
                     agentSimController.getFile(),
                     getJsonUrl(agentSimController.getFile()),
-                ).then(() => {
+                );
+
+                p.then(() => {
                     this.visGeometry.render(totalElapsedTime);
                     this.lastRenderTime = Date.now();
                     this.animationRequestID = requestAnimationFrame(this.animate);
                 });
+
+                p.catch(() => {
+                    this.visGeometry.render(totalElapsedTime);
+                    this.lastRenderTime = Date.now();
+                    this.animationRequestID = requestAnimationFrame(this.animate);
+                });
+
                 agentSimController.markFileChangeAsHandled();
 
                 return;
