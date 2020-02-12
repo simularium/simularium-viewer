@@ -29,6 +29,7 @@ function lerp(x0, x1, alpha) {
 
 class VisGeometry {
     constructor(loggerLevel) {
+        this.handleTrajectoryData = this.handleTrajectoryData.bind(this);
         this.visGeomMap = new Map();
         this.meshRegistry = new Map();
         this.meshLoadAttempted = new Map();
@@ -89,6 +90,26 @@ class VisGeometry {
     set colorVariant(val) { this.mcolorVariant = val; }
 
     get renderDom() { return this.renderer.domElement; }
+
+    handleTrajectoryData(trajectoryData) {
+        // get bounds.
+        if (trajectoryData.hasOwnProperty("boxSizeX") && trajectoryData.hasOwnProperty("boxSizeY") && trajectoryData.hasOwnProperty("boxSizeZ")) {
+            const bx = trajectoryData.boxSizeX;
+            const by = trajectoryData.boxSizeY;
+            const bz = trajectoryData.boxSizeZ;
+            const epsilon = 0.000001;
+            if ((Math.abs(bx) < epsilon) || (Math.abs(by) < epsilon) || (Math.abs(bz) < epsilon)) {
+                console.log("WARNING: Bounding box: at least one bound is zero; using default bounds");
+                this.resetBounds(DEFAULT_VOLUME_BOUNDS);
+            }
+            else {
+                this.resetBounds([-bx/2, -by/2, -bz/2, bx/2, by/2, bz/2]);
+            }
+        }
+        else {
+            this.resetBounds(DEFAULT_VOLUME_BOUNDS);
+        }
+    }
 
     resetCamera() {
         this.controls.reset();
@@ -449,21 +470,16 @@ class VisGeometry {
                 self.resetMapping();
                 const jsonData = data;
                 self.logger.debug('JSON Mesh mapping loaded: ', jsonData);
-                let foundBounds = false;
                 Object.keys(jsonData).forEach((id) => {
                     const entry = jsonData[id];
                     if (id === "size") {
-                        self.resetBounds([-entry.x/2, -entry.y/2, -entry.z/2, entry.x/2, entry.y/2, entry.z/2]);
-                        foundBounds = true;
+                        console.log("WARNING: Ignoring deprecated bounding box data");
                     }
                     else {
                         self.mapIdToGeom(Number(id), entry.mesh);
                         self.setScaleForId(Number(id), entry.scale);
                     }
                 });
-                if (!foundBounds) {
-                    self.resetBounds(DEFAULT_VOLUME_BOUNDS);
-                }
                 if (callback) {
                     callback(jsonData);
                 }
