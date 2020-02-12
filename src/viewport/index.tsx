@@ -210,6 +210,7 @@ class Viewport extends React.Component<ViewportProps> {
 
         p.then(() => {
             parsedFiles.sort(sortFrames);
+            this.visGeometry.resetMapping();
             for(let i = 0, l = parsedFiles.length; i < l; ++i)
             {
                 let frameJSON = parsedFiles[i];
@@ -314,7 +315,7 @@ class Viewport extends React.Component<ViewportProps> {
         if (elapsedTime > timePerFrame) {
             if(agentSimController.hasChangedFile) {
                 this.visGeometry.clear();
-                this.visGeometry.resetAllGeometry();
+                this.visGeometry.resetMapping();
 
                 let p = this.visGeometry.mapFromJSON(
                     agentSimController.getFile(),
