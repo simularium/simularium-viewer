@@ -131,6 +131,9 @@ class NetConnection {
             case this.owner.msgTypes.ID_TRAJECTORY_FILE_INFO:
                 logger.debug('Trajectory file info Arrived');
                 this.owner.simParameters.setTrajectoryFileInfo(msg);
+                if (this.owner.simParameters.handleTrajectoryDataInternal) {
+                    this.owner.simParameters.handleTrajectoryDataInternal(msg);
+                }
                 if (this.owner.simParameters.handleTrajectoryData) {
                     // optional callback set through props in viewport
                     this.owner.simParameters.handleTrajectoryData(msg);

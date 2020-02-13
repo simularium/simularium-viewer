@@ -137,6 +137,8 @@ class Viewport extends React.Component<ViewportProps> {
         this.visGeometry.reparent(this.vdomRef.current);
 
         simParameters.handleTrajectoryData = onTrajectoryFileInfoChanged;
+        // tie the simparameters to the visgeometry here, so that visgeometry can get a chance to receive the trajectory data
+        simParameters.handleTrajectoryDataInternal = this.visGeometry.handleTrajectoryData;
 
         agentSimController.connect().then(() => {
             if (loadInitialData) {
