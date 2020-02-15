@@ -53,7 +53,7 @@ class VisGeometry {
         this.sphereGeometry = new THREE.SphereBufferGeometry(1, 32, 32);
 
         this.membrane = {
-            // assume only one membrane mesh 
+            // assume only one membrane mesh
             mesh: null,
             sim: MembraneShader.MembraneShaderSim ? new MembraneShader.MembraneShaderSim() : null,
             material: null,
@@ -74,7 +74,7 @@ class VisGeometry {
         this.membrane.facesMaterial.uniforms.uvscale.value = new THREE.Vector2(40.0, 40.0);
         this.membrane.sidesMaterial.uniforms.uvscale.value = new THREE.Vector2(2.0, 40.0);
 
-        
+
         this.mlogger = jsLogger.get('visgeometry');
         this.mlogger.setLevel(loggerLevel);
     }
@@ -268,7 +268,7 @@ class VisGeometry {
         this.setUpControls(this.renderer.domElement);
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
-        this.renderer.setSize(width, height);        
+        this.renderer.setSize(width, height);
         this.renderer.clear();
 
         if (this.membrane.sim) {
@@ -558,7 +558,7 @@ class VisGeometry {
 
                 const lastTypeId = runtimeMesh.userData ? runtimeMesh.userData.typeId : -1;
                 if (!runtimeMesh.userData) {
-                    runtimeMesh.userData = { 
+                    runtimeMesh.userData = {
                         active: true,
                         baseMaterial: this.getMaterial(materialType, typeId),
                         index: i,
@@ -581,9 +581,9 @@ class VisGeometry {
                     }
                 }
 
-                dx = agentData.x - runtimeMesh.position.x; 
-                dy = agentData.y - runtimeMesh.position.y; 
-                dz = agentData.z - runtimeMesh.position.z; 
+                dx = agentData.x - runtimeMesh.position.x;
+                dy = agentData.y - runtimeMesh.position.y;
+                dz = agentData.z - runtimeMesh.position.z;
                 runtimeMesh.position.x = agentData.x;
                 runtimeMesh.position.y = agentData.y;
                 runtimeMesh.position.z = agentData.z;
@@ -647,6 +647,9 @@ class VisGeometry {
                 fiberIndex += 1;
             }
         });
+
+        this.hideUnusedFibers(fiberIndex);
+
         if (this.followObject) {
             // keep camera at same distance from target.
             const direction = new THREE.Vector3().subVectors( this.camera.position, this.controls.target );
@@ -814,7 +817,7 @@ class VisGeometry {
             // will create line "lazily" when the line has more than 1 point(?)
             line: null,
         };
-        
+
         pathdata.geometry.addAttribute( 'position', new THREE.BufferAttribute( pathdata.points, 3 ) );
         pathdata.geometry.addAttribute( 'color', new THREE.BufferAttribute( pathdata.colors, 3 ) );
         // path starts empty: draw range spans nothing
@@ -845,7 +848,7 @@ class VisGeometry {
             return;
         }
         // Check for periodic boundary condition:
-        // if any agent moved more than half the volume size in one step, 
+        // if any agent moved more than half the volume size in one step,
         // assume it jumped the boundary going the other way.
         const volumeSize = new THREE.Vector3();
         this.boundingBox.getSize(volumeSize);
@@ -853,7 +856,7 @@ class VisGeometry {
             // now what?
             // TODO: clip line segment from x-dx to x against the bounds,
             // compute new line segments from x-dx to bound, and from x to opposite bound
-            // For now, add a degenerate line segment 
+            // For now, add a degenerate line segment
             dx = 0;
             dy = 0;
             dz = 0;
@@ -877,7 +880,7 @@ class VisGeometry {
                 path.colors[ic*6+2] = lerp(path.color.b, PATH_END_COLOR.b, a);
 
                 // the very last point should be b=0
-                const b = 1.0 - (ic+1)/(path.numSegments+1); 
+                const b = 1.0 - (ic+1)/(path.numSegments+1);
                 path.colors[ic*6+3] = lerp(path.color.r, PATH_END_COLOR.r, b);
                 path.colors[ic*6+4] = lerp(path.color.g, PATH_END_COLOR.g, b);
                 path.colors[ic*6+5] = lerp(path.color.b, PATH_END_COLOR.b, b);
@@ -943,8 +946,30 @@ class VisGeometry {
         }
     }
 
+    hideUnusedFibers(numberOfFibers) {
+        for(let i = numberOfFibers; i < MAX_MESHES; i += 1) {
+            const name = `Fiber_${i.toString()}`;
+            const fiberMesh = this.getFiberMesh(name);
+
+            if(fiberMesh.visible === false) {
+                break;
+            }
+
+            const nameEnd0 = `FiberEnd0_${i.toString()}`;
+            const end0 = this.getFiberMesh(nameEnd0);
+
+            const nameEnd1 = `FiberEnd1_${i.toString()}`;
+            const end1 = this.getFiberMesh(nameEnd1);
+
+            fiberMesh.visible = false;
+            end0.visible = false;
+            end1.visible = false;
+        }
+    }
+
     clear() {
         this.hideUnusedMeshes(0);
+        this.hideUnusedFibers(0);
     }
 
     resetAllGeometry() {
