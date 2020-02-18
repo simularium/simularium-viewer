@@ -578,6 +578,8 @@ class VisGeometry {
                     const meshGeom = this.getGeomFromId(typeId);
                     if (meshGeom && meshGeom.children) {
                         runtimeMesh = this.setupMeshGeometry(i, runtimeMesh, meshGeom, isFollowedObject);
+                    } else {
+                        this.assignMaterial(runtimeMesh, runtimeMesh.userData.baseMaterial);
                     }
                 }
 
