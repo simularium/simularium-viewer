@@ -77,14 +77,17 @@ class VisData {
     constructor() {
         this.mcolorVariant = 50;
 
-        this.webWorker = util.ThreadUtil.createWebWorkerFromFunction(
-            this.convertVisDataWorkFunctionToString(),
-        );
+        if(util.ThreadUtil.browserSupportsWebWorkers())
+        {
+            this.webWorker = util.ThreadUtil.createWebWorkerFromFunction(
+                this.convertVisDataWorkFunctionToString(),
+            );
 
-        this.webWorker.onmessage = (event) => {
-            this.mframeDataCache.push(event.data.frameData);
-            this.mframeCache.push(event.data.parsedAgentData);
-        };
+            this.webWorker.onmessage = (event) => {
+                this.mframeDataCache.push(event.data.frameData);
+                this.mframeCache.push(event.data.parsedAgentData);
+            };
+        }
 
         this.mcolors = [
             0x6ac1e5,
@@ -183,7 +186,12 @@ class VisData {
     }
 
     currentFrame() {
-        if(this.mcacheFrame === -1 && this.mframeCache.length > 0) { this.mcacheFrame = 0;  }
+        if(this.mframeCache.length === 0) {
+            return {};
+        } else if(this.mcacheFrame === -1) {
+            this.mcacheFrame = 0;
+            return this.mframeCache[0];
+        }
 
         return this.mcacheFrame < this.mframeCache.length ? this.mframeCache[this.mcacheFrame] : {};
     }
@@ -231,7 +239,8 @@ class VisData {
         if(this.lockedForFrame === true)
         {
             if(visDataMsg.bundleData[0].frameNumber !== this.frameToWaitFor) {
-                console.log("Frame ", visDataMsg.bundleData[0].frameNumber, " doesn't match ", this.frameToWaitFor);
+                // This object is waiting for a frame with a specified frame number
+                //  and  the arriving frame didn't match it
                 return;
             } else {
                 this.lockedForFrame = false;
@@ -240,7 +249,7 @@ class VisData {
         }
 
         visDataMsg.bundleData.forEach((dataFrame) => {
-            if (util.ThreadUtil.browserSupportsWebWorkers()) {
+            if (util.ThreadUtil.browserSupportsWebWorkers() && this.webWorker !== null) {
                 this.webWorker.postMessage(dataFrame);
             } else {
                 let newFrame = VisData.parse(dataFrame);
