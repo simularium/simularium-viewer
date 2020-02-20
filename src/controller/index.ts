@@ -1,23 +1,22 @@
-import { NetConnection, SimParameters, VisData } from "../agentsim";
 import jsLogger from "js-logger";
+import { NetConnection } from "../agentsim";
+import { VisData } from "../agentsim";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
 export default class AgentSimController {
-    public netConnection: any;
-    public simParameters: any;
+    public netConnection: NetConnection;
     public visData: any;
     private networkEnabled: boolean;
     private isPaused: boolean;
     private fileChanged: boolean;
+    private playBackFile: any;
 
     public constructor(netConnectionSettings, params) {
         const loggerLevel =
             params.loggerLevel === "debug" ? jsLogger.DEBUG : jsLogger.OFF;
         this.visData = new VisData({});
-        this.simParameters = new SimParameters(params);
         this.netConnection = new NetConnection(
-            this.simParameters,
             this.visData,
             netConnectionSettings,
             loggerLevel
@@ -32,13 +31,21 @@ export default class AgentSimController {
         return this.fileChanged;
     }
 
+    public connect() {
+        return this.netConnection.connectToRemoteServer(
+            this.netConnection.getIp()
+        );
+    }
+
     public start() {
         // switch back to 'networked' playback
         this.networkEnabled = true;
         this.isPaused = false;
         this.visData.clearCache();
 
-        return this.netConnection.guiStartRemoteTrajectoryPlayback();
+        return this.netConnection.startRemoteTrajectoryPlayback(
+            this.playBackFile
+        );
     }
 
     public time() {
@@ -61,20 +68,8 @@ export default class AgentSimController {
         return this.isPaused;
     }
 
-    public connect() {
-        return this.netConnection.guiConnect();
-    }
-
-    public numberOfFrames() {
-        return this.simParameters.numberOfCacheFrames;
-    }
-
-    public timeStepSize() {
-        return this.simParameters.cacheTimeStepSize;
-    }
-
     public initializeTrajectoryFile() {
-        this.netConnection.guiRequestTrajectoryInfo();
+        this.netConnection.requestTrajectoryFileInfo(this.playBackFile);
     }
 
     public playFromFrame(frameNumber) {
@@ -104,14 +99,6 @@ export default class AgentSimController {
         this.netConnection.gotoRemoteSimulationTime(timeNs);
     }
 
-    public gotoNextFrame() {
-        this.netConnection.gotoNextFrame();
-    }
-
-    public gotoPreviousFrame() {
-        this.netConnection.gotoPreviousFrame();
-    }
-
     public resume() {
         if (this.networkEnabled) {
             this.netConnection.resumeRemoteSim();
@@ -121,17 +108,21 @@ export default class AgentSimController {
     }
 
     public changeFile(newFile) {
-        if (newFile !== this.simParameters.playBackFile) {
+        if (newFile !== this.playBackFile) {
             this.fileChanged = true;
-            this.simParameters.playBackFile = newFile;
+            this.playBackFile = newFile;
 
             this.visData.WaitForFrame(0);
             this.visData.clearCache();
 
             this.stop();
-            this.start().then(() => {
-                this.playOneFrame(0);
-            });
+            const startPromise = this.start();
+
+            if (startPromise) {
+                startPromise.then(() => {
+                    this.playOneFrame(0);
+                });
+            }
         }
     }
 
@@ -140,7 +131,7 @@ export default class AgentSimController {
     }
 
     public getFile() {
-        return this.simParameters.playBackFile;
+        return this.playBackFile;
     }
 
     public disableNetworkCommands() {

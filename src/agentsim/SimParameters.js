@@ -27,16 +27,12 @@ class SimParameters {
         this.mguiNeedsUpdate = false;
     }
 
-    get newSimulationRunning() { return this.mnewSimulationIsRunning; }
-
-    set newSimulationRunning(val) { this.mnewSimulationIsRunning = val; }
-
     get paramList() { return this.mparamList; }
 
     set paramList(val) { this.mparamList = val; }
 
     get playBackFile() { return this.trajectoryPlaybackFile; }
-    
+
     set playBackFile(val) {
         if (this.trajectoryPlaybackFile !== val) {
             this.trajectoryPlaybackFile = val;

@@ -14,7 +14,6 @@ import { VisGeometry, DevGUI } from "../agentsim";
 interface ViewportProps {
     height: number;
     width: number;
-    devgui: boolean;
     loggerLevel: string;
     onTimeChange: (timeData: TimeData) => void | undefined;
     agentSimController: AgentSimController;
@@ -81,7 +80,6 @@ class Viewport extends React.Component<ViewportProps> {
     public static defaultProps = {
         height: 800,
         width: 800,
-        devgui: false,
         highlightedParticleType: -1,
         loadInitialData: true,
         showMeshes: true,
@@ -132,13 +130,14 @@ class Viewport extends React.Component<ViewportProps> {
             onJsonDataArrived
         } = this.props;
         const {
-            simParameters,
+            netConnection,
         } = agentSimController;
         this.visGeometry.reparent(this.vdomRef.current);
 
-        simParameters.handleTrajectoryData = onTrajectoryFileInfoChanged;
-        // tie the simparameters to the visgeometry here, so that visgeometry can get a chance to receive the trajectory data
-        simParameters.handleTrajectoryDataInternal = this.visGeometry.handleTrajectoryData;
+        netConnection.onTrajectoryFileInfoArrive = (msg) => {
+            this.visGeometry.handleTrajectoryData(msg);
+            onTrajectoryFileInfoChanged(msg);
+        }
 
         agentSimController.connect().then(() => {
             if (loadInitialData) {
@@ -154,8 +153,6 @@ class Viewport extends React.Component<ViewportProps> {
                 agentSimController.initializeTrajectoryFile();
             }
         });
-
-        setInterval(agentSimController.netConnection.checkForUpdates.bind(agentSimController.netConnection), 1000);
 
         if (this.vdomRef.current) {
             this.vdomRef.current.addEventListener('timeChange', this.handleTimeChange, false);
@@ -305,7 +302,6 @@ class Viewport extends React.Component<ViewportProps> {
             agentSimController,
         } = this.props;
         const {
-            simParameters,
             netConnection,
             visData,
         } = agentSimController;
@@ -356,14 +352,12 @@ class Viewport extends React.Component<ViewportProps> {
 
     public render() {
         const {
-            devgui,
             agentSimController,
             width,
             height,
         } = this.props;
 
         const {
-            simParameters,
             netConnection,
             visData,
         } = agentSimController;
@@ -381,13 +375,6 @@ class Viewport extends React.Component<ViewportProps> {
                 }
                 ref={this.vdomRef}
             >
-                {devgui && (
-                    <DevGUI
-                        simParams={simParameters}
-                        visData={visData}
-                        netConnection={netConnection}
-                    />
-                )}
             </div>
         );
     }

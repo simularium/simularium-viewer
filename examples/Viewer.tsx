@@ -29,6 +29,7 @@ const netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
     serverPort: 9002,
     ipServiceAddr: null,
+
 }
 
 interface ViewerState {
@@ -147,22 +148,8 @@ class Viewer extends React.Component<{}, ViewerState> {
             <button onClick={changeFile('ATPsynthase_10.h5')}>ATP 10</button>
             <br/>
             <input id="frame-number" type="text" />
-            <button
-                onClick={() => agentSim.gotoNextFrame()}
-            >Next Frame</button>
-            <button
-                onClick={() => agentSim.gotoPreviousFrame()}
-            >Previous Frame</button>
-            <button
-                onClick={this.playOneFrame}
-            >
-                Play one frame
-            </button>
-            <button
-                onClick={() => agentSim.playFromTime(0)}
-            >
-                Play from time 0ns
-            </button>
+            <button onClick={this.playOneFrame}>Play one frame</button>
+            <button onClick={() => agentSim.playFromTime(0)}>Play from time 0ns</button>
             <br/>
             <select
                 onChange={(event) => this.highlightParticleType(event.target.value)}
