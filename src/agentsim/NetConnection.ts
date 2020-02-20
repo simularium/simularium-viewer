@@ -14,6 +14,7 @@ export class NetConnection {
     private logger: any;
     private visData: any;
     public onTrajectoryFileInfoArrive: any;
+    public onTrajectoryDataArrive: any;
 
     public constructor(visData, opts, loggerLevel) {
         // these have been set to correspond to backend values
@@ -53,6 +54,7 @@ export class NetConnection {
         this.logger.setLevel(loggerLevel);
 
         this.onTrajectoryFileInfoArrive = null;
+        this.onTrajectoryDataArrive = null;
 
         // Frees the reserved backend in the event that the window closes w/o disconnecting
         window.addEventListener("beforeunload", this.onClose.bind(this));
@@ -108,7 +110,9 @@ export class NetConnection {
         this.logger.debug("Websocket Message Recieved: ", msg);
         switch (msgType) {
             case this.msgTypes.ID_VIS_DATA_ARRIVE:
-                this.visData.parseAgentsFromNetData(msg);
+                if (this.onTrajectoryDataArrive) {
+                    this.onTrajectoryDataArrive(msg);
+                }
                 break;
             case this.msgTypes.ID_UPDATE_TIME_STEP:
                 // TODO: callback to handle time step update

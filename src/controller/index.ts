@@ -22,6 +22,10 @@ export default class AgentSimController {
             loggerLevel
         );
 
+        this.netConnection.onTrajectoryDataArrive = this.visData.parseAgentsFromNetData.bind(
+            this.visData
+        );
+
         this.networkEnabled = true;
         this.isPaused = false;
         this.fileChanged = false;

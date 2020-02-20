@@ -87,6 +87,8 @@ class VisData {
                 this.mframeDataCache.push(event.data.frameData);
                 this.mframeCache.push(event.data.parsedAgentData);
             };
+        } else {
+            this.webWorker = null;
         }
 
         this.mcolors = [

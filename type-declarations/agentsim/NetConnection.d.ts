@@ -7,6 +7,7 @@ export declare class NetConnection {
     private logger;
     private visData;
     onTrajectoryFileInfoArrive: any;
+    onTrajectoryDataArrive: any;
     constructor(visData: any, opts: any, loggerLevel: any);
     /**
      * WebSocket State
