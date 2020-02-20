@@ -17,7 +17,6 @@ export default class AgentSimController {
             params.loggerLevel === "debug" ? jsLogger.DEBUG : jsLogger.OFF;
         this.visData = new VisData({});
         this.netConnection = new NetConnection(
-            this.visData,
             netConnectionSettings,
             loggerLevel
         );
@@ -76,10 +75,6 @@ export default class AgentSimController {
         this.netConnection.requestTrajectoryFileInfo(this.playBackFile);
     }
 
-    public playFromFrame(frameNumber) {
-        this.netConnection.playRemoteSimCacheFromFrame(frameNumber);
-    }
-
     public playFromTime(timeNs) {
         // If there is a locally cached frame, use it
         if (this.visData.hasLocalCacheForTime(timeNs)) {
@@ -93,10 +88,6 @@ export default class AgentSimController {
                 this.netConnection.playRemoteSimCacheFromTime(timeNs);
             }
         }
-    }
-
-    public playOneFrame(frameNumber) {
-        this.netConnection.requestSingleFrame(frameNumber);
     }
 
     public gotoFrameAtTime(timeNs) {
@@ -124,7 +115,7 @@ export default class AgentSimController {
 
             if (startPromise) {
                 startPromise.then(() => {
-                    this.playOneFrame(0);
+                    this.netConnection.requestSingleFrame(0);
                 });
             }
         }

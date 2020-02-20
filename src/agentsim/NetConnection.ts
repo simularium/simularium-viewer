@@ -12,11 +12,10 @@ export class NetConnection {
     private msgTypes: any;
     private playbackTypes: any;
     private logger: any;
-    private visData: any;
     public onTrajectoryFileInfoArrive: any;
     public onTrajectoryDataArrive: any;
 
-    public constructor(visData, opts, loggerLevel) {
+    public constructor(opts, loggerLevel) {
         // these have been set to correspond to backend values
         this.playbackTypes = Object.freeze({
             ID_LIVE_SIMULATION: 0,
@@ -27,8 +26,6 @@ export class NetConnection {
         this.webSocket = null;
         this.serverIp = opts.serverIp || "localhost";
         this.serverPort = opts.serverPort || "9002";
-
-        this.visData = visData;
 
         // these have been set to correspond to backend values
         this.msgTypes = Object.freeze({
