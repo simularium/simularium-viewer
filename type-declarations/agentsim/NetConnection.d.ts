@@ -9,45 +9,45 @@ export declare class NetConnection {
     onTrajectoryFileInfoArrive: any;
     constructor(visData: any, opts: any, loggerLevel: any);
     /**
-    * WebSocket State
-    */
+     * WebSocket State
+     */
     private socketIsConnecting;
     socketIsValid(): boolean;
     private socketIsConnected;
     /**
-    *   Websocket Message Handler
-    * */
+     *   Websocket Message Handler
+     * */
     private onMessage;
     private onOpen;
     private onClose;
     /**
-    * WebSocket Connect
-    * */
+     * WebSocket Connect
+     * */
     connectToUri(uri: any): void;
     disconnect(): void;
     getIp(): string;
     private connectToUriAsync;
     connectToRemoteServer(address: any): Promise<{}>;
     /**
-    * Websocket Send Helper Functions
-    */
+     * Websocket Send Helper Functions
+     */
     private logWebSocketRequest;
     private sendWebSocketRequest;
     /**
-    * Websocket Update Parameters
-    */
+     * Websocket Update Parameters
+     */
     sendTimeStepUpdate(newTimeStep: any): void;
     sendParameterUpdate(paramName: any, paramValue: any): void;
     sendModelDefinition(model: any): void;
     /**
-    * WebSocket Simulation Control
-    *
-    * Simulation Run Modes:
-    *  Live : Results are sent as they are calculated
-    *  Pre-Run : All results are evaluated, then sent piecemeal
-    *  Trajectory File: No simulation run, stream a result file piecemeal
-    *
-    */
+     * WebSocket Simulation Control
+     *
+     * Simulation Run Modes:
+     *  Live : Results are sent as they are calculated
+     *  Pre-Run : All results are evaluated, then sent piecemeal
+     *  Trajectory File: No simulation run, stream a result file piecemeal
+     *
+     */
     startRemoteSimPreRun(timeStep: any, numTimeSteps: any): void;
     startRemoteSimLive(): void;
     startRemoteTrajectoryPlayback(fileName: any): Promise<void> | undefined;

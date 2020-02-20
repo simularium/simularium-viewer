@@ -1,4 +1,4 @@
-import { NetConnection } from '../agentsim';
+import { NetConnection } from "../agentsim";
 export default class AgentSimController {
     netConnection: NetConnection;
     visData: any;
