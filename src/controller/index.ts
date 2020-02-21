@@ -79,7 +79,6 @@ export default class AgentSimController {
         // If there is a locally cached frame, use it
         if (this.visData.hasLocalCacheForTime(timeNs)) {
             this.visData.playFromTime(timeNs);
-            // @TODO: Does the networked state need to change? (need an explicit play command?)
         } else {
             if (this.networkEnabled) {
                 // else reset the local cache,

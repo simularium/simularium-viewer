@@ -256,7 +256,18 @@ describe("VisData module", () => {
             let i = 0;
             while (!visData.atLatestFrame()) {
                 let currentFrame = visData.currentFrame();
+                expect(visData.hasLocalCacheForTime(i * 5)).toBe(true);
                 expect(currentFrame).toEqual(parsedData[i++]);
+                visData.gotoNextFrame();
+            }
+        });
+        test("can find frames in cache by time", () => {
+            let visData = new VisData();
+            visData.parseAgentsFromNetData(testData);
+
+            let i = 0;
+            while (!visData.atLatestFrame()) {
+                expect(visData.hasLocalCacheForTime(i * 5)).toBe(true);
                 visData.gotoNextFrame();
             }
         });

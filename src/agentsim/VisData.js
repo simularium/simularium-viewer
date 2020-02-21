@@ -149,7 +149,7 @@ class VisData {
     *   Functions to check update
     * */
     hasLocalCacheForTime(timeNs) {
-        if(this.mframeDataCache.length === 1 && timeNs === 0) { return true; }
+        if(this.mframeDataCache.length > 0 && timeNs === 0) { return true; }
 
         if(this.mframeDataCache.length < 2) { return false; }
 
