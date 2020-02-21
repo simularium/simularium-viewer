@@ -19,6 +19,8 @@ interface ViewerState {
     width: number;
     showMeshes: boolean;
     showPaths: boolean;
+    timeStep: number;
+    totalDuration: number;
 }
 
 const agentSim = new AgentSimController(netConnectionSettings, { trajectoryPlaybackFile: "ATPsynthase_9.h5" })
@@ -37,6 +39,8 @@ const intialState = {
     width: 800,
     showMeshes: true,
     showPaths: true,
+    timeStep: 1,
+    totalDuration: 100,
 }
 
 const changeFile = (file: string) => () => agentSim.changeFile(file);
@@ -91,25 +95,23 @@ class Viewer extends React.Component<{}, ViewerState> {
 
     handleTrajectoryInfo(data) {
         console.log('Trajectory info arrived', data);
+        this.state.totalDuration = data.totalDuration;
+        this.state.timeStep = data.timeStepSize;
+
+        currentTime = 0;
+        currentFrame = 0;
+    }
+
+    handleScrubTime(event) {
+        agentSim.gotoTime(event.target.value);
     }
 
     render() {
         return (<div className="container" style={{height: '90%', width: '75%'}}>
-            <button
-                onClick={() => agentSim.start()}
-            >Start</button>
-            <button
-                onClick={() => agentSim.pause()}
-            >Pause</button>
-            <button
-                onClick={() => agentSim.resume()}
-            >Resume</button>
-            <button
-                onClick={() => agentSim.playFromFrame(currentFrame)}
-            >Play from cache</button>
-            <button
-                onClick={() => agentSim.stop()}
-            >stop</button>
+            <button onClick={() => agentSim.start()} >Start</button>
+            <button onClick={() => agentSim.pause()} >Pause</button>
+            <button onClick={() => agentSim.resume()} >Resume</button>
+            <button onClick={() => agentSim.stop()} >stop</button>
             <button onClick={changeFile('aster.cmo')}>Aster</button>
             <button onClick={changeFile('actin34_0.h5')}>Actin 34</button>
             <button onClick={changeFile('microtubules30_1.h5')}>MT 30</button>
@@ -124,9 +126,12 @@ class Viewer extends React.Component<{}, ViewerState> {
             <button onClick={changeFile('ATPsynthase_9.h5')}>ATP 9</button>
             <button onClick={changeFile('ATPsynthase_10.h5')}>ATP 10</button>
             <br/>
-            <input id="frame-number" type="text" />
+            <input type="range"
+                min="0"
+                value={currentTime}
+                max={this.state.totalDuration}
+                onChange={this.handleScrubTime} />
             <button onClick={this.playOneFrame}>Play one frame</button>
-            <button onClick={() => agentSim.playFromTime(0)}>Play from time 0ns</button>
             <br/>
             <select
                 onChange={(event) => this.highlightParticleType(event.target.value)}
@@ -152,10 +157,10 @@ class Viewer extends React.Component<{}, ViewerState> {
                 width={this.state.width}
                 devgui={false}
                 loggerLevel="debug"
-                onTimeChange={this.handleTimeChange}
+                onTimeChange={this.handleTimeChange.bind(this)}
                 agentSimController={agentSim}
                 onJsonDataArrived={this.handleJsonMeshData}
-                onTrajectoryFileInfoChanged={this.handleTrajectoryInfo}
+                onTrajectoryFileInfoChanged={this.handleTrajectoryInfo.bind(this)}
                 highlightedParticleType={this.state.highlightId}
                 loadInitialData={true}
                 showMeshes={this.state.showMeshes}

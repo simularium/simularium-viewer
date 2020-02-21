@@ -75,8 +75,7 @@ export default class AgentSimController {
         this.netConnection.requestTrajectoryFileInfo(this.playBackFile);
     }
 
-    public playFromTime(timeNs) {
-        // If there is a locally cached frame, use it
+    public gotoTime(timeNs) {
         if (this.visData.hasLocalCacheForTime(timeNs)) {
             this.visData.gotoTime(timeNs);
         } else {
@@ -84,10 +83,13 @@ export default class AgentSimController {
                 // else reset the local cache,
                 //  and play remotely from the desired simulation time
                 this.visData.clearCache();
-                this.netConnection.playRemoteSimCacheFromTime(timeNs);
+                this.netConnection.gotoRemoteSimulationTime(timeNs);
             }
         }
+    }
 
+    public playFromTime(timeNs) {
+        this.gotoTime(timeNs);
         this.isPaused = false;
     }
 

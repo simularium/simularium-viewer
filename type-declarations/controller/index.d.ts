@@ -15,6 +15,7 @@ export default class AgentSimController {
     pause(): void;
     paused(): boolean;
     initializeTrajectoryFile(): void;
+    gotoTime(timeNs: any): void;
     playFromTime(timeNs: any): void;
     resume(): void;
     changeFile(newFile: any): void;
