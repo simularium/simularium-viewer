@@ -384,8 +384,6 @@ export class NetConnection {
         );
     }
 
-    // Loads a single frame nearest to timeNanoSeconds
-    //  and sets the client to paused
     public playRemoteSimCacheFromTime(timeNanoSeconds) {
         this.sendWebSocketRequest(
             {
@@ -396,9 +394,6 @@ export class NetConnection {
         );
     }
 
-    // Loads a single frame nearest to timeNanoSeconds
-    //  and sets the client to paused
-    //  effectivley, gets a single frame
     public gotoRemoteSimulationTime(timeNanoSeconds) {
         this.sendWebSocketRequest(
             {
@@ -409,10 +404,6 @@ export class NetConnection {
         );
     }
 
-    // The backend will send a message with information
-    //  about the trajectory file specified
-    //  this will also initiate loading for the trajectory file
-    //  this function should not be called before a websocket connection is established
     public requestTrajectoryFileInfo(fileName) {
         this.sendWebSocketRequest(
             {
