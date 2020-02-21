@@ -4,31 +4,9 @@ import AgentVizViewer, { AgentSimController } from '../dist';
 import './style.css';
 import { CLIENT_RENEG_WINDOW } from "tls";
 
-// The agentsim component relies on a web-socket connection
-//  this version of the config will attempt to connect to the
-//  provided settings on startup
-// const netConnectionSettings = {
-//     serverIp: "52.15.70.94",
-//     serverPort: 9002,
-// }
-
-// The agentsim component relies on a web-socket connection
-//  this version of the config will request information about a
-//  valid remote server from a service hosted at the address
-//  provided below
-// const netConnectionSettingsIpService = {
-//     useIpService: true,
-//     ipServiceAddr: "http://a70fd6193bee611e9907a06c21ce3c1b-732404489.us-east-2.elb.amazonaws.com/"
-// }
-
-// could be a prop
-const useIpService = false;
-
 const netConnectionSettings = {
-    useIpService,
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
-    serverPort: 9002,
-    ipServiceAddr: null,
+    serverPort: 9002
 }
 
 interface ViewerState {
@@ -147,22 +125,8 @@ class Viewer extends React.Component<{}, ViewerState> {
             <button onClick={changeFile('ATPsynthase_10.h5')}>ATP 10</button>
             <br/>
             <input id="frame-number" type="text" />
-            <button
-                onClick={() => agentSim.gotoNextFrame()}
-            >Next Frame</button>
-            <button
-                onClick={() => agentSim.gotoPreviousFrame()}
-            >Previous Frame</button>
-            <button
-                onClick={this.playOneFrame}
-            >
-                Play one frame
-            </button>
-            <button
-                onClick={() => agentSim.playFromTime(0)}
-            >
-                Play from time 0ns
-            </button>
+            <button onClick={this.playOneFrame}>Play one frame</button>
+            <button onClick={() => agentSim.playFromTime(0)}>Play from time 0ns</button>
             <br/>
             <select
                 onChange={(event) => this.highlightParticleType(event.target.value)}

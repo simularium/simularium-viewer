@@ -75,54 +75,19 @@ class VisData {
     }
 
     constructor() {
-        this.mcolorVariant = 50;
+        if(util.ThreadUtil.browserSupportsWebWorkers())
+        {
+            this.webWorker = util.ThreadUtil.createWebWorkerFromFunction(
+                this.convertVisDataWorkFunctionToString(),
+            );
 
-        this.webWorker = util.ThreadUtil.createWebWorkerFromFunction(
-            this.convertVisDataWorkFunctionToString(),
-        );
-
-        this.webWorker.onmessage = (event) => {
-            this.mframeDataCache.push(event.data.frameData);
-            this.mframeCache.push(event.data.parsedAgentData);
-        };
-
-        this.mcolors = [
-            0x6ac1e5,
-            0xff2200,
-            0xee7967,
-            0xff6600,
-            0xd94d49,
-            0xffaa00,
-            0xffcc00,
-            0x00ccff,
-            0x00aaff,
-            0x8048f3,
-            0x07f4ec,
-            0x79bd8f,
-            0x8800ff,
-            0xaa00ff,
-            0xcc00ff,
-            0xff00cc,
-            0xff00aa,
-            0xff0088,
-            0xff0066,
-            0xff0044,
-            0xff0022,
-            0xff0000,
-            0xccff00,
-            0xaaff00,
-            0x88ff00,
-            0x00ffcc,
-            0x66ff00,
-            0x44ff00,
-            0x22ff00,
-            0x00ffaa,
-            0x00ff88,
-            0x00ffaa,
-            0x00ffff,
-            0x0066ff,
-
-        ];
+            this.webWorker.onmessage = (event) => {
+                this.mframeDataCache.push(event.data.frameData);
+                this.mframeCache.push(event.data.parsedAgentData);
+            };
+        } else {
+            this.webWorker = null;
+        }
 
         this.mframeCache = [];
         this.mframeDataCache = [];
@@ -132,30 +97,23 @@ class VisData {
         this.lockedForFrame = false;
     }
 
-    get colors() { return this.mcolors; }
-
     get time() { return this.mcacheFrame < this.mframeDataCache.length ? this.mframeDataCache[this.mcacheFrame] : -1 }
-
-    get colorVariant() { return this.mcolorVariant; }
-
-    set colorVariant(val) { this.mcolorVariant = val; }
 
     /**
     *   Functions to check update
     * */
     hasLocalCacheForTime(timeNs) {
-        if(this.mframeDataCache.length === 1 && timeNs === 0) { return true; }
-
-        if(this.mframeDataCache.length < 2) { return false; }
-
-        let start = this.mframeDataCache[0].time;
-        let end = this.mframeDataCache[this.mframeDataCache.length - 1].time;
+        if(this.mframeDataCache.length > 0 && timeNs === 0) {
+            return true;
+        } else if(this.mframeDataCache.length < 2) {
+            return false;
+        }
 
         return this.mframeDataCache[0].time <= timeNs &&
             this.mframeDataCache[this.mframeDataCache.length - 1].time >= timeNs;
     }
 
-    playFromTime(timeNs) {
+    gotoTime(timeNs) {
         this.mcacheFrame = -1;
 
         for(let frame = 0, numFrames = this.mframeDataCache.length;
@@ -177,13 +135,13 @@ class VisData {
         return this.mcacheFrame >= (this.mframeCache.length - 1);
     }
 
-    latestSimTimeCachedLocally() {
-        if(this.mframeDataCache === null || this.mframeDataCache.length === 0) { return -1; }
-        return this.mframeDataCache[this.mframeDataCache.length -1].time;
-    }
-
     currentFrame() {
-        if(this.mcacheFrame === -1 && this.mframeCache.length > 0) { this.mcacheFrame = 0;  }
+        if(this.mframeCache.length === 0) {
+            return {};
+        } else if(this.mcacheFrame === -1) {
+            this.mcacheFrame = 0;
+            return this.mframeCache[0];
+        }
 
         return this.mcacheFrame < this.mframeCache.length ? this.mframeCache[this.mcacheFrame] : {};
     }
@@ -201,12 +159,6 @@ class VisData {
     WaitForFrame(frameNumber) {
         this.frameToWaitFor = frameNumber;
         this.lockedForFrame = true;
-    }
-
-    cacheJSON(visDataFrame) {
-        let frame = VisData.parse(visDataFrame);
-        this.mframeCache.push(frame.parsedAgentData);
-        this.mframeDataCache.push(frame.frameData);
     }
 
     clearCache() {
@@ -228,10 +180,10 @@ class VisData {
         *   }
         */
 
-        if(this.lockedForFrame === true)
-        {
+        if(this.lockedForFrame === true) {
             if(visDataMsg.bundleData[0].frameNumber !== this.frameToWaitFor) {
-                console.log("Frame ", visDataMsg.bundleData[0].frameNumber, " doesn't match ", this.frameToWaitFor);
+                // This object is waiting for a frame with a specified frame number
+                //  and  the arriving frame didn't match it
                 return;
             } else {
                 this.lockedForFrame = false;
@@ -240,7 +192,7 @@ class VisData {
         }
 
         visDataMsg.bundleData.forEach((dataFrame) => {
-            if (util.ThreadUtil.browserSupportsWebWorkers()) {
+            if (util.ThreadUtil.browserSupportsWebWorkers() && this.webWorker !== null) {
                 this.webWorker.postMessage(dataFrame);
             } else {
                 let newFrame = VisData.parse(dataFrame);
@@ -248,10 +200,6 @@ class VisData {
                 this.mframeDataCache.push(newFrame.frameData);
             }
         });
-    }
-
-    numberOfAgents() {
-        return Object.keys(this.currentAgentDataFrame).length;
     }
 
     convertVisDataWorkFunctionToString() {

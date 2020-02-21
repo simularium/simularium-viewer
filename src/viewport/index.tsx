@@ -9,12 +9,11 @@ import {
 //  such as OrbitControls.js below
 import * as THREE from  'three';
 
-import { VisGeometry, DevGUI } from "../agentsim";
+import { VisGeometry } from "../agentsim";
 
 interface ViewportProps {
     height: number;
     width: number;
-    devgui: boolean;
     loggerLevel: string;
     onTimeChange: (timeData: TimeData) => void | undefined;
     agentSimController: AgentSimController;
@@ -81,7 +80,6 @@ class Viewport extends React.Component<ViewportProps> {
     public static defaultProps = {
         height: 800,
         width: 800,
-        devgui: false,
         highlightedParticleType: -1,
         loadInitialData: true,
         showMeshes: true,
@@ -102,10 +100,18 @@ class Viewport extends React.Component<ViewportProps> {
             agentSimController,
         } = this.props;
 
+        const colors = [
+            0x6ac1e5, 0xff2200, 0xee7967, 0xff6600, 0xd94d49, 0xffaa00, 0xffcc00, 0x00ccff,
+            0x00aaff, 0x8048f3, 0x07f4ec, 0x79bd8f, 0x8800ff, 0xaa00ff, 0xcc00ff, 0xff00cc,
+            0xff00aa, 0xff0088, 0xff0066, 0xff0044, 0xff0022, 0xff0000, 0xccff00, 0xaaff00,
+            0x88ff00, 0x00ffcc, 0x66ff00, 0x44ff00, 0x22ff00, 0x00ffaa, 0x00ff88, 0x00ffaa,
+            0x00ffff, 0x0066ff
+        ];
+
         this.visGeometry = new VisGeometry(loggerLevel);
         this.animate = this.animate.bind(this);
         this.visGeometry.setupScene();
-        this.visGeometry.createMaterials(agentSimController.visData.colors);
+        this.visGeometry.createMaterials(colors);
         this.visGeometry.createMeshes();
         this.vdomRef = React.createRef();
         this.dispatchUpdatedTime = this.dispatchUpdatedTime.bind(this);
@@ -132,13 +138,14 @@ class Viewport extends React.Component<ViewportProps> {
             onJsonDataArrived
         } = this.props;
         const {
-            simParameters,
+            netConnection,
         } = agentSimController;
         this.visGeometry.reparent(this.vdomRef.current);
 
-        simParameters.handleTrajectoryData = onTrajectoryFileInfoChanged;
-        // tie the simparameters to the visgeometry here, so that visgeometry can get a chance to receive the trajectory data
-        simParameters.handleTrajectoryDataInternal = this.visGeometry.handleTrajectoryData;
+        netConnection.onTrajectoryFileInfoArrive = (msg) => {
+            this.visGeometry.handleTrajectoryData(msg);
+            onTrajectoryFileInfoChanged(msg);
+        }
 
         agentSimController.connect().then(() => {
             if (loadInitialData) {
@@ -154,8 +161,6 @@ class Viewport extends React.Component<ViewportProps> {
                 agentSimController.initializeTrajectoryFile();
             }
         });
-
-        setInterval(agentSimController.netConnection.checkForUpdates.bind(agentSimController.netConnection), 1000);
 
         if (this.vdomRef.current) {
             this.vdomRef.current.addEventListener('timeChange', this.handleTimeChange, false);
@@ -305,7 +310,6 @@ class Viewport extends React.Component<ViewportProps> {
             agentSimController,
         } = this.props;
         const {
-            simParameters,
             netConnection,
             visData,
         } = agentSimController;
@@ -341,7 +345,6 @@ class Viewport extends React.Component<ViewportProps> {
                 return;
             }
             if (!visData.atLatestFrame() && !agentSimController.paused()) {
-                this.visGeometry.colorVariant = visData.colorVariant;
                 this.visGeometry.update(visData.currentFrame());
                 this.dispatchUpdatedTime(visData.time);
                 visData.gotoNextFrame();
@@ -356,14 +359,12 @@ class Viewport extends React.Component<ViewportProps> {
 
     public render() {
         const {
-            devgui,
             agentSimController,
             width,
             height,
         } = this.props;
 
         const {
-            simParameters,
             netConnection,
             visData,
         } = agentSimController;
@@ -381,13 +382,6 @@ class Viewport extends React.Component<ViewportProps> {
                 }
                 ref={this.vdomRef}
             >
-                {devgui && (
-                    <DevGUI
-                        simParams={simParameters}
-                        visData={visData}
-                        netConnection={netConnection}
-                    />
-                )}
             </div>
         );
     }

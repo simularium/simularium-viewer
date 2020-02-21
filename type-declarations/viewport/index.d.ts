@@ -3,7 +3,6 @@ import AgentSimController from '../controller';
 interface ViewportProps {
     height: number;
     width: number;
-    devgui: boolean;
     loggerLevel: string;
     onTimeChange: (timeData: TimeData) => void | undefined;
     agentSimController: AgentSimController;
@@ -31,7 +30,6 @@ declare class Viewport extends React.Component<ViewportProps> {
     static defaultProps: {
         height: number;
         width: number;
-        devgui: boolean;
         highlightedParticleType: number;
         loadInitialData: boolean;
         showMeshes: boolean;
