@@ -9,7 +9,7 @@ export default class AgentSimController {
     constructor(netConnectionSettings: any, params: any);
     readonly hasChangedFile: boolean;
     connect(): Promise<{}>;
-    start(): Promise<void> | undefined;
+    start(): Promise<void>;
     time(): void;
     stop(): void;
     pause(): void;

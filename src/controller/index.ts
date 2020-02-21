@@ -108,13 +108,9 @@ export default class AgentSimController {
             this.visData.clearCache();
 
             this.stop();
-            const startPromise = this.start();
-
-            if (startPromise) {
-                startPromise.then(() => {
-                    this.netConnection.requestSingleFrame(0);
-                });
-            }
+            this.start().then(() => {
+                this.netConnection.requestSingleFrame(0);
+            });
         }
     }
 

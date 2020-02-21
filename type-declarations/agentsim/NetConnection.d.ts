@@ -50,7 +50,7 @@ export declare class NetConnection {
      */
     startRemoteSimPreRun(timeStep: any, numTimeSteps: any): void;
     startRemoteSimLive(): void;
-    startRemoteTrajectoryPlayback(fileName: any): Promise<void> | undefined;
+    startRemoteTrajectoryPlayback(fileName: string): Promise<void>;
     playRemoteSimCacheFromFrame(cacheFrame: any): void;
     pauseRemoteSim(): void;
     resumeRemoteSim(): void;

@@ -312,11 +312,7 @@ export class NetConnection {
         });
     }
 
-    public startRemoteTrajectoryPlayback(fileName) {
-        if (!fileName) {
-            return;
-        }
-
+    public startRemoteTrajectoryPlayback(fileName: string) {
         const jsonData = {
             msgType: this.msgTypes.ID_VIS_DATA_REQUEST,
             mode: this.playbackTypes.ID_TRAJECTORY_FILE_PLAYBACK,
