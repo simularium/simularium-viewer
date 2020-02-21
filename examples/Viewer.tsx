@@ -106,6 +106,14 @@ class Viewer extends React.Component<{}, ViewerState> {
         agentSim.gotoTime(event.target.value);
     }
 
+    gotoNextFrame() {
+        agentSim.gotoTime(currentTime + this.state.timeStep + 1e-9);
+    }
+
+    gotoPreviousFrame() {
+        agentSim.gotoTime(currentTime - this.state.timeStep - 1e-9);
+    }
+
     render() {
         return (<div className="container" style={{height: '90%', width: '75%'}}>
             <button onClick={() => agentSim.start()} >Start</button>
@@ -131,7 +139,8 @@ class Viewer extends React.Component<{}, ViewerState> {
                 value={currentTime}
                 max={this.state.totalDuration}
                 onChange={this.handleScrubTime} />
-            <button onClick={this.playOneFrame}>Play one frame</button>
+            <button onClick={this.gotoNextFrame.bind(this)}>Next Frame</button>
+            <button onClick={this.gotoPreviousFrame.bind(this)}>Previous Frame</button>
             <br/>
             <select
                 onChange={(event) => this.highlightParticleType(event.target.value)}
