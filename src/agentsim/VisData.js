@@ -91,44 +91,6 @@ class VisData {
             this.webWorker = null;
         }
 
-        this.mcolors = [
-            0x6ac1e5,
-            0xff2200,
-            0xee7967,
-            0xff6600,
-            0xd94d49,
-            0xffaa00,
-            0xffcc00,
-            0x00ccff,
-            0x00aaff,
-            0x8048f3,
-            0x07f4ec,
-            0x79bd8f,
-            0x8800ff,
-            0xaa00ff,
-            0xcc00ff,
-            0xff00cc,
-            0xff00aa,
-            0xff0088,
-            0xff0066,
-            0xff0044,
-            0xff0022,
-            0xff0000,
-            0xccff00,
-            0xaaff00,
-            0x88ff00,
-            0x00ffcc,
-            0x66ff00,
-            0x44ff00,
-            0x22ff00,
-            0x00ffaa,
-            0x00ff88,
-            0x00ffaa,
-            0x00ffff,
-            0x0066ff,
-
-        ];
-
         this.mframeCache = [];
         this.mframeDataCache = [];
         this.mcacheFrame = -1;
@@ -137,13 +99,7 @@ class VisData {
         this.lockedForFrame = false;
     }
 
-    get colors() { return this.mcolors; }
-
     get time() { return this.mcacheFrame < this.mframeDataCache.length ? this.mframeDataCache[this.mcacheFrame] : -1 }
-
-    get colorVariant() { return this.mcolorVariant; }
-
-    set colorVariant(val) { this.mcolorVariant = val; }
 
     /**
     *   Functions to check update

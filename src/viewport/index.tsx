@@ -373,7 +373,6 @@ class Viewport extends React.Component<ViewportProps> {
                 return;
             }
             if (!visData.atLatestFrame() && !agentSimController.paused()) {
-                this.visGeometry.colorVariant = visData.colorVariant;
                 this.visGeometry.update(visData.currentFrame());
                 this.dispatchUpdatedTime(visData.time);
                 visData.gotoNextFrame();
