@@ -76,6 +76,7 @@ class Viewport extends React.Component<ViewportProps> {
     private hit: boolean;
     private raycaster: THREE.Raycaster;
     private animationRequestID: number;
+    private lastRenderedAgentTime: number;
 
     public static defaultProps = {
         height: 800,
@@ -344,9 +345,15 @@ class Viewport extends React.Component<ViewportProps> {
 
                 return;
             }
-            if (!visData.atLatestFrame() && !agentSimController.paused()) {
-                this.visGeometry.update(visData.currentFrame());
+
+            if(visData.time != this.lastRenderedAgentTime)
+            {
                 this.dispatchUpdatedTime(visData.time);
+                this.visGeometry.update(visData.currentFrame());
+                this.lastRenderedAgentTime = visData.time;
+            }
+
+            if (!visData.atLatestFrame() && !agentSimController.paused()) {
                 visData.gotoNextFrame();
             }
 

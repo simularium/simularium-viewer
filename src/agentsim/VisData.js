@@ -137,7 +137,7 @@ class VisData {
 
     currentFrame() {
         if(this.mframeCache.length === 0) {
-            return {};
+            return [];
         } else if(this.mcacheFrame === -1) {
             this.mcacheFrame = 0;
             return this.mframeCache[0];

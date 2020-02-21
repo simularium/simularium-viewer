@@ -210,7 +210,7 @@ describe("VisData module", () => {
         test("currentFrame returns empty frame when cache is empty", () => {
             let visData = new VisData();
             let emptyFrame = visData.currentFrame();
-            expect(emptyFrame).toEqual({});
+            expect(emptyFrame).toEqual([]);
         });
         test("can request frame from a cache size of 1", () => {
             const singleFrame = {
