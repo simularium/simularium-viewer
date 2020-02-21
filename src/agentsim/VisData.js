@@ -166,12 +166,6 @@ class VisData {
         this.lockedForFrame = true;
     }
 
-    cacheJSON(visDataFrame) {
-        let frame = VisData.parse(visDataFrame);
-        this.mframeCache.push(frame.parsedAgentData);
-        this.mframeDataCache.push(frame.frameData);
-    }
-
     clearCache() {
         this.mframeCache = [];
         this.mframeDataCache = [];
@@ -212,10 +206,6 @@ class VisData {
                 this.mframeDataCache.push(newFrame.frameData);
             }
         });
-    }
-
-    numberOfAgents() {
-        return Object.keys(this.currentAgentDataFrame).length;
     }
 
     convertVisDataWorkFunctionToString() {
