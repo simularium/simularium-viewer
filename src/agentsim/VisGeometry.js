@@ -42,7 +42,7 @@ class VisGeometry {
         this.runTimeMeshes = [];
         this.runTimeFiberMeshes = new Map();
         this.mlastNumberOfAgents = 0;
-        this.mcolorVariant = 50;
+        this.colorVariant = 50;
         this.fixLightsToCamera = true;
         this.highlightedId = -1;
 
@@ -84,10 +84,6 @@ class VisGeometry {
     get lastNumberOfAgents() { return this.mlastNumberOfAgents; }
 
     set lastNumberOfAgents(val) { this.mlastNumberOfAgents = val; }
-
-    get colorVariant() { return this.mcolorVariant; }
-
-    set colorVariant(val) { this.mcolorVariant = val; }
 
     get renderDom() { return this.renderer.domElement; }
 
