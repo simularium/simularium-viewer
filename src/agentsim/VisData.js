@@ -113,7 +113,7 @@ class VisData {
             this.mframeDataCache[this.mframeDataCache.length - 1].time >= timeNs;
     }
 
-    playFromTime(timeNs) {
+    gotoTime(timeNs) {
         this.mcacheFrame = -1;
 
         for(let frame = 0, numFrames = this.mframeDataCache.length;
@@ -133,11 +133,6 @@ class VisData {
         if(this.mcacheFrame === -1 && this.mframeCache.length > 0) { return false; }
 
         return this.mcacheFrame >= (this.mframeCache.length - 1);
-    }
-
-    latestSimTimeCachedLocally() {
-        if(this.mframeDataCache === null || this.mframeDataCache.length === 0) { return -1; }
-        return this.mframeDataCache[this.mframeDataCache.length -1].time;
     }
 
     currentFrame() {

@@ -78,7 +78,7 @@ export default class AgentSimController {
     public playFromTime(timeNs) {
         // If there is a locally cached frame, use it
         if (this.visData.hasLocalCacheForTime(timeNs)) {
-            this.visData.playFromTime(timeNs);
+            this.visData.gotoTime(timeNs);
         } else {
             if (this.networkEnabled) {
                 // else reset the local cache,
@@ -87,10 +87,8 @@ export default class AgentSimController {
                 this.netConnection.playRemoteSimCacheFromTime(timeNs);
             }
         }
-    }
 
-    public gotoFrameAtTime(timeNs) {
-        this.netConnection.gotoRemoteSimulationTime(timeNs);
+        this.isPaused = false;
     }
 
     public resume() {
