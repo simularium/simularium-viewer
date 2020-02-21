@@ -20,6 +20,7 @@ export default class AgentSimController {
             loggerLevel
         );
 
+        this.playBackFile = params.trajectoryPlaybackFile;
         this.netConnection.onTrajectoryDataArrive = this.visData.parseAgentsFromNetData.bind(
             this.visData
         );
