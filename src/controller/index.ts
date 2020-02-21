@@ -1,6 +1,5 @@
 import jsLogger from "js-logger";
-import { NetConnection } from "../agentsim";
-import { VisData } from "../agentsim";
+import { NetConnection, VisData } from "../agentsim";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 

@@ -180,8 +180,7 @@ class VisData {
         *   }
         */
 
-        if(this.lockedForFrame === true)
-        {
+        if(this.lockedForFrame === true) {
             if(visDataMsg.bundleData[0].frameNumber !== this.frameToWaitFor) {
                 // This object is waiting for a frame with a specified frame number
                 //  and  the arriving frame didn't match it
