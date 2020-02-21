@@ -348,9 +348,12 @@ class Viewport extends React.Component<ViewportProps> {
 
             if(visData.time != this.lastRenderedAgentTime)
             {
-                this.dispatchUpdatedTime(visData.time);
-                this.visGeometry.update(visData.currentFrame());
-                this.lastRenderedAgentTime = visData.time;
+                let currentAgents = visData.currentFrame();
+                if(currentAgents.length > 0) {
+                    this.dispatchUpdatedTime(visData.time);
+                    this.visGeometry.update(currentAgents);
+                    this.lastRenderedAgentTime = visData.time;
+                }
             }
 
             if (!visData.atLatestFrame() && !agentSimController.paused()) {
