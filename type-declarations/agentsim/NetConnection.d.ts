@@ -5,8 +5,8 @@ export declare class NetConnection {
     private msgTypes;
     private playbackTypes;
     private logger;
-    onTrajectoryFileInfoArrive: any;
-    onTrajectoryDataArrive: any;
+    onTrajectoryFileInfoArrive: Function;
+    onTrajectoryDataArrive: Function;
     constructor(opts: any, loggerLevel: any);
     /**
      * WebSocket State

@@ -1,19 +1,44 @@
 import jsLogger from "js-logger";
 
 interface NetMessage {
-    connId: any;
-    msgType: any;
+    connId: string;
+    msgType: number;
+}
+
+interface NetMessageType {
+    ID_UNDEFINED_WEB_REQUEST: number;
+    ID_VIS_DATA_ARRIVE: number;
+    ID_VIS_DATA_REQUEST: number;
+    ID_VIS_DATA_FINISH: number;
+    ID_VIS_DATA_PAUSE: number;
+    ID_VIS_DATA_RESUME: number;
+    ID_VIS_DATA_ABORT: number;
+    ID_UPDATE_TIME_STEP: number;
+    ID_UPDATE_RATE_PARAM: number;
+    ID_MODEL_DEFINITION: number;
+    ID_HEARTBEAT_PING: number;
+    ID_HEARTBEAT_PONG: number;
+    ID_PLAY_CACHE: number;
+    ID_TRAJECTORY_FILE_INFO: number;
+    ID_GOTO_SIMULATION_TIME: number;
+    ID_INIT_TRAJECTORY_FILE: number;
+}
+
+interface PlayBackType {
+    ID_LIVE_SIMULATION: number;
+    ID_PRE_RUN_SIMULATION: number;
+    ID_TRAJECTORY_FILE_PLAYBACK: number;
 }
 
 export class NetConnection {
     private webSocket: any;
     private serverIp: string;
     private serverPort: number;
-    private msgTypes: any;
-    private playbackTypes: any;
+    private msgTypes: NetMessageType;
+    private playbackTypes: PlayBackType;
     private logger: any;
-    public onTrajectoryFileInfoArrive: any;
-    public onTrajectoryDataArrive: any;
+    public onTrajectoryFileInfoArrive: Function;
+    public onTrajectoryDataArrive: Function;
 
     public constructor(opts, loggerLevel) {
         // these have been set to correspond to backend values
@@ -50,8 +75,8 @@ export class NetConnection {
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(loggerLevel);
 
-        this.onTrajectoryFileInfoArrive = null;
-        this.onTrajectoryDataArrive = null;
+        this.onTrajectoryFileInfoArrive = function() {};
+        this.onTrajectoryDataArrive = function() {};
 
         // Frees the reserved backend in the event that the window closes w/o disconnecting
         window.addEventListener("beforeunload", this.onClose.bind(this));
@@ -107,9 +132,7 @@ export class NetConnection {
         this.logger.debug("Websocket Message Recieved: ", msg);
         switch (msgType) {
             case this.msgTypes.ID_VIS_DATA_ARRIVE:
-                if (this.onTrajectoryDataArrive) {
-                    this.onTrajectoryDataArrive(msg);
-                }
+                this.onTrajectoryDataArrive(msg);
                 break;
             case this.msgTypes.ID_UPDATE_TIME_STEP:
                 // TODO: callback to handle time step update
@@ -132,9 +155,7 @@ export class NetConnection {
                 break;
             case this.msgTypes.ID_TRAJECTORY_FILE_INFO:
                 this.logger.debug("Trajectory file info Arrived");
-                if (this.onTrajectoryFileInfoArrive) {
-                    this.onTrajectoryFileInfoArrive(msg);
-                }
+                this.onTrajectoryFileInfoArrive(msg);
                 break;
             default:
                 this.logger.debug("Web request recieved", msg.msgType);
