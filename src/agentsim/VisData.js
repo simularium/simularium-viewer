@@ -75,8 +75,6 @@ class VisData {
     }
 
     constructor() {
-        this.mcolorVariant = 50;
-
         if(util.ThreadUtil.browserSupportsWebWorkers())
         {
             this.webWorker = util.ThreadUtil.createWebWorkerFromFunction(
