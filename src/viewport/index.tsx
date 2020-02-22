@@ -129,6 +129,7 @@ class Viewport extends React.Component<ViewportProps> {
         this.hit = false;
         this.raycaster = new THREE.Raycaster();
         this.animationRequestID = 0;
+        this.lastRenderedAgentTime = -1;
     }
 
     public componentDidMount() {
