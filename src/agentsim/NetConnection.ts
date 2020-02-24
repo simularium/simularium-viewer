@@ -34,9 +34,9 @@ export class NetConnection {
     private webSocket: any;
     private serverIp: string;
     private serverPort: number;
-    private msgTypes: NetMessageType;
-    private playbackTypes: PlayBackType;
-    private logger: any;
+    protected playbackTypes: PlayBackType;
+    protected logger: any;
+    protected msgTypes: NetMessageType;
     public onTrajectoryFileInfoArrive: Function;
     public onTrajectoryDataArrive: Function;
 
@@ -129,7 +129,7 @@ export class NetConnection {
             );
             return;
         }
-        this.logger.debug("Websocket Message Recieved: ", msg);
+
         switch (msgType) {
             case this.msgTypes.ID_VIS_DATA_ARRIVE:
                 this.onTrajectoryDataArrive(msg);
