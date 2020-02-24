@@ -1,6 +1,6 @@
 import React from "react";
 
-import AgentVizViewer, { AgentSimController } from '../dist';
+import AgentVizViewer, { NetConnection, AgentSimController } from '../dist';
 import './style.css';
 import { CLIENT_RENEG_WINDOW } from "tls";
 
@@ -8,6 +8,8 @@ const netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
     serverPort: 9002
 }
+
+const netConn = new NetConnection(netConnectionSettings);
 
 interface ViewerState {
     highlightId: number;
@@ -23,7 +25,7 @@ interface ViewerState {
     totalDuration: number;
 }
 
-const agentSim = new AgentSimController(netConnectionSettings, { trajectoryPlaybackFile: "ATPsynthase_9.h5" })
+const agentSim = new AgentSimController({ trajectoryPlaybackFile: "ATPsynthase_9.h5", netConnection: netConn })
 let currentFrame = 0;
 let currentTime = 0;
 

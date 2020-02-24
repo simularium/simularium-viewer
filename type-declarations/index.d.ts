@@ -1,4 +1,5 @@
 import Viewport from "./viewport";
 import AgentSimController from "./controller";
-export { AgentSimController };
+import { NetConnection } from "./agentsim/NetConnection";
+export { AgentSimController, NetConnection };
 export default Viewport;

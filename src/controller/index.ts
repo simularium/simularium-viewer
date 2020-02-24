@@ -11,14 +11,9 @@ export default class AgentSimController {
     private fileChanged: boolean;
     private playBackFile: any;
 
-    public constructor(netConnectionSettings, params) {
-        const loggerLevel =
-            params.loggerLevel === "debug" ? jsLogger.DEBUG : jsLogger.OFF;
+    public constructor(params) {
         this.visData = new VisData({});
-        this.netConnection = new NetConnection(
-            netConnectionSettings,
-            loggerLevel
-        );
+        this.netConnection = params.netConnection;
 
         this.playBackFile = params.trajectoryPlaybackFile;
         this.netConnection.onTrajectoryDataArrive = this.visData.parseAgentsFromNetData.bind(

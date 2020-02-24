@@ -6,7 +6,7 @@ export default class AgentSimController {
     private isPaused;
     private fileChanged;
     private playBackFile;
-    constructor(netConnectionSettings: any, params: any);
+    constructor(params: any);
     readonly hasChangedFile: boolean;
     connect(): Promise<{}>;
     start(): Promise<void>;

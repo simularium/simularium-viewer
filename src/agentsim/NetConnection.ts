@@ -40,7 +40,7 @@ export class NetConnection {
     public onTrajectoryFileInfoArrive: Function;
     public onTrajectoryDataArrive: Function;
 
-    public constructor(opts, loggerLevel) {
+    public constructor(opts) {
         // these have been set to correspond to backend values
         this.playbackTypes = Object.freeze({
             ID_LIVE_SIMULATION: 0,
@@ -73,7 +73,7 @@ export class NetConnection {
         });
 
         this.logger = jsLogger.get("netconnection");
-        this.logger.setLevel(loggerLevel);
+        this.logger.setLevel(jsLogger.DEBUG);
 
         this.onTrajectoryFileInfoArrive = function() {};
         this.onTrajectoryDataArrive = function() {};
@@ -109,7 +109,7 @@ export class NetConnection {
     /**
      *   Websocket Message Handler
      * */
-    private onMessage(event) {
+    protected onMessage(event) {
         if (!this.socketIsValid()) {
             return;
         }
@@ -204,7 +204,7 @@ export class NetConnection {
         return connectPromise;
     }
 
-    public connectToRemoteServer(address) {
+    public connectToRemoteServer(address: string) {
         let remoteStartPromise = new Promise((resolve, reject) => {
             if (this.socketIsConnected()) {
                 return resolve("Remote sim sucessfully started");
@@ -369,7 +369,7 @@ export class NetConnection {
         );
     }
 
-    public requestSingleFrame(startFrameNumber) {
+    public requestSingleFrame(startFrameNumber: number) {
         this.sendWebSocketRequest(
             {
                 msgType: this.msgTypes.ID_VIS_DATA_REQUEST,
@@ -390,7 +390,7 @@ export class NetConnection {
         );
     }
 
-    public gotoRemoteSimulationTime(timeNanoSeconds) {
+    public gotoRemoteSimulationTime(timeNanoSeconds: number) {
         this.sendWebSocketRequest(
             {
                 msgType: this.msgTypes.ID_GOTO_SIMULATION_TIME,
@@ -400,7 +400,7 @@ export class NetConnection {
         );
     }
 
-    public requestTrajectoryFileInfo(fileName) {
+    public requestTrajectoryFileInfo(fileName: string) {
         this.sendWebSocketRequest(
             {
                 msgType: this.msgTypes.ID_INIT_TRAJECTORY_FILE,

@@ -7,7 +7,7 @@ export declare class NetConnection {
     private logger;
     onTrajectoryFileInfoArrive: Function;
     onTrajectoryDataArrive: Function;
-    constructor(opts: any, loggerLevel: any);
+    constructor(opts: any);
     /**
      * WebSocket State
      */
@@ -17,7 +17,7 @@ export declare class NetConnection {
     /**
      *   Websocket Message Handler
      * */
-    private onMessage;
+    protected onMessage(event: any): void;
     private onOpen;
     private onClose;
     /**
@@ -27,7 +27,7 @@ export declare class NetConnection {
     disconnect(): void;
     getIp(): string;
     private connectToUriAsync;
-    connectToRemoteServer(address: any): Promise<{}>;
+    connectToRemoteServer(address: string): Promise<{}>;
     /**
      * Websocket Send Helper Functions
      */
@@ -55,8 +55,8 @@ export declare class NetConnection {
     pauseRemoteSim(): void;
     resumeRemoteSim(): void;
     abortRemoteSim(): void;
-    requestSingleFrame(startFrameNumber: any): void;
+    requestSingleFrame(startFrameNumber: number): void;
     playRemoteSimCacheFromTime(timeNanoSeconds: any): void;
-    gotoRemoteSimulationTime(timeNanoSeconds: any): void;
-    requestTrajectoryFileInfo(fileName: any): void;
+    gotoRemoteSimulationTime(timeNanoSeconds: number): void;
+    requestTrajectoryFileInfo(fileName: string): void;
 }
