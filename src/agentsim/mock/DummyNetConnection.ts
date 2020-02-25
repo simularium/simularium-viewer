@@ -129,6 +129,11 @@ export class DummyNetConnection extends NetConnection {
             };
 
             this.onMessage({ data: JSON.stringify(tfi) });
+
+            // Send the first frame of data
+            const msg = this.getDataBundle(0, 1);
+            this.frameCounter++;
+            this.onMessage({ data: JSON.stringify(msg) });
         }, this.commandLatencyMS);
     }
 
