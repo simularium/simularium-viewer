@@ -27,50 +27,53 @@ export class DummyNetConnection extends NetConnection {
         setInterval(this.broadcast.bind(this), 200);
     }
 
-    private broadcast() {
-        if (!this.isStreamingData) {
-            return;
-        }
-
-        if (this.frameCounter * this.timeStep >= this.totalDuration - 1) {
-            this.isStreamingData = false; // finished
-            return;
-        }
-
-        const bundleSize = 5;
+    private getDataBundle(frameNumber: number, bundleSize: number) {
         const msg = {
             msgType: this.msgTypes.ID_VIS_DATA_ARRIVE,
-            bundleStart: this.frameCounter,
+            bundleStart: frameNumber,
             bundleSize: bundleSize,
             bundleData: [] as object[],
         };
 
         const bundleData: object[] = [];
         for (let i = 0; i < bundleSize; i++) {
-            // The below is a single agent that moves in a circle
             const data = {
-                frameNumber: this.frameCounter,
-                time: this.frameCounter * this.timeStep,
+                frameNumber: frameNumber,
+                time: frameNumber * this.timeStep,
                 data: [
                     1000,
                     43,
-                    Math.cos(this.frameCounter),
-                    Math.sin(this.frameCounter),
+                    Math.cos(frameNumber / 4) * 5,
+                    Math.sin(frameNumber / 4) * 5,
                     0,
                     0,
                     0,
-                    4.5,
+                    10,
                     1,
                     0,
                 ],
             };
-
             bundleData.push(data);
-
-            this.frameCounter++;
+            frameNumber++;
         }
 
         msg.bundleData = bundleData;
+        return msg;
+    }
+
+    private broadcast() {
+        if (!this.isStreamingData) {
+            return;
+        }
+
+        if (this.frameCounter * this.timeStep >= this.totalDuration) {
+            this.isStreamingData = false; // finished
+            return;
+        }
+
+        const bundleSize = 5; //@HACK: I know the total duration is a multiple of 5
+        const msg = this.getDataBundle(this.frameCounter, bundleSize);
+        this.frameCounter += bundleSize;
         this.onMessage({ data: JSON.stringify(msg) });
     }
 
@@ -120,7 +123,7 @@ export class DummyNetConnection extends NetConnection {
                 msgType: this.msgTypes.ID_TRAJECTORY_FILE_INFO,
                 boxSizeX: 100,
                 boxSizeY: 100,
-                boxSizeZ: 10,
+                boxSizeZ: 20,
                 totalDuration: this.totalDuration,
                 timeStepSize: this.timeStep,
             };
@@ -131,13 +134,21 @@ export class DummyNetConnection extends NetConnection {
 
     public requestSingleFrame(frameNumber: number) {
         setTimeout(() => {
-            // OnMessage event.data w/ parsable vis data message
+            this.frameCounter = frameNumber;
+
+            const msg = this.getDataBundle(this.frameCounter, 1);
+            this.frameCounter;
+            this.onMessage({ data: JSON.stringify(msg) });
         }, this.commandLatencyMS);
     }
 
     public gotoRemoteSimulationTime(timeNS: number) {
         setTimeout(() => {
             this.frameCounter = timeNS / this.timeStep;
+
+            const msg = this.getDataBundle(this.frameCounter, 1);
+            this.frameCounter++;
+            this.onMessage({ data: JSON.stringify(msg) });
         }, this.commandLatencyMS);
     }
     // TODO go through AgentSimController, implement mock functions for netConnection functionality used
