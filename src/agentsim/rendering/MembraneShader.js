@@ -1,6 +1,6 @@
 // Three JS is assumed to be in the global scope in extensions
 //  such as OrbitControls.js below
-import * as THREE from  'three';
+import * as THREE from "three";
 global.THREE = THREE;
 
 import RenderToBuffer from "./RenderToBuffer.js";
@@ -27,13 +27,19 @@ class MembraneShaderSim {
 
         this.pass0 = new RenderToBuffer({
             uniforms: {
-                iResolution: { value: new THREE.Vector2(dataTextureSize, dataTextureSize) },
+                iResolution: {
+                    value: new THREE.Vector2(dataTextureSize, dataTextureSize),
+                },
                 iFrame: { value: 0 },
                 iTime: { value: 0.0 },
                 iChannel0: { value: null },
-                iChannelResolution0: { value: new THREE.Vector2(dataTextureSize, dataTextureSize) }
+                iChannelResolution0: {
+                    value: new THREE.Vector2(dataTextureSize, dataTextureSize),
+                },
             },
-            fragmentShader: common + `
+            fragmentShader:
+                common +
+                `
             uniform int iFrame;
             uniform float iTime;
             uniform vec2 iResolution;
@@ -137,36 +143,44 @@ class MembraneShaderSim {
                 
                 gl_FragColor = (datai==0.0) ? vec4(newpos, newvel) : newcolorsize;
             }
-            `
+            `,
         });
-        
-        this.tgt0 = new THREE.WebGLRenderTarget(dataTextureSize, dataTextureSize, {
-            minFilter: THREE.NearestFilter,
-            magFilter: THREE.NearestFilter,
-            format: THREE.RGBAFormat,
-            type: THREE.FloatType,
-            depthBuffer: false,
-            stencilBuffer: false,
-        });
+
+        this.tgt0 = new THREE.WebGLRenderTarget(
+            dataTextureSize,
+            dataTextureSize,
+            {
+                minFilter: THREE.NearestFilter,
+                magFilter: THREE.NearestFilter,
+                format: THREE.RGBAFormat,
+                type: THREE.FloatType,
+                depthBuffer: false,
+                stencilBuffer: false,
+            }
+        );
         this.tgt0.texture.generateMipmaps = false;
-        
-        this.tgt1 = new THREE.WebGLRenderTarget(dataTextureSize, dataTextureSize, {
-            minFilter: THREE.NearestFilter,
-            magFilter: THREE.NearestFilter,
-            format: THREE.RGBAFormat,
-            type: THREE.FloatType,
-            depthBuffer: false,
-            stencilBuffer: false,
-        });
+
+        this.tgt1 = new THREE.WebGLRenderTarget(
+            dataTextureSize,
+            dataTextureSize,
+            {
+                minFilter: THREE.NearestFilter,
+                magFilter: THREE.NearestFilter,
+                format: THREE.RGBAFormat,
+                type: THREE.FloatType,
+                depthBuffer: false,
+                stencilBuffer: false,
+            }
+        );
         this.tgt1.texture.generateMipmaps = false;
     }
 
-    resize(x,y) {
-        this.tgt0.setSize(x,y);
-        this.tgt1.setSize(x,y);
+    resize(x, y) {
+        this.tgt0.setSize(x, y);
+        this.tgt1.setSize(x, y);
     }
-    
-    render(renderer, time, frame) {
+
+    render(renderer) {
         const old = renderer.autoClear;
         renderer.autoClear = false;
 
@@ -176,12 +190,18 @@ class MembraneShaderSim {
 
         this.pass0.material.uniforms.iFrame.value = this.frame;
         this.pass0.material.uniforms.iChannel0.value = srcTgt.texture;
-        this.pass0.material.uniforms.iChannelResolution0.value = new THREE.Vector2(srcTgt.width, srcTgt.height);
-        this.pass0.material.uniforms.iResolution.value = new THREE.Vector2(tgt.width, tgt.height);
+        this.pass0.material.uniforms.iChannelResolution0.value = new THREE.Vector2(
+            srcTgt.width,
+            srcTgt.height
+        );
+        this.pass0.material.uniforms.iResolution.value = new THREE.Vector2(
+            tgt.width,
+            tgt.height
+        );
 
         this.pass0.render(renderer, tgt);
         this.outputTarget = tgt;
-    
+
         // restore original framebuffer canvas
         renderer.setRenderTarget(null);
         renderer.autoClear = old;
@@ -192,32 +212,134 @@ class MembraneShaderSim {
     getOutputTarget() {
         return this.outputTarget;
     }
-    
 }
 
 const vertexShader = `
     uniform float iTime;
     uniform vec2 iResolution;
+
     varying vec2 vUv;
     varying vec3 n;
+    varying vec3 vLightFront;
+    varying vec3 vIndirectFront;
+
+    #define saturate(a) clamp( a, 0.0, 1.0 )
+
+    struct GeometricContext {
+        vec3 position;
+        vec3 normal;
+        vec3 viewDir;
+    };
+    struct IncidentLight {
+        vec3 color;
+        vec3 direction;
+        bool visible;
+    };
+
+    struct DirectionalLight {
+        vec3 direction;
+        vec3 color;
+        int shadow;
+        float shadowBias;
+        float shadowRadius;
+        vec2 shadowMapSize;
+    };
+    uniform DirectionalLight directionalLights[ 1 ];
+    void getDirectionalDirectLightIrradiance( const in DirectionalLight directionalLight, const in GeometricContext geometry, out IncidentLight directLight ) {
+        directLight.color = directionalLight.color;
+        directLight.direction = directionalLight.direction;
+        directLight.visible = true;
+    }
+
+    struct HemisphereLight {
+        vec3 direction;
+        vec3 skyColor;
+        vec3 groundColor;
+    };
+    uniform HemisphereLight hemisphereLights[ 1 ];
+    vec3 getHemisphereLightIrradiance( const in HemisphereLight hemiLight, const in GeometricContext geometry ) {
+        float dotNL = dot( geometry.normal, hemiLight.direction );
+        float hemiDiffuseWeight = 0.5 * dotNL + 0.5;
+        vec3 irradiance = mix( hemiLight.groundColor, hemiLight.skyColor, hemiDiffuseWeight );
+        #ifndef PHYSICALLY_CORRECT_LIGHTS
+            irradiance *= PI;
+        #endif
+        return irradiance;
+    }
+
     void main()	{
         vec3 p = position.xyz;
         vec4 modelViewPosition = modelViewMatrix * vec4(p, 1.0);
         vUv = uv;
         n = normalMatrix * normal;
+
+        GeometricContext geometry;
+        geometry.position = modelViewPosition.xyz;
+        geometry.normal = normalize( n );
+        geometry.viewDir = normalize( -modelViewPosition.xyz );
+
+        // per-vertex lighting compatible with the rest of three.js
+        vLightFront = vec3(0.0);
+        
+        IncidentLight directLight;
+        getDirectionalDirectLightIrradiance( directionalLights[ 0 ], geometry, directLight );
+        float dotNL = dot( geometry.normal, directLight.direction );
+        vec3 directLightColor_Diffuse = PI * directLight.color;
+        vLightFront += saturate( dotNL ) * directLightColor_Diffuse;
+        vIndirectFront += getHemisphereLightIrradiance( hemisphereLights[ 0 ], geometry );
+
         gl_Position = projectionMatrix * modelViewPosition;
     }
 `;
 
-const fragmentShader = common + `
+const fragmentShader =
+    common +
+    `
     uniform float iTime;
     uniform vec2 iResolution;
+    uniform vec2 uvscale;
+#if USE_SIM
     uniform sampler2D iChannel0;
     uniform vec2 iChannelResolution0;
+#endif
     uniform sampler2D splat;
+
+    uniform vec3 ambientLightColor;
 
     varying vec2 vUv;
     varying vec3 n;
+    varying vec3 vLightFront;
+    varying vec3 vIndirectFront;
+
+    struct ReflectedLight {
+        vec3 directDiffuse;
+        vec3 directSpecular;
+        vec3 indirectDiffuse;
+        vec3 indirectSpecular;
+    };
+
+    vec3 getAmbientLightIrradiance( const in vec3 ambientLightColor ) {
+        vec3 irradiance = ambientLightColor;
+        #ifndef PHYSICALLY_CORRECT_LIGHTS
+            irradiance *= PI;
+        #endif
+        return irradiance;
+    }
+    struct IncidentLight {
+        vec3 color;
+        vec3 direction;
+        bool visible;
+    };
+
+    struct DirectionalLight {
+        vec3 direction;
+        vec3 color;
+        int shadow;
+        float shadowBias;
+        float shadowRadius;
+        vec2 shadowMapSize;
+    };
+    uniform DirectionalLight directionalLights[ 1 ];
 
     float noise3D(vec3 p)
     {
@@ -339,10 +461,9 @@ const fragmentShader = common + `
     Buffer B can measure and display the total kinetic energy of the particles.
     
     */
-
-#define NOISE_SCALE 10.0	
-#define NOISE_COLOR vec3(0.1, 0.7, 0.8)
-#define NOISE_BACKGROUND_COLOR vec3(0.5, 0.5, 0.4)
+   
+#define NOISE_COLOR vec3(0.4, 0.33, 0.07)
+#define NOISE_BACKGROUND_COLOR vec3(0.075, 0.0625, 0.0)
 #define LIGHT_DIR_UV vec3(0.0, 0.0, 1.0)
 
     void main( )
@@ -355,18 +476,39 @@ const fragmentShader = common + `
         vec2 uv = vUv*2.0-1.0;
         
         // zoom scaling of the noise effect
-        uv *= NOISE_SCALE;
+        uv *= uvscale;
 
-        float time = iTime * 0.5;
+        float time = iTime * 1.0;
         vec3 col = vec3(0.0);
-        float n;
-        n = simplex3D(vec3(time,vec2(uv)))*0.5+0.5;
+        float ns;
+        ns = simplex3D(vec3(time,vec2(uv)))*0.5+0.5;
     
-        col = n * NOISE_COLOR;
-        col = mix(col, NOISE_BACKGROUND_COLOR, 0.5*sin(time)-0.5);
+        ns = ns*ns;
+
+        float delta = 0.01;
+        float nsx = simplex3D(vec3(time,vec2(uv)+vec2(delta, 0.0)))*0.5+0.5;
+        nsx = nsx*nsx;
+        float nsy = simplex3D(vec3(time,vec2(uv)+vec2(0.0, delta)))*0.5+0.5;
+        nsy = nsy*nsy;
+        float dnx = (nsx-(ns))/delta;
+        float dny = (nsy-(ns))/delta;
+        float bumpFactor = 8.0;
+
+//        float dnx = dFdx(ns);
+//        float dny = dFdy(ns);
+//        float bumpFactor = 128.0;
+
+        vec3 normal = vec3(dnx, dny, 0.0)*bumpFactor;
+        // transform this normal back into world space for proper lighting?
+        normal = (mat3(viewMatrix)) * normal;
+        normal = normalize(normal + n);
+
+        float lightfg = clamp(dot(normal, directionalLights[0].direction), 0.0, 1.0);
+
+        col = mix(NOISE_BACKGROUND_COLOR, NOISE_COLOR, 1.0 - (1.0-ns)*(1.0-ns)*lightfg);
 
         // 2. second layer: read from the particle simulation
-
+#if USE_SIM
         uv = vUv;
 
         vec2 pixel = uv*vec2(float(GridX),float(GridY));
@@ -407,7 +549,14 @@ const fragmentShader = common + `
             
         // debug grids in use  
         //if (getColorSize(grid).a!=0.0) col=mix(col,vec3(1.,1.,1.),getColorSize(grid).a*0.3);
-        
+#endif
+        ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );
+        reflectedLight.indirectDiffuse = getAmbientLightIrradiance( ambientLightColor );
+        reflectedLight.indirectDiffuse += vIndirectFront;
+        reflectedLight.directDiffuse = vLightFront * col;
+        vec3 outgoingLight = reflectedLight.directDiffuse + reflectedLight.indirectDiffuse;
+        col = outgoingLight;
+
         gl_FragColor = vec4(col,1.0);
     }
 `;
@@ -416,17 +565,38 @@ const MembraneShader = new THREE.ShaderMaterial({
     uniforms: {
         iTime: { value: 1.0 },
         iResolution: { value: new THREE.Vector2() },
+        uvscale: { value: new THREE.Vector2(1.0, 1.0) },
         iChannel0: { value: null },
-        iChannelResolution0: { value: new THREE.Vector2(dataTextureSize, dataTextureSize) },
-        splat: { value: new THREE.TextureLoader().load("assets/splat.png") },
-    },        
+        iChannelResolution0: {
+            value: new THREE.Vector2(dataTextureSize, dataTextureSize),
+        },
+        splat: { value: null },
+        ///// LIGHTING
+        ambientLightColor: {value:null},
+        lightProbe: {value:null},
+        directionalLights: {value:null},
+        spotLights: {value:null},
+        rectAreaLights: {value:null},
+        pointLights: {value:null},
+        hemisphereLights: {value:null},
+        directionalShadowMap: {value:null},
+        directionalShadowMatrix: {value:null},
+        spotShadowMap: {value:null},
+        spotShadowMatrix: {value:null},
+        pointShadowMap: {value:null},
+        pointShadowMatrix: {value:null},
+    },
     vertexShader: vertexShader,
     fragmentShader: fragmentShader,
-    side: THREE.DoubleSide,
-    transparent: true,
+    defines: {
+        "PI": "3.14159265359",
+        "USE_SIM": "0",
+        "PHYSICALLY_CORRECT_LIGHTS": "1",
+    },
+    lights: true
 });
 
-export default { 
-    MembraneShaderSim: MembraneShaderSim,
-    MembraneShader: MembraneShader
+export default {
+    MembraneShaderSim: null,
+    MembraneShader: MembraneShader,
 };

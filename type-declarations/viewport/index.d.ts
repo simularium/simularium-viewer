@@ -3,7 +3,6 @@ import AgentSimController from '../controller';
 interface ViewportProps {
     height: number;
     width: number;
-    devgui: boolean;
     loggerLevel: string;
     onTimeChange: (timeData: TimeData) => void | undefined;
     agentSimController: AgentSimController;
@@ -13,6 +12,7 @@ interface ViewportProps {
     loadInitialData: boolean;
     showMeshes: boolean;
     showPaths: boolean;
+    showBounds: boolean;
 }
 interface TimeData {
     time: number;
@@ -21,6 +21,7 @@ interface TimeData {
 declare class Viewport extends React.Component<ViewportProps> {
     private visGeometry;
     private lastRenderTime;
+    private startTime;
     private vdomRef;
     private handlers;
     private hit;
@@ -29,11 +30,11 @@ declare class Viewport extends React.Component<ViewportProps> {
     static defaultProps: {
         height: number;
         width: number;
-        devgui: boolean;
         highlightedParticleType: number;
         loadInitialData: boolean;
         showMeshes: boolean;
         showPaths: boolean;
+        showBounds: boolean;
     };
     private static isCustomEvent;
     constructor(props: ViewportProps);
@@ -46,6 +47,7 @@ declare class Viewport extends React.Component<ViewportProps> {
     onDrop: (e: any) => void;
     addEventHandlersToCanvas(): void;
     removeEventHandlersFromCanvas(): void;
+    resetCamera(): void;
     onPickObject(event: MouseEvent): void;
     private handleTimeChange;
     private dispatchUpdatedTime;

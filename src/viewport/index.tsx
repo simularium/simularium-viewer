@@ -14,7 +14,6 @@ import { VisGeometry, VisGeometry2, DevGUI } from "../agentsim";
 interface ViewportProps {
     height: number;
     width: number;
-    devgui: boolean;
     loggerLevel: string;
     onTimeChange: (timeData: TimeData) => void | undefined;
     agentSimController: AgentSimController;
@@ -24,6 +23,7 @@ interface ViewportProps {
     loadInitialData: boolean;
     showMeshes: boolean;
     showPaths: boolean;
+    showBounds: boolean;
 }
 
 interface TimeData {
@@ -61,6 +61,10 @@ function sortFrames(a: FrameJSON, b: FrameJSON): number {
     return a.frameNumber > b.frameNumber ? 1 : -1;
 }
 
+function getJsonUrl(trajectoryName) {
+    return `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${trajectoryName}.json`;
+}
+
 class Viewport extends React.Component<ViewportProps> {
     // NOTE: this can be typed in the future, but they may change signifantly and I dont want to at the moment. -MMRM
     private visGeometry: any;
@@ -76,11 +80,11 @@ class Viewport extends React.Component<ViewportProps> {
     public static defaultProps = {
         height: 800,
         width: 800,
-        devgui: false,
         highlightedParticleType: -1,
         loadInitialData: true,
         showMeshes: true,
         showPaths: true,
+        showBounds: true,
     };
 
     private static isCustomEvent(event: Event): event is CustomEvent {
@@ -96,10 +100,18 @@ class Viewport extends React.Component<ViewportProps> {
             agentSimController,
         } = this.props;
 
+        const colors = [
+            0x6ac1e5, 0xff2200, 0xee7967, 0xff6600, 0xd94d49, 0xffaa00, 0xffcc00, 0x00ccff,
+            0x00aaff, 0x8048f3, 0x07f4ec, 0x79bd8f, 0x8800ff, 0xaa00ff, 0xcc00ff, 0xff00cc,
+            0xff00aa, 0xff0088, 0xff0066, 0xff0044, 0xff0022, 0xff0000, 0xccff00, 0xaaff00,
+            0x88ff00, 0x00ffcc, 0x66ff00, 0x44ff00, 0x22ff00, 0x00ffaa, 0x00ff88, 0x00ffaa,
+            0x00ffff, 0x0066ff
+        ];
+
         this.visGeometry = new VisGeometry2(loggerLevel);
         this.animate = this.animate.bind(this);
         this.visGeometry.setupScene();
-        this.visGeometry.createMaterials(agentSimController.visData.colors);
+        this.visGeometry.createMaterials(colors);
         this.visGeometry.createMeshes();
         this.vdomRef = React.createRef();
         this.dispatchUpdatedTime = this.dispatchUpdatedTime.bind(this);
@@ -126,18 +138,22 @@ class Viewport extends React.Component<ViewportProps> {
             onJsonDataArrived
         } = this.props;
         const {
-            simParameters,
+            netConnection,
         } = agentSimController;
         this.visGeometry.reparent(this.vdomRef.current);
 
-        simParameters.handleTrajectoryData = onTrajectoryFileInfoChanged;
+        netConnection.onTrajectoryFileInfoArrive = (msg) => {
+            this.visGeometry.handleTrajectoryData(msg);
+            onTrajectoryFileInfoChanged(msg);
+        }
 
         agentSimController.connect().then(() => {
             if (loadInitialData) {
                 let fileName = agentSimController.getFile();
                 this.visGeometry.fetchGeometryData(
-                    `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${fileName}.json`, onJsonDataArrived
-
+                    fileName,
+                    getJsonUrl(fileName),
+                    onJsonDataArrived
                 ).then(() => {
                     this.visGeometry.render();
                     this.lastRenderTime = Date.now();
@@ -145,8 +161,6 @@ class Viewport extends React.Component<ViewportProps> {
                 agentSimController.initializeTrajectoryFile();
             }
         });
-
-        setInterval(agentSimController.netConnection.checkForUpdates.bind(agentSimController.netConnection), 1000);
 
         if (this.vdomRef.current) {
             this.vdomRef.current.addEventListener('timeChange', this.handleTimeChange, false);
@@ -167,10 +181,11 @@ class Viewport extends React.Component<ViewportProps> {
     }
 
     public componentDidUpdate(prevProps: ViewportProps) {
-        const { height, width, showMeshes, showPaths } = this.props;
+        const { height, width, showMeshes, showPaths, showBounds } = this.props;
         this.visGeometry.setHighlightById(this.props.highlightedParticleType);
         this.visGeometry.setShowMeshes(showMeshes);
         this.visGeometry.setShowPaths(showPaths);
+        this.visGeometry.setShowBounds(showBounds);
         if (prevProps.height !== height || prevProps.width !== width) {
             this.visGeometry.resize(width, height);
         }
@@ -202,6 +217,7 @@ class Viewport extends React.Component<ViewportProps> {
 
         p.then(() => {
             parsedFiles.sort(sortFrames);
+            this.visGeometry.resetMapping();
             for(let i = 0, l = parsedFiles.length; i < l; ++i)
             {
                 let frameJSON = parsedFiles[i];
@@ -220,6 +236,10 @@ class Viewport extends React.Component<ViewportProps> {
         forOwn(this.handlers, (handler, eventName) =>
             this.visGeometry.renderDom.removeEventListener(eventName, handler, false)
         );
+    }
+
+    public resetCamera() {
+        this.visGeometry.resetCamera();
     }
 
     public onPickObject(event: MouseEvent) {
@@ -290,7 +310,6 @@ class Viewport extends React.Component<ViewportProps> {
             agentSimController,
         } = this.props;
         const {
-            simParameters,
             netConnection,
             visData,
         } = agentSimController;
@@ -300,16 +319,36 @@ class Viewport extends React.Component<ViewportProps> {
         const elapsedTime = now - this.lastRenderTime;
         const totalElapsedTime = now - this.startTime;
         if (elapsedTime > timePerFrame) {
+            if(agentSimController.hasChangedFile) {
+                this.visGeometry.clear();
+                this.visGeometry.resetMapping();
+
+                let p = this.visGeometry.mapFromJSON(
+                    agentSimController.getFile(),
+                    getJsonUrl(agentSimController.getFile()),
+                );
+
+                p.then(() => {
+                    this.visGeometry.render(totalElapsedTime);
+                    this.lastRenderTime = Date.now();
+                    this.animationRequestID = requestAnimationFrame(this.animate);
+                });
+
+                p.catch(() => {
+                    this.visGeometry.render(totalElapsedTime);
+                    this.lastRenderTime = Date.now();
+                    this.animationRequestID = requestAnimationFrame(this.animate);
+                });
+
+                agentSimController.markFileChangeAsHandled();
+
+                return;
+            }
             if (!visData.atLatestFrame() && !agentSimController.paused()) {
-                this.visGeometry.colorVariant = visData.colorVariant;
                 this.visGeometry.update(visData.currentFrame());
                 this.dispatchUpdatedTime(visData.time);
                 visData.gotoNextFrame();
             }
-
-            //if (!netConnection.socketIsValid()) {
-            //this.visGeometry.clear();
-            //}
 
             this.visGeometry.render(totalElapsedTime);
             this.lastRenderTime = Date.now();
@@ -320,14 +359,12 @@ class Viewport extends React.Component<ViewportProps> {
 
     public render() {
         const {
-            devgui,
             agentSimController,
             width,
             height,
         } = this.props;
 
         const {
-            simParameters,
             netConnection,
             visData,
         } = agentSimController;
@@ -345,13 +382,6 @@ class Viewport extends React.Component<ViewportProps> {
                 }
                 ref={this.vdomRef}
             >
-                {devgui && (
-                    <DevGUI
-                        simParams={simParameters}
-                        visData={visData}
-                        netConnection={netConnection}
-                    />
-                )}
             </div>
         );
     }

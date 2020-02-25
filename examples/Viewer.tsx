@@ -4,31 +4,9 @@ import AgentVizViewer, { AgentSimController } from '../dist';
 import './style.css';
 import { CLIENT_RENEG_WINDOW } from "tls";
 
-// The agentsim component relies on a web-socket connection
-//  this version of the config will attempt to connect to the
-//  provided settings on startup
-// const netConnectionSettings = {
-//     serverIp: "52.15.70.94",
-//     serverPort: 9002,
-// }
-
-// The agentsim component relies on a web-socket connection
-//  this version of the config will request information about a
-//  valid remote server from a service hosted at the address
-//  provided below
-// const netConnectionSettingsIpService = {
-//     useIpService: true,
-//     ipServiceAddr: "http://a70fd6193bee611e9907a06c21ce3c1b-732404489.us-east-2.elb.amazonaws.com/"
-// }
-
-// could be a prop
-const useIpService = false;
-
 const netConnectionSettings = {
-    useIpService,
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
-    serverPort: 9002,
-    ipServiceAddr: null,
+    serverPort: 9002
 }
 
 interface ViewerState {
@@ -61,11 +39,14 @@ const intialState = {
     showPaths: true,
 }
 
-
+const changeFile = (file: string) => () => agentSim.changeFile(file);
 
 class Viewer extends React.Component<{}, ViewerState> {
+    private viewerRef: React.RefObject<AgentVizViewer>;
+
     constructor(props) {
         super(props)
+        this.viewerRef = React.createRef();
         this.handleJsonMeshData = this.handleJsonMeshData.bind(this);
         this.handleTimeChange = this.handleTimeChange.bind(this);
         this.playOneFrame = this.playOneFrame.bind(this);
@@ -129,32 +110,23 @@ class Viewer extends React.Component<{}, ViewerState> {
             <button
                 onClick={() => agentSim.stop()}
             >stop</button>
-            <button
-                onClick={() => agentSim.changeFile('microtubules19.h5')}
-            >microtubules file</button>
-            <button
-                onClick={() => agentSim.changeFile('actin19.h5')}
-            >
-                actin file
-            </button>
+            <button onClick={changeFile('aster.cmo')}>Aster</button>
+            <button onClick={changeFile('actin34_0.h5')}>Actin 34</button>
+            <button onClick={changeFile('microtubules30_1.h5')}>MT 30</button>
+            <button onClick={changeFile('ATPsynthase_1.h5')}>ATP 1</button>
+            <button onClick={changeFile('ATPsynthase_2.h5')}>ATP 2</button>
+            <button onClick={changeFile('ATPsynthase_3.h5')}>ATP 3</button>
+            <button onClick={changeFile('ATPsynthase_4.h5')}>ATP 4</button>
+            <button onClick={changeFile('ATPsynthase_5.h5')}>ATP 5</button>
+            <button onClick={changeFile('ATPsynthase_6.h5')}>ATP 6</button>
+            <button onClick={changeFile('ATPsynthase_7.h5')}>ATP 7</button>
+            <button onClick={changeFile('ATPsynthase_8.h5')}>ATP 8</button>
+            <button onClick={changeFile('ATPsynthase_9.h5')}>ATP 9</button>
+            <button onClick={changeFile('ATPsynthase_10.h5')}>ATP 10</button>
             <br/>
             <input id="frame-number" type="text" />
-            <button
-                onClick={() => agentSim.gotoNextFrame()}
-            >Next Frame</button>
-            <button
-                onClick={() => agentSim.gotoPreviousFrame()}
-            >Previous Frame</button>
-            <button
-                onClick={this.playOneFrame}
-            >
-                Play one frame
-            </button>
-            <button
-                onClick={() => agentSim.playFromTime(0)}
-            >
-                Play from time 0ns
-            </button>
+            <button onClick={this.playOneFrame}>Play one frame</button>
+            <button onClick={() => agentSim.playFromTime(0)}>Play from time 0ns</button>
             <br/>
             <select
                 onChange={(event) => this.highlightParticleType(event.target.value)}
@@ -170,8 +142,12 @@ class Viewer extends React.Component<{}, ViewerState> {
             <button
                 onClick={() => this.setState({showPaths: !this.state.showPaths})}
             >ShowPaths</button>
+            <button
+                onClick={() => this.viewerRef.current.resetCamera()}
+            >ResetCamera</button>
 
             <AgentVizViewer
+                ref={this.viewerRef}
                 height={this.state.height}
                 width={this.state.width}
                 devgui={false}
