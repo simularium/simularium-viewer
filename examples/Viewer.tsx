@@ -1,6 +1,6 @@
 import React from "react";
 
-import AgentVizViewer, { DummyNetConnection, NetConnection, AgentSimController } from '../dist';
+import AgentVizViewer, { NetConnection, AgentSimController } from '../dist';
 import './style.css';
 import { CLIENT_RENEG_WINDOW } from "tls";
 
@@ -9,8 +9,7 @@ const netConnectionSettings = {
     serverPort: 9002
 }
 
-//const netConn = new NetConnection(netConnectionSettings);
-const netConn = new DummyNetConnection({});
+const netConn = new NetConnection(netConnectionSettings);
 
 interface ViewerState {
     highlightId: number;
@@ -26,11 +25,9 @@ interface ViewerState {
     totalDuration: number;
 }
 
-const agentSim = new AgentSimController({ netConnection: netConn })
+const agentSim = new AgentSimController({ trajectoryPlaybackFile: "ATPsynthase_9.h5", netConnection: netConn });
 let currentFrame = 0;
 let currentTime = 0;
-
-
 
 const intialState = {
     highlightId: -1,
