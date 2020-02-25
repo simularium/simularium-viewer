@@ -22,7 +22,7 @@ export class DummyNetConnection extends NetConnection {
         this.connectLatencyMS = 1000;
 
         this.timeStep = 1;
-        this.totalDuration = 100;
+        this.totalDuration = 99;
 
         setInterval(this.broadcast.bind(this), 200);
     }
@@ -66,12 +66,12 @@ export class DummyNetConnection extends NetConnection {
             return;
         }
 
-        if (this.frameCounter * this.timeStep >= this.totalDuration) {
+        if (this.frameCounter * this.timeStep > this.totalDuration) {
             this.isStreamingData = false; // finished
             return;
         }
 
-        const bundleSize = 5; //@HACK: I know the total duration is a multiple of 5
+        const bundleSize = 5;
         const msg = this.getDataBundle(this.frameCounter, bundleSize);
         this.frameCounter += bundleSize;
         this.onMessage({ data: JSON.stringify(msg) });
