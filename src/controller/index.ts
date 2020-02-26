@@ -47,7 +47,7 @@ export default class AgentSimController {
     }
 
     public time() {
-        this.visData.time;
+        return this.visData.time();
     }
 
     public stop() {
@@ -135,3 +135,5 @@ export default class AgentSimController {
         this.visData.clearCache();
     }
 }
+
+export { AgentSimController };

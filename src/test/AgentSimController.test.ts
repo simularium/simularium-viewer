@@ -1,13 +1,28 @@
-import { AgentSimController } from "../../dist";
-import { DummyNetConnection } from "../agentsim/mock/DummyNetConnection";
+import { VisData } from "../agentsim";
+import { AgentSimController } from "../controller";
+import { DummyNetConnection } from "../agentsim";
 
 describe("AgentSimController module", () => {
-    describe("AgentSimController Scrubbing", () => {
-        test("step forwards working", () => {
+    describe("AgentSimController Time", () => {
+        test("Go to time in cache", done => {
             const netConn = new DummyNetConnection({});
+            netConn.timeStep = 1;
+            netConn.totalDuration = 100;
+            netConn.commandLatencyMS = 0;
+            netConn.connectLatencyMS = 0;
+
             const controller = new AgentSimController({
                 netConnection: netConn,
             });
+
+            controller.start();
+
+            // allow time for data streaming to occur
+            setTimeout(() => {
+                controller.gotoTime(2);
+                expect(controller.time()).toEqual(2);
+                done();
+            }, 500);
         });
     });
 });

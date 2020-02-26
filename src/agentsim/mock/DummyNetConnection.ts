@@ -6,10 +6,10 @@ export class DummyNetConnection extends NetConnection {
     private isStreamingData: boolean;
     private frameCounter: number;
     private isConnected: boolean;
-    private commandLatencyMS: number;
-    private connectLatencyMS: number;
-    private totalDuration: number;
-    private timeStep: number;
+    public commandLatencyMS: number;
+    public connectLatencyMS: number;
+    public totalDuration: number;
+    public timeStep: number;
 
     public constructor(opts) {
         super(opts);

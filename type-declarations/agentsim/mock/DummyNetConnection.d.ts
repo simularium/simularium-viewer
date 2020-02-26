@@ -1,13 +1,14 @@
-import { NetConnection } from '../';
+import { NetConnection } from "../";
 export declare class DummyNetConnection extends NetConnection {
     private isStreamingData;
     private frameCounter;
     private isConnected;
-    private commandLatencyMS;
-    private connectLatencyMS;
-    private totalDuration;
-    private timeStep;
+    commandLatencyMS: number;
+    connectLatencyMS: number;
+    totalDuration: number;
+    timeStep: number;
     constructor(opts: any);
+    private getDataBundle;
     private broadcast;
     getIp(): string;
     socketIsValid(): boolean;

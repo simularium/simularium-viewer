@@ -97,7 +97,19 @@ class VisData {
         this.lockedForFrame = false;
     }
 
-    get time() { return this.mcacheFrame < this.mframeDataCache.length ? this.mframeDataCache[this.mcacheFrame] : -1 }
+    time() {
+        if(this.mframeDataCache.length > 0) {
+            if(this.mcacheFrame < 0) {
+                return this.mframeDataCache[0].time;
+            } else if(this.mcacheFrame >= this.mframeDataCache.length) {
+                return this.mframeDataCache[this.mframeDataCache.length - 1].time;
+            } else {
+                return this.mframeDataCache[this.mcacheFrame].time;
+            }
+        }
+
+        return 0;
+    }
 
     /**
     *   Functions to check update
@@ -123,7 +135,7 @@ class VisData {
             let frameTime = this.mframeDataCache[frame].time;
             if(timeNs < frameTime)
             {
-                this.mcacheFrame = frame;
+                this.mcacheFrame = Math.max(frame - 1, 0);
                 break;
             }
         }

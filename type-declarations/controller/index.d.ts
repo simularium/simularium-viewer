@@ -10,7 +10,7 @@ export default class AgentSimController {
     readonly hasChangedFile: boolean;
     connect(): Promise<{}>;
     start(): Promise<void>;
-    time(): void;
+    time(): any;
     stop(): void;
     pause(): void;
     paused(): boolean;
@@ -25,3 +25,4 @@ export default class AgentSimController {
     cacheJSON(json: any): void;
     clearLocalCache(): void;
 }
+export { AgentSimController };
