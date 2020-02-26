@@ -1,6 +1,5 @@
 import { NetConnection } from "../";
 
-// TODO: add dummy data, dummy functions with latency, use for agentsim-controller test
 // Mocks the simularium simulation back-end, w/ latency
 export class DummyNetConnection extends NetConnection {
     private isStreamingData: boolean;
@@ -156,5 +155,4 @@ export class DummyNetConnection extends NetConnection {
             this.onMessage({ data: JSON.stringify(msg) });
         }, this.commandLatencyMS);
     }
-    // TODO go through AgentSimController, implement mock functions for netConnection functionality used
 }
