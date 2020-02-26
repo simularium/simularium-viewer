@@ -98,7 +98,7 @@ class VisData {
     }
 
     //get time() { return this.mcacheFrame < this.mframeDataCache.length ? this.mframeDataCache[this.mcacheFrame] : -1 }
-    get time() {
+    get currentFrameData() {
         if(this.mframeDataCache.length > 0) {
             if(this.mcacheFrame < 0) {
                 return this.mframeDataCache[0];

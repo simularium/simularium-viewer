@@ -47,7 +47,7 @@ export default class AgentSimController {
     }
 
     public time() {
-        return this.visData.time.time;
+        return this.visData.currentFrameData.time;
     }
 
     public stop() {
