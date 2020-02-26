@@ -13,7 +13,14 @@ export default class AgentSimController {
 
     public constructor(params) {
         this.visData = new VisData({});
-        this.netConnection = params.netConnection;
+
+        if (params.netConnection) {
+            this.netConnection = params.netConnection;
+        } else {
+            this.netConnection = new NetConnection(
+                params.netConnectionSettings
+            );
+        }
 
         this.playBackFile = params.trajectoryPlaybackFile;
         this.netConnection.onTrajectoryDataArrive = this.visData.parseAgentsFromNetData.bind(

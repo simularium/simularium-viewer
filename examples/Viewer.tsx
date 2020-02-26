@@ -9,8 +9,6 @@ const netConnectionSettings = {
     serverPort: 9002
 }
 
-const netConn = new NetConnection(netConnectionSettings);
-
 interface ViewerState {
     highlightId: number;
     pauseOn: number;
@@ -25,7 +23,11 @@ interface ViewerState {
     totalDuration: number;
 }
 
-const agentSim = new AgentSimController({ trajectoryPlaybackFile: "ATPsynthase_9.h5", netConnection: netConn });
+const agentSim = new AgentSimController({
+    trajectoryPlaybackFile: "ATPsynthase_9.h5",
+    netConnectionSettings: netConnectionSettings
+});
+
 let currentFrame = 0;
 let currentTime = 0;
 
