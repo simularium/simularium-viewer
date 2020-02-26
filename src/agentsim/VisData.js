@@ -97,18 +97,19 @@ class VisData {
         this.lockedForFrame = false;
     }
 
-    time() {
+    //get time() { return this.mcacheFrame < this.mframeDataCache.length ? this.mframeDataCache[this.mcacheFrame] : -1 }
+    get time() {
         if(this.mframeDataCache.length > 0) {
             if(this.mcacheFrame < 0) {
-                return this.mframeDataCache[0].time;
+                return this.mframeDataCache[0];
             } else if(this.mcacheFrame >= this.mframeDataCache.length) {
-                return this.mframeDataCache[this.mframeDataCache.length - 1].time;
+                return this.mframeDataCache[this.mframeDataCache.length - 1];
             } else {
-                return this.mframeDataCache[this.mcacheFrame].time;
+                return this.mframeDataCache[this.mcacheFrame];
             }
         }
 
-        return 0;
+        return -1;
     }
 
     /**
