@@ -21,8 +21,8 @@ const MAX_PATH_LEN = 32;
 const MAX_MESHES = 5000;
 const BACKGROUND_COLOR = new THREE.Color(0xcccccc);
 const PATH_END_COLOR = BACKGROUND_COLOR;
-// FIXME Hard-coded for actin simulation.  needs to be data coming from backend.
-const VOLUME_DIMS = new THREE.Vector3(300, 300, 300);
+const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
+const BOUNDING_BOX_COLOR = new THREE.Color(0x6e6e6e);
 
 function lerp(x0, x1, alpha) {
     return x0 + (x1 - x0) * alpha;
@@ -30,6 +30,7 @@ function lerp(x0, x1, alpha) {
 
 class VisGeometry2 {
     constructor(loggerLevel) {
+        this.handleTrajectoryData = this.handleTrajectoryData.bind(this);
         // map particle type id to its mesh file name
         this.visGeomMap = new Map();
         this.meshRegistry = new Map();
@@ -82,6 +83,30 @@ class VisGeometry2 {
     set colorVariant(val) { this.mcolorVariant = val; }
 
     get renderDom() { return this.renderer.domElement; }
+
+    handleTrajectoryData(trajectoryData) {
+        // get bounds.
+        if (trajectoryData.hasOwnProperty("boxSizeX") && trajectoryData.hasOwnProperty("boxSizeY") && trajectoryData.hasOwnProperty("boxSizeZ")) {
+            const bx = trajectoryData.boxSizeX;
+            const by = trajectoryData.boxSizeY;
+            const bz = trajectoryData.boxSizeZ;
+            const epsilon = 0.000001;
+            if ((Math.abs(bx) < epsilon) || (Math.abs(by) < epsilon) || (Math.abs(bz) < epsilon)) {
+                console.log("WARNING: Bounding box: at least one bound is zero; using default bounds");
+                this.resetBounds(DEFAULT_VOLUME_BOUNDS);
+            }
+            else {
+                this.resetBounds([-bx/2, -by/2, -bz/2, bx/2, by/2, bz/2]);
+            }
+        }
+        else {
+            this.resetBounds(DEFAULT_VOLUME_BOUNDS);
+        }
+    }
+
+    resetCamera() {
+        this.controls.reset();
+    }
 
     getFollowObject() {
         return this.followObject;
@@ -155,6 +180,14 @@ class VisGeometry2 {
         }
     }
 
+    setUpControls(element) {
+        this.controls = new THREE.OrbitControls(this.camera, element);
+        this.controls.maxDistance = 750;
+        this.controls.minDistance = 5;
+        this.controls.zoomSpeed = 2;
+        this.controls.enablePan = false;
+    }
+
     /**
     *   Setup ThreeJS Scene
     * */
@@ -165,11 +198,8 @@ class VisGeometry2 {
         this.camera = new THREE.PerspectiveCamera(
             75, initWidth / initHeight, 0.1, 1000,
         );
-        this.controls = new THREE.OrbitControls(this.camera);
-        this.controls.maxDistance = 750;
-        this.controls.minDistance = 5;
-        this.controls.zoomSpeed = 5;
-        this.controls.enablePan = false;
+
+        this.resetBounds(DEFAULT_VOLUME_BOUNDS);
 
         // this.dl = null;
         // this.dl = new THREE.DirectionalLight(0xffffff, 0.6);
@@ -234,16 +264,15 @@ class VisGeometry2 {
         let height = parent.scrollHeight;
         let width = parent.scrollWidth;
         parent.appendChild(this.renderer.domElement);
-
+        this.setUpControls(this.renderer.domElement);
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
-        this.renderer.setSize(width, height);        
+        this.renderer.setSize(width, height);
         this.renderer.clear();
 
         if (this.membrane.sim) {
             this.membrane.sim.resize(width, height);
         }
-        this.moleculeRenderer.resize(width, height);
 
         this.renderer.domElement.position = "absolute";
         this.renderer.domElement.top = "0px";
@@ -478,6 +507,23 @@ class VisGeometry2 {
                 }
             },
         );
+    }
+
+    resetBounds(boundsAsArray) {
+        if (!boundsAsArray) {
+            console.log("invalid bounds received");
+            return;
+        }
+        const visible = this.boundingBoxMesh ? this.boundingBoxMesh.visible : true;
+        this.scene.remove(this.boundingBoxMesh);
+        // array is minx,miny,minz, maxx,maxy,maxz
+        this.boundingBox = new THREE.Box3(
+            new THREE.Vector3(boundsAsArray[0], boundsAsArray[1], boundsAsArray[2]),
+            new THREE.Vector3(boundsAsArray[3], boundsAsArray[4], boundsAsArray[5])
+        );
+        this.boundingBoxMesh = new THREE.Box3Helper( this.boundingBox, BOUNDING_BOX_COLOR );
+        this.boundingBoxMesh.visible = visible;
+        this.scene.add(this.boundingBoxMesh);
     }
 
     setScaleForTypeId(id, scale) {
@@ -849,6 +895,10 @@ class VisGeometry2 {
                 runtimeMesh.visible = showMeshes;
             }
         }
+    }
+
+    setShowBounds(showBounds) {
+        this.boundingBoxMesh.visible = showBounds;
     }
 
     showPathForAgentIndex(idx, visible) {
