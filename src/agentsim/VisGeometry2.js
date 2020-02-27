@@ -486,7 +486,7 @@ class VisGeometry2 {
         return null;
     }
 
-    fetchGeometryData(filePath, callback) {
+    fetchGeometryData(name, filePath, callback) {
         const jsonRequest = new Request(filePath);
         const self = this;
         return fetch(jsonRequest).then(
