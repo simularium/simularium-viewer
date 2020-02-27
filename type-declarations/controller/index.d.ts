@@ -6,15 +6,16 @@ export default class AgentSimController {
     private isPaused;
     private fileChanged;
     private playBackFile;
-    constructor(netConnectionSettings: any, params: any);
+    constructor(params: any);
     readonly hasChangedFile: boolean;
     connect(): Promise<{}>;
     start(): Promise<void>;
-    time(): void;
+    time(): any;
     stop(): void;
     pause(): void;
     paused(): boolean;
     initializeTrajectoryFile(): void;
+    gotoTime(timeNs: any): void;
     playFromTime(timeNs: any): void;
     resume(): void;
     changeFile(newFile: any): void;
@@ -24,3 +25,4 @@ export default class AgentSimController {
     cacheJSON(json: any): void;
     clearLocalCache(): void;
 }
+export { AgentSimController };

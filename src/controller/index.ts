@@ -11,14 +11,16 @@ export default class AgentSimController {
     private fileChanged: boolean;
     private playBackFile: any;
 
-    public constructor(netConnectionSettings, params) {
-        const loggerLevel =
-            params.loggerLevel === "debug" ? jsLogger.DEBUG : jsLogger.OFF;
+    public constructor(params) {
         this.visData = new VisData({});
-        this.netConnection = new NetConnection(
-            netConnectionSettings,
-            loggerLevel
-        );
+
+        if (params.netConnection) {
+            this.netConnection = params.netConnection;
+        } else {
+            this.netConnection = new NetConnection(
+                params.netConnectionSettings
+            );
+        }
 
         this.playBackFile = params.trajectoryPlaybackFile;
         this.netConnection.onTrajectoryDataArrive = this.visData.parseAgentsFromNetData.bind(
@@ -52,7 +54,7 @@ export default class AgentSimController {
     }
 
     public time() {
-        this.visData.time;
+        return this.visData.currentFrameData.time;
     }
 
     public stop() {
@@ -75,8 +77,7 @@ export default class AgentSimController {
         this.netConnection.requestTrajectoryFileInfo(this.playBackFile);
     }
 
-    public playFromTime(timeNs) {
-        // If there is a locally cached frame, use it
+    public gotoTime(timeNs) {
         if (this.visData.hasLocalCacheForTime(timeNs)) {
             this.visData.gotoTime(timeNs);
         } else {
@@ -84,10 +85,13 @@ export default class AgentSimController {
                 // else reset the local cache,
                 //  and play remotely from the desired simulation time
                 this.visData.clearCache();
-                this.netConnection.playRemoteSimCacheFromTime(timeNs);
+                this.netConnection.gotoRemoteSimulationTime(timeNs);
             }
         }
+    }
 
+    public playFromTime(timeNs) {
+        this.gotoTime(timeNs);
         this.isPaused = false;
     }
 
@@ -138,3 +142,5 @@ export default class AgentSimController {
         this.visData.clearCache();
     }
 }
+
+export { AgentSimController };

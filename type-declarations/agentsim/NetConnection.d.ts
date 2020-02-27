@@ -1,13 +1,36 @@
+interface NetMessageType {
+    ID_UNDEFINED_WEB_REQUEST: number;
+    ID_VIS_DATA_ARRIVE: number;
+    ID_VIS_DATA_REQUEST: number;
+    ID_VIS_DATA_FINISH: number;
+    ID_VIS_DATA_PAUSE: number;
+    ID_VIS_DATA_RESUME: number;
+    ID_VIS_DATA_ABORT: number;
+    ID_UPDATE_TIME_STEP: number;
+    ID_UPDATE_RATE_PARAM: number;
+    ID_MODEL_DEFINITION: number;
+    ID_HEARTBEAT_PING: number;
+    ID_HEARTBEAT_PONG: number;
+    ID_PLAY_CACHE: number;
+    ID_TRAJECTORY_FILE_INFO: number;
+    ID_GOTO_SIMULATION_TIME: number;
+    ID_INIT_TRAJECTORY_FILE: number;
+}
+interface PlayBackType {
+    ID_LIVE_SIMULATION: number;
+    ID_PRE_RUN_SIMULATION: number;
+    ID_TRAJECTORY_FILE_PLAYBACK: number;
+}
 export declare class NetConnection {
     private webSocket;
     private serverIp;
     private serverPort;
-    private msgTypes;
-    private playbackTypes;
-    private logger;
+    protected playbackTypes: PlayBackType;
+    protected logger: any;
+    protected msgTypes: NetMessageType;
     onTrajectoryFileInfoArrive: Function;
     onTrajectoryDataArrive: Function;
-    constructor(opts: any, loggerLevel: any);
+    constructor(opts: any);
     /**
      * WebSocket State
      */
@@ -17,7 +40,7 @@ export declare class NetConnection {
     /**
      *   Websocket Message Handler
      * */
-    private onMessage;
+    protected onMessage(event: any): void;
     private onOpen;
     private onClose;
     /**
@@ -27,7 +50,7 @@ export declare class NetConnection {
     disconnect(): void;
     getIp(): string;
     private connectToUriAsync;
-    connectToRemoteServer(address: any): Promise<{}>;
+    connectToRemoteServer(address: string): Promise<{}>;
     /**
      * Websocket Send Helper Functions
      */
@@ -55,8 +78,9 @@ export declare class NetConnection {
     pauseRemoteSim(): void;
     resumeRemoteSim(): void;
     abortRemoteSim(): void;
-    requestSingleFrame(startFrameNumber: any): void;
+    requestSingleFrame(startFrameNumber: number): void;
     playRemoteSimCacheFromTime(timeNanoSeconds: any): void;
-    gotoRemoteSimulationTime(timeNanoSeconds: any): void;
-    requestTrajectoryFileInfo(fileName: any): void;
+    gotoRemoteSimulationTime(timeNanoSeconds: number): void;
+    requestTrajectoryFileInfo(fileName: string): void;
 }
+export {};
