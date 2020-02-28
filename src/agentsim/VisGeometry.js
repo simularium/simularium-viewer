@@ -607,12 +607,11 @@ class VisGeometry {
 
                 const curvePoints = [];
                 const { subpoints } = agentData;
-                let numSubPoints = subpoints.length;
-
+                const numSubPoints = subpoints.length;
                 if(numSubPoints % 3 !== 0) {
                     this.logger.warn("Warning, subpoints array does not contain a multiple of 3");
                     this.logger.warn(agentData);
-                    numSubPoints = numSubPoints - numSubPoints % 3;
+                    return;
                 }
                 const collisionRadius = agentData.cr;
                 for (let j = 0; j < numSubPoints; j += 3) {
