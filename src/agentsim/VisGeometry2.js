@@ -7,9 +7,9 @@
 import * as THREE from  'three';
 global.THREE = THREE;
 
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { WEBGL } from 'three/examples/jsm/WebGL.js';
 
-import './three/OBJLoader.js';
 import './three/OrbitControls.js';
 
 import jsLogger from 'js-logger';
@@ -229,7 +229,7 @@ class VisGeometry2 {
     }
 
     loadObj(meshName) {
-        const objLoader = new THREE.OBJLoader();
+        const objLoader = new OBJLoader();
         objLoader.load(
             `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/meshes/obj/${meshName}`,
             (object) => {
@@ -498,16 +498,21 @@ class VisGeometry2 {
                 self.logger.debug('JSON Mesh mapping loaded: ', jsonData);
                 Object.keys(jsonData).forEach((id) => {
                     const entry = jsonData[id];
-                    self.mapTypeIdToGeom(Number(id), entry.mesh);
-                    self.setScaleForTypeId(Number(id), entry.scale);
+                    if (id === "size") {
+                        console.log("WARNING: Ignoring deprecated bounding box data");
+                    }
+                    else {
+                        self.mapTypeIdToGeom(Number(id), entry.mesh);
+                        self.setScaleForTypeId(Number(id), entry.scale);
+                    }
                 });
-                self.setupMembrane(self.membrane);
                 if (callback) {
                     callback(jsonData);
                 }
             },
         );
     }
+
 
     resetBounds(boundsAsArray) {
         if (!boundsAsArray) {
