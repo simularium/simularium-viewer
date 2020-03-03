@@ -44,14 +44,16 @@ class MoleculePass {
                 // IN_color = vec4(1.0, 0.0, 0.0, 1.0);
                 // IN_instanceId = 1;
                 // IN_atomId = 1;
+
                 gl_Position = projectionMatrix * modelViewPosition;
 
                 //IN_radius = (gl_Position.w > 0) ? gl_Position.w : 20.0;
                 //gl_PointSize = IN_radius;
-
-
                 //center = (0.5 * gl_Position.xy/gl_Position.w + 0.5) * vpSize;
+
                 gl_PointSize = iResolution.y * projectionMatrix[1][1] * radius * Scale / gl_Position.w;
+                //gl_PointSize = 10.0;
+                //gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
                 IN_radius = radius;
             }
         `;
@@ -73,7 +75,10 @@ class MoleculePass {
             uniform mat4 projectionMatrix;
             
             void main()	{
+                //gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+                //return;
                 
+
                 vec2 uv = (gl_PointCoord - vec2(.5, .5)) * 2.0;
                 float lensqr = dot(uv, uv);
                 if (lensqr > 1.0) discard;

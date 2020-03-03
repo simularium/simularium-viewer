@@ -2,6 +2,7 @@ import SSAO1Pass from "./SSAO";
 import MoleculePass from "./MoleculePass";
 import BlurPass from "./GaussianBlur";
 import CompositePass from "./CompositePass";
+import DrawBufferPass from "./DrawBufferPass";
 
 class MoleculeRenderer {
     constructor() {
@@ -11,6 +12,7 @@ class MoleculeRenderer {
         this.blur1Pass = new BlurPass(1);
         this.blur2Pass = new BlurPass(1);
         this.compositePass = new CompositePass();
+        this.drawBufferPass = new DrawBufferPass();
 
         // buffers:
         this.colorBuffer = new THREE.WebGLRenderTarget(2, 2, {
@@ -118,6 +120,7 @@ class MoleculeRenderer {
         this.blur1Pass.resize(x,y);
         this.blur2Pass.resize(x,y);
         this.compositePass.resize(x,y);
+        this.drawBufferPass.resize(x,y);
     }
 
     render(renderer, camera, target) {
@@ -133,7 +136,9 @@ class MoleculeRenderer {
         this.blur2Pass.render(renderer, this.ssaoBufferBlurred2, this.ssaoBuffer2, this.positionBuffer, this.blurIntermediateBuffer);
 
         // render into default render target
-        this.compositePass.render(renderer, target, this.ssaoBufferBlurred, this.ssaoBufferBlurred2, this.colorBuffer);
+//        this.compositePass.render(renderer, target, this.ssaoBufferBlurred, this.ssaoBufferBlurred2, this.colorBuffer);
+
+        this.drawBufferPass.render(renderer, target, this.colorBuffer);
     }
 }
 

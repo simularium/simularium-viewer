@@ -38,8 +38,6 @@ class VisGeometry2 {
         // map particle type id to its mesh uniform scale value
         this.scaleMapping = new Map();
         this.geomCount = MAX_MESHES;
-        this.colors = [];
-        this.desatColors = [];
         this.materials = [];
         this.desatMaterials = [];
         this.highlightMaterial = new THREE.MeshBasicMaterial({color: new THREE.Color(1,0,0)});
@@ -47,7 +45,7 @@ class VisGeometry2 {
         this.runTimeMeshes = [];
         this.runTimeFiberMeshes = new Map();
         this.mlastNumberOfAgents = 0;
-        this.mcolorVariant = 50;
+        this.colorVariant = 50;
         this.fixLightsToCamera = true;
         this.highlightedId = -1;
 
@@ -58,13 +56,26 @@ class VisGeometry2 {
         this.sphereGeometry = new THREE.SphereBufferGeometry(1, 32, 32);
 
         this.membrane = {
-            // assume only one membrane mesh 
+            // assume only one membrane mesh
             mesh: null,
             sim: MembraneShader.MembraneShaderSim ? new MembraneShader.MembraneShaderSim() : null,
-            MembraneShader: MembraneShader.MembraneShader,
             material: null,
             runtimeMeshIndex: -1,
+            faces: [
+                {name:"curved_5nm_Right"},
+                {name:"curved_5nm_Left"}
+            ],
+            sides: [
+                {name:"curved_5nm_Bottom"},
+                {name:"curved_5nm_Top"},
+                {name:"curved_5nm_Back"},
+                {name:"curved_5nm_Front"}
+            ],
+            facesMaterial: MembraneShader.MembraneShader.clone(),
+            sidesMaterial: MembraneShader.MembraneShader.clone()
         };
+        this.membrane.facesMaterial.uniforms.uvscale.value = new THREE.Vector2(40.0, 40.0);
+        this.membrane.sidesMaterial.uniforms.uvscale.value = new THREE.Vector2(2.0, 40.0);
 
         this.moleculeRenderer = new MoleculeRenderer();
         
@@ -77,10 +88,6 @@ class VisGeometry2 {
     get lastNumberOfAgents() { return this.mlastNumberOfAgents; }
 
     set lastNumberOfAgents(val) { this.mlastNumberOfAgents = val; }
-
-    get colorVariant() { return this.mcolorVariant; }
-
-    set colorVariant(val) { this.mcolorVariant = val; }
 
     get renderDom() { return this.renderer.domElement; }
 
@@ -163,19 +170,14 @@ class VisGeometry2 {
         const meshGeom = this.meshRegistry.get(meshName);
 
         // go over all objects and update mesh of this typeId
+        // if this happens before the first updateScene, then the runtimeMeshes don't have type id's yet.
         let nMeshes = this.runTimeMeshes.length;
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
             let runtimeMesh = this.getMesh(i);
             if (runtimeMesh.userData && typeIds.includes(runtimeMesh.userData.typeId)) {
                 const isFollowedObject = (runtimeMesh === this.followObject);
 
-                const p = runtimeMesh.position;
-                const r = runtimeMesh.rotation;
-                const s = runtimeMesh.scale;
                 runtimeMesh = this.setupMeshGeometry(i, runtimeMesh, meshGeom, isFollowedObject);
-                runtimeMesh.position.copy(p);
-                runtimeMesh.rotation.copy(r);
-                runtimeMesh.scale.copy(s);
             }
         }
     }
@@ -225,7 +227,7 @@ class VisGeometry2 {
         this.renderer.setClearColor(BACKGROUND_COLOR, 1);
         this.renderer.clear();
 
-        this.camera.position.z = 5;
+        this.camera.position.z = 120;
     }
 
     loadObj(meshName) {
@@ -268,6 +270,9 @@ class VisGeometry2 {
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(width, height);
+        
+        this.moleculeRenderer.resize(width, height);
+
         this.renderer.clear();
 
         if (this.membrane.sim) {
@@ -299,15 +304,17 @@ class VisGeometry2 {
             this.membrane.sim.render(this.renderer, elapsedSeconds);
         }
 
-        if (this.membrane.mesh && this.membrane.material) {
-            this.membrane.material.uniforms.iTime.value = elapsedSeconds;
+        if (this.membrane.mesh) {
+            this.membrane.facesMaterial.uniforms.iTime.value = elapsedSeconds;
+            this.membrane.sidesMaterial.uniforms.iTime.value = elapsedSeconds;
 
             if (this.membrane.sim) {
                 this.membrane.material.uniforms.iChannel0.value = this.membrane.sim.getOutputTarget().texture;
                 this.membrane.material.uniforms.iChannelResolution0.value = new THREE.Vector2(this.membrane.sim.getOutputTarget().width, this.membrane.sim.getOutputTarget().height);
             }
 
-            this.renderer.getDrawingBufferSize(this.membrane.material.uniforms.iResolution.value);
+            this.renderer.getDrawingBufferSize(this.membrane.facesMaterial.uniforms.iResolution.value);
+            this.renderer.getDrawingBufferSize(this.membrane.sidesMaterial.uniforms.iResolution.value);
         }
 
         this.controls.update();
@@ -328,24 +335,21 @@ class VisGeometry2 {
     /**
     *   Run Time Mesh functions
     */
-    createMaterials(colors) {
-        this.colors = [];
-        const numColors = colors.length;
-        for (let i = 0; i < numColors; i += 1) {
-            this.materials.push(
-                new THREE.MeshLambertMaterial({ color: colors[i] }),
-            );
-            const hsl = {};
-            const desatColor = new THREE.Color(colors[i]);
-            hsl = desatColor.getHSL(hsl);
-            desatColor.setHSL(hsl.h, 0.5*hsl.s, hsl.l);
-            this.colors.push(colors[i]);
-            this.desatColors.push(desatColor);
-            this.desatMaterials.push(
-                new THREE.MeshLambertMaterial({ color: desatColor, opacity: 0.25, transparent: true }),
-            );
-        }
+   createMaterials(colors) {
+    const numColors = colors.length;
+    for (let i = 0; i < numColors; i += 1) {
+        this.materials.push(
+            new THREE.MeshLambertMaterial({ color: colors[i] }),
+        );
+        const hsl = {};
+        const desatColor = new THREE.Color(colors[i]);
+        hsl = desatColor.getHSL(hsl);
+        desatColor.setHSL(hsl.h, 0.5*hsl.s, hsl.l);
+        this.desatMaterials.push(
+            new THREE.MeshLambertMaterial({ color: desatColor, opacity: 0.25, transparent: true }),
+        );
     }
+}
 
     createMeshes() {
         const { scene } = this;
@@ -396,8 +400,12 @@ class VisGeometry2 {
 
     addMesh(meshName, mesh) {
         this.meshRegistry.set(meshName, mesh);
+        if (!mesh.name) {
+            mesh.name = meshName;
+        }
         if (meshName.includes("membrane")) {
             this.membrane.mesh = mesh;
+            this.assignMaterial(mesh);
         }
     }
 
@@ -420,41 +428,19 @@ class VisGeometry2 {
 
         // membrane is special
         if (typeId === this.membrane.typeId) {
-            return isHighlighted ? this.membrane.material : this.desatMaterials[0];
+            return isHighlighted ? this.membrane.facesMaterial : this.desatMaterials[0];
         }
 
         let matArray = isHighlighted ? this.materials : this.desatMaterials;
         return matArray[Number(index) % matArray.length];
     }
 
-    setupMembrane(membraneData) {
-        if (!membraneData) {
-            return;
-        }
-
-        if (this.membrane && this.membrane.mesh) {
-            this.scene.remove(this.membrane.mesh);
-        }
-
-        const texsplat = new THREE.TextureLoader().load("assets/splat.png");
-        texsplat.wrapS = THREE.RepeatWrapping;
-        texsplat.wrapT = THREE.RepeatWrapping;
-
-        const material = this.membrane.MembraneShader.clone();
-        material.uniforms.splat.value = texsplat;
-
-        this.membrane.material = material;
-
-        if (this.membrane.runtimeMeshIndex !== -1) {
-            const m = this.getMesh(this.membrane.runtimeMeshIndex);
-            this.assignMaterial(m, this.membrane.material);
-        }
-    }
-
     /**
     *   Data Management
     */
     resetMapping() {
+        this.resetAllGeometry();
+
         this.visGeomMap.clear();
         this.meshRegistry.clear();
         this.meshLoadAttempted.clear();
@@ -471,7 +457,7 @@ class VisGeometry2 {
             this.membrane.typeId = id;
         }
 
-        if (!this.meshRegistry.has(meshName) && !this.meshLoadAttempted.get(meshName)) {
+        if (meshName && !this.meshRegistry.has(meshName) && !this.meshLoadAttempted.get(meshName)) {
             this.loadObj(meshName);
             this.meshLoadAttempted.set(meshName, true);
         }
@@ -683,6 +669,8 @@ class VisGeometry2 {
 
         this.moleculeRenderer.updateMolecules(buf, agents.length);
 
+        this.hideUnusedFibers(fiberIndex);
+
         if (this.followObject) {
             // keep camera at same distance from target.
             const direction = new THREE.Vector3().subVectors( this.camera.position, this.controls.target );
@@ -697,15 +685,22 @@ class VisGeometry2 {
     }
 
     setupMeshGeometry(i, runtimeMesh, meshGeom, isFollowedObject) {
+        // remember current transform
+        const p = runtimeMesh.position;
+        const r = runtimeMesh.rotation;
+        const s = runtimeMesh.scale;
+
         if (this.membrane.mesh === meshGeom) {
             if (this.membrane.mesh && runtimeMesh.children.length !== this.membrane.mesh.children.length) {
                 // to avoid a deep clone of userData, just reuse the instance
                 const userData = runtimeMesh.userData;
+                const visible = runtimeMesh.visible;
                 runtimeMesh.userData = null;
                 this.scene.remove(runtimeMesh);
                 runtimeMesh = this.membrane.mesh.clone();
                 runtimeMesh.userData = userData;
-                this.assignMaterial(runtimeMesh, this.membrane.material || runtimeMesh.userData.baseMaterial);
+                runtimeMesh.visible = visible;
+                this.assignMaterial(runtimeMesh);
                 this.scene.add(runtimeMesh);
                 this.resetMesh(i, runtimeMesh);
                 this.membrane.runtimeMeshIndex = i;
@@ -714,10 +709,12 @@ class VisGeometry2 {
         else {
             // to avoid a deep clone of userData, just reuse the instance
             const userData = runtimeMesh.userData;
+            const visible = runtimeMesh.visible;
             runtimeMesh.userData = null;
             this.scene.remove(runtimeMesh);
             runtimeMesh = meshGeom.clone();
             runtimeMesh.userData = userData;
+            runtimeMesh.visible = visible;
             this.scene.add(runtimeMesh);
             this.resetMesh(i, runtimeMesh);
 
@@ -729,10 +726,20 @@ class VisGeometry2 {
             }
 
         }
+
+        // restore transform
+        runtimeMesh.position.copy(p);
+        runtimeMesh.rotation.copy(r);
+        runtimeMesh.scale.copy(s);
+
         return runtimeMesh;
     }
 
     assignMaterial(runtimeMesh, material) {
+        if (runtimeMesh.name.includes("membrane")) {
+            return this.assignMembraneMaterial(runtimeMesh);
+        }
+
         if (runtimeMesh instanceof THREE.Mesh) {
             runtimeMesh.material = material;
         }
@@ -740,6 +747,33 @@ class VisGeometry2 {
             runtimeMesh.traverse( (child) => {
                 if ( child instanceof THREE.Mesh ) {
                     child.material = material;
+                }
+            });
+        }
+    }
+
+    assignMembraneMaterial(runtimeMesh) {
+        const isHighlighted = (this.highlightedId == -1 || this.highlightedId == runtimeMesh.userData.typeId);
+
+        if (isHighlighted) {
+            // at this time, assign separate material parameters to the faces and sides of the membrane
+            const faceNames = this.membrane.faces.map((el)=>{return el.name});
+            const sideNames = this.membrane.sides.map((el)=>{return el.name});
+            runtimeMesh.traverse( (child) => {
+                if ( child instanceof THREE.Mesh ) {
+                    if (faceNames.includes(child.name)){
+                        child.material = this.membrane.facesMaterial;
+                    }
+                    else if (sideNames.includes(child.name)) {
+                        child.material = this.membrane.sidesMaterial;
+                    }
+                }
+            });
+        }
+        else {
+            runtimeMesh.traverse( (child) => {
+                if ( child instanceof THREE.Mesh ) {
+                    child.material = this.desatMaterials[0];
                 }
             });
         }
@@ -931,8 +965,42 @@ class VisGeometry2 {
         }
     }
 
+    hideUnusedFibers(numberOfFibers) {
+        for(let i = numberOfFibers; i < MAX_MESHES; i += 1) {
+            const name = `Fiber_${i.toString()}`;
+            const fiberMesh = this.getFiberMesh(name);
+
+            if(fiberMesh.visible === false) {
+                break;
+            }
+
+            const nameEnd0 = `FiberEnd0_${i.toString()}`;
+            const end0 = this.getFiberMesh(nameEnd0);
+
+            const nameEnd1 = `FiberEnd1_${i.toString()}`;
+            const end1 = this.getFiberMesh(nameEnd1);
+
+            fiberMesh.visible = false;
+            end0.visible = false;
+            end1.visible = false;
+        }
+    }
+
     clear() {
         this.hideUnusedMeshes(0);
+        this.hideUnusedFibers(0);
+    }
+
+    resetAllGeometry() {
+        // set all runtime meshes back to spheres.
+        const sphereGeom = this.getSphereGeom();
+        let nMeshes = this.runTimeMeshes.length;
+        for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
+            if (this.runTimeMeshes[i].userData) {
+                const runtimeMesh = this.setupMeshGeometry(i, this.runTimeMeshes[i], new THREE.Mesh(sphereGeom), false);
+                this.assignMaterial(runtimeMesh, new THREE.MeshLambertMaterial({ color: 0xFF00FF }));
+            }
+        }
     }
 
     update(agents) {

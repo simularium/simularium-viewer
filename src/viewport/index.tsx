@@ -9,7 +9,7 @@ import {
 //  such as OrbitControls.js below
 import * as THREE from  'three';
 
-import { VisGeometry, VisGeometry2, DevGUI } from "../agentsim";
+import { VisGeometry2, DevGUI } from "../agentsim";
 
 interface ViewportProps {
     height: number;
