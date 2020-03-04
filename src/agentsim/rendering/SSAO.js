@@ -110,15 +110,16 @@ class SSAO1Pass {
     }
 
     createNoiseTex() {
-        const noisedata = new Float32Array(16*3);
+        const noisedata = new Float32Array(16*4);
         for (let i = 0; i < 16; i++)
         {
-            noisedata[i*3+0] = Math.random()*2.0 - 1.0;
-            noisedata[i*3+1] = Math.random()*2.0 - 1.0;
-            noisedata[i*3+2] = 0;
+            noisedata[i*4+0] = Math.random()*2.0 - 1.0;
+            noisedata[i*4+1] = Math.random()*2.0 - 1.0;
+            noisedata[i*4+2] = 0;
+            noisedata[i*4+3] = 0;
         }
         // TODO half float type?
-        return new THREE.DataTexture( noisedata, 4, 4, THREE.RGBFormat, THREE.FloatType );
+        return new THREE.DataTexture( noisedata, 4, 4, THREE.RGBAFormat, THREE.FloatType );
     }
 
     createSSAOSamples() {
