@@ -10,6 +10,7 @@ class CompositePass {
                 atomIdTex: { value: null },
                 instanceIdTex: { value: null },
                 depthBufferTex: { value: null },
+                colorsBuffer: { value: null },
                 zNear: {value: 0.1},
                 zFar: {value: 1000},
             },
@@ -22,6 +23,8 @@ class CompositePass {
             uniform sampler2D atomIdTex;
             uniform sampler2D instanceIdTex;
             uniform sampler2D depthBufferTex;
+
+            uniform sampler2D colorsBuffer;
             
             uniform float zNear;
             uniform float zFar;
@@ -266,7 +269,8 @@ class CompositePass {
 
                 //vec4 col = vec4(IngredientColor[ingredientId],1.0);
                 // todo: consider using UINT for optimal % operator, instead of INT
-                vec4 col = vec4(ResidueColors[ingredientId % 23],1.0);
+                //vec4 col = vec4(ResidueColors[ingredientId % 23],1.0);
+                vec4 col = texelFetch(colorsBuffer, ivec2(ingredientId, 0), 0);
 
                 float z_b = texture(depthBufferTex, texCoords).r;
                 float eyeDepth = LinearEyeDepth(z_b);
@@ -302,7 +306,8 @@ class CompositePass {
                 float c = ingredientGroupsColorValues.y + (ingredientGroupsColorRanges.y) * (ingredientLocalIndex - 0.5f);
                 float l = ingredientGroupsColorValues.z + (ingredientGroupsColorRanges.z) * (ingredientLocalIndex - 0.5f);
             
-                vec3 hcl = rgb_to_hcv(col.xyz*20.0);
+                vec3 hcl = rgb_to_hcv(col.xyz);
+//                vec3 hcl = rgb_to_hcv(col.xyz*20.0);
                 h = hcl.r;
                 c = hcl.g+10.0;
                 l = hcl.b+10.0;
@@ -387,6 +392,13 @@ gl_FragColor = vec4(occ1 * occ2 * color.xyz, 1.0);
             `
         });
     }
+
+    // colorsData is a Float32Array of rgba
+    updateColors(numColors, colorsData) {
+        this.pass.material.uniforms.colorsBuffer.value = new THREE.DataTexture( colorsData, numColors, 1, THREE.RGBAFormat, THREE.FloatType );
+    }
+    
+
     resize(x, y) {
 
     }

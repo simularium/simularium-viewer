@@ -129,6 +129,11 @@ class MoleculeRenderer {
     updateMolecules(positions, typeids, numVertices) {
         this.gbufferPass.update(positions, typeids, numVertices);
     }
+    // colorsData is a Float32Array of rgb triples
+    updateColors(numColors, colorsData) {
+        this.compositePass.updateColors(numColors, colorsData);
+    }
+
     createMoleculeBuffer(n) {
         this.gbufferPass.createMoleculeBuffer(n);
     }
@@ -155,6 +160,11 @@ class MoleculeRenderer {
     }
 
     render(renderer, camera, target) {
+        // TODO : DEPTH HANDLING STRATEGY:
+        // gbuffer pass writes gl_FragDepth
+        // depth buffer should be not written to or tested again after this.
+        // depth buffer should be maintained and transferred to final render pass so that other standard geometry can be drawn
+
         // 1 draw molecules into G buffers
         // TODO : MRT
         this.gbufferPass.render(renderer, camera, this.colorBuffer, this.normalBuffer, this.positionBuffer);
