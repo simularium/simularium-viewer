@@ -325,7 +325,7 @@ class Viewport extends React.Component<ViewportProps> {
                 this.visGeometry.clear();
                 this.visGeometry.resetMapping();
 
-                let p = this.visGeometry.mapFromJSON(
+                let p = this.visGeometry.fetchGeometryData(
                     agentSimController.getFile(),
                     getJsonUrl(agentSimController.getFile()),
                 );

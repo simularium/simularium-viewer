@@ -270,7 +270,7 @@ class VisGeometry2 {
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(width, height);
-        
+
         this.moleculeRenderer.resize(width, height);
 
         this.renderer.clear();
@@ -558,7 +558,8 @@ class VisGeometry2 {
         let dx, dy, dz;
         // The agents sent over are mapped by an integer id
         
-        const buf = new Float32Array(3*agents.length);
+        const buf = new Float32Array(4*agents.length);
+        const typeids = new Float32Array(agents.length);
 
         agents.forEach((agentData, i) => {
 
@@ -606,6 +607,7 @@ class VisGeometry2 {
                 buf[i*3 + 0] = agentData.x;
                 buf[i*3 + 1] = agentData.y;
                 buf[i*3 + 2] = agentData.z;
+                typeids[i] = typeId;
 
                 // runtimeMesh.rotation.x = agentData.xrot;
                 // runtimeMesh.rotation.y = agentData.yrot;
@@ -667,7 +669,7 @@ class VisGeometry2 {
             }
         });
 
-        this.moleculeRenderer.updateMolecules(buf, agents.length);
+        this.moleculeRenderer.updateMolecules(buf, typeids, agents.length);
 
         this.hideUnusedFibers(fiberIndex);
 

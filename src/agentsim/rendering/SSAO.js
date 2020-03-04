@@ -79,6 +79,9 @@ class SSAO1Pass {
                 occlusion += (sampleDepth >= posSample.z ? 1.0 : 0.0) * rangeCheck;
               }
             
+              //gl_FragColor = vec4(1.0 - occlusion/ float(kernelSize), 1.0 - occlusion / float(kernelSize), 1.0 - occlusion / float(kernelSize), 1.0);
+              //return;
+
               float occlusion_weight = smoothstep(ssao_threshold - ssao_falloff, ssao_threshold, length(viewPos));
               occlusion_weight = 1.0 - occlusion_weight;
               occlusion_weight *= 0.95;

@@ -28,7 +28,8 @@ class BlurXPass {
                 int i;
                 float w, sum = 0.0;
             
-                const float depthThreshold = 0.0001;
+                // in view space depth coordinates
+                const float depthThreshold = 1.0;//0.0001;
             
                 if (amount == 0.0)
                 {
@@ -94,7 +95,8 @@ class BlurYPass {
                 int i;
                 float w, sum = 0.0;
             
-                const float depthThreshold = 0.0001;
+                // in view space depth coordinates
+                const float depthThreshold = 1.0;//0.0001;
             
                 if (amount == 0.0)
                 {

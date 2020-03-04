@@ -4,13 +4,19 @@ import BlurPass from "./GaussianBlur";
 import CompositePass from "./CompositePass";
 import DrawBufferPass from "./DrawBufferPass";
 
+import * as dat from 'dat.gui';
+
+
 class MoleculeRenderer {
     constructor() {
         this.gbufferPass = new MoleculePass();
-        this.ssao1Pass = new SSAO1Pass(0.00005, 0.38505, 0.08333);
-        this.ssao2Pass = new SSAO1Pass(0.00125, 1.05714, 0.15188);
-        this.blur1Pass = new BlurPass(1);
-        this.blur2Pass = new BlurPass(1);
+        // radius, threshold, falloff in view space coordinates.
+        this.ssao1Pass = new SSAO1Pass(4.5, 150, 50);
+        this.ssao2Pass = new SSAO1Pass(4.5, 150, 50);
+//        this.ssao1Pass = new SSAO1Pass(0.00005, 0.38505, 0.08333);
+//        this.ssao2Pass = new SSAO1Pass(0.00125, 1.05714, 0.15188);
+        this.blur1Pass = new BlurPass(10);
+        this.blur2Pass = new BlurPass(10);
         this.compositePass = new CompositePass();
         this.drawBufferPass = new DrawBufferPass();
 
@@ -90,13 +96,38 @@ class MoleculeRenderer {
             depthBuffer: false,
             stencilBuffer: false,
         });
-        this.ssaoBufferBlurred2.texture.generateMipmaps = false;    
+        this.ssaoBufferBlurred2.texture.generateMipmaps = false;
+
+        this.setupGui();
+    }
+
+    setupGui() { 
+        var settings = {
+            aoradius1: 4.5,
+            aoradius2: 4.5,
+            blurradius1: 10.0,
+            blurradius2: 10.0
+        }
+        const gui = new dat.GUI();
+        var self = this;
+        gui.add(settings, 'aoradius1', 0.01, 10.0).onChange((value)=> {
+            self.ssao1Pass.pass.material.uniforms.radius.value = value;
+        });
+        gui.add(settings, 'aoradius2', 0.01, 10.0).onChange((value)=> {
+            self.ssao2Pass.pass.material.uniforms.radius.value = value;
+        });
+        gui.add(settings, 'blurradius1', 0.01, 10.0).onChange((value)=> {
+            self.blur1Pass.setRadius(value);
+        });
+        gui.add(settings, 'blurradius2', 0.01, 10.0).onChange((value)=> {
+            self.blur2Pass.setRadius(value);
+        });
 
     }
 
     // TODO this is a geometry/scene update and should be updated through some other means?
-    updateMolecules(positions, numVertices) {
-        this.gbufferPass.update(positions, numVertices);
+    updateMolecules(positions, typeids, numVertices) {
+        this.gbufferPass.update(positions, typeids, numVertices);
     }
     createMoleculeBuffer(n) {
         this.gbufferPass.createMoleculeBuffer(n);
@@ -136,10 +167,15 @@ class MoleculeRenderer {
         this.blur2Pass.render(renderer, this.ssaoBufferBlurred2, this.ssaoBuffer2, this.positionBuffer, this.blurIntermediateBuffer);
 
         // render into default render target
-//        this.compositePass.render(renderer, target, this.ssaoBufferBlurred, this.ssaoBufferBlurred2, this.colorBuffer);
+        this.compositePass.render(renderer, target, this.ssaoBufferBlurred, this.ssaoBufferBlurred2, this.colorBuffer);
 
-        this.drawBufferPass.render(renderer, target, this.colorBuffer);
-    }
+//this.drawBufferPass.render(renderer, target, this.colorBuffer);
+//this.drawBufferPass.render(renderer, target, this.ssaoBuffer);
+//this.drawBufferPass.render(renderer, target, this.ssaoBuffer2);
+//this.drawBufferPass.render(renderer, target, this.normalBuffer);
+//this.drawBufferPass.setScale(1.0/150.0, 1.0/150.0, 1.0/150.0, 1.0/150.0);
+//this.drawBufferPass.render(renderer, target, this.positionBuffer);
+}
 }
 
 export default MoleculeRenderer;

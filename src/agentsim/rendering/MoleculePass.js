@@ -26,11 +26,14 @@ class MoleculePass {
         const vertexShader = `
         precision highp float;
 
+            attribute float vTypeId;
+
             uniform float iTime;
             uniform vec2 iResolution;
             uniform float Scale;
             varying vec3 IN_viewPos;
             varying float IN_radius;
+            flat out int IN_typeId; // same as instanceid?
             // varying vec4 IN_color;
             // flat int IN_instanceId;
             // flat int IN_atomId;
@@ -55,6 +58,7 @@ class MoleculePass {
                 //gl_PointSize = 10.0;
                 //gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
                 IN_radius = radius;
+                IN_typeId = int(vTypeId);
             }
         `;
         
@@ -63,6 +67,7 @@ class MoleculePass {
 
         varying vec3 IN_viewPos;
         varying float IN_radius;
+        flat in int IN_typeId;
             // varying vec4 IN_color;
             // flat int IN_instanceId;
             // flat int IN_atomId;
@@ -108,7 +113,9 @@ class MoleculePass {
                 //gl_FragColor = vec4(fragPosDepth, 0.0, 0.0, 1.0);
                 // gl_FragColor = vec4(gl_PointCoord.xy, 0.0, 1.0);
                 
-                gl_FragColor = vec4(84.0/255.0, 179.0/255.0, 162.0/255.0, 1.0);
+                gl_FragColor = vec4(float(IN_typeId), float(IN_typeId), float(IN_typeId), 1.0);
+                //gl_FragColor = vec4(float(IN_typeId)/50.0, float(IN_typeId)/50.0, float(IN_typeId)/50.0, 1.0);
+                //gl_FragColor = vec4(84.0/255.0, 179.0/255.0, 162.0/255.0, 1.0);
             }
 
         `;
@@ -222,7 +229,7 @@ class MoleculePass {
                 splat: { value: new THREE.TextureLoader().load("assets/splat.png") },
                 Scale: { value: 1.0 },
                 projectionMatrix: { value: new THREE.Matrix4() }
-            },        
+            },
             vertexShader: vertexShader,
             fragmentShader: fragmentShader,
             side: THREE.FrontSide,
@@ -271,22 +278,32 @@ class MoleculePass {
     createMoleculeBuffer(n) {
         this.geometry = new THREE.BufferGeometry();
         var vertices = new Float32Array(n*3);
+        var typeIds = new Float32Array(n);
         for ( var i = 0; i < n; i ++ ) {
+            // position
             vertices[i*3]=0;
             vertices[i*3+1]=0;
             vertices[i*3+2]=0;
+            // particle type id
+            typeIds[i]=-1;
         }
-        this.geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
+        this.geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 4 ) );
+        this.geometry.setAttribute( 'vTypeId', new THREE.Float32BufferAttribute( typeIds, 1 ) );
         if (this.particles) {
             this.particles.geometry = this.geometry;
         }
     }
 
-    update(positions, numVertices) {
+    update(positions, typeIds, numVertices) {
         // update positions, and reset geoemtry int the particles object.
         this.particles.geometry.attributes.position.array.set(positions);
 
         this.particles.geometry.attributes.position.needsUpdate = true;
+
+        this.particles.geometry.attributes.vTypeId.array.set(typeIds);
+
+        this.particles.geometry.attributes.vTypeId.needsUpdate = true;
+
         this.particles.geometry.setDrawRange( 0, numVertices );
 
         this.particles.visible = true;

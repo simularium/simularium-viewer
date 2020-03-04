@@ -246,39 +246,47 @@ class CompositePass {
             void main(void)
             {
                 vec2 texCoords = vUv;
-                vec4 col = texture(colorTex, texCoords);
+                // contains IDs.  index into data buffer.
+                vec4 col0 = texture(colorTex, texCoords);
+                if (col0.x < 0.0) {
+                    discard;
+                }
                 float occ1 = texture(ssaoTex1, texCoords).r;
                 float occ2 = texture(ssaoTex2, texCoords).r;
                 int atomId = int(texture(atomIdTex, texCoords).r);
-                int instanceId = int(texture(instanceIdTex, texCoords).r);
+                //int instanceId = int(texture(instanceIdTex, texCoords).r);
+                int instanceId = int(col0.x);
             
                 if(instanceId < 0)
                     discard;
             
                 vec4 instanceInfo = vec4(0.0,0.0,0.0,0.0);//ProteinInstanceInfo[instanceId];
-                int ingredientId = int(instanceInfo.x);
-            
-                col = vec4(IngredientColor[ingredientId],1.0);
-            
+                //int ingredientId = int(instanceInfo.x);
+                int ingredientId = int(col0.x);
+
+                //vec4 col = vec4(IngredientColor[ingredientId],1.0);
+                // todo: consider using UINT for optimal % operator, instead of INT
+                vec4 col = vec4(ResidueColors[ingredientId % 23],1.0);
+
                 float z_b = texture(depthBufferTex, texCoords).r;
                 float eyeDepth = LinearEyeDepth(z_b);
-            
+
                 vec4 atomInfo = vec4(0.0,0.0,0.0,0.0);//AtomInfos[atomId];
-            
+
                 int secondaryStructure = int(atomInfo.x);
                 int atomSymbolId = int(atomInfo.y);
                 int residueSymbolId = int(atomInfo.z);
                 int chainSymbolId = int(atomInfo.w);
-            
+
                 //int numChains = int(IngredientInfo[ingredientId].y);
                 int numChains = 1;
-            
+
                 //predefined colors
                 //atomSymbolId = 2;
                 vec3 atomColor = AtomColors[atomSymbolId];
                 //atomColor = vec3(1,1,1);
                 vec3 aminoAcidColor = ResidueColors[residueSymbolId]; // currently not used
-            
+
                 //ToDo:
             
                 //ingredient colors and color ranges
@@ -361,8 +369,11 @@ class CompositePass {
                     //color.xyz = atomColor;
                 }
             
-              gl_FragColor = vec4(occ1 * occ2 * color.xyz, 1.0);
-              //~ for debug: depth
+//                gl_FragColor = vec4(occ1 * occ2 * col0.xyz, 1.0);
+gl_FragColor = vec4(occ1 * occ2 * color.xyz, 1.0);
+//gl_FragColor = vec4(occ1 * occ2 * col.xyz, 1.0);
+
+//~ for debug: depth
               //out_color = vec4(eyeDepth, eyeDepth, eyeDepth, 1.0);
               //out_color = vec4(occ1 * occ2 * col.xyz, 1.0);
                 //out_color = vec4(vec3(residueSymbolId), 1.0);
