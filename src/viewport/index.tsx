@@ -372,6 +372,7 @@ class Viewport extends React.Component<ViewportProps> {
                 p.then(() => {
                     this.visGeometry.render(totalElapsedTime);
                     this.lastRenderTime = Date.now();
+                    this.lastRenderedAgentTime = -1;
                     this.animationRequestID = requestAnimationFrame(
                         this.animate
                     );
@@ -380,6 +381,7 @@ class Viewport extends React.Component<ViewportProps> {
                 p.catch(() => {
                     this.visGeometry.render(totalElapsedTime);
                     this.lastRenderTime = Date.now();
+                    this.lastRenderedAgentTime = -1;
                     this.animationRequestID = requestAnimationFrame(
                         this.animate
                     );
