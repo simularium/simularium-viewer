@@ -1,6 +1,6 @@
 // Three JS is assumed to be in the global scope in extensions
 //  such as OrbitControls.js below
-import * as THREE from  'three';
+import * as THREE from "three";
 global.THREE = THREE;
 
 import RenderToBuffer from "./RenderToBuffer.js";
@@ -8,18 +8,17 @@ import RenderToBuffer from "./RenderToBuffer.js";
 // strategy:
 // 0. based on depth, aggregate atoms in the molecule into larger spheres using clustering ?
 // 1. write spheres as GL_POINTs with appropriately scaled size
-// 2. fragment shader: discard pts outside of sphere, 
+// 2. fragment shader: discard pts outside of sphere,
 //    write normal
 //    write depth
 //    write color
 //    write instance id (for same molecule...)
 // 3. AO shader + blend over color buffer
 // 4. outline shader over color buffer
-// 
+//
 
 // buffer of points to be drawn as sprites
 class MoleculePass {
-
     constructor(n) {
         this.createMoleculeBuffer(n);
 
@@ -61,7 +60,7 @@ class MoleculePass {
                 IN_typeId = int(vTypeId);
             }
         `;
-        
+
         const fragmentShader = `
         precision highp float;
 
@@ -218,17 +217,19 @@ class MoleculePass {
             }
 
         `;
-        
+
         this.colorMaterial = new THREE.ShaderMaterial({
             uniforms: {
-                color: { value: new THREE.Color(0x44ff44)},
+                color: { value: new THREE.Color(0x44ff44) },
                 iTime: { value: 1.0 },
                 iResolution: { value: new THREE.Vector2() },
                 iChannel0: { value: null },
                 iChannelResolution0: { value: new THREE.Vector2(2, 2) },
-                splat: { value: new THREE.TextureLoader().load("assets/splat.png") },
+                splat: {
+                    value: new THREE.TextureLoader().load("assets/splat.png"),
+                },
                 Scale: { value: 1.0 },
-                projectionMatrix: { value: new THREE.Matrix4() }
+                projectionMatrix: { value: new THREE.Matrix4() },
             },
             vertexShader: vertexShader,
             fragmentShader: fragmentShader,
@@ -237,15 +238,17 @@ class MoleculePass {
         });
         this.normalMaterial = new THREE.ShaderMaterial({
             uniforms: {
-                color: { value: new THREE.Color(0x44ff44)},
+                color: { value: new THREE.Color(0x44ff44) },
                 iTime: { value: 1.0 },
                 iResolution: { value: new THREE.Vector2() },
                 iChannel0: { value: null },
                 iChannelResolution0: { value: new THREE.Vector2(2, 2) },
-                splat: { value: new THREE.TextureLoader().load("assets/splat.png") },
+                splat: {
+                    value: new THREE.TextureLoader().load("assets/splat.png"),
+                },
                 Scale: { value: 1.0 },
-                projectionMatrix: { value: new THREE.Matrix4() }
-            },        
+                projectionMatrix: { value: new THREE.Matrix4() },
+            },
             vertexShader: vertexShader,
             fragmentShader: normalShader,
             side: THREE.FrontSide,
@@ -253,42 +256,50 @@ class MoleculePass {
         });
         this.positionMaterial = new THREE.ShaderMaterial({
             uniforms: {
-                color: { value: new THREE.Color(0x44ff44)},
+                color: { value: new THREE.Color(0x44ff44) },
                 iTime: { value: 1.0 },
                 iResolution: { value: new THREE.Vector2() },
                 iChannel0: { value: null },
                 iChannelResolution0: { value: new THREE.Vector2(2, 2) },
-                splat: { value: new THREE.TextureLoader().load("assets/splat.png") },
+                splat: {
+                    value: new THREE.TextureLoader().load("assets/splat.png"),
+                },
                 Scale: { value: 1.0 },
-                projectionMatrix: { value: new THREE.Matrix4() }
-            },        
+                projectionMatrix: { value: new THREE.Matrix4() },
+            },
             vertexShader: vertexShader,
             fragmentShader: positionShader,
             side: THREE.FrontSide,
             transparent: false,
         });
-    
+
         // could break up into a few particles buffers at the cost of separate draw calls...
-        this.particles = new THREE.Points( this.geometry, this.colorMaterial );
+        this.particles = new THREE.Points(this.geometry, this.colorMaterial);
         this.particles.visible = false;
         this.scene = new THREE.Scene();
-        this.scene.add( this.particles );
+        this.scene.add(this.particles);
     }
 
     createMoleculeBuffer(n) {
         this.geometry = new THREE.BufferGeometry();
-        var vertices = new Float32Array(n*3);
+        var vertices = new Float32Array(n * 3);
         var typeIds = new Float32Array(n);
-        for ( var i = 0; i < n; i ++ ) {
+        for (var i = 0; i < n; i++) {
             // position
-            vertices[i*3]=0;
-            vertices[i*3+1]=0;
-            vertices[i*3+2]=0;
+            vertices[i * 3] = 0;
+            vertices[i * 3 + 1] = 0;
+            vertices[i * 3 + 2] = 0;
             // particle type id
-            typeIds[i]=-1;
+            typeIds[i] = -1;
         }
-        this.geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 4 ) );
-        this.geometry.setAttribute( 'vTypeId', new THREE.Float32BufferAttribute( typeIds, 1 ) );
+        this.geometry.setAttribute(
+            "position",
+            new THREE.Float32BufferAttribute(vertices, 4)
+        );
+        this.geometry.setAttribute(
+            "vTypeId",
+            new THREE.Float32BufferAttribute(typeIds, 1)
+        );
         if (this.particles) {
             this.particles.geometry = this.geometry;
         }
@@ -304,44 +315,48 @@ class MoleculePass {
 
         this.particles.geometry.attributes.vTypeId.needsUpdate = true;
 
-        this.particles.geometry.setDrawRange( 0, numVertices );
+        this.particles.geometry.setDrawRange(0, numVertices);
 
         this.particles.visible = true;
     }
 
     resize(width, height) {
-        this.colorMaterial.uniforms.iResolution.value = new THREE.Vector2(width, height);
-        this.normalMaterial.uniforms.iResolution.value = new THREE.Vector2(width, height);
-        this.positionMaterial.uniforms.iResolution.value = new THREE.Vector2(width, height);
+        this.colorMaterial.uniforms.iResolution.value = new THREE.Vector2(
+            width,
+            height
+        );
+        this.normalMaterial.uniforms.iResolution.value = new THREE.Vector2(
+            width,
+            height
+        );
+        this.positionMaterial.uniforms.iResolution.value = new THREE.Vector2(
+            width,
+            height
+        );
     }
 
     render(renderer, camera, colorBuffer, normalBuffer, positionBuffer) {
         const c = renderer.getClearColor();
         const a = renderer.getClearAlpha();
-        renderer.setClearColor(new THREE.Color(-1.0, -1.0, -1.0), 0.0);
+        // alpha == -1 is a marker to discard pixels later
+        renderer.setClearColor(new THREE.Color(0.0, 0.0, 0.0), -1.0);
 
         // TODO : MRT
         renderer.setRenderTarget(colorBuffer);
         this.particles.material = this.colorMaterial;
-        this.particles.material.uniforms.projectionMatrix.value = camera.projectionMatrix;
-        renderer.render(
-          this.scene,
-          camera
-        );  
+        this.particles.material.uniforms.projectionMatrix.value =
+            camera.projectionMatrix;
+        renderer.render(this.scene, camera);
         renderer.setRenderTarget(normalBuffer);
         this.particles.material = this.normalMaterial;
-        this.particles.material.uniforms.projectionMatrix.value = camera.projectionMatrix;
-        renderer.render(
-          this.scene,
-          camera
-        );  
+        this.particles.material.uniforms.projectionMatrix.value =
+            camera.projectionMatrix;
+        renderer.render(this.scene, camera);
         renderer.setRenderTarget(positionBuffer);
         this.particles.material = this.positionMaterial;
-        this.particles.material.uniforms.projectionMatrix.value = camera.projectionMatrix;
-        renderer.render(
-          this.scene,
-          camera
-        );  
+        this.particles.material.uniforms.projectionMatrix.value =
+            camera.projectionMatrix;
+        renderer.render(this.scene, camera);
 
         renderer.setClearColor(c, a);
     }

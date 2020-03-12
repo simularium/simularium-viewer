@@ -17,7 +17,7 @@ import MembraneShader from "./rendering/MembraneShader.js";
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 5000;
-const BACKGROUND_COLOR = new THREE.Color(0xffffff);
+const BACKGROUND_COLOR = new THREE.Color(1.0, 1.0, 1.0);
 const PATH_END_COLOR = BACKGROUND_COLOR;
 const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
 const BOUNDING_BOX_COLOR = new THREE.Color(0x6e6e6e);

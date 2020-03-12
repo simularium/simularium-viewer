@@ -11,8 +11,8 @@ class CompositePass {
                 instanceIdTex: { value: null },
                 depthBufferTex: { value: null },
                 colorsBuffer: { value: null },
-                zNear: {value: 0.1},
-                zFar: {value: 1000},
+                zNear: { value: 0.1 },
+                zFar: { value: 1000 },
             },
             fragmentShader: `
             in vec2 vUv;
@@ -251,7 +251,7 @@ class CompositePass {
                 vec2 texCoords = vUv;
                 // contains IDs.  index into data buffer.
                 vec4 col0 = texture(colorTex, texCoords);
-                if (col0.x < 0.0) {
+                if (col0.w < 0.0) {
                     discard;
                 }
                 float occ1 = texture(ssaoTex1, texCoords).r;
@@ -389,28 +389,33 @@ gl_FragColor = vec4(occ1 * occ2 * color.xyz, 1.0);
                 //out_color = vec4(vec3(chainSymbolId*0.5), 1.0);
             }
             
-            `
+            `,
         });
     }
 
     // colorsData is a Float32Array of rgba
     updateColors(numColors, colorsData) {
-        this.pass.material.uniforms.colorsBuffer.value = new THREE.DataTexture( colorsData, numColors, 1, THREE.RGBAFormat, THREE.FloatType );
+        this.pass.material.uniforms.colorsBuffer.value = new THREE.DataTexture(
+            colorsData,
+            numColors,
+            1,
+            THREE.RGBAFormat,
+            THREE.FloatType
+        );
     }
-    
 
-    resize(x, y) {
-
-    }
+    resize(x, y) {}
     render(renderer, target, ssaoBuffer1, ssaoBuffer2, colorBuffer) {
         this.pass.material.uniforms.colorTex.value = colorBuffer.texture;
         this.pass.material.uniforms.ssaoTex1.value = ssaoBuffer1.texture;
         this.pass.material.uniforms.ssaoTex2.value = ssaoBuffer2.texture;
 
-
         const c = renderer.getClearColor();
         const a = renderer.getClearAlpha();
-        renderer.setClearColor(new THREE.Color(0.121569, 0.13333, 0.17647), 1.0);
+        renderer.setClearColor(
+            new THREE.Color(0.121569, 0.13333, 0.17647),
+            1.0
+        );
 
         this.pass.render(renderer, target);
 
