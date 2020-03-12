@@ -10,9 +10,12 @@ class CompositePass {
                 atomIdTex: { value: null },
                 instanceIdTex: { value: null },
                 depthBufferTex: { value: null },
+                // colors indexed by particle type id
                 colorsBuffer: { value: null },
                 zNear: { value: 0.1 },
                 zFar: { value: 1000 },
+                atomicBeginDistance: { value: 150 },
+                chainBeginDistance: { value: 200 },
             },
             fragmentShader: `
             in vec2 vUv;
@@ -29,6 +32,9 @@ class CompositePass {
             uniform float zNear;
             uniform float zFar;
             
+            uniform float atomicBeginDistance; // = 100.0;
+            uniform float chainBeginDistance; // = 150.0;
+
             // layout(std430) buffer;
             // layout(binding = 0) buffer INPUT0 {
             //   vec4 AtomInfos[];
@@ -235,10 +241,7 @@ class CompositePass {
                 float H = abs((Q.w - Q.y) / (6.0 * C + HCV_EPSILON) + Q.z);
                 return vec3(H, C, Q.x);
             }
-            
-            const float atomicBeginDistance = 0.05;
-            const float chainBeginDistance = 0.30;
-            
+                        
             float LinearEyeDepth(float z_b)
             {
                 float z_n = 2.0 * z_b - 1.0;
@@ -288,6 +291,7 @@ class CompositePass {
                 //predefined colors
                 //atomSymbolId = 2;
                 vec3 atomColor = AtomColors[atomSymbolId];
+                atomColor = col.xyz;
                 //atomColor = vec3(1,1,1);
                 vec3 aminoAcidColor = ResidueColors[residueSymbolId]; // currently not used
 
@@ -309,15 +313,15 @@ class CompositePass {
                 vec3 hcl = rgb_to_hcv(col.xyz);
 //                vec3 hcl = rgb_to_hcv(col.xyz*20.0);
                 h = hcl.r;
-                c = hcl.g+10.0;
-                l = hcl.b+10.0;
+                c = hcl.g;//+10.0;
+                l = hcl.b;//+10.0;
                 //h = 120.0;
                 //c = 80.0;
                 //l = 50.0;
             
-                h = IngredientColorHCL[ingredientId].x;
-                c = IngredientColorHCL[ingredientId].y;
-                l = IngredientColorHCL[ingredientId].z;
+//                h = IngredientColorHCL[ingredientId].x;
+//                c = IngredientColorHCL[ingredientId].y;
+//                l = IngredientColorHCL[ingredientId].z;
             
             
                 //if(false)
@@ -359,7 +363,7 @@ class CompositePass {
                     h += (float(chainSymbolId) * hueShift);
                 }
             
-              c -= 15.0;
+//              c -= 15.0;
             
                 vec3 color;
                 color = d3_hcl_lab(h, c, l);
@@ -405,6 +409,7 @@ gl_FragColor = vec4(occ1 * occ2 * color.xyz, 1.0);
     }
 
     resize(x, y) {}
+
     render(renderer, target, ssaoBuffer1, ssaoBuffer2, colorBuffer) {
         this.pass.material.uniforms.colorTex.value = colorBuffer.texture;
         this.pass.material.uniforms.ssaoTex1.value = ssaoBuffer1.texture;

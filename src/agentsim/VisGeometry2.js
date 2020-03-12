@@ -424,9 +424,12 @@ class VisGeometry2 {
         this.colorsData = new Float32Array(numColors * 4);
         for (let i = 0; i < numColors; i += 1) {
             // each color is currently a hex value:
-            this.colorsData[i * 4 + 0] = ((colors[i] & 0xff0000) >> 16) / 255.0;
-            this.colorsData[i * 4 + 1] = ((colors[i] & 0x00ff00) >> 8) / 255.0;
-            this.colorsData[i * 4 + 2] = ((colors[i] & 0x0000ff) >> 0) / 255.0;
+            this.colorsData[i * 4 + 0] =
+                ((colors[i] & 0x00ff0000) >> 16) / 255.0;
+            this.colorsData[i * 4 + 1] =
+                ((colors[i] & 0x0000ff00) >> 8) / 255.0;
+            this.colorsData[i * 4 + 2] =
+                ((colors[i] & 0x000000ff) >> 0) / 255.0;
             this.colorsData[i * 4 + 3] = 1.0;
 
             this.materials.push(

@@ -4,8 +4,7 @@ import BlurPass from "./GaussianBlur";
 import CompositePass from "./CompositePass";
 import DrawBufferPass from "./DrawBufferPass";
 
-import * as dat from 'dat.gui';
-
+import * as dat from "dat.gui";
 
 class MoleculeRenderer {
     constructor() {
@@ -13,8 +12,8 @@ class MoleculeRenderer {
         // radius, threshold, falloff in view space coordinates.
         this.ssao1Pass = new SSAO1Pass(4.5, 150, 50);
         this.ssao2Pass = new SSAO1Pass(4.5, 150, 50);
-//        this.ssao1Pass = new SSAO1Pass(0.00005, 0.38505, 0.08333);
-//        this.ssao2Pass = new SSAO1Pass(0.00125, 1.05714, 0.15188);
+        //        this.ssao1Pass = new SSAO1Pass(0.00005, 0.38505, 0.08333);
+        //        this.ssao2Pass = new SSAO1Pass(0.00125, 1.05714, 0.15188);
         this.blur1Pass = new BlurPass(10);
         this.blur2Pass = new BlurPass(10);
         this.compositePass = new CompositePass();
@@ -29,7 +28,7 @@ class MoleculeRenderer {
             depthBuffer: true,
             stencilBuffer: false,
         });
-        this.colorBuffer.texture.generateMipmaps = false;    
+        this.colorBuffer.texture.generateMipmaps = false;
         // TODO : MRT AND SHARE DEPTH BUFFER among color, position, normal etc
         this.normalBuffer = new THREE.WebGLRenderTarget(2, 2, {
             minFilter: THREE.NearestFilter,
@@ -39,7 +38,7 @@ class MoleculeRenderer {
             depthBuffer: true,
             stencilBuffer: false,
         });
-        this.normalBuffer.texture.generateMipmaps = false;    
+        this.normalBuffer.texture.generateMipmaps = false;
         this.positionBuffer = new THREE.WebGLRenderTarget(2, 2, {
             minFilter: THREE.NearestFilter,
             magFilter: THREE.NearestFilter,
@@ -48,7 +47,7 @@ class MoleculeRenderer {
             depthBuffer: true,
             stencilBuffer: false,
         });
-        this.positionBuffer.texture.generateMipmaps = false;    
+        this.positionBuffer.texture.generateMipmaps = false;
 
         // intermediate blurring buffer
         this.blurIntermediateBuffer = new THREE.WebGLRenderTarget(2, 2, {
@@ -59,7 +58,7 @@ class MoleculeRenderer {
             depthBuffer: false,
             stencilBuffer: false,
         });
-        this.blurIntermediateBuffer.texture.generateMipmaps = false;    
+        this.blurIntermediateBuffer.texture.generateMipmaps = false;
 
         this.ssaoBuffer = new THREE.WebGLRenderTarget(2, 2, {
             minFilter: THREE.NearestFilter,
@@ -69,7 +68,7 @@ class MoleculeRenderer {
             depthBuffer: false,
             stencilBuffer: false,
         });
-        this.ssaoBuffer.texture.generateMipmaps = false;    
+        this.ssaoBuffer.texture.generateMipmaps = false;
         this.ssaoBuffer2 = new THREE.WebGLRenderTarget(2, 2, {
             minFilter: THREE.NearestFilter,
             magFilter: THREE.NearestFilter,
@@ -78,7 +77,7 @@ class MoleculeRenderer {
             depthBuffer: false,
             stencilBuffer: false,
         });
-        this.ssaoBuffer2.texture.generateMipmaps = false;    
+        this.ssaoBuffer2.texture.generateMipmaps = false;
         this.ssaoBufferBlurred = new THREE.WebGLRenderTarget(2, 2, {
             minFilter: THREE.NearestFilter,
             magFilter: THREE.NearestFilter,
@@ -87,7 +86,7 @@ class MoleculeRenderer {
             depthBuffer: false,
             stencilBuffer: false,
         });
-        this.ssaoBufferBlurred.texture.generateMipmaps = false;    
+        this.ssaoBufferBlurred.texture.generateMipmaps = false;
         this.ssaoBufferBlurred2 = new THREE.WebGLRenderTarget(2, 2, {
             minFilter: THREE.NearestFilter,
             magFilter: THREE.NearestFilter,
@@ -101,28 +100,37 @@ class MoleculeRenderer {
         this.setupGui();
     }
 
-    setupGui() { 
+    setupGui() {
         var settings = {
             aoradius1: 4.5,
             aoradius2: 4.5,
             blurradius1: 10.0,
-            blurradius2: 10.0
-        }
+            blurradius2: 10.0,
+            atomBeginDistance: 150.0,
+            chainBeginDistance: 200.0,
+        };
         const gui = new dat.GUI();
         var self = this;
-        gui.add(settings, 'aoradius1', 0.01, 10.0).onChange((value)=> {
+        gui.add(settings, "aoradius1", 0.01, 10.0).onChange(value => {
             self.ssao1Pass.pass.material.uniforms.radius.value = value;
         });
-        gui.add(settings, 'aoradius2', 0.01, 10.0).onChange((value)=> {
+        gui.add(settings, "aoradius2", 0.01, 10.0).onChange(value => {
             self.ssao2Pass.pass.material.uniforms.radius.value = value;
         });
-        gui.add(settings, 'blurradius1', 0.01, 10.0).onChange((value)=> {
+        gui.add(settings, "blurradius1", 0.01, 10.0).onChange(value => {
             self.blur1Pass.setRadius(value);
         });
-        gui.add(settings, 'blurradius2', 0.01, 10.0).onChange((value)=> {
+        gui.add(settings, "blurradius2", 0.01, 10.0).onChange(value => {
             self.blur2Pass.setRadius(value);
         });
-
+        gui.add(settings, "atomBeginDistance", 0.01, 1000.0).onChange(value => {
+            self.compositePass.pass.material.uniforms.atomicBeginDistance.value = value;
+        });
+        gui.add(settings, "chainBeginDistance", 0.01, 1000.0).onChange(
+            value => {
+                self.compositePass.pass.material.uniforms.chainBeginDistance.value = value;
+            }
+        );
     }
 
     // TODO this is a geometry/scene update and should be updated through some other means?
@@ -150,13 +158,13 @@ class MoleculeRenderer {
         this.ssaoBufferBlurred.setSize(x, y);
         this.ssaoBufferBlurred2.setSize(x, y);
 
-        this.gbufferPass.resize(x,y);
-        this.ssao1Pass.resize(x,y);
-        this.ssao2Pass.resize(x,y);
-        this.blur1Pass.resize(x,y);
-        this.blur2Pass.resize(x,y);
-        this.compositePass.resize(x,y);
-        this.drawBufferPass.resize(x,y);
+        this.gbufferPass.resize(x, y);
+        this.ssao1Pass.resize(x, y);
+        this.ssao2Pass.resize(x, y);
+        this.blur1Pass.resize(x, y);
+        this.blur2Pass.resize(x, y);
+        this.compositePass.resize(x, y);
+        this.drawBufferPass.resize(x, y);
     }
 
     render(renderer, camera, target) {
@@ -167,25 +175,61 @@ class MoleculeRenderer {
 
         // 1 draw molecules into G buffers
         // TODO : MRT
-        this.gbufferPass.render(renderer, camera, this.colorBuffer, this.normalBuffer, this.positionBuffer);
+        this.gbufferPass.render(
+            renderer,
+            camera,
+            this.colorBuffer,
+            this.normalBuffer,
+            this.positionBuffer
+        );
 
         // 2 render ssao
-        this.ssao1Pass.render(renderer, camera, this.ssaoBuffer, this.normalBuffer, this.positionBuffer);
-        this.blur1Pass.render(renderer, this.ssaoBufferBlurred, this.ssaoBuffer, this.positionBuffer, this.blurIntermediateBuffer);
+        this.ssao1Pass.render(
+            renderer,
+            camera,
+            this.ssaoBuffer,
+            this.normalBuffer,
+            this.positionBuffer
+        );
+        this.blur1Pass.render(
+            renderer,
+            this.ssaoBufferBlurred,
+            this.ssaoBuffer,
+            this.positionBuffer,
+            this.blurIntermediateBuffer
+        );
 
-        this.ssao2Pass.render(renderer, camera, this.ssaoBuffer2, this.normalBuffer, this.positionBuffer);
-        this.blur2Pass.render(renderer, this.ssaoBufferBlurred2, this.ssaoBuffer2, this.positionBuffer, this.blurIntermediateBuffer);
+        this.ssao2Pass.render(
+            renderer,
+            camera,
+            this.ssaoBuffer2,
+            this.normalBuffer,
+            this.positionBuffer
+        );
+        this.blur2Pass.render(
+            renderer,
+            this.ssaoBufferBlurred2,
+            this.ssaoBuffer2,
+            this.positionBuffer,
+            this.blurIntermediateBuffer
+        );
 
         // render into default render target
-        this.compositePass.render(renderer, target, this.ssaoBufferBlurred, this.ssaoBufferBlurred2, this.colorBuffer);
+        this.compositePass.render(
+            renderer,
+            target,
+            this.ssaoBufferBlurred,
+            this.ssaoBufferBlurred2,
+            this.colorBuffer
+        );
 
-//this.drawBufferPass.render(renderer, target, this.colorBuffer);
-//this.drawBufferPass.render(renderer, target, this.ssaoBuffer);
-//this.drawBufferPass.render(renderer, target, this.ssaoBuffer2);
-//this.drawBufferPass.render(renderer, target, this.normalBuffer);
-//this.drawBufferPass.setScale(1.0/150.0, 1.0/150.0, 1.0/150.0, 1.0/150.0);
-//this.drawBufferPass.render(renderer, target, this.positionBuffer);
-}
+        //this.drawBufferPass.render(renderer, target, this.colorBuffer);
+        //this.drawBufferPass.render(renderer, target, this.ssaoBuffer);
+        //this.drawBufferPass.render(renderer, target, this.ssaoBuffer2);
+        //this.drawBufferPass.render(renderer, target, this.normalBuffer);
+        //this.drawBufferPass.setScale(1.0/150.0, 1.0/150.0, 1.0/150.0, 1.0/150.0);
+        //this.drawBufferPass.render(renderer, target, this.positionBuffer);
+    }
 }
 
 export default MoleculeRenderer;
