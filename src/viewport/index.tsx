@@ -7,7 +7,7 @@ import {
 } from "lodash";
 // Three JS is assumed to be in the global scope in extensions
 //  such as OrbitControls.js below
-import * as THREE from  'three';
+import * as THREE from 'three';
 
 import { VisGeometry2, DevGUI } from "../agentsim";
 
@@ -204,7 +204,7 @@ class Viewport extends React.Component<ViewportProps> {
 
     public onDragOver = (e) => {
         let event = e as Event;
-        if(event.stopPropagation) { event.stopPropagation() };
+        if (event.stopPropagation) { event.stopPropagation() };
         event.preventDefault();
     }
 
@@ -220,8 +220,7 @@ class Viewport extends React.Component<ViewportProps> {
         p.then(() => {
             parsedFiles.sort(sortFrames);
             this.visGeometry.resetMapping();
-            for(let i = 0, l = parsedFiles.length; i < l; ++i)
-            {
+            for (let i = 0, l = parsedFiles.length; i < l; ++i) {
                 let frameJSON = parsedFiles[i];
                 this.cacheJSON(frameJSON);
             }
@@ -321,7 +320,7 @@ class Viewport extends React.Component<ViewportProps> {
         const elapsedTime = now - this.lastRenderTime;
         const totalElapsedTime = now - this.startTime;
         if (elapsedTime > timePerFrame) {
-            if(agentSimController.hasChangedFile) {
+            if (agentSimController.hasChangedFile) {
                 this.visGeometry.clear();
                 this.visGeometry.resetMapping();
 
@@ -347,13 +346,12 @@ class Viewport extends React.Component<ViewportProps> {
                 return;
             }
 
-            if(visData.time != this.lastRenderedAgentTime)
-            {
+            if (visData.time != this.lastRenderedAgentTime) {
                 let currentAgents = visData.currentFrame();
-                if(currentAgents.length > 0) {
+                if (currentAgents.length > 0) {
                     this.dispatchUpdatedTime(visData.currentFrameData);
                     this.visGeometry.update(currentAgents);
-                    this.lastRenderedAgentTime = visData.currentFrameData;
+                    this.lastRenderedAgentTime = visData.time;
                 }
             }
 
