@@ -373,18 +373,14 @@ class Viewport extends React.Component<ViewportProps> {
                     this.visGeometry.render(totalElapsedTime);
                     this.lastRenderTime = Date.now();
                     this.lastRenderedAgentTime = -1;
-                    this.animationRequestID = requestAnimationFrame(
-                        this.animate
-                    );
+                    this.animationRequestID = requestAnimationFrame(this.animate);
                 });
 
                 p.catch(() => {
                     this.visGeometry.render(totalElapsedTime);
                     this.lastRenderTime = Date.now();
                     this.lastRenderedAgentTime = -1;
-                    this.animationRequestID = requestAnimationFrame(
-                        this.animate
-                    );
+                    this.animationRequestID = requestAnimationFrame(this.animate);
                 });
 
                 agentSimController.markFileChangeAsHandled();
