@@ -675,8 +675,6 @@ class VisGeometry {
         let dx, dy, dz;
         // The agents sent over are mapped by an integer id
 
-        const buf = new Float32Array(3 * agents.length);
-
         agents.forEach((agentData, i) => {
             const visType = agentData["vis-type"];
             const typeId = agentData.type;
@@ -736,10 +734,6 @@ class VisGeometry {
                 runtimeMesh.position.y = agentData.y;
                 runtimeMesh.position.z = agentData.z;
 
-                buf[i * 3 + 0] = agentData.x;
-                buf[i * 3 + 1] = agentData.y;
-                buf[i * 3 + 2] = agentData.z;
-
                 runtimeMesh.rotation.x = agentData.xrot;
                 runtimeMesh.rotation.y = agentData.yrot;
                 runtimeMesh.rotation.z = agentData.zrot;
@@ -770,8 +764,10 @@ class VisGeometry {
                 const curvePoints = [];
                 const { subpoints } = agentData;
                 const numSubPoints = subpoints.length;
-                if(numSubPoints % 3 !== 0) {
-                    this.logger.warn("Warning, subpoints array does not contain a multiple of 3");
+                if (numSubPoints % 3 !== 0) {
+                    this.logger.warn(
+                        "Warning, subpoints array does not contain a multiple of 3"
+                    );
                     this.logger.warn(agentData);
                     return;
                 }
