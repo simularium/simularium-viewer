@@ -261,7 +261,7 @@ class VisGeometry {
             75,
             initWidth / initHeight,
             0.1,
-            10000
+            1000
         );
 
         this.resetBounds(DEFAULT_VOLUME_BOUNDS);
@@ -1003,11 +1003,11 @@ class VisGeometry {
             line: null,
         };
 
-        pathdata.geometry.addAttribute(
+        pathdata.geometry.setAttribute(
             "position",
             new THREE.BufferAttribute(pathdata.points, 3)
         );
-        pathdata.geometry.addAttribute(
+        pathdata.geometry.setAttribute(
             "color",
             new THREE.BufferAttribute(pathdata.colors, 3)
         );

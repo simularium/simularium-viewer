@@ -271,16 +271,16 @@ class VisGeometry2 {
 
         this.resetBounds(DEFAULT_VOLUME_BOUNDS);
 
-        // this.dl = null;
-        // this.dl = new THREE.DirectionalLight(0xffffff, 0.6);
-        // this.dl.position.set(0, 0, 1);
-        // this.scene.add(this.dl);
+        this.dl = null;
+        this.dl = new THREE.DirectionalLight(0xffffff, 0.6);
+        this.dl.position.set(0, 0, 1);
+        this.scene.add(this.dl);
 
-        // this.hemiLight = new THREE.HemisphereLight(0xffffff, 0x000000, 0.6);
-        // this.hemiLight.color.setHSL(0.095, 1, 0.75);
-        // this.hemiLight.groundColor.setHSL(0.6, 1, 0.6);
-        // this.hemiLight.position.set(0, 1, 0);
-        // this.scene.add(this.hemiLight);
+        this.hemiLight = new THREE.HemisphereLight(0xffffff, 0x000000, 0.5);
+        this.hemiLight.color.setHSL(0.095, 1, 0.75);
+        this.hemiLight.groundColor.setHSL(0.6, 1, 0.6);
+        this.hemiLight.position.set(0, 1, 0);
+        this.scene.add(this.hemiLight);
 
         if (WEBGL.isWebGL2Available() === false) {
             this.renderer = new THREE.WebGLRenderer();
@@ -402,14 +402,19 @@ class VisGeometry2 {
 
         this.controls.update();
 
-        // if (this.dl && this.fixLightsToCamera) {
-        //     // position directional light at camera (facing scene, as headlight!)
-        //     this.dl.position.copy(this.camera.position);
-        // }
-        // if (this.hemiLight && this.fixLightsToCamera) {
-        //     // make hemi light come down from vertical of screen (camera up)
-        //     this.hemiLight.position.setFromMatrixColumn(this.camera.matrixWorld, 1);
-        // }
+        if (this.dl && this.fixLightsToCamera) {
+            // position directional light at camera (facing scene, as headlight!)
+            this.dl.position.setFromMatrixColumn(this.camera.matrixWorld, 2);
+
+            //this.dl.position.copy(this.camera.position);
+        }
+        if (this.hemiLight && this.fixLightsToCamera) {
+            // make hemi light come down from vertical of screen (camera up)
+            this.hemiLight.position.setFromMatrixColumn(
+                this.camera.matrixWorld,
+                1
+            );
+        }
 
         this.moleculeRenderer.render(this.renderer, this.camera, null);
         //this.renderer.render(this.scene, this.camera);
@@ -576,7 +581,7 @@ class VisGeometry2 {
     /**
      *   Map Type ID -> Geometry
      */
-    mapTypeIdToGeom(id, meshName) {
+    mapIdToGeom(id, meshName) {
         this.logger.debug("Mesh for id ", id, " set to ", meshName);
         this.visGeomMap.set(id, meshName);
         if (meshName.includes("membrane")) {
@@ -618,7 +623,7 @@ class VisGeometry2 {
                             "WARNING: Ignoring deprecated bounding box data"
                         );
                     } else {
-                        self.mapTypeIdToGeom(Number(id), entry.mesh);
+                        self.mapIdToGeom(Number(id), entry.mesh);
                         self.setScaleForId(Number(id), entry.scale);
                     }
                 });
@@ -984,7 +989,10 @@ class VisGeometry2 {
         if (!color) {
             // get the agent's color. is there a simpler way?
             const mat = this.getMaterialOfAgentIndex(idx);
-            color = mat ? mat.color.clone() : new THREE.Color(0xffffff);
+            color =
+                mat && mat.color
+                    ? mat.color.clone()
+                    : new THREE.Color(0xffffff);
         }
 
         const pathdata = {
@@ -1049,10 +1057,12 @@ class VisGeometry2 {
         // Check for periodic boundary condition:
         // if any agent moved more than half the volume size in one step,
         // assume it jumped the boundary going the other way.
+        const volumeSize = new THREE.Vector3();
+        this.boundingBox.getSize(volumeSize);
         if (
-            Math.abs(dx) > VOLUME_DIMS.x / 2 ||
-            Math.abs(dy) > VOLUME_DIMS.y / 2 ||
-            Math.abs(dz) > VOLUME_DIMS.z / 2
+            Math.abs(dx) > volumeSize.x / 2 ||
+            Math.abs(dy) > volumeSize.y / 2 ||
+            Math.abs(dz) > volumeSize.z / 2
         ) {
             // now what?
             // TODO: clip line segment from x-dx to x against the bounds,
