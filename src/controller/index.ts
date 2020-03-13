@@ -12,7 +12,7 @@ export default class AgentSimController {
     private playBackFile: any;
 
     public constructor(params) {
-        this.visData = new VisData({});
+        this.visData = new VisData();
 
         if (params.netConnection) {
             this.netConnection = params.netConnection;
