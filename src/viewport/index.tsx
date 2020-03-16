@@ -5,9 +5,6 @@ import AgentSimController from '../controller';
 import {
     forOwn,
 } from "lodash";
-// Three JS is assumed to be in the global scope in extensions
-//  such as OrbitControls.js below
-import * as THREE from 'three';
 
 import { VisGeometry } from "../agentsim";
 
