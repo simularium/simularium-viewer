@@ -104,6 +104,10 @@ class MoleculeRenderer {
             aoradius2: 4.5,
             blurradius1: 10.0,
             blurradius2: 10.0,
+            aothreshold1: 150,
+            aofalloff1: 50,
+            aothreshold2: 150,
+            aofalloff2: 50,
             atomBeginDistance: 150.0,
             chainBeginDistance: 200.0,
         };
@@ -111,15 +115,28 @@ class MoleculeRenderer {
         gui.add(settings, "aoradius1", 0.01, 10.0).onChange(value => {
             self.ssao1Pass.pass.material.uniforms.radius.value = value;
         });
-        gui.add(settings, "aoradius2", 0.01, 10.0).onChange(value => {
-            self.ssao2Pass.pass.material.uniforms.radius.value = value;
-        });
         gui.add(settings, "blurradius1", 0.01, 10.0).onChange(value => {
             self.blur1Pass.setRadius(value);
+        });
+        gui.add(settings, "aothreshold1", 0.01, 300.0).onChange(value => {
+            self.ssao1Pass.pass.material.uniforms.ssao_threshold.value = value;
+        });
+        gui.add(settings, "aofalloff1", 0.01, 300.0).onChange(value => {
+            self.ssao1Pass.pass.material.uniforms.ssao_falloff.value = value;
+        });
+        gui.add(settings, "aoradius2", 0.01, 10.0).onChange(value => {
+            self.ssao2Pass.pass.material.uniforms.radius.value = value;
         });
         gui.add(settings, "blurradius2", 0.01, 10.0).onChange(value => {
             self.blur2Pass.setRadius(value);
         });
+        gui.add(settings, "aothreshold2", 0.01, 300.0).onChange(value => {
+            self.ssao2Pass.pass.material.uniforms.ssao_threshold.value = value;
+        });
+        gui.add(settings, "aofalloff2", 0.01, 300.0).onChange(value => {
+            self.ssao2Pass.pass.material.uniforms.ssao_falloff.value = value;
+        });
+
         gui.add(settings, "atomBeginDistance", 0.01, 1000.0).onChange(value => {
             self.compositePass.pass.material.uniforms.atomicBeginDistance.value = value;
         });
