@@ -2,6 +2,7 @@ import SSAO1Pass from "./SSAO";
 import MoleculePass from "./MoleculePass";
 import BlurPass from "./GaussianBlur";
 import CompositePass from "./CompositePass";
+import ContourPass from "./ContourPass";
 import DrawBufferPass from "./DrawBufferPass";
 
 import * as dat from "dat.gui";
@@ -17,6 +18,7 @@ class MoleculeRenderer {
         this.blur1Pass = new BlurPass(10);
         this.blur2Pass = new BlurPass(10);
         this.compositePass = new CompositePass();
+        this.contourPass = new ContourPass();
         this.drawBufferPass = new DrawBufferPass();
 
         // buffers:
@@ -189,6 +191,7 @@ class MoleculeRenderer {
         this.blur1Pass.resize(x, y);
         this.blur2Pass.resize(x, y);
         this.compositePass.resize(x, y);
+        this.contourPass.resize(x, y);
         this.drawBufferPass.resize(x, y);
     }
 
@@ -239,12 +242,23 @@ class MoleculeRenderer {
             this.blurIntermediateBuffer
         );
 
+        // render composite pass into normal buffer, overwriting the normals data!
+        const compositeTarget = this.normalBuffer;
+
         // render into default render target
         this.compositePass.render(
             renderer,
-            target,
+            compositeTarget,
             this.ssaoBufferBlurred,
             this.ssaoBufferBlurred2,
+            this.colorBuffer
+        );
+
+        this.contourPass.render(
+            renderer,
+            target,
+            compositeTarget,
+            // this is the buffer with the instance ids
             this.colorBuffer
         );
 
