@@ -3,10 +3,21 @@ import jsLogger from 'js-logger';
 import AgentSimController from '../controller';
 
 import {
+    Raycaster,
+    Scene,
+    Vector2
+} from "three";
+
+import {
     forOwn,
 } from "lodash";
 
 import { VisGeometry } from "../agentsim";
+
+interface TrajectoryFileInfo {
+  timeStepSize: number;
+  totalDuration: number;
+};
 
 interface ViewportProps {
     height: number;
@@ -14,8 +25,8 @@ interface ViewportProps {
     loggerLevel: string;
     onTimeChange: (timeData: TimeData) => void | undefined;
     agentSimController: AgentSimController;
-    onJsonDataArrived: any;
-    onTrajectoryFileInfoChanged: (cachedData: any) => void | undefined;
+    onJsonDataArrived: Function;
+    onTrajectoryFileInfoChanged: (cachedData: TrajectoryFileInfo) => void | undefined;
     highlightedParticleType: number | string;
     loadInitialData: boolean;
     showMeshes: boolean;
@@ -58,20 +69,20 @@ function sortFrames(a: FrameJSON, b: FrameJSON): number {
     return a.frameNumber > b.frameNumber ? 1 : -1;
 }
 
-function getJsonUrl(trajectoryName) {
+function getJsonUrl(trajectoryName: string): string {
     return `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${trajectoryName}.json`;
 }
 
 class Viewport extends React.Component<ViewportProps> {
     // NOTE: this can be typed in the future, but they may change signifantly and I dont want to at the moment. -MMRM
-    private visGeometry: any;
+    private visGeometry: VisGeometry;
     private lastRenderTime: number;
     private startTime: number;
     private vdomRef: React.RefObject<HTMLInputElement>;
-    private handlers: { [key: string]: (e: any) => void };
+    private handlers: { [key: string]: (e: DragEvent | MouseEvent) => void };
 
     private hit: boolean;
-    private raycaster: THREE.Raycaster;
+    private raycaster: Raycaster;
     private animationRequestID: number;
     private lastRenderedAgentTime: number;
 
@@ -94,10 +105,6 @@ class Viewport extends React.Component<ViewportProps> {
         super(props);
 
         const loggerLevel = props.loggerLevel === 'debug' ? jsLogger.DEBUG : jsLogger.OFF;
-        const {
-            agentSimController,
-        } = this.props;
-
         const colors = [
             0x6ac1e5, 0xff2200, 0xee7967, 0xff6600, 0xd94d49, 0xffaa00, 0xffcc00, 0x00ccff,
             0x00aaff, 0x8048f3, 0x07f4ec, 0x79bd8f, 0x8800ff, 0xaa00ff, 0xcc00ff, 0xff00cc,
@@ -124,12 +131,12 @@ class Viewport extends React.Component<ViewportProps> {
             drop: this.onDrop
         };
         this.hit = false;
-        this.raycaster = new THREE.Raycaster();
+        this.raycaster = new Raycaster();
         this.animationRequestID = 0;
         this.lastRenderedAgentTime = -1;
     }
 
-    public componentDidMount() {
+    public componentDidMount(): void {
         const {
             agentSimController,
             onTrajectoryFileInfoChanged,
@@ -141,7 +148,7 @@ class Viewport extends React.Component<ViewportProps> {
         } = agentSimController;
         this.visGeometry.reparent(this.vdomRef.current);
 
-        netConnection.onTrajectoryFileInfoArrive = (msg) => {
+        netConnection.onTrajectoryFileInfoArrive = (msg: TrajectoryFileInfo) => {
             this.visGeometry.handleTrajectoryData(msg);
             onTrajectoryFileInfoChanged(msg);
         }
@@ -170,7 +177,7 @@ class Viewport extends React.Component<ViewportProps> {
         this.animate();
     }
 
-    public componentWillUnmount() {
+    public componentWillUnmount(): void {
         if (this.vdomRef.current) {
             this.vdomRef.current.removeEventListener('timeChange', this.handleTimeChange);
         }
@@ -179,7 +186,7 @@ class Viewport extends React.Component<ViewportProps> {
 
     }
 
-    public componentDidUpdate(prevProps: ViewportProps) {
+    public componentDidUpdate(prevProps: ViewportProps): void {
         const { height, width, showMeshes, showPaths, showBounds } = this.props;
         this.visGeometry.setHighlightById(this.props.highlightedParticleType);
         this.visGeometry.setShowMeshes(showMeshes);
@@ -199,13 +206,13 @@ class Viewport extends React.Component<ViewportProps> {
         this.props.agentSimController.clearLocalCache();
     }
 
-    public onDragOver = (e) => {
+    public onDragOver = (e: DragEvent) => {
         let event = e as Event;
         if (event.stopPropagation) { event.stopPropagation() };
         event.preventDefault();
     }
 
-    public onDrop = (e) => {
+    public onDrop = (e: DragEvent) => {
         this.onDragOver(e);
         let files = e.target.files || e.dataTransfer.files;
         this.clearCache();
@@ -224,24 +231,24 @@ class Viewport extends React.Component<ViewportProps> {
         });
     }
 
-    public addEventHandlersToCanvas() {
+    public addEventHandlersToCanvas(): void {
         forOwn(this.handlers, (handler, eventName) =>
             this.visGeometry.renderDom.addEventListener(eventName, handler, false)
         );
     }
 
-    public removeEventHandlersFromCanvas() {
+    public removeEventHandlersFromCanvas(): void {
         forOwn(this.handlers, (handler, eventName) =>
             this.visGeometry.renderDom.removeEventListener(eventName, handler, false)
         );
     }
 
-    public resetCamera() {
+    public resetCamera(): void {
         this.visGeometry.resetCamera();
     }
 
-    public onPickObject(event: MouseEvent) {
-        const size = new THREE.Vector2();
+    public onPickObject(event: MouseEvent): void {
+        const size = new Vector2();
         this.visGeometry.renderer.getSize(size);
 
         const mouse = {
@@ -260,7 +267,7 @@ class Viewport extends React.Component<ViewportProps> {
             let obj = intersects[0].object;
             // if the object has a parent and the parent is not the scene, use that.
             // assumption: only one level of object hierarchy.
-            if (obj.parent && !(obj.parent instanceof THREE.Scene)) {
+            if (obj.parent && !(obj.parent instanceof Scene)) {
                 obj = obj.parent;
             }
             this.hit = true;
@@ -279,7 +286,7 @@ class Viewport extends React.Component<ViewportProps> {
         }
     }
 
-    private handleTimeChange(e: Event) {
+    private handleTimeChange(e: Event): void {
         const {
             onTimeChange,
         } = this.props;
@@ -289,26 +296,25 @@ class Viewport extends React.Component<ViewportProps> {
         onTimeChange(e.detail)
     }
 
-    private dispatchUpdatedTime(timeData) {
+    private dispatchUpdatedTime(timeData): void {
         const event = new CustomEvent('timeChange', { detail: timeData });
         if (this.vdomRef.current) {
             this.vdomRef.current.dispatchEvent(event);
         }
     }
 
-    public stopAnimate() {
+    public stopAnimate(): void {
         if (this.animationRequestID !== 0) {
             cancelAnimationFrame(this.animationRequestID);
             this.animationRequestID = 0;
         }
     }
 
-    public animate() {
+    public animate(): void {
         const {
             agentSimController,
         } = this.props;
         const {
-            netConnection,
             visData,
         } = agentSimController;
         const framesPerSecond = 60; // how often the view-port rendering is refreshed per second
@@ -365,17 +371,11 @@ class Viewport extends React.Component<ViewportProps> {
         this.animationRequestID = requestAnimationFrame(this.animate);
     };
 
-    public render() {
+    public render(): void {
         const {
-            agentSimController,
             width,
             height,
         } = this.props;
-
-        const {
-            netConnection,
-            visData,
-        } = agentSimController;
 
         // style is specified below so that the size
         // can be passed as a react property
