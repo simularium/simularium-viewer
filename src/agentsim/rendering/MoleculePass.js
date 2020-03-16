@@ -25,16 +25,17 @@ class MoleculePass {
         const vertexShader = `
         precision highp float;
 
-            attribute float vTypeId;
+        attribute float vTypeId;
+        attribute float vInstanceId;
 
             uniform float iTime;
             uniform vec2 iResolution;
             uniform float Scale;
             varying vec3 IN_viewPos;
             varying float IN_radius;
-            flat out int IN_typeId; // same as instanceid?
+            flat out int IN_typeId;
+            flat out int IN_instanceId;
             // varying vec4 IN_color;
-            // flat int IN_instanceId;
             // flat int IN_atomId;
             const float radius = 1.0;
             void main()	{
@@ -58,6 +59,7 @@ class MoleculePass {
                 //gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
                 IN_radius = radius;
                 IN_typeId = int(vTypeId);
+                IN_instanceId = int(vInstanceId);
             }
         `;
 
@@ -67,6 +69,7 @@ class MoleculePass {
         varying vec3 IN_viewPos;
         varying float IN_radius;
         flat in int IN_typeId;
+        flat in int IN_instanceId;
             // varying vec4 IN_color;
             // flat int IN_instanceId;
             // flat int IN_atomId;
@@ -112,7 +115,7 @@ class MoleculePass {
                 //gl_FragColor = vec4(fragPosDepth, 0.0, 0.0, 1.0);
                 // gl_FragColor = vec4(gl_PointCoord.xy, 0.0, 1.0);
                 
-                gl_FragColor = vec4(float(IN_typeId), float(IN_typeId), float(IN_typeId), 1.0);
+                gl_FragColor = vec4(float(IN_typeId), float(IN_instanceId), fragViewPos.z, 1.0);
                 //gl_FragColor = vec4(float(IN_typeId)/50.0, float(IN_typeId)/50.0, float(IN_typeId)/50.0, 1.0);
                 //gl_FragColor = vec4(84.0/255.0, 179.0/255.0, 162.0/255.0, 1.0);
             }
@@ -284,6 +287,7 @@ class MoleculePass {
         this.geometry = new THREE.BufferGeometry();
         var vertices = new Float32Array(n * 4);
         var typeIds = new Float32Array(n);
+        var instanceIds = new Float32Array(n);
         for (var i = 0; i < n; i++) {
             // position
             vertices[i * 4] = 0;
@@ -292,6 +296,8 @@ class MoleculePass {
             vertices[i * 4 + 3] = 1;
             // particle type id
             typeIds[i] = -1;
+            // particle instance id
+            instanceIds[i] = -1;
         }
         this.geometry.setAttribute(
             "position",
@@ -301,20 +307,25 @@ class MoleculePass {
             "vTypeId",
             new THREE.Float32BufferAttribute(typeIds, 1)
         );
+        this.geometry.setAttribute(
+            "vInstanceId",
+            new THREE.Float32BufferAttribute(instanceIds, 1)
+        );
         if (this.particles) {
             this.particles.geometry = this.geometry;
         }
     }
 
-    update(positions, typeIds, numVertices) {
+    update(positions, typeIds, instanceIds, numVertices) {
         // update positions, and reset geoemtry int the particles object.
         this.particles.geometry.attributes.position.array.set(positions);
-
         this.particles.geometry.attributes.position.needsUpdate = true;
 
         this.particles.geometry.attributes.vTypeId.array.set(typeIds);
-
         this.particles.geometry.attributes.vTypeId.needsUpdate = true;
+
+        this.particles.geometry.attributes.vInstanceId.array.set(instanceIds);
+        this.particles.geometry.attributes.vInstanceId.needsUpdate = true;
 
         this.particles.geometry.setDrawRange(0, numVertices);
 

@@ -735,6 +735,9 @@ class VisGeometry2 {
 
         const buf = new Float32Array(4 * agents.length * this.numAtomsPerAgent);
         const typeids = new Float32Array(agents.length * this.numAtomsPerAgent);
+        const instanceids = new Float32Array(
+            agents.length * this.numAtomsPerAgent
+        );
 
         agents.forEach((agentData, i) => {
             const visType = agentData["vis-type"];
@@ -787,6 +790,7 @@ class VisGeometry2 {
                         agentData.z + (Math.random() - 0.5) * this.atomSpread;
                     buf[(i * this.numAtomsPerAgent + k) * 4 + 3] = 1.0;
                     typeids[i * this.numAtomsPerAgent + k] = typeId;
+                    instanceids[i * this.numAtomsPerAgent + k] = i;
                 }
 
                 // runtimeMesh.rotation.x = agentData.xrot;
@@ -866,6 +870,7 @@ class VisGeometry2 {
         this.moleculeRenderer.updateMolecules(
             buf,
             typeids,
+            instanceids,
             agents.length,
             this.numAtomsPerAgent
         );

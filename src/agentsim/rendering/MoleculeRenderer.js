@@ -131,10 +131,17 @@ class MoleculeRenderer {
     }
 
     // TODO this is a geometry/scene update and should be updated through some other means?
-    updateMolecules(positions, typeids, numAgents, numAtomsPerAgent) {
+    updateMolecules(
+        positions,
+        typeids,
+        instanceids,
+        numAgents,
+        numAtomsPerAgent
+    ) {
         this.gbufferPass.update(
             positions,
             typeids,
+            instanceids,
             numAgents * numAtomsPerAgent
         );
     }

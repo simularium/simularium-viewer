@@ -253,6 +253,7 @@ class CompositePass {
             {
                 vec2 texCoords = vUv;
                 // contains IDs.  index into data buffer.
+                // typeId, instanceId, viewZ
                 vec4 col0 = texture(colorTex, texCoords);
                 if (col0.w < 0.0) {
                     discard;
@@ -261,7 +262,7 @@ class CompositePass {
                 float occ2 = texture(ssaoTex2, texCoords).r;
                 int atomId = int(texture(atomIdTex, texCoords).r);
                 //int instanceId = int(texture(instanceIdTex, texCoords).r);
-                int instanceId = int(col0.x);
+                int instanceId = int(col0.y);
             
                 if(instanceId < 0)
                     discard;
