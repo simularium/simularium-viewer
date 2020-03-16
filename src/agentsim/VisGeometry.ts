@@ -1,9 +1,7 @@
-/* globals global Request*/
-/* eslint no-undef: "error" */
-import * as THREE from "three";
-global.THREE = THREE;
-
 import { WEBGL } from "three/examples/jsm/WebGL.js";
+import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+
 import {
     WebGLRendererParameters,
     LineSegments,
@@ -29,9 +27,6 @@ import {
     Mesh,
     Vector3,
 } from "three";
-
-import "./three/OBJLoader.js";
-import "./three/OrbitControls.js";
 
 import jsLogger from "js-logger";
 
@@ -295,7 +290,7 @@ class VisGeometry {
     }
 
     public setUpControls(element) {
-        this.controls = new THREE.OrbitControls(this.camera, element);
+        this.controls = new OrbitControls(this.camera, element);
         this.controls.maxDistance = 750;
         this.controls.minDistance = 5;
         this.controls.zoomSpeed = 2;
@@ -352,7 +347,7 @@ class VisGeometry {
         this.camera.position.z = 120;
 
         this.loadObj = meshName => {
-            const objLoader = new THREE.OBJLoader();
+            const objLoader = new OBJLoader();
             objLoader.load(
                 `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/meshes/obj/${meshName}`,
                 object => {
