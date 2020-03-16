@@ -42,8 +42,8 @@ declare class VisGeometry {
     onNewRuntimeGeometryType(meshName: any): void;
     setUpControls(element: any): void;
     /**
-    *   Setup ThreeJS Scene
-    * */
+     *   Setup ThreeJS Scene
+     * */
     setupScene(): void;
     resize(width: any, height: any): void;
     reparent(parent: any): void;
@@ -51,8 +51,8 @@ declare class VisGeometry {
     enableControls(): void;
     render(time: any): void;
     /**
-    *   Run Time Mesh functions
-    */
+     *   Run Time Mesh functions
+     */
     createMaterials(colors: any): void;
     createMeshes(): void;
     addMesh(meshName: any, mesh: any): void;
@@ -61,12 +61,12 @@ declare class VisGeometry {
     getFiberMesh(name: any): any;
     getMaterial(index: any, typeId: any): any;
     /**
-    *   Data Management
-    */
+     *   Data Management
+     */
     resetMapping(): void;
     /**
-    *   Map Type ID -> Geometry
-    */
+     *   Map Type ID -> Geometry
+     */
     mapIdToGeom(id: any, meshName: any): void;
     getGeomFromId(id: any): any;
     mapFromJSON(name: any, filePath: any, callback: any): Promise<void>;
@@ -74,12 +74,12 @@ declare class VisGeometry {
     setScaleForId(id: any, scale: any): void;
     getScaleForId(id: any): any;
     /**
-    *   Default Geometry
-    */
+     *   Default Geometry
+     */
     getSphereGeom(): any;
     /**
-    *   Update Scene
-    * */
+     *   Update Scene
+     * */
     updateScene(agents: any): void;
     setupMeshGeometry(i: any, runtimeMesh: any, meshGeom: any, isFollowedObject: any): any;
     assignMaterial(runtimeMesh: any, material: any): void;

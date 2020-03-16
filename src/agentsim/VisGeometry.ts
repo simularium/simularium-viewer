@@ -46,6 +46,18 @@ function lerp(x0, x1, alpha) {
     return x0 + (x1 - x0) * alpha;
 }
 
+interface PathData {
+    agent: number;
+    numSegments: number;
+    maxSegments: number;
+    color: Color;
+    points: Float32Array;
+    colors: Float32Array;
+    geometry: BufferGeometry;
+    material: LineBasicMaterial;
+    line: any;
+}
+
 class VisGeometry {
     public handleTrajectoryData: any;
     public visGeomMap: any;
@@ -990,20 +1002,30 @@ class VisGeometry {
             return foundpath;
         }
 
-        const pathdata = {
+        if (!maxSegments) {
+            maxSegments = MAX_PATH_LEN;
+        }
+
+        if (!color) {
+            // get the agent's color. is there a simpler way?
+            const mat = this.getMaterialOfAgentIndex(idx);
+            color = mat && mat.color ? mat.color.clone() : new Color(0xffffff);
+        }
+
+        const pathdata: PathData = {
             agent: idx,
             numSegments: 0,
             maxSegments: maxSegments,
             color: color,
-            points: new Float32Array(maxSegments! * 3 * 2),
-            colors: new Float32Array(maxSegments! * 3 * 2),
+            points: new Float32Array(maxSegments * 3 * 2),
+            colors: new Float32Array(maxSegments * 3 * 2),
             geometry: new BufferGeometry(),
             material: new LineBasicMaterial({
                 // the line will be colored per-vertex
                 vertexColors: VertexColors,
             }),
             // will create line "lazily" when the line has more than 1 point(?)
-            line: null as any,
+            line: null,
         };
 
         pathdata.geometry.addAttribute(
@@ -1017,7 +1039,7 @@ class VisGeometry {
         // path starts empty: draw range spans nothing
         pathdata.geometry.setDrawRange(0, 0);
         pathdata.line = new LineSegments(pathdata.geometry, pathdata.material);
-        pathdata.line!.frustumCulled = false;
+        pathdata.line.frustumCulled = false;
         this.scene.add(pathdata.line);
 
         this.paths.push(pathdata);
