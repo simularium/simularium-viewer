@@ -282,13 +282,14 @@ class MoleculePass {
 
     createMoleculeBuffer(n) {
         this.geometry = new THREE.BufferGeometry();
-        var vertices = new Float32Array(n * 3);
+        var vertices = new Float32Array(n * 4);
         var typeIds = new Float32Array(n);
         for (var i = 0; i < n; i++) {
             // position
-            vertices[i * 3] = 0;
-            vertices[i * 3 + 1] = 0;
-            vertices[i * 3 + 2] = 0;
+            vertices[i * 4] = 0;
+            vertices[i * 4 + 1] = 0;
+            vertices[i * 4 + 2] = 0;
+            vertices[i * 4 + 3] = 1;
             // particle type id
             typeIds[i] = -1;
         }

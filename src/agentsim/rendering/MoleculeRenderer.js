@@ -96,11 +96,9 @@ class MoleculeRenderer {
             stencilBuffer: false,
         });
         this.ssaoBufferBlurred2.texture.generateMipmaps = false;
-
-        this.setupGui();
     }
 
-    setupGui() {
+    setupGui(gui) {
         var settings = {
             aoradius1: 4.5,
             aoradius2: 4.5,
@@ -109,7 +107,6 @@ class MoleculeRenderer {
             atomBeginDistance: 150.0,
             chainBeginDistance: 200.0,
         };
-        const gui = new dat.GUI();
         var self = this;
         gui.add(settings, "aoradius1", 0.01, 10.0).onChange(value => {
             self.ssao1Pass.pass.material.uniforms.radius.value = value;
@@ -134,8 +131,12 @@ class MoleculeRenderer {
     }
 
     // TODO this is a geometry/scene update and should be updated through some other means?
-    updateMolecules(positions, typeids, numVertices) {
-        this.gbufferPass.update(positions, typeids, numVertices);
+    updateMolecules(positions, typeids, numAgents, numAtomsPerAgent) {
+        this.gbufferPass.update(
+            positions,
+            typeids,
+            numAgents * numAtomsPerAgent
+        );
     }
     // colorsData is a Float32Array of rgb triples
     updateColors(numColors, colorsData) {

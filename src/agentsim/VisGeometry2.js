@@ -6,6 +6,8 @@
 import * as THREE from "three";
 global.THREE = THREE;
 
+import * as dat from "dat.gui";
+
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { WEBGL } from "three/examples/jsm/WebGL.js";
 
@@ -102,6 +104,31 @@ class VisGeometry2 {
 
         this.mlogger = jsLogger.get("visgeometry");
         this.mlogger.setLevel(loggerLevel);
+
+        this.setupGui();
+    }
+
+    setupGui() {
+        const gui = new dat.GUI();
+        this.atomSpread = 3.0;
+        this.numAtomsPerAgent = 8;
+        var settings = {
+            atomSpread: this.atomSpread,
+            numAtoms: this.numAtomsPerAgent,
+        };
+        var self = this;
+        gui.add(settings, "atomSpread", 0.01, 8.0).onChange(value => {
+            self.atomSpread = value;
+            self.updateScene(self.currentSceneAgents);
+        });
+        gui.add(settings, "numAtoms", 1, 20)
+            .step(1)
+            .onChange(value => {
+                self.numAtomsPerAgent = Math.floor(value);
+                self.updateScene(self.currentSceneAgents);
+            });
+
+        this.moleculeRenderer.setupGui(gui);
     }
 
     get logger() {
@@ -464,8 +491,9 @@ class VisGeometry2 {
         const { materials } = this;
 
         // empty buffer of molecule positions, to be filled. (init all to origin)
-        // currently one "atom" per molecule per geomCount
-        this.moleculeRenderer.createMoleculeBuffer(this.geomCount);
+        this.moleculeRenderer.createMoleculeBuffer(
+            this.geomCount * this.numAtomsPerAgent
+        );
 
         //multipass render:
         // draw moleculebuffer into several render targets to store depth, normals, colors
@@ -692,6 +720,7 @@ class VisGeometry2 {
      *   Update Scene
      * */
     updateScene(agents) {
+        this.currentSceneAgents = agents;
         const sphereGeometry = this.getSphereGeom();
         let fiberIndex = 0;
 
@@ -704,8 +733,8 @@ class VisGeometry2 {
         let dx, dy, dz;
         // The agents sent over are mapped by an integer id
 
-        const buf = new Float32Array(4 * agents.length);
-        const typeids = new Float32Array(agents.length);
+        const buf = new Float32Array(4 * agents.length * this.numAtomsPerAgent);
+        const typeids = new Float32Array(agents.length * this.numAtomsPerAgent);
 
         agents.forEach((agentData, i) => {
             const visType = agentData["vis-type"];
@@ -749,10 +778,16 @@ class VisGeometry2 {
                 // runtimeMesh.position.y = agentData.y;
                 // runtimeMesh.position.z = agentData.z;
 
-                buf[i * 3 + 0] = agentData.x;
-                buf[i * 3 + 1] = agentData.y;
-                buf[i * 3 + 2] = agentData.z;
-                typeids[i] = typeId;
+                for (let k = 0; k < this.numAtomsPerAgent; ++k) {
+                    buf[(i * this.numAtomsPerAgent + k) * 4 + 0] =
+                        agentData.x + (Math.random() - 0.5) * this.atomSpread;
+                    buf[(i * this.numAtomsPerAgent + k) * 4 + 1] =
+                        agentData.y + (Math.random() - 0.5) * this.atomSpread;
+                    buf[(i * this.numAtomsPerAgent + k) * 4 + 2] =
+                        agentData.z + (Math.random() - 0.5) * this.atomSpread;
+                    buf[(i * this.numAtomsPerAgent + k) * 4 + 3] = 1.0;
+                    typeids[i * this.numAtomsPerAgent + k] = typeId;
+                }
 
                 // runtimeMesh.rotation.x = agentData.xrot;
                 // runtimeMesh.rotation.y = agentData.yrot;
@@ -828,7 +863,12 @@ class VisGeometry2 {
             }
         });
 
-        this.moleculeRenderer.updateMolecules(buf, typeids, agents.length);
+        this.moleculeRenderer.updateMolecules(
+            buf,
+            typeids,
+            agents.length,
+            this.numAtomsPerAgent
+        );
 
         this.hideUnusedFibers(fiberIndex);
 
