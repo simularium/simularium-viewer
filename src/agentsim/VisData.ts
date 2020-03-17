@@ -3,10 +3,28 @@ import * as util from "./ThreadUtil";
 /**
  * Parse Agents from Net Data
  * */
+interface AgentData {
+    x: number;
+    y: number;
+    z: number;
+    xrot: number;
+    yrot: number;
+    zrot: number;
+    visType: number;
+    type: number;
+    cr: number;
+    subpoints: number[];
+}
+
+interface FrameData {
+    frameNumber: number;
+    time: number;
+}
+
 class VisData {
-    private frameCache: any;
-    private frameDataCache: any;
-    private webWorker: any;
+    private frameCache: AgentData[][];
+    private frameDataCache: FrameData[];
+    private webWorker: Worker | null;
 
     private frameToWaitFor: number;
     private lockedForFrame: boolean;
@@ -54,7 +72,7 @@ class VisData {
             "nSubPoints",
         ];
         const visData = visDataMsg.data;
-        const parsedAgentData: any = [];
+        const parsedAgentData: AgentData[] = [];
         const nSubPointsIndex = agentObjectKeys.findIndex(
             ele => ele === "nSubPoints"
         );
@@ -90,7 +108,7 @@ class VisData {
             parsedAgentData.push(parseOneAgent(agentSubSetArray));
         }
 
-        const frameData = {
+        const frameData: FrameData = {
             time: visDataMsg.time,
             frameNumber: visDataMsg.frameNumber,
         };
@@ -124,7 +142,7 @@ class VisData {
     }
 
     //get time() { return this.cacheFrame < this.frameDataCache.length ? this.frameDataCache[this.cacheFrame] : -1 }
-    public get currentFrameData() {
+    public get currentFrameData(): FrameData {
         if (this.frameDataCache.length > 0) {
             if (this.cacheFrame < 0) {
                 return this.frameDataCache[0];
@@ -135,13 +153,13 @@ class VisData {
             }
         }
 
-        return -1;
+        return { frameNumber: 0, time: 0 };
     }
 
     /**
      *   Functions to check update
      * */
-    public hasLocalCacheForTime(timeNs) {
+    public hasLocalCacheForTime(timeNs): boolean {
         if (this.frameDataCache.length > 0 && timeNs === 0) {
             return true;
         } else if (this.frameDataCache.length < 2) {
@@ -154,7 +172,7 @@ class VisData {
         );
     }
 
-    public gotoTime(timeNs) {
+    public gotoTime(timeNs): void {
         this.cacheFrame = -1;
 
         for (
@@ -170,7 +188,7 @@ class VisData {
         }
     }
 
-    public atLatestFrame() {
+    public atLatestFrame(): boolean {
         if (this.cacheFrame === -1 && this.frameCache.length > 0) {
             return false;
         }
@@ -178,7 +196,7 @@ class VisData {
         return this.cacheFrame >= this.frameCache.length - 1;
     }
 
-    public currentFrame() {
+    public currentFrame(): AgentData[] {
         if (this.frameCache.length === 0) {
             return [];
         } else if (this.cacheFrame === -1) {
@@ -188,10 +206,10 @@ class VisData {
 
         return this.cacheFrame < this.frameCache.length
             ? this.frameCache[this.cacheFrame]
-            : {};
+            : Array<AgentData>();
     }
 
-    public gotoNextFrame() {
+    public gotoNextFrame(): void {
         if (!this.atLatestFrame()) {
             this.cacheFrame = this.cacheFrame + 1;
         }
@@ -200,18 +218,18 @@ class VisData {
     /**
      * Data management
      * */
-    public WaitForFrame(frameNumber) {
+    public WaitForFrame(frameNumber): void {
         this.frameToWaitFor = frameNumber;
         this.lockedForFrame = true;
     }
 
-    public clearCache() {
+    public clearCache(): void {
         this.frameCache = [];
         this.frameDataCache = [];
         this.cacheFrame = 0;
     }
 
-    public parseAgentsFromNetData(visDataMsg) {
+    public parseAgentsFromNetData(visDataMsg): void {
         /**
          *   visDataMsg = {
          *       ...
@@ -249,7 +267,7 @@ class VisData {
         });
     }
 
-    public convertVisDataWorkFunctionToString() {
+    public convertVisDataWorkFunctionToString(): string {
         return `function visDataWorkerFunc() {
         self.addEventListener('message', (e) => {
             const visDataMsg = e.data;

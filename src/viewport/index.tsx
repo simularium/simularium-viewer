@@ -15,8 +15,8 @@ import {
 import { VisGeometry } from "../agentsim";
 
 interface TrajectoryFileInfo {
-  timeStepSize: number;
-  totalDuration: number;
+    timeStepSize: number;
+    totalDuration: number;
 };
 
 interface ViewportProps {
@@ -79,7 +79,7 @@ class Viewport extends React.Component<ViewportProps> {
     private lastRenderTime: number;
     private startTime: number;
     private vdomRef: React.RefObject<HTMLInputElement>;
-    private handlers: { [key: string]: (e: DragEvent | MouseEvent) => void };
+    private handlers: { [key: string]: (e: Event) => void};
 
     private hit: boolean;
     private raycaster: Raycaster;
@@ -161,7 +161,7 @@ class Viewport extends React.Component<ViewportProps> {
                     getJsonUrl(fileName),
                     onJsonDataArrived
                 ).then(() => {
-                    this.visGeometry.render();
+                    this.visGeometry.render(this.startTime);
                     this.lastRenderTime = Date.now();
                 });
                 agentSimController.initializeTrajectoryFile();
@@ -206,19 +206,22 @@ class Viewport extends React.Component<ViewportProps> {
         this.props.agentSimController.clearLocalCache();
     }
 
-    public onDragOver = (e: DragEvent) => {
-        let event = e as Event;
-        if (event.stopPropagation) { event.stopPropagation() };
-        event.preventDefault();
+    public onDragOver = (e: Event) => {
+        if (e.stopPropagation) { e.stopPropagation(); };
+        e.preventDefault();
     }
 
-    public onDrop = (e: DragEvent) => {
+    public onDrop = (e: Event) => {
         this.onDragOver(e);
-        let files = e.target.files || e.dataTransfer.files;
+        let event = e as DragEvent;
+        let input = event.target as HTMLInputElement;
+        let data: DataTransfer = event.dataTransfer as DataTransfer;
+
+        let files: FileList = input.files || data.files;
         this.clearCache();
 
         let parsedFiles = [];
-        let filesArr: FileHTML[] = Array.from(files);
+        let filesArr: FileHTML[] = Array.from(files) as any as FileHTML[];
         let p = parseFilesToText(filesArr, parsedFiles);
 
         p.then(() => {
@@ -247,7 +250,8 @@ class Viewport extends React.Component<ViewportProps> {
         this.visGeometry.resetCamera();
     }
 
-    public onPickObject(event: MouseEvent): void {
+    public onPickObject(e: Event): void {
+        const event = e as MouseEvent;
         const size = new Vector2();
         this.visGeometry.renderer.getSize(size);
 
@@ -371,7 +375,7 @@ class Viewport extends React.Component<ViewportProps> {
         this.animationRequestID = requestAnimationFrame(this.animate);
     };
 
-    public render(): void {
+    public render(): React.ReactElement<any> {
         const {
             width,
             height,

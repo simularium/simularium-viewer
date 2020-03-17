@@ -612,7 +612,7 @@ class VisGeometry {
         return null;
     }
 
-    public mapFromJSON(name, filePath, callback) {
+    public mapFromJSON(name, filePath, callback?) {
         const jsonRequest = new Request(filePath);
         const self = this;
         return fetch(jsonRequest)

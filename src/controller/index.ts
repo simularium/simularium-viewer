@@ -5,11 +5,11 @@ jsLogger.setHandler(jsLogger.createDefaultHandler());
 
 export default class AgentSimController {
     public netConnection: NetConnection;
-    public visData: any;
+    public visData: VisData;
     private networkEnabled: boolean;
     private isPaused: boolean;
     private fileChanged: boolean;
-    private playBackFile: any;
+    private playBackFile: string;
 
     public constructor(params) {
         this.visData = new VisData();
@@ -32,17 +32,17 @@ export default class AgentSimController {
         this.fileChanged = false;
     }
 
-    public get hasChangedFile() {
+    public get hasChangedFile(): boolean {
         return this.fileChanged;
     }
 
-    public connect() {
+    public connect(): Promise<{}> {
         return this.netConnection.connectToRemoteServer(
             this.netConnection.getIp()
         );
     }
 
-    public start() {
+    public start(): Promise<void> {
         // switch back to 'networked' playback
         this.networkEnabled = true;
         this.isPaused = false;
@@ -53,15 +53,15 @@ export default class AgentSimController {
         );
     }
 
-    public time() {
+    public time(): number {
         return this.visData.currentFrameData.time;
     }
 
-    public stop() {
+    public stop(): void {
         this.netConnection.abortRemoteSim();
     }
 
-    public pause() {
+    public pause(): void {
         if (this.networkEnabled) {
             this.netConnection.pauseRemoteSim();
         }
@@ -69,15 +69,15 @@ export default class AgentSimController {
         this.isPaused = true;
     }
 
-    public paused() {
+    public paused(): boolean {
         return this.isPaused;
     }
 
-    public initializeTrajectoryFile() {
+    public initializeTrajectoryFile(): void {
         this.netConnection.requestTrajectoryFileInfo(this.playBackFile);
     }
 
-    public gotoTime(timeNs) {
+    public gotoTime(timeNs): void {
         if (this.visData.hasLocalCacheForTime(timeNs)) {
             this.visData.gotoTime(timeNs);
         } else {
@@ -90,12 +90,12 @@ export default class AgentSimController {
         }
     }
 
-    public playFromTime(timeNs) {
+    public playFromTime(timeNs): void {
         this.gotoTime(timeNs);
         this.isPaused = false;
     }
 
-    public resume() {
+    public resume(): void {
         if (this.networkEnabled) {
             this.netConnection.resumeRemoteSim();
         }
@@ -103,7 +103,7 @@ export default class AgentSimController {
         this.isPaused = false;
     }
 
-    public changeFile(newFile) {
+    public changeFile(newFile): void {
         if (newFile !== this.playBackFile) {
             this.fileChanged = true;
             this.playBackFile = newFile;
@@ -118,15 +118,15 @@ export default class AgentSimController {
         }
     }
 
-    public markFileChangeAsHandled() {
+    public markFileChangeAsHandled(): void {
         this.fileChanged = false;
     }
 
-    public getFile() {
+    public getFile(): string {
         return this.playBackFile;
     }
 
-    public disableNetworkCommands() {
+    public disableNetworkCommands(): void {
         this.networkEnabled = false;
 
         if (this.netConnection.socketIsValid()) {
@@ -134,11 +134,11 @@ export default class AgentSimController {
         }
     }
 
-    public cacheJSON(json) {
+    public cacheJSON(json): void {
         this.visData.parseAgentsFromNetData(json);
     }
 
-    public clearLocalCache() {
+    public clearLocalCache(): void {
         this.visData.clearCache();
     }
 }
