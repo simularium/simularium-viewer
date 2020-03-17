@@ -276,8 +276,9 @@ class CompositePass {
                 //vec4 col = vec4(ResidueColors[ingredientId % 23],1.0);
                 vec4 col = texelFetch(colorsBuffer, ivec2(ingredientId, 0), 0);
 
-                float z_b = texture(depthBufferTex, texCoords).r;
-                float eyeDepth = LinearEyeDepth(z_b);
+                //float z_b = texture(depthBufferTex, texCoords).r;
+                //float eyeDepth = LinearEyeDepth(z_b);
+                float eyeDepth = -col0.z;
 
                 vec4 atomInfo = vec4(0.0,0.0,0.0,0.0);//AtomInfos[atomId];
 
@@ -291,8 +292,8 @@ class CompositePass {
 
                 //predefined colors
                 //atomSymbolId = 2;
-                vec3 atomColor = AtomColors[atomSymbolId];
-                atomColor = col.xyz;
+                //vec3 atomColor = AtomColors[atomSymbolId];
+                vec3 atomColor = col.xyz;
                 //atomColor = vec3(1,1,1);
                 vec3 aminoAcidColor = ResidueColors[residueSymbolId]; // currently not used
 
@@ -311,11 +312,11 @@ class CompositePass {
                 float c = ingredientGroupsColorValues.y + (ingredientGroupsColorRanges.y) * (ingredientLocalIndex - 0.5f);
                 float l = ingredientGroupsColorValues.z + (ingredientGroupsColorRanges.z) * (ingredientLocalIndex - 0.5f);
             
-                vec3 hcl = rgb_to_hcv(col.xyz);
+                vec3 hcl = rgb_to_hcv(col.xyz*20.0);
 //                vec3 hcl = rgb_to_hcv(col.xyz*20.0);
                 h = hcl.r;
-                c = hcl.g;//+10.0;
-                l = hcl.b;//+10.0;
+                c = hcl.g+10.0;
+                l = hcl.b+10.0;
                 //h = 120.0;
                 //c = 80.0;
                 //l = 50.0;
@@ -325,17 +326,19 @@ class CompositePass {
 //                l = IngredientColorHCL[ingredientId].z;
             
             
-                //if(false)
-                if(eyeDepth < chainBeginDistance)
+                if(false)
+                //if(eyeDepth < chainBeginDistance)
                 {
                     float cc = max(eyeDepth - atomicBeginDistance, 0.0);
                     float dd = chainBeginDistance - atomicBeginDistance;
                     float ddd = (1.0-(cc/dd));
-                    if(atomSymbolId > 0) l -= 13.0 * ddd;
+                    if(atomSymbolId > 0) {
+                        l -= 13.0 * ddd;
+                    }
                 }
             
-                //if(false)
-                if(eyeDepth < chainBeginDistance && numChains > 1)
+                if(false)
+                //if(eyeDepth < chainBeginDistance && numChains > 1)
                 {
                     float cc = max(eyeDepth - atomicBeginDistance, 0.0);
                     float dd = chainBeginDistance - atomicBeginDistance;
@@ -364,19 +367,21 @@ class CompositePass {
                     h += (float(chainSymbolId) * hueShift);
                 }
             
-//              c -= 15.0;
+              c -= 15.0;
             
                 vec3 color;
                 color = d3_hcl_lab(h, c, l);
                 color = max(color, vec3(0.0,0.0,0.0));
                 color = min(color, vec3(1.0,1.0,1.0));
-            
+                
+                //if(false)
                 if(eyeDepth < atomicBeginDistance)
                 {
                     float t = (eyeDepth/atomicBeginDistance);
                     t = 1.0 - clamp(t, 0.0, 1.0);
                     color.xyz = mix(color.xyz, atomColor, t);
                     //color.xyz = atomColor;
+                    //color.xyz = vec3(0.0, 1.0, 0.0);
                 }
             
 //                gl_FragColor = vec4(occ1 * occ2 * col0.xyz, 1.0);
@@ -384,7 +389,7 @@ gl_FragColor = vec4(occ1 * occ2 * color.xyz, 1.0);
 //gl_FragColor = vec4(occ1 * occ2 * col.xyz, 1.0);
 
 //~ for debug: depth
-              //out_color = vec4(eyeDepth, eyeDepth, eyeDepth, 1.0);
+//gl_FragColor = vec4((eyeDepth-zNear)/(zFar-zNear), (eyeDepth-zNear)/(zFar-zNear), (eyeDepth-zNear)/(zFar-zNear), 1.0);
               //out_color = vec4(occ1 * occ2 * col.xyz, 1.0);
                 //out_color = vec4(vec3(residueSymbolId), 1.0);
                 //out_color = vec4(vec3(instanceId), 1.0);
@@ -411,7 +416,10 @@ gl_FragColor = vec4(occ1 * occ2 * color.xyz, 1.0);
 
     resize(x, y) {}
 
-    render(renderer, target, ssaoBuffer1, ssaoBuffer2, colorBuffer) {
+    render(renderer, camera, target, ssaoBuffer1, ssaoBuffer2, colorBuffer) {
+        this.pass.material.uniforms.zNear.value = camera.near;
+        this.pass.material.uniforms.zFar.value = camera.far;
+
         this.pass.material.uniforms.colorTex.value = colorBuffer.texture;
         this.pass.material.uniforms.ssaoTex1.value = ssaoBuffer1.texture;
         this.pass.material.uniforms.ssaoTex2.value = ssaoBuffer2.texture;

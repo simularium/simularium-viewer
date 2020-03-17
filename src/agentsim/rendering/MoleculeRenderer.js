@@ -11,8 +11,8 @@ class MoleculeRenderer {
     constructor() {
         this.gbufferPass = new MoleculePass();
         // radius, threshold, falloff in view space coordinates.
-        this.ssao1Pass = new SSAO1Pass(4.5, 150, 50);
-        this.ssao2Pass = new SSAO1Pass(4.5, 150, 50);
+        this.ssao1Pass = new SSAO1Pass(4.5, 150, 150);
+        this.ssao2Pass = new SSAO1Pass(4.5, 150, 150);
         //        this.ssao1Pass = new SSAO1Pass(0.00005, 0.38505, 0.08333);
         //        this.ssao2Pass = new SSAO1Pass(0.00125, 1.05714, 0.15188);
         this.blur1Pass = new BlurPass(10);
@@ -107,9 +107,9 @@ class MoleculeRenderer {
             blurradius1: 10.0,
             blurradius2: 10.0,
             aothreshold1: 150,
-            aofalloff1: 50,
+            aofalloff1: 150,
             aothreshold2: 150,
-            aofalloff2: 50,
+            aofalloff2: 150,
             atomBeginDistance: 150.0,
             chainBeginDistance: 200.0,
         };
@@ -139,14 +139,12 @@ class MoleculeRenderer {
             self.ssao2Pass.pass.material.uniforms.ssao_falloff.value = value;
         });
 
-        gui.add(settings, "atomBeginDistance", 0.01, 1000.0).onChange(value => {
+        gui.add(settings, "atomBeginDistance", 0.0, 300.0).onChange(value => {
             self.compositePass.pass.material.uniforms.atomicBeginDistance.value = value;
         });
-        gui.add(settings, "chainBeginDistance", 0.01, 1000.0).onChange(
-            value => {
-                self.compositePass.pass.material.uniforms.chainBeginDistance.value = value;
-            }
-        );
+        gui.add(settings, "chainBeginDistance", 0.0, 300.0).onChange(value => {
+            self.compositePass.pass.material.uniforms.chainBeginDistance.value = value;
+        });
     }
 
     // TODO this is a geometry/scene update and should be updated through some other means?
@@ -248,6 +246,7 @@ class MoleculeRenderer {
         // render into default render target
         this.compositePass.render(
             renderer,
+            camera,
             compositeTarget,
             this.ssaoBufferBlurred,
             this.ssaoBufferBlurred2,
