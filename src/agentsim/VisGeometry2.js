@@ -745,7 +745,7 @@ class VisGeometry2 {
             const scale = this.getScaleForId(typeId);
 
             if (visType === visTypes.ID_VIS_TYPE_DEFAULT) {
-                // const materialType = (typeId + 1) * this.colorVariant;
+                const materialType = (typeId + 1) * this.colorVariant;
                 // let runtimeMesh = this.getMesh(i);
                 // const isFollowedObject = (runtimeMesh === this.followObject);
 
@@ -789,7 +789,8 @@ class VisGeometry2 {
                     buf[(i * this.numAtomsPerAgent + k) * 4 + 2] =
                         agentData.z + (Math.random() - 0.5) * this.atomSpread;
                     buf[(i * this.numAtomsPerAgent + k) * 4 + 3] = 1.0;
-                    typeids[i * this.numAtomsPerAgent + k] = typeId;
+                    //                    typeids[i * this.numAtomsPerAgent + k] = typeId;
+                    typeids[i * this.numAtomsPerAgent + k] = materialType;
                     instanceids[i * this.numAtomsPerAgent + k] = i;
                 }
 

@@ -274,7 +274,8 @@ class CompositePass {
                 //vec4 col = vec4(IngredientColor[ingredientId],1.0);
                 // todo: consider using UINT for optimal % operator, instead of INT
                 //vec4 col = vec4(ResidueColors[ingredientId % 23],1.0);
-                vec4 col = texelFetch(colorsBuffer, ivec2(ingredientId, 0), 0);
+                ivec2 ncols = textureSize(colorsBuffer, 0);
+                vec4 col = texelFetch(colorsBuffer, ivec2(ingredientId % ncols.x, 0), 0);
 
                 //float z_b = texture(depthBufferTex, texCoords).r;
                 //float eyeDepth = LinearEyeDepth(z_b);
@@ -384,9 +385,11 @@ class CompositePass {
                     //color.xyz = vec3(0.0, 1.0, 0.0);
                 }
             
-//                gl_FragColor = vec4(occ1 * occ2 * col0.xyz, 1.0);
-gl_FragColor = vec4(occ1 * occ2 * color.xyz, 1.0);
-//gl_FragColor = vec4(occ1 * occ2 * col.xyz, 1.0);
+                gl_FragColor = vec4(occ1 * occ2 * color.xyz, 1.0);
+                
+                //                gl_FragColor = vec4(occ1 * occ2 * col0.xyz, 1.0);
+//                gl_FragColor = vec4(occ1 * occ2 * col.xyz, 1.0);
+                //gl_FragColor = vec4(col.xyz, 1.0);
 
 //~ for debug: depth
 //gl_FragColor = vec4((eyeDepth-zNear)/(zFar-zNear), (eyeDepth-zNear)/(zFar-zNear), (eyeDepth-zNear)/(zFar-zNear), 1.0);
