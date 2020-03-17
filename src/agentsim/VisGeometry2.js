@@ -101,6 +101,7 @@ class VisGeometry2 {
         );
 
         this.moleculeRenderer = new MoleculeRenderer();
+        this.moleculeRenderer.setBackgroundColor(BACKGROUND_COLOR);
 
         this.mlogger = jsLogger.get("visgeometry");
         this.mlogger.setLevel(loggerLevel);

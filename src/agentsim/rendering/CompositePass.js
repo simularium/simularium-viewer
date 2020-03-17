@@ -12,10 +12,11 @@ class CompositePass {
                 depthBufferTex: { value: null },
                 // colors indexed by particle type id
                 colorsBuffer: { value: null },
+                backgroundColor: { value: new THREE.Color(1, 1, 1) },
                 zNear: { value: 0.1 },
                 zFar: { value: 1000 },
                 atomicBeginDistance: { value: 150 },
-                chainBeginDistance: { value: 200 },
+                chainBeginDistance: { value: 225 },
             },
             fragmentShader: `
             in vec2 vUv;
@@ -31,6 +32,7 @@ class CompositePass {
             
             uniform float zNear;
             uniform float zFar;
+            uniform vec3 backgroundColor;
             
             uniform float atomicBeginDistance; // = 100.0;
             uniform float chainBeginDistance; // = 150.0;
@@ -232,6 +234,7 @@ class CompositePass {
             
             const float HCV_EPSILON = 1e-10;
             
+            // hue chroma value
             vec3 rgb_to_hcv(vec3 rgb)
             {
                 // Based on work by Sam Hocevar and Emil Persson
@@ -241,6 +244,49 @@ class CompositePass {
                 float H = abs((Q.w - Q.y) / (6.0 * C + HCV_EPSILON) + Q.z);
                 return vec3(H, C, Q.x);
             }
+
+            vec3 hue_to_rgb(float H)
+            {
+                float R = abs(H * 6.0 - 3.0) - 1.0;
+                float G = 2.0 - abs(H * 6.0 - 2.0);
+                float B = 2.0 - abs(H * 6.0 - 4.0);
+                return saturate(vec3(R,G,B));
+            }
+
+            // The weights of RGB contributions to luminance.
+  // Should sum to unity.
+  vec3 HCYwts = vec3(0.299, 0.587, 0.114);
+ 
+  vec3 HCYtoRGB(in vec3 HCY)
+  {
+    vec3 RGB = hue_to_rgb(HCY.x);
+    float Z = dot(RGB, HCYwts);
+    if (HCY.z < Z)
+    {
+        HCY.y *= HCY.z / Z;
+    }
+    else if (Z < 1.0)
+    {
+        HCY.y *= (1.0 - HCY.z) / (1.0 - Z);
+    }
+    return (RGB - Z) * HCY.y + HCY.z;
+  }
+  vec3 RGBtoHCY(in vec3 RGB)
+  {
+    // Corrected by David Schaeffer
+    vec3 HCV = rgb_to_hcv(RGB);
+    float Y = dot(RGB, HCYwts);
+    float Z = dot(hue_to_rgb(HCV.x), HCYwts);
+    if (Y < Z)
+    {
+      HCV.y *= Z / (HCV_EPSILON + Y);
+    }
+    else
+    {
+      HCV.y *= (1.0 - Z) / (HCV_EPSILON + 1.0 - Y);
+    }
+    return vec3(HCV.x, HCV.y, Y);
+  }
                         
             float LinearEyeDepth(float z_b)
             {
@@ -281,7 +327,7 @@ class CompositePass {
                 //float eyeDepth = LinearEyeDepth(z_b);
                 float eyeDepth = -col0.z;
 
-                vec4 atomInfo = vec4(0.0,0.0,0.0,0.0);//AtomInfos[atomId];
+                vec4 atomInfo = vec4(0.0,1.0,0.0,0.0);//AtomInfos[atomId];
 
                 int secondaryStructure = int(atomInfo.x);
                 int atomSymbolId = int(atomInfo.y);
@@ -313,22 +359,21 @@ class CompositePass {
                 float c = ingredientGroupsColorValues.y + (ingredientGroupsColorRanges.y) * (ingredientLocalIndex - 0.5f);
                 float l = ingredientGroupsColorValues.z + (ingredientGroupsColorRanges.z) * (ingredientLocalIndex - 0.5f);
             
+//                vec3 hcl = rgb_to_hcv(col.xyz*255.0);
+//                vec3 hcl = rgb_to_hcv(col.xyz);
                 vec3 hcl = rgb_to_hcv(col.xyz*20.0);
-//                vec3 hcl = rgb_to_hcv(col.xyz*20.0);
-                h = hcl.r;
-                c = hcl.g+10.0;
-                l = hcl.b+10.0;
-                //h = 120.0;
-                //c = 80.0;
-                //l = 50.0;
+
+                 h = hcl.r;
+                 c = hcl.g+10.0;
+                 l = hcl.b+10.0;
             
 //                h = IngredientColorHCL[ingredientId].x;
 //                c = IngredientColorHCL[ingredientId].y;
 //                l = IngredientColorHCL[ingredientId].z;
             
             
-                if(false)
-                //if(eyeDepth < chainBeginDistance)
+                //if(false)
+                if(eyeDepth < chainBeginDistance)
                 {
                     float cc = max(eyeDepth - atomicBeginDistance, 0.0);
                     float dd = chainBeginDistance - atomicBeginDistance;
@@ -338,8 +383,8 @@ class CompositePass {
                     }
                 }
             
-                if(false)
-                //if(eyeDepth < chainBeginDistance && numChains > 1)
+                //if(false)
+                if(eyeDepth < chainBeginDistance && numChains > 1)
                 {
                     float cc = max(eyeDepth - atomicBeginDistance, 0.0);
                     float dd = chainBeginDistance - atomicBeginDistance;
@@ -368,7 +413,21 @@ class CompositePass {
                     h += (float(chainSymbolId) * hueShift);
                 }
             
-              c -= 15.0;
+                // if (somethingIsSelected == 1)
+                // {
+                //   if (instanceInfo.y == 1.0)
+                //   {
+                //     c += 30;
+                //     l += 11;
+                //   }
+                //   else {
+                //     c -= 30;
+                //     l -= 11;
+                //   }
+                // }
+                //~ just tone it down a bright
+                // l -= 11;
+                c -= 15.0;
             
                 vec3 color;
                 color = d3_hcl_lab(h, c, l);
@@ -427,16 +486,16 @@ class CompositePass {
         this.pass.material.uniforms.ssaoTex1.value = ssaoBuffer1.texture;
         this.pass.material.uniforms.ssaoTex2.value = ssaoBuffer2.texture;
 
-        const c = renderer.getClearColor();
-        const a = renderer.getClearAlpha();
-        renderer.setClearColor(
-            new THREE.Color(0.121569, 0.13333, 0.17647),
-            1.0
-        );
+        // const c = renderer.getClearColor();
+        // const a = renderer.getClearAlpha();
+        // renderer.setClearColor(
+        //     new THREE.Color(0.121569, 0.13333, 0.17647),
+        //     1.0
+        // );
 
         this.pass.render(renderer, target);
 
-        renderer.setClearColor(c, a);
+        // renderer.setClearColor(c, a);
     }
 }
 

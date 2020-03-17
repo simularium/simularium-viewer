@@ -111,7 +111,7 @@ class MoleculeRenderer {
             aothreshold2: 150,
             aofalloff2: 150,
             atomBeginDistance: 150.0,
-            chainBeginDistance: 200.0,
+            chainBeginDistance: 225.0,
         };
         var self = this;
         gui.add(settings, "aoradius1", 0.01, 10.0).onChange(value => {
@@ -145,6 +145,10 @@ class MoleculeRenderer {
         gui.add(settings, "chainBeginDistance", 0.0, 300.0).onChange(value => {
             self.compositePass.pass.material.uniforms.chainBeginDistance.value = value;
         });
+    }
+
+    setBackgroundColor(color) {
+        this.compositePass.pass.material.uniforms.backgroundColor.value = color;
     }
 
     // TODO this is a geometry/scene update and should be updated through some other means?
