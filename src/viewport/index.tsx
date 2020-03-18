@@ -374,7 +374,7 @@ class Viewport extends React.Component<ViewportProps> {
         this.animationRequestID = requestAnimationFrame(this.animate);
     };
 
-    public render(): React.ReactElement<any> {
+    public render(): React.ReactElement<HTMLElement> {
         const {
             width,
             height,

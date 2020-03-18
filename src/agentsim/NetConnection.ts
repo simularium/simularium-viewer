@@ -194,8 +194,8 @@ export class NetConnection {
         return `wss://${this.serverIp}:${this.serverPort}/`;
     }
 
-    private connectToUriAsync(address): Promise<any> {
-        let connectPromise = new Promise(resolve => {
+    private connectToUriAsync(address): Promise<string> {
+        let connectPromise = new Promise<string>(resolve => {
             this.connectToUri(address);
             resolve("Succesfully connected to uri!");
         });
@@ -203,8 +203,8 @@ export class NetConnection {
         return connectPromise;
     }
 
-    public connectToRemoteServer(address: string): Promise<any> {
-        let remoteStartPromise = new Promise((resolve, reject) => {
+    public connectToRemoteServer(address: string): Promise<string> {
+        let remoteStartPromise = new Promise<string>((resolve, reject) => {
             if (this.socketIsConnected()) {
                 return resolve("Remote sim sucessfully started");
             }
