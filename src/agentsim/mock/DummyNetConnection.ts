@@ -1,5 +1,10 @@
 import { NetConnection } from "../";
 
+interface TestDataBundle {
+    bundleSize: number;
+    bundleStart: number;
+}
+
 // Mocks the simularium simulation back-end, w/ latency
 export class DummyNetConnection extends NetConnection {
     private isStreamingData: boolean;
@@ -9,6 +14,7 @@ export class DummyNetConnection extends NetConnection {
     public connectLatencyMS: number;
     public totalDuration: number;
     public timeStep: number;
+    private fileName: string;
 
     public constructor(opts) {
         super(opts);
@@ -22,11 +28,15 @@ export class DummyNetConnection extends NetConnection {
 
         this.timeStep = 1;
         this.totalDuration = 99;
+        this.fileName = "";
 
         setInterval(this.broadcast.bind(this), 200);
     }
 
-    private getDataBundle(frameNumber: number, bundleSize: number) {
+    private getDataBundle(
+        frameNumber: number,
+        bundleSize: number
+    ): TestDataBundle {
         const msg = {
             msgType: this.msgTypes.ID_VIS_DATA_ARRIVE,
             bundleStart: frameNumber,
@@ -84,7 +94,7 @@ export class DummyNetConnection extends NetConnection {
         return this.isConnected;
     }
 
-    public connectToRemoteServer(uri: string): Promise<any> {
+    public connectToRemoteServer(uri: string): Promise<string> {
         return new Promise(resolve => {
             setTimeout(() => {
                 this.isConnected = true;
@@ -112,6 +122,7 @@ export class DummyNetConnection extends NetConnection {
 
     public startRemoteTrajectoryPlayback(fileName: string): Promise<void> {
         return this.connectToRemoteServer(this.getIp()).then(() => {
+            this.fileName = fileName;
             this.isStreamingData = true;
         });
     }
@@ -125,6 +136,7 @@ export class DummyNetConnection extends NetConnection {
                 boxSizeZ: 20,
                 totalDuration: this.totalDuration,
                 timeStepSize: this.timeStep,
+                fileName: fileName,
             };
 
             this.onMessage({ data: JSON.stringify(tfi) });
