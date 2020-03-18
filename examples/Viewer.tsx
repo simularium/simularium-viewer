@@ -124,6 +124,9 @@ class Viewer extends React.Component<{}, ViewerState> {
                 <button onClick={() => agentSim.resume()}>Resume</button>
                 <button onClick={() => agentSim.stop()}>stop</button>
                 <button onClick={changeFile("test_traj1.h5")}>TEST</button>
+                <button onClick={changeFile("microtubules_v2_shrinking.h5")}>
+                    MTub
+                </button>
                 <button onClick={changeFile("aster.cmo")}>Aster</button>
                 <button onClick={changeFile("actin34_0.h5")}>Actin 34</button>
                 <button onClick={changeFile("microtubules30_1.h5")}>

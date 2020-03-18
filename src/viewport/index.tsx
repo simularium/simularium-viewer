@@ -7,7 +7,7 @@ import { forOwn } from "lodash";
 //  such as OrbitControls.js below
 import * as THREE from "three";
 
-import { VisGeometry2, DevGUI } from "../agentsim";
+import { VisGeometry, VisGeometry2, DevGUI } from "../agentsim";
 
 interface ViewportProps {
     height: number;
@@ -373,14 +373,18 @@ class Viewport extends React.Component<ViewportProps> {
                     this.visGeometry.render(totalElapsedTime);
                     this.lastRenderTime = Date.now();
                     this.lastRenderedAgentTime = -1;
-                    this.animationRequestID = requestAnimationFrame(this.animate);
+                    this.animationRequestID = requestAnimationFrame(
+                        this.animate
+                    );
                 });
 
                 p.catch(() => {
                     this.visGeometry.render(totalElapsedTime);
                     this.lastRenderTime = Date.now();
                     this.lastRenderedAgentTime = -1;
-                    this.animationRequestID = requestAnimationFrame(this.animate);
+                    this.animationRequestID = requestAnimationFrame(
+                        this.animate
+                    );
                 });
 
                 agentSimController.markFileChangeAsHandled();
