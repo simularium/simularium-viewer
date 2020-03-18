@@ -3,11 +3,13 @@ import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 import {
+    Material,
     WebGLRendererParameters,
     LineSegments,
     BufferAttribute,
     VertexColors,
     LineBasicMaterial,
+    Geometry,
     BufferGeometry,
     CatmullRomCurve3,
     Box3,
@@ -58,44 +60,45 @@ interface PathData {
 
 class VisGeometry {
     public handleTrajectoryData: any;
-    public visGeomMap: any;
-    public meshRegistry: Map<any, any>;
-    public meshLoadAttempted: Map<any, any>;
-    public scaleMapping: Map<any, any>;
+    public visGeomMap: Map<number, string>;
+    public meshRegistry: Map<string | number, Mesh>;
+    public meshLoadAttempted: Map<string, boolean>;
+    public scaleMapping: Map<number, number>;
     public geomCount: number;
-    public materials: any;
-    public desatMaterials: any;
-    public highlightMaterial: any;
-    public followObject: any;
-    public runTimeMeshes: any;
-    public runTimeFiberMeshes: any;
+    public materials: Material[];
+    public desatMaterials: Material[];
+    public highlightMaterial: MeshBasicMaterial;
+    public followObject: Object3D | null;
+    public runTimeMeshes: Mesh[];
+    public runTimeFiberMeshes: Map<string, Mesh>;
     public mlastNumberOfAgents: number;
     public colorVariant: number;
     public fixLightsToCamera: boolean;
-    public highlightedId: any;
-    public paths: any;
-    public sphereGeometry: any;
+    public highlightedId: number;
+    public paths: PathData[];
+    public sphereGeometry: SphereBufferGeometry;
     public membrane: any;
     public mlogger: any;
-    public renderer: any;
-    public scene: any;
-    public camera: any;
-    public controls: any;
-    public dl: any;
-    public boundingBox: any;
-    public boundingBoxMesh: any;
-    public loadObj: any;
-    public hemiLight: any;
+    public renderer: WebGLRenderer;
+    public scene: Scene;
+    public camera: PerspectiveCamera;
+    public controls: OrbitControls;
+    public dl: DirectionalLight;
+    public boundingBox: Box3;
+    public boundingBoxMesh: Box3Helper;
+    public loadObj: Function;
+    public hemiLight: HemisphereLight;
+    private errorMesh: Mesh;
 
     public constructor(loggerLevel) {
         this.handleTrajectoryData = trajectoryData => {
             this.updateBoxSize(trajectoryData);
         };
 
-        this.visGeomMap = new Map();
-        this.meshRegistry = new Map();
-        this.meshLoadAttempted = new Map();
-        this.scaleMapping = new Map();
+        this.visGeomMap = new Map<number, string>();
+        this.meshRegistry = new Map<string | number, Mesh>();
+        this.meshLoadAttempted = new Map<string, boolean>();
+        this.scaleMapping = new Map<number, number>();
         this.geomCount = MAX_MESHES;
         this.materials = [];
         this.desatMaterials = [];
@@ -115,6 +118,7 @@ class VisGeometry {
 
         // the canonical default geometry instance
         this.sphereGeometry = new SphereBufferGeometry(1, 32, 32);
+        this.setupScene();
 
         this.membrane = {
             // assume only one membrane mesh
@@ -145,6 +149,48 @@ class VisGeometry {
 
         this.mlogger = jsLogger.get("visgeometry");
         this.mlogger.setLevel(loggerLevel);
+
+        this.scene = new Scene();
+        this.camera = new PerspectiveCamera(75, 100 / 100, 0.1, 10000);
+        this.dl = new DirectionalLight(0xffffff, 0.6);
+        this.hemiLight = new HemisphereLight(0xffffff, 0x000000, 0.5);
+        this.renderer = new WebGLRenderer();
+        this.controls = new OrbitControls(
+            this.camera,
+            this.renderer.domElement
+        );
+
+        this.boundingBox = new Box3(
+            new Vector3(0, 0, 0),
+            new Vector3(100, 100, 100)
+        );
+        this.boundingBoxMesh = new Box3Helper(
+            this.boundingBox,
+            BOUNDING_BOX_COLOR
+        );
+        this.errorMesh = new Mesh(this.sphereGeometry);
+
+        this.loadObj = meshName => {
+            const objLoader = new OBJLoader();
+            objLoader.load(
+                `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/meshes/obj/${meshName}`,
+                object => {
+                    this.logger.debug("Finished loading mesh: ", meshName);
+                    this.addMesh(meshName, object);
+                    this.onNewRuntimeGeometryType(meshName);
+                },
+                xhr => {
+                    this.logger.debug(
+                        meshName,
+                        " ",
+                        `${(xhr.loaded / xhr.total) * 100}% loaded`
+                    );
+                },
+                error => {
+                    this.logger.debug("Failed to load mesh: ", error, meshName);
+                }
+            );
+        };
     }
 
     public get logger(): any {
@@ -202,7 +248,7 @@ class VisGeometry {
         this.controls.reset();
     }
 
-    public getFollowObject(): Object3D {
+    public getFollowObject(): Object3D | null {
         return this.followObject;
     }
 
@@ -314,7 +360,6 @@ class VisGeometry {
 
         this.resetBounds(DEFAULT_VOLUME_BOUNDS);
 
-        this.dl = null;
         this.dl = new DirectionalLight(0xffffff, 0.6);
         this.dl.position.set(0, 0, 1);
         this.scene.add(this.dl);
@@ -346,28 +391,6 @@ class VisGeometry {
         this.renderer.clear();
 
         this.camera.position.z = 120;
-
-        this.loadObj = meshName => {
-            const objLoader = new OBJLoader();
-            objLoader.load(
-                `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/meshes/obj/${meshName}`,
-                object => {
-                    this.logger.debug("Finished loading mesh: ", meshName);
-                    this.addMesh(meshName, object);
-                    this.onNewRuntimeGeometryType(meshName);
-                },
-                xhr => {
-                    this.logger.debug(
-                        meshName,
-                        " ",
-                        `${(xhr.loaded / xhr.total) * 100}% loaded`
-                    );
-                },
-                error => {
-                    this.logger.debug("Failed to load mesh: ", error, meshName);
-                }
-            );
-        };
     }
 
     public resize(width, height): void {
@@ -397,9 +420,7 @@ class VisGeometry {
             this.membrane.sim.resize(width, height);
         }
 
-        this.renderer.domElement.position = "absolute";
-        this.renderer.domElement.top = "0px";
-        this.renderer.domElement.left = "0px";
+        this.renderer.domElement.setAttribute("style", "top: 0px; left: 0px");
 
         this.renderer.domElement.onmouseenter = () => this.enableControls();
         this.renderer.domElement.onmouseleave = () => this.disableControls();
@@ -551,11 +572,16 @@ class VisGeometry {
         this.runTimeMeshes[index] = obj;
     }
 
-    public getFiberMesh(name): Mesh {
-        return this.runTimeFiberMeshes.get(name);
+    public getFiberMesh(name: string): Mesh {
+        let mesh = this.runTimeFiberMeshes.get(name);
+        if (mesh) {
+            mesh;
+        }
+
+        return this.errorMesh;
     }
 
-    public getMaterial(index, typeId): MeshBasicMaterial {
+    public getMaterial(index, typeId): Material {
         // if no highlight, or if this is the highlighed type, then use regular material, otherwise use desaturated.
         // todo strings or numbers for these ids?????
         const isHighlighted =
@@ -604,10 +630,15 @@ class VisGeometry {
         }
     }
 
-    public getGeomFromId(id): Mesh | null {
+    public getGeomFromId(id: number): Mesh | null {
         if (this.visGeomMap.has(id)) {
             const meshName = this.visGeomMap.get(id);
-            return this.meshRegistry.get(meshName);
+            if (meshName && this.meshRegistry.has(meshName)) {
+                let mesh = this.meshRegistry.get(meshName);
+                if (mesh) {
+                    return mesh;
+                }
+            }
         }
 
         return null;
@@ -661,14 +692,17 @@ class VisGeometry {
         this.scene.add(this.boundingBoxMesh);
     }
 
-    public setScaleForId(id, scale): void {
+    public setScaleForId(id: number, scale: number): void {
         this.logger.debug("Scale for id ", id, " set to ", scale);
         this.scaleMapping.set(id, scale);
     }
 
-    public getScaleForId(id): number {
+    public getScaleForId(id: number): number {
         if (this.scaleMapping.has(id)) {
-            return this.scaleMapping.get(id);
+            let scale = this.scaleMapping.get(id);
+            if (scale) {
+                return scale;
+            }
         }
 
         return 1;
@@ -677,13 +711,23 @@ class VisGeometry {
     /**
      *   Default Geometry
      */
-    public getSphereGeom(): SphereBufferGeometry {
+    public getSphereGeom(): BufferGeometry | Geometry {
         const sphereId = -1;
         if (!this.meshRegistry.has(sphereId)) {
-            this.meshRegistry.set(sphereId, this.sphereGeometry);
+            this.meshRegistry.set(sphereId, new Mesh(this.sphereGeometry));
         }
 
-        return this.meshRegistry.get(sphereId);
+        if (this.meshRegistry.has(sphereId)) {
+            let sphereMesh = this.meshRegistry.get(sphereId);
+            if (sphereMesh) {
+                let geom = sphereMesh.geometry;
+                if (geom) {
+                    return geom;
+                }
+            }
+        }
+
+        return this.sphereGeometry;
     }
 
     /**
@@ -975,10 +1019,15 @@ class VisGeometry {
         return undefined;
     }
 
-    public findPathForAgentIndex(idx): PathData {
-        return this.paths.find(path => {
+    public findPathForAgentIndex(idx): PathData | null {
+        let path = this.paths.find(path => {
             return path.agent === idx;
         });
+
+        if (path) {
+            return path;
+        }
+        return null;
     }
 
     public removePathForObject(obj): void {

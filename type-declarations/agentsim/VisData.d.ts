@@ -1,6 +1,22 @@
 /**
  * Parse Agents from Net Data
  * */
+interface AgentData {
+    x: number;
+    y: number;
+    z: number;
+    xrot: number;
+    yrot: number;
+    zrot: number;
+    visType: number;
+    type: number;
+    cr: number;
+    subpoints: number[];
+}
+interface FrameData {
+    frameNumber: number;
+    time: number;
+}
 declare class VisData {
     private frameCache;
     private frameDataCache;
@@ -35,21 +51,18 @@ declare class VisData {
      *   of the application, since network latency is a major bottle-neck)
      * */
     static parse(visDataMsg: any): {
-        frameData: {
-            time: any;
-            frameNumber: any;
-        };
-        parsedAgentData: any;
+        frameData: FrameData;
+        parsedAgentData: AgentData[];
     };
     constructor();
-    readonly currentFrameData: any;
+    readonly currentFrameData: FrameData;
     /**
      *   Functions to check update
      * */
     hasLocalCacheForTime(timeNs: any): boolean;
     gotoTime(timeNs: any): void;
     atLatestFrame(): boolean;
-    currentFrame(): any;
+    currentFrame(): AgentData[];
     gotoNextFrame(): void;
     /**
      * Data management

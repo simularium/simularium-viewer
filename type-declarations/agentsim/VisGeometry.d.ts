@@ -1,41 +1,55 @@
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { Material, LineBasicMaterial, Geometry, BufferGeometry, Box3, Box3Helper, Color, MeshBasicMaterial, SphereBufferGeometry, Scene, PerspectiveCamera, DirectionalLight, HemisphereLight, WebGLRenderer, Mesh, Object3D } from "three";
+interface PathData {
+    agent: number;
+    numSegments: number;
+    maxSegments: number;
+    color: Color;
+    points: Float32Array;
+    colors: Float32Array;
+    geometry: BufferGeometry;
+    material: LineBasicMaterial;
+    line: any;
+}
 declare class VisGeometry {
     handleTrajectoryData: any;
-    visGeomMap: any;
-    meshRegistry: Map<any, any>;
-    meshLoadAttempted: Map<any, any>;
-    scaleMapping: Map<any, any>;
+    visGeomMap: Map<number, string>;
+    meshRegistry: Map<string | number, Mesh>;
+    meshLoadAttempted: Map<string, boolean>;
+    scaleMapping: Map<number, number>;
     geomCount: number;
-    materials: any;
-    desatMaterials: any;
-    highlightMaterial: any;
-    followObject: any;
-    runTimeMeshes: any;
-    runTimeFiberMeshes: any;
+    materials: Material[];
+    desatMaterials: Material[];
+    highlightMaterial: MeshBasicMaterial;
+    followObject: Object3D | null;
+    runTimeMeshes: Mesh[];
+    runTimeFiberMeshes: Map<string, Mesh>;
     mlastNumberOfAgents: number;
     colorVariant: number;
     fixLightsToCamera: boolean;
-    highlightedId: any;
-    paths: any;
-    sphereGeometry: any;
+    highlightedId: number;
+    paths: PathData[];
+    sphereGeometry: SphereBufferGeometry;
     membrane: any;
     mlogger: any;
-    renderer: any;
-    scene: any;
-    camera: any;
-    controls: any;
-    dl: any;
-    boundingBox: any;
-    boundingBoxMesh: any;
-    loadObj: any;
-    hemiLight: any;
+    renderer: WebGLRenderer;
+    scene: Scene;
+    camera: PerspectiveCamera;
+    controls: OrbitControls;
+    dl: DirectionalLight;
+    boundingBox: Box3;
+    boundingBoxMesh: Box3Helper;
+    loadObj: Function;
+    hemiLight: HemisphereLight;
+    private errorMesh;
     constructor(loggerLevel: any);
     readonly logger: any;
     lastNumberOfAgents: number;
-    readonly renderDom: any;
+    readonly renderDom: HTMLElement;
     updateBoxSize(trajectoryData: any): void;
     resetCamera(): void;
-    getFollowObject(): any;
-    setFollowObject(obj: any): void;
+    getFollowObject(): Object3D | null;
+    setFollowObject(obj: Object3D | null): void;
     unfollow(): void;
     setHighlightById(id: any): void;
     dehighlight(): void;
@@ -56,10 +70,10 @@ declare class VisGeometry {
     createMaterials(colors: any): void;
     createMeshes(): void;
     addMesh(meshName: any, mesh: any): void;
-    getMesh(index: any): any;
+    getMesh(index: any): Mesh;
     resetMesh(index: any, obj: any): void;
-    getFiberMesh(name: any): any;
-    getMaterial(index: any, typeId: any): any;
+    getFiberMesh(name: string): Mesh;
+    getMaterial(index: any, typeId: any): Material;
     /**
      *   Data Management
      */
@@ -68,27 +82,27 @@ declare class VisGeometry {
      *   Map Type ID -> Geometry
      */
     mapIdToGeom(id: any, meshName: any): void;
-    getGeomFromId(id: any): any;
-    mapFromJSON(name: any, filePath: any, callback: any): Promise<void>;
+    getGeomFromId(id: number): Mesh | null;
+    mapFromJSON(name: any, filePath: any, callback?: any): Promise<any>;
     resetBounds(boundsAsArray: any): void;
-    setScaleForId(id: any, scale: any): void;
-    getScaleForId(id: any): any;
+    setScaleForId(id: number, scale: number): void;
+    getScaleForId(id: number): number;
     /**
      *   Default Geometry
      */
-    getSphereGeom(): any;
+    getSphereGeom(): BufferGeometry | Geometry;
     /**
      *   Update Scene
      * */
     updateScene(agents: any): void;
-    setupMeshGeometry(i: any, runtimeMesh: any, meshGeom: any, isFollowedObject: any): any;
-    assignMaterial(runtimeMesh: any, material: any): void;
+    setupMeshGeometry(i: any, runtimeMesh: any, meshGeom: any, isFollowedObject: any): Mesh;
+    assignMaterial(runtimeMesh: Object3D, material: MeshBasicMaterial | LineBasicMaterial): void;
     assignMembraneMaterial(runtimeMesh: any): void;
-    getMaterialOfAgentIndex(idx: any): any;
-    findPathForAgentIndex(idx: any): any;
+    getMaterialOfAgentIndex(idx: any): MeshBasicMaterial | undefined;
+    findPathForAgentIndex(idx: any): PathData | null;
     removePathForObject(obj: any): void;
     addPathForObject(obj: any): void;
-    addPathForAgentIndex(idx: any, maxSegments?: number, color?: any): any;
+    addPathForAgentIndex(idx: any, maxSegments?: number, color?: any): PathData;
     removePathForAgentIndex(idx: any): void;
     addPointToPath(path: any, x: any, y: any, z: any, dx: any, dy: any, dz: any): void;
     setShowPaths(showPaths: any): void;
