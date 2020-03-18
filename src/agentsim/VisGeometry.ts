@@ -26,6 +26,7 @@ import {
     MeshLambertMaterial,
     Mesh,
     Vector3,
+    Object3D,
 } from "three";
 
 import jsLogger from "js-logger";
@@ -146,11 +147,11 @@ class VisGeometry {
         this.mlogger.setLevel(loggerLevel);
     }
 
-    public get logger() {
+    public get logger(): any {
         return this.mlogger;
     }
 
-    public get lastNumberOfAgents() {
+    public get lastNumberOfAgents(): number {
         return this.mlastNumberOfAgents;
     }
 
@@ -158,11 +159,11 @@ class VisGeometry {
         this.mlastNumberOfAgents = val;
     }
 
-    public get renderDom() {
+    public get renderDom(): HTMLElement {
         return this.renderer.domElement;
     }
 
-    public updateBoxSize(trajectoryData) {
+    public updateBoxSize(trajectoryData): void {
         // get bounds.
         if (
             trajectoryData.hasOwnProperty("boxSizeX") &&
@@ -197,15 +198,15 @@ class VisGeometry {
         }
     }
 
-    public resetCamera() {
+    public resetCamera(): void {
         this.controls.reset();
     }
 
-    public getFollowObject() {
+    public getFollowObject(): Object3D {
         return this.followObject;
     }
 
-    public setFollowObject(obj) {
+    public setFollowObject(obj: Object3D | null): void {
         if (
             obj &&
             obj.userData &&
@@ -228,11 +229,11 @@ class VisGeometry {
     }
 
     // equivalent to setFollowObject(null)
-    public unfollow() {
+    public unfollow(): void {
         this.followObject = null;
     }
 
-    public setHighlightById(id) {
+    public setHighlightById(id): void {
         if (this.highlightedId === id) {
             return;
         }
@@ -255,11 +256,11 @@ class VisGeometry {
         }
     }
 
-    public dehighlight() {
+    public dehighlight(): void {
         this.setHighlightById(-1);
     }
 
-    public onNewRuntimeGeometryType(meshName) {
+    public onNewRuntimeGeometryType(meshName): void {
         // find all typeIds for this meshName
         let typeIds = [...this.visGeomMap.entries()]
             .filter(({ 1: v }) => v === meshName)
@@ -289,7 +290,7 @@ class VisGeometry {
         }
     }
 
-    public setUpControls(element) {
+    public setUpControls(element): void {
         this.controls = new OrbitControls(this.camera, element);
         this.controls.maxDistance = 750;
         this.controls.minDistance = 5;
@@ -300,7 +301,7 @@ class VisGeometry {
     /**
      *   Setup ThreeJS Scene
      * */
-    public setupScene() {
+    public setupScene(): void {
         let initWidth = 100;
         let initHeight = 100;
         this.scene = new Scene();
@@ -369,7 +370,7 @@ class VisGeometry {
         };
     }
 
-    public resize(width, height) {
+    public resize(width, height): void {
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(width, height);
@@ -378,7 +379,7 @@ class VisGeometry {
         }
     }
 
-    public reparent(parent) {
+    public reparent(parent): void {
         if (parent === "undefined" || parent == null) {
             return;
         }
@@ -404,15 +405,15 @@ class VisGeometry {
         this.renderer.domElement.onmouseleave = () => this.disableControls();
     }
 
-    public disableControls() {
+    public disableControls(): void {
         this.controls.enabled = false;
     }
 
-    public enableControls() {
+    public enableControls(): void {
         this.controls.enabled = true;
     }
 
-    public render(time) {
+    public render(time): void {
         if (this.runTimeMeshes.length == 0) {
             return;
         }
@@ -465,7 +466,7 @@ class VisGeometry {
     /**
      *   Run Time Mesh functions
      */
-    public createMaterials(colors) {
+    public createMaterials(colors): void {
         const numColors = colors.length;
         for (let i = 0; i < numColors; i += 1) {
             this.materials.push(new MeshLambertMaterial({ color: colors[i] }));
@@ -483,7 +484,7 @@ class VisGeometry {
         }
     }
 
-    public createMeshes() {
+    public createMeshes(): void {
         const { scene } = this;
         this.geomCount = MAX_MESHES;
         const sphereGeom = this.getSphereGeom();
@@ -531,7 +532,7 @@ class VisGeometry {
         }
     }
 
-    public addMesh(meshName, mesh) {
+    public addMesh(meshName, mesh): void {
         this.meshRegistry.set(meshName, mesh);
         if (!mesh.name) {
             mesh.name = meshName;
@@ -542,19 +543,19 @@ class VisGeometry {
         }
     }
 
-    public getMesh(index) {
+    public getMesh(index): Mesh {
         return this.runTimeMeshes[index];
     }
 
-    public resetMesh(index, obj) {
+    public resetMesh(index, obj): void {
         this.runTimeMeshes[index] = obj;
     }
 
-    public getFiberMesh(name) {
+    public getFiberMesh(name): Mesh {
         return this.runTimeFiberMeshes.get(name);
     }
 
-    public getMaterial(index, typeId) {
+    public getMaterial(index, typeId): MeshBasicMaterial {
         // if no highlight, or if this is the highlighed type, then use regular material, otherwise use desaturated.
         // todo strings or numbers for these ids?????
         const isHighlighted =
@@ -574,7 +575,7 @@ class VisGeometry {
     /**
      *   Data Management
      */
-    public resetMapping() {
+    public resetMapping(): void {
         this.resetAllGeometry();
 
         this.visGeomMap.clear();
@@ -586,7 +587,7 @@ class VisGeometry {
     /**
      *   Map Type ID -> Geometry
      */
-    public mapIdToGeom(id, meshName) {
+    public mapIdToGeom(id, meshName): void {
         this.logger.debug("Mesh for id ", id, " set to ", meshName);
         this.visGeomMap.set(id, meshName);
         if (meshName.includes("membrane")) {
@@ -603,7 +604,7 @@ class VisGeometry {
         }
     }
 
-    public getGeomFromId(id) {
+    public getGeomFromId(id): Mesh | null {
         if (this.visGeomMap.has(id)) {
             const meshName = this.visGeomMap.get(id);
             return this.meshRegistry.get(meshName);
@@ -612,7 +613,7 @@ class VisGeometry {
         return null;
     }
 
-    public mapFromJSON(name, filePath, callback?) {
+    public mapFromJSON(name, filePath, callback?): Promise<any> {
         const jsonRequest = new Request(filePath);
         const self = this;
         return fetch(jsonRequest)
@@ -638,7 +639,7 @@ class VisGeometry {
             });
     }
 
-    public resetBounds(boundsAsArray) {
+    public resetBounds(boundsAsArray): void {
         if (!boundsAsArray) {
             console.log("invalid bounds received");
             return;
@@ -660,12 +661,12 @@ class VisGeometry {
         this.scene.add(this.boundingBoxMesh);
     }
 
-    public setScaleForId(id, scale) {
+    public setScaleForId(id, scale): void {
         this.logger.debug("Scale for id ", id, " set to ", scale);
         this.scaleMapping.set(id, scale);
     }
 
-    public getScaleForId(id) {
+    public getScaleForId(id): number {
         if (this.scaleMapping.has(id)) {
             return this.scaleMapping.get(id);
         }
@@ -676,7 +677,7 @@ class VisGeometry {
     /**
      *   Default Geometry
      */
-    public getSphereGeom() {
+    public getSphereGeom(): SphereBufferGeometry {
         const sphereId = -1;
         if (!this.meshRegistry.has(sphereId)) {
             this.meshRegistry.set(sphereId, this.sphereGeometry);
@@ -688,7 +689,7 @@ class VisGeometry {
     /**
      *   Update Scene
      * */
-    public updateScene(agents) {
+    public updateScene(agents): void {
         const sphereGeometry = this.getSphereGeom();
         let fiberIndex = 0;
 
@@ -811,8 +812,7 @@ class VisGeometry {
                     8,
                     false
                 );
-                runtimeFiberMesh.geometry.copy(fibergeometry);
-                runtimeFiberMesh.geometry.needsUpdate = true;
+                runtimeFiberMesh.geometry = fibergeometry;
                 runtimeFiberMesh.visible = true;
 
                 const nameEnd0 = `FiberEnd0_${fiberIndex.toString()}`;
@@ -862,7 +862,7 @@ class VisGeometry {
         }
     }
 
-    public setupMeshGeometry(i, runtimeMesh, meshGeom, isFollowedObject) {
+    public setupMeshGeometry(i, runtimeMesh, meshGeom, isFollowedObject): Mesh {
         // remember current transform
         const p = runtimeMesh.position;
         const r = runtimeMesh.rotation;
@@ -917,7 +917,10 @@ class VisGeometry {
         return runtimeMesh;
     }
 
-    public assignMaterial(runtimeMesh, material) {
+    public assignMaterial(
+        runtimeMesh: Object3D,
+        material: MeshBasicMaterial | LineBasicMaterial
+    ): void {
         if (runtimeMesh.name.includes("membrane")) {
             return this.assignMembraneMaterial(runtimeMesh);
         }
@@ -933,7 +936,7 @@ class VisGeometry {
         }
     }
 
-    public assignMembraneMaterial(runtimeMesh) {
+    public assignMembraneMaterial(runtimeMesh): void {
         const isHighlighted =
             this.highlightedId == -1 ||
             this.highlightedId == runtimeMesh.userData.typeId;
@@ -964,7 +967,7 @@ class VisGeometry {
         }
     }
 
-    public getMaterialOfAgentIndex(idx) {
+    public getMaterialOfAgentIndex(idx): MeshBasicMaterial | undefined {
         const runtimeMesh = this.getMesh(idx);
         if (runtimeMesh.userData) {
             return runtimeMesh.userData.baseMaterial;
@@ -972,26 +975,30 @@ class VisGeometry {
         return undefined;
     }
 
-    public findPathForAgentIndex(idx) {
+    public findPathForAgentIndex(idx): PathData {
         return this.paths.find(path => {
             return path.agent === idx;
         });
     }
 
-    public removePathForObject(obj) {
+    public removePathForObject(obj): void {
         if (obj && obj.userData && obj.userData.index !== undefined) {
             this.removePathForAgentIndex(obj.userData.index);
         }
     }
 
-    public addPathForObject(obj) {
+    public addPathForObject(obj): void {
         if (obj && obj.userData && obj.userData.index !== undefined) {
             this.addPathForAgentIndex(obj.userData.index);
         }
     }
 
     // assumes color is a threejs color, or null/undefined
-    public addPathForAgentIndex(idx, maxSegments?: number, color?: any) {
+    public addPathForAgentIndex(
+        idx,
+        maxSegments?: number,
+        color?: any
+    ): PathData {
         // make sure the idx is not already in our list.
         // could be optimized...
         const foundpath = this.findPathForAgentIndex(idx);
@@ -1044,7 +1051,7 @@ class VisGeometry {
         return pathdata;
     }
 
-    public removePathForAgentIndex(idx) {
+    public removePathForAgentIndex(idx): void {
         const pathindex = this.paths.findIndex(path => {
             return path.agent === idx;
         });
@@ -1062,7 +1069,7 @@ class VisGeometry {
         this.paths.splice(pathindex, 1);
     }
 
-    public addPointToPath(path, x, y, z, dx, dy, dz) {
+    public addPointToPath(path, x, y, z, dx, dy, dz): void {
         if (x === dx && y === dy && z === dz) {
             return;
         }
@@ -1147,13 +1154,13 @@ class VisGeometry {
         path.line.geometry.attributes.position.needsUpdate = true; // required after the first render
     }
 
-    public setShowPaths(showPaths) {
+    public setShowPaths(showPaths): void {
         for (let i = 0; i < this.paths.length; ++i) {
             this.paths[i].line.visible = showPaths;
         }
     }
 
-    public setShowMeshes(showMeshes) {
+    public setShowMeshes(showMeshes): void {
         let nMeshes = this.runTimeMeshes.length;
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
             const runtimeMesh = this.getMesh(i);
@@ -1163,18 +1170,18 @@ class VisGeometry {
         }
     }
 
-    public setShowBounds(showBounds) {
+    public setShowBounds(showBounds): void {
         this.boundingBoxMesh.visible = showBounds;
     }
 
-    public showPathForAgentIndex(idx, visible) {
+    public showPathForAgentIndex(idx, visible): void {
         const path = this.findPathForAgentIndex(idx);
         if (path) {
             path.line.visible = visible;
         }
     }
 
-    public hideUnusedMeshes(numberOfAgents) {
+    public hideUnusedMeshes(numberOfAgents): void {
         let nMeshes = this.runTimeMeshes.length;
         for (let i = numberOfAgents; i < MAX_MESHES && i < nMeshes; i += 1) {
             const runtimeMesh = this.getMesh(i);
@@ -1192,7 +1199,7 @@ class VisGeometry {
         }
     }
 
-    public hideUnusedFibers(numberOfFibers) {
+    public hideUnusedFibers(numberOfFibers): void {
         for (let i = numberOfFibers; i < MAX_MESHES; i += 1) {
             const name = `Fiber_${i.toString()}`;
             const fiberMesh = this.getFiberMesh(name);
@@ -1213,12 +1220,12 @@ class VisGeometry {
         }
     }
 
-    public clear() {
+    public clear(): void {
         this.hideUnusedMeshes(0);
         this.hideUnusedFibers(0);
     }
 
-    public resetAllGeometry() {
+    public resetAllGeometry(): void {
         // set all runtime meshes back to spheres.
         const sphereGeom = this.getSphereGeom();
         let nMeshes = this.runTimeMeshes.length;
@@ -1238,7 +1245,7 @@ class VisGeometry {
         }
     }
 
-    public update(agents) {
+    public update(agents): void {
         this.updateScene(agents);
 
         const numberOfAgents = agents.length;
