@@ -21,6 +21,11 @@ interface FrameData {
     time: number;
 }
 
+interface ParsedFrame {
+    frameData: FrameData;
+    parsedAgentData: AgentData[];
+}
+
 class VisData {
     private frameCache: AgentData[][];
     private frameDataCache: FrameData[];
@@ -57,7 +62,7 @@ class VisData {
      *   of the application, since network latency is a major bottle-neck)
      * */
 
-    public static parse(visDataMsg) {
+    public static parse(visDataMsg): ParsedFrame {
         // IMPORTANT: Order of this array needs to perfectly match the incoming data.
         const agentObjectKeys = [
             "vis-type",
@@ -77,7 +82,7 @@ class VisData {
             ele => ele === "nSubPoints"
         );
 
-        const parseOneAgent = agentArray => {
+        const parseOneAgent = (agentArray): AgentData => {
             return agentArray.reduce(
                 (agentData, cur, i) => {
                     let key;
