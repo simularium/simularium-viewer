@@ -42,8 +42,14 @@ const PATH_END_COLOR = BACKGROUND_COLOR;
 const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 
-function lerp(x0, x1, alpha) {
+function lerp(x0: number, x1: number, alpha: number): number {
     return x0 + (x1 - x0) * alpha;
+}
+
+interface HSL {
+    h: number;
+    s: number;
+    l: number;
 }
 
 interface PathData {
@@ -55,11 +61,11 @@ interface PathData {
     colors: Float32Array;
     geometry: BufferGeometry;
     material: LineBasicMaterial;
-    line: any;
+    line: LineSegments | null;
 }
 
 class VisGeometry {
-    public handleTrajectoryData: any;
+    public handleTrajectoryData: Function;
     public visGeomMap: Map<number, string>;
     public meshRegistry: Map<string | number, Mesh>;
     public meshLoadAttempted: Map<string, boolean>;
@@ -491,7 +497,7 @@ class VisGeometry {
         const numColors = colors.length;
         for (let i = 0; i < numColors; i += 1) {
             this.materials.push(new MeshLambertMaterial({ color: colors[i] }));
-            let hsl: any = {};
+            let hsl: HSL = { h: 0, s: 0, l: 0 };
             const desatColor = new Color(colors[i]);
             hsl = desatColor.getHSL(hsl);
             desatColor.setHSL(hsl.h, 0.5 * hsl.s, hsl.l);
@@ -831,7 +837,7 @@ class VisGeometry {
 
                 const runtimeFiberMesh = this.getFiberMesh(name);
 
-                const curvePoints: any = [];
+                const curvePoints: Vector3[] = [];
                 const { subpoints } = agentData;
                 const numSubPoints = subpoints.length;
                 if (numSubPoints % 3 !== 0) {
@@ -1046,14 +1052,16 @@ class VisGeometry {
     public addPathForAgentIndex(
         idx,
         maxSegments?: number,
-        color?: any
+        color?: Color
     ): PathData {
         // make sure the idx is not already in our list.
         // could be optimized...
         const foundpath = this.findPathForAgentIndex(idx);
         if (foundpath) {
-            foundpath.line.visible = true;
-            return foundpath;
+            if (foundpath.line) {
+                foundpath.line.visible = true;
+                return foundpath;
+            }
         }
 
         if (!maxSegments) {
@@ -1113,7 +1121,7 @@ class VisGeometry {
             return;
         }
         const path = this.paths[pathindex];
-        this.scene.remove(path.line);
+        this.scene.remove(path.line as Object3D);
 
         this.paths.splice(pathindex, 1);
     }
@@ -1205,7 +1213,10 @@ class VisGeometry {
 
     public setShowPaths(showPaths): void {
         for (let i = 0; i < this.paths.length; ++i) {
-            this.paths[i].line.visible = showPaths;
+            let line = this.paths[i].line;
+            if (line) {
+                line.visible = showPaths;
+            }
         }
     }
 
@@ -1226,7 +1237,9 @@ class VisGeometry {
     public showPathForAgentIndex(idx, visible): void {
         const path = this.findPathForAgentIndex(idx);
         if (path) {
-            path.line.visible = visible;
+            if (path.line) {
+                path.line.visible = visible;
+            }
         }
     }
 
