@@ -1,17 +1,32 @@
-/* globals global Request*/
-/* eslint no-undef: "error" */
+import { WEBGL } from "three/examples/jsm/WebGL.js";
+import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
-// Three JS is assumed to be in the global scope in extensions
-//  such as OrbitControls.js below
-import * as THREE from "three";
-global.THREE = THREE;
+import {
+    Box3,
+    Box3Helper,
+    BufferGeometry,
+    Color,
+    DirectionalLight,
+    HemisphereLight,
+    LineBasicMaterial,
+    LineCurve3,
+    LineSegments,
+    Material,
+    Mesh,
+    MeshBasicMaterial,
+    MeshLambertMaterial,
+    Object3D,
+    PerspectiveCamera,
+    Scene,
+    SphereBufferGeometry,
+    TubeBufferGeometry,
+    Vector2,
+    Vector3,
+    WebGLRenderer,
+} from "three";
 
 import * as dat from "dat.gui";
-
-import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
-import { WEBGL } from "three/examples/jsm/WebGL.js";
-
-import "./three/OrbitControls.js";
 
 import jsLogger from "js-logger";
 
@@ -21,17 +36,65 @@ import MoleculeRenderer from "./rendering/MoleculeRenderer.js";
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 5000;
 //const BACKGROUND_COLOR = new THREE.Color(0xcccccc);
-const BACKGROUND_COLOR = new THREE.Color(0.121569, 0.13333, 0.17647);
+const BACKGROUND_COLOR = new Color(0.121569, 0.13333, 0.17647);
 const PATH_END_COLOR = BACKGROUND_COLOR;
 const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
-const BOUNDING_BOX_COLOR = new THREE.Color(0x6e6e6e);
+const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 
-function lerp(x0, x1, alpha) {
+function lerp(x0: number, x1: number, alpha: number): number {
     return x0 + (x1 - x0) * alpha;
 }
 
+interface PathData {
+    agent: number;
+    numSegments: number;
+    maxSegments: number;
+    color: Color;
+    points: Float32Array;
+    colors: Float32Array;
+    geometry: BufferGeometry;
+    material: LineBasicMaterial;
+    line: LineSegments | null;
+}
+
 class VisGeometry2 {
-    constructor(loggerLevel) {
+    public visGeomMap: Map<number, string>;
+    public meshRegistry: Map<string | number, Mesh>;
+    public meshLoadAttempted: Map<string, boolean>;
+    public scaleMapping: Map<number, number>;
+    public geomCount: number;
+    public materials: Material[];
+    public desatMaterials: Material[];
+    public highlightMaterial: MeshBasicMaterial;
+    public followObject: Object3D | null;
+    public runTimeMeshes: Mesh[];
+    public runTimeFiberMeshes: Map<string, Mesh>;
+    public mlastNumberOfAgents: number;
+    public colorVariant: number;
+    public fixLightsToCamera: boolean;
+    public highlightedId: number;
+    public paths: PathData[];
+    public sphereGeometry: SphereBufferGeometry;
+    public membrane: any;
+    public mlogger: any;
+    public renderer: WebGLRenderer;
+    public scene: Scene;
+    public camera: PerspectiveCamera;
+    public controls: OrbitControls;
+    public dl: DirectionalLight;
+    public boundingBox: Box3;
+    public boundingBoxMesh: Box3Helper;
+    public loadObj: Function;
+    public hemiLight: HemisphereLight;
+    public moleculeRenderer: MoleculeRenderer;
+    public atomSpread: number = 3.0;
+    public numAtomsPerAgent: number = 8;
+    public currentSceneAgents: any[];
+    public colorsData: Float32Array;
+
+    private errorMesh: Mesh;
+
+    public constructor(loggerLevel) {
         this.handleTrajectoryData = this.handleTrajectoryData.bind(this);
         // map particle type id to its mesh file name
         this.visGeomMap = new Map();
@@ -42,8 +105,8 @@ class VisGeometry2 {
         this.geomCount = MAX_MESHES;
         this.materials = [];
         this.desatMaterials = [];
-        this.highlightMaterial = new THREE.MeshBasicMaterial({
-            color: new THREE.Color(1, 0, 0),
+        this.highlightMaterial = new MeshBasicMaterial({
+            color: new Color(1, 0, 0),
         });
         this.followObject = null;
         this.runTimeMeshes = [];
@@ -57,7 +120,7 @@ class VisGeometry2 {
         this.paths = [];
 
         // the canonical default geometry instance
-        this.sphereGeometry = new THREE.SphereBufferGeometry(1, 32, 32);
+        this.sphereGeometry = new SphereBufferGeometry(1, 32, 32);
 
         this.membrane = {
             // assume only one membrane mesh
@@ -92,11 +155,11 @@ class VisGeometry2 {
             facesMaterial: MembraneShader.MembraneShader.clone(),
             sidesMaterial: MembraneShader.MembraneShader.clone(),
         };
-        this.membrane.facesMaterial.uniforms.uvscale.value = new THREE.Vector2(
+        this.membrane.facesMaterial.uniforms.uvscale.value = new Vector2(
             40.0,
             40.0
         );
-        this.membrane.sidesMaterial.uniforms.uvscale.value = new THREE.Vector2(
+        this.membrane.sidesMaterial.uniforms.uvscale.value = new Vector2(
             2.0,
             40.0
         );
@@ -107,13 +170,13 @@ class VisGeometry2 {
         this.mlogger = jsLogger.get("visgeometry");
         this.mlogger.setLevel(loggerLevel);
 
+        this.currentSceneAgents = [];
+        this.colorsData = new Float32Array();
         this.setupGui();
     }
 
-    setupGui() {
+    public setupGui(): void {
         const gui = new dat.GUI();
-        this.atomSpread = 3.0;
-        this.numAtomsPerAgent = 8;
         var settings = {
             atomSpread: this.atomSpread,
             numAtoms: this.numAtomsPerAgent,
@@ -133,23 +196,23 @@ class VisGeometry2 {
         this.moleculeRenderer.setupGui(gui);
     }
 
-    get logger() {
+    public get logger(): any {
         return this.mlogger;
     }
 
-    get lastNumberOfAgents() {
+    public get lastNumberOfAgents(): number {
         return this.mlastNumberOfAgents;
     }
 
-    set lastNumberOfAgents(val) {
+    public set lastNumberOfAgents(val) {
         this.mlastNumberOfAgents = val;
     }
 
-    get renderDom() {
+    public get renderDom(): HTMLElement {
         return this.renderer.domElement;
     }
 
-    handleTrajectoryData(trajectoryData) {
+    public handleTrajectoryData(trajectoryData): void {
         // get bounds.
         if (
             trajectoryData.hasOwnProperty("boxSizeX") &&
@@ -184,15 +247,15 @@ class VisGeometry2 {
         }
     }
 
-    resetCamera() {
+    public resetCamera(): void {
         this.controls.reset();
     }
 
-    getFollowObject() {
+    public getFollowObject(): Object3D | null {
         return this.followObject;
     }
 
-    setFollowObject(obj) {
+    public setFollowObject(obj: Object3D | null): void {
         if (
             obj &&
             obj.userData &&
@@ -215,11 +278,11 @@ class VisGeometry2 {
     }
 
     // equivalent to setFollowObject(null)
-    unfollow() {
+    public unfollow(): void {
         this.followObject = null;
     }
 
-    setHighlightById(id) {
+    public setHighlightById(id): void {
         if (this.highlightedId === id) {
             return;
         }
@@ -242,11 +305,11 @@ class VisGeometry2 {
         }
     }
 
-    dehighlight() {
+    public dehighlight(): void {
         this.setHighlightById(-1);
     }
 
-    onNewRuntimeGeometryType(meshName) {
+    public onNewRuntimeGeometryType(meshName): void {
         // find all typeIds for this meshName
         let typeIds = [...this.visGeomMap.entries()]
             .filter(({ 1: v }) => v === meshName)
@@ -276,8 +339,8 @@ class VisGeometry2 {
         }
     }
 
-    setUpControls(element) {
-        this.controls = new THREE.OrbitControls(this.camera, element);
+    public setUpControls(element): void {
+        this.controls = new OrbitControls(this.camera, element);
         this.controls.maxDistance = 750;
         this.controls.minDistance = 5;
         this.controls.zoomSpeed = 2;
@@ -287,11 +350,11 @@ class VisGeometry2 {
     /**
      *   Setup ThreeJS Scene
      * */
-    setupScene() {
+    public setupScene(): void {
         let initWidth = 100;
         let initHeight = 100;
-        this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera(
+        this.scene = new Scene();
+        this.camera = new PerspectiveCamera(
             75,
             initWidth / initHeight,
             0.1,
@@ -300,25 +363,25 @@ class VisGeometry2 {
 
         this.resetBounds(DEFAULT_VOLUME_BOUNDS);
 
-        this.dl = null;
-        this.dl = new THREE.DirectionalLight(0xffffff, 0.6);
+        this.dl = new.DirectionalLight(0xffffff, 0.6);
         this.dl.position.set(0, 0, 1);
         this.scene.add(this.dl);
 
-        this.hemiLight = new THREE.HemisphereLight(0xffffff, 0x000000, 0.5);
+        this.hemiLight = new HemisphereLight(0xffffff, 0x000000, 0.5);
         this.hemiLight.color.setHSL(0.095, 1, 0.75);
         this.hemiLight.groundColor.setHSL(0.6, 1, 0.6);
         this.hemiLight.position.set(0, 1, 0);
         this.scene.add(this.hemiLight);
 
         if (WEBGL.isWebGL2Available() === false) {
-            this.renderer = new THREE.WebGLRenderer();
+            this.renderer = new WebGLRenderer();
         } else {
             const canvas = document.createElement("canvas");
-            const context = canvas.getContext("webgl2", {
-                alpha: false,
-            });
-            this.renderer = new THREE.WebGLRenderer({
+            const context: WebGLRenderingContext = (canvas.getContext(
+                "webgl2",
+                { alpha: false }
+            ) as any) as WebGLRenderingContext;
+            this.renderer = new WebGLRenderer({
                 canvas: canvas,
                 context: context,
             });
@@ -331,7 +394,7 @@ class VisGeometry2 {
         this.camera.position.z = 120;
     }
 
-    loadObj(meshName) {
+    public loadObj(meshName): void {
         const objLoader = new OBJLoader();
         objLoader.load(
             `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/meshes/obj/${meshName}`,
@@ -353,7 +416,7 @@ class VisGeometry2 {
         );
     }
 
-    resize(width, height) {
+    public resize(width, height): void {
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(width, height);
@@ -363,7 +426,7 @@ class VisGeometry2 {
         this.moleculeRenderer.resize(width, height);
     }
 
-    reparent(parent) {
+    public reparent(parent): void {
         if (parent === "undefined" || parent == null) {
             return;
         }
@@ -393,15 +456,15 @@ class VisGeometry2 {
         this.renderer.domElement.onmouseleave = () => this.disableControls();
     }
 
-    disableControls() {
+    public disableControls(): void {
         this.controls.enabled = false;
     }
 
-    enableControls() {
+    public enableControls(): void {
         this.controls.enabled = true;
     }
 
-    render(time) {
+    public render(time): void {
         //if(this.runTimeMeshes.length == 0) { return; }
 
         var elapsedSeconds = time / 1000;
@@ -453,7 +516,7 @@ class VisGeometry2 {
     /**
      *   Run Time Mesh functions
      */
-    createMaterials(colors) {
+    public createMaterials(colors): void {
         const numColors = colors.length;
         // fill buffer of colors:
         this.colorsData = new Float32Array(numColors * 4);
@@ -468,16 +531,16 @@ class VisGeometry2 {
             this.colorsData[i * 4 + 3] = 1.0;
 
             this.materials.push(
-                new THREE.MeshLambertMaterial({
+                new MeshLambertMaterial({
                     color: colors[i],
                 })
             );
-            const hsl = {};
-            const desatColor = new THREE.Color(colors[i]);
+            let hsl = {};
+            const desatColor = new Color(colors[i]);
             hsl = desatColor.getHSL(hsl);
             desatColor.setHSL(hsl.h, 0.5 * hsl.s, hsl.l);
             this.desatMaterials.push(
-                new THREE.MeshLambertMaterial({
+                new MeshLambertMaterial({
                     color: desatColor,
                     opacity: 0.25,
                     transparent: true,
@@ -487,7 +550,7 @@ class VisGeometry2 {
         this.moleculeRenderer.updateColors(numColors, this.colorsData);
     }
 
-    createMeshes() {
+    public createMeshes(): void {
         const { scene } = this;
         this.geomCount = MAX_MESHES;
         const sphereGeom = this.getSphereGeom();
@@ -504,25 +567,19 @@ class VisGeometry2 {
 
         // create placeholder meshes and fibers
         for (let i = 0; i < this.geomCount; i += 1) {
-            const runtimeMesh = new THREE.Mesh(sphereGeom, materials[0]);
+            const runtimeMesh = new Mesh(sphereGeom, materials[0]);
 
             runtimeMesh.name = `Mesh_${i.toString()}`;
             runtimeMesh.visible = false;
             this.runTimeMeshes[i] = runtimeMesh;
             scene.add(runtimeMesh);
 
-            const fibercurve = new THREE.LineCurve3(
-                new THREE.Vector3(0, 0, 0),
-                new THREE.Vector3(1, 1, 1)
+            const fibercurve = new LineCurve3(
+                new Vector3(0, 0, 0),
+                new Vector3(1, 1, 1)
             );
-            const geometry = new THREE.TubeBufferGeometry(
-                fibercurve,
-                1,
-                1,
-                1,
-                false
-            );
-            const runtimeFiberMesh = new THREE.Mesh(geometry, materials[0]);
+            const geometry = new TubeBufferGeometry(fibercurve, 1, 1, 1, false);
+            const runtimeFiberMesh = new Mesh(geometry, materials[0]);
             runtimeFiberMesh.name = `Fiber_${i.toString()}`;
             runtimeFiberMesh.visible = false;
             this.runTimeFiberMeshes.set(
@@ -531,10 +588,7 @@ class VisGeometry2 {
             );
             scene.add(runtimeFiberMesh);
 
-            const runtimeFiberEndcapMesh0 = new THREE.Mesh(
-                sphereGeom,
-                materials[0]
-            );
+            const runtimeFiberEndcapMesh0 = new Mesh(sphereGeom, materials[0]);
             runtimeFiberEndcapMesh0.name = `FiberEnd0_${i.toString()}`;
             runtimeFiberEndcapMesh0.visible = false;
             this.runTimeFiberMeshes.set(
@@ -543,10 +597,7 @@ class VisGeometry2 {
             );
             scene.add(runtimeFiberEndcapMesh0);
 
-            const runtimeFiberEndcapMesh1 = new THREE.Mesh(
-                sphereGeom,
-                materials[0]
-            );
+            const runtimeFiberEndcapMesh1 = new Mesh(sphereGeom, materials[0]);
             runtimeFiberEndcapMesh1.name = `FiberEnd1_${i.toString()}`;
             runtimeFiberEndcapMesh1.visible = false;
             this.runTimeFiberMeshes.set(
@@ -557,7 +608,7 @@ class VisGeometry2 {
         }
     }
 
-    addMesh(meshName, mesh) {
+    public addMesh(meshName, mesh): void {
         this.meshRegistry.set(meshName, mesh);
         if (!mesh.name) {
             mesh.name = meshName;
@@ -568,19 +619,24 @@ class VisGeometry2 {
         }
     }
 
-    getMesh(index) {
+    public getMesh(index): Mesh {
         return this.runTimeMeshes[index];
     }
 
-    resetMesh(index, obj) {
+    public resetMesh(index, obj): void {
         this.runTimeMeshes[index] = obj;
     }
 
-    getFiberMesh(name) {
-        return this.runTimeFiberMeshes.get(name);
+    public getFiberMesh(name: string): Mesh {
+        let mesh = this.runTimeFiberMeshes.get(name);
+        if (mesh) {
+            mesh;
+        }
+
+        return this.errorMesh;
     }
 
-    getMaterial(index, typeId) {
+    public getMaterial(index, typeId): Material {
         // if no highlight, or if this is the highlighed type, then use regular material, otherwise use desaturated.
         // todo strings or numbers for these ids?????
         const isHighlighted =
@@ -600,7 +656,7 @@ class VisGeometry2 {
     /**
      *   Data Management
      */
-    resetMapping() {
+    public resetMapping(): void {
         this.resetAllGeometry();
 
         this.visGeomMap.clear();
@@ -612,7 +668,7 @@ class VisGeometry2 {
     /**
      *   Map Type ID -> Geometry
      */
-    mapIdToGeom(id, meshName) {
+    public mapIdToGeom(id, meshName): void {
         this.logger.debug("Mesh for id ", id, " set to ", meshName);
         this.visGeomMap.set(id, meshName);
         if (meshName.includes("membrane")) {
@@ -629,7 +685,7 @@ class VisGeometry2 {
         }
     }
 
-    getGeomFromId(id) {
+    public getGeomFromId(id: number): Mesh | null {
         if (this.visGeomMap.has(id)) {
             const meshName = this.visGeomMap.get(id);
             return this.meshRegistry.get(meshName);
@@ -638,7 +694,7 @@ class VisGeometry2 {
         return null;
     }
 
-    mapFromJSON(name, filePath, callback) {
+    public mapFromJSON(name, filePath, callback?): Promise<any> {
         const jsonRequest = new Request(filePath);
         const self = this;
         return fetch(jsonRequest)
@@ -664,7 +720,7 @@ class VisGeometry2 {
             });
     }
 
-    resetBounds(boundsAsArray) {
+    public resetBounds(boundsAsArray): void {
         if (!boundsAsArray) {
             console.log("invalid bounds received");
             return;
