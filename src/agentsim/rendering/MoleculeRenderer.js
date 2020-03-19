@@ -102,6 +102,7 @@ class MoleculeRenderer {
 
     setupGui(gui) {
         var settings = {
+            atomRadius: 1.0,
             aoradius1: 4.5,
             aoradius2: 4.5,
             blurradius1: 10.0,
@@ -114,6 +115,9 @@ class MoleculeRenderer {
             chainBeginDistance: 225.0,
         };
         var self = this;
+        gui.add(settings, "atomRadius", 0.01, 10.0).onChange(value => {
+            self.gbufferPass.setAtomRadius(value);
+        });
         gui.add(settings, "aoradius1", 0.01, 10.0).onChange(value => {
             self.ssao1Pass.pass.material.uniforms.radius.value = value;
         });

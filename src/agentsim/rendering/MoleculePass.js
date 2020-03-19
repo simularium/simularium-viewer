@@ -37,7 +37,7 @@ class MoleculePass {
             flat out int IN_instanceId;
             // varying vec4 IN_color;
             // flat int IN_atomId;
-            const float radius = 1.0;
+            uniform float radius;
             void main()	{
                 vec3 p = position.xyz;
                 vec4 modelViewPosition = modelViewMatrix * vec4(p, 1.0);
@@ -223,6 +223,7 @@ class MoleculePass {
 
         this.colorMaterial = new THREE.ShaderMaterial({
             uniforms: {
+                radius: { value: 1.0 },
                 color: { value: new THREE.Color(0x44ff44) },
                 iTime: { value: 1.0 },
                 iResolution: { value: new THREE.Vector2() },
@@ -241,6 +242,7 @@ class MoleculePass {
         });
         this.normalMaterial = new THREE.ShaderMaterial({
             uniforms: {
+                radius: { value: 1.0 },
                 color: { value: new THREE.Color(0x44ff44) },
                 iTime: { value: 1.0 },
                 iResolution: { value: new THREE.Vector2() },
@@ -259,6 +261,7 @@ class MoleculePass {
         });
         this.positionMaterial = new THREE.ShaderMaterial({
             uniforms: {
+                radius: { value: 1.0 },
                 color: { value: new THREE.Color(0x44ff44) },
                 iTime: { value: 1.0 },
                 iResolution: { value: new THREE.Vector2() },
@@ -330,6 +333,12 @@ class MoleculePass {
         this.particles.geometry.setDrawRange(0, numVertices);
 
         this.particles.visible = true;
+    }
+
+    setAtomRadius(r) {
+        this.colorMaterial.uniforms.radius.value = r;
+        this.normalMaterial.uniforms.radius.value = r;
+        this.positionMaterial.uniforms.radius.value = r;
     }
 
     resize(width, height) {
