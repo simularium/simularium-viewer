@@ -4,7 +4,7 @@ class BlurXPass {
     constructor() {
         this.pass = new RenderToBuffer({
             uniforms: {
-                size: { value: new THREE.Vector2(2,2) },
+                size: { value: new THREE.Vector2(2, 2) },
                 colorTex: { value: null },
                 viewPosTex: { value: null },
                 amount: { value: 2 },
@@ -56,7 +56,7 @@ class BlurXPass {
                 //out_col = color / sum;
                 gl_FragColor = color / sum;
             }
-                        `
+                        `,
         });
     }
     resize(x, y) {
@@ -71,7 +71,7 @@ class BlurYPass {
     constructor() {
         this.pass = new RenderToBuffer({
             uniforms: {
-                size: { value: new THREE.Vector2(2,2) },
+                size: { value: new THREE.Vector2(2, 2) },
                 colorTex: { value: null },
                 viewPosTex: { value: null },
                 amount: { value: 2 },
@@ -123,7 +123,7 @@ class BlurYPass {
                 //out_col = color / sum;
                 gl_FragColor = color / sum;
             }
-                                    `
+                                    `,
         });
     }
     resize(x, y) {
@@ -142,19 +142,17 @@ class BlurPass {
         this.setRadius(radius);
     }
     resize(x, y) {
-        this.blurXpass.resize(x,y);
-        this.blurYpass.resize(x,y);
+        this.blurXpass.resize(x, y);
+        this.blurYpass.resize(x, y);
     }
     setRadius(r) {
         this.blurXpass.pass.material.uniforms.amount.value = r;
         this.blurYpass.pass.material.uniforms.amount.value = r;
     }
     render(renderer, target, source, positions, intermediateBuffer) {
-
-        const c = renderer.getClearColor();
+        const c = renderer.getClearColor().clone();
         const a = renderer.getClearAlpha();
         renderer.setClearColor(new THREE.Color(1.0, 1.0, 1.0), 1.0);
-
 
         // blur src into dest in two passes with an intermediate buffer (separable filter)
 
@@ -162,12 +160,15 @@ class BlurPass {
         // y = ( intermediate, viewpos ) --> dest
 
         this.blurXpass.pass.material.uniforms.colorTex.value = source.texture;
-        this.blurXpass.pass.material.uniforms.viewPosTex.value = positions.texture;
+        this.blurXpass.pass.material.uniforms.viewPosTex.value =
+            positions.texture;
 
         this.blurXpass.render(renderer, intermediateBuffer);
 
-        this.blurYpass.pass.material.uniforms.colorTex.value = intermediateBuffer.texture;
-        this.blurYpass.pass.material.uniforms.viewPosTex.value = positions.texture;
+        this.blurYpass.pass.material.uniforms.colorTex.value =
+            intermediateBuffer.texture;
+        this.blurYpass.pass.material.uniforms.viewPosTex.value =
+            positions.texture;
 
         this.blurYpass.render(renderer, target);
 

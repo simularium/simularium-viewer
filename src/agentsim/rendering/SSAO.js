@@ -4,19 +4,19 @@ class SSAO1Pass {
     constructor(radius, threshold, falloff) {
         this.pass = new RenderToBuffer({
             uniforms: {
-                iResolution: { value: new THREE.Vector2(2,2) },
+                iResolution: { value: new THREE.Vector2(2, 2) },
                 iTime: { value: 0.0 },
                 normalTex: { value: null },
                 viewPosTex: { value: null },
                 noiseTex: { value: this.createNoiseTex() },
-                iChannelResolution0: { value: new THREE.Vector2(2,2) },
+                iChannelResolution0: { value: new THREE.Vector2(2, 2) },
                 projectionMatrix: { value: new THREE.Matrix4() },
                 width: { value: 2 },
                 height: { value: 2 },
                 radius: { value: radius },
                 ssao_threshold: { value: threshold }, // = 0.5;
                 ssao_falloff: { value: falloff }, // = 0.1;
-                samples: { value: this.createSSAOSamples() }
+                samples: { value: this.createSSAOSamples() },
             },
             fragmentShader: `
             uniform float iTime;
@@ -89,7 +89,7 @@ class SSAO1Pass {
               //ssao_output = vec4(occlusion, occlusion, occlusion, 1.0);
               gl_FragColor = vec4(occlusion, occlusion, occlusion, 1.0);
             }
-            `
+            `,
         });
     }
     resize(x, y) {
@@ -98,11 +98,12 @@ class SSAO1Pass {
         this.pass.material.uniforms.height.value = y;
     }
     render(renderer, camera, target, normals, positions) {
-        this.pass.material.uniforms.projectionMatrix.value = camera.projectionMatrix;
+        this.pass.material.uniforms.projectionMatrix.value =
+            camera.projectionMatrix;
         this.pass.material.uniforms.viewPosTex.value = positions.texture;
         this.pass.material.uniforms.normalTex.value = normals.texture;
 
-        const c = renderer.getClearColor();
+        const c = renderer.getClearColor().clone();
         const a = renderer.getClearAlpha();
         renderer.setClearColor(new THREE.Color(1.0, 0.0, 0.0), 1.0);
         this.pass.render(renderer, target);
@@ -110,22 +111,31 @@ class SSAO1Pass {
     }
 
     createNoiseTex() {
-        const noisedata = new Float32Array(16*4);
-        for (let i = 0; i < 16; i++)
-        {
-            noisedata[i*4+0] = Math.random()*2.0 - 1.0;
-            noisedata[i*4+1] = Math.random()*2.0 - 1.0;
-            noisedata[i*4+2] = 0;
-            noisedata[i*4+3] = 0;
+        const noisedata = new Float32Array(16 * 4);
+        for (let i = 0; i < 16; i++) {
+            noisedata[i * 4 + 0] = Math.random() * 2.0 - 1.0;
+            noisedata[i * 4 + 1] = Math.random() * 2.0 - 1.0;
+            noisedata[i * 4 + 2] = 0;
+            noisedata[i * 4 + 3] = 0;
         }
         // TODO half float type?
-        return new THREE.DataTexture( noisedata, 4, 4, THREE.RGBAFormat, THREE.FloatType );
+        return new THREE.DataTexture(
+            noisedata,
+            4,
+            4,
+            THREE.RGBAFormat,
+            THREE.FloatType
+        );
     }
 
     createSSAOSamples() {
         const samples = [];
         for (let i = 0; i < 64; i++) {
-            const sample = new THREE.Vector3(Math.random() * 2.0 - 1.0, Math.random() * 2.0 - 1.0, Math.random());
+            const sample = new THREE.Vector3(
+                Math.random() * 2.0 - 1.0,
+                Math.random() * 2.0 - 1.0,
+                Math.random()
+            );
             sample.normalize();
             sample.multiplyScalar(Math.random());
             samples.push(sample);

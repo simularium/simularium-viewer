@@ -348,7 +348,7 @@ class MoleculePass {
     }
 
     render(renderer, camera, colorBuffer, normalBuffer, positionBuffer) {
-        const c = renderer.getClearColor();
+        const c = renderer.getClearColor().clone();
         const a = renderer.getClearAlpha();
         // alpha == -1 is a marker to discard pixels later
         renderer.setClearColor(new THREE.Color(0.0, 0.0, 0.0), -1.0);

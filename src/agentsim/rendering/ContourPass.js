@@ -54,13 +54,13 @@ class ContourPass {
         this.pass.material.uniforms.instanceIdTex.value =
             instanceIdBuffer.texture;
 
-        const c = renderer.getClearColor();
-        const a = renderer.getClearAlpha();
-        renderer.setClearColor(new THREE.Color(1.0, 0.0, 0.0), 1.0);
+        // const c = renderer.getClearColor().clone();
+        // const a = renderer.getClearAlpha();
+        // renderer.setClearColor(new THREE.Color(1.0, 0.0, 0.0), 1.0);
 
         this.pass.render(renderer, target);
 
-        renderer.setClearColor(c, a);
+        // renderer.setClearColor(c, a);
     }
 }
 

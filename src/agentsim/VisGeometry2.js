@@ -20,7 +20,8 @@ import MoleculeRenderer from "./rendering/MoleculeRenderer.js";
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 5000;
-const BACKGROUND_COLOR = new THREE.Color(0xcccccc);
+//const BACKGROUND_COLOR = new THREE.Color(0xcccccc);
+const BACKGROUND_COLOR = new THREE.Color(0.121569, 0.13333, 0.17647);
 const PATH_END_COLOR = BACKGROUND_COLOR;
 const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
 const BOUNDING_BOX_COLOR = new THREE.Color(0x6e6e6e);
@@ -377,6 +378,7 @@ class VisGeometry2 {
 
         this.moleculeRenderer.resize(width, height);
 
+        this.renderer.setClearColor(BACKGROUND_COLOR, 1.0);
         this.renderer.clear();
 
         if (this.membrane.sim) {
