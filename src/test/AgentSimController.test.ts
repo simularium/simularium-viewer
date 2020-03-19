@@ -1,4 +1,3 @@
-import { VisData } from "../agentsim";
 import { AgentSimController } from "../controller";
 import { DummyNetConnection } from "../agentsim";
 

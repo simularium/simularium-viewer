@@ -12,7 +12,7 @@ export declare class DummyNetConnection extends NetConnection {
     private broadcast;
     getIp(): string;
     socketIsValid(): boolean;
-    connectToRemoteServer(uri: string): Promise<{}>;
+    connectToRemoteServer(uri: string): Promise<any>;
     disconnect(): void;
     pauseRemoteSim(): void;
     resumeRemoteSim(): void;

@@ -1,5 +1,10 @@
 import { NetConnection } from "../";
 
+interface TestDataBundle {
+    bundleSize: number;
+    bundleStart: number;
+}
+
 // Mocks the simularium simulation back-end, w/ latency
 export class DummyNetConnection extends NetConnection {
     private isStreamingData: boolean;
@@ -9,6 +14,7 @@ export class DummyNetConnection extends NetConnection {
     public connectLatencyMS: number;
     public totalDuration: number;
     public timeStep: number;
+    private fileName: string;
 
     public constructor(opts) {
         super(opts);
@@ -22,11 +28,15 @@ export class DummyNetConnection extends NetConnection {
 
         this.timeStep = 1;
         this.totalDuration = 99;
+        this.fileName = "";
 
         setInterval(this.broadcast.bind(this), 200);
     }
 
-    private getDataBundle(frameNumber: number, bundleSize: number) {
+    private getDataBundle(
+        frameNumber: number,
+        bundleSize: number
+    ): TestDataBundle {
         const msg = {
             msgType: this.msgTypes.ID_VIS_DATA_ARRIVE,
             bundleStart: frameNumber,
@@ -60,7 +70,7 @@ export class DummyNetConnection extends NetConnection {
         return msg;
     }
 
-    private broadcast() {
+    private broadcast(): void {
         if (!this.isStreamingData) {
             return;
         }
@@ -76,15 +86,15 @@ export class DummyNetConnection extends NetConnection {
         this.onMessage({ data: JSON.stringify(msg) });
     }
 
-    public getIp() {
+    public getIp(): string {
         return "dummy-net-connection-test-addr";
     }
 
-    public socketIsValid() {
+    public socketIsValid(): boolean {
         return this.isConnected;
     }
 
-    public connectToRemoteServer(uri: string) {
+    public connectToRemoteServer(uri: string): Promise<string> {
         return new Promise(resolve => {
             setTimeout(() => {
                 this.isConnected = true;
@@ -93,30 +103,31 @@ export class DummyNetConnection extends NetConnection {
         });
     }
 
-    public disconnect() {
+    public disconnect(): void {
         setTimeout(() => {
             this.isConnected = false;
         }, this.commandLatencyMS);
     }
 
-    public pauseRemoteSim() {
+    public pauseRemoteSim(): void {
         this.isStreamingData = false;
     }
-    public resumeRemoteSim() {
+    public resumeRemoteSim(): void {
         this.isStreamingData = true;
     }
-    public abortRemoteSim() {
+    public abortRemoteSim(): void {
         this.isStreamingData = false;
         this.isConnected = false;
     }
 
-    public startRemoteTrajectoryPlayback(fileName: string) {
+    public startRemoteTrajectoryPlayback(fileName: string): Promise<void> {
         return this.connectToRemoteServer(this.getIp()).then(() => {
+            this.fileName = fileName;
             this.isStreamingData = true;
         });
     }
 
-    public requestTrajectoryFileInfo(fileName: string) {
+    public requestTrajectoryFileInfo(fileName: string): void {
         setTimeout(() => {
             const tfi = {
                 msgType: this.msgTypes.ID_TRAJECTORY_FILE_INFO,
@@ -125,6 +136,7 @@ export class DummyNetConnection extends NetConnection {
                 boxSizeZ: 20,
                 totalDuration: this.totalDuration,
                 timeStepSize: this.timeStep,
+                fileName: fileName,
             };
 
             this.onMessage({ data: JSON.stringify(tfi) });
@@ -136,7 +148,7 @@ export class DummyNetConnection extends NetConnection {
         }, this.commandLatencyMS);
     }
 
-    public requestSingleFrame(frameNumber: number) {
+    public requestSingleFrame(frameNumber: number): void {
         setTimeout(() => {
             this.frameCounter = frameNumber;
 
@@ -146,7 +158,7 @@ export class DummyNetConnection extends NetConnection {
         }, this.commandLatencyMS);
     }
 
-    public gotoRemoteSimulationTime(timeNS: number) {
+    public gotoRemoteSimulationTime(timeNS: number): void {
         setTimeout(() => {
             this.frameCounter = timeNS / this.timeStep;
 

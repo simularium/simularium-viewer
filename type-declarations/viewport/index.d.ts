@@ -1,13 +1,17 @@
 import * as React from 'react';
 import AgentSimController from '../controller';
+interface TrajectoryFileInfo {
+    timeStepSize: number;
+    totalDuration: number;
+}
 interface ViewportProps {
     height: number;
     width: number;
     loggerLevel: string;
     onTimeChange: (timeData: TimeData) => void | undefined;
     agentSimController: AgentSimController;
-    onJsonDataArrived: any;
-    onTrajectoryFileInfoChanged: (cachedData: any) => void | undefined;
+    onJsonDataArrived: Function;
+    onTrajectoryFileInfoChanged: (cachedData: TrajectoryFileInfo) => void | undefined;
     highlightedParticleType: number | string;
     loadInitialData: boolean;
     showMeshes: boolean;
@@ -44,16 +48,16 @@ declare class Viewport extends React.Component<ViewportProps> {
     componentDidUpdate(prevProps: ViewportProps): void;
     private cacheJSON;
     private clearCache;
-    onDragOver: (e: any) => void;
-    onDrop: (e: any) => void;
+    onDragOver: (e: Event) => void;
+    onDrop: (e: Event) => void;
     addEventHandlersToCanvas(): void;
     removeEventHandlersFromCanvas(): void;
     resetCamera(): void;
-    onPickObject(event: MouseEvent): void;
+    onPickObject(e: Event): void;
     private handleTimeChange;
     private dispatchUpdatedTime;
     stopAnimate(): void;
     animate(): void;
-    render(): JSX.Element;
+    render(): React.ReactElement<any>;
 }
 export default Viewport;
