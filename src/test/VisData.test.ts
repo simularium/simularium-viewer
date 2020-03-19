@@ -203,9 +203,12 @@ describe("VisData module", () => {
                 time: 0,
             };
             expect(() => {
-                VisData.parse(visDataMsgTooShort).toThrowError();
-                VisData.parse(visDataMsgTooLong).toThrowError();
-            });
+                VisData.parse(visDataMsgTooLong);
+            }).toThrowError();
+
+            expect(() => {
+                VisData.parse(visDataMsgTooShort);
+            }).toThrowError();
         });
         test("currentFrame returns empty frame when cache is empty", () => {
             let visData = new VisData();

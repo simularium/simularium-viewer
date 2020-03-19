@@ -85,21 +85,21 @@ export class NetConnection {
     /**
      * WebSocket State
      */
-    private socketIsConnecting() {
+    private socketIsConnecting(): boolean {
         return (
             this.webSocket !== null &&
             this.webSocket.readyState === this.webSocket.CONNECTING
         );
     }
 
-    public socketIsValid() {
+    public socketIsValid(): boolean {
         return !(
             this.webSocket === null ||
             this.webSocket.readyState === this.webSocket.CLOSED
         );
     }
 
-    private socketIsConnected() {
+    private socketIsConnected(): boolean {
         return (
             this.webSocket !== null &&
             this.webSocket.readyState === this.webSocket.OPEN
@@ -109,12 +109,11 @@ export class NetConnection {
     /**
      *   Websocket Message Handler
      * */
-    protected onMessage(event) {
+    protected onMessage(event): void {
         if (!this.socketIsValid()) {
             return;
         }
 
-        const { logger } = this;
         const msg: NetMessage = JSON.parse(event.data);
         const msgType = msg.msgType;
         const numMsgTypes = Object.keys(this.msgTypes).length;
@@ -163,13 +162,13 @@ export class NetConnection {
         }
     }
 
-    private onOpen() {}
-    private onClose() {}
+    private onOpen(): void {}
+    private onClose(): void {}
 
     /**
      * WebSocket Connect
      * */
-    public connectToUri(uri) {
+    public connectToUri(uri): void {
         if (this.socketIsValid()) {
             this.disconnect();
         }
@@ -182,7 +181,7 @@ export class NetConnection {
         this.webSocket.onmessage = this.onMessage.bind(this);
     }
 
-    public disconnect() {
+    public disconnect(): void {
         if (!this.socketIsValid()) {
             this.logger.warn("disconnect failed, client is not connected");
             return;
@@ -191,12 +190,12 @@ export class NetConnection {
         this.webSocket.close();
     }
 
-    public getIp() {
+    public getIp(): string {
         return `wss://${this.serverIp}:${this.serverPort}/`;
     }
 
-    private connectToUriAsync(address) {
-        let connectPromise = new Promise((resolve, reject) => {
+    private connectToUriAsync(address): Promise<string> {
+        let connectPromise = new Promise<string>(resolve => {
             this.connectToUri(address);
             resolve("Succesfully connected to uri!");
         });
@@ -204,8 +203,8 @@ export class NetConnection {
         return connectPromise;
     }
 
-    public connectToRemoteServer(address: string) {
-        let remoteStartPromise = new Promise((resolve, reject) => {
+    public connectToRemoteServer(address: string): Promise<string> {
+        let remoteStartPromise = new Promise<string>((resolve, reject) => {
             if (this.socketIsConnected()) {
                 return resolve("Remote sim sucessfully started");
             }
@@ -232,11 +231,11 @@ export class NetConnection {
     /**
      * Websocket Send Helper Functions
      */
-    private logWebSocketRequest(whatRequest, jsonData) {
+    private logWebSocketRequest(whatRequest, jsonData): void {
         this.logger.debug("Web Socket Request Sent: ", whatRequest, jsonData);
     }
 
-    private sendWebSocketRequest(jsonData, requestDescription) {
+    private sendWebSocketRequest(jsonData, requestDescription): void {
         this.webSocket.send(JSON.stringify(jsonData));
         this.logWebSocketRequest(requestDescription, jsonData);
     }
@@ -244,7 +243,7 @@ export class NetConnection {
     /**
      * Websocket Update Parameters
      */
-    public sendTimeStepUpdate(newTimeStep) {
+    public sendTimeStepUpdate(newTimeStep): void {
         if (!this.socketIsValid()) {
             return;
         }
@@ -256,7 +255,7 @@ export class NetConnection {
         this.sendWebSocketRequest(jsonData, "Update Time-Step");
     }
 
-    public sendParameterUpdate(paramName, paramValue) {
+    public sendParameterUpdate(paramName, paramValue): void {
         if (!this.socketIsValid()) {
             return;
         }
@@ -269,7 +268,7 @@ export class NetConnection {
         this.sendWebSocketRequest(jsonData, "Rate Parameter Update");
     }
 
-    public sendModelDefinition(model) {
+    public sendModelDefinition(model): void {
         if (!this.socketIsValid()) {
             return;
         }
@@ -288,7 +287,7 @@ export class NetConnection {
      *  Trajectory File: No simulation run, stream a result file piecemeal
      *
      */
-    public startRemoteSimPreRun(timeStep, numTimeSteps) {
+    public startRemoteSimPreRun(timeStep, numTimeSteps): void {
         const jsonData = {
             msgType: this.msgTypes.ID_VIS_DATA_REQUEST,
             mode: this.playbackTypes.ID_PRE_RUN_SIMULATION,
@@ -301,7 +300,7 @@ export class NetConnection {
         });
     }
 
-    public startRemoteSimLive() {
+    public startRemoteSimLive(): void {
         const jsonData = {
             msgType: this.msgTypes.ID_VIS_DATA_REQUEST,
             mode: this.playbackTypes.ID_LIVE_SIMULATION,
@@ -312,7 +311,7 @@ export class NetConnection {
         });
     }
 
-    public startRemoteTrajectoryPlayback(fileName: string) {
+    public startRemoteTrajectoryPlayback(fileName: string): Promise<void> {
         const jsonData = {
             msgType: this.msgTypes.ID_VIS_DATA_REQUEST,
             mode: this.playbackTypes.ID_TRAJECTORY_FILE_PLAYBACK,
@@ -327,7 +326,7 @@ export class NetConnection {
         });
     }
 
-    public playRemoteSimCacheFromFrame(cacheFrame) {
+    public playRemoteSimCacheFromFrame(cacheFrame): void {
         if (!this.socketIsValid()) {
             return;
         }
@@ -339,7 +338,7 @@ export class NetConnection {
         this.sendWebSocketRequest(jsonData, "Play Simulation Cache from Frame");
     }
 
-    public pauseRemoteSim() {
+    public pauseRemoteSim(): void {
         if (!this.socketIsValid()) {
             return;
         }
@@ -349,7 +348,7 @@ export class NetConnection {
         );
     }
 
-    public resumeRemoteSim() {
+    public resumeRemoteSim(): void {
         if (!this.socketIsValid()) {
             return;
         }
@@ -359,7 +358,7 @@ export class NetConnection {
         );
     }
 
-    public abortRemoteSim() {
+    public abortRemoteSim(): void {
         if (!this.socketIsValid()) {
             return;
         }
@@ -369,7 +368,7 @@ export class NetConnection {
         );
     }
 
-    public requestSingleFrame(startFrameNumber: number) {
+    public requestSingleFrame(startFrameNumber: number): void {
         this.sendWebSocketRequest(
             {
                 msgType: this.msgTypes.ID_VIS_DATA_REQUEST,
@@ -380,7 +379,7 @@ export class NetConnection {
         );
     }
 
-    public playRemoteSimCacheFromTime(timeNanoSeconds) {
+    public playRemoteSimCacheFromTime(timeNanoSeconds): void {
         this.sendWebSocketRequest(
             {
                 msgType: this.msgTypes.ID_PLAY_CACHE,
@@ -390,7 +389,7 @@ export class NetConnection {
         );
     }
 
-    public gotoRemoteSimulationTime(timeNanoSeconds: number) {
+    public gotoRemoteSimulationTime(timeNanoSeconds: number): void {
         this.sendWebSocketRequest(
             {
                 msgType: this.msgTypes.ID_GOTO_SIMULATION_TIME,
@@ -400,7 +399,7 @@ export class NetConnection {
         );
     }
 
-    public requestTrajectoryFileInfo(fileName: string) {
+    public requestTrajectoryFileInfo(fileName: string): void {
         this.sendWebSocketRequest(
             {
                 msgType: this.msgTypes.ID_INIT_TRAJECTORY_FILE,

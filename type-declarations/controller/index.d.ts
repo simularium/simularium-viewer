@@ -1,7 +1,7 @@
-import { NetConnection } from "../agentsim";
+import { NetConnection, VisData } from "../agentsim";
 export default class AgentSimController {
     netConnection: NetConnection;
-    visData: any;
+    visData: VisData;
     private networkEnabled;
     private isPaused;
     private fileChanged;
@@ -10,7 +10,7 @@ export default class AgentSimController {
     readonly hasChangedFile: boolean;
     connect(): Promise<{}>;
     start(): Promise<void>;
-    time(): any;
+    time(): number;
     stop(): void;
     pause(): void;
     paused(): boolean;
@@ -20,7 +20,7 @@ export default class AgentSimController {
     resume(): void;
     changeFile(newFile: any): void;
     markFileChangeAsHandled(): void;
-    getFile(): any;
+    getFile(): string;
     disableNetworkCommands(): void;
     cacheJSON(json: any): void;
     clearLocalCache(): void;
