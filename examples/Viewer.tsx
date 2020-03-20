@@ -50,7 +50,7 @@ const changeFile = (file: string) => () => agentSim.changeFile(file);
 class Viewer extends React.Component<{}, ViewerState> {
     private viewerRef: React.RefObject<AgentVizViewer>;
 
-    constructor(props) {
+    public constructor(props) {
         super(props);
         this.viewerRef = React.createRef();
         this.handleJsonMeshData = this.handleJsonMeshData.bind(this);
@@ -60,7 +60,7 @@ class Viewer extends React.Component<{}, ViewerState> {
         this.state = intialState;
     }
 
-    componentDidMount() {
+    public componentDidMount(): void {
         window.addEventListener("resize", () => {
             const container = document.querySelector(".container");
 
@@ -70,11 +70,11 @@ class Viewer extends React.Component<{}, ViewerState> {
         });
     }
 
-    handleJsonMeshData(jsonData) {
+    public handleJsonMeshData(jsonData): void {
         this.setState({ particleTypeIds: Object.keys(jsonData) });
     }
 
-    handleTimeChange(timeData) {
+    public handleTimeChange(timeData): void {
         currentFrame = timeData.frameNumber;
         currentTime = timeData.time;
         this.setState({ currentFrame, currentTime });
@@ -84,18 +84,18 @@ class Viewer extends React.Component<{}, ViewerState> {
         }
     }
 
-    highlightParticleType(typeId) {
+    public highlightParticleType(typeId): void {
         this.setState({ highlightId: typeId });
     }
 
-    playOneFrame() {
+    public playOneFrame(): void {
         const frame = Number(document.querySelector("#frame-number").value);
         agentSim.playFromFrame(frame);
 
         this.setState({ pauseOn: frame + 1 });
     }
 
-    handleTrajectoryInfo(data) {
+    public handleTrajectoryInfo(data): void {
         console.log("Trajectory info arrived", data);
         this.state.totalDuration = data.totalDuration;
         this.state.timeStep = data.timeStepSize;
@@ -104,19 +104,19 @@ class Viewer extends React.Component<{}, ViewerState> {
         currentFrame = 0;
     }
 
-    handleScrubTime(event) {
+    public handleScrubTime(event): void {
         agentSim.gotoTime(event.target.value);
     }
 
-    gotoNextFrame() {
+    public gotoNextFrame(): void {
         agentSim.gotoTime(currentTime + this.state.timeStep + 1e-9);
     }
 
-    gotoPreviousFrame() {
+    public gotoPreviousFrame(): void {
         agentSim.gotoTime(currentTime - this.state.timeStep - 1e-9);
     }
 
-    render() {
+    public render(): JSX.Element {
         return (
             <div className="container" style={{ height: "90%", width: "75%" }}>
                 <button onClick={() => agentSim.start()}>Start</button>
