@@ -1,5 +1,3 @@
-import RenderToBuffer from "./RenderToBuffer";
-
 import {
     BufferAttribute,
     BufferGeometry,

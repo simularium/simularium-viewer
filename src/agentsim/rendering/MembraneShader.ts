@@ -1,13 +1,4 @@
-import {
-    FloatType,
-    NearestFilter,
-    RGBAFormat,
-    ShaderMaterial,
-    Vector2,
-    WebGLRenderTarget,
-} from "three";
-
-import RenderToBuffer from "./RenderToBuffer";
+import { ShaderMaterial, Vector2 } from "three";
 
 const dataTextureSize = 32;
 

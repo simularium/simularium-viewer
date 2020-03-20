@@ -5,7 +5,6 @@ import CompositePass from "./CompositePass";
 import ContourPass from "./ContourPass";
 import DrawBufferPass from "./DrawBufferPass";
 
-import * as dat from "dat.gui";
 import { FloatType, NearestFilter, RGBAFormat, WebGLRenderTarget } from "three";
 
 class MoleculeRenderer {
