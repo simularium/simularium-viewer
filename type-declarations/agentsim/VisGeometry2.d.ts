@@ -1,5 +1,6 @@
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { Material, LineSegments, LineBasicMaterial, Geometry, BufferGeometry, Box3, Box3Helper, Color, MeshBasicMaterial, SphereBufferGeometry, Scene, PerspectiveCamera, DirectionalLight, HemisphereLight, WebGLRenderer, Mesh, Object3D } from "three";
+import { Box3, Box3Helper, BufferGeometry, Color, DirectionalLight, Geometry, HemisphereLight, LineBasicMaterial, LineSegments, Material, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, Scene, SphereBufferGeometry, WebGLRenderer } from "three";
+import MoleculeRenderer from "./rendering/MoleculeRenderer.js";
 interface PathData {
     agent: number;
     numSegments: number;
@@ -11,8 +12,7 @@ interface PathData {
     material: LineBasicMaterial;
     line: LineSegments | null;
 }
-declare class VisGeometry {
-    handleTrajectoryData: Function;
+declare class VisGeometry2 {
     visGeomMap: Map<number, string>;
     meshRegistry: Map<string | number, Mesh>;
     meshLoadAttempted: Map<string, boolean>;
@@ -41,12 +41,18 @@ declare class VisGeometry {
     boundingBoxMesh: Box3Helper;
     loadObj: Function;
     hemiLight: HemisphereLight;
+    moleculeRenderer: MoleculeRenderer;
+    atomSpread: number;
+    numAtomsPerAgent: number;
+    currentSceneAgents: any[];
+    colorsData: Float32Array;
     private errorMesh;
     constructor(loggerLevel: any);
+    setupGui(): void;
     readonly logger: any;
     lastNumberOfAgents: number;
     readonly renderDom: HTMLElement;
-    updateBoxSize(trajectoryData: any): void;
+    handleTrajectoryData(trajectoryData: any): void;
     resetCamera(): void;
     getFollowObject(): Object3D | null;
     setFollowObject(obj: Object3D | null): void;
@@ -59,6 +65,7 @@ declare class VisGeometry {
      *   Setup ThreeJS Scene
      * */
     setupScene(): void;
+    loadObj(meshName: any): void;
     resize(width: any, height: any): void;
     reparent(parent: any): void;
     disableControls(): void;
@@ -115,5 +122,5 @@ declare class VisGeometry {
     resetAllGeometry(): void;
     update(agents: any): void;
 }
-export { VisGeometry };
-export default VisGeometry;
+export { VisGeometry2 };
+export default VisGeometry2;

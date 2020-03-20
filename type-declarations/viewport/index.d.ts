@@ -1,5 +1,5 @@
-import * as React from 'react';
-import AgentSimController from '../controller';
+import * as React from "react";
+import AgentSimController from "../controller";
 interface TrajectoryFileInfo {
     timeStepSize: number;
     totalDuration: number;
@@ -58,6 +58,6 @@ declare class Viewport extends React.Component<ViewportProps> {
     private dispatchUpdatedTime;
     stopAnimate(): void;
     animate(): void;
-    render(): React.ReactElement<any>;
+    render(): React.ReactElement<HTMLElement>;
 }
 export default Viewport;

@@ -50,7 +50,7 @@ export declare class NetConnection {
     disconnect(): void;
     getIp(): string;
     private connectToUriAsync;
-    connectToRemoteServer(address: string): Promise<any>;
+    connectToRemoteServer(address: string): Promise<string>;
     /**
      * Websocket Send Helper Functions
      */
