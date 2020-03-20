@@ -73,7 +73,7 @@ function getJsonUrl(trajectoryName: string): string {
 }
 
 class Viewport extends React.Component<ViewportProps> {
-    private visGeometry: VisGeometry;
+    private visGeometry: VisGeometry2;
     private lastRenderTime: number;
     private startTime: number;
     private vdomRef: React.RefObject<HTMLInputElement>;
