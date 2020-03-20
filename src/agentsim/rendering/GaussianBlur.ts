@@ -1,10 +1,14 @@
-import RenderToBuffer from "./RenderToBuffer.js";
+import { Color, Vector2 } from "three";
+
+import RenderToBuffer from "./RenderToBuffer";
 
 class BlurXPass {
-    constructor() {
+    public pass: RenderToBuffer;
+
+    public constructor() {
         this.pass = new RenderToBuffer({
             uniforms: {
-                size: { value: new THREE.Vector2(2, 2) },
+                size: { value: new Vector2(2, 2) },
                 colorTex: { value: null },
                 viewPosTex: { value: null },
                 amount: { value: 2 },
@@ -59,19 +63,23 @@ class BlurXPass {
                         `,
         });
     }
-    resize(x, y) {
-        this.pass.material.uniforms.size.value = new THREE.Vector2(x, y);
+
+    public resize(x, y): void {
+        this.pass.material.uniforms.size.value = new Vector2(x, y);
     }
-    render(renderer, tgt) {
+
+    public render(renderer, tgt): void {
         this.pass.render(renderer, tgt);
     }
 }
 
 class BlurYPass {
-    constructor() {
+    public pass: RenderToBuffer;
+
+    public constructor() {
         this.pass = new RenderToBuffer({
             uniforms: {
-                size: { value: new THREE.Vector2(2, 2) },
+                size: { value: new Vector2(2, 2) },
                 colorTex: { value: null },
                 viewPosTex: { value: null },
                 amount: { value: 2 },
@@ -126,33 +134,47 @@ class BlurYPass {
                                     `,
         });
     }
-    resize(x, y) {
-        this.pass.material.uniforms.size.value = new THREE.Vector2(x, y);
+
+    public resize(x, y): void {
+        this.pass.material.uniforms.size.value = new Vector2(x, y);
     }
-    render(renderer, tgt) {
+
+    public render(renderer, tgt): void {
         this.pass.render(renderer, tgt);
     }
 }
 
 class BlurPass {
-    constructor(radius) {
+    public blurXpass: BlurXPass;
+    public blurYpass: BlurYPass;
+
+    public constructor(radius) {
         this.blurXpass = new BlurXPass();
         this.blurYpass = new BlurYPass();
 
         this.setRadius(radius);
     }
-    resize(x, y) {
+
+    public resize(x, y): void {
         this.blurXpass.resize(x, y);
         this.blurYpass.resize(x, y);
     }
-    setRadius(r) {
+
+    public setRadius(r): void {
         this.blurXpass.pass.material.uniforms.amount.value = r;
         this.blurYpass.pass.material.uniforms.amount.value = r;
     }
-    render(renderer, target, source, positions, intermediateBuffer) {
+
+    public render(
+        renderer,
+        target,
+        source,
+        positions,
+        intermediateBuffer
+    ): void {
         const c = renderer.getClearColor().clone();
         const a = renderer.getClearAlpha();
-        renderer.setClearColor(new THREE.Color(1.0, 1.0, 1.0), 1.0);
+        renderer.setClearColor(new Color(1.0, 1.0, 1.0), 1.0);
 
         // blur src into dest in two passes with an intermediate buffer (separable filter)
 

@@ -1,12 +1,16 @@
-import RenderToBuffer from "./RenderToBuffer.js";
+import { Color, Vector4 } from "three";
+
+import RenderToBuffer from "./RenderToBuffer";
 
 class DrawBufferPass {
-    constructor() {
+    public pass: RenderToBuffer;
+
+    public constructor() {
         this.pass = new RenderToBuffer({
             uniforms: {
                 colorTex: { value: null },
-                scale: { value: new THREE.Vector4(1, 1, 1, 1) },
-                bias: { value: new THREE.Vector4(0, 0, 0, 0) },
+                scale: { value: new Vector4(1, 1, 1, 1) },
+                bias: { value: new Vector4(0, 0, 0, 0) },
             },
             fragmentShader: `
             in vec2 vUv;
@@ -24,21 +28,23 @@ class DrawBufferPass {
             `,
         });
     }
-    resize(x, y) {}
 
-    setScale(x, y, z, w) {
-        this.pass.material.uniforms.scale.value = new THREE.Vector4(x, y, z, w);
-    }
-    setBias(x, y, z, w) {
-        this.pass.material.uniforms.bias.value = new THREE.Vector4(x, y, z, w);
+    public resize(x, y): void {}
+
+    public setScale(x, y, z, w): void {
+        this.pass.material.uniforms.scale.value = new Vector4(x, y, z, w);
     }
 
-    render(renderer, target, bufferToDraw) {
+    public setBias(x, y, z, w): void {
+        this.pass.material.uniforms.bias.value = new Vector4(x, y, z, w);
+    }
+
+    public render(renderer, target, bufferToDraw): void {
         this.pass.material.uniforms.colorTex.value = bufferToDraw.texture;
 
         const c = renderer.getClearColor().clone();
         const a = renderer.getClearAlpha();
-        renderer.setClearColor(new THREE.Color(1, 0, 0), 1.0);
+        renderer.setClearColor(new Color(1, 0, 0), 1.0);
 
         this.pass.render(renderer, target);
 

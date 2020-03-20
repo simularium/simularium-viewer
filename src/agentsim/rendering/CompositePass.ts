@@ -1,7 +1,11 @@
-import RenderToBuffer from "./RenderToBuffer.js";
+import { Color, DataTexture, FloatType, RGBAFormat } from "three";
+
+import RenderToBuffer from "./RenderToBuffer";
 
 class CompositePass {
-    constructor() {
+    public pass: RenderToBuffer;
+
+    public constructor() {
         this.pass = new RenderToBuffer({
             uniforms: {
                 colorTex: { value: null },
@@ -12,7 +16,7 @@ class CompositePass {
                 depthBufferTex: { value: null },
                 // colors indexed by particle type id
                 colorsBuffer: { value: null },
-                backgroundColor: { value: new THREE.Color(1, 1, 1) },
+                backgroundColor: { value: new Color(1, 1, 1) },
                 zNear: { value: 0.1 },
                 zFar: { value: 1000 },
                 atomicBeginDistance: { value: 150 },
@@ -466,19 +470,26 @@ class CompositePass {
     }
 
     // colorsData is a Float32Array of rgba
-    updateColors(numColors, colorsData) {
-        this.pass.material.uniforms.colorsBuffer.value = new THREE.DataTexture(
+    public updateColors(numColors, colorsData): void {
+        this.pass.material.uniforms.colorsBuffer.value = new DataTexture(
             colorsData,
             numColors,
             1,
-            THREE.RGBAFormat,
-            THREE.FloatType
+            RGBAFormat,
+            FloatType
         );
     }
 
-    resize(x, y) {}
+    public resize(x, y): void {}
 
-    render(renderer, camera, target, ssaoBuffer1, ssaoBuffer2, colorBuffer) {
+    public render(
+        renderer,
+        camera,
+        target,
+        ssaoBuffer1,
+        ssaoBuffer2,
+        colorBuffer
+    ): void {
         this.pass.material.uniforms.zNear.value = camera.near;
         this.pass.material.uniforms.zFar.value = camera.far;
 

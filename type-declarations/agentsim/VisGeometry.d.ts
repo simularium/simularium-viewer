@@ -1,5 +1,5 @@
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { Material, LineSegments, LineBasicMaterial, Geometry, BufferGeometry, Box3, Box3Helper, Color, MeshBasicMaterial, SphereBufferGeometry, Scene, PerspectiveCamera, DirectionalLight, HemisphereLight, WebGLRenderer, Mesh, Object3D } from "three";
+import { Material, LineSegments, LineBasicMaterial, Geometry, BufferGeometry, Box3, Box3Helper, Color, MeshBasicMaterial, SphereBufferGeometry, Scene, PerspectiveCamera, DirectionalLight, HemisphereLight, WebGLRenderer, Mesh, Object3D, ShaderMaterial } from "three";
 interface PathData {
     agent: number;
     numSegments: number;
@@ -10,6 +10,19 @@ interface PathData {
     geometry: BufferGeometry;
     material: LineBasicMaterial;
     line: LineSegments | null;
+}
+interface MembraneInfo {
+    typeId: number;
+    mesh?: Mesh;
+    runtimeMeshIndex: number;
+    faces: {
+        name: string;
+    }[];
+    sides: {
+        name: string;
+    }[];
+    facesMaterial: ShaderMaterial;
+    sidesMaterial: ShaderMaterial;
 }
 declare class VisGeometry {
     handleTrajectoryData: Function;
@@ -30,7 +43,7 @@ declare class VisGeometry {
     highlightedId: number;
     paths: PathData[];
     sphereGeometry: SphereBufferGeometry;
-    membrane: any;
+    membrane: MembraneInfo;
     mlogger: any;
     renderer: WebGLRenderer;
     scene: Scene;

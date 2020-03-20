@@ -1,6 +1,6 @@
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { Box3, Box3Helper, BufferGeometry, Color, DirectionalLight, Geometry, HemisphereLight, LineBasicMaterial, LineSegments, Material, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, Scene, SphereBufferGeometry, WebGLRenderer } from "three";
-import MoleculeRenderer from "./rendering/MoleculeRenderer.js";
+import { Box3, Box3Helper, BufferGeometry, Color, DirectionalLight, Geometry, HemisphereLight, LineBasicMaterial, LineSegments, Material, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, Scene, SphereBufferGeometry, WebGLRenderer, ShaderMaterial } from "three";
+import MoleculeRenderer from "./rendering/MoleculeRenderer";
 interface PathData {
     agent: number;
     numSegments: number;
@@ -11,6 +11,19 @@ interface PathData {
     geometry: BufferGeometry;
     material: LineBasicMaterial;
     line: LineSegments | null;
+}
+interface MembraneInfo {
+    typeId: number;
+    mesh?: Mesh;
+    runtimeMeshIndex: number;
+    faces: {
+        name: string;
+    }[];
+    sides: {
+        name: string;
+    }[];
+    facesMaterial: ShaderMaterial;
+    sidesMaterial: ShaderMaterial;
 }
 declare class VisGeometry2 {
     visGeomMap: Map<number, string>;
@@ -30,7 +43,7 @@ declare class VisGeometry2 {
     highlightedId: number;
     paths: PathData[];
     sphereGeometry: SphereBufferGeometry;
-    membrane: any;
+    membrane: MembraneInfo;
     mlogger: any;
     renderer: WebGLRenderer;
     scene: Scene;

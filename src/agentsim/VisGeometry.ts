@@ -29,11 +29,12 @@ import {
     Mesh,
     Vector3,
     Object3D,
+    ShaderMaterial,
 } from "three";
 
 import jsLogger from "js-logger";
 
-import MembraneShader from "./rendering/MembraneShader.js";
+import MembraneShader from "./rendering/MembraneShader";
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 5000;
@@ -64,6 +65,16 @@ interface PathData {
     line: LineSegments | null;
 }
 
+interface MembraneInfo {
+    typeId: number;
+    mesh?: Mesh;
+    runtimeMeshIndex: number;
+    faces: { name: string }[];
+    sides: { name: string }[];
+    facesMaterial: ShaderMaterial;
+    sidesMaterial: ShaderMaterial;
+}
+
 class VisGeometry {
     public handleTrajectoryData: Function;
     public visGeomMap: Map<number, string>;
@@ -83,7 +94,7 @@ class VisGeometry {
     public highlightedId: number;
     public paths: PathData[];
     public sphereGeometry: SphereBufferGeometry;
-    public membrane: any;
+    public membrane: MembraneInfo;
     public mlogger: any;
     public renderer: WebGLRenderer;
     public scene: Scene;
@@ -128,11 +139,8 @@ class VisGeometry {
 
         this.membrane = {
             // assume only one membrane mesh
-            mesh: null,
-            sim: MembraneShader.MembraneShaderSim
-                ? new MembraneShader.MembraneShaderSim()
-                : null,
-            material: null,
+            typeId: -1,
+            mesh: undefined,
             runtimeMeshIndex: -1,
             faces: [{ name: "curved_5nm_Right" }, { name: "curved_5nm_Left" }],
             sides: [
@@ -403,9 +411,6 @@ class VisGeometry {
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(width, height);
-        if (this.membrane.sim) {
-            this.membrane.sim.resize(width, height);
-        }
     }
 
     public reparent(parent): void {
@@ -421,10 +426,6 @@ class VisGeometry {
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(width, height);
         this.renderer.clear();
-
-        if (this.membrane.sim) {
-            this.membrane.sim.resize(width, height);
-        }
 
         this.renderer.domElement.setAttribute("style", "top: 0px; left: 0px");
 
@@ -447,21 +448,9 @@ class VisGeometry {
 
         var elapsedSeconds = time / 1000;
 
-        if (this.membrane.sim) {
-            this.membrane.sim.render(this.renderer, elapsedSeconds);
-        }
-
         if (this.membrane.mesh) {
             this.membrane.facesMaterial.uniforms.iTime.value = elapsedSeconds;
             this.membrane.sidesMaterial.uniforms.iTime.value = elapsedSeconds;
-
-            if (this.membrane.sim) {
-                this.membrane.material.uniforms.iChannel0.value = this.membrane.sim.getOutputTarget().texture;
-                this.membrane.material.uniforms.iChannelResolution0.value = new Vector2(
-                    this.membrane.sim.getOutputTarget().width,
-                    this.membrane.sim.getOutputTarget().height
-                );
-            }
 
             this.renderer.getDrawingBufferSize(
                 this.membrane.facesMaterial.uniforms.iResolution.value

@@ -1,16 +1,28 @@
-import RenderToBuffer from "./RenderToBuffer.js";
+import RenderToBuffer from "./RenderToBuffer";
+
+import {
+    Color,
+    DataTexture,
+    FloatType,
+    Matrix4,
+    RGBAFormat,
+    Vector2,
+    Vector3,
+} from "three";
 
 class SSAO1Pass {
-    constructor(radius, threshold, falloff) {
+    public pass: RenderToBuffer;
+
+    public constructor(radius, threshold, falloff) {
         this.pass = new RenderToBuffer({
             uniforms: {
-                iResolution: { value: new THREE.Vector2(2, 2) },
+                iResolution: { value: new Vector2(2, 2) },
                 iTime: { value: 0.0 },
                 normalTex: { value: null },
                 viewPosTex: { value: null },
                 noiseTex: { value: this.createNoiseTex() },
-                iChannelResolution0: { value: new THREE.Vector2(2, 2) },
-                projectionMatrix: { value: new THREE.Matrix4() },
+                iChannelResolution0: { value: new Vector2(2, 2) },
+                projectionMatrix: { value: new Matrix4() },
                 width: { value: 2 },
                 height: { value: 2 },
                 radius: { value: radius },
@@ -92,12 +104,14 @@ class SSAO1Pass {
             `,
         });
     }
-    resize(x, y) {
-        this.pass.material.uniforms.iResolution.value = new THREE.Vector2(x, y);
+
+    public resize(x, y): void {
+        this.pass.material.uniforms.iResolution.value = new Vector2(x, y);
         this.pass.material.uniforms.width.value = x;
         this.pass.material.uniforms.height.value = y;
     }
-    render(renderer, camera, target, normals, positions) {
+
+    public render(renderer, camera, target, normals, positions): void {
         this.pass.material.uniforms.projectionMatrix.value =
             camera.projectionMatrix;
         this.pass.material.uniforms.viewPosTex.value = positions.texture;
@@ -105,12 +119,12 @@ class SSAO1Pass {
 
         const c = renderer.getClearColor().clone();
         const a = renderer.getClearAlpha();
-        renderer.setClearColor(new THREE.Color(1.0, 0.0, 0.0), 1.0);
+        renderer.setClearColor(new Color(1.0, 0.0, 0.0), 1.0);
         this.pass.render(renderer, target);
         renderer.setClearColor(c, a);
     }
 
-    createNoiseTex() {
+    public createNoiseTex(): DataTexture {
         const noisedata = new Float32Array(16 * 4);
         for (let i = 0; i < 16; i++) {
             noisedata[i * 4 + 0] = Math.random() * 2.0 - 1.0;
@@ -119,19 +133,13 @@ class SSAO1Pass {
             noisedata[i * 4 + 3] = 0;
         }
         // TODO half float type?
-        return new THREE.DataTexture(
-            noisedata,
-            4,
-            4,
-            THREE.RGBAFormat,
-            THREE.FloatType
-        );
+        return new DataTexture(noisedata, 4, 4, RGBAFormat, FloatType);
     }
 
-    createSSAOSamples() {
-        const samples = [];
+    public createSSAOSamples(): Vector3[] {
+        const samples: Vector3[] = [];
         for (let i = 0; i < 64; i++) {
-            const sample = new THREE.Vector3(
+            const sample = new Vector3(
                 Math.random() * 2.0 - 1.0,
                 Math.random() * 2.0 - 1.0,
                 Math.random()

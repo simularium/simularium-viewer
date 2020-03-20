@@ -1,7 +1,9 @@
-import RenderToBuffer from "./RenderToBuffer.js";
+import RenderToBuffer from "./RenderToBuffer";
 
 class ContourPass {
-    constructor() {
+    public pass: RenderToBuffer;
+
+    public constructor() {
         this.pass = new RenderToBuffer({
             uniforms: {
                 colorTex: { value: null },
@@ -47,9 +49,9 @@ class ContourPass {
         });
     }
 
-    resize(x, y) {}
+    public resize(x, y): void {}
 
-    render(renderer, target, colorBuffer, instanceIdBuffer) {
+    public render(renderer, target, colorBuffer, instanceIdBuffer): void {
         this.pass.material.uniforms.colorTex.value = colorBuffer.texture;
         this.pass.material.uniforms.instanceIdTex.value =
             instanceIdBuffer.texture;

@@ -6,10 +6,28 @@ import ContourPass from "./ContourPass";
 import DrawBufferPass from "./DrawBufferPass";
 
 import * as dat from "dat.gui";
+import { FloatType, NearestFilter, RGBAFormat, WebGLRenderTarget } from "three";
 
 class MoleculeRenderer {
-    constructor() {
-        this.gbufferPass = new MoleculePass();
+    public gbufferPass: MoleculePass;
+    public ssao1Pass: SSAO1Pass;
+    public ssao2Pass: SSAO1Pass;
+    public blur1Pass: BlurPass;
+    public blur2Pass: BlurPass;
+    public compositePass: CompositePass;
+    public contourPass: ContourPass;
+    public drawBufferPass: DrawBufferPass;
+    public colorBuffer: WebGLRenderTarget;
+    public normalBuffer: WebGLRenderTarget;
+    public positionBuffer: WebGLRenderTarget;
+    public blurIntermediateBuffer: WebGLRenderTarget;
+    public ssaoBuffer: WebGLRenderTarget;
+    public ssaoBuffer2: WebGLRenderTarget;
+    public ssaoBufferBlurred: WebGLRenderTarget;
+    public ssaoBufferBlurred2: WebGLRenderTarget;
+
+    public constructor() {
+        this.gbufferPass = new MoleculePass(1);
         // radius, threshold, falloff in view space coordinates.
         this.ssao1Pass = new SSAO1Pass(4.5, 150, 150);
         this.ssao2Pass = new SSAO1Pass(4.5, 150, 150);
@@ -22,85 +40,85 @@ class MoleculeRenderer {
         this.drawBufferPass = new DrawBufferPass();
 
         // buffers:
-        this.colorBuffer = new THREE.WebGLRenderTarget(2, 2, {
-            minFilter: THREE.NearestFilter,
-            magFilter: THREE.NearestFilter,
-            format: THREE.RGBAFormat,
-            type: THREE.FloatType,
+        this.colorBuffer = new WebGLRenderTarget(2, 2, {
+            minFilter: NearestFilter,
+            magFilter: NearestFilter,
+            format: RGBAFormat,
+            type: FloatType,
             depthBuffer: true,
             stencilBuffer: false,
         });
         this.colorBuffer.texture.generateMipmaps = false;
         // TODO : MRT AND SHARE DEPTH BUFFER among color, position, normal etc
-        this.normalBuffer = new THREE.WebGLRenderTarget(2, 2, {
-            minFilter: THREE.NearestFilter,
-            magFilter: THREE.NearestFilter,
-            format: THREE.RGBAFormat,
-            type: THREE.FloatType,
+        this.normalBuffer = new WebGLRenderTarget(2, 2, {
+            minFilter: NearestFilter,
+            magFilter: NearestFilter,
+            format: RGBAFormat,
+            type: FloatType,
             depthBuffer: true,
             stencilBuffer: false,
         });
         this.normalBuffer.texture.generateMipmaps = false;
-        this.positionBuffer = new THREE.WebGLRenderTarget(2, 2, {
-            minFilter: THREE.NearestFilter,
-            magFilter: THREE.NearestFilter,
-            format: THREE.RGBAFormat,
-            type: THREE.FloatType,
+        this.positionBuffer = new WebGLRenderTarget(2, 2, {
+            minFilter: NearestFilter,
+            magFilter: NearestFilter,
+            format: RGBAFormat,
+            type: FloatType,
             depthBuffer: true,
             stencilBuffer: false,
         });
         this.positionBuffer.texture.generateMipmaps = false;
 
         // intermediate blurring buffer
-        this.blurIntermediateBuffer = new THREE.WebGLRenderTarget(2, 2, {
-            minFilter: THREE.NearestFilter,
-            magFilter: THREE.NearestFilter,
-            format: THREE.RGBAFormat,
-            type: THREE.FloatType,
+        this.blurIntermediateBuffer = new WebGLRenderTarget(2, 2, {
+            minFilter: NearestFilter,
+            magFilter: NearestFilter,
+            format: RGBAFormat,
+            type: FloatType,
             depthBuffer: false,
             stencilBuffer: false,
         });
         this.blurIntermediateBuffer.texture.generateMipmaps = false;
 
-        this.ssaoBuffer = new THREE.WebGLRenderTarget(2, 2, {
-            minFilter: THREE.NearestFilter,
-            magFilter: THREE.NearestFilter,
-            format: THREE.RGBAFormat,
-            type: THREE.FloatType,
+        this.ssaoBuffer = new WebGLRenderTarget(2, 2, {
+            minFilter: NearestFilter,
+            magFilter: NearestFilter,
+            format: RGBAFormat,
+            type: FloatType,
             depthBuffer: false,
             stencilBuffer: false,
         });
         this.ssaoBuffer.texture.generateMipmaps = false;
-        this.ssaoBuffer2 = new THREE.WebGLRenderTarget(2, 2, {
-            minFilter: THREE.NearestFilter,
-            magFilter: THREE.NearestFilter,
-            format: THREE.RGBAFormat,
-            type: THREE.FloatType,
+        this.ssaoBuffer2 = new WebGLRenderTarget(2, 2, {
+            minFilter: NearestFilter,
+            magFilter: NearestFilter,
+            format: RGBAFormat,
+            type: FloatType,
             depthBuffer: false,
             stencilBuffer: false,
         });
         this.ssaoBuffer2.texture.generateMipmaps = false;
-        this.ssaoBufferBlurred = new THREE.WebGLRenderTarget(2, 2, {
-            minFilter: THREE.NearestFilter,
-            magFilter: THREE.NearestFilter,
-            format: THREE.RGBAFormat,
-            type: THREE.FloatType,
+        this.ssaoBufferBlurred = new WebGLRenderTarget(2, 2, {
+            minFilter: NearestFilter,
+            magFilter: NearestFilter,
+            format: RGBAFormat,
+            type: FloatType,
             depthBuffer: false,
             stencilBuffer: false,
         });
         this.ssaoBufferBlurred.texture.generateMipmaps = false;
-        this.ssaoBufferBlurred2 = new THREE.WebGLRenderTarget(2, 2, {
-            minFilter: THREE.NearestFilter,
-            magFilter: THREE.NearestFilter,
-            format: THREE.RGBAFormat,
-            type: THREE.FloatType,
+        this.ssaoBufferBlurred2 = new WebGLRenderTarget(2, 2, {
+            minFilter: NearestFilter,
+            magFilter: NearestFilter,
+            format: RGBAFormat,
+            type: FloatType,
             depthBuffer: false,
             stencilBuffer: false,
         });
         this.ssaoBufferBlurred2.texture.generateMipmaps = false;
     }
 
-    setupGui(gui) {
+    public setupGui(gui): void {
         var settings = {
             atomRadius: 1.0,
             aoradius1: 4.5,
@@ -151,18 +169,18 @@ class MoleculeRenderer {
         });
     }
 
-    setBackgroundColor(color) {
+    public setBackgroundColor(color): void {
         this.compositePass.pass.material.uniforms.backgroundColor.value = color;
     }
 
     // TODO this is a geometry/scene update and should be updated through some other means?
-    updateMolecules(
+    public updateMolecules(
         positions,
         typeids,
         instanceids,
         numAgents,
         numAtomsPerAgent
-    ) {
+    ): void {
         this.gbufferPass.update(
             positions,
             typeids,
@@ -170,16 +188,17 @@ class MoleculeRenderer {
             numAgents * numAtomsPerAgent
         );
     }
+
     // colorsData is a Float32Array of rgb triples
-    updateColors(numColors, colorsData) {
+    public updateColors(numColors, colorsData): void {
         this.compositePass.updateColors(numColors, colorsData);
     }
 
-    createMoleculeBuffer(n) {
+    public createMoleculeBuffer(n): void {
         this.gbufferPass.createMoleculeBuffer(n);
     }
 
-    resize(x, y) {
+    public resize(x, y): void {
         this.colorBuffer.setSize(x, y);
         // TODO : MRT AND SHARE DEPTH BUFFER
         this.normalBuffer.setSize(x, y);
@@ -201,7 +220,7 @@ class MoleculeRenderer {
         this.drawBufferPass.resize(x, y);
     }
 
-    render(renderer, camera, target) {
+    public render(renderer, camera, target): void {
         // TODO : DEPTH HANDLING STRATEGY:
         // gbuffer pass writes gl_FragDepth
         // depth buffer should be not written to or tested again after this.

@@ -29,14 +29,15 @@ import {
     VertexColors,
     WebGLRenderer,
     WebGLRendererParameters,
+    ShaderMaterial,
 } from "three";
 
 import * as dat from "dat.gui";
 
 import jsLogger from "js-logger";
 
-import MembraneShader from "./rendering/MembraneShader.js";
-import MoleculeRenderer from "./rendering/MoleculeRenderer.js";
+import MembraneShader from "./rendering/MembraneShader";
+import MoleculeRenderer from "./rendering/MoleculeRenderer";
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 5000;
@@ -68,6 +69,16 @@ interface PathData {
     line: LineSegments | null;
 }
 
+interface MembraneInfo {
+    typeId: number;
+    mesh?: Mesh;
+    runtimeMeshIndex: number;
+    faces: { name: string }[];
+    sides: { name: string }[];
+    facesMaterial: ShaderMaterial;
+    sidesMaterial: ShaderMaterial;
+}
+
 class VisGeometry2 {
     public visGeomMap: Map<number, string>;
     public meshRegistry: Map<string | number, Mesh>;
@@ -86,7 +97,7 @@ class VisGeometry2 {
     public highlightedId: number;
     public paths: PathData[];
     public sphereGeometry: SphereBufferGeometry;
-    public membrane: any;
+    public membrane: MembraneInfo;
     public mlogger: any;
     public renderer: WebGLRenderer;
     public scene: Scene;
@@ -132,11 +143,8 @@ class VisGeometry2 {
 
         this.membrane = {
             // assume only one membrane mesh
-            mesh: null,
-            sim: MembraneShader.MembraneShaderSim
-                ? new MembraneShader.MembraneShaderSim()
-                : null,
-            material: null,
+            typeId: -1,
+            mesh: undefined,
             runtimeMeshIndex: -1,
             faces: [
                 {
@@ -449,9 +457,6 @@ class VisGeometry2 {
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(width, height);
-        if (this.membrane.sim) {
-            this.membrane.sim.resize(width, height);
-        }
         this.moleculeRenderer.resize(width, height);
     }
 
@@ -473,10 +478,6 @@ class VisGeometry2 {
         this.renderer.setClearColor(BACKGROUND_COLOR, 1.0);
         this.renderer.clear();
 
-        if (this.membrane.sim) {
-            this.membrane.sim.resize(width, height);
-        }
-
         this.renderer.domElement.setAttribute("style", "top: 0px; left: 0px");
 
         this.renderer.domElement.onmouseenter = () => this.enableControls();
@@ -496,21 +497,9 @@ class VisGeometry2 {
 
         var elapsedSeconds = time / 1000;
 
-        if (this.membrane.sim) {
-            this.membrane.sim.render(this.renderer, elapsedSeconds);
-        }
-
         if (this.membrane.mesh) {
             this.membrane.facesMaterial.uniforms.iTime.value = elapsedSeconds;
             this.membrane.sidesMaterial.uniforms.iTime.value = elapsedSeconds;
-
-            if (this.membrane.sim) {
-                this.membrane.material.uniforms.iChannel0.value = this.membrane.sim.getOutputTarget().texture;
-                this.membrane.material.uniforms.iChannelResolution0.value = new Vector2(
-                    this.membrane.sim.getOutputTarget().width,
-                    this.membrane.sim.getOutputTarget().height
-                );
-            }
 
             this.renderer.getDrawingBufferSize(
                 this.membrane.facesMaterial.uniforms.iResolution.value

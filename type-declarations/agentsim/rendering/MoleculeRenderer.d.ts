@@ -1,0 +1,34 @@
+import SSAO1Pass from "./SSAO";
+import MoleculePass from "./MoleculePass";
+import BlurPass from "./GaussianBlur";
+import CompositePass from "./CompositePass";
+import ContourPass from "./ContourPass";
+import DrawBufferPass from "./DrawBufferPass";
+import { WebGLRenderTarget } from "three";
+declare class MoleculeRenderer {
+    gbufferPass: MoleculePass;
+    ssao1Pass: SSAO1Pass;
+    ssao2Pass: SSAO1Pass;
+    blur1Pass: BlurPass;
+    blur2Pass: BlurPass;
+    compositePass: CompositePass;
+    contourPass: ContourPass;
+    drawBufferPass: DrawBufferPass;
+    colorBuffer: WebGLRenderTarget;
+    normalBuffer: WebGLRenderTarget;
+    positionBuffer: WebGLRenderTarget;
+    blurIntermediateBuffer: WebGLRenderTarget;
+    ssaoBuffer: WebGLRenderTarget;
+    ssaoBuffer2: WebGLRenderTarget;
+    ssaoBufferBlurred: WebGLRenderTarget;
+    ssaoBufferBlurred2: WebGLRenderTarget;
+    constructor();
+    setupGui(gui: any): void;
+    setBackgroundColor(color: any): void;
+    updateMolecules(positions: any, typeids: any, instanceids: any, numAgents: any, numAtomsPerAgent: any): void;
+    updateColors(numColors: any, colorsData: any): void;
+    createMoleculeBuffer(n: any): void;
+    resize(x: any, y: any): void;
+    render(renderer: any, camera: any, target: any): void;
+}
+export default MoleculeRenderer;
