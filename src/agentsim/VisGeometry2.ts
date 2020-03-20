@@ -47,6 +47,11 @@ const PATH_END_COLOR = BACKGROUND_COLOR;
 const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 
+enum RenderStyle {
+    GENERIC,
+    MOLECULAR,
+}
+
 function lerp(x0: number, x1: number, alpha: number): number {
     return x0 + (x1 - x0) * alpha;
 }
@@ -80,6 +85,7 @@ interface MembraneInfo {
 }
 
 class VisGeometry2 {
+    public renderStyle: RenderStyle;
     public visGeomMap: Map<number, string>;
     public meshRegistry: Map<string | number, Mesh>;
     public meshLoadAttempted: Map<string, boolean>;
@@ -116,6 +122,7 @@ class VisGeometry2 {
     private errorMesh: Mesh;
 
     public constructor(loggerLevel) {
+        this.renderStyle = RenderStyle.GENERIC;
         this.visGeomMap = new Map<number, string>();
         this.meshRegistry = new Map<string | number, Mesh>();
         this.meshLoadAttempted = new Map<string, boolean>();
@@ -229,6 +236,13 @@ class VisGeometry2 {
             });
 
         this.moleculeRenderer.setupGui(gui);
+    }
+
+    public switchRenderStyle(): void {
+        this.renderStyle =
+            this.renderStyle === RenderStyle.GENERIC
+                ? RenderStyle.MOLECULAR
+                : RenderStyle.GENERIC;
     }
 
     public get logger(): any {
@@ -525,8 +539,11 @@ class VisGeometry2 {
             );
         }
 
-        this.moleculeRenderer.render(this.renderer, this.camera, null);
-        //this.renderer.render(this.scene, this.camera);
+        if (this.renderStyle == RenderStyle.GENERIC) {
+            this.renderer.render(this.scene, this.camera);
+        } else {
+            this.moleculeRenderer.render(this.renderer, this.camera, null);
+        }
     }
 
     /**
@@ -802,7 +819,7 @@ class VisGeometry2 {
      * */
     public updateScene(agents): void {
         this.currentSceneAgents = agents;
-        //const sphereGeometry = this.getSphereGeom();
+        const sphereGeometry = this.getSphereGeom();
         let fiberIndex = 0;
 
         // these have been set to correspond to backend values
@@ -811,7 +828,7 @@ class VisGeometry2 {
             ID_VIS_TYPE_FIBER: 1001,
         });
 
-        //let dx, dy, dz;
+        let dx, dy, dz;
         // The agents sent over are mapped by an integer id
 
         const buf = new Float32Array(4 * agents.length * this.numAtomsPerAgent);
@@ -827,40 +844,66 @@ class VisGeometry2 {
 
             if (visType === visTypes.ID_VIS_TYPE_DEFAULT) {
                 const materialType = (typeId + 1) * this.colorVariant;
-                // let runtimeMesh = this.getMesh(i);
-                // const isFollowedObject = (runtimeMesh === this.followObject);
+                let runtimeMesh = this.getMesh(i);
+                const isFollowedObject = runtimeMesh === this.followObject;
+                const lastTypeId = runtimeMesh.userData
+                    ? runtimeMesh.userData.typeId
+                    : -1;
 
-                // if (!runtimeMesh.userData) {
-                //     runtimeMesh.userData = {
-                //         active: true,
-                //         baseMaterial: this.getMaterial(materialType, typeId),
-                //         index: i,
-                //         typeId: typeId,
-                //         materialType: materialType
-                //     }
-                // }
-                // else {
-                //     runtimeMesh.userData.active = true;
-                //     runtimeMesh.userData.baseMaterial = this.getMaterial(materialType, typeId);
-                //     runtimeMesh.userData.index = i;
-                //     runtimeMesh.userData.typeId = typeId;
-                //     runtimeMesh.userData.materialType = materialType;
-                // }
+                if (!runtimeMesh.userData) {
+                    runtimeMesh.userData = {
+                        active: true,
+                        baseMaterial: this.getMaterial(materialType, typeId),
+                        index: i,
+                        typeId: typeId,
+                        materialType: materialType,
+                    };
+                } else {
+                    runtimeMesh.userData.active = true;
+                    runtimeMesh.userData.baseMaterial = this.getMaterial(
+                        materialType,
+                        typeId
+                    );
+                    runtimeMesh.userData.index = i;
+                    runtimeMesh.userData.typeId = typeId;
+                    runtimeMesh.userData.materialType = materialType;
+                }
 
-                // if (runtimeMesh.geometry === sphereGeometry) {
-                //     const meshGeom = this.getGeomFromId(typeId);
-                //     if (meshGeom && meshGeom.children) {
-                //         // in theory this code should never be hit, due to the way the mesh geometry is updated in loadObj
-                //         runtimeMesh = this.setupMeshGeometry(i, runtimeMesh, meshGeom, isFollowedObject);
-                //     }
-                // }
+                if (
+                    runtimeMesh.geometry === sphereGeometry ||
+                    typeId !== lastTypeId
+                ) {
+                    const meshGeom = this.getGeomFromId(typeId);
+                    if (meshGeom && meshGeom.children) {
+                        runtimeMesh = this.setupMeshGeometry(
+                            i,
+                            runtimeMesh,
+                            meshGeom,
+                            isFollowedObject
+                        );
+                    } else {
+                        this.assignMaterial(
+                            runtimeMesh,
+                            runtimeMesh.userData.baseMaterial
+                        );
+                    }
+                }
 
-                // dx = agentData.x - runtimeMesh.position.x;
-                // dy = agentData.y - runtimeMesh.position.y;
-                // dz = agentData.z - runtimeMesh.position.z;
-                // runtimeMesh.position.x = agentData.x;
-                // runtimeMesh.position.y = agentData.y;
-                // runtimeMesh.position.z = agentData.z;
+                dx = agentData.x - runtimeMesh.position.x;
+                dy = agentData.y - runtimeMesh.position.y;
+                dz = agentData.z - runtimeMesh.position.z;
+                runtimeMesh.position.x = agentData.x;
+                runtimeMesh.position.y = agentData.y;
+                runtimeMesh.position.z = agentData.z;
+
+                runtimeMesh.rotation.x = agentData.xrot;
+                runtimeMesh.rotation.y = agentData.yrot;
+                runtimeMesh.rotation.z = agentData.zrot;
+                runtimeMesh.visible = true;
+
+                runtimeMesh.scale.x = agentData.cr * scale;
+                runtimeMesh.scale.y = agentData.cr * scale;
+                runtimeMesh.scale.z = agentData.cr * scale;
 
                 for (let k = 0; k < this.numAtomsPerAgent; ++k) {
                     buf[(i * this.numAtomsPerAgent + k) * 4 + 0] =
@@ -875,20 +918,18 @@ class VisGeometry2 {
                     instanceids[i * this.numAtomsPerAgent + k] = i;
                 }
 
-                // runtimeMesh.rotation.x = agentData.xrot;
-                // runtimeMesh.rotation.y = agentData.yrot;
-                // runtimeMesh.rotation.z = agentData.zrot;
-
-                // runtimeMesh.visible = true;
-
-                // runtimeMesh.scale.x = agentData.cr * scale;
-                // runtimeMesh.scale.y = agentData.cr * scale;
-                // runtimeMesh.scale.z = agentData.cr * scale;
-
-                // const path = this.findPathForAgentIndex(i);
-                // if (path) {
-                //     this.addPointToPath(path, agentData.x, agentData.y, agentData.z, dx, dy, dz);
-                // }
+                const path = this.findPathForAgentIndex(i);
+                if (path) {
+                    this.addPointToPath(
+                        path,
+                        agentData.x,
+                        agentData.y,
+                        agentData.z,
+                        dx,
+                        dy,
+                        dz
+                    );
+                }
             } else if (visType === visTypes.ID_VIS_TYPE_FIBER) {
                 const name = `Fiber_${fiberIndex.toString()}`;
 

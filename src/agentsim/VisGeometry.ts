@@ -103,7 +103,6 @@ class VisGeometry {
     public dl: DirectionalLight;
     public boundingBox: Box3;
     public boundingBoxMesh: Box3Helper;
-    public loadObj: Function;
     public hemiLight: HemisphereLight;
     private errorMesh: Mesh;
 
@@ -183,28 +182,6 @@ class VisGeometry {
             BOUNDING_BOX_COLOR
         );
         this.errorMesh = new Mesh(this.sphereGeometry);
-
-        this.loadObj = meshName => {
-            const objLoader = new OBJLoader();
-            objLoader.load(
-                `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/meshes/obj/${meshName}`,
-                object => {
-                    this.logger.debug("Finished loading mesh: ", meshName);
-                    this.addMesh(meshName, object);
-                    this.onNewRuntimeGeometryType(meshName);
-                },
-                xhr => {
-                    this.logger.debug(
-                        meshName,
-                        " ",
-                        `${(xhr.loaded / xhr.total) * 100}% loaded`
-                    );
-                },
-                error => {
-                    this.logger.debug("Failed to load mesh: ", error, meshName);
-                }
-            );
-        };
     }
 
     public get logger(): any {
@@ -405,6 +382,28 @@ class VisGeometry {
         this.renderer.clear();
 
         this.camera.position.z = 120;
+    }
+
+    public loadObj(meshName): void {
+        const objLoader = new OBJLoader();
+        objLoader.load(
+            `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/meshes/obj/${meshName}`,
+            object => {
+                this.logger.debug("Finished loading mesh: ", meshName);
+                this.addMesh(meshName, object);
+                this.onNewRuntimeGeometryType(meshName);
+            },
+            xhr => {
+                this.logger.debug(
+                    meshName,
+                    " ",
+                    `${(xhr.loaded / xhr.total) * 100}% loaded`
+                );
+            },
+            error => {
+                this.logger.debug("Failed to load mesh: ", error, meshName);
+            }
+        );
     }
 
     public resize(width, height): void {
