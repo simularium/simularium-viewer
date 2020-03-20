@@ -52,7 +52,6 @@ declare class VisGeometry {
     dl: DirectionalLight;
     boundingBox: Box3;
     boundingBoxMesh: Box3Helper;
-    loadObj: Function;
     hemiLight: HemisphereLight;
     private errorMesh;
     constructor(loggerLevel: any);
@@ -72,6 +71,7 @@ declare class VisGeometry {
      *   Setup ThreeJS Scene
      * */
     setupScene(): void;
+    loadObj(meshName: any): void;
     resize(width: any, height: any): void;
     reparent(parent: any): void;
     disableControls(): void;

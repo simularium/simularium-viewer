@@ -1,6 +1,10 @@
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { Box3, Box3Helper, BufferGeometry, Color, DirectionalLight, Geometry, HemisphereLight, LineBasicMaterial, LineSegments, Material, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, Scene, SphereBufferGeometry, WebGLRenderer, ShaderMaterial } from "three";
 import MoleculeRenderer from "./rendering/MoleculeRenderer";
+declare enum RenderStyle {
+    GENERIC = 0,
+    MOLECULAR = 1
+}
 interface PathData {
     agent: number;
     numSegments: number;
@@ -26,6 +30,7 @@ interface MembraneInfo {
     sidesMaterial: ShaderMaterial;
 }
 declare class VisGeometry2 {
+    renderStyle: RenderStyle;
     visGeomMap: Map<number, string>;
     meshRegistry: Map<string | number, Mesh>;
     meshLoadAttempted: Map<string, boolean>;
@@ -61,6 +66,7 @@ declare class VisGeometry2 {
     private errorMesh;
     constructor(loggerLevel: any);
     setupGui(): void;
+    switchRenderStyle(): void;
     readonly logger: any;
     lastNumberOfAgents: number;
     readonly renderDom: HTMLElement;

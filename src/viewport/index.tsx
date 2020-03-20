@@ -295,6 +295,10 @@ class Viewport extends React.Component<ViewportProps> {
         this.visGeometry.resetCamera();
     }
 
+    public switchRenderStyle(): void {
+        this.visGeometry.switchRenderStyle();
+    }
+
     public onPickObject(e: Event): void {
         const event = e as MouseEvent;
         const size = new Vector2();

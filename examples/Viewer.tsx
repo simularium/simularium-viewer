@@ -190,6 +190,11 @@ class Viewer extends React.Component<{}, ViewerState> {
                 <button onClick={() => this.viewerRef.current.resetCamera()}>
                     ResetCamera
                 </button>
+                <button
+                    onClick={() => this.viewerRef.current.switchRenderStyle()}
+                >
+                    Switch Render
+                </button>
 
                 <AgentVizViewer
                     ref={this.viewerRef}

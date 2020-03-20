@@ -53,6 +53,7 @@ declare class Viewport extends React.Component<ViewportProps> {
     addEventHandlersToCanvas(): void;
     removeEventHandlersFromCanvas(): void;
     resetCamera(): void;
+    switchRenderStyle(): void;
     onPickObject(e: Event): void;
     private handleTimeChange;
     private dispatchUpdatedTime;
