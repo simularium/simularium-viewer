@@ -39,7 +39,6 @@ declare class VisGeometry2 {
     dl: DirectionalLight;
     boundingBox: Box3;
     boundingBoxMesh: Box3Helper;
-    loadObj: Function;
     hemiLight: HemisphereLight;
     moleculeRenderer: MoleculeRenderer;
     atomSpread: number;

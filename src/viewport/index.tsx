@@ -2,22 +2,16 @@ import * as React from "react";
 import jsLogger from "js-logger";
 import AgentSimController from "../controller";
 
-import {
-    Raycaster,
-    Scene,
-    Vector2
-} from "three";
+import { Raycaster, Scene, Vector2 } from "three";
 
-import {
-    forOwn,
-} from "lodash";
+import { forOwn } from "lodash";
 
-import { VisGeometry, VisGeometry2, DevGUI } from "../agentsim";
+import { VisGeometry, VisGeometry2 } from "../agentsim";
 
 interface TrajectoryFileInfo {
     timeStepSize: number;
     totalDuration: number;
-};
+}
 
 interface ViewportProps {
     height: number;
@@ -26,7 +20,9 @@ interface ViewportProps {
     onTimeChange: (timeData: TimeData) => void | undefined;
     agentSimController: AgentSimController;
     onJsonDataArrived: Function;
-    onTrajectoryFileInfoChanged: (cachedData: TrajectoryFileInfo) => void | undefined;
+    onTrajectoryFileInfoChanged: (
+        cachedData: TrajectoryFileInfo
+    ) => void | undefined;
     highlightedParticleType: number | string;
     loadInitialData: boolean;
     showMeshes: boolean;
@@ -81,7 +77,7 @@ class Viewport extends React.Component<ViewportProps> {
     private lastRenderTime: number;
     private startTime: number;
     private vdomRef: React.RefObject<HTMLInputElement>;
-    private handlers: { [key: string]: (e: Event) => void};
+    private handlers: { [key: string]: (e: Event) => void };
 
     private hit: boolean;
     private raycaster: Raycaster;
@@ -105,7 +101,8 @@ class Viewport extends React.Component<ViewportProps> {
     public constructor(props: ViewportProps) {
         super(props);
 
-        const loggerLevel = props.loggerLevel === 'debug' ? jsLogger.DEBUG : jsLogger.OFF;
+        const loggerLevel =
+            props.loggerLevel === "debug" ? jsLogger.DEBUG : jsLogger.OFF;
         const colors = [
             0x6ac1e5,
             0xff2200,
@@ -176,7 +173,9 @@ class Viewport extends React.Component<ViewportProps> {
         const { netConnection } = agentSimController;
         this.visGeometry.reparent(this.vdomRef.current);
 
-        netConnection.onTrajectoryFileInfoArrive = (msg: TrajectoryFileInfo) => {
+        netConnection.onTrajectoryFileInfoArrive = (
+            msg: TrajectoryFileInfo
+        ) => {
             this.visGeometry.handleTrajectoryData(msg);
             onTrajectoryFileInfoChanged(msg);
         };
@@ -184,14 +183,16 @@ class Viewport extends React.Component<ViewportProps> {
         agentSimController.connect().then(() => {
             if (loadInitialData) {
                 let fileName = agentSimController.getFile();
-                this.visGeometry.mapFromJSON(
-                    fileName,
-                    getJsonUrl(fileName),
-                    onJsonDataArrived
-                ).then(() => {
-                    this.visGeometry.render(this.startTime);
-                    this.lastRenderTime = Date.now();
-                });
+                this.visGeometry
+                    .mapFromJSON(
+                        fileName,
+                        getJsonUrl(fileName),
+                        onJsonDataArrived
+                    )
+                    .then(() => {
+                        this.visGeometry.render(this.startTime);
+                        this.lastRenderTime = Date.now();
+                    });
                 agentSimController.initializeTrajectoryFile();
             }
         });
@@ -241,9 +242,11 @@ class Viewport extends React.Component<ViewportProps> {
     };
 
     public onDragOver = (e: Event) => {
-        if (e.stopPropagation) { e.stopPropagation(); };
+        if (e.stopPropagation) {
+            e.stopPropagation();
+        }
         e.preventDefault();
-    }
+    };
 
     public onDrop = (e: Event) => {
         this.onDragOver(e);
@@ -255,7 +258,7 @@ class Viewport extends React.Component<ViewportProps> {
         this.clearCache();
 
         let parsedFiles = [];
-        let filesArr: FileHTML[] = Array.from(files) as any as FileHTML[];
+        let filesArr: FileHTML[] = (Array.from(files) as any) as FileHTML[];
         let p = parseFilesToText(filesArr, parsedFiles);
 
         p.then(() => {
@@ -336,9 +339,7 @@ class Viewport extends React.Component<ViewportProps> {
     }
 
     private handleTimeChange(e: Event): void {
-        const {
-            onTimeChange,
-        } = this.props;
+        const { onTimeChange } = this.props;
         if (!Viewport.isCustomEvent(e)) {
             throw new Error("not custom event");
         }
@@ -346,7 +347,7 @@ class Viewport extends React.Component<ViewportProps> {
     }
 
     private dispatchUpdatedTime(timeData): void {
-        const event = new CustomEvent('timeChange', { detail: timeData });
+        const event = new CustomEvent("timeChange", { detail: timeData });
         if (this.vdomRef.current) {
             this.vdomRef.current.dispatchEvent(event);
         }
@@ -360,12 +361,8 @@ class Viewport extends React.Component<ViewportProps> {
     }
 
     public animate(): void {
-        const {
-            agentSimController,
-        } = this.props;
-        const {
-            visData,
-        } = agentSimController;
+        const { agentSimController } = this.props;
+        const { visData } = agentSimController;
         const framesPerSecond = 60; // how often the view-port rendering is refreshed per second
         const timePerFrame = 1000 / framesPerSecond; // the time interval at which to re-render
         const now = Date.now();
@@ -425,10 +422,7 @@ class Viewport extends React.Component<ViewportProps> {
     }
 
     public render(): React.ReactElement<HTMLElement> {
-        const {
-            width,
-            height,
-        } = this.props;
+        const { width, height } = this.props;
 
         // style is specified below so that the size
         // can be passed as a react property

@@ -5,7 +5,9 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import {
     Box3,
     Box3Helper,
+    BufferAttribute,
     BufferGeometry,
+    CatmullRomCurve3,
     Color,
     DirectionalLight,
     Geometry,
@@ -24,6 +26,7 @@ import {
     TubeBufferGeometry,
     Vector2,
     Vector3,
+    VertexColors,
     WebGLRenderer,
     WebGLRendererParameters,
 } from "three";
@@ -92,7 +95,6 @@ class VisGeometry2 {
     public dl: DirectionalLight;
     public boundingBox: Box3;
     public boundingBoxMesh: Box3Helper;
-    public loadObj: Function;
     public hemiLight: HemisphereLight;
     public moleculeRenderer: MoleculeRenderer;
     public atomSpread: number = 3.0;
@@ -196,7 +198,7 @@ class VisGeometry2 {
         );
         this.errorMesh = new Mesh(this.sphereGeometry);
         this.currentSceneAgents = [];
-        this.colorsData = new Float32Array();
+        this.colorsData = new Float32Array(0);
         this.setupGui();
     }
 
