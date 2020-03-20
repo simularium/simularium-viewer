@@ -3,45 +3,54 @@ import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 import {
-    Material,
-    WebGLRendererParameters,
-    LineSegments,
-    BufferAttribute,
-    VertexColors,
-    LineBasicMaterial,
-    Geometry,
-    BufferGeometry,
-    CatmullRomCurve3,
     Box3,
     Box3Helper,
-    TubeBufferGeometry,
-    LineCurve3,
+    BufferAttribute,
+    BufferGeometry,
+    CatmullRomCurve3,
     Color,
-    MeshBasicMaterial,
-    SphereBufferGeometry,
-    Vector2,
-    Scene,
-    PerspectiveCamera,
     DirectionalLight,
+    Geometry,
     HemisphereLight,
-    WebGLRenderer,
-    MeshLambertMaterial,
+    LineBasicMaterial,
+    LineCurve3,
+    LineSegments,
+    Material,
     Mesh,
-    Vector3,
+    MeshBasicMaterial,
+    MeshLambertMaterial,
     Object3D,
+    PerspectiveCamera,
+    Scene,
+    SphereBufferGeometry,
+    TubeBufferGeometry,
+    Vector2,
+    Vector3,
+    VertexColors,
+    WebGLRenderer,
+    WebGLRendererParameters,
     ShaderMaterial,
 } from "three";
+
+import * as dat from "dat.gui";
 
 import jsLogger from "js-logger";
 
 import MembraneShader from "./rendering/MembraneShader";
+import MoleculeRenderer from "./rendering/MoleculeRenderer";
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 5000;
-const BACKGROUND_COLOR = new Color(0xffffff);
+//const BACKGROUND_COLOR = new THREE.Color(0xcccccc);
+const BACKGROUND_COLOR = new Color(0.121569, 0.13333, 0.17647);
 const PATH_END_COLOR = BACKGROUND_COLOR;
 const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
+
+enum RenderStyle {
+    GENERIC,
+    MOLECULAR,
+}
 
 function lerp(x0: number, x1: number, alpha: number): number {
     return x0 + (x1 - x0) * alpha;
@@ -76,7 +85,7 @@ interface MembraneInfo {
 }
 
 class VisGeometry {
-    public handleTrajectoryData: Function;
+    public renderStyle: RenderStyle;
     public visGeomMap: Map<number, string>;
     public meshRegistry: Map<string | number, Mesh>;
     public meshLoadAttempted: Map<string, boolean>;
@@ -104,13 +113,16 @@ class VisGeometry {
     public boundingBox: Box3;
     public boundingBoxMesh: Box3Helper;
     public hemiLight: HemisphereLight;
+    public moleculeRenderer: MoleculeRenderer;
+    public atomSpread: number = 3.0;
+    public numAtomsPerAgent: number = 8;
+    public currentSceneAgents: any[];
+    public colorsData: Float32Array;
+
     private errorMesh: Mesh;
 
     public constructor(loggerLevel) {
-        this.handleTrajectoryData = trajectoryData => {
-            this.updateBoxSize(trajectoryData);
-        };
-
+        this.renderStyle = RenderStyle.GENERIC;
         this.visGeomMap = new Map<number, string>();
         this.meshRegistry = new Map<string | number, Mesh>();
         this.meshLoadAttempted = new Map<string, boolean>();
@@ -141,12 +153,27 @@ class VisGeometry {
             typeId: -1,
             mesh: undefined,
             runtimeMeshIndex: -1,
-            faces: [{ name: "curved_5nm_Right" }, { name: "curved_5nm_Left" }],
+            faces: [
+                {
+                    name: "curved_5nm_Right",
+                },
+                {
+                    name: "curved_5nm_Left",
+                },
+            ],
             sides: [
-                { name: "curved_5nm_Bottom" },
-                { name: "curved_5nm_Top" },
-                { name: "curved_5nm_Back" },
-                { name: "curved_5nm_Front" },
+                {
+                    name: "curved_5nm_Bottom",
+                },
+                {
+                    name: "curved_5nm_Top",
+                },
+                {
+                    name: "curved_5nm_Back",
+                },
+                {
+                    name: "curved_5nm_Front",
+                },
             ],
             facesMaterial: MembraneShader.MembraneShader.clone(),
             sidesMaterial: MembraneShader.MembraneShader.clone(),
@@ -159,6 +186,9 @@ class VisGeometry {
             2.0,
             40.0
         );
+
+        this.moleculeRenderer = new MoleculeRenderer();
+        this.moleculeRenderer.setBackgroundColor(BACKGROUND_COLOR);
 
         this.mlogger = jsLogger.get("visgeometry");
         this.mlogger.setLevel(loggerLevel);
@@ -182,6 +212,37 @@ class VisGeometry {
             BOUNDING_BOX_COLOR
         );
         this.errorMesh = new Mesh(this.sphereGeometry);
+        this.currentSceneAgents = [];
+        this.colorsData = new Float32Array(0);
+        this.setupGui();
+    }
+
+    public setupGui(): void {
+        const gui = new dat.GUI();
+        var settings = {
+            atomSpread: this.atomSpread,
+            numAtoms: this.numAtomsPerAgent,
+        };
+        var self = this;
+        gui.add(settings, "atomSpread", 0.01, 8.0).onChange(value => {
+            self.atomSpread = value;
+            self.updateScene(self.currentSceneAgents);
+        });
+        gui.add(settings, "numAtoms", 1, 20)
+            .step(1)
+            .onChange(value => {
+                self.numAtomsPerAgent = Math.floor(value);
+                self.updateScene(self.currentSceneAgents);
+            });
+
+        this.moleculeRenderer.setupGui(gui);
+    }
+
+    public switchRenderStyle(): void {
+        this.renderStyle =
+            this.renderStyle === RenderStyle.GENERIC
+                ? RenderStyle.MOLECULAR
+                : RenderStyle.GENERIC;
     }
 
     public get logger(): any {
@@ -200,7 +261,7 @@ class VisGeometry {
         return this.renderer.domElement;
     }
 
-    public updateBoxSize(trajectoryData): void {
+    public handleTrajectoryData(trajectoryData): void {
         // get bounds.
         if (
             trajectoryData.hasOwnProperty("boxSizeX") &&
@@ -346,7 +407,7 @@ class VisGeometry {
             75,
             initWidth / initHeight,
             0.1,
-            10000
+            1000
         );
 
         this.resetBounds(DEFAULT_VOLUME_BOUNDS);
@@ -410,6 +471,7 @@ class VisGeometry {
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(width, height);
+        this.moleculeRenderer.resize(width, height);
     }
 
     public reparent(parent): void {
@@ -424,6 +486,10 @@ class VisGeometry {
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(width, height);
+
+        this.moleculeRenderer.resize(width, height);
+
+        this.renderer.setClearColor(BACKGROUND_COLOR, 1.0);
         this.renderer.clear();
 
         this.renderer.domElement.setAttribute("style", "top: 0px; left: 0px");
@@ -441,9 +507,7 @@ class VisGeometry {
     }
 
     public render(time): void {
-        if (this.runTimeMeshes.length == 0) {
-            return;
-        }
+        //if(this.runTimeMeshes.length == 0) { return; }
 
         var elapsedSeconds = time / 1000;
 
@@ -475,7 +539,11 @@ class VisGeometry {
             );
         }
 
-        this.renderer.render(this.scene, this.camera);
+        if (this.renderStyle == RenderStyle.GENERIC) {
+            this.renderer.render(this.scene, this.camera);
+        } else {
+            this.moleculeRenderer.render(this.renderer, this.camera, null);
+        }
     }
 
     /**
@@ -483,7 +551,18 @@ class VisGeometry {
      */
     public createMaterials(colors): void {
         const numColors = colors.length;
+        // fill buffer of colors:
+        this.colorsData = new Float32Array(numColors * 4);
         for (let i = 0; i < numColors; i += 1) {
+            // each color is currently a hex value:
+            this.colorsData[i * 4 + 0] =
+                ((colors[i] & 0x00ff0000) >> 16) / 255.0;
+            this.colorsData[i * 4 + 1] =
+                ((colors[i] & 0x0000ff00) >> 8) / 255.0;
+            this.colorsData[i * 4 + 2] =
+                ((colors[i] & 0x000000ff) >> 0) / 255.0;
+            this.colorsData[i * 4 + 3] = 1.0;
+
             this.materials.push(new MeshLambertMaterial({ color: colors[i] }));
             let hsl: HSL = { h: 0, s: 0, l: 0 };
             const desatColor = new Color(colors[i]);
@@ -497,6 +576,7 @@ class VisGeometry {
                 })
             );
         }
+        this.moleculeRenderer.updateColors(numColors, this.colorsData);
     }
 
     public createMeshes(): void {
@@ -505,6 +585,16 @@ class VisGeometry {
         const sphereGeom = this.getSphereGeom();
         const { materials } = this;
 
+        // empty buffer of molecule positions, to be filled. (init all to origin)
+        this.moleculeRenderer.createMoleculeBuffer(
+            this.geomCount * this.numAtomsPerAgent
+        );
+
+        //multipass render:
+        // draw moleculebuffer into several render targets to store depth, normals, colors
+        // draw quad to composite the buffers into final frame
+
+        // create placeholder meshes and fibers
         for (let i = 0; i < this.geomCount; i += 1) {
             const runtimeMesh = new Mesh(sphereGeom, materials[0]);
 
@@ -728,6 +818,7 @@ class VisGeometry {
      *   Update Scene
      * */
     public updateScene(agents): void {
+        this.currentSceneAgents = agents;
         const sphereGeometry = this.getSphereGeom();
         let fiberIndex = 0;
 
@@ -739,6 +830,13 @@ class VisGeometry {
 
         let dx, dy, dz;
         // The agents sent over are mapped by an integer id
+
+        const buf = new Float32Array(4 * agents.length * this.numAtomsPerAgent);
+        const typeids = new Float32Array(agents.length * this.numAtomsPerAgent);
+        const instanceids = new Float32Array(
+            agents.length * this.numAtomsPerAgent
+        );
+
         agents.forEach((agentData, i) => {
             const visType = agentData["vis-type"];
             const typeId = agentData.type;
@@ -748,10 +846,10 @@ class VisGeometry {
                 const materialType = (typeId + 1) * this.colorVariant;
                 let runtimeMesh = this.getMesh(i);
                 const isFollowedObject = runtimeMesh === this.followObject;
-
                 const lastTypeId = runtimeMesh.userData
                     ? runtimeMesh.userData.typeId
                     : -1;
+
                 if (!runtimeMesh.userData) {
                     runtimeMesh.userData = {
                         active: true,
@@ -801,12 +899,24 @@ class VisGeometry {
                 runtimeMesh.rotation.x = agentData.xrot;
                 runtimeMesh.rotation.y = agentData.yrot;
                 runtimeMesh.rotation.z = agentData.zrot;
-
                 runtimeMesh.visible = true;
 
                 runtimeMesh.scale.x = agentData.cr * scale;
                 runtimeMesh.scale.y = agentData.cr * scale;
                 runtimeMesh.scale.z = agentData.cr * scale;
+
+                for (let k = 0; k < this.numAtomsPerAgent; ++k) {
+                    buf[(i * this.numAtomsPerAgent + k) * 4 + 0] =
+                        agentData.x + (Math.random() - 0.5) * this.atomSpread;
+                    buf[(i * this.numAtomsPerAgent + k) * 4 + 1] =
+                        agentData.y + (Math.random() - 0.5) * this.atomSpread;
+                    buf[(i * this.numAtomsPerAgent + k) * 4 + 2] =
+                        agentData.z + (Math.random() - 0.5) * this.atomSpread;
+                    buf[(i * this.numAtomsPerAgent + k) * 4 + 3] = 1.0;
+                    //                    typeids[i * this.numAtomsPerAgent + k] = typeId;
+                    typeids[i * this.numAtomsPerAgent + k] = materialType;
+                    instanceids[i * this.numAtomsPerAgent + k] = i;
+                }
 
                 const path = this.findPathForAgentIndex(i);
                 if (path) {
@@ -878,6 +988,14 @@ class VisGeometry {
                 fiberIndex += 1;
             }
         });
+
+        this.moleculeRenderer.updateMolecules(
+            buf,
+            typeids,
+            instanceids,
+            agents.length,
+            this.numAtomsPerAgent
+        );
 
         this.hideUnusedFibers(fiberIndex);
 
@@ -1078,11 +1196,11 @@ class VisGeometry {
             line: null,
         };
 
-        pathdata.geometry.addAttribute(
+        pathdata.geometry.setAttribute(
             "position",
             new BufferAttribute(pathdata.points, 3)
         );
-        pathdata.geometry.addAttribute(
+        pathdata.geometry.setAttribute(
             "color",
             new BufferAttribute(pathdata.colors, 3)
         );
@@ -1289,7 +1407,9 @@ class VisGeometry {
                 );
                 this.assignMaterial(
                     runtimeMesh,
-                    new MeshLambertMaterial({ color: 0xff00ff })
+                    new MeshLambertMaterial({
+                        color: 0xff00ff,
+                    })
                 );
             }
         }

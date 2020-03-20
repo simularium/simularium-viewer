@@ -6,7 +6,7 @@ import { Raycaster, Scene, Vector2 } from "three";
 
 import { forOwn } from "lodash";
 
-import { VisGeometry, VisGeometry2 } from "../agentsim";
+import { VisGeometry } from "../agentsim";
 
 interface TrajectoryFileInfo {
     timeStepSize: number;
@@ -73,7 +73,7 @@ function getJsonUrl(trajectoryName: string): string {
 }
 
 class Viewport extends React.Component<ViewportProps> {
-    private visGeometry: VisGeometry2;
+    private visGeometry: VisGeometry;
     private lastRenderTime: number;
     private startTime: number;
     private vdomRef: React.RefObject<HTMLInputElement>;
@@ -140,7 +140,7 @@ class Viewport extends React.Component<ViewportProps> {
             0x0066ff,
         ];
 
-        this.visGeometry = new VisGeometry2(loggerLevel);
+        this.visGeometry = new VisGeometry(loggerLevel);
         this.animate = this.animate.bind(this);
         this.visGeometry.setupScene();
         this.visGeometry.createMaterials(colors);
