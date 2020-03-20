@@ -13,7 +13,10 @@ interface TrajectoryFileInfo {
     totalDuration: number;
 }
 
+export type PropColor = string | number | [number, number, number];
+
 interface ViewportProps {
+    backgroundColor: PropColor;
     height: number;
     width: number;
     loggerLevel: string;
@@ -85,6 +88,7 @@ class Viewport extends React.Component<ViewportProps> {
     private lastRenderedAgentTime: number;
 
     public static defaultProps = {
+        backgroundColor: [0.121569, 0.13333, 0.17647],
         height: 800,
         width: 800,
         highlightedParticleType: -1,
@@ -140,7 +144,7 @@ class Viewport extends React.Component<ViewportProps> {
             0x0066ff,
         ];
 
-        this.visGeometry = new VisGeometry(loggerLevel);
+        this.visGeometry = new VisGeometry(loggerLevel, props.backgroundColor);
         this.animate = this.animate.bind(this);
         this.visGeometry.setupScene();
         this.visGeometry.createMaterials(colors);

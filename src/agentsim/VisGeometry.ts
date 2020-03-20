@@ -41,9 +41,7 @@ import MoleculeRenderer from "./rendering/MoleculeRenderer";
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 5000;
-//const BACKGROUND_COLOR = new THREE.Color(0xcccccc);
-const BACKGROUND_COLOR = new Color(0.121569, 0.13333, 0.17647);
-const PATH_END_COLOR = BACKGROUND_COLOR;
+const DEFAULT_BACKGROUND_COLOR = [0.121569, 0.13333, 0.17647];
 const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 
@@ -86,6 +84,8 @@ interface MembraneInfo {
 
 class VisGeometry {
     public renderStyle: RenderStyle;
+    public backgroundColor: Color;
+    public pathEndColor: Color;
     public visGeomMap: Map<number, string>;
     public meshRegistry: Map<string | number, Mesh>;
     public meshLoadAttempted: Map<string, boolean>;
@@ -121,7 +121,10 @@ class VisGeometry {
 
     private errorMesh: Mesh;
 
-    public constructor(loggerLevel) {
+    public constructor(
+        loggerLevel,
+        backgroundColor = DEFAULT_BACKGROUND_COLOR
+    ) {
         this.renderStyle = RenderStyle.GENERIC;
         this.visGeomMap = new Map<number, string>();
         this.meshRegistry = new Map<string | number, Mesh>();
@@ -188,7 +191,16 @@ class VisGeometry {
         );
 
         this.moleculeRenderer = new MoleculeRenderer();
-        this.moleculeRenderer.setBackgroundColor(BACKGROUND_COLOR);
+
+        this.backgroundColor = Array.isArray(backgroundColor)
+            ? new Color(
+                  backgroundColor[0],
+                  backgroundColor[1],
+                  backgroundColor[2]
+              )
+            : new Color(backgroundColor);
+        this.pathEndColor = this.backgroundColor.clone();
+        this.moleculeRenderer.setBackgroundColor(this.backgroundColor);
 
         this.mlogger = jsLogger.get("visgeometry");
         this.mlogger.setLevel(loggerLevel);
@@ -214,7 +226,9 @@ class VisGeometry {
         this.errorMesh = new Mesh(this.sphereGeometry);
         this.currentSceneAgents = [];
         this.colorsData = new Float32Array(0);
-        this.setupGui();
+        if (loggerLevel === jsLogger.DEBUG) {
+            this.setupGui();
+        }
     }
 
     public setupGui(): void {
@@ -243,6 +257,7 @@ class VisGeometry {
             this.renderStyle === RenderStyle.GENERIC
                 ? RenderStyle.MOLECULAR
                 : RenderStyle.GENERIC;
+        this.updateScene(this.currentSceneAgents);
     }
 
     public get logger(): any {
@@ -439,7 +454,7 @@ class VisGeometry {
         }
 
         this.renderer.setSize(initWidth, initHeight); // expected to change when reparented
-        this.renderer.setClearColor(BACKGROUND_COLOR, 1);
+        this.renderer.setClearColor(this.backgroundColor, 1);
         this.renderer.clear();
 
         this.camera.position.z = 120;
@@ -489,7 +504,7 @@ class VisGeometry {
 
         this.moleculeRenderer.resize(width, height);
 
-        this.renderer.setClearColor(BACKGROUND_COLOR, 1.0);
+        this.renderer.setClearColor(this.backgroundColor, 1.0);
         this.renderer.clear();
 
         this.renderer.domElement.setAttribute("style", "top: 0px; left: 0px");
@@ -1269,17 +1284,17 @@ class VisGeometry {
                 const a = 1.0 - ic / (path.numSegments + 1);
                 path.colors[ic * 6 + 0] = lerp(
                     path.color.r,
-                    PATH_END_COLOR.r,
+                    this.pathEndColor.r,
                     a
                 );
                 path.colors[ic * 6 + 1] = lerp(
                     path.color.g,
-                    PATH_END_COLOR.g,
+                    this.pathEndColor.g,
                     a
                 );
                 path.colors[ic * 6 + 2] = lerp(
                     path.color.b,
-                    PATH_END_COLOR.b,
+                    this.pathEndColor.b,
                     a
                 );
 
@@ -1287,17 +1302,17 @@ class VisGeometry {
                 const b = 1.0 - (ic + 1) / (path.numSegments + 1);
                 path.colors[ic * 6 + 3] = lerp(
                     path.color.r,
-                    PATH_END_COLOR.r,
+                    this.pathEndColor.r,
                     b
                 );
                 path.colors[ic * 6 + 4] = lerp(
                     path.color.g,
-                    PATH_END_COLOR.g,
+                    this.pathEndColor.g,
                     b
                 );
                 path.colors[ic * 6 + 5] = lerp(
                     path.color.b,
-                    PATH_END_COLOR.b,
+                    this.pathEndColor.b,
                     b
                 );
             }
