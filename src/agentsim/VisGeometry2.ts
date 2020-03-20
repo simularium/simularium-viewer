@@ -802,7 +802,7 @@ class VisGeometry2 {
      * */
     public updateScene(agents): void {
         this.currentSceneAgents = agents;
-        const sphereGeometry = this.getSphereGeom();
+        //const sphereGeometry = this.getSphereGeom();
         let fiberIndex = 0;
 
         // these have been set to correspond to backend values
@@ -811,7 +811,7 @@ class VisGeometry2 {
             ID_VIS_TYPE_FIBER: 1001,
         });
 
-        let dx, dy, dz;
+        //let dx, dy, dz;
         // The agents sent over are mapped by an integer id
 
         const buf = new Float32Array(4 * agents.length * this.numAtomsPerAgent);
