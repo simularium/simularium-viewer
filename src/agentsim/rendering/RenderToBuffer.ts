@@ -7,8 +7,6 @@ import {
 } from "three";
 
 class RenderToBuffer {
-    public frameCounter: number;
-    public sampleCounter: number;
     public scene: Scene;
     public geometry: PlaneBufferGeometry;
     public material: ShaderMaterial;
@@ -19,8 +17,6 @@ class RenderToBuffer {
         // paramsobj should have:
         // fragmentShader
         // uniforms
-        this.frameCounter = 0;
-        this.sampleCounter = 0;
         this.scene = new Scene();
         this.geometry = new PlaneBufferGeometry(2, 2);
 

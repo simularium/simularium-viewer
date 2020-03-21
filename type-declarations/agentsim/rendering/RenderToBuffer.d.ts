@@ -1,7 +1,5 @@
 import { Mesh, OrthographicCamera, PlaneBufferGeometry, Scene, ShaderMaterial } from "three";
 declare class RenderToBuffer {
-    frameCounter: number;
-    sampleCounter: number;
     scene: Scene;
     geometry: PlaneBufferGeometry;
     material: ShaderMaterial;
