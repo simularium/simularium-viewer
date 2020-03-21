@@ -1,7 +1,7 @@
 /**
  * Parse Agents from Net Data
  * */
-interface AgentData {
+export interface AgentData {
     x: number;
     y: number;
     z: number;

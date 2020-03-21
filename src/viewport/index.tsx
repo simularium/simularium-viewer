@@ -144,7 +144,7 @@ class Viewport extends React.Component<ViewportProps> {
             0x0066ff,
         ];
 
-        this.visGeometry = new VisGeometry(loggerLevel, props.backgroundColor);
+        this.visGeometry = new VisGeometry(loggerLevel);
         this.animate = this.animate.bind(this);
         this.visGeometry.setupScene();
         this.visGeometry.createMaterials(colors);
@@ -226,11 +226,19 @@ class Viewport extends React.Component<ViewportProps> {
     }
 
     public componentDidUpdate(prevProps: ViewportProps): void {
-        const { height, width, showMeshes, showPaths, showBounds } = this.props;
+        const {
+            backgroundColor,
+            height,
+            width,
+            showMeshes,
+            showPaths,
+            showBounds,
+        } = this.props;
         this.visGeometry.setHighlightById(this.props.highlightedParticleType);
         this.visGeometry.setShowMeshes(showMeshes);
         this.visGeometry.setShowPaths(showPaths);
         this.visGeometry.setShowBounds(showBounds);
+        this.visGeometry.setBackgroundColor(backgroundColor);
         if (prevProps.height !== height || prevProps.width !== width) {
             this.visGeometry.resize(width, height);
         }

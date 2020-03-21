@@ -4,7 +4,9 @@ interface TrajectoryFileInfo {
     timeStepSize: number;
     totalDuration: number;
 }
+export declare type PropColor = string | number | [number, number, number];
 interface ViewportProps {
+    backgroundColor: PropColor;
     height: number;
     width: number;
     loggerLevel: string;
@@ -33,6 +35,7 @@ declare class Viewport extends React.Component<ViewportProps> {
     private animationRequestID;
     private lastRenderedAgentTime;
     static defaultProps: {
+        backgroundColor: number[];
         height: number;
         width: number;
         highlightedParticleType: number;

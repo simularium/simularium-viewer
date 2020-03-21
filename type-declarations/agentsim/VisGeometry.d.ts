@@ -1,5 +1,7 @@
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { Box3, Box3Helper, BufferGeometry, Color, DirectionalLight, Geometry, HemisphereLight, LineBasicMaterial, LineSegments, Material, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, Scene, SphereBufferGeometry, WebGLRenderer, ShaderMaterial } from "three";
+import { Box3, Box3Helper, BufferGeometry, Color, DirectionalLight, Geometry, HemisphereLight, LineBasicMaterial, LineSegments, Material, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, Scene, ShaderMaterial, SphereBufferGeometry, WebGLRenderer } from "three";
+import { ILogger } from "js-logger/src/types";
+import { AgentData } from "./VisData";
 import MoleculeRenderer from "./rendering/MoleculeRenderer";
 declare enum RenderStyle {
     GENERIC = 0,
@@ -31,6 +33,8 @@ interface MembraneInfo {
 }
 declare class VisGeometry {
     renderStyle: RenderStyle;
+    backgroundColor: Color;
+    pathEndColor: Color;
     visGeomMap: Map<number, string>;
     meshRegistry: Map<string | number, Mesh>;
     meshLoadAttempted: Map<string, boolean>;
@@ -49,7 +53,7 @@ declare class VisGeometry {
     paths: PathData[];
     sphereGeometry: SphereBufferGeometry;
     membrane: MembraneInfo;
-    mlogger: any;
+    mlogger: ILogger;
     renderer: WebGLRenderer;
     scene: Scene;
     camera: PerspectiveCamera;
@@ -61,13 +65,14 @@ declare class VisGeometry {
     moleculeRenderer: MoleculeRenderer;
     atomSpread: number;
     numAtomsPerAgent: number;
-    currentSceneAgents: any[];
+    currentSceneAgents: AgentData[];
     colorsData: Float32Array;
     private errorMesh;
     constructor(loggerLevel: any);
+    setBackgroundColor(c: any): void;
     setupGui(): void;
     switchRenderStyle(): void;
-    readonly logger: any;
+    readonly logger: ILogger;
     lastNumberOfAgents: number;
     readonly renderDom: HTMLElement;
     handleTrajectoryData(trajectoryData: any): void;
@@ -108,7 +113,7 @@ declare class VisGeometry {
      */
     mapIdToGeom(id: any, meshName: any): void;
     getGeomFromId(id: number): Mesh | null;
-    mapFromJSON(name: any, filePath: any, callback?: any): Promise<any>;
+    mapFromJSON(name: any, filePath: any, callback?: any): Promise<void | Response>;
     resetBounds(boundsAsArray: any): void;
     setScaleForId(id: number, scale: number): void;
     getScaleForId(id: number): number;

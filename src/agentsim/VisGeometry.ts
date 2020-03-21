@@ -22,6 +22,7 @@ import {
     Object3D,
     PerspectiveCamera,
     Scene,
+    ShaderMaterial,
     SphereBufferGeometry,
     TubeBufferGeometry,
     Vector2,
@@ -29,19 +30,21 @@ import {
     VertexColors,
     WebGLRenderer,
     WebGLRendererParameters,
-    ShaderMaterial,
 } from "three";
 
 import * as dat from "dat.gui";
 
 import jsLogger from "js-logger";
+import { ILogger } from "js-logger/src/types";
+
+import { AgentData } from "./VisData";
 
 import MembraneShader from "./rendering/MembraneShader";
 import MoleculeRenderer from "./rendering/MoleculeRenderer";
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 5000;
-const DEFAULT_BACKGROUND_COLOR = [0.121569, 0.13333, 0.17647];
+const DEFAULT_BACKGROUND_COLOR = new Color(0.121569, 0.13333, 0.17647);
 const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 
@@ -104,7 +107,7 @@ class VisGeometry {
     public paths: PathData[];
     public sphereGeometry: SphereBufferGeometry;
     public membrane: MembraneInfo;
-    public mlogger: any;
+    public mlogger: ILogger;
     public renderer: WebGLRenderer;
     public scene: Scene;
     public camera: PerspectiveCamera;
@@ -116,15 +119,12 @@ class VisGeometry {
     public moleculeRenderer: MoleculeRenderer;
     public atomSpread: number = 3.0;
     public numAtomsPerAgent: number = 8;
-    public currentSceneAgents: any[];
+    public currentSceneAgents: AgentData[];
     public colorsData: Float32Array;
 
     private errorMesh: Mesh;
 
-    public constructor(
-        loggerLevel,
-        backgroundColor = DEFAULT_BACKGROUND_COLOR
-    ) {
+    public constructor(loggerLevel) {
         this.renderStyle = RenderStyle.GENERIC;
         this.visGeomMap = new Map<number, string>();
         this.meshRegistry = new Map<string | number, Mesh>();
@@ -177,13 +177,7 @@ class VisGeometry {
 
         this.moleculeRenderer = new MoleculeRenderer();
 
-        this.backgroundColor = Array.isArray(backgroundColor)
-            ? new Color(
-                  backgroundColor[0],
-                  backgroundColor[1],
-                  backgroundColor[2]
-              )
-            : new Color(backgroundColor);
+        this.backgroundColor = DEFAULT_BACKGROUND_COLOR;
         this.pathEndColor = this.backgroundColor.clone();
         this.moleculeRenderer.setBackgroundColor(this.backgroundColor);
 
@@ -216,6 +210,16 @@ class VisGeometry {
         }
     }
 
+    public setBackgroundColor(c): void {
+        // convert from a PropColor to a THREE.Color
+        this.backgroundColor = Array.isArray(c)
+            ? new Color(c[0], c[1], c[2])
+            : new Color(c);
+        this.pathEndColor = this.backgroundColor.clone();
+        this.moleculeRenderer.setBackgroundColor(this.backgroundColor);
+        this.renderer.setClearColor(this.backgroundColor, 1);
+    }
+
     public setupGui(): void {
         const gui = new dat.GUI();
         var settings = {
@@ -245,7 +249,7 @@ class VisGeometry {
         this.updateScene(this.currentSceneAgents);
     }
 
-    public get logger(): any {
+    public get logger(): ILogger {
         return this.mlogger;
     }
 
@@ -426,10 +430,9 @@ class VisGeometry {
             this.renderer = new WebGLRenderer();
         } else {
             const canvas = document.createElement("canvas");
-            const context: WebGLRenderingContext = (canvas.getContext(
-                "webgl2",
-                { alpha: false }
-            ) as any) as WebGLRenderingContext;
+            const context: WebGLRenderingContext = canvas.getContext("webgl2", {
+                alpha: false,
+            }) as WebGLRenderingContext;
 
             const rendererParams: WebGLRendererParameters = {
                 canvas: canvas,
@@ -730,7 +733,7 @@ class VisGeometry {
         return null;
     }
 
-    public mapFromJSON(name, filePath, callback?): Promise<any> {
+    public mapFromJSON(name, filePath, callback?): Promise<void | Response> {
         const jsonRequest = new Request(filePath);
         const self = this;
         return fetch(jsonRequest)
