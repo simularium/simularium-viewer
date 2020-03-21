@@ -480,7 +480,10 @@ class CompositePass {
         );
     }
 
-    public resize(x, y): void {}
+    public resize(x, y): void {
+        x;
+        y;
+    }
 
     public render(
         renderer,

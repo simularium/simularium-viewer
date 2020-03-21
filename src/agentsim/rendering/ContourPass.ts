@@ -49,7 +49,10 @@ class ContourPass {
         });
     }
 
-    public resize(x, y): void {}
+    public resize(x, y): void {
+        x;
+        y;
+    }
 
     public render(renderer, target, colorBuffer, instanceIdBuffer): void {
         this.pass.material.uniforms.colorTex.value = colorBuffer.texture;

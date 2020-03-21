@@ -270,7 +270,7 @@ class Viewport extends React.Component<ViewportProps> {
         this.clearCache();
 
         let parsedFiles = [];
-        let filesArr: FileHTML[] = (Array.from(files) as any) as FileHTML[];
+        let filesArr: FileHTML[] = Array.from(files) as FileHTML[];
         let p = parseFilesToText(filesArr, parsedFiles);
 
         p.then(() => {

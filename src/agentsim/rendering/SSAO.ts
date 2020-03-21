@@ -26,8 +26,8 @@ class SSAO1Pass {
                 width: { value: 2 },
                 height: { value: 2 },
                 radius: { value: radius },
-                ssao_threshold: { value: threshold }, // = 0.5;
-                ssao_falloff: { value: falloff }, // = 0.1;
+                ssaoThreshold: { value: threshold }, // = 0.5;
+                ssaoFalloff: { value: falloff }, // = 0.1;
                 samples: { value: this.createSSAOSamples() },
             },
             fragmentShader: `
@@ -47,8 +47,8 @@ class SSAO1Pass {
             
             //~ SSAO settings
             uniform float radius;
-            uniform float ssao_threshold; // = 0.5;
-            uniform float ssao_falloff; // = 0.1;
+            uniform float ssaoThreshold; // = 0.5;
+            uniform float ssaoFalloff; // = 0.1;
             
             //layout(location = 0) out vec4 ssao_output;
             
@@ -94,7 +94,7 @@ class SSAO1Pass {
               //gl_FragColor = vec4(1.0 - occlusion/ float(kernelSize), 1.0 - occlusion / float(kernelSize), 1.0 - occlusion / float(kernelSize), 1.0);
               //return;
 
-              float occlusion_weight = smoothstep(ssao_threshold - ssao_falloff, ssao_threshold, length(viewPos));
+              float occlusion_weight = smoothstep(ssaoThreshold - ssaoFalloff, ssaoThreshold, length(viewPos));
               occlusion_weight = 1.0 - occlusion_weight;
               occlusion_weight *= 0.95;
               occlusion = 1.0 - ((occlusion_weight * occlusion) / float(kernelSize));

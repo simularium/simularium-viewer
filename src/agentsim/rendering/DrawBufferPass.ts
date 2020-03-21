@@ -29,7 +29,10 @@ class DrawBufferPass {
         });
     }
 
-    public resize(x, y): void {}
+    public resize(x, y): void {
+        x;
+        y;
+    }
 
     public setScale(x, y, z, w): void {
         this.pass.material.uniforms.scale.value = new Vector4(x, y, z, w);
