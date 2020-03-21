@@ -49,10 +49,8 @@ class ContourPass {
         });
     }
 
-    public resize(x, y): void {
-        x;
-        y;
-    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public resize(x, y): void {}
 
     public render(renderer, target, colorBuffer, instanceIdBuffer): void {
         this.pass.material.uniforms.colorTex.value = colorBuffer.texture;

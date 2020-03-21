@@ -480,10 +480,8 @@ class CompositePass {
         );
     }
 
-    public resize(x, y): void {
-        x;
-        y;
-    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public resize(x, y): void {}
 
     public render(
         renderer,
