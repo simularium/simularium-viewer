@@ -156,27 +156,12 @@ class VisGeometry {
             typeId: -1,
             mesh: undefined,
             runtimeMeshIndex: -1,
-            faces: [
-                {
-                    name: "curved_5nm_Right",
-                },
-                {
-                    name: "curved_5nm_Left",
-                },
-            ],
+            faces: [{ name: "curved_5nm_Right" }, { name: "curved_5nm_Left" }],
             sides: [
-                {
-                    name: "curved_5nm_Bottom",
-                },
-                {
-                    name: "curved_5nm_Top",
-                },
-                {
-                    name: "curved_5nm_Back",
-                },
-                {
-                    name: "curved_5nm_Front",
-                },
+                { name: "curved_5nm_Bottom" },
+                { name: "curved_5nm_Top" },
+                { name: "curved_5nm_Back" },
+                { name: "curved_5nm_Front" },
             ],
             facesMaterial: MembraneShader.MembraneShader.clone(),
             sidesMaterial: MembraneShader.MembraneShader.clone(),
