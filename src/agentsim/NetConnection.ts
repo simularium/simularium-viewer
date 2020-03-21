@@ -1,4 +1,5 @@
 import jsLogger from "js-logger";
+import { ILogger } from "js-logger/src/types";
 
 interface NetMessage {
     connId: string;
@@ -31,11 +32,11 @@ interface PlayBackType {
 }
 
 export class NetConnection {
-    private webSocket: any;
+    private webSocket: WebSocket | null;
     private serverIp: string;
     private serverPort: number;
     protected playbackTypes: PlayBackType;
-    protected logger: any;
+    protected logger: ILogger;
     protected msgTypes: NetMessageType;
     public onTrajectoryFileInfoArrive: Function;
     public onTrajectoryDataArrive: Function;
@@ -121,7 +122,7 @@ export class NetConnection {
         if (msgType > numMsgTypes || msgType < 1) {
             // this suggests either the back-end is out of sync, or a connection to an unknown back-end
             //  either would be very bad
-            this.logger.console.error(
+            this.logger.error(
                 "Unrecognized web message of type ",
                 msg.msgType,
                 " arrived"
@@ -187,7 +188,9 @@ export class NetConnection {
             return;
         }
 
-        this.webSocket.close();
+        if (this.webSocket !== null) {
+            this.webSocket.close();
+        }
     }
 
     public getIp(): string {
@@ -236,7 +239,9 @@ export class NetConnection {
     }
 
     private sendWebSocketRequest(jsonData, requestDescription): void {
-        this.webSocket.send(JSON.stringify(jsonData));
+        if (this.webSocket !== null) {
+            this.webSocket.send(JSON.stringify(jsonData));
+        }
         this.logWebSocketRequest(requestDescription, jsonData);
     }
 
