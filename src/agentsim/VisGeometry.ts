@@ -507,7 +507,9 @@ class VisGeometry {
     }
 
     public render(time): void {
-        //if(this.runTimeMeshes.length == 0) { return; }
+        if (this.runTimeMeshes.length == 0) {
+            return;
+        }
 
         var elapsedSeconds = time / 1000;
 
