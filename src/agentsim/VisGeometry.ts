@@ -1407,9 +1407,7 @@ class VisGeometry {
                 );
                 this.assignMaterial(
                     runtimeMesh,
-                    new MeshLambertMaterial({
-                        color: 0xff00ff,
-                    })
+                    new MeshLambertMaterial({ color: 0xff00ff })
                 );
             }
         }
