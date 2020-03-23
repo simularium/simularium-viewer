@@ -327,10 +327,24 @@ class VisGeometry {
             return;
         }
         if (this.followObject) {
-            this.assignMaterial(
-                this.followObject,
-                this.followObject.userData.baseMaterial
-            );
+            // find the baseMaterial by examining the followObject
+            let material = null;
+            if (
+                this.followObject instanceof Mesh &&
+                this.followObject.userData
+            ) {
+                material = this.followObject.userData.baseMaterial;
+            } else {
+                this.followObject.traverse(child => {
+                    if (child instanceof Mesh && child.userData) {
+                        material = child.userData.baseMaterial;
+                    }
+                });
+            }
+
+            if (material) {
+                this.assignMaterial(this.followObject, material);
+            }
         }
         this.followObject = obj;
         // put the camera on it
