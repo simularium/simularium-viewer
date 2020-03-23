@@ -11,6 +11,7 @@ import {
     Color,
     DirectionalLight,
     Geometry,
+    Group,
     HemisphereLight,
     LineBasicMaterial,
     LineCurve3,
@@ -121,6 +122,10 @@ class VisGeometry {
     public numAtomsPerAgent: number = 8;
     public currentSceneAgents: AgentData[];
     public colorsData: Float32Array;
+    public lightsGroup: Group;
+    public agentMeshGroup: Group;
+    public agentFiberGroup: Group;
+    public agentPathGroup: Group;
 
     private errorMesh: Mesh;
 
@@ -185,6 +190,11 @@ class VisGeometry {
         this.mlogger.setLevel(loggerLevel);
 
         this.scene = new Scene();
+        this.lightsGroup = new Group();
+        this.agentMeshGroup = new Group();
+        this.agentFiberGroup = new Group();
+        this.agentPathGroup = new Group();
+
         this.camera = new PerspectiveCamera(75, 100 / 100, 0.1, 10000);
         this.dl = new DirectionalLight(0xffffff, 0.6);
         this.hemiLight = new HemisphereLight(0xffffff, 0x000000, 0.5);
@@ -407,6 +417,19 @@ class VisGeometry {
         let initWidth = 100;
         let initHeight = 100;
         this.scene = new Scene();
+        this.lightsGroup = new Group();
+        this.lightsGroup.name = "lights";
+        this.scene.add(this.lightsGroup);
+        this.agentMeshGroup = new Group();
+        this.agentMeshGroup.name = "agent meshes";
+        this.scene.add(this.agentMeshGroup);
+        this.agentFiberGroup = new Group();
+        this.agentFiberGroup.name = "agent fibers";
+        this.scene.add(this.agentFiberGroup);
+        this.agentPathGroup = new Group();
+        this.agentPathGroup.name = "agent paths";
+        this.scene.add(this.agentPathGroup);
+
         this.camera = new PerspectiveCamera(
             75,
             initWidth / initHeight,
@@ -418,13 +441,13 @@ class VisGeometry {
 
         this.dl = new DirectionalLight(0xffffff, 0.6);
         this.dl.position.set(0, 0, 1);
-        this.scene.add(this.dl);
+        this.lightsGroup.add(this.dl);
 
         this.hemiLight = new HemisphereLight(0xffffff, 0x000000, 0.5);
         this.hemiLight.color.setHSL(0.095, 1, 0.75);
         this.hemiLight.groundColor.setHSL(0.6, 1, 0.6);
         this.hemiLight.position.set(0, 1, 0);
-        this.scene.add(this.hemiLight);
+        this.lightsGroup.add(this.hemiLight);
 
         if (WEBGL.isWebGL2Available() === false) {
             this.renderer = new WebGLRenderer();
@@ -585,7 +608,6 @@ class VisGeometry {
     }
 
     public createMeshes(): void {
-        const { scene } = this;
         this.geomCount = MAX_MESHES;
         const sphereGeom = this.getSphereGeom();
         const { materials } = this;
@@ -606,7 +628,7 @@ class VisGeometry {
             runtimeMesh.name = `Mesh_${i.toString()}`;
             runtimeMesh.visible = false;
             this.runTimeMeshes[i] = runtimeMesh;
-            scene.add(runtimeMesh);
+            this.agentMeshGroup.add(runtimeMesh);
 
             const fibercurve = new LineCurve3(
                 new Vector3(0, 0, 0),
@@ -620,7 +642,7 @@ class VisGeometry {
                 runtimeFiberMesh.name,
                 runtimeFiberMesh
             );
-            scene.add(runtimeFiberMesh);
+            this.agentFiberGroup.add(runtimeFiberMesh);
 
             const runtimeFiberEndcapMesh0 = new Mesh(sphereGeom, materials[0]);
             runtimeFiberEndcapMesh0.name = `FiberEnd0_${i.toString()}`;
@@ -629,7 +651,7 @@ class VisGeometry {
                 runtimeFiberEndcapMesh0.name,
                 runtimeFiberEndcapMesh0
             );
-            scene.add(runtimeFiberEndcapMesh0);
+            this.agentFiberGroup.add(runtimeFiberEndcapMesh0);
 
             const runtimeFiberEndcapMesh1 = new Mesh(sphereGeom, materials[0]);
             runtimeFiberEndcapMesh1.name = `FiberEnd1_${i.toString()}`;
@@ -638,7 +660,7 @@ class VisGeometry {
                 runtimeFiberEndcapMesh1.name,
                 runtimeFiberEndcapMesh1
             );
-            scene.add(runtimeFiberEndcapMesh1);
+            this.agentFiberGroup.add(runtimeFiberEndcapMesh1);
         }
     }
 
@@ -1039,12 +1061,12 @@ class VisGeometry {
                 const userData = runtimeMesh.userData;
                 const visible = runtimeMesh.visible;
                 runtimeMesh.userData = null;
-                this.scene.remove(runtimeMesh);
+                this.agentMeshGroup.remove(runtimeMesh);
                 runtimeMesh = this.membrane.mesh.clone();
                 runtimeMesh.userData = userData;
                 runtimeMesh.visible = visible;
                 this.assignMembraneMaterial(runtimeMesh);
-                this.scene.add(runtimeMesh);
+                this.agentMeshGroup.add(runtimeMesh);
                 this.resetMesh(i, runtimeMesh);
                 this.membrane.runtimeMeshIndex = i;
             }
@@ -1053,11 +1075,11 @@ class VisGeometry {
             const userData = runtimeMesh.userData;
             const visible = runtimeMesh.visible;
             runtimeMesh.userData = null;
-            this.scene.remove(runtimeMesh);
+            this.agentMeshGroup.remove(runtimeMesh);
             runtimeMesh = meshGeom.clone();
             runtimeMesh.userData = userData;
             runtimeMesh.visible = visible;
-            this.scene.add(runtimeMesh);
+            this.agentMeshGroup.add(runtimeMesh);
             this.resetMesh(i, runtimeMesh);
 
             if (isFollowedObject) {
@@ -1213,7 +1235,7 @@ class VisGeometry {
         pathdata.geometry.setDrawRange(0, 0);
         pathdata.line = new LineSegments(pathdata.geometry, pathdata.material);
         pathdata.line.frustumCulled = false;
-        this.scene.add(pathdata.line);
+        this.agentPathGroup.add(pathdata.line);
 
         this.paths.push(pathdata);
         return pathdata;
@@ -1232,7 +1254,7 @@ class VisGeometry {
             return;
         }
         const path = this.paths[pathindex];
-        this.scene.remove(path.line as Object3D);
+        this.agentPathGroup.remove(path.line as Object3D);
 
         this.paths.splice(pathindex, 1);
     }

@@ -1,5 +1,5 @@
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { Box3, Box3Helper, BufferGeometry, Color, DirectionalLight, Geometry, HemisphereLight, LineBasicMaterial, LineSegments, Material, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, Scene, ShaderMaterial, SphereBufferGeometry, WebGLRenderer } from "three";
+import { Box3, Box3Helper, BufferGeometry, Color, DirectionalLight, Geometry, Group, HemisphereLight, LineBasicMaterial, LineSegments, Material, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, Scene, ShaderMaterial, SphereBufferGeometry, WebGLRenderer } from "three";
 import { ILogger } from "js-logger/src/types";
 import { AgentData } from "./VisData";
 import MoleculeRenderer from "./rendering/MoleculeRenderer";
@@ -67,6 +67,10 @@ declare class VisGeometry {
     numAtomsPerAgent: number;
     currentSceneAgents: AgentData[];
     colorsData: Float32Array;
+    lightsGroup: Group;
+    agentMeshGroup: Group;
+    agentFiberGroup: Group;
+    agentPathGroup: Group;
     private errorMesh;
     constructor(loggerLevel: any);
     setBackgroundColor(c: any): void;
