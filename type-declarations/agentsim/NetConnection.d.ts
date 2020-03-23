@@ -1,3 +1,4 @@
+import { ILogger } from "js-logger/src/types";
 interface NetMessageType {
     ID_UNDEFINED_WEB_REQUEST: number;
     ID_VIS_DATA_ARRIVE: number;
@@ -26,7 +27,7 @@ export declare class NetConnection {
     private serverIp;
     private serverPort;
     protected playbackTypes: PlayBackType;
-    protected logger: any;
+    protected logger: ILogger;
     protected msgTypes: NetMessageType;
     onTrajectoryFileInfoArrive: Function;
     onTrajectoryDataArrive: Function;
@@ -50,7 +51,7 @@ export declare class NetConnection {
     disconnect(): void;
     getIp(): string;
     private connectToUriAsync;
-    connectToRemoteServer(address: string): Promise<any>;
+    connectToRemoteServer(address: string): Promise<string>;
     /**
      * Websocket Send Helper Functions
      */

@@ -7,12 +7,13 @@ export declare class DummyNetConnection extends NetConnection {
     connectLatencyMS: number;
     totalDuration: number;
     timeStep: number;
+    private fileName;
     constructor(opts: any);
     private getDataBundle;
     private broadcast;
     getIp(): string;
     socketIsValid(): boolean;
-    connectToRemoteServer(uri: string): Promise<any>;
+    connectToRemoteServer(uri: string): Promise<string>;
     disconnect(): void;
     pauseRemoteSim(): void;
     resumeRemoteSim(): void;

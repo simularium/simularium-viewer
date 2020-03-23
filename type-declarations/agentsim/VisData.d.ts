@@ -1,7 +1,7 @@
 /**
  * Parse Agents from Net Data
  * */
-interface AgentData {
+export interface AgentData {
     x: number;
     y: number;
     z: number;
@@ -16,6 +16,10 @@ interface AgentData {
 interface FrameData {
     frameNumber: number;
     time: number;
+}
+interface ParsedFrame {
+    frameData: FrameData;
+    parsedAgentData: AgentData[];
 }
 declare class VisData {
     private frameCache;
@@ -50,10 +54,7 @@ declare class VisData {
      *   paid for network bandwith (and improving the quality & responsiveness
      *   of the application, since network latency is a major bottle-neck)
      * */
-    static parse(visDataMsg: any): {
-        frameData: FrameData;
-        parsedAgentData: AgentData[];
-    };
+    static parse(visDataMsg: any): ParsedFrame;
     constructor();
     readonly currentFrameData: FrameData;
     /**

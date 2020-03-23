@@ -1,9 +1,4 @@
-// Three JS is assumed to be in the global scope in extensions
-//  such as OrbitControls.js below
-import * as THREE from "three";
-global.THREE = THREE;
-
-import RenderToBuffer from "./RenderToBuffer.js";
+import { ShaderMaterial, Vector2 } from "three";
 
 const dataTextureSize = 32;
 
@@ -20,199 +15,6 @@ const common = `
 #define getPos(grid) textureLod(iChannel0,(grid*vec2(1.,2.0)+vec2(5.1,10.1))/iResolution.xy,0.).xy
 #define getVel(grid) textureLod(iChannel0,(grid*vec2(1.,2.0)+vec2(5.1,10.1))/iResolution.xy,0.).zw
 `;
-
-class MembraneShaderSim {
-    constructor() {
-        this.frame = 0;
-
-        this.pass0 = new RenderToBuffer({
-            uniforms: {
-                iResolution: {
-                    value: new THREE.Vector2(dataTextureSize, dataTextureSize),
-                },
-                iFrame: { value: 0 },
-                iTime: { value: 0.0 },
-                iChannel0: { value: null },
-                iChannelResolution0: {
-                    value: new THREE.Vector2(dataTextureSize, dataTextureSize),
-                },
-            },
-            fragmentShader:
-                common +
-                `
-            uniform int iFrame;
-            uniform float iTime;
-            uniform vec2 iResolution;
-            uniform sampler2D iChannel0;
-            uniform vec2 iChannelResolution0;
-            varying vec2 vUv;
-
-#define PARTICLE_COLOR vec4(0.6, 0.0, 0.0, 1.0)
-
-            void main()
-            {
-                vec2 grid = floor(gl_FragCoord.xy/vec2(1.0,2.0)-vec2(5.,5.));
-                float datai = floor(fract(gl_FragCoord.y/2.0)*2.0);
-                if (grid.x>=float(GridX) || grid.y>=float(GridY) || grid.x<0. || grid.y<0.) {
-                    gl_FragColor = vec4(0.,0.,0.,0.);
-                    return;
-                }
-                
-                vec2 newpos = vec2(0.0, 0.0);
-                vec2 newvel = vec2(0.0, 0.0);
-                vec4 newcolorsize = vec4(0.0, 0.0, 0.0, 0.0);
-                
-                
-                if (iFrame<5) // init
-                {
-                    if (mod(grid.x,2.0)==1. && mod(grid.y,2.0)==1.)
-                    {
-                        newpos  = vec2(sin(grid.y)*0.5+0.5,sin(grid.x)*0.7+0.5)+grid; // middle of the grid
-                        newvel = vec2(sin(grid.y),cos(grid.x))*0.1;
-                        
-                        
-                        float diskrad = GridX*0.24;
-                        if (length(grid-vec2(diskrad,diskrad))<diskrad) 
-                        {
-                            newcolorsize = PARTICLE_COLOR;
-                        }
-                        if (length(grid-vec2(GridX-diskrad,diskrad))<diskrad)
-                        {
-                            newcolorsize = PARTICLE_COLOR;
-                        }
-                        
-                        if (newcolorsize.a==0.0) newpos = vec2(0.,0.);
-                    }
-                }
-                else
-                {
-                    // check surrounding grid for particles that move to this one
-                    for(int x=0;x<9;x++) // for some reason nested loops compiles wrong
-                    {
-                        vec2 grid2 = grid+vec2(float(x%3-1),float(x/3-1));
-            
-                        vec2 pos = getPos(grid2)+getVel(grid2);
-                        vec2 vel = getVel(grid2);
-                        vec4 colorsize = getColorSize(grid2);
-            
-                        if ( floor(pos)==grid)
-                        {
-                            newpos += pos*colorsize.a;
-                            newvel += vel*colorsize.a;
-                            newcolorsize.xyz += colorsize.xyz*colorsize.a;
-                            newcolorsize.a += colorsize.a;
-                        }
-                    }
-                    
-                    if (newcolorsize.a>0.) // in case multiple particles hit occopy the same grid, combine their mass and average their data
-                    {
-                        newpos/=newcolorsize.a;
-                        newvel/=newcolorsize.a;
-                        newcolorsize.xyz/=newcolorsize.a;
-                    }
-                    
-                    // bouncing walls
-                    if (newpos.x<Radius) newvel.x = abs(newvel.x);
-                    if (newpos.x>float(GridX)-Radius) newvel.x = -(newpos.x-float(GridX)+Radius);
-                    if (newpos.y<Radius) newvel.y = abs(newvel.y);
-                    if (newpos.y>float(GridY)-Radius) newvel.y = -abs(newvel.y);
-                
-                    // bouncing other molecules
-                    vec2 orignewvel = newvel;
-                    for(int y=-3;y<=3;y++)
-                        for(int x=-3;x<=3;x++)
-                        {
-                            vec2 grid2 = grid+vec2(float(x),float(y));
-                            vec2 pos = getPos(grid2)+getVel(grid2);
-                            if (pos!=newpos && getColorSize(grid2).a>0.)
-                            {
-                                if (length(pos-newpos)<Radius*2.)
-                                {
-                                    vec2 normal = normalize(pos-newpos);
-                                    vec2 veldif = orignewvel - getVel(grid2);
-                                    newvel -= normal * max(dot(normal,veldif)*Bouncefac,0.);
-                                }
-                            }
-                        }
-            
-                     
-                    newvel.y -= Gravity;  // gracity setting in Common:
-                    float maxvel = 1.0; // make sure they don't jump over grids
-                    if (length(newvel)>maxvel) newvel *= maxvel/length(newvel); 
-                }
-                
-                gl_FragColor = (datai==0.0) ? vec4(newpos, newvel) : newcolorsize;
-            }
-            `,
-        });
-
-        this.tgt0 = new THREE.WebGLRenderTarget(
-            dataTextureSize,
-            dataTextureSize,
-            {
-                minFilter: THREE.NearestFilter,
-                magFilter: THREE.NearestFilter,
-                format: THREE.RGBAFormat,
-                type: THREE.FloatType,
-                depthBuffer: false,
-                stencilBuffer: false,
-            }
-        );
-        this.tgt0.texture.generateMipmaps = false;
-
-        this.tgt1 = new THREE.WebGLRenderTarget(
-            dataTextureSize,
-            dataTextureSize,
-            {
-                minFilter: THREE.NearestFilter,
-                magFilter: THREE.NearestFilter,
-                format: THREE.RGBAFormat,
-                type: THREE.FloatType,
-                depthBuffer: false,
-                stencilBuffer: false,
-            }
-        );
-        this.tgt1.texture.generateMipmaps = false;
-    }
-
-    resize(x, y) {
-        this.tgt0.setSize(x, y);
-        this.tgt1.setSize(x, y);
-    }
-
-    render(renderer) {
-        const old = renderer.autoClear;
-        renderer.autoClear = false;
-
-        // pingpong for pass0 double buffered.
-        const srcTgt = this.frame % 2 ? this.tgt0 : this.tgt1;
-        const tgt = this.frame % 2 ? this.tgt1 : this.tgt0;
-
-        this.pass0.material.uniforms.iFrame.value = this.frame;
-        this.pass0.material.uniforms.iChannel0.value = srcTgt.texture;
-        this.pass0.material.uniforms.iChannelResolution0.value = new THREE.Vector2(
-            srcTgt.width,
-            srcTgt.height
-        );
-        this.pass0.material.uniforms.iResolution.value = new THREE.Vector2(
-            tgt.width,
-            tgt.height
-        );
-
-        this.pass0.render(renderer, tgt);
-        this.outputTarget = tgt;
-
-        // restore original framebuffer canvas
-        renderer.setRenderTarget(null);
-        renderer.autoClear = old;
-
-        this.frame++;
-    }
-
-    getOutputTarget() {
-        return this.outputTarget;
-    }
-}
 
 const vertexShader = `
     uniform float iTime;
@@ -561,42 +363,41 @@ const fragmentShader =
     }
 `;
 
-const MembraneShader = new THREE.ShaderMaterial({
+const MembraneShader = new ShaderMaterial({
     uniforms: {
         iTime: { value: 1.0 },
-        iResolution: { value: new THREE.Vector2() },
-        uvscale: { value: new THREE.Vector2(1.0, 1.0) },
+        iResolution: { value: new Vector2() },
+        uvscale: { value: new Vector2(1.0, 1.0) },
         iChannel0: { value: null },
         iChannelResolution0: {
-            value: new THREE.Vector2(dataTextureSize, dataTextureSize),
+            value: new Vector2(dataTextureSize, dataTextureSize),
         },
         splat: { value: null },
         ///// LIGHTING
-        ambientLightColor: {value:null},
-        lightProbe: {value:null},
-        directionalLights: {value:null},
-        spotLights: {value:null},
-        rectAreaLights: {value:null},
-        pointLights: {value:null},
-        hemisphereLights: {value:null},
-        directionalShadowMap: {value:null},
-        directionalShadowMatrix: {value:null},
-        spotShadowMap: {value:null},
-        spotShadowMatrix: {value:null},
-        pointShadowMap: {value:null},
-        pointShadowMatrix: {value:null},
+        ambientLightColor: { value: null },
+        lightProbe: { value: null },
+        directionalLights: { value: null },
+        spotLights: { value: null },
+        rectAreaLights: { value: null },
+        pointLights: { value: null },
+        hemisphereLights: { value: null },
+        directionalShadowMap: { value: null },
+        directionalShadowMatrix: { value: null },
+        spotShadowMap: { value: null },
+        spotShadowMatrix: { value: null },
+        pointShadowMap: { value: null },
+        pointShadowMatrix: { value: null },
     },
     vertexShader: vertexShader,
     fragmentShader: fragmentShader,
     defines: {
-        "PI": "3.14159265359",
-        "USE_SIM": "0",
-        "PHYSICALLY_CORRECT_LIGHTS": "1",
+        PI: "3.14159265359",
+        USE_SIM: "0",
+        PHYSICALLY_CORRECT_LIGHTS: "1",
     },
-    lights: true
+    lights: true,
 });
 
 export default {
-    MembraneShaderSim: null,
     MembraneShader: MembraneShader,
 };

@@ -1,10 +1,12 @@
-import * as React from 'react';
-import AgentSimController from '../controller';
+import * as React from "react";
+import AgentSimController from "../controller";
 interface TrajectoryFileInfo {
     timeStepSize: number;
     totalDuration: number;
 }
+export declare type PropColor = string | number | [number, number, number];
 interface ViewportProps {
+    backgroundColor: PropColor;
     height: number;
     width: number;
     loggerLevel: string;
@@ -33,6 +35,7 @@ declare class Viewport extends React.Component<ViewportProps> {
     private animationRequestID;
     private lastRenderedAgentTime;
     static defaultProps: {
+        backgroundColor: number[];
         height: number;
         width: number;
         highlightedParticleType: number;
@@ -53,11 +56,12 @@ declare class Viewport extends React.Component<ViewportProps> {
     addEventHandlersToCanvas(): void;
     removeEventHandlersFromCanvas(): void;
     resetCamera(): void;
+    switchRenderStyle(): void;
     onPickObject(e: Event): void;
     private handleTimeChange;
     private dispatchUpdatedTime;
     stopAnimate(): void;
     animate(): void;
-    render(): React.ReactElement<any>;
+    render(): React.ReactElement<HTMLElement>;
 }
 export default Viewport;

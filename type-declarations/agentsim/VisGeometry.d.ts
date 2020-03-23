@@ -1,5 +1,12 @@
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { Material, LineBasicMaterial, Geometry, BufferGeometry, Box3, Box3Helper, Color, MeshBasicMaterial, SphereBufferGeometry, Scene, PerspectiveCamera, DirectionalLight, HemisphereLight, WebGLRenderer, Mesh, Object3D } from "three";
+import { Box3, Box3Helper, BufferGeometry, Color, DirectionalLight, Geometry, Group, HemisphereLight, LineBasicMaterial, LineSegments, Material, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, Scene, ShaderMaterial, SphereBufferGeometry, WebGLRenderer } from "three";
+import { ILogger } from "js-logger/src/types";
+import { AgentData } from "./VisData";
+import MoleculeRenderer from "./rendering/MoleculeRenderer";
+declare enum RenderStyle {
+    GENERIC = 0,
+    MOLECULAR = 1
+}
 interface PathData {
     agent: number;
     numSegments: number;
@@ -9,10 +16,25 @@ interface PathData {
     colors: Float32Array;
     geometry: BufferGeometry;
     material: LineBasicMaterial;
-    line: any;
+    line: LineSegments | null;
+}
+interface MembraneInfo {
+    typeId: number;
+    mesh?: Mesh;
+    runtimeMeshIndex: number;
+    faces: {
+        name: string;
+    }[];
+    sides: {
+        name: string;
+    }[];
+    facesMaterial: ShaderMaterial;
+    sidesMaterial: ShaderMaterial;
 }
 declare class VisGeometry {
-    handleTrajectoryData: any;
+    renderStyle: RenderStyle;
+    backgroundColor: Color;
+    pathEndColor: Color;
     visGeomMap: Map<number, string>;
     meshRegistry: Map<string | number, Mesh>;
     meshLoadAttempted: Map<string, boolean>;
@@ -30,8 +52,8 @@ declare class VisGeometry {
     highlightedId: number;
     paths: PathData[];
     sphereGeometry: SphereBufferGeometry;
-    membrane: any;
-    mlogger: any;
+    membrane: MembraneInfo;
+    mlogger: ILogger;
     renderer: WebGLRenderer;
     scene: Scene;
     camera: PerspectiveCamera;
@@ -39,14 +61,25 @@ declare class VisGeometry {
     dl: DirectionalLight;
     boundingBox: Box3;
     boundingBoxMesh: Box3Helper;
-    loadObj: Function;
     hemiLight: HemisphereLight;
+    moleculeRenderer: MoleculeRenderer;
+    atomSpread: number;
+    numAtomsPerAgent: number;
+    currentSceneAgents: AgentData[];
+    colorsData: Float32Array;
+    lightsGroup: Group;
+    agentMeshGroup: Group;
+    agentFiberGroup: Group;
+    agentPathGroup: Group;
     private errorMesh;
     constructor(loggerLevel: any);
-    readonly logger: any;
+    setBackgroundColor(c: any): void;
+    setupGui(): void;
+    switchRenderStyle(): void;
+    readonly logger: ILogger;
     lastNumberOfAgents: number;
     readonly renderDom: HTMLElement;
-    updateBoxSize(trajectoryData: any): void;
+    handleTrajectoryData(trajectoryData: any): void;
     resetCamera(): void;
     getFollowObject(): Object3D | null;
     setFollowObject(obj: Object3D | null): void;
@@ -59,6 +92,7 @@ declare class VisGeometry {
      *   Setup ThreeJS Scene
      * */
     setupScene(): void;
+    loadObj(meshName: any): void;
     resize(width: any, height: any): void;
     reparent(parent: any): void;
     disableControls(): void;
@@ -83,7 +117,7 @@ declare class VisGeometry {
      */
     mapIdToGeom(id: any, meshName: any): void;
     getGeomFromId(id: number): Mesh | null;
-    mapFromJSON(name: any, filePath: any, callback?: any): Promise<any>;
+    mapFromJSON(name: any, filePath: any, callback?: any): Promise<void | Response>;
     resetBounds(boundsAsArray: any): void;
     setScaleForId(id: number, scale: number): void;
     getScaleForId(id: number): number;
@@ -102,7 +136,7 @@ declare class VisGeometry {
     findPathForAgentIndex(idx: any): PathData | null;
     removePathForObject(obj: any): void;
     addPathForObject(obj: any): void;
-    addPathForAgentIndex(idx: any, maxSegments?: number, color?: any): PathData;
+    addPathForAgentIndex(idx: any, maxSegments?: number, color?: Color): PathData;
     removePathForAgentIndex(idx: any): void;
     addPointToPath(path: any, x: any, y: any, z: any, dx: any, dy: any, dz: any): void;
     setShowPaths(showPaths: any): void;

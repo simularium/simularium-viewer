@@ -4,4 +4,4 @@ export declare var VisData: VisData;
 
 export declare var NetConnection: NetConnection;
 
-export declare var ThreadUtil: any;
+export declare var ThreadUtil: ThreadUtil;
