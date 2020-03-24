@@ -129,6 +129,7 @@ declare class VisGeometry {
      *   Update Scene
      * */
     updateScene(agents: any): void;
+    animateCamera(): void;
     setupMeshGeometry(i: any, runtimeMesh: any, meshGeom: any, isFollowedObject: any): Mesh;
     assignMaterial(runtimeMesh: Object3D, material: MeshBasicMaterial | LineBasicMaterial): void;
     assignMembraneMaterial(runtimeMesh: any): void;

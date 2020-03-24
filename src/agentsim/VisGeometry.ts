@@ -329,14 +329,11 @@ class VisGeometry {
         if (this.followObject) {
             // find the baseMaterial by examining the followObject
             let material = null;
-            if (
-                this.followObject instanceof Mesh &&
-                this.followObject.userData
-            ) {
+            if (this.followObject.userData) {
                 material = this.followObject.userData.baseMaterial;
             } else {
                 this.followObject.traverse(child => {
-                    if (child instanceof Mesh && child.userData) {
+                    if (child.userData) {
                         material = child.userData.baseMaterial;
                     }
                 });
@@ -347,9 +344,8 @@ class VisGeometry {
             }
         }
         this.followObject = obj;
-        // put the camera on it
+
         if (obj) {
-            this.controls.target.copy(obj.position);
             this.assignMaterial(obj, this.highlightMaterial);
         }
     }
