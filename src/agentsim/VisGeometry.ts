@@ -327,15 +327,25 @@ class VisGeometry {
             return;
         }
         if (this.followObject) {
-            this.assignMaterial(
-                this.followObject,
-                this.followObject.userData.baseMaterial
-            );
+            // find the baseMaterial by examining the followObject
+            let material = null;
+            if (this.followObject.userData) {
+                material = this.followObject.userData.baseMaterial;
+            } else {
+                this.followObject.traverse(child => {
+                    if (child.userData) {
+                        material = child.userData.baseMaterial;
+                    }
+                });
+            }
+
+            if (material) {
+                this.assignMaterial(this.followObject, material);
+            }
         }
         this.followObject = obj;
-        // put the camera on it
+
         if (obj) {
-            this.controls.target.copy(obj.position);
             this.assignMaterial(obj, this.highlightMaterial);
         }
     }
@@ -552,6 +562,8 @@ class VisGeometry {
         }
 
         this.controls.update();
+
+        this.animateCamera();
 
         if (this.dl && this.fixLightsToCamera) {
             // position directional light at camera (facing scene, as headlight!)
@@ -1025,7 +1037,12 @@ class VisGeometry {
         );
 
         this.hideUnusedFibers(fiberIndex);
+    }
 
+    public animateCamera(): void {
+        const lerpTarget = true;
+        const lerpPosition = true;
+        const lerpRate = 0.2;
         if (this.followObject) {
             // keep camera at same distance from target.
             const direction = new Vector3().subVectors(
@@ -1033,15 +1050,29 @@ class VisGeometry {
                 this.controls.target
             );
             const distance = direction.length();
+            direction.normalize();
+
+            const newTarget = new Vector3();
+            newTarget.copy(this.followObject.position);
 
             // update controls target for orbiting
-            this.controls.target.copy(this.followObject.position);
+            if (lerpTarget) {
+                this.controls.target.lerp(newTarget, lerpRate);
+            } else {
+                this.controls.target.copy(newTarget);
+            }
 
-            direction.normalize();
-            this.camera.position.subVectors(
-                this.controls.target,
+            // update new camera position
+            const newPosition = new Vector3();
+            newPosition.subVectors(
+                this.followObject.position,
                 direction.multiplyScalar(-distance)
             );
+            if (lerpPosition) {
+                this.camera.position.lerp(newPosition, lerpRate);
+            } else {
+                this.camera.position.copy(newPosition);
+            }
         }
     }
 
