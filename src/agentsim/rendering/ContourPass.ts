@@ -27,7 +27,8 @@ class ContourPass {
               float wStep = 1.0 / float(resolution.x);
               float hStep = 1.0 / float(resolution.y);
             
-              int X = int(texture(instanceIdTex, vUv).g);
+              vec4 instance = texture(instanceIdTex, vUv);
+              int X = int(instance.g);
               int R = int(texture(instanceIdTex, vUv + vec2(wStep, 0)).g);
               int L = int(texture(instanceIdTex, vUv + vec2(-wStep, 0)).g);
               int T = int(texture(instanceIdTex, vUv + vec2(0, hStep)).g);
@@ -43,6 +44,7 @@ class ContourPass {
                 finalColor = mix(vec4(0,0,0,1), col, 0.8);
               }
             
+              gl_FragDepth = instance.w >= 0.0 ? instance.w : 1.0;
               gl_FragColor = finalColor;
             }
             `,
@@ -53,6 +55,9 @@ class ContourPass {
     public resize(x, y): void {}
 
     public render(renderer, target, colorBuffer, instanceIdBuffer): void {
+        // this render pass has to fill frag depth for future render passes
+        this.pass.material.depthWrite = true;
+        this.pass.material.depthTest = true;
         this.pass.material.uniforms.colorTex.value = colorBuffer.texture;
         this.pass.material.uniforms.instanceIdTex.value =
             instanceIdBuffer.texture;

@@ -2,11 +2,9 @@ import * as React from "react";
 import jsLogger from "js-logger";
 import AgentSimController from "../controller";
 
-import { Raycaster, Scene, Vector2 } from "three";
-
 import { forOwn } from "lodash";
 
-import { VisGeometry } from "../agentsim";
+import { VisGeometry, NO_AGENT } from "../agentsim";
 
 interface TrajectoryFileInfo {
     timeStepSize: number;
@@ -83,7 +81,6 @@ class Viewport extends React.Component<ViewportProps> {
     private handlers: { [key: string]: (e: Event) => void };
 
     private hit: boolean;
-    private raycaster: Raycaster;
     private animationRequestID: number;
     private lastRenderedAgentTime: number;
 
@@ -162,7 +159,6 @@ class Viewport extends React.Component<ViewportProps> {
             drop: this.onDrop,
         };
         this.hit = false;
-        this.raycaster = new Raycaster();
         this.animationRequestID = 0;
         this.lastRenderedAgentTime = -1;
     }
@@ -313,40 +309,24 @@ class Viewport extends React.Component<ViewportProps> {
 
     public onPickObject(e: Event): void {
         const event = e as MouseEvent;
-        const size = new Vector2();
-        this.visGeometry.renderer.getSize(size);
 
-        const mouse = {
-            x: (event.offsetX / size.x) * 2 - 1,
-            y: -(event.offsetY / size.y) * 2 + 1,
-        };
-
-        // hit testing
-        this.raycaster.setFromCamera(mouse, this.visGeometry.camera);
         // TODO: intersect with scene's children not including lights?
         // can we select a smaller number of things to hit test?
         const oldFollowObject = this.visGeometry.getFollowObject();
-        this.visGeometry.setFollowObject(null);
-        const intersects = this.raycaster.intersectObjects(
-            this.visGeometry.scene.children,
-            true
-        );
-        if (intersects && intersects.length) {
-            let obj = intersects[0].object;
-            // if the object has a parent and the parent is not the scene, use that.
-            // assumption: only one level of object hierarchy.
-            if (obj.parent && !(obj.parent instanceof Scene)) {
-                obj = obj.parent;
-            }
+        this.visGeometry.setFollowObject(NO_AGENT);
+
+        // hit testing
+        const intersectedObject = this.visGeometry.hitTest(event);
+        if (intersectedObject !== NO_AGENT) {
             this.hit = true;
-            if (oldFollowObject !== obj) {
-                this.visGeometry.removePathForObject(oldFollowObject);
+            if (oldFollowObject !== intersectedObject) {
+                this.visGeometry.removePathForAgentIndex(oldFollowObject);
             }
-            this.visGeometry.setFollowObject(obj);
-            this.visGeometry.addPathForObject(obj);
+            this.visGeometry.setFollowObject(intersectedObject);
+            this.visGeometry.addPathForAgentIndex(intersectedObject);
         } else {
-            if (oldFollowObject) {
-                this.visGeometry.removePathForObject(oldFollowObject);
+            if (oldFollowObject !== NO_AGENT) {
+                this.visGeometry.removePathForAgentIndex(oldFollowObject);
             }
             if (this.hit) {
                 this.hit = false;

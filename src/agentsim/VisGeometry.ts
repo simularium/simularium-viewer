@@ -22,6 +22,7 @@ import {
     MeshLambertMaterial,
     Object3D,
     PerspectiveCamera,
+    Raycaster,
     Scene,
     ShaderMaterial,
     SphereBufferGeometry,
@@ -48,6 +49,7 @@ const MAX_MESHES = 5000;
 const DEFAULT_BACKGROUND_COLOR = new Color(0.121569, 0.13333, 0.17647);
 const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
+const NO_AGENT = -1;
 
 enum RenderStyle {
     GENERIC,
@@ -98,7 +100,7 @@ class VisGeometry {
     public materials: Material[];
     public desatMaterials: Material[];
     public highlightMaterial: MeshBasicMaterial;
-    public followObject: Object3D | null;
+    public followObjectIndex: number;
     public runTimeMeshes: Mesh[];
     public runTimeFiberMeshes: Map<string, Mesh>;
     public mlastNumberOfAgents: number;
@@ -126,6 +128,7 @@ class VisGeometry {
     public agentMeshGroup: Group;
     public agentFiberGroup: Group;
     public agentPathGroup: Group;
+    private raycaster: Raycaster;
 
     private errorMesh: Mesh;
 
@@ -141,7 +144,7 @@ class VisGeometry {
         this.highlightMaterial = new MeshBasicMaterial({
             color: new Color(1, 0, 0),
         });
-        this.followObject = null;
+        this.followObjectIndex = NO_AGENT;
         this.runTimeMeshes = [];
         this.runTimeFiberMeshes = new Map();
         this.mlastNumberOfAgents = 0;
@@ -218,6 +221,7 @@ class VisGeometry {
         if (loggerLevel === jsLogger.DEBUG) {
             this.setupGui();
         }
+        this.raycaster = new Raycaster();
     }
 
     public setBackgroundColor(c): void {
@@ -256,6 +260,7 @@ class VisGeometry {
             this.renderStyle === RenderStyle.GENERIC
                 ? RenderStyle.MOLECULAR
                 : RenderStyle.GENERIC;
+        this.agentMeshGroup.visible = this.renderStyle === RenderStyle.GENERIC;
         this.updateScene(this.currentSceneAgents);
     }
 
@@ -314,25 +319,23 @@ class VisGeometry {
         this.controls.reset();
     }
 
-    public getFollowObject(): Object3D | null {
-        return this.followObject;
+    public getFollowObject(): number {
+        return this.followObjectIndex;
     }
 
-    public setFollowObject(obj: Object3D | null): void {
-        if (
-            obj &&
-            obj.userData &&
-            obj.userData.index === this.membrane.runtimeMeshIndex
-        ) {
+    public setFollowObject(obj: number): void {
+        if (obj === this.membrane.runtimeMeshIndex) {
             return;
         }
-        if (this.followObject) {
+
+        if (this.followObjectIndex !== NO_AGENT) {
+            const runtimeMesh = this.getMesh(this.followObjectIndex);
             // find the baseMaterial by examining the followObject
             let material = null;
-            if (this.followObject.userData) {
-                material = this.followObject.userData.baseMaterial;
+            if (runtimeMesh.userData) {
+                material = runtimeMesh.userData.baseMaterial;
             } else {
-                this.followObject.traverse(child => {
+                runtimeMesh.traverse(child => {
                     if (child.userData) {
                         material = child.userData.baseMaterial;
                     }
@@ -340,19 +343,20 @@ class VisGeometry {
             }
 
             if (material) {
-                this.assignMaterial(this.followObject, material);
+                this.assignMaterial(runtimeMesh, material);
             }
         }
-        this.followObject = obj;
+        this.followObjectIndex = obj;
 
-        if (obj) {
-            this.assignMaterial(obj, this.highlightMaterial);
+        if (obj !== NO_AGENT) {
+            const runtimeMesh = this.getMesh(obj);
+            this.assignMaterial(runtimeMesh, this.highlightMaterial);
         }
     }
 
-    // equivalent to setFollowObject(null)
+    // equivalent to setFollowObject(NO_AGENT)
     public unfollow(): void {
-        this.followObject = null;
+        this.followObjectIndex = NO_AGENT;
     }
 
     public setHighlightById(id): void {
@@ -400,7 +404,7 @@ class VisGeometry {
                 runtimeMesh.userData &&
                 typeIds.includes(runtimeMesh.userData.typeId)
             ) {
-                const isFollowedObject = runtimeMesh === this.followObject;
+                const isFollowedObject = i === this.followObjectIndex;
 
                 runtimeMesh = this.setupMeshGeometry(
                     i,
@@ -582,7 +586,52 @@ class VisGeometry {
         if (this.renderStyle == RenderStyle.GENERIC) {
             this.renderer.render(this.scene, this.camera);
         } else {
+            this.moleculeRenderer.setHighlightInstance(this.followObjectIndex);
             this.moleculeRenderer.render(this.renderer, this.camera, null);
+            this.renderer.autoClear = false;
+            this.renderer.render(this.scene, this.camera);
+            this.renderer.autoClear = true;
+        }
+    }
+
+    public hitTest(event: MouseEvent): number {
+        const size = new Vector2();
+        this.renderer.getSize(size);
+        if (this.renderStyle === RenderStyle.GENERIC) {
+            const mouse = {
+                x: (event.offsetX / size.x) * 2 - 1,
+                y: -(event.offsetY / size.y) * 2 + 1,
+            };
+
+            this.raycaster.setFromCamera(mouse, this.camera);
+            // only intersect the agent mesh group.
+            // TODO: intersect fibers also
+            const intersects = this.raycaster.intersectObjects(
+                this.agentMeshGroup.children,
+                true
+            );
+
+            if (intersects && intersects.length) {
+                let obj = intersects[0].object;
+                // if the object has a parent and the parent is not the scene, use that.
+                // assumption: obj file meshes load into their own Groups
+                // and have only one level of hierarchy.
+                if (!obj.userData || !obj.userData.index) {
+                    if (obj.parent && obj.parent !== this.agentMeshGroup) {
+                        obj = obj.parent;
+                    }
+                }
+                return obj.userData.index;
+            } else {
+                return NO_AGENT;
+            }
+        } else {
+            // read from instance buffer pixel!
+            return this.moleculeRenderer.hitTest(
+                this.renderer,
+                event.offsetX,
+                size.y - event.offsetY
+            );
         }
     }
 
@@ -884,7 +933,7 @@ class VisGeometry {
             if (visType === visTypes.ID_VIS_TYPE_DEFAULT) {
                 const materialType = (typeId + 1) * this.colorVariant;
                 let runtimeMesh = this.getMesh(i);
-                const isFollowedObject = runtimeMesh === this.followObject;
+                const isFollowedObject = i === this.followObjectIndex;
                 const lastTypeId = runtimeMesh.userData
                     ? runtimeMesh.userData.typeId
                     : -1;
@@ -1043,7 +1092,7 @@ class VisGeometry {
         const lerpTarget = true;
         const lerpPosition = true;
         const lerpRate = 0.2;
-        if (this.followObject) {
+        if (this.followObjectIndex !== NO_AGENT) {
             // keep camera at same distance from target.
             const direction = new Vector3().subVectors(
                 this.camera.position,
@@ -1053,7 +1102,8 @@ class VisGeometry {
             direction.normalize();
 
             const newTarget = new Vector3();
-            newTarget.copy(this.followObject.position);
+            const followedObject = this.getMesh(this.followObjectIndex);
+            newTarget.copy(followedObject.position);
 
             // update controls target for orbiting
             if (lerpTarget) {
@@ -1065,7 +1115,7 @@ class VisGeometry {
             // update new camera position
             const newPosition = new Vector3();
             newPosition.subVectors(
-                this.followObject.position,
+                followedObject.position,
                 direction.multiplyScalar(-distance)
             );
             if (lerpPosition) {
@@ -1482,5 +1532,5 @@ class VisGeometry {
     }
 }
 
-export { VisGeometry };
+export { VisGeometry, NO_AGENT };
 export default VisGeometry;
