@@ -44,7 +44,7 @@ import MembraneShader from "./rendering/MembraneShader";
 import MoleculeRenderer from "./rendering/MoleculeRenderer";
 
 const MAX_PATH_LEN = 32;
-const MAX_MESHES = 5000;
+const MAX_MESHES = 20000;
 const DEFAULT_BACKGROUND_COLOR = new Color(0.121569, 0.13333, 0.17647);
 const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
