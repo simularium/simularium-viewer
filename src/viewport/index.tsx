@@ -6,12 +6,7 @@ import { Raycaster, Scene, Vector2 } from "three";
 
 import { forOwn } from "lodash";
 
-import { VisGeometry } from "../agentsim";
-
-interface TrajectoryFileInfo {
-    timeStepSize: number;
-    totalDuration: number;
-}
+import { VisGeometry, TrajectoryFileInfo } from "../agentsim";
 
 export type PropColor = string | number | [number, number, number];
 

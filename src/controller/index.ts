@@ -1,5 +1,5 @@
 import jsLogger from "js-logger";
-import { NetConnection, VisData } from "../agentsim";
+import { NetConnection, VisData, TrajectoryFileInfo } from "../agentsim";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
@@ -142,7 +142,7 @@ export default class AgentSimController {
         this.visData.clearCache();
     }
 
-    public dragAndDropFileInfo() {
+    public dragAndDropFileInfo(): TrajectoryFileInfo {
         return this.visData.dragAndDropFileInfo();
     }
 }

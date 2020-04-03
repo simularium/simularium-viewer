@@ -1,4 +1,4 @@
-import { NetConnection, VisData } from "../agentsim";
+import { NetConnection, VisData, TrajectoryFileInfo } from "../agentsim";
 export default class AgentSimController {
     netConnection: NetConnection;
     visData: VisData;
@@ -24,5 +24,6 @@ export default class AgentSimController {
     disableNetworkCommands(): void;
     cacheJSON(json: any): void;
     clearLocalCache(): void;
+    dragAndDropFileInfo(): TrajectoryFileInfo;
 }
 export { AgentSimController };
