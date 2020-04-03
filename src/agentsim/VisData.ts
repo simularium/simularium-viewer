@@ -141,11 +141,13 @@ class VisData {
             );
 
             this.webWorker.onmessage = event => {
-                this.frameDataCache = this.frameDataCache.concat(
-                    event.frameDataArray
+                Array.prototype.push.apply(
+                    this.frameDataCache,
+                    event.data.frameDataArray
                 );
-                this.frameCache = this.frameCache.concat(
-                    event.parsedAgentDataArray
+                Array.prototype.push.apply(
+                    this.frameCache,
+                    event.data.parsedAgentDataArray
                 );
             };
         } else {
@@ -279,10 +281,12 @@ class VisData {
             this.webWorker.postMessage(visDataMsg);
         } else {
             let frames = VisData.parse(visDataMsg);
-            this.frameDataCache = this.frameDataCache.concat(
+            Array.prototype.push.apply(
+                this.frameDataCache,
                 frames.frameDataArray
             );
-            this.frameCache = this.frameCache.concat(
+            Array.prototype.push.apply(
+                this.frameCache,
                 frames.parsedAgentDataArray
             );
         }
@@ -299,13 +303,21 @@ class VisData {
         }
 
         let frames = VisData.parse(visDataMsg);
-        this.frameDataCache = this.frameDataCache.concat(frames.frameDataArray);
-        this.frameCache = this.frameCache.concat(frames.parsedAgentDataArray);
+        Array.prototype.push.apply(this.frameDataCache, frames.frameDataArray);
+        Array.prototype.push.apply(
+            this.frameCache,
+            frames.parsedAgentDataArray
+        );
     }
 
     public dragAndDropFileInfo() {
         let max: number[] = [0, 0, 0];
         let min: number[] = [0, 0, 0];
+
+        if (this.frameCache.length === 0) {
+            throw Error("No data in cache for drag-and-drop file");
+            return;
+        }
 
         this.frameCache.forEach(element => {
             let radius =
@@ -362,12 +374,19 @@ class VisData {
             min[2] = Math.min(max[2], 2 * minz - radius);
         });
 
+        let timeStepSize =
+            this.frameDataCache.length > 1
+                ? this.frameDataCache[1].time - this.frameDataCache[0].time
+                : 1;
+        let totalDuration =
+            this.frameDataCache[this.frameCache.length - 1] * timeStepSize;
+
         return {
             boxSizeX: max[0] - min[0],
             boxSizeY: max[1] - min[0],
             boxSizeZ: max[2] - min[2],
-            totalDuration: 1000,
-            timeStepSize: 10,
+            totalDuration: totalDuration,
+            timeStepSize: timeStepSize,
         };
     }
 
@@ -376,13 +395,13 @@ class VisData {
         self.addEventListener('message', (e) => {
             const visDataMsg = e.data;
             const {
-                frameData,
-                parsedAgentData,
+                frameDataArray,
+                parsedAgentDataArray,
             } = ${VisData.parse}(visDataMsg)
 
             postMessage({
-                frameData,
-                parsedAgentData,
+                frameDataArray,
+                parsedAgentDataArray,
             });
         }, false);
         }`;
