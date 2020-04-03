@@ -28,7 +28,6 @@ declare class Viewport extends React.Component<ViewportProps> {
     private vdomRef;
     private handlers;
     private hit;
-    private raycaster;
     private animationRequestID;
     private lastRenderedAgentTime;
     static defaultProps: {
