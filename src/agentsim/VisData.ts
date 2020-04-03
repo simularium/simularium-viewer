@@ -21,9 +21,9 @@ interface FrameData {
     time: number;
 }
 
-interface ParsedFrame {
-    frameData: FrameData;
-    parsedAgentData: AgentData[];
+interface ParsedBundle {
+    frameDataArray: FrameData[];
+    parsedAgentDataArray: AgentData[][];
 }
 
 class VisData {
@@ -62,65 +62,75 @@ class VisData {
      *   of the application, since network latency is a major bottle-neck)
      * */
 
-    public static parse(visDataMsg): ParsedFrame {
-        // IMPORTANT: Order of this array needs to perfectly match the incoming data.
-        const agentObjectKeys = [
-            "vis-type",
-            "type",
-            "x",
-            "y",
-            "z",
-            "xrot",
-            "yrot",
-            "zrot",
-            "cr",
-            "nSubPoints",
-        ];
-        const visData = visDataMsg.data;
-        const parsedAgentData: AgentData[] = [];
-        const nSubPointsIndex = agentObjectKeys.findIndex(
-            ele => ele === "nSubPoints"
-        );
-
-        const parseOneAgent = (agentArray): AgentData => {
-            return agentArray.reduce(
-                (agentData, cur, i) => {
-                    let key;
-                    if (agentObjectKeys[i]) {
-                        key = agentObjectKeys[i];
-                        agentData[key] = cur;
-                    } else if (i < agentArray.length + agentData.nSubPoints) {
-                        agentData.subpoints.push(cur);
-                    }
-                    return agentData;
-                },
-                { subpoints: [] }
+    public static parse(visDataMsg): ParsedBundle {
+        let parsedAgentDataArray: AgentData[][] = [];
+        let frameDataArray: FrameData[] = [];
+        visDataMsg.bundleData.forEach(frame => {
+            // IMPORTANT: Order of this array needs to perfectly match the incoming data.
+            const agentObjectKeys = [
+                "vis-type",
+                "type",
+                "x",
+                "y",
+                "z",
+                "xrot",
+                "yrot",
+                "zrot",
+                "cr",
+                "nSubPoints",
+            ];
+            const visData = frame.data;
+            const parsedAgentData: AgentData[] = [];
+            const nSubPointsIndex = agentObjectKeys.findIndex(
+                ele => ele === "nSubPoints"
             );
-        };
 
-        while (visData.length) {
-            const nSubPoints = visData[nSubPointsIndex];
-            const chunckLength = agentObjectKeys.length + nSubPoints; // each array length is varible based on how many subpoints the agent has
-            if (visData.length < chunckLength) {
-                throw Error("malformed data: too few entries");
+            const parseOneAgent = (agentArray): AgentData => {
+                return agentArray.reduce(
+                    (agentData, cur, i) => {
+                        let key;
+                        if (agentObjectKeys[i]) {
+                            key = agentObjectKeys[i];
+                            agentData[key] = cur;
+                        } else if (
+                            i <
+                            agentArray.length + agentData.nSubPoints
+                        ) {
+                            agentData.subpoints.push(cur);
+                        }
+                        return agentData;
+                    },
+                    { subpoints: [] }
+                );
+            };
+
+            while (visData.length) {
+                const nSubPoints = visData[nSubPointsIndex];
+                const chunckLength = agentObjectKeys.length + nSubPoints; // each array length is varible based on how many subpoints the agent has
+                if (visData.length < chunckLength) {
+                    throw Error("malformed data: too few entries");
+                }
+
+                const agentSubSetArray = visData.splice(0, chunckLength); // cut off the array of 1 agent data from front of the array;
+                if (agentSubSetArray.length < agentObjectKeys.length) {
+                    throw Error("malformed data: indexing off");
+                }
+
+                parsedAgentData.push(parseOneAgent(agentSubSetArray));
             }
 
-            const agentSubSetArray = visData.splice(0, chunckLength); // cut off the array of 1 agent data from front of the array;
-            if (agentSubSetArray.length < agentObjectKeys.length) {
-                throw Error("malformed data: indexing off");
-            }
+            const frameData: FrameData = {
+                time: frame.time,
+                frameNumber: frame.frameNumber,
+            };
 
-            parsedAgentData.push(parseOneAgent(agentSubSetArray));
-        }
-
-        const frameData: FrameData = {
-            time: visDataMsg.time,
-            frameNumber: visDataMsg.frameNumber,
-        };
+            parsedAgentDataArray.push(parsedAgentData);
+            frameDataArray.push(frameData);
+        });
 
         return {
-            frameData,
-            parsedAgentData,
+            parsedAgentDataArray,
+            frameDataArray,
         };
     }
 
@@ -131,8 +141,12 @@ class VisData {
             );
 
             this.webWorker.onmessage = event => {
-                this.frameDataCache.push(event.data.frameData);
-                this.frameCache.push(event.data.parsedAgentData);
+                this.frameDataCache = this.frameDataCache.concat(
+                    event.frameDataArray
+                );
+                this.frameCache = this.frameCache.concat(
+                    event.parsedAgentDataArray
+                );
             };
         } else {
             this.webWorker = null;
@@ -258,18 +272,20 @@ class VisData {
             }
         }
 
-        visDataMsg.bundleData.forEach(dataFrame => {
-            if (
-                util.ThreadUtil.browserSupportsWebWorkers() &&
-                this.webWorker !== null
-            ) {
-                this.webWorker.postMessage(dataFrame);
-            } else {
-                let newFrame = VisData.parse(dataFrame);
-                this.frameCache.push(newFrame.parsedAgentData);
-                this.frameDataCache.push(newFrame.frameData);
-            }
-        });
+        if (
+            util.ThreadUtil.browserSupportsWebWorkers() &&
+            this.webWorker !== null
+        ) {
+            this.webWorker.postMessage(visDataMsg);
+        } else {
+            let frames = VisData.parse(visDataMsg);
+            this.frameDataCache = this.frameDataCache.concat(
+                frames.frameDataArray
+            );
+            this.frameCache = this.frameCache.concat(
+                frames.parsedAgentDataArray
+            );
+        }
     }
 
     // for use w/ a drag-and-drop trajectory file
@@ -282,18 +298,15 @@ class VisData {
             return;
         }
 
-        visDataMsg.bundleData.forEach(dataFrame => {
-            let newFrame = VisData.parse(dataFrame);
-            this.frameCache.push(newFrame.parsedAgentData);
-            this.frameDataCache.push(newFrame.frameData);
-        });
+        let frames = VisData.parse(visDataMsg);
+        this.frameDataCache = this.frameDataCache.concat(frames.frameDataArray);
+        this.frameCache = this.frameCache.concat(frames.parsedAgentDataArray);
     }
 
     public dragAndDropFileInfo() {
         let max: number[] = [0, 0, 0];
         let min: number[] = [0, 0, 0];
 
-        console.log("FrameCache", this.frameCache);
         this.frameCache.forEach(element => {
             let radius =
                 Math.max.apply(
