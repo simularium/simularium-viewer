@@ -135,11 +135,15 @@ export default class AgentSimController {
     }
 
     public cacheJSON(json): void {
-        this.visData.parseAgentsFromNetData(json);
+        this.visData.cacheJSON(json);
     }
 
     public clearLocalCache(): void {
         this.visData.clearCache();
+    }
+
+    public dragAndDropFileInfo() {
+        return this.visData.dragAndDropFileInfo();
     }
 }
 

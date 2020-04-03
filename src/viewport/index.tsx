@@ -248,6 +248,14 @@ class Viewport extends React.Component<ViewportProps> {
         this.props.agentSimController.cacheJSON(json);
     };
 
+    private configDragAndDrop = () => {
+        const trajectoryFileInfo =
+          this.props.agentSimController.dragAndDropFileInfo();
+
+        const { netConnection } = this.props.agentSimController;
+        netConnection.onTrajectoryFileInfoArrive(trajectoryFileInfo);
+    }
+
     private clearCache = () => {
         this.props.agentSimController.disableNetworkCommands();
         this.props.agentSimController.clearLocalCache();
@@ -276,10 +284,13 @@ class Viewport extends React.Component<ViewportProps> {
         p.then(() => {
             parsedFiles.sort(sortFrames);
             this.visGeometry.resetMapping();
-            for (let i = 0, l = parsedFiles.length; i < l; ++i) {
+            for (let i = 0, l = 1; i < l; ++i) { // only accept 1 file at a time
+                //@TODO: alert/log about only accepting 1 file?
                 let frameJSON = parsedFiles[i];
                 this.cacheJSON(frameJSON);
             }
+        }).then(() => {
+            this.configDragAndDrop();
         });
     };
 

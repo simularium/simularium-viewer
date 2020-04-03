@@ -272,6 +272,92 @@ class VisData {
         });
     }
 
+    // for use w/ a drag-and-drop trajectory file
+    //  save a file for playback
+    public cacheJSON(visDataMsg): void {
+        if (this.frameCache.length > 0) {
+            throw Error(
+                "cache not cleared before cacheing a new drag-and-drop file"
+            );
+            return;
+        }
+
+        visDataMsg.bundleData.forEach(dataFrame => {
+            let newFrame = VisData.parse(dataFrame);
+            this.frameCache.push(newFrame.parsedAgentData);
+            this.frameDataCache.push(newFrame.frameData);
+        });
+    }
+
+    public dragAndDropFileInfo() {
+        let max: number[] = [0, 0, 0];
+        let min: number[] = [0, 0, 0];
+
+        console.log("FrameCache", this.frameCache);
+        this.frameCache.forEach(element => {
+            let radius =
+                Math.max.apply(
+                    Math,
+                    element.map(agent => {
+                        return agent.cr;
+                    })
+                ) * 1.1;
+            let maxx: number = Math.max.apply(
+                Math,
+                element.map(agent => {
+                    return agent.x;
+                })
+            );
+            let maxy: number = Math.max.apply(
+                Math,
+                element.map(agent => {
+                    return agent.y;
+                })
+            );
+            let maxz: number = Math.max.apply(
+                Math,
+                element.map(agent => {
+                    return agent.z;
+                })
+            );
+
+            let minx: number = Math.min.apply(
+                Math,
+                element.map(agent => {
+                    return agent.x;
+                })
+            );
+            let miny: number = Math.min.apply(
+                Math,
+                element.map(agent => {
+                    return agent.y;
+                })
+            );
+            let minz: number = Math.min.apply(
+                Math,
+                element.map(agent => {
+                    return agent.z;
+                })
+            );
+
+            max[0] = Math.max(max[0], 2 * maxx + radius);
+            max[1] = Math.max(max[1], 2 * maxy + radius);
+            max[2] = Math.max(max[2], 2 * maxz + radius);
+
+            min[0] = Math.min(max[0], 2 * minx - radius);
+            min[1] = Math.min(max[1], 2 * miny - radius);
+            min[2] = Math.min(max[2], 2 * minz - radius);
+        });
+
+        return {
+            boxSizeX: max[0] - min[0],
+            boxSizeY: max[1] - min[0],
+            boxSizeZ: max[2] - min[2],
+            totalDuration: 1000,
+            timeStepSize: 10,
+        };
+    }
+
     public convertVisDataWorkFunctionToString(): string {
         return `function visDataWorkerFunc() {
         self.addEventListener('message', (e) => {
