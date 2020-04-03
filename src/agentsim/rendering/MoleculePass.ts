@@ -131,7 +131,7 @@ class MoleculePass {
                 //gl_FragColor = vec4(fragPosDepth, 0.0, 0.0, 1.0);
                 // gl_FragColor = vec4(gl_PointCoord.xy, 0.0, 1.0);
                 
-                gl_FragColor = vec4(float(IN_typeId), float(IN_instanceId), fragViewPos.z, 1.0);
+                gl_FragColor = vec4(float(IN_typeId), float(IN_instanceId), fragViewPos.z, fragPosDepth);
                 //gl_FragColor = vec4(float(IN_typeId)/50.0, float(IN_typeId)/50.0, float(IN_typeId)/50.0, 1.0);
                 //gl_FragColor = vec4(84.0/255.0, 179.0/255.0, 162.0/255.0, 1.0);
             }

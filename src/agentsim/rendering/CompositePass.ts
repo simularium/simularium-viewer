@@ -21,6 +21,7 @@ class CompositePass {
                 zFar: { value: 1000 },
                 atomicBeginDistance: { value: 150 },
                 chainBeginDistance: { value: 225 },
+                highlightInstance: { value: -1 },
             },
             fragmentShader: `
             in vec2 vUv;
@@ -37,6 +38,8 @@ class CompositePass {
             uniform float zNear;
             uniform float zFar;
             uniform vec3 backgroundColor;
+
+            uniform float highlightInstance;
             
             uniform float atomicBeginDistance; // = 100.0;
             uniform float chainBeginDistance; // = 150.0;
@@ -448,6 +451,9 @@ class CompositePass {
                     //color.xyz = vec3(0.0, 1.0, 0.0);
                 }
             
+                if (highlightInstance == col0.y) {
+                    color.xyz = vec3(1.0, 0.0, 0.0);
+                }
                 gl_FragColor = vec4(occ1 * occ2 * color.xyz, 1.0);
                 
                 //                gl_FragColor = vec4(occ1 * occ2 * col0.xyz, 1.0);

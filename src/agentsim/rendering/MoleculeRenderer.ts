@@ -171,6 +171,22 @@ class MoleculeRenderer {
     public setBackgroundColor(color): void {
         this.compositePass.pass.material.uniforms.backgroundColor.value = color;
     }
+    public setHighlightInstance(instance): void {
+        this.compositePass.pass.material.uniforms.highlightInstance.value = instance;
+    }
+
+    public hitTest(renderer, x, y): number {
+        const pixel = new Float32Array(4).fill(-1);
+        // (IN_typeId), (IN_instanceId), fragViewPos.z, fragPosDepth;
+        renderer.readRenderTargetPixels(this.colorBuffer, x, y, 1, 1, pixel);
+        if (pixel[3] === -1) {
+            return -1;
+        } else {
+            // look up the object from its instance.
+            const instance = pixel[1];
+            return instance;
+        }
+    }
 
     // TODO this is a geometry/scene update and should be updated through some other means?
     public updateMolecules(
@@ -283,7 +299,7 @@ class MoleculeRenderer {
             renderer,
             target,
             compositeTarget,
-            // this is the buffer with the instance ids
+            // this is the buffer with the instance ids and fragdepth!
             this.colorBuffer
         );
 
