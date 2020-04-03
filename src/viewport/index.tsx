@@ -4,12 +4,7 @@ import AgentSimController from "../controller";
 
 import { forOwn } from "lodash";
 
-import { VisGeometry, NO_AGENT } from "../agentsim";
-
-interface TrajectoryFileInfo {
-    timeStepSize: number;
-    totalDuration: number;
-}
+import { VisGeometry, TrajectoryFileInfo, NO_AGENT } from "../agentsim";
 
 export type PropColor = string | number | [number, number, number];
 

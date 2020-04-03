@@ -1,3 +1,4 @@
+import { TrajectoryFileInfo } from "./TrajectoryFileInfo";
 /**
  * Parse Agents from Net Data
  * */
@@ -17,9 +18,9 @@ interface FrameData {
     frameNumber: number;
     time: number;
 }
-interface ParsedFrame {
-    frameData: FrameData;
-    parsedAgentData: AgentData[];
+interface ParsedBundle {
+    frameDataArray: FrameData[];
+    parsedAgentDataArray: AgentData[][];
 }
 declare class VisData {
     private frameCache;
@@ -54,7 +55,7 @@ declare class VisData {
      *   paid for network bandwith (and improving the quality & responsiveness
      *   of the application, since network latency is a major bottle-neck)
      * */
-    static parse(visDataMsg: any): ParsedFrame;
+    static parse(visDataMsg: any): ParsedBundle;
     constructor();
     readonly currentFrameData: FrameData;
     /**
@@ -71,6 +72,8 @@ declare class VisData {
     WaitForFrame(frameNumber: any): void;
     clearCache(): void;
     parseAgentsFromNetData(visDataMsg: any): void;
+    cacheJSON(visDataMsg: any): void;
+    dragAndDropFileInfo(): TrajectoryFileInfo;
     convertVisDataWorkFunctionToString(): string;
 }
 export { VisData };

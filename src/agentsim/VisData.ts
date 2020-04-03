@@ -1,4 +1,5 @@
 import * as util from "./ThreadUtil";
+import { TrajectoryFileInfo } from "./TrajectoryFileInfo";
 
 /**
  * Parse Agents from Net Data
@@ -310,13 +311,19 @@ class VisData {
         );
     }
 
-    public dragAndDropFileInfo() {
+    public dragAndDropFileInfo(): TrajectoryFileInfo {
         let max: number[] = [0, 0, 0];
         let min: number[] = [0, 0, 0];
 
         if (this.frameCache.length === 0) {
             throw Error("No data in cache for drag-and-drop file");
-            return;
+            return {
+                boxSizeX: 0,
+                boxSizeY: 0,
+                boxSizeZ: 0,
+                totalDuration: 1,
+                timeStepSize: 1,
+            };
         }
 
         this.frameCache.forEach(element => {
@@ -379,7 +386,8 @@ class VisData {
                 ? this.frameDataCache[1].time - this.frameDataCache[0].time
                 : 1;
         let totalDuration =
-            this.frameDataCache[this.frameCache.length - 1] * timeStepSize;
+            this.frameDataCache[this.frameCache.length - 1].frameNumber *
+            timeStepSize;
 
         return {
             boxSizeX: max[0] - min[0],
