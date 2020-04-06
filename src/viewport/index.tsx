@@ -275,11 +275,9 @@ class Viewport extends React.Component<ViewportProps> {
         p.then(() => {
             parsedFiles.sort(sortFrames);
             this.visGeometry.resetMapping();
-            for (let i = 0, l = 1; i < l; ++i) { // only accept 1 file at a time
-                //@TODO: alert/log about only accepting 1 file?
-                let frameJSON = parsedFiles[i];
-                this.cacheJSON(frameJSON);
-            }
+
+            let frameJSON = parsedFiles[0];
+            this.cacheJSON(frameJSON);
         }).then(() => {
             this.configDragAndDrop();
         });
