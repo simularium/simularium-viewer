@@ -138,26 +138,36 @@ describe("VisData module", () => {
                 "subpoint-3",
             ];
             const visDataMsg = {
-                data: testData,
-                frameNumber: 0,
-                time: 0,
+                bundleData: [
+                    {
+                        data: testData,
+                        frameNumber: 0,
+                        time: 0,
+                    },
+                ],
+                bundleSize: 1,
+                bundleStart: 0,
             };
             const parsedData = VisData.parse(visDataMsg);
-            expect(parsedData.frameData).toEqual({ frameNumber: 0, time: 0 });
-            expect(parsedData.parsedAgentData).toEqual([
-                {
-                    cr: "cr",
-                    nSubPoints: 3,
-                    subpoints: ["subpoint-1", "subpoint-2", "subpoint-3"],
-                    type: "type",
-                    "vis-type": "vis-type",
-                    x: "x",
-                    xrot: "xrot",
-                    y: "y",
-                    yrot: "yrot",
-                    z: "z",
-                    zrot: "zrot",
-                },
+            expect(parsedData.frameDataArray).toEqual([
+                { frameNumber: 0, time: 0 },
+            ]);
+            expect(parsedData.parsedAgentDataArray).toEqual([
+                [
+                    {
+                        cr: "cr",
+                        nSubPoints: 3,
+                        subpoints: ["subpoint-1", "subpoint-2", "subpoint-3"],
+                        type: "type",
+                        "vis-type": "vis-type",
+                        x: "x",
+                        xrot: "xrot",
+                        y: "y",
+                        yrot: "yrot",
+                        z: "z",
+                        zrot: "zrot",
+                    },
+                ],
             ]);
         });
         test("it throws an error if number of supoints does not match the nSubpoints value", () => {
@@ -178,9 +188,15 @@ describe("VisData module", () => {
                 "subpoint-4",
             ];
             const visDataMsgTooShort = {
-                data: tooShort,
-                frameNumber: 0,
-                time: 0,
+                bundleData: [
+                    {
+                        data: tooShort,
+                        frameNumber: 0,
+                        time: 0,
+                    },
+                ],
+                bundleSize: 1,
+                bundleStart: 0,
             };
             const tooLong = [
                 "vis-type",
@@ -198,9 +214,15 @@ describe("VisData module", () => {
                 "subpoint-3",
             ];
             const visDataMsgTooLong = {
-                data: tooLong,
-                frameNumber: 0,
-                time: 0,
+                bundleData: [
+                    {
+                        data: tooLong,
+                        frameNumber: 0,
+                        time: 0,
+                    },
+                ],
+                bundleSize: 1,
+                bundleStart: 0,
             };
             expect(() => {
                 VisData.parse(visDataMsgTooLong);

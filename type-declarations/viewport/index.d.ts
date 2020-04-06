@@ -1,9 +1,6 @@
 import * as React from "react";
 import AgentSimController from "../controller";
-interface TrajectoryFileInfo {
-    timeStepSize: number;
-    totalDuration: number;
-}
+import { TrajectoryFileInfo } from "../agentsim";
 export declare type PropColor = string | number | [number, number, number];
 interface ViewportProps {
     backgroundColor: PropColor;
@@ -31,7 +28,6 @@ declare class Viewport extends React.Component<ViewportProps> {
     private vdomRef;
     private handlers;
     private hit;
-    private raycaster;
     private animationRequestID;
     private lastRenderedAgentTime;
     static defaultProps: {
@@ -50,6 +46,7 @@ declare class Viewport extends React.Component<ViewportProps> {
     componentWillUnmount(): void;
     componentDidUpdate(prevProps: ViewportProps): void;
     private cacheJSON;
+    private configDragAndDrop;
     private clearCache;
     onDragOver: (e: Event) => void;
     onDrop: (e: Event) => void;

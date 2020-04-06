@@ -4,12 +4,7 @@ import AgentSimController from "../controller";
 
 import { forOwn } from "lodash";
 
-import { VisGeometry, NO_AGENT } from "../agentsim";
-
-interface TrajectoryFileInfo {
-    timeStepSize: number;
-    totalDuration: number;
-}
+import { VisGeometry, TrajectoryFileInfo, NO_AGENT } from "../agentsim";
 
 export type PropColor = string | number | [number, number, number];
 
@@ -244,6 +239,14 @@ class Viewport extends React.Component<ViewportProps> {
         this.props.agentSimController.cacheJSON(json);
     };
 
+    private configDragAndDrop = () => {
+        const trajectoryFileInfo =
+          this.props.agentSimController.dragAndDropFileInfo();
+
+        const { netConnection } = this.props.agentSimController;
+        netConnection.onTrajectoryFileInfoArrive(trajectoryFileInfo);
+    }
+
     private clearCache = () => {
         this.props.agentSimController.disableNetworkCommands();
         this.props.agentSimController.clearLocalCache();
@@ -272,10 +275,11 @@ class Viewport extends React.Component<ViewportProps> {
         p.then(() => {
             parsedFiles.sort(sortFrames);
             this.visGeometry.resetMapping();
-            for (let i = 0, l = parsedFiles.length; i < l; ++i) {
-                let frameJSON = parsedFiles[i];
-                this.cacheJSON(frameJSON);
-            }
+
+            let frameJSON = parsedFiles[0];
+            this.cacheJSON(frameJSON);
+        }).then(() => {
+            this.configDragAndDrop();
         });
     };
 

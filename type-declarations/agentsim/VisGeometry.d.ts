@@ -3,6 +3,7 @@ import { Box3, Box3Helper, BufferGeometry, Color, DirectionalLight, Geometry, Gr
 import { ILogger } from "js-logger/src/types";
 import { AgentData } from "./VisData";
 import MoleculeRenderer from "./rendering/MoleculeRenderer";
+declare const NO_AGENT = -1;
 declare enum RenderStyle {
     GENERIC = 0,
     MOLECULAR = 1
@@ -43,7 +44,7 @@ declare class VisGeometry {
     materials: Material[];
     desatMaterials: Material[];
     highlightMaterial: MeshBasicMaterial;
-    followObject: Object3D | null;
+    followObjectIndex: number;
     runTimeMeshes: Mesh[];
     runTimeFiberMeshes: Map<string, Mesh>;
     mlastNumberOfAgents: number;
@@ -71,6 +72,7 @@ declare class VisGeometry {
     agentMeshGroup: Group;
     agentFiberGroup: Group;
     agentPathGroup: Group;
+    private raycaster;
     private errorMesh;
     constructor(loggerLevel: any);
     setBackgroundColor(c: any): void;
@@ -81,8 +83,8 @@ declare class VisGeometry {
     readonly renderDom: HTMLElement;
     handleTrajectoryData(trajectoryData: any): void;
     resetCamera(): void;
-    getFollowObject(): Object3D | null;
-    setFollowObject(obj: Object3D | null): void;
+    getFollowObject(): number;
+    setFollowObject(obj: number): void;
     unfollow(): void;
     setHighlightById(id: any): void;
     dehighlight(): void;
@@ -98,6 +100,7 @@ declare class VisGeometry {
     disableControls(): void;
     enableControls(): void;
     render(time: any): void;
+    hitTest(event: MouseEvent): number;
     /**
      *   Run Time Mesh functions
      */
@@ -150,5 +153,5 @@ declare class VisGeometry {
     resetAllGeometry(): void;
     update(agents: any): void;
 }
-export { VisGeometry };
+export { VisGeometry, NO_AGENT };
 export default VisGeometry;

@@ -25,6 +25,8 @@ declare class MoleculeRenderer {
     constructor();
     setupGui(gui: any): void;
     setBackgroundColor(color: any): void;
+    setHighlightInstance(instance: any): void;
+    hitTest(renderer: any, x: any, y: any): number;
     updateMolecules(positions: any, typeids: any, instanceids: any, numAgents: any, numAtomsPerAgent: any): void;
     updateColors(numColors: any, colorsData: any): void;
     createMoleculeBuffer(n: any): void;

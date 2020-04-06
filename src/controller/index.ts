@@ -1,5 +1,5 @@
 import jsLogger from "js-logger";
-import { NetConnection, VisData } from "../agentsim";
+import { NetConnection, VisData, TrajectoryFileInfo } from "../agentsim";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
@@ -135,11 +135,15 @@ export default class AgentSimController {
     }
 
     public cacheJSON(json): void {
-        this.visData.parseAgentsFromNetData(json);
+        this.visData.cacheJSON(json);
     }
 
     public clearLocalCache(): void {
         this.visData.clearCache();
+    }
+
+    public dragAndDropFileInfo(): TrajectoryFileInfo {
+        return this.visData.dragAndDropFileInfo();
     }
 }
 

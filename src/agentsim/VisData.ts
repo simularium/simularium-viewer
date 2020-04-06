@@ -1,4 +1,5 @@
 import * as util from "./ThreadUtil";
+import { TrajectoryFileInfo } from "./TrajectoryFileInfo";
 
 /**
  * Parse Agents from Net Data
@@ -21,9 +22,9 @@ interface FrameData {
     time: number;
 }
 
-interface ParsedFrame {
-    frameData: FrameData;
-    parsedAgentData: AgentData[];
+interface ParsedBundle {
+    frameDataArray: FrameData[];
+    parsedAgentDataArray: AgentData[][];
 }
 
 class VisData {
@@ -62,65 +63,75 @@ class VisData {
      *   of the application, since network latency is a major bottle-neck)
      * */
 
-    public static parse(visDataMsg): ParsedFrame {
-        // IMPORTANT: Order of this array needs to perfectly match the incoming data.
-        const agentObjectKeys = [
-            "vis-type",
-            "type",
-            "x",
-            "y",
-            "z",
-            "xrot",
-            "yrot",
-            "zrot",
-            "cr",
-            "nSubPoints",
-        ];
-        const visData = visDataMsg.data;
-        const parsedAgentData: AgentData[] = [];
-        const nSubPointsIndex = agentObjectKeys.findIndex(
-            ele => ele === "nSubPoints"
-        );
-
-        const parseOneAgent = (agentArray): AgentData => {
-            return agentArray.reduce(
-                (agentData, cur, i) => {
-                    let key;
-                    if (agentObjectKeys[i]) {
-                        key = agentObjectKeys[i];
-                        agentData[key] = cur;
-                    } else if (i < agentArray.length + agentData.nSubPoints) {
-                        agentData.subpoints.push(cur);
-                    }
-                    return agentData;
-                },
-                { subpoints: [] }
+    public static parse(visDataMsg): ParsedBundle {
+        let parsedAgentDataArray: AgentData[][] = [];
+        let frameDataArray: FrameData[] = [];
+        visDataMsg.bundleData.forEach(frame => {
+            // IMPORTANT: Order of this array needs to perfectly match the incoming data.
+            const agentObjectKeys = [
+                "vis-type",
+                "type",
+                "x",
+                "y",
+                "z",
+                "xrot",
+                "yrot",
+                "zrot",
+                "cr",
+                "nSubPoints",
+            ];
+            const visData = frame.data;
+            const parsedAgentData: AgentData[] = [];
+            const nSubPointsIndex = agentObjectKeys.findIndex(
+                ele => ele === "nSubPoints"
             );
-        };
 
-        while (visData.length) {
-            const nSubPoints = visData[nSubPointsIndex];
-            const chunckLength = agentObjectKeys.length + nSubPoints; // each array length is varible based on how many subpoints the agent has
-            if (visData.length < chunckLength) {
-                throw Error("malformed data: too few entries");
+            const parseOneAgent = (agentArray): AgentData => {
+                return agentArray.reduce(
+                    (agentData, cur, i) => {
+                        let key;
+                        if (agentObjectKeys[i]) {
+                            key = agentObjectKeys[i];
+                            agentData[key] = cur;
+                        } else if (
+                            i <
+                            agentArray.length + agentData.nSubPoints
+                        ) {
+                            agentData.subpoints.push(cur);
+                        }
+                        return agentData;
+                    },
+                    { subpoints: [] }
+                );
+            };
+
+            while (visData.length) {
+                const nSubPoints = visData[nSubPointsIndex];
+                const chunckLength = agentObjectKeys.length + nSubPoints; // each array length is varible based on how many subpoints the agent has
+                if (visData.length < chunckLength) {
+                    throw Error("malformed data: too few entries");
+                }
+
+                const agentSubSetArray = visData.splice(0, chunckLength); // cut off the array of 1 agent data from front of the array;
+                if (agentSubSetArray.length < agentObjectKeys.length) {
+                    throw Error("malformed data: indexing off");
+                }
+
+                parsedAgentData.push(parseOneAgent(agentSubSetArray));
             }
 
-            const agentSubSetArray = visData.splice(0, chunckLength); // cut off the array of 1 agent data from front of the array;
-            if (agentSubSetArray.length < agentObjectKeys.length) {
-                throw Error("malformed data: indexing off");
-            }
+            const frameData: FrameData = {
+                time: frame.time,
+                frameNumber: frame.frameNumber,
+            };
 
-            parsedAgentData.push(parseOneAgent(agentSubSetArray));
-        }
-
-        const frameData: FrameData = {
-            time: visDataMsg.time,
-            frameNumber: visDataMsg.frameNumber,
-        };
+            parsedAgentDataArray.push(parsedAgentData);
+            frameDataArray.push(frameData);
+        });
 
         return {
-            frameData,
-            parsedAgentData,
+            parsedAgentDataArray,
+            frameDataArray,
         };
     }
 
@@ -131,8 +142,14 @@ class VisData {
             );
 
             this.webWorker.onmessage = event => {
-                this.frameDataCache.push(event.data.frameData);
-                this.frameCache.push(event.data.parsedAgentData);
+                Array.prototype.push.apply(
+                    this.frameDataCache,
+                    event.data.frameDataArray
+                );
+                Array.prototype.push.apply(
+                    this.frameCache,
+                    event.data.parsedAgentDataArray
+                );
             };
         } else {
             this.webWorker = null;
@@ -258,18 +275,127 @@ class VisData {
             }
         }
 
-        visDataMsg.bundleData.forEach(dataFrame => {
-            if (
-                util.ThreadUtil.browserSupportsWebWorkers() &&
-                this.webWorker !== null
-            ) {
-                this.webWorker.postMessage(dataFrame);
-            } else {
-                let newFrame = VisData.parse(dataFrame);
-                this.frameCache.push(newFrame.parsedAgentData);
-                this.frameDataCache.push(newFrame.frameData);
-            }
+        if (
+            util.ThreadUtil.browserSupportsWebWorkers() &&
+            this.webWorker !== null
+        ) {
+            this.webWorker.postMessage(visDataMsg);
+        } else {
+            let frames = VisData.parse(visDataMsg);
+            Array.prototype.push.apply(
+                this.frameDataCache,
+                frames.frameDataArray
+            );
+            Array.prototype.push.apply(
+                this.frameCache,
+                frames.parsedAgentDataArray
+            );
+        }
+    }
+
+    // for use w/ a drag-and-drop trajectory file
+    //  save a file for playback
+    public cacheJSON(visDataMsg): void {
+        if (this.frameCache.length > 0) {
+            throw Error(
+                "cache not cleared before cacheing a new drag-and-drop file"
+            );
+            return;
+        }
+
+        let frames = VisData.parse(visDataMsg);
+        Array.prototype.push.apply(this.frameDataCache, frames.frameDataArray);
+        Array.prototype.push.apply(
+            this.frameCache,
+            frames.parsedAgentDataArray
+        );
+    }
+
+    public dragAndDropFileInfo(): TrajectoryFileInfo {
+        let max: number[] = [0, 0, 0];
+        let min: number[] = [0, 0, 0];
+
+        if (this.frameCache.length === 0) {
+            throw Error("No data in cache for drag-and-drop file");
+            return {
+                boxSizeX: 0,
+                boxSizeY: 0,
+                boxSizeZ: 0,
+                totalDuration: 1,
+                timeStepSize: 1,
+            };
+        }
+
+        this.frameCache.forEach(element => {
+            let radius =
+                Math.max.apply(
+                    Math,
+                    element.map(agent => {
+                        return agent.cr;
+                    })
+                ) * 1.1;
+            let maxx: number = Math.max.apply(
+                Math,
+                element.map(agent => {
+                    return agent.x;
+                })
+            );
+            let maxy: number = Math.max.apply(
+                Math,
+                element.map(agent => {
+                    return agent.y;
+                })
+            );
+            let maxz: number = Math.max.apply(
+                Math,
+                element.map(agent => {
+                    return agent.z;
+                })
+            );
+
+            let minx: number = Math.min.apply(
+                Math,
+                element.map(agent => {
+                    return agent.x;
+                })
+            );
+            let miny: number = Math.min.apply(
+                Math,
+                element.map(agent => {
+                    return agent.y;
+                })
+            );
+            let minz: number = Math.min.apply(
+                Math,
+                element.map(agent => {
+                    return agent.z;
+                })
+            );
+
+            max[0] = Math.max(max[0], 2 * maxx + radius);
+            max[1] = Math.max(max[1], 2 * maxy + radius);
+            max[2] = Math.max(max[2], 2 * maxz + radius);
+
+            min[0] = Math.min(max[0], 2 * minx - radius);
+            min[1] = Math.min(max[1], 2 * miny - radius);
+            min[2] = Math.min(max[2], 2 * minz - radius);
         });
+
+        let timeStepSize =
+            this.frameDataCache.length > 1
+                ? this.frameDataCache[1].time - this.frameDataCache[0].time
+                : 1;
+        let totalDuration =
+            this.frameDataCache[this.frameCache.length - 1].frameNumber *
+            timeStepSize;
+
+        return {
+            boxSizeX: max[0] - min[0],
+            boxSizeY: max[1] - min[0],
+            boxSizeZ: max[2] - min[2],
+            totalDuration: totalDuration,
+            timeStepSize: timeStepSize,
+        };
     }
 
     public convertVisDataWorkFunctionToString(): string {
@@ -277,13 +403,13 @@ class VisData {
         self.addEventListener('message', (e) => {
             const visDataMsg = e.data;
             const {
-                frameData,
-                parsedAgentData,
+                frameDataArray,
+                parsedAgentDataArray,
             } = ${VisData.parse}(visDataMsg)
 
             postMessage({
-                frameData,
-                parsedAgentData,
+                frameDataArray,
+                parsedAgentDataArray,
             });
         }, false);
         }`;
