@@ -1,11 +1,7 @@
-export declare var VisGeometry: any;
+export declare var VisGeometry: VisGeometry;
 
-export declare var VisData: any;
+export declare var VisData: VisData;
 
-export declare var NetConnection: any;
+export declare var NetConnection: NetConnection;
 
-export declare var SimParameters: any;
-
-export declare var DevGUI: any;
-
-export declare var ThreadUtil: any;
+export declare var ThreadUtil: ThreadUtil;

@@ -1,26 +1,30 @@
-import { NetConnection, SimParameters, VisData } from "../agentsim";
 import jsLogger from "js-logger";
+import { NetConnection, VisData, TrajectoryFileInfo } from "../agentsim";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
 export default class AgentSimController {
-    public netConnection: any;
-    public simParameters: any;
-    public visData: any;
+    public netConnection: NetConnection;
+    public visData: VisData;
     private networkEnabled: boolean;
     private isPaused: boolean;
     private fileChanged: boolean;
+    private playBackFile: string;
 
-    public constructor(netConnectionSettings, params) {
-        const loggerLevel =
-            params.loggerLevel === "debug" ? jsLogger.DEBUG : jsLogger.OFF;
-        this.visData = new VisData({});
-        this.simParameters = new SimParameters(params);
-        this.netConnection = new NetConnection(
-            this.simParameters,
-            this.visData,
-            netConnectionSettings,
-            loggerLevel
+    public constructor(params) {
+        this.visData = new VisData();
+
+        if (params.netConnection) {
+            this.netConnection = params.netConnection;
+        } else {
+            this.netConnection = new NetConnection(
+                params.netConnectionSettings
+            );
+        }
+
+        this.playBackFile = params.trajectoryPlaybackFile;
+        this.netConnection.onTrajectoryDataArrive = this.visData.parseAgentsFromNetData.bind(
+            this.visData
         );
 
         this.networkEnabled = true;
@@ -28,118 +32,101 @@ export default class AgentSimController {
         this.fileChanged = false;
     }
 
-    public get hasChangedFile() {
+    public get hasChangedFile(): boolean {
         return this.fileChanged;
     }
 
-    public start() {
+    public connect(): Promise<{}> {
+        return this.netConnection.connectToRemoteServer(
+            this.netConnection.getIp()
+        );
+    }
+
+    public start(): Promise<void> {
         // switch back to 'networked' playback
         this.networkEnabled = true;
         this.isPaused = false;
         this.visData.clearCache();
 
-        return this.netConnection.guiStartRemoteTrajectoryPlayback();
+        return this.netConnection.startRemoteTrajectoryPlayback(
+            this.playBackFile
+        );
     }
 
-    public time() {
-        this.visData.time;
+    public time(): number {
+        return this.visData.currentFrameData.time;
     }
 
-    public stop() {
+    public stop(): void {
         this.netConnection.abortRemoteSim();
     }
 
-    public pause() {
+    public pause(): void {
         if (this.networkEnabled) {
             this.netConnection.pauseRemoteSim();
-        } else {
-            this.isPaused = true;
         }
+
+        this.isPaused = true;
     }
 
-    public paused() {
+    public paused(): boolean {
         return this.isPaused;
     }
 
-    public connect() {
-        return this.netConnection.guiConnect();
+    public initializeTrajectoryFile(): void {
+        this.netConnection.requestTrajectoryFileInfo(this.playBackFile);
     }
 
-    public numberOfFrames() {
-        return this.simParameters.numberOfCacheFrames;
-    }
-
-    public timeStepSize() {
-        return this.simParameters.cacheTimeStepSize;
-    }
-
-    public initializeTrajectoryFile() {
-        this.netConnection.guiRequestTrajectoryInfo();
-    }
-
-    public playFromFrame(frameNumber) {
-        this.netConnection.playRemoteSimCacheFromFrame(frameNumber);
-    }
-
-    public playFromTime(timeNs) {
-        // If there is a locally cached frame, use it
+    public gotoTime(timeNs): void {
         if (this.visData.hasLocalCacheForTime(timeNs)) {
-            this.visData.playFromTime(timeNs);
-            // @TODO: Does the networked state need to change? (need an explicit play command?)
+            this.visData.gotoTime(timeNs);
         } else {
             if (this.networkEnabled) {
                 // else reset the local cache,
                 //  and play remotely from the desired simulation time
                 this.visData.clearCache();
-                this.netConnection.playRemoteSimCacheFromTime(timeNs);
+                this.netConnection.gotoRemoteSimulationTime(timeNs);
             }
         }
     }
 
-    public playOneFrame(frameNumber) {
-        this.netConnection.requestSingleFrame(frameNumber);
+    public playFromTime(timeNs): void {
+        this.gotoTime(timeNs);
+        this.isPaused = false;
     }
 
-    public gotoFrameAtTime(timeNs) {
-        this.netConnection.gotoRemoteSimulationTime(timeNs);
-    }
-
-    public gotoNextFrame() {
-        this.netConnection.gotoNextFrame();
-    }
-
-    public gotoPreviousFrame() {
-        this.netConnection.gotoPreviousFrame();
-    }
-
-    public resume() {
+    public resume(): void {
         if (this.networkEnabled) {
             this.netConnection.resumeRemoteSim();
-        } else {
-            this.isPaused = false;
         }
+
+        this.isPaused = false;
     }
 
-    public changeFile(newFile) {
-        if (newFile !== this.simParameters.playBackFile) {
+    public changeFile(newFile): void {
+        if (newFile !== this.playBackFile) {
             this.fileChanged = true;
-            this.simParameters.playBackFile = newFile;
+            this.playBackFile = newFile;
+
+            this.visData.WaitForFrame(0);
+            this.visData.clearCache();
+
             this.stop();
             this.start().then(() => {
-                this.playOneFrame(0);
+                this.netConnection.requestSingleFrame(0);
             });
         }
     }
 
-    public markFileChangeAsHandled() {
+    public markFileChangeAsHandled(): void {
         this.fileChanged = false;
     }
 
-    public getFile() {
-        return this.simParameters.playBackFile;
+    public getFile(): string {
+        return this.playBackFile;
     }
 
-    public disableNetworkCommands() {
+    public disableNetworkCommands(): void {
         this.networkEnabled = false;
 
         if (this.netConnection.socketIsValid()) {
@@ -147,11 +134,17 @@ export default class AgentSimController {
         }
     }
 
-    public cacheJSON(json) {
-        this.visData.parseAgentsFromNetData(json);
+    public cacheJSON(json): void {
+        this.visData.cacheJSON(json);
     }
 
-    public clearLocalCache() {
+    public clearLocalCache(): void {
         this.visData.clearCache();
     }
+
+    public dragAndDropFileInfo(): TrajectoryFileInfo {
+        return this.visData.dragAndDropFileInfo();
+    }
 }
+
+export { AgentSimController };

@@ -1,14 +1,16 @@
-import * as React from 'react';
-import AgentSimController from '../controller';
+import * as React from "react";
+import AgentSimController from "../controller";
+import { TrajectoryFileInfo } from "../agentsim";
+export declare type PropColor = string | number | [number, number, number];
 interface ViewportProps {
+    backgroundColor: PropColor;
     height: number;
     width: number;
-    devgui: boolean;
     loggerLevel: string;
     onTimeChange: (timeData: TimeData) => void | undefined;
     agentSimController: AgentSimController;
-    onJsonDataArrived: any;
-    onTrajectoryFileInfoChanged: (cachedData: any) => void | undefined;
+    onJsonDataArrived: Function;
+    onTrajectoryFileInfoChanged: (cachedData: TrajectoryFileInfo) => void | undefined;
     highlightedParticleType: number | string;
     loadInitialData: boolean;
     showMeshes: boolean;
@@ -26,12 +28,12 @@ declare class Viewport extends React.Component<ViewportProps> {
     private vdomRef;
     private handlers;
     private hit;
-    private raycaster;
     private animationRequestID;
+    private lastRenderedAgentTime;
     static defaultProps: {
+        backgroundColor: number[];
         height: number;
         width: number;
-        devgui: boolean;
         highlightedParticleType: number;
         loadInitialData: boolean;
         showMeshes: boolean;
@@ -44,17 +46,19 @@ declare class Viewport extends React.Component<ViewportProps> {
     componentWillUnmount(): void;
     componentDidUpdate(prevProps: ViewportProps): void;
     private cacheJSON;
+    private configDragAndDrop;
     private clearCache;
-    onDragOver: (e: any) => void;
-    onDrop: (e: any) => void;
+    onDragOver: (e: Event) => void;
+    onDrop: (e: Event) => void;
     addEventHandlersToCanvas(): void;
     removeEventHandlersFromCanvas(): void;
     resetCamera(): void;
-    onPickObject(event: MouseEvent): void;
+    switchRenderStyle(): void;
+    onPickObject(e: Event): void;
     private handleTimeChange;
     private dispatchUpdatedTime;
     stopAnimate(): void;
     animate(): void;
-    render(): JSX.Element;
+    render(): React.ReactElement<HTMLElement>;
 }
 export default Viewport;
