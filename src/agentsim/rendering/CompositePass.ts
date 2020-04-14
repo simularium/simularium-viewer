@@ -61,39 +61,6 @@ class CompositePass {
             
             //out vec4 out_color;
             
-            float d3_lab_xyz(float x)
-            {
-                return x > 0.206893034 ? x * x * x : (x - 4.0 / 29.0) / 7.787037;
-            }
-            
-            float d3_xyz_rgb(float r)
-            {
-                return round(255.0 * (r <= 0.00304 ? 12.92 * r : 1.055 * pow(r, 1.0 / 2.4) - 0.055));
-            }
-
-            vec3 d3_lab_rgb(float l, float a, float b)
-            {
-                float y = (l + 16.0) / 116.0;
-                float x = y + a / 500.0;
-                float z = y - b / 200.0;
-            
-                x = d3_lab_xyz(x) * 0.950470;
-                y = d3_lab_xyz(y) * 1.0;
-                z = d3_lab_xyz(z) * 1.088830;
-            
-                return vec3(
-                    d3_xyz_rgb(3.2404542 * x - 1.5371385 * y - 0.4985314 * z),
-                    d3_xyz_rgb(-0.9692660 * x + 1.8760108 * y + 0.0415560 * z),
-                    d3_xyz_rgb(0.0556434 * x - 0.2040259 * y + 1.0572252 * z)
-                );
-            }
-            
-            vec3 d3_hcl_lab(float h, float c, float l)
-            {
-                float d3_radians = 0.01745329252;
-                return d3_lab_rgb(l, cos(h * d3_radians) * c, sin(h * d3_radians) * c) / 255.0;
-            }
-            
             vec3 IngredientColor[47] = vec3[](
                 vec3(1.0, 0.1, 0.1),
                 vec3(1.0, 0.4, 0.4),
@@ -238,28 +205,7 @@ class CompositePass {
                 vec3(50,50,170)/255.0,       // TYR      mid blue
                 vec3(15,130,15) /255.0       // VAL      green
             );
-            
-            const float HCV_EPSILON = 1e-10;
-            
-            // hue chroma value
-            vec3 rgb_to_hcv(vec3 rgb)
-            {
-                // Based on work by Sam Hocevar and Emil Persson
-                vec4 P = (rgb.g < rgb.b) ? vec4(rgb.bg, -1.0, 2.0/3.0) : vec4(rgb.gb, 0.0, -1.0/3.0);
-                vec4 Q = (rgb.r < P.x) ? vec4(P.xyw, rgb.r) : vec4(rgb.r, P.yzx);
-                float C = Q.x - min(Q.w, Q.y);
-                float H = abs((Q.w - Q.y) / (6.0 * C + HCV_EPSILON) + Q.z);
-                return vec3(H, C, Q.x);
-            }
-
-            vec3 hue_to_rgb(float H)
-            {
-                float R = abs(H * 6.0 - 3.0) - 1.0;
-                float G = 2.0 - abs(H * 6.0 - 2.0);
-                float B = 2.0 - abs(H * 6.0 - 4.0);
-                return saturate(vec3(R,G,B));
-            }
-
+                        
             const float HCLgamma_ = 3.0;
 const float HCLy0_ = 100.0;
 const float HCLmaxL_ = 0.530454533953517;
@@ -404,14 +350,15 @@ vec3 rgb2hcl(in vec3 RGB) {
 
                 vec3 hcl = rgb2hcl(col.xyz);
                  h = hcl.r;
-                 c = hcl.g;//+10.0;
-                 l = hcl.b;//+10.0;
+                 c = hcl.g;
+                 l = hcl.b;
             
 //                h = IngredientColorHCL[ingredientId].x;
 //                c = IngredientColorHCL[ingredientId].y;
 //                l = IngredientColorHCL[ingredientId].z;
             
-            
+            // chainBeginDistance should be > atomicBeginDistance
+
                 //if(false)
                 if(eyeDepth < chainBeginDistance)
                 {
@@ -426,13 +373,14 @@ vec3 rgb2hcl(in vec3 RGB) {
                     }
                 }
             
-                if(false)
+                //if(false)
                 // different colors for chains
-                //if(eyeDepth < chainBeginDistance && numChains > 1)
+                if(eyeDepth < chainBeginDistance && numChains > 1)
                 {
                     float cc = max(eyeDepth - atomicBeginDistance, 0.0);
                     float dd = chainBeginDistance - atomicBeginDistance;
-                    float ddd = (1.0-(cc/dd));
+                    float ddd = min(1.0, max(cc/dd, 0.0));
+                    ddd = (1.0-(ddd));
             
                     float wedge = min(50.0 * float(numChains), 180.0);
                     // float hueShift = wedge / numChains;
@@ -448,7 +396,7 @@ vec3 rgb2hcl(in vec3 RGB) {
                     hueShift = numChains >= 10 ? 15.0/360.0 : hueShift;
                     hueShift = numChains >= 11 ? 10.0/360.0 : hueShift;
                     hueShift = numChains >= 12 ? 10.0/360.0 : hueShift;
-                    hueShift *= (1.0-(cc/dd));
+                    hueShift *= ddd;
             
                     float hueLength = hueShift * float(numChains - 1);
                     float hueOffset = hueLength * 0.5;
@@ -475,7 +423,7 @@ vec3 rgb2hcl(in vec3 RGB) {
             
                 vec3 color;
                 color = hcl2rgb(vec3(h, c, l));
-                //color = d3_hcl_lab(h, c, l);
+
                 color = max(color, vec3(0.0,0.0,0.0));
                 color = min(color, vec3(1.0,1.0,1.0));
                 
@@ -484,6 +432,8 @@ vec3 rgb2hcl(in vec3 RGB) {
                 {
                     float t = (eyeDepth/atomicBeginDistance);
                     t = 1.0 - clamp(t, 0.0, 1.0);
+                    // inside of atomicBeginDistance:
+                    // near is atomColor, far is color.xyz
                     color.xyz = mix(color.xyz, atomColor, t);
                     //color.xyz = atomColor;
                     //color.xyz = vec3(0.0, 1.0, 0.0);
