@@ -1,4 +1,4 @@
-import { Color, DataTexture, FloatType, RGBAFormat } from "three";
+import { Color, DataTexture, FloatType, RGBAFormat, Vector3 } from "three";
 
 import RenderToBuffer from "./RenderToBuffer";
 
@@ -17,10 +17,11 @@ class CompositePass {
                 // colors indexed by particle type id
                 colorsBuffer: { value: null },
                 backgroundColor: { value: new Color(1, 1, 1) },
+                bgHCLoffset: { value: new Vector3(1.0, 0.0, 0.2) },
                 zNear: { value: 0.1 },
                 zFar: { value: 1000 },
                 atomicBeginDistance: { value: 150 },
-                chainBeginDistance: { value: 225 },
+                chainBeginDistance: { value: 300 },
                 highlightInstance: { value: -1 },
             },
             fragmentShader: `
@@ -38,6 +39,7 @@ class CompositePass {
             uniform float zNear;
             uniform float zFar;
             uniform vec3 backgroundColor;
+            uniform vec3 bgHCLoffset;
 
             uniform float highlightInstance;
             
@@ -341,6 +343,7 @@ vec3 rgb2hcl(in vec3 RGB) {
             
                 vec3 bghcl = rgb2hcl(backgroundColor);
 
+
                 //inital Hue-Chroma-Luminance
                 float h = ingredientGroupsColorValues.x + (ingredientGroupsColorRanges.x) * (ingredientLocalIndex - 0.5f);
                 float c = ingredientGroupsColorValues.y + (ingredientGroupsColorRanges.y) * (ingredientLocalIndex - 0.5f);
@@ -352,7 +355,12 @@ vec3 rgb2hcl(in vec3 RGB) {
                  h = hcl.r;
                  c = hcl.g;
                  l = hcl.b;
-            
+
+                 bghcl = mix(bghcl, hcl, bgHCLoffset);
+                 h = bghcl.r;
+                 c = bghcl.g;
+                 l = bghcl.b;
+
 //                h = IngredientColorHCL[ingredientId].x;
 //                c = IngredientColorHCL[ingredientId].y;
 //                l = IngredientColorHCL[ingredientId].z;
@@ -367,9 +375,9 @@ vec3 rgb2hcl(in vec3 RGB) {
                     float ddd = min(1.0, max(cc/dd, 0.0));
                     ddd = (1.0-(ddd));
                     if(atomSymbolId > 0) {
-                        l = mix(bghcl.z, l, ddd);
-                        c = mix(bghcl.y, c, ddd);
-                        h = mix(bghcl.x, h, ddd);
+                        l = mix(bghcl.z, hcl.z, ddd);
+                        c = mix(bghcl.y, hcl.y, ddd);
+                        //h = mix(bghcl.x, hcl.x, ddd);
                     }
                 }
             
@@ -434,6 +442,7 @@ vec3 rgb2hcl(in vec3 RGB) {
                     t = 1.0 - clamp(t, 0.0, 1.0);
                     // inside of atomicBeginDistance:
                     // near is atomColor, far is color.xyz
+                    // linear RGB interp? not HCL?
                     color.xyz = mix(color.xyz, atomColor, t);
                     //color.xyz = atomColor;
                     //color.xyz = vec3(0.0, 1.0, 0.0);
