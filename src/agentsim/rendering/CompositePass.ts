@@ -341,6 +341,7 @@ vec3 rgb2hcl(in vec3 RGB) {
                 vec3 ingredientGroupsColorValues;
                 vec3 ingredientGroupsColorRanges;
             
+                // background color as HCL
                 vec3 bghcl = rgb2hcl(backgroundColor);
 
 
@@ -351,11 +352,13 @@ vec3 rgb2hcl(in vec3 RGB) {
             
 //                vec3 hcl = rgb_to_hcv(col.xyz*20.0);
 
+                // atom color in HCL
                 vec3 hcl = rgb2hcl(col.xyz);
                  h = hcl.r;
                  c = hcl.g;
                  l = hcl.b;
 
+                 // per-pixel BG is related to atom color
                  bghcl = mix(bghcl, hcl, bgHCLoffset);
                  h = bghcl.r;
                  c = bghcl.g;
@@ -377,7 +380,7 @@ vec3 rgb2hcl(in vec3 RGB) {
                     if(atomSymbolId > 0) {
                         l = mix(bghcl.z, hcl.z, ddd);
                         c = mix(bghcl.y, hcl.y, ddd);
-                        //h = mix(bghcl.x, hcl.x, ddd);
+                        h = mix(bghcl.x, hcl.x, ddd);
                     }
                 }
             
