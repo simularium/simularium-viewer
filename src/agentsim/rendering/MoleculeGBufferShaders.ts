@@ -6,7 +6,6 @@ precision highp float;
 attribute float vTypeId;
 attribute float vInstanceId;
 
-    uniform float iTime;
     uniform vec2 iResolution;
     uniform float Scale;
     varying vec3 IN_viewPos;
@@ -52,7 +51,6 @@ flat in int IN_instanceId;
     // flat int IN_instanceId;
     // flat int IN_atomId;
 
-    uniform float iTime;
     uniform vec2 iResolution;
 
     uniform float Scale;
@@ -105,11 +103,13 @@ precision highp float;
 
 varying vec3 IN_viewPos;
 varying float IN_radius;
+flat in int IN_typeId;
+flat in int IN_instanceId;
+
     // varying vec4 IN_color;
     // flat int IN_instanceId;
     // flat int IN_atomId;
 
-    uniform float iTime;
     uniform vec2 iResolution;
 
     uniform float Scale;
@@ -154,11 +154,13 @@ precision highp float;
 
 varying vec3 IN_viewPos;
 varying float IN_radius;
+flat in int IN_typeId;
+flat in int IN_instanceId;
+
     // varying vec4 IN_color;
     // flat int IN_instanceId;
     // flat int IN_atomId;
 
-    uniform float iTime;
     uniform vec2 iResolution;
 
     uniform float Scale;
@@ -203,10 +205,7 @@ const colorMaterial = new ShaderMaterial({
     uniforms: {
         radius: { value: 1.0 },
         color: { value: new Color(0x44ff44) },
-        iTime: { value: 1.0 },
         iResolution: { value: new Vector2() },
-        iChannel0: { value: null },
-        iChannelResolution0: { value: new Vector2(2, 2) },
         Scale: { value: 1.0 },
         projectionMatrix: { value: new Matrix4() },
     },
@@ -219,10 +218,7 @@ const normalMaterial = new ShaderMaterial({
     uniforms: {
         radius: { value: 1.0 },
         color: { value: new Color(0x44ff44) },
-        iTime: { value: 1.0 },
         iResolution: { value: new Vector2() },
-        iChannel0: { value: null },
-        iChannelResolution0: { value: new Vector2(2, 2) },
         Scale: { value: 1.0 },
         projectionMatrix: { value: new Matrix4() },
     },
@@ -235,10 +231,7 @@ const positionMaterial = new ShaderMaterial({
     uniforms: {
         radius: { value: 1.0 },
         color: { value: new Color(0x44ff44) },
-        iTime: { value: 1.0 },
         iResolution: { value: new Vector2() },
-        iChannel0: { value: null },
-        iChannelResolution0: { value: new Vector2(2, 2) },
         Scale: { value: 1.0 },
         projectionMatrix: { value: new Matrix4() },
     },

@@ -1,19 +1,16 @@
-import { Color, FrontSide, Matrix4, ShaderMaterial, Vector2 } from "three";
+import { FrontSide, Matrix4, ShaderMaterial } from "three";
 
 const vertexShader = `
 precision highp float;
 
-uniform float iTime;
-uniform vec2 iResolution;
-uniform float Scale;
-
 varying vec3 IN_viewPos;
-varying float IN_radius;
+varying vec3 IN_viewNormal;
           
 void main()	{
     vec3 p = position.xyz;
     vec4 modelViewPosition = modelViewMatrix * vec4(p, 1.0);
     IN_viewPos = modelViewPosition.xyz;
+    IN_viewNormal = normalMatrix * normal.xyz;
 
     gl_Position = projectionMatrix * modelViewPosition;
 
@@ -35,6 +32,7 @@ void main()	{
     vec3 fragViewPos = IN_viewPos;
   
     vec4 fragPosClip = projectionMatrix * vec4(fragViewPos, 1.0);
+    vec3 fragPosNDC = fragPosClip.xyz / fragPosClip.w;
     float n = gl_DepthRange.near;
     float f = gl_DepthRange.far;
     // TODO: is this the smae as gl_FragCoord.z ???
@@ -72,13 +70,8 @@ void main()	{
 
 const colorMaterial = new ShaderMaterial({
     uniforms: {
-        radius: { value: 1.0 },
-        color: { value: new Color(0x44ff44) },
-        iTime: { value: 1.0 },
-        iResolution: { value: new Vector2() },
-        iChannel0: { value: null },
-        iChannelResolution0: { value: new Vector2(2, 2) },
-        Scale: { value: 1.0 },
+        IN_typeId: { value: 0 },
+        IN_instanceId: { value: 0 },
         projectionMatrix: { value: new Matrix4() },
     },
     vertexShader: vertexShader,
@@ -88,13 +81,6 @@ const colorMaterial = new ShaderMaterial({
 });
 const normalMaterial = new ShaderMaterial({
     uniforms: {
-        radius: { value: 1.0 },
-        color: { value: new Color(0x44ff44) },
-        iTime: { value: 1.0 },
-        iResolution: { value: new Vector2() },
-        iChannel0: { value: null },
-        iChannelResolution0: { value: new Vector2(2, 2) },
-        Scale: { value: 1.0 },
         projectionMatrix: { value: new Matrix4() },
     },
     vertexShader: vertexShader,
@@ -104,13 +90,6 @@ const normalMaterial = new ShaderMaterial({
 });
 const positionMaterial = new ShaderMaterial({
     uniforms: {
-        radius: { value: 1.0 },
-        color: { value: new Color(0x44ff44) },
-        iTime: { value: 1.0 },
-        iResolution: { value: new Vector2() },
-        iChannel0: { value: null },
-        iChannelResolution0: { value: new Vector2(2, 2) },
-        Scale: { value: 1.0 },
         projectionMatrix: { value: new Matrix4() },
     },
     vertexShader: vertexShader,

@@ -56,7 +56,6 @@ class MoleculePass {
 
         // could break up into a few particles buffers at the cost of separate draw calls...
         this.particles = new Points(this.geometry, this.colorMaterial);
-        this.particles.visible = false;
         this.scene = new Scene();
         this.scene.add(this.particles);
     }
@@ -166,18 +165,44 @@ class MoleculePass {
         this.positionMaterialMesh.uniforms.projectionMatrix.value =
             camera.projectionMatrix;
 
+        ///////////////////////////////
+        ///////////////////////////////
+        this.particles.visible = false;
+        ///////////////////////////////
+        ///////////////////////////////
+
+        const meshScene = new Scene();
+        meshScene.add(this.agentMeshGroup);
+        const prevVis = this.agentMeshGroup.visible;
+        this.agentMeshGroup.visible = true;
+
         // TODO : MRT
         renderer.setRenderTarget(colorBuffer);
         this.particles.material = this.colorMaterial;
         renderer.render(this.scene, camera);
+        meshScene.overrideMaterial = this.colorMaterialMesh;
+        renderer.autoClear = false;
+        renderer.render(meshScene, camera);
+        renderer.autoClear = true;
 
         renderer.setRenderTarget(normalBuffer);
         this.particles.material = this.normalMaterial;
         renderer.render(this.scene, camera);
+        meshScene.overrideMaterial = this.normalMaterialMesh;
+        renderer.autoClear = false;
+        renderer.render(meshScene, camera);
+        renderer.autoClear = true;
 
         renderer.setRenderTarget(positionBuffer);
         this.particles.material = this.positionMaterial;
         renderer.render(this.scene, camera);
+        meshScene.overrideMaterial = this.positionMaterialMesh;
+        renderer.autoClear = false;
+        renderer.render(meshScene, camera);
+        renderer.autoClear = true;
+
+        this.agentMeshGroup.visible = prevVis;
+        meshScene.overrideMaterial = null;
 
         renderer.setClearColor(c, a);
     }

@@ -60,6 +60,31 @@ function lerp(x0: number, x1: number, alpha: number): number {
     return x0 + (x1 - x0) * alpha;
 }
 
+function onAgentMeshBeforeRender(
+    renderer,
+    scene,
+    camera,
+    geometry,
+    material,
+    group
+): void {
+    if (!material.uniforms) {
+        return;
+    }
+    if (!material.uniforms.IN_typeId) {
+        return;
+    }
+    if (!material.uniforms.IN_instanceId) {
+        return;
+    }
+    const u = this.userData;
+    if (!u) {
+        return;
+    }
+    material.uniforms.IN_typeId.value = u.materialType;
+    material.uniforms.IN_instanceId.value = u.index;
+}
+
 interface HSL {
     h: number;
     s: number;
@@ -198,11 +223,6 @@ class VisGeometry {
         this.agentFiberGroup = new Group();
         this.agentPathGroup = new Group();
 
-        this.moleculeRenderer.setMeshGroups(
-            this.agentMeshGroup,
-            this.agentFiberGroup
-        );
-
         this.camera = new PerspectiveCamera(75, 100 / 100, 0.1, 10000);
         this.dl = new DirectionalLight(0xffffff, 0.6);
         this.hemiLight = new HemisphereLight(0xffffff, 0x000000, 0.5);
@@ -262,7 +282,7 @@ class VisGeometry {
             self.atomSpread = value;
             self.updateScene(self.currentSceneAgents);
         });
-        gui.add(settings, "numAtoms", 1, 20)
+        gui.add(settings, "numAtoms", 1, 80)
             .step(1)
             .onChange(value => {
                 self.numAtomsPerAgent = Math.floor(value);
@@ -277,7 +297,7 @@ class VisGeometry {
             this.renderStyle === RenderStyle.GENERIC
                 ? RenderStyle.MOLECULAR
                 : RenderStyle.GENERIC;
-        this.agentMeshGroup.visible = this.renderStyle === RenderStyle.GENERIC;
+        //this.agentMeshGroup.visible = this.renderStyle === RenderStyle.GENERIC;
         this.updateScene(this.currentSceneAgents);
     }
 
@@ -603,10 +623,17 @@ class VisGeometry {
         if (this.renderStyle == RenderStyle.GENERIC) {
             this.renderer.render(this.scene, this.camera);
         } else {
+            this.moleculeRenderer.setMeshGroups(
+                this.agentMeshGroup,
+                this.agentFiberGroup
+            );
             this.moleculeRenderer.setHighlightInstance(this.followObjectIndex);
             this.moleculeRenderer.render(this.renderer, this.camera, null);
             this.renderer.autoClear = false;
+            this.scene.add(this.agentMeshGroup);
+            this.agentMeshGroup.visible = false;
             this.renderer.render(this.scene, this.camera);
+            this.agentMeshGroup.visible = true;
             this.renderer.autoClear = true;
         }
     }
@@ -956,6 +983,7 @@ class VisGeometry {
                     : -1;
 
                 if (!runtimeMesh.userData) {
+                    console.log("runtimemesh has no userdata in updateScene");
                     runtimeMesh.userData = {
                         active: true,
                         baseMaterial: this.getMaterial(materialType, typeId),
@@ -1010,17 +1038,22 @@ class VisGeometry {
                 runtimeMesh.scale.y = agentData.cr * scale;
                 runtimeMesh.scale.z = agentData.cr * scale;
 
-                for (let k = 0; k < this.numAtomsPerAgent; ++k) {
-                    buf[(i * this.numAtomsPerAgent + k) * 4 + 0] =
-                        agentData.x + (Math.random() - 0.5) * this.atomSpread;
-                    buf[(i * this.numAtomsPerAgent + k) * 4 + 1] =
-                        agentData.y + (Math.random() - 0.5) * this.atomSpread;
-                    buf[(i * this.numAtomsPerAgent + k) * 4 + 2] =
-                        agentData.z + (Math.random() - 0.5) * this.atomSpread;
-                    buf[(i * this.numAtomsPerAgent + k) * 4 + 3] = 1.0;
-                    //                    typeids[i * this.numAtomsPerAgent + k] = typeId;
-                    typeids[i * this.numAtomsPerAgent + k] = materialType;
-                    instanceids[i * this.numAtomsPerAgent + k] = i;
+                if (this.renderStyle === RenderStyle.MOLECULAR) {
+                    for (let k = 0; k < this.numAtomsPerAgent; ++k) {
+                        buf[(i * this.numAtomsPerAgent + k) * 4 + 0] =
+                            agentData.x +
+                            (Math.random() - 0.5) * this.atomSpread;
+                        buf[(i * this.numAtomsPerAgent + k) * 4 + 1] =
+                            agentData.y +
+                            (Math.random() - 0.5) * this.atomSpread;
+                        buf[(i * this.numAtomsPerAgent + k) * 4 + 2] =
+                            agentData.z +
+                            (Math.random() - 0.5) * this.atomSpread;
+                        buf[(i * this.numAtomsPerAgent + k) * 4 + 3] = 1.0;
+                        //                    typeids[i * this.numAtomsPerAgent + k] = typeId;
+                        typeids[i * this.numAtomsPerAgent + k] = materialType;
+                        instanceids[i * this.numAtomsPerAgent + k] = i;
+                    }
                 }
 
                 const path = this.findPathForAgentIndex(i);
@@ -1094,14 +1127,15 @@ class VisGeometry {
             }
         });
 
-        this.moleculeRenderer.updateMolecules(
-            buf,
-            typeids,
-            instanceids,
-            agents.length,
-            this.numAtomsPerAgent
-        );
-
+        if (this.renderStyle === RenderStyle.MOLECULAR) {
+            this.moleculeRenderer.updateMolecules(
+                buf,
+                typeids,
+                instanceids,
+                agents.length,
+                this.numAtomsPerAgent
+            );
+        }
         this.hideUnusedFibers(fiberIndex);
     }
 
@@ -1198,6 +1232,13 @@ class VisGeometry {
         return runtimeMesh;
     }
 
+    // private addAgentMeshToScene(mesh) {
+    //     this.agentMeshGroup.add(mesh);
+    //     this.gbufferPositionGroup.add(mesh);
+    //     this.gbufferNormalGroup.add(mesh);
+    //     this.gbufferColorGroup.add(mesh);
+    // }
+
     public assignMaterial(
         runtimeMesh: Object3D,
         material: MeshBasicMaterial | LineBasicMaterial
@@ -1208,10 +1249,15 @@ class VisGeometry {
 
         if (runtimeMesh instanceof Mesh) {
             runtimeMesh.material = material;
+            runtimeMesh.onBeforeRender = onAgentMeshBeforeRender.bind(
+                runtimeMesh
+            );
         } else {
             runtimeMesh.traverse(child => {
                 if (child instanceof Mesh) {
                     child.material = material;
+                    child.onBeforeRender = onAgentMeshBeforeRender.bind(child);
+                    child.userData = runtimeMesh.userData;
                 }
             });
         }
