@@ -198,6 +198,11 @@ class VisGeometry {
         this.agentFiberGroup = new Group();
         this.agentPathGroup = new Group();
 
+        this.moleculeRenderer.setMeshGroups(
+            this.agentMeshGroup,
+            this.agentFiberGroup
+        );
+
         this.camera = new PerspectiveCamera(75, 100 / 100, 0.1, 10000);
         this.dl = new DirectionalLight(0xffffff, 0.6);
         this.hemiLight = new HemisphereLight(0xffffff, 0x000000, 0.5);

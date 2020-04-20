@@ -5,7 +5,13 @@ import CompositePass from "./CompositePass";
 import ContourPass from "./ContourPass";
 import DrawBufferPass from "./DrawBufferPass";
 
-import { FloatType, NearestFilter, RGBAFormat, WebGLRenderTarget } from "three";
+import {
+    FloatType,
+    NearestFilter,
+    RGBAFormat,
+    WebGLRenderTarget,
+    Group,
+} from "three";
 
 class MoleculeRenderer {
     public gbufferPass: MoleculePass;
@@ -226,6 +232,10 @@ class MoleculeRenderer {
         this.gbufferPass.createMoleculeBuffer(n);
     }
 
+    public setMeshGroups(agentMeshGroup: Group, agentFiberGroup: Group): void {
+        this.gbufferPass.setMeshGroups(agentMeshGroup, agentFiberGroup);
+    }
+
     public resize(x, y): void {
         this.colorBuffer.setSize(x, y);
         // TODO : MRT AND SHARE DEPTH BUFFER
@@ -249,13 +259,12 @@ class MoleculeRenderer {
     }
 
     public render(renderer, camera, target): void {
-        // TODO : DEPTH HANDLING STRATEGY:
+        // DEPTH HANDLING STRATEGY:
         // gbuffer pass writes gl_FragDepth
         // depth buffer should be not written to or tested again after this.
-        // depth buffer should be maintained and transferred to final render pass so that other standard geometry can be drawn
 
         // 1 draw molecules into G buffers
-        // TODO : MRT
+        // pick out mesh group and fiber group from visgeometry scene
         this.gbufferPass.render(
             renderer,
             camera,
