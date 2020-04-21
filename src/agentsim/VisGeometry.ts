@@ -239,8 +239,20 @@ class VisGeometry {
         var settings = {
             atomSpread: this.atomSpread,
             numAtoms: this.numAtomsPerAgent,
+            bgcolor: {
+                r: this.backgroundColor.r * 255,
+                g: this.backgroundColor.g * 255,
+                b: this.backgroundColor.b * 255,
+            },
         };
         var self = this;
+        gui.addColor(settings, "bgcolor").onChange(value => {
+            self.setBackgroundColor([
+                value.r / 255.0,
+                value.g / 255.0,
+                value.b / 255.0,
+            ]);
+        });
         gui.add(settings, "atomSpread", 0.01, 8.0).onChange(value => {
             self.atomSpread = value;
             self.updateScene(self.currentSceneAgents);

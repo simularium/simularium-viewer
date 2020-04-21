@@ -130,6 +130,9 @@ class MoleculeRenderer {
             aofalloff2: 150,
             atomBeginDistance: 150.0,
             chainBeginDistance: 225.0,
+            bghueoffset: 1,
+            bgchromaoffset: 0,
+            bgluminanceoffset: 0.2,
         };
         var self = this;
         gui.add(settings, "atomRadius", 0.01, 10.0).onChange(value => {
@@ -165,6 +168,16 @@ class MoleculeRenderer {
         });
         gui.add(settings, "chainBeginDistance", 0.0, 300.0).onChange(value => {
             self.compositePass.pass.material.uniforms.chainBeginDistance.value = value;
+        });
+
+        gui.add(settings, "bghueoffset", 0.0, 1.0).onChange(value => {
+            self.compositePass.pass.material.uniforms.bgHCLoffset.value.x = value;
+        });
+        gui.add(settings, "bgchromaoffset", 0.0, 1.0).onChange(value => {
+            self.compositePass.pass.material.uniforms.bgHCLoffset.value.y = value;
+        });
+        gui.add(settings, "bgluminanceoffset", 0.0, 1.0).onChange(value => {
+            self.compositePass.pass.material.uniforms.bgHCLoffset.value.z = value;
         });
     }
 
