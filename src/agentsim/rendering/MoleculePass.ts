@@ -38,8 +38,10 @@ class MoleculePass {
     public geometry: BufferGeometry;
     public agentMeshGroup: Group;
     public agentFiberGroup: Group;
+    private showAtoms: boolean;
 
     public constructor(n) {
+        this.showAtoms = false;
         this.agentMeshGroup = new Group();
         this.agentFiberGroup = new Group();
         this.geometry = new BufferGeometry();
@@ -96,6 +98,10 @@ class MoleculePass {
     public setMeshGroups(agentMeshGroup: Group, agentFiberGroup: Group): void {
         this.agentMeshGroup = agentMeshGroup;
         this.agentFiberGroup = agentFiberGroup;
+    }
+
+    public setShowAtoms(show: boolean): void {
+        this.showAtoms = show;
     }
 
     public update(positions, typeIds, instanceIds, numVertices): void {
@@ -165,44 +171,41 @@ class MoleculePass {
         this.positionMaterialMesh.uniforms.projectionMatrix.value =
             camera.projectionMatrix;
 
-        ///////////////////////////////
-        ///////////////////////////////
-        this.particles.visible = false;
-        ///////////////////////////////
-        ///////////////////////////////
+        if (!this.showAtoms) {
+            const meshScene = new Scene();
+            meshScene.add(this.agentMeshGroup);
+            const prevVis = this.agentMeshGroup.visible;
+            this.agentMeshGroup.visible = true;
 
-        const meshScene = new Scene();
-        meshScene.add(this.agentMeshGroup);
-        const prevVis = this.agentMeshGroup.visible;
-        this.agentMeshGroup.visible = true;
+            // TODO : MRT
+            renderer.setRenderTarget(colorBuffer);
+            meshScene.overrideMaterial = this.colorMaterialMesh;
+            renderer.render(meshScene, camera);
 
-        // TODO : MRT
-        renderer.setRenderTarget(colorBuffer);
-        this.particles.material = this.colorMaterial;
-        renderer.render(this.scene, camera);
-        meshScene.overrideMaterial = this.colorMaterialMesh;
-        renderer.autoClear = false;
-        renderer.render(meshScene, camera);
-        renderer.autoClear = true;
+            renderer.setRenderTarget(normalBuffer);
+            meshScene.overrideMaterial = this.normalMaterialMesh;
+            renderer.render(meshScene, camera);
 
-        renderer.setRenderTarget(normalBuffer);
-        this.particles.material = this.normalMaterial;
-        renderer.render(this.scene, camera);
-        meshScene.overrideMaterial = this.normalMaterialMesh;
-        renderer.autoClear = false;
-        renderer.render(meshScene, camera);
-        renderer.autoClear = true;
+            renderer.setRenderTarget(positionBuffer);
+            meshScene.overrideMaterial = this.positionMaterialMesh;
+            renderer.render(meshScene, camera);
 
-        renderer.setRenderTarget(positionBuffer);
-        this.particles.material = this.positionMaterial;
-        renderer.render(this.scene, camera);
-        meshScene.overrideMaterial = this.positionMaterialMesh;
-        renderer.autoClear = false;
-        renderer.render(meshScene, camera);
-        renderer.autoClear = true;
+            this.agentMeshGroup.visible = prevVis;
+            meshScene.overrideMaterial = null;
+        } else {
+            // TODO : MRT
+            renderer.setRenderTarget(colorBuffer);
+            this.particles.material = this.colorMaterial;
+            renderer.render(this.scene, camera);
 
-        this.agentMeshGroup.visible = prevVis;
-        meshScene.overrideMaterial = null;
+            renderer.setRenderTarget(normalBuffer);
+            this.particles.material = this.normalMaterial;
+            renderer.render(this.scene, camera);
+
+            renderer.setRenderTarget(positionBuffer);
+            this.particles.material = this.positionMaterial;
+            renderer.render(this.scene, camera);
+        }
 
         renderer.setClearColor(c, a);
     }

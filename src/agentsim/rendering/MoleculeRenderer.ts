@@ -139,8 +139,12 @@ class MoleculeRenderer {
             bghueoffset: 1,
             bgchromaoffset: 0,
             bgluminanceoffset: 0.2,
+            showAtoms: false,
         };
         var self = this;
+        gui.add(settings, "showAtoms").onChange(value => {
+            self.gbufferPass.setShowAtoms(value);
+        });
         gui.add(settings, "atomRadius", 0.01, 10.0).onChange(value => {
             self.gbufferPass.setAtomRadius(value);
         });
@@ -151,10 +155,10 @@ class MoleculeRenderer {
             self.blur1Pass.setRadius(value);
         });
         gui.add(settings, "aothreshold1", 0.01, 300.0).onChange(value => {
-            self.ssao1Pass.pass.material.uniforms.ssao_threshold.value = value;
+            self.ssao1Pass.pass.material.uniforms.ssaoThreshold.value = value;
         });
         gui.add(settings, "aofalloff1", 0.01, 300.0).onChange(value => {
-            self.ssao1Pass.pass.material.uniforms.ssao_falloff.value = value;
+            self.ssao1Pass.pass.material.uniforms.ssaoFalloff.value = value;
         });
         gui.add(settings, "aoradius2", 0.01, 10.0).onChange(value => {
             self.ssao2Pass.pass.material.uniforms.radius.value = value;
@@ -163,10 +167,10 @@ class MoleculeRenderer {
             self.blur2Pass.setRadius(value);
         });
         gui.add(settings, "aothreshold2", 0.01, 300.0).onChange(value => {
-            self.ssao2Pass.pass.material.uniforms.ssao_threshold.value = value;
+            self.ssao2Pass.pass.material.uniforms.ssaoThreshold.value = value;
         });
         gui.add(settings, "aofalloff2", 0.01, 300.0).onChange(value => {
-            self.ssao2Pass.pass.material.uniforms.ssao_falloff.value = value;
+            self.ssao2Pass.pass.material.uniforms.ssaoFalloff.value = value;
         });
 
         gui.add(settings, "atomBeginDistance", 0.0, 300.0).onChange(value => {
@@ -258,6 +262,10 @@ class MoleculeRenderer {
         this.drawBufferPass.resize(x, y);
     }
 
+    public setShowAtoms(show): void {
+        this.gbufferPass.setShowAtoms(show);
+    }
+
     public render(renderer, camera, target): void {
         // DEPTH HANDLING STRATEGY:
         // gbuffer pass writes gl_FragDepth
@@ -325,6 +333,7 @@ class MoleculeRenderer {
             this.colorBuffer
         );
 
+        // DEBUGGING some of the intermediate buffers:
         //this.drawBufferPass.setScale(1.0 / 34.0, 1.0 / 6.0, 0, 1);
         //this.drawBufferPass.render(renderer, target, this.colorBuffer);
         //this.drawBufferPass.render(renderer, target, this.ssaoBuffer);
