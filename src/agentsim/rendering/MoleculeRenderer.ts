@@ -325,6 +325,7 @@ class MoleculeRenderer {
             this.colorBuffer
         );
 
+        //this.drawBufferPass.setScale(1.0 / 34.0, 1.0 / 6.0, 0, 1);
         //this.drawBufferPass.render(renderer, target, this.colorBuffer);
         //this.drawBufferPass.render(renderer, target, this.ssaoBuffer);
         //this.drawBufferPass.render(renderer, target, this.ssaoBuffer2);

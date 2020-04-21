@@ -81,8 +81,10 @@ function onAgentMeshBeforeRender(
     if (!u) {
         return;
     }
-    material.uniforms.IN_typeId.value = u.materialType;
-    material.uniforms.IN_instanceId.value = u.index;
+    //console.log(u.materialType);
+    material.uniforms.IN_typeId.value = Number(u.materialType);
+    material.uniforms.IN_instanceId.value = Number(u.index);
+    material.uniformsNeedUpdate = true;
 }
 
 interface HSL {
@@ -623,6 +625,7 @@ class VisGeometry {
         if (this.renderStyle == RenderStyle.GENERIC) {
             this.renderer.render(this.scene, this.camera);
         } else {
+            // group will be added to a differnet scene, and thus removed from this scene
             this.moleculeRenderer.setMeshGroups(
                 this.agentMeshGroup,
                 this.agentFiberGroup
@@ -630,6 +633,7 @@ class VisGeometry {
             this.moleculeRenderer.setHighlightInstance(this.followObjectIndex);
             this.moleculeRenderer.render(this.renderer, this.camera, null);
             this.renderer.autoClear = false;
+            // restore mesh group back to this.scene
             this.scene.add(this.agentMeshGroup);
             this.agentMeshGroup.visible = false;
             this.renderer.render(this.scene, this.camera);
@@ -811,6 +815,9 @@ class VisGeometry {
         }
 
         let matArray = isHighlighted ? this.materials : this.desatMaterials;
+        // console.log(
+        //     "" + Number(index) + " :: " + (Number(index) % matArray.length)
+        // );
         return matArray[Number(index) % matArray.length];
     }
 
@@ -983,6 +990,7 @@ class VisGeometry {
                     : -1;
 
                 if (!runtimeMesh.userData) {
+                    // TODO can we ever get here?
                     console.log("runtimemesh has no userdata in updateScene");
                     runtimeMesh.userData = {
                         active: true,
