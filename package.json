@@ -59,7 +59,6 @@
     },
     "dependencies": {
         "dat.gui": "^0.7.6",
-        "d3-color": "^1.4.0",
         "js-logger": "^1.6.0",
         "react": "~16.9.0",
         "react-dom": "^16.9.0",
