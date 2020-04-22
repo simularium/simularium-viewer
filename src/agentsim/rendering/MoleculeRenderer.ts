@@ -139,7 +139,7 @@ class MoleculeRenderer {
             bghueoffset: 1,
             bgchromaoffset: 0,
             bgluminanceoffset: 0.2,
-            showAtoms: false,
+            showAtoms: this.gbufferPass.getShowAtoms(),
         };
         var self = this;
         gui.add(settings, "showAtoms").onChange(value => {
@@ -272,7 +272,7 @@ class MoleculeRenderer {
         // depth buffer should be not written to or tested again after this.
 
         // 1 draw molecules into G buffers
-        // pick out mesh group and fiber group from visgeometry scene
+        // TODO: MRT
         this.gbufferPass.render(
             renderer,
             camera,

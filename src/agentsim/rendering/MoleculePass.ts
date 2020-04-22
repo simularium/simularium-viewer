@@ -103,6 +103,9 @@ class MoleculePass {
     public setShowAtoms(show: boolean): void {
         this.showAtoms = show;
     }
+    public getShowAtoms(): boolean {
+        return this.showAtoms;
+    }
 
     public update(positions, typeIds, instanceIds, numVertices): void {
         // update positions, and reset geoemtry in the particles object.

@@ -817,9 +817,6 @@ class VisGeometry {
         }
 
         let matArray = isHighlighted ? this.materials : this.desatMaterials;
-        // console.log(
-        //     "" + Number(index) + " :: " + (Number(index) % matArray.length)
-        // );
         return matArray[Number(index) % matArray.length];
     }
 
@@ -1060,7 +1057,6 @@ class VisGeometry {
                             agentData.z +
                             (Math.random() - 0.5) * this.atomSpread;
                         buf[(i * this.numAtomsPerAgent + k) * 4 + 3] = 1.0;
-                        //                    typeids[i * this.numAtomsPerAgent + k] = typeId;
                         typeids[i * this.numAtomsPerAgent + k] = materialType;
                         instanceids[i * this.numAtomsPerAgent + k] = i;
                     }
@@ -1241,13 +1237,6 @@ class VisGeometry {
 
         return runtimeMesh;
     }
-
-    // private addAgentMeshToScene(mesh) {
-    //     this.agentMeshGroup.add(mesh);
-    //     this.gbufferPositionGroup.add(mesh);
-    //     this.gbufferNormalGroup.add(mesh);
-    //     this.gbufferColorGroup.add(mesh);
-    // }
 
     public assignMaterial(
         runtimeMesh: Object3D,
