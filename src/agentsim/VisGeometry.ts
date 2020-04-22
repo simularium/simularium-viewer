@@ -299,7 +299,6 @@ class VisGeometry {
             this.renderStyle === RenderStyle.GENERIC
                 ? RenderStyle.MOLECULAR
                 : RenderStyle.GENERIC;
-        //this.agentMeshGroup.visible = this.renderStyle === RenderStyle.GENERIC;
         this.updateScene(this.currentSceneAgents);
     }
 
