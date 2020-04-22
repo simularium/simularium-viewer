@@ -25,8 +25,8 @@ import {
 // 4. outline shader over color buffer
 //
 
-// buffer of points to be drawn as sprites
-class MoleculePass {
+// draw positions, normals, and instance and type ids of objects
+class GBufferPass {
     public colorMaterial: ShaderMaterial;
     public normalMaterial: ShaderMaterial;
     public positionMaterial: ShaderMaterial;
@@ -219,4 +219,4 @@ class MoleculePass {
     }
 }
 
-export default MoleculePass;
+export default GBufferPass;

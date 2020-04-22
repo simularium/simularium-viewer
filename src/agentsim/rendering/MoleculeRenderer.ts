@@ -1,5 +1,5 @@
 import SSAO1Pass from "./SSAO";
-import MoleculePass from "./MoleculePass";
+import GBufferPass from "./GBufferPass";
 import BlurPass from "./GaussianBlur";
 import CompositePass from "./CompositePass";
 import ContourPass from "./ContourPass";
@@ -14,7 +14,7 @@ import {
 } from "three";
 
 class MoleculeRenderer {
-    public gbufferPass: MoleculePass;
+    public gbufferPass: GBufferPass;
     public ssao1Pass: SSAO1Pass;
     public ssao2Pass: SSAO1Pass;
     public blur1Pass: BlurPass;
@@ -32,7 +32,7 @@ class MoleculeRenderer {
     public ssaoBufferBlurred2: WebGLRenderTarget;
 
     public constructor() {
-        this.gbufferPass = new MoleculePass(1);
+        this.gbufferPass = new GBufferPass(1);
         // radius, threshold, falloff in view space coordinates.
         this.ssao1Pass = new SSAO1Pass(4.5, 150, 150);
         this.ssao2Pass = new SSAO1Pass(4.5, 150, 150);
