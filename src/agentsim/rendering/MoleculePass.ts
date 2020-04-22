@@ -173,9 +173,13 @@ class MoleculePass {
 
         if (!this.showAtoms) {
             const meshScene = new Scene();
+            // note that these groups will have to be restored back to the scene they lived in
             meshScene.add(this.agentMeshGroup);
-            const prevVis = this.agentMeshGroup.visible;
+            meshScene.add(this.agentFiberGroup);
+            const prevVisMesh = this.agentMeshGroup.visible;
             this.agentMeshGroup.visible = true;
+            const prevVisFiber = this.agentFiberGroup.visible;
+            this.agentFiberGroup.visible = true;
 
             // TODO : MRT
             renderer.setRenderTarget(colorBuffer);
@@ -190,7 +194,8 @@ class MoleculePass {
             meshScene.overrideMaterial = this.positionMaterialMesh;
             renderer.render(meshScene, camera);
 
-            this.agentMeshGroup.visible = prevVis;
+            this.agentMeshGroup.visible = prevVisMesh;
+            this.agentFiberGroup.visible = prevVisFiber;
             meshScene.overrideMaterial = null;
         } else {
             // TODO : MRT

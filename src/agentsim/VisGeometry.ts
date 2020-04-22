@@ -625,7 +625,7 @@ class VisGeometry {
         if (this.renderStyle == RenderStyle.GENERIC) {
             this.renderer.render(this.scene, this.camera);
         } else {
-            // group will be added to a differnet scene, and thus removed from this scene
+            // group will be added to a different scene, and thus removed from this scene
             this.moleculeRenderer.setMeshGroups(
                 this.agentMeshGroup,
                 this.agentFiberGroup
@@ -635,9 +635,12 @@ class VisGeometry {
             this.renderer.autoClear = false;
             // restore mesh group back to this.scene
             this.scene.add(this.agentMeshGroup);
+            this.scene.add(this.agentFiberGroup);
             this.agentMeshGroup.visible = false;
+            this.agentFiberGroup.visible = false;
             this.renderer.render(this.scene, this.camera);
             this.agentMeshGroup.visible = true;
+            this.agentFiberGroup.visible = true;
             this.renderer.autoClear = true;
         }
     }
