@@ -60,6 +60,33 @@ function lerp(x0: number, x1: number, alpha: number): number {
     return x0 + (x1 - x0) * alpha;
 }
 
+function onAgentMeshBeforeRender(
+    renderer,
+    scene,
+    camera,
+    geometry,
+    material,
+    group
+): void {
+    if (!material.uniforms) {
+        return;
+    }
+    if (!material.uniforms.IN_typeId) {
+        return;
+    }
+    if (!material.uniforms.IN_instanceId) {
+        return;
+    }
+    const u = this.userData;
+    if (!u) {
+        return;
+    }
+    //console.log(u.materialType);
+    material.uniforms.IN_typeId.value = Number(u.materialType);
+    material.uniforms.IN_instanceId.value = Number(u.index);
+    material.uniformsNeedUpdate = true;
+}
+
 interface HSL {
     h: number;
     s: number;
@@ -257,7 +284,7 @@ class VisGeometry {
             self.atomSpread = value;
             self.updateScene(self.currentSceneAgents);
         });
-        gui.add(settings, "numAtoms", 1, 20)
+        gui.add(settings, "numAtoms", 1, 80)
             .step(1)
             .onChange(value => {
                 self.numAtomsPerAgent = Math.floor(value);
@@ -272,7 +299,6 @@ class VisGeometry {
             this.renderStyle === RenderStyle.GENERIC
                 ? RenderStyle.MOLECULAR
                 : RenderStyle.GENERIC;
-        this.agentMeshGroup.visible = this.renderStyle === RenderStyle.GENERIC;
         this.updateScene(this.currentSceneAgents);
     }
 
@@ -598,10 +624,22 @@ class VisGeometry {
         if (this.renderStyle == RenderStyle.GENERIC) {
             this.renderer.render(this.scene, this.camera);
         } else {
+            // group will be added to a different scene, and thus removed from this scene
+            this.moleculeRenderer.setMeshGroups(
+                this.agentMeshGroup,
+                this.agentFiberGroup
+            );
             this.moleculeRenderer.setHighlightInstance(this.followObjectIndex);
             this.moleculeRenderer.render(this.renderer, this.camera, null);
             this.renderer.autoClear = false;
+            // restore mesh group back to this.scene
+            this.scene.add(this.agentMeshGroup);
+            this.scene.add(this.agentFiberGroup);
+            this.agentMeshGroup.visible = false;
+            this.agentFiberGroup.visible = false;
             this.renderer.render(this.scene, this.camera);
+            this.agentMeshGroup.visible = true;
+            this.agentFiberGroup.visible = true;
             this.renderer.autoClear = true;
         }
     }
@@ -951,6 +989,8 @@ class VisGeometry {
                     : -1;
 
                 if (!runtimeMesh.userData) {
+                    // TODO can we ever get here?
+                    console.log("runtimemesh has no userdata in updateScene");
                     runtimeMesh.userData = {
                         active: true,
                         baseMaterial: this.getMaterial(materialType, typeId),
@@ -1005,17 +1045,21 @@ class VisGeometry {
                 runtimeMesh.scale.y = agentData.cr * scale;
                 runtimeMesh.scale.z = agentData.cr * scale;
 
-                for (let k = 0; k < this.numAtomsPerAgent; ++k) {
-                    buf[(i * this.numAtomsPerAgent + k) * 4 + 0] =
-                        agentData.x + (Math.random() - 0.5) * this.atomSpread;
-                    buf[(i * this.numAtomsPerAgent + k) * 4 + 1] =
-                        agentData.y + (Math.random() - 0.5) * this.atomSpread;
-                    buf[(i * this.numAtomsPerAgent + k) * 4 + 2] =
-                        agentData.z + (Math.random() - 0.5) * this.atomSpread;
-                    buf[(i * this.numAtomsPerAgent + k) * 4 + 3] = 1.0;
-                    //                    typeids[i * this.numAtomsPerAgent + k] = typeId;
-                    typeids[i * this.numAtomsPerAgent + k] = materialType;
-                    instanceids[i * this.numAtomsPerAgent + k] = i;
+                if (this.renderStyle === RenderStyle.MOLECULAR) {
+                    for (let k = 0; k < this.numAtomsPerAgent; ++k) {
+                        buf[(i * this.numAtomsPerAgent + k) * 4 + 0] =
+                            agentData.x +
+                            (Math.random() - 0.5) * this.atomSpread;
+                        buf[(i * this.numAtomsPerAgent + k) * 4 + 1] =
+                            agentData.y +
+                            (Math.random() - 0.5) * this.atomSpread;
+                        buf[(i * this.numAtomsPerAgent + k) * 4 + 2] =
+                            agentData.z +
+                            (Math.random() - 0.5) * this.atomSpread;
+                        buf[(i * this.numAtomsPerAgent + k) * 4 + 3] = 1.0;
+                        typeids[i * this.numAtomsPerAgent + k] = materialType;
+                        instanceids[i * this.numAtomsPerAgent + k] = i;
+                    }
                 }
 
                 const path = this.findPathForAgentIndex(i);
@@ -1089,14 +1133,15 @@ class VisGeometry {
             }
         });
 
-        this.moleculeRenderer.updateMolecules(
-            buf,
-            typeids,
-            instanceids,
-            agents.length,
-            this.numAtomsPerAgent
-        );
-
+        if (this.renderStyle === RenderStyle.MOLECULAR) {
+            this.moleculeRenderer.updateMolecules(
+                buf,
+                typeids,
+                instanceids,
+                agents.length,
+                this.numAtomsPerAgent
+            );
+        }
         this.hideUnusedFibers(fiberIndex);
     }
 
@@ -1203,10 +1248,15 @@ class VisGeometry {
 
         if (runtimeMesh instanceof Mesh) {
             runtimeMesh.material = material;
+            runtimeMesh.onBeforeRender = onAgentMeshBeforeRender.bind(
+                runtimeMesh
+            );
         } else {
             runtimeMesh.traverse(child => {
                 if (child instanceof Mesh) {
                     child.material = material;
+                    child.onBeforeRender = onAgentMeshBeforeRender.bind(child);
+                    child.userData = runtimeMesh.userData;
                 }
             });
         }

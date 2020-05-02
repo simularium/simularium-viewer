@@ -1,14 +1,20 @@
 import SSAO1Pass from "./SSAO";
-import MoleculePass from "./MoleculePass";
+import GBufferPass from "./GBufferPass";
 import BlurPass from "./GaussianBlur";
 import CompositePass from "./CompositePass";
 import ContourPass from "./ContourPass";
 import DrawBufferPass from "./DrawBufferPass";
 
-import { FloatType, NearestFilter, RGBAFormat, WebGLRenderTarget } from "three";
+import {
+    FloatType,
+    NearestFilter,
+    RGBAFormat,
+    WebGLRenderTarget,
+    Group,
+} from "three";
 
 class MoleculeRenderer {
-    public gbufferPass: MoleculePass;
+    public gbufferPass: GBufferPass;
     public ssao1Pass: SSAO1Pass;
     public ssao2Pass: SSAO1Pass;
     public blur1Pass: BlurPass;
@@ -26,7 +32,7 @@ class MoleculeRenderer {
     public ssaoBufferBlurred2: WebGLRenderTarget;
 
     public constructor() {
-        this.gbufferPass = new MoleculePass(1);
+        this.gbufferPass = new GBufferPass(1);
         // radius, threshold, falloff in view space coordinates.
         this.ssao1Pass = new SSAO1Pass(4.5, 150, 150);
         this.ssao2Pass = new SSAO1Pass(4.5, 150, 150);
@@ -133,8 +139,12 @@ class MoleculeRenderer {
             bghueoffset: 1,
             bgchromaoffset: 0,
             bgluminanceoffset: 0.2,
+            showAtoms: this.gbufferPass.getShowAtoms(),
         };
         var self = this;
+        gui.add(settings, "showAtoms").onChange(value => {
+            self.gbufferPass.setShowAtoms(value);
+        });
         gui.add(settings, "atomRadius", 0.01, 10.0).onChange(value => {
             self.gbufferPass.setAtomRadius(value);
         });
@@ -145,10 +155,10 @@ class MoleculeRenderer {
             self.blur1Pass.setRadius(value);
         });
         gui.add(settings, "aothreshold1", 0.01, 300.0).onChange(value => {
-            self.ssao1Pass.pass.material.uniforms.ssao_threshold.value = value;
+            self.ssao1Pass.pass.material.uniforms.ssaoThreshold.value = value;
         });
         gui.add(settings, "aofalloff1", 0.01, 300.0).onChange(value => {
-            self.ssao1Pass.pass.material.uniforms.ssao_falloff.value = value;
+            self.ssao1Pass.pass.material.uniforms.ssaoFalloff.value = value;
         });
         gui.add(settings, "aoradius2", 0.01, 10.0).onChange(value => {
             self.ssao2Pass.pass.material.uniforms.radius.value = value;
@@ -157,10 +167,10 @@ class MoleculeRenderer {
             self.blur2Pass.setRadius(value);
         });
         gui.add(settings, "aothreshold2", 0.01, 300.0).onChange(value => {
-            self.ssao2Pass.pass.material.uniforms.ssao_threshold.value = value;
+            self.ssao2Pass.pass.material.uniforms.ssaoThreshold.value = value;
         });
         gui.add(settings, "aofalloff2", 0.01, 300.0).onChange(value => {
-            self.ssao2Pass.pass.material.uniforms.ssao_falloff.value = value;
+            self.ssao2Pass.pass.material.uniforms.ssaoFalloff.value = value;
         });
 
         gui.add(settings, "atomBeginDistance", 0.0, 300.0).onChange(value => {
@@ -226,6 +236,10 @@ class MoleculeRenderer {
         this.gbufferPass.createMoleculeBuffer(n);
     }
 
+    public setMeshGroups(agentMeshGroup: Group, agentFiberGroup: Group): void {
+        this.gbufferPass.setMeshGroups(agentMeshGroup, agentFiberGroup);
+    }
+
     public resize(x, y): void {
         this.colorBuffer.setSize(x, y);
         // TODO : MRT AND SHARE DEPTH BUFFER
@@ -248,14 +262,17 @@ class MoleculeRenderer {
         this.drawBufferPass.resize(x, y);
     }
 
+    public setShowAtoms(show): void {
+        this.gbufferPass.setShowAtoms(show);
+    }
+
     public render(renderer, camera, target): void {
-        // TODO : DEPTH HANDLING STRATEGY:
+        // DEPTH HANDLING STRATEGY:
         // gbuffer pass writes gl_FragDepth
         // depth buffer should be not written to or tested again after this.
-        // depth buffer should be maintained and transferred to final render pass so that other standard geometry can be drawn
 
         // 1 draw molecules into G buffers
-        // TODO : MRT
+        // TODO: MRT
         this.gbufferPass.render(
             renderer,
             camera,
@@ -316,6 +333,8 @@ class MoleculeRenderer {
             this.colorBuffer
         );
 
+        // DEBUGGING some of the intermediate buffers:
+        //this.drawBufferPass.setScale(1.0 / 34.0, 1.0 / 6.0, 0, 1);
         //this.drawBufferPass.render(renderer, target, this.colorBuffer);
         //this.drawBufferPass.render(renderer, target, this.ssaoBuffer);
         //this.drawBufferPass.render(renderer, target, this.ssaoBuffer2);
