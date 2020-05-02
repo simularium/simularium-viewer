@@ -1,5 +1,7 @@
 import * as React from "react";
 import jsLogger from "js-logger";
+import Stats from "three/examples/jsm/libs/stats.module.js";
+
 import AgentSimController from "../controller";
 
 import { forOwn } from "lodash";
@@ -79,6 +81,8 @@ class Viewport extends React.Component<ViewportProps> {
     private animationRequestID: number;
     private lastRenderedAgentTime: number;
 
+    private stats: Stats;
+
     public static defaultProps = {
         backgroundColor: [0.121569, 0.13333, 0.17647],
         height: 800,
@@ -147,6 +151,8 @@ class Viewport extends React.Component<ViewportProps> {
         this.lastRenderTime = Date.now();
         this.startTime = Date.now();
         this.onPickObject = this.onPickObject.bind(this);
+        this.stats = new Stats();
+        this.stats.showPanel(1);
 
         this.handlers = {
             contextmenu: this.onPickObject,
@@ -167,6 +173,10 @@ class Viewport extends React.Component<ViewportProps> {
         } = this.props;
         const { netConnection } = agentSimController;
         this.visGeometry.reparent(this.vdomRef.current);
+        if (this.props.loggerLevel === "debug") {
+            this.stats.dom.style.position = "absolute";
+            this.vdomRef.current.appendChild(this.stats.dom);
+        }
 
         netConnection.onTrajectoryFileInfoArrive = (
             msg: TrajectoryFileInfo
@@ -240,12 +250,11 @@ class Viewport extends React.Component<ViewportProps> {
     };
 
     private configDragAndDrop = () => {
-        const trajectoryFileInfo =
-          this.props.agentSimController.dragAndDropFileInfo();
+        const trajectoryFileInfo = this.props.agentSimController.dragAndDropFileInfo();
 
         const { netConnection } = this.props.agentSimController;
         netConnection.onTrajectoryFileInfoArrive(trajectoryFileInfo);
-    }
+    };
 
     private clearCache = () => {
         this.props.agentSimController.disableNetworkCommands();
@@ -413,8 +422,9 @@ class Viewport extends React.Component<ViewportProps> {
             if (!visData.atLatestFrame() && !agentSimController.paused()) {
                 visData.gotoNextFrame();
             }
-
+            this.stats.begin();
             this.visGeometry.render(totalElapsedTime);
+            this.stats.end();
             this.lastRenderTime = Date.now();
         }
 
@@ -432,6 +442,7 @@ class Viewport extends React.Component<ViewportProps> {
                 style={{
                     height: height,
                     width: width,
+                    position: "relative",
                 }}
                 ref={this.vdomRef}
             ></div>
