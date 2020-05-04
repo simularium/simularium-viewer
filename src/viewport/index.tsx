@@ -174,8 +174,10 @@ class Viewport extends React.Component<ViewportProps> {
         const { netConnection } = agentSimController;
         this.visGeometry.reparent(this.vdomRef.current);
         if (this.props.loggerLevel === "debug") {
-            this.stats.dom.style.position = "absolute";
-            this.vdomRef.current.appendChild(this.stats.dom);
+            if (this.vdomRef && this.vdomRef.current) {
+                this.stats.dom.style.position = "absolute";
+                this.vdomRef.current.appendChild(this.stats.dom);
+            }
         }
 
         netConnection.onTrajectoryFileInfoArrive = (

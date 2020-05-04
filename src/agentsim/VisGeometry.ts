@@ -61,6 +61,7 @@ function lerp(x0: number, x1: number, alpha: number): number {
 }
 
 function onAgentMeshBeforeRender(
+    this: Object3D,
     renderer,
     scene,
     camera,
