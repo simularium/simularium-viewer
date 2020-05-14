@@ -60,6 +60,7 @@
     "dependencies": {
         "dat.gui": "^0.7.6",
         "js-logger": "^1.6.0",
+        "parse-pdb": "^1.0.0",
         "react": "~16.9.0",
         "react-dom": "^16.9.0",
         "three": "^0.110.0"
