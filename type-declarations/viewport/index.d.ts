@@ -30,6 +30,7 @@ declare class Viewport extends React.Component<ViewportProps> {
     private hit;
     private animationRequestID;
     private lastRenderedAgentTime;
+    private stats;
     static defaultProps: {
         backgroundColor: number[];
         height: number;

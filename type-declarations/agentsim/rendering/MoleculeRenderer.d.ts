@@ -1,12 +1,12 @@
 import SSAO1Pass from "./SSAO";
-import MoleculePass from "./MoleculePass";
+import GBufferPass from "./GBufferPass";
 import BlurPass from "./GaussianBlur";
 import CompositePass from "./CompositePass";
 import ContourPass from "./ContourPass";
 import DrawBufferPass from "./DrawBufferPass";
-import { WebGLRenderTarget } from "three";
+import { WebGLRenderTarget, Group } from "three";
 declare class MoleculeRenderer {
-    gbufferPass: MoleculePass;
+    gbufferPass: GBufferPass;
     ssao1Pass: SSAO1Pass;
     ssao2Pass: SSAO1Pass;
     blur1Pass: BlurPass;
@@ -30,7 +30,9 @@ declare class MoleculeRenderer {
     updateMolecules(positions: any, typeids: any, instanceids: any, numAgents: any, numAtomsPerAgent: any): void;
     updateColors(numColors: any, colorsData: any): void;
     createMoleculeBuffer(n: any): void;
+    setMeshGroups(agentMeshGroup: Group, agentFiberGroup: Group): void;
     resize(x: any, y: any): void;
+    setShowAtoms(show: any): void;
     render(renderer: any, camera: any, target: any): void;
 }
 export default MoleculeRenderer;
