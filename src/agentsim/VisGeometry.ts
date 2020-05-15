@@ -162,9 +162,6 @@ class VisGeometry {
     public agentPathGroup: Group;
     private raycaster: Raycaster;
     private pdb?: PDBModel;
-    private pdbX: number;
-    private pdbY: number;
-    private pdbZ: number;
 
     private errorMesh: Mesh;
 
@@ -190,9 +187,6 @@ class VisGeometry {
 
         // lazy init
         this.pdb = undefined;
-        this.pdbX = 0;
-        this.pdbY = 0;
-        this.pdbZ = 0;
 
         // will store data for all agents that are drawing paths
         this.paths = [];
@@ -286,9 +280,6 @@ class VisGeometry {
                 g: this.backgroundColor.g * 255,
                 b: this.backgroundColor.b * 255,
             },
-            pdbX: this.pdbX,
-            pdbY: this.pdbY,
-            pdbZ: this.pdbZ,
         };
         var self = this;
         gui.addColor(settings, "bgcolor").onChange(value => {
@@ -297,18 +288,6 @@ class VisGeometry {
                 value.g / 255.0,
                 value.b / 255.0,
             ]);
-        });
-        gui.add(settings, "pdbX", -3.14159, 3.14159).onChange(value => {
-            self.pdbX = value;
-            self.updateScene(self.currentSceneAgents);
-        });
-        gui.add(settings, "pdbY", -3.14159, 3.14159).onChange(value => {
-            self.pdbY = value;
-            self.updateScene(self.currentSceneAgents);
-        });
-        gui.add(settings, "pdbZ", -3.14159, 3.14159).onChange(value => {
-            self.pdbZ = value;
-            self.updateScene(self.currentSceneAgents);
         });
         gui.add(settings, "atomSpread", 0.01, 8.0).onChange(value => {
             self.atomSpread = value;
@@ -1013,6 +992,9 @@ class VisGeometry {
         const typeids = new Float32Array(agents.length * numAtoms);
         const instanceids = new Float32Array(agents.length * numAtoms);
 
+        // temp vector to hold some calculations
+        const p = new Vector3();
+
         agents.forEach((agentData, i) => {
             const visType = agentData["vis-type"];
             const typeId = agentData.type;
@@ -1083,21 +1065,23 @@ class VisGeometry {
                 runtimeMesh.scale.y = agentData.cr * scale;
                 runtimeMesh.scale.z = agentData.cr * scale;
 
+                // need to translate rotate scale each object.
+                // buffer of mat4x4s per agent?
+
                 if (this.renderStyle === RenderStyle.MOLECULAR) {
                     if (this.pdb && this.pdb.pdb) {
-                        //const mrot = new Matrix4().makeRotationFromEuler(runtimeMesh.rotation);
-                        const p = new Vector3();
                         for (let k = 0; k < numAtoms; ++k) {
+                            // flip handedness to match previous obj files.
                             p.set(
-                                this.pdb.pdb.atoms[k].x / 10.0,
+                                -this.pdb.pdb.atoms[k].x / 10.0,
                                 this.pdb.pdb.atoms[k].y / 10.0,
-                                this.pdb.pdb.atoms[k].z / 10.0
+                                -this.pdb.pdb.atoms[k].z / 10.0
                             );
                             p.applyEuler(
                                 new Euler(
-                                    agentData.xrot + Math.PI, //this.pdbX,
-                                    agentData.yrot, // + this.pdbY,
-                                    agentData.zrot + Math.PI * 0.5 // + this.pdbZ
+                                    agentData.xrot,
+                                    agentData.yrot,
+                                    agentData.zrot
                                 )
                             );
                             p.add(runtimeMesh.position);
