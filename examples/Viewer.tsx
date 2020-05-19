@@ -1,6 +1,7 @@
 import React from "react";
 
 import AgentVizViewer, { NetConnection, AgentSimController } from "../dist";
+import { Orchestrator } from "../dist";
 import "./style.css";
 import { CLIENT_RENEG_WINDOW } from "tls";
 
@@ -30,6 +31,17 @@ const agentSim = new AgentSimController({
 
 let currentFrame = 0;
 let currentTime = 0;
+
+let orchestrator = new Orchestrator({
+  serviceAddr: "http://localhost:5000",
+});
+
+console.log(orchestrator);
+let f = orchestrator.getSimNode("test");
+f.then((nodes) => {
+  console.log(nodes);
+  orchestrator.freeNode(nodes[0], "test");
+});
 
 const intialState = {
     highlightId: -1,
