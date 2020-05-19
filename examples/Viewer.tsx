@@ -32,17 +32,6 @@ const agentSim = new AgentSimController({
 let currentFrame = 0;
 let currentTime = 0;
 
-let orchestrator = new Orchestrator({
-  serviceAddr: "http://localhost:5000",
-});
-
-console.log(orchestrator);
-let f = orchestrator.getSimNode("test");
-f.then((nodes) => {
-  console.log(nodes);
-  orchestrator.freeNode(nodes[0], "test");
-});
-
 const intialState = {
     highlightId: -1,
     pauseOn: -1,
