@@ -126,7 +126,9 @@ class VisGeometry {
     public pathEndColor: Color;
     public visGeomMap: Map<number, string>;
     public meshRegistry: Map<string | number, Mesh>;
+    public pdbRegistry: Map<string | number, PDBModel>;
     public meshLoadAttempted: Map<string, boolean>;
+    public pdbLoadAttempted: Map<string, boolean>;
     public scaleMapping: Map<number, number>;
     public geomCount: number;
     public materials: Material[];
@@ -169,7 +171,9 @@ class VisGeometry {
         this.renderStyle = RenderStyle.GENERIC;
         this.visGeomMap = new Map<number, string>();
         this.meshRegistry = new Map<string | number, Mesh>();
+        this.pdbRegistry = new Map<string | number, PDBModel>();
         this.meshLoadAttempted = new Map<string, boolean>();
+        this.pdbLoadAttempted = new Map<string, boolean>();
         this.scaleMapping = new Map<number, number>();
         this.geomCount = MAX_MESHES;
         this.materials = [];
@@ -843,8 +847,22 @@ class VisGeometry {
 
         this.visGeomMap.clear();
         this.meshRegistry.clear();
+        this.pdbRegistry.clear();
         this.meshLoadAttempted.clear();
+        this.pdbLoadAttempted.clear();
         this.scaleMapping.clear();
+    }
+
+    private getPdbNameFromMeshName(meshName: string): string {
+        // arp2 arp3 actin
+        if (meshName === "arp2.obj") {
+            return "assets/arp2.pdb";
+        } else if (meshName === "arp3.obj") {
+            return "assets/arp3.pdb";
+        } else if (meshName === "actin.obj") {
+            return "assets/actin.pdb";
+        }
+        return "";
     }
 
     /**
@@ -865,6 +883,22 @@ class VisGeometry {
             this.loadObj(meshName);
             this.meshLoadAttempted.set(meshName, true);
         }
+
+        // try load pdb file also.
+        const pdbName = this.getPdbNameFromMeshName(meshName);
+        if (
+            pdbName &&
+            !this.pdbRegistry.has(pdbName) &&
+            !this.pdbLoadAttempted.get(pdbName)
+        ) {
+            const pdbmodel = new PDBModel(pdbName);
+            pdbmodel.download().then(() => {
+                this.pdbRegistry.set(pdbName, pdbmodel);
+                console.log("GOT PROMISE AFTER PDB");
+                this.logger.debug("Finished loading pdb: ", pdbName);
+            });
+            this.pdbLoadAttempted.set(pdbName, true);
+        }
     }
 
     public getGeomFromId(id: number): Mesh | null {
@@ -874,6 +908,23 @@ class VisGeometry {
                 let mesh = this.meshRegistry.get(meshName);
                 if (mesh) {
                     return mesh;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public getPdbFromId(id: number): PDBModel | null {
+        if (this.visGeomMap.has(id)) {
+            const meshName = this.visGeomMap.get(id);
+            if (meshName) {
+                const pdbName = this.getPdbNameFromMeshName(meshName);
+                if (pdbName && this.pdbRegistry.has(pdbName)) {
+                    const pdb = this.pdbRegistry.get(pdbName);
+                    if (pdb) {
+                        return pdb;
+                    }
                 }
             }
         }
@@ -1069,13 +1120,14 @@ class VisGeometry {
                 // buffer of mat4x4s per agent?
 
                 if (this.renderStyle === RenderStyle.MOLECULAR) {
-                    if (this.pdb && this.pdb.pdb) {
+                    const pdb = this.getPdbFromId(typeId);
+                    if (pdb && pdb.pdb) {
                         for (let k = 0; k < numAtoms; ++k) {
                             // flip handedness to match previous obj files.
                             p.set(
-                                -this.pdb.pdb.atoms[k].x / 10.0,
-                                this.pdb.pdb.atoms[k].y / 10.0,
-                                -this.pdb.pdb.atoms[k].z / 10.0
+                                -pdb.pdb.atoms[k].x / 10.0,
+                                pdb.pdb.atoms[k].y / 10.0,
+                                -pdb.pdb.atoms[k].z / 10.0
                             );
                             p.applyEuler(
                                 new Euler(
