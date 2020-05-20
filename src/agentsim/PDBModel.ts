@@ -16,7 +16,7 @@ class PDBModel {
         this.geometry = new BufferGeometry();
     }
 
-    public download() {
+    public download(): Promise<void> {
         const pdbRequest = new Request(this.filePath);
         const self = this;
         return fetch(pdbRequest)
@@ -31,7 +31,7 @@ class PDBModel {
             });
     }
 
-    private checkChains() {
+    private checkChains(): void {
         if (!this.pdb.chains) {
             this.pdb.chains = new Map();
         }
@@ -49,7 +49,7 @@ class PDBModel {
         }
     }
 
-    private createGPUBuffers() {
+    private createGPUBuffers(): void {
         // create gpu representation for this pdb
         this.geometry = new BufferGeometry();
         const n = this.pdb.atoms.length;

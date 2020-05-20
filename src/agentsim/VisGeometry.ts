@@ -35,7 +35,6 @@ import {
     VertexColors,
     WebGLRenderer,
     WebGLRendererParameters,
-    Matrix4,
 } from "three";
 
 import * as dat from "dat.gui";
