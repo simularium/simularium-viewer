@@ -27,7 +27,7 @@ declare class MoleculeRenderer {
     setBackgroundColor(color: any): void;
     setHighlightInstance(instance: any): void;
     hitTest(renderer: any, x: any, y: any): number;
-    updateMolecules(positions: any, typeids: any, instanceids: any, numAgents: any, numAtomsPerAgent: any): void;
+    updateMolecules(positions: any, typeids: any, instanceids: any, numAtoms: any): void;
     updateColors(numColors: any, colorsData: any): void;
     createMoleculeBuffer(n: any): void;
     setMeshGroups(agentMeshGroup: Group, agentFiberGroup: Group): void;

@@ -162,7 +162,6 @@ class VisGeometry {
     public agentFiberGroup: Group;
     public agentPathGroup: Group;
     private raycaster: Raycaster;
-    private pdb?: PDBModel;
 
     private errorMesh: Mesh;
 
@@ -187,9 +186,6 @@ class VisGeometry {
         this.colorVariant = 50;
         this.fixLightsToCamera = true;
         this.highlightedId = -1;
-
-        // lazy init
-        this.pdb = undefined;
 
         // will store data for all agents that are drawing paths
         this.paths = [];
@@ -555,11 +551,6 @@ class VisGeometry {
                 this.logger.debug("Failed to load mesh: ", error, meshName);
             }
         );
-
-        if (!this.pdb) {
-            this.pdb = new PDBModel("assets/actin.pdb");
-            this.pdb.download();
-        }
     }
 
     public resize(width, height): void {
@@ -1034,13 +1025,30 @@ class VisGeometry {
         let dx, dy, dz;
         // The agents sent over are mapped by an integer id
 
-        let numAtoms = this.numAtomsPerAgent;
-        if (this.pdb && this.pdb.pdb) {
-            numAtoms = this.pdb.pdb.atoms.length;
+        // compute size of buffers
+        // this is ugly: a new loop over all agents to add up the pdb sizes
+        // TODO Future instancing changes may obviate the whole thing.
+        let numAtoms = 0;
+        if (this.renderStyle === RenderStyle.MOLECULAR) {
+            agents.forEach(agentData => {
+                const visType = agentData["vis-type"];
+                const typeId = agentData.type;
+                if (visType === visTypes.ID_VIS_TYPE_DEFAULT) {
+                    if (this.renderStyle === RenderStyle.MOLECULAR) {
+                        const pdb = this.getPdbFromId(typeId);
+                        if (pdb && pdb.pdb) {
+                            numAtoms += pdb.pdb.atoms.length;
+                        } else {
+                            numAtoms += this.numAtomsPerAgent;
+                        }
+                    }
+                }
+            });
         }
-        const buf = new Float32Array(4 * agents.length * numAtoms);
-        const typeids = new Float32Array(agents.length * numAtoms);
-        const instanceids = new Float32Array(agents.length * numAtoms);
+        let atomIndex = 0;
+        const buf = new Float32Array(4 * numAtoms);
+        const typeids = new Float32Array(numAtoms);
+        const instanceids = new Float32Array(numAtoms);
 
         // temp vector to hold some calculations
         const p = new Vector3();
@@ -1121,8 +1129,9 @@ class VisGeometry {
                 if (this.renderStyle === RenderStyle.MOLECULAR) {
                     const pdb = this.getPdbFromId(typeId);
                     if (pdb && pdb.pdb) {
-                        for (let k = 0; k < numAtoms; ++k) {
+                        for (let k = 0; k < pdb.pdb.atoms.length; ++k) {
                             // flip handedness to match previous obj files.
+                            // divide by 10 to go from angstroms(pdb) to nanometers
                             p.set(
                                 -pdb.pdb.atoms[k].x / 10.0,
                                 pdb.pdb.atoms[k].y / 10.0,
@@ -1136,39 +1145,29 @@ class VisGeometry {
                                 )
                             );
                             p.add(runtimeMesh.position);
-                            buf[(i * numAtoms + k) * 4 + 0] = p.x;
-                            buf[(i * numAtoms + k) * 4 + 1] = p.y;
-                            buf[(i * numAtoms + k) * 4 + 2] = p.z;
-                            buf[(i * numAtoms + k) * 4 + 3] = 1.0;
-
-                            // rotate point by agentData.rot, and then translate to position
-                            // atom positions in angstroms
-                            // buf[(i * numAtoms + k) * 4 + 0] =
-                            //     agentData.x + this.pdb.pdb.atoms[k].x / 10.0;
-                            // buf[(i * numAtoms + k) * 4 + 1] =
-                            //     agentData.y + this.pdb.pdb.atoms[k].y / 10.0;
-                            // buf[(i * numAtoms + k) * 4 + 2] =
-                            //     agentData.z + this.pdb.pdb.atoms[k].z / 10.0;
-                            // buf[(i * numAtoms + k) * 4 + 3] = 1.0;
-                            typeids[i * numAtoms + k] = materialType;
-                            instanceids[i * numAtoms + k] = i;
+                            buf[atomIndex * 4 + 0] = p.x;
+                            buf[atomIndex * 4 + 1] = p.y;
+                            buf[atomIndex * 4 + 2] = p.z;
+                            buf[atomIndex * 4 + 3] = 1.0;
+                            typeids[atomIndex] = materialType;
+                            instanceids[atomIndex] = i;
+                            atomIndex++;
                         }
                     } else {
                         for (let k = 0; k < this.numAtomsPerAgent; ++k) {
-                            buf[(i * this.numAtomsPerAgent + k) * 4 + 0] =
+                            buf[atomIndex * 4 + 0] =
                                 agentData.x +
                                 (Math.random() - 0.5) * this.atomSpread;
-                            buf[(i * this.numAtomsPerAgent + k) * 4 + 1] =
+                            buf[atomIndex * 4 + 1] =
                                 agentData.y +
                                 (Math.random() - 0.5) * this.atomSpread;
-                            buf[(i * this.numAtomsPerAgent + k) * 4 + 2] =
+                            buf[atomIndex * 4 + 2] =
                                 agentData.z +
                                 (Math.random() - 0.5) * this.atomSpread;
-                            buf[(i * this.numAtomsPerAgent + k) * 4 + 3] = 1.0;
-                            typeids[
-                                i * this.numAtomsPerAgent + k
-                            ] = materialType;
-                            instanceids[i * this.numAtomsPerAgent + k] = i;
+                            buf[atomIndex * 4 + 3] = 1.0;
+                            typeids[atomIndex] = materialType;
+                            instanceids[atomIndex] = i;
+                            atomIndex++;
                         }
                     }
                 }
@@ -1249,12 +1248,8 @@ class VisGeometry {
                 buf,
                 typeids,
                 instanceids,
-                agents.length,
-                numAtoms
+                atomIndex // total number of atoms
             );
-            if (this.pdb && this.pdb.pdb) {
-                this.moleculeRenderer.gbufferPass.setAtomRadius(0.2);
-            }
         }
         this.hideUnusedFibers(fiberIndex);
     }
