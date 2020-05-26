@@ -125,15 +125,15 @@ class MoleculeRenderer {
 
     public setupGui(gui): void {
         var settings = {
-            atomRadius: 1.0,
-            aoradius1: 4.5,
-            aoradius2: 4.5,
-            blurradius1: 10.0,
-            blurradius2: 10.0,
-            aothreshold1: 150,
-            aofalloff1: 150,
-            aothreshold2: 150,
-            aofalloff2: 150,
+            atomRadius: 0.25,
+            aoradius1: 2.2,
+            aoradius2: 5,
+            blurradius1: 1.5,
+            blurradius2: 0.7,
+            aothreshold1: 75,
+            aofalloff1: 100,
+            aothreshold2: 75,
+            aofalloff2: 75,
             atomBeginDistance: 150.0,
             chainBeginDistance: 225.0,
             bghueoffset: 1,
@@ -141,6 +141,35 @@ class MoleculeRenderer {
             bgluminanceoffset: 0.2,
             showAtoms: this.gbufferPass.getShowAtoms(),
         };
+
+        /////////////////////////////////////////////////////////////////////
+        // init from settings object
+        this.gbufferPass.setShowAtoms(settings.showAtoms);
+        this.gbufferPass.setAtomRadius(settings.atomRadius);
+        this.ssao1Pass.pass.material.uniforms.radius.value = settings.aoradius1;
+        this.blur1Pass.setRadius(settings.blurradius1);
+        this.ssao1Pass.pass.material.uniforms.ssaoThreshold.value =
+            settings.aothreshold1;
+        this.ssao1Pass.pass.material.uniforms.ssaoFalloff.value =
+            settings.aofalloff1;
+        this.ssao2Pass.pass.material.uniforms.radius.value = settings.aoradius2;
+        this.blur2Pass.setRadius(settings.blurradius2);
+        this.ssao2Pass.pass.material.uniforms.ssaoThreshold.value =
+            settings.aothreshold2;
+        this.ssao2Pass.pass.material.uniforms.ssaoFalloff.value =
+            settings.aofalloff2;
+        this.compositePass.pass.material.uniforms.atomicBeginDistance.value =
+            settings.atomBeginDistance;
+        this.compositePass.pass.material.uniforms.chainBeginDistance.value =
+            settings.chainBeginDistance;
+        this.compositePass.pass.material.uniforms.bgHCLoffset.value.x =
+            settings.bghueoffset;
+        this.compositePass.pass.material.uniforms.bgHCLoffset.value.y =
+            settings.bgchromaoffset;
+        this.compositePass.pass.material.uniforms.bgHCLoffset.value.z =
+            settings.bgluminanceoffset;
+        /////////////////////////////////////////////////////////////////////
+
         var self = this;
         gui.add(settings, "showAtoms").onChange(value => {
             self.gbufferPass.setShowAtoms(value);
