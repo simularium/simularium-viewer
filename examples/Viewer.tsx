@@ -1,6 +1,7 @@
 import React from "react";
 
 import AgentVizViewer, { NetConnection, AgentSimController } from "../dist";
+import { Orchestrator } from "../dist";
 import "./style.css";
 import { CLIENT_RENEG_WINDOW } from "tls";
 
