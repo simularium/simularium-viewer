@@ -39,6 +39,7 @@ class GBufferPass {
     public agentMeshGroup: Group;
     public agentFiberGroup: Group;
     private showAtoms: boolean;
+    private moleculeBufferSize: number;
 
     public constructor(n) {
         this.showAtoms = false;
@@ -46,6 +47,7 @@ class GBufferPass {
         this.agentFiberGroup = new Group();
         this.geometry = new BufferGeometry();
 
+        this.moleculeBufferSize = 1;
         this.createMoleculeBuffer(n);
 
         this.colorMaterial = MoleculeGBufferShaders.colorMaterial;
@@ -63,6 +65,11 @@ class GBufferPass {
     }
 
     public createMoleculeBuffer(n): void {
+        if (n <= this.moleculeBufferSize) {
+            return;
+        }
+        console.log("reallocating molecule buffer to " + n + " vertices");
+        this.moleculeBufferSize = n;
         this.geometry = new BufferGeometry();
         var vertices = new Float32Array(n * 4);
         var typeIds = new Float32Array(n);
@@ -108,6 +115,8 @@ class GBufferPass {
     }
 
     public update(positions, typeIds, instanceIds, numVertices): void {
+        this.createMoleculeBuffer(numVertices);
+
         // update positions, and reset geoemtry in the particles object.
         const g = this.particles.geometry as BufferGeometry;
 

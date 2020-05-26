@@ -27,7 +27,8 @@ class PDBModel {
                 self.pdb = parsePdb(data);
                 console.log("PDB FILE HAS " + self.pdb.atoms.length + " ATOMS");
                 self.checkChains();
-                self.createGPUBuffers();
+                // TODO look at this when ready to do instancing refactor
+                //self.createGPUBuffers();
             });
     }
 

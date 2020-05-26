@@ -12,6 +12,7 @@ declare class GBufferPass {
     agentMeshGroup: Group;
     agentFiberGroup: Group;
     private showAtoms;
+    private moleculeBufferSize;
     constructor(n: any);
     createMoleculeBuffer(n: any): void;
     setMeshGroups(agentMeshGroup: Group, agentFiberGroup: Group): void;

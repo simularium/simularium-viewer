@@ -85,7 +85,6 @@ function onAgentMeshBeforeRender(
     if (!u) {
         return;
     }
-    //console.log(u.materialType);
     material.uniforms.IN_typeId.value = Number(u.materialType);
     material.uniforms.IN_instanceId.value = Number(u.index);
     material.uniformsNeedUpdate = true;
@@ -884,7 +883,6 @@ class VisGeometry {
             const pdbmodel = new PDBModel(pdbName);
             pdbmodel.download().then(() => {
                 this.pdbRegistry.set(pdbName, pdbmodel);
-                console.log("GOT PROMISE AFTER PDB");
                 this.logger.debug("Finished loading pdb: ", pdbName);
             });
             this.pdbLoadAttempted.set(pdbName, true);
