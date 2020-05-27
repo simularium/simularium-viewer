@@ -1127,6 +1127,7 @@ class VisGeometry {
                 if (this.renderStyle === RenderStyle.MOLECULAR) {
                     const pdb = this.getPdbFromId(typeId);
                     if (pdb && pdb.pdb) {
+                        // transform and add all pdb atoms to the atom buffer
                         for (let k = 0; k < pdb.pdb.atoms.length; ++k) {
                             // flip handedness to match previous obj files.
                             // divide by 10 to go from angstroms(pdb) to nanometers
@@ -1152,6 +1153,9 @@ class VisGeometry {
                             atomIndex++;
                         }
                     } else {
+                        // if no pdb, but we want to show atoms as spheres:
+                        // add random spheres (close to the agent position) to the atom buffer
+                        // TODO: to be removed when this is production ready
                         for (let k = 0; k < this.numAtomsPerAgent; ++k) {
                             buf[atomIndex * 4 + 0] =
                                 agentData.x +
