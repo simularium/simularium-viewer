@@ -4,7 +4,7 @@ module.exports = {
     entry: './src/index.ts',
     output: {
         filename: 'index.js',
-        library: 'agentviz-viewer',
+        library: 'simularium-viewer',
         libraryTarget: 'umd',
         path: path.resolve(__dirname, 'dist'),
     },

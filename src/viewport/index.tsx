@@ -2,11 +2,11 @@ import * as React from "react";
 import jsLogger from "js-logger";
 import Stats from "three/examples/jsm/libs/stats.module.js";
 
-import AgentSimController from "../controller";
+import SimulariumController from "../controller";
 
 import { forOwn } from "lodash";
 
-import { VisGeometry, TrajectoryFileInfo, NO_AGENT } from "../agentsim";
+import { VisGeometry, TrajectoryFileInfo, NO_AGENT } from "../simularium";
 
 export type PropColor = string | number | [number, number, number];
 
@@ -16,7 +16,7 @@ interface ViewportProps {
     width: number;
     loggerLevel: string;
     onTimeChange: (timeData: TimeData) => void | undefined;
-    agentSimController: AgentSimController;
+    simulariumController: SimulariumController;
     onJsonDataArrived: Function;
     onTrajectoryFileInfoChanged: (
         cachedData: TrajectoryFileInfo
@@ -166,12 +166,12 @@ class Viewport extends React.Component<ViewportProps> {
 
     public componentDidMount(): void {
         const {
-            agentSimController,
+            simulariumController,
             onTrajectoryFileInfoChanged,
             loadInitialData,
             onJsonDataArrived,
         } = this.props;
-        const { netConnection } = agentSimController;
+        const { netConnection } = simulariumController;
         this.visGeometry.reparent(this.vdomRef.current);
         if (this.props.loggerLevel === "debug") {
             if (this.vdomRef && this.vdomRef.current) {
@@ -187,9 +187,9 @@ class Viewport extends React.Component<ViewportProps> {
             onTrajectoryFileInfoChanged(msg);
         };
 
-        agentSimController.connect().then(() => {
+        simulariumController.connect().then(() => {
             if (loadInitialData) {
-                let fileName = agentSimController.getFile();
+                let fileName = simulariumController.getFile();
                 this.visGeometry
                     .mapFromJSON(
                         fileName,
@@ -200,7 +200,7 @@ class Viewport extends React.Component<ViewportProps> {
                         this.visGeometry.render(this.startTime);
                         this.lastRenderTime = Date.now();
                     });
-                agentSimController.initializeTrajectoryFile();
+                simulariumController.initializeTrajectoryFile();
             }
         });
 
@@ -248,19 +248,19 @@ class Viewport extends React.Component<ViewportProps> {
     }
 
     private cacheJSON = json => {
-        this.props.agentSimController.cacheJSON(json);
+        this.props.simulariumController.cacheJSON(json);
     };
 
     private configDragAndDrop = () => {
-        const trajectoryFileInfo = this.props.agentSimController.dragAndDropFileInfo();
+        const trajectoryFileInfo = this.props.simulariumController.dragAndDropFileInfo();
 
-        const { netConnection } = this.props.agentSimController;
+        const { netConnection } = this.props.simulariumController;
         netConnection.onTrajectoryFileInfoArrive(trajectoryFileInfo);
     };
 
     private clearCache = () => {
-        this.props.agentSimController.disableNetworkCommands();
-        this.props.agentSimController.clearLocalCache();
+        this.props.simulariumController.disableNetworkCommands();
+        this.props.simulariumController.clearLocalCache();
     };
 
     public onDragOver = (e: Event) => {
@@ -372,21 +372,21 @@ class Viewport extends React.Component<ViewportProps> {
     }
 
     public animate(): void {
-        const { agentSimController } = this.props;
-        const { visData } = agentSimController;
+        const { simulariumController } = this.props;
+        const { visData } = simulariumController;
         const framesPerSecond = 60; // how often the view-port rendering is refreshed per second
         const timePerFrame = 1000 / framesPerSecond; // the time interval at which to re-render
         const now = Date.now();
         const elapsedTime = now - this.lastRenderTime;
         const totalElapsedTime = now - this.startTime;
         if (elapsedTime > timePerFrame) {
-            if (agentSimController.hasChangedFile) {
+            if (simulariumController.hasChangedFile) {
                 this.visGeometry.clear();
                 this.visGeometry.resetMapping();
 
                 let p = this.visGeometry.mapFromJSON(
-                    agentSimController.getFile(),
-                    getJsonUrl(agentSimController.getFile())
+                    simulariumController.getFile(),
+                    getJsonUrl(simulariumController.getFile())
                 );
 
                 p.then(() => {
@@ -407,7 +407,7 @@ class Viewport extends React.Component<ViewportProps> {
                     );
                 });
 
-                agentSimController.markFileChangeAsHandled();
+                simulariumController.markFileChangeAsHandled();
 
                 return;
             }
@@ -421,7 +421,7 @@ class Viewport extends React.Component<ViewportProps> {
                 }
             }
 
-            if (!visData.atLatestFrame() && !agentSimController.paused()) {
+            if (!visData.atLatestFrame() && !simulariumController.paused()) {
                 visData.gotoNextFrame();
             }
             this.stats.begin();

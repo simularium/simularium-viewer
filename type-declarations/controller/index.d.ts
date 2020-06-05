@@ -1,5 +1,5 @@
-import { NetConnection, VisData, TrajectoryFileInfo } from "../agentsim";
-export default class AgentSimController {
+import { NetConnection, VisData, TrajectoryFileInfo } from "../simularium";
+export default class SimulariumController {
     netConnection: NetConnection;
     visData: VisData;
     private networkEnabled;
@@ -26,4 +26,4 @@ export default class AgentSimController {
     clearLocalCache(): void;
     dragAndDropFileInfo(): TrajectoryFileInfo;
 }
-export { AgentSimController };
+export { SimulariumController };
