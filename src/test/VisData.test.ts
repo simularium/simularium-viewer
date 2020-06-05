@@ -1,4 +1,4 @@
-import { VisData } from "../agentsim";
+import { VisData } from "../simularium";
 
 // Sample data of a single agent of type '7'
 //  moving linearly from (0,0,0) to (5,5,5)

@@ -1,9 +1,9 @@
 import jsLogger from "js-logger";
-import { NetConnection, VisData, TrajectoryFileInfo } from "../agentsim";
+import { NetConnection, VisData, TrajectoryFileInfo } from "../simularium";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
-export default class AgentSimController {
+export default class SimulariumController {
     public netConnection: NetConnection;
     public visData: VisData;
     private networkEnabled: boolean;
@@ -147,4 +147,4 @@ export default class AgentSimController {
     }
 }
 
-export { AgentSimController };
+export { SimulariumController };

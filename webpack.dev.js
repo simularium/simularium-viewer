@@ -19,7 +19,7 @@ module.exports = {
         new MiniCssExtractPlugin({ filename: 'style.[contenthash].css' }),
         new CopyWebpackPlugin([
             { from: 'examples/assets', to: path.resolve(__dirname, 'public/assets') },
-            { from: 'src/agentsim/assets', to: path.resolve(__dirname, 'public/assets') },
+            { from: 'src/simularium/assets', to: path.resolve(__dirname, 'public/assets') },
         ]),
     ],
     devServer: {
