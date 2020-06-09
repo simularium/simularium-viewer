@@ -1,5 +1,3 @@
-import myrand from "./rand";
-
 interface Extent {
     min: number;
     max: number;
@@ -23,6 +21,19 @@ function findMin(arr) {
 }
 
 /**
+ * fillArray
+ * @desc Returns a prefilled array.
+ * @param {number} length - length of array
+ * @param {*} value - value to prefill with.
+ * @return array with prefilled values.
+ */
+function fillArray(length, val) {
+    return Array.apply(null, Array(length)).map(function() {
+        return val;
+    });
+}
+
+/**
  * KMeans
  * @constructor
  * @desc KMeans constructor
@@ -43,7 +54,7 @@ export default class KMeans {
     public timer: number;
     private distances: number[];
 
-    constructor(opts: KMeansOptions) {
+    public constructor(opts: KMeansOptions) {
         // Number of cluster centroids.
         this.k = opts.k;
 
@@ -335,17 +346,4 @@ export default class KMeans {
         //     console.log("Iteration took for completion: " + this.iterations);
         // }
     }
-}
-
-/**
- * fillArray
- * @desc Returns a prefilled array.
- * @param {number} length - length of array
- * @param {*} value - value to prefill with.
- * @return array with prefilled values.
- */
-function fillArray(length, val) {
-    return Array.apply(null, Array(length)).map(function() {
-        return val;
-    });
 }

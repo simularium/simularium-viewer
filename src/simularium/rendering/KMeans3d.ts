@@ -1,5 +1,3 @@
-import myrand from "./rand";
-
 interface Extent {
     min: number;
     max: number;
@@ -52,7 +50,7 @@ export default class KMeans {
     public timer: number;
     private tmpDistances: any;
 
-    constructor(opts: KMeansOptions) {
+    public constructor(opts: KMeansOptions) {
         // Number of cluster centroids.
         this.k = opts.k;
 
