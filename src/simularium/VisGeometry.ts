@@ -2,7 +2,7 @@ import { WEBGL } from "three/examples/jsm/WebGL.js";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
-import PDBModel from "../agentsim/PDBModel";
+import PDBModel from "./PDBModel";
 
 import {
     Box3,
