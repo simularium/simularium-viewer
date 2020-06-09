@@ -1,8 +1,8 @@
-import { AgentSimController } from "../controller";
-import { DummyNetConnection } from "../agentsim";
+import { SimulariumController } from "../controller";
+import { DummyNetConnection } from "../simularium";
 
-describe("AgentSimController module", () => {
-    describe("AgentSimController Time", () => {
+describe("SimulariumController module", () => {
+    describe("SimulariumController Time", () => {
         test("Go to time in cache", done => {
             const netConn = new DummyNetConnection({});
             netConn.timeStep = 1;
@@ -10,7 +10,7 @@ describe("AgentSimController module", () => {
             netConn.commandLatencyMS = 0;
             netConn.connectLatencyMS = 0;
 
-            const controller = new AgentSimController({
+            const controller = new SimulariumController({
                 netConnection: netConn,
             });
 

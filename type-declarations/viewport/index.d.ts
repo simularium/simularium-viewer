@@ -1,6 +1,6 @@
 import * as React from "react";
-import AgentSimController from "../controller";
-import { TrajectoryFileInfo } from "../agentsim";
+import SimulariumController from "../controller";
+import { TrajectoryFileInfo } from "../simularium";
 export declare type PropColor = string | number | [number, number, number];
 interface ViewportProps {
     backgroundColor: PropColor;
@@ -8,7 +8,7 @@ interface ViewportProps {
     width: number;
     loggerLevel: string;
     onTimeChange: (timeData: TimeData) => void | undefined;
-    agentSimController: AgentSimController;
+    simulariumController: SimulariumController;
     onJsonDataArrived: Function;
     onTrajectoryFileInfoChanged: (cachedData: TrajectoryFileInfo) => void | undefined;
     highlightedParticleType: number | string;

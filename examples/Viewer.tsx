@@ -1,6 +1,7 @@
 import React from "react";
 
-import AgentVizViewer, { NetConnection, AgentSimController } from "../dist";
+import SimulariumViewer, { NetConnection, SimulariumController } from "../dist";
+import { Orchestrator } from "../dist";
 import "./style.css";
 import { CLIENT_RENEG_WINDOW } from "tls";
 
@@ -23,7 +24,7 @@ interface ViewerState {
     totalDuration: number;
 }
 
-const agentSim = new AgentSimController({
+const simulariumController = new SimulariumController({
     trajectoryPlaybackFile: "ATPsynthase_9.h5",
     netConnectionSettings: netConnectionSettings,
 });
@@ -45,10 +46,10 @@ const intialState = {
     totalDuration: 100,
 };
 
-const changeFile = (file: string) => () => agentSim.changeFile(file);
+const changeFile = (file: string) => () => simulariumController.changeFile(file);
 
 class Viewer extends React.Component<{}, ViewerState> {
-    private viewerRef: React.RefObject<AgentVizViewer>;
+    private viewerRef: React.RefObject<SimulariumViewer>;
 
     public constructor(props) {
         super(props);
@@ -79,7 +80,7 @@ class Viewer extends React.Component<{}, ViewerState> {
         currentTime = timeData.time;
         this.setState({ currentFrame, currentTime });
         if (this.state.pauseOn === currentFrame) {
-            agentSim.pause();
+            simulariumController.pause();
             this.setState({ pauseOn: -1 });
         }
     }
@@ -90,7 +91,7 @@ class Viewer extends React.Component<{}, ViewerState> {
 
     public playOneFrame(): void {
         const frame = Number(document.querySelector("#frame-number").value);
-        agentSim.playFromFrame(frame);
+        simulariumController.playFromFrame(frame);
 
         this.setState({ pauseOn: frame + 1 });
     }
@@ -105,24 +106,24 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public handleScrubTime(event): void {
-        agentSim.gotoTime(event.target.value);
+        simulariumController.gotoTime(event.target.value);
     }
 
     public gotoNextFrame(): void {
-        agentSim.gotoTime(currentTime + this.state.timeStep + 1e-9);
+        simulariumController.gotoTime(currentTime + this.state.timeStep + 1e-9);
     }
 
     public gotoPreviousFrame(): void {
-        agentSim.gotoTime(currentTime - this.state.timeStep - 1e-9);
+        simulariumController.gotoTime(currentTime - this.state.timeStep - 1e-9);
     }
 
     public render(): JSX.Element {
         return (
             <div className="container" style={{ height: "90%", width: "75%" }}>
-                <button onClick={() => agentSim.start()}>Start</button>
-                <button onClick={() => agentSim.pause()}>Pause</button>
-                <button onClick={() => agentSim.resume()}>Resume</button>
-                <button onClick={() => agentSim.stop()}>stop</button>
+                <button onClick={() => simulariumController.start()}>Start</button>
+                <button onClick={() => simulariumController.pause()}>Pause</button>
+                <button onClick={() => simulariumController.resume()}>Resume</button>
+                <button onClick={() => simulariumController.stop()}>stop</button>
                 <button onClick={changeFile("test_traj1.h5")}>TEST</button>
                 <button onClick={changeFile("microtubules_v2_shrinking.h5")}>
                     MTub
@@ -196,14 +197,14 @@ class Viewer extends React.Component<{}, ViewerState> {
                     Switch Render
                 </button>
 
-                <AgentVizViewer
+                <SimulariumViewer
                     ref={this.viewerRef}
                     height={this.state.height}
                     width={this.state.width}
                     devgui={false}
                     loggerLevel="debug"
                     onTimeChange={this.handleTimeChange.bind(this)}
-                    agentSimController={agentSim}
+                    simulariumController={simulariumController}
                     onJsonDataArrived={this.handleJsonMeshData}
                     onTrajectoryFileInfoChanged={this.handleTrajectoryInfo.bind(
                         this
