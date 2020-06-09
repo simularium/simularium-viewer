@@ -1127,14 +1127,30 @@ class VisGeometry {
                 if (this.renderStyle === RenderStyle.MOLECULAR) {
                     const pdb = this.getPdbFromId(typeId);
                     if (pdb && pdb.pdb) {
+                        // select LOD
+                        const distance = this.camera.position.distanceTo(
+                            runtimeMesh.position
+                        );
+
+                        let lod = 1;
+                        // if (distance < 40) {
+                        //     lod = 0;
+                        // } else if (distance < 100) {
+                        //     lod = 1;
+                        // } else if (distance < 150) {
+                        //     lod = 2;
+                        // } else {
+                        //     lod = 3;
+                        // }
+                        const atoms = pdb.getLod(lod);
                         // transform and add all pdb atoms to the atom buffer
-                        for (let k = 0; k < pdb.pdb.atoms.length; ++k) {
+                        for (let k = 0; k < atoms.length / 3; ++k) {
                             // flip handedness to match previous obj files.
                             // divide by 10 to go from angstroms(pdb) to nanometers
                             p.set(
-                                -pdb.pdb.atoms[k].x / 10.0,
-                                pdb.pdb.atoms[k].y / 10.0,
-                                -pdb.pdb.atoms[k].z / 10.0
+                                -atoms[k * 3] / 10.0,
+                                atoms[k * 3 + 1] / 10.0,
+                                -atoms[k * 3 + 2] / 10.0
                             );
                             p.applyEuler(
                                 new Euler(

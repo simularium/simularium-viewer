@@ -285,6 +285,40 @@ class MoleculeRenderer {
     }
 
     public render(renderer, camera, target): void {
+        // currently rendering is a limited # of draw calls of POINTS objects and one draw call per mesh TRIANGLES object (reusing same geometry buffer)
+        // transforms are happening serially on cpu side because all objects are packed into buffer
+        //    could use buffer of transforms and per-instance indices to index into it
+        // can't swap static LODs without looping over transforms
+
+        // current bottleneck is uploading huge vertex buffer to GPU every time the sim updates
+
+        // threejs does not allow:
+        //   multiple render targets : i have to do 3x the vtx processing work to draw
+        //   instancing is limited and not generalized : draw call overhead
+        //   transform feedback (capture the post-transform state of an object and resubmit it multiple times)
+        //   WEBGL_multi_draw extension support??? : draw call overhead
+        //     chrome flags Enable Draft webgl extensions
+
+        // webgl2 :  FF, Chrome, Edge, Android
+        //    NOT: safari, ios safari  (due in 2020?)
+
+        // no geometry or tessellation shaders in webgl2 at all
+
+        // options to proceed:
+        //   1. baby steps with three.js.  reconfigure rendering to use one buffer per molecule LOD and many draw calls.  test perf.
+        //   2. custom webgl renderer.  could still use some threejs classes for camera, matrices and maybe canvas handling
+        //   3. fork threejs and mod (some of the asked for features are languishing in PRs)
+        // Both options 2 and 3 are time consuming.  #3 is probably quicker to implement, possibly less optimal JS code,
+        //   more robust against varying user configs
+        // we still need to maintain the simple mesh rendering for webgl1 devices.
+
+        // Dan's time:
+        //    CFE and data scripts  (h/o to J?)
+        //    agave 2
+        //    simularium
+        //    volume-viewer smartgoals
+        //    etc (ML prototype, ...)
+
         // DEPTH HANDLING STRATEGY:
         // gbuffer pass writes gl_FragDepth
         // depth buffer should be not written to or tested again after this.
