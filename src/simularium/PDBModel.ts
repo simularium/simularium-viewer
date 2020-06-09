@@ -1,5 +1,5 @@
 import parsePdb from "parse-pdb";
-import { BufferGeometry, Float32BufferAttribute, Points } from "three";
+import { BufferGeometry, Float32BufferAttribute, Points, Vector3 } from "three";
 
 import KMeans from "./rendering/KMeans";
 import KMeans3d from "./rendering/KMeans3d";
@@ -32,12 +32,23 @@ class PDBModel {
                 // note pdb atom coordinates are in angstroms
                 // 1 nm is 10 angstroms
                 self.pdb = parsePdb(data);
+                self.fixupCoordinates();
                 console.log("PDB FILE HAS " + self.pdb.atoms.length + " ATOMS");
                 self.checkChains();
                 // TODO look at this when ready to do instancing refactor
                 //self.createGPUBuffers();
                 self.precomputeLOD();
             });
+    }
+
+    private fixupCoordinates() {
+        const PDB_COORDINATE_SCALE = new Vector3(-0.1, 0.1, -0.1);
+
+        for (var i = 0; i < this.pdb.atoms.length; ++i) {
+            this.pdb.atoms[i].x *= PDB_COORDINATE_SCALE.x;
+            this.pdb.atoms[i].y *= PDB_COORDINATE_SCALE.y;
+            this.pdb.atoms[i].z *= PDB_COORDINATE_SCALE.z;
+        }
     }
 
     private checkChains(): void {

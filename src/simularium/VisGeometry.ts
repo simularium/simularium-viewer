@@ -1148,9 +1148,9 @@ class VisGeometry {
                             // flip handedness to match previous obj files.
                             // divide by 10 to go from angstroms(pdb) to nanometers
                             p.set(
-                                -atoms[k * 3] / 10.0,
-                                atoms[k * 3 + 1] / 10.0,
-                                -atoms[k * 3 + 2] / 10.0
+                                atoms[k * 3],
+                                atoms[k * 3 + 1],
+                                atoms[k * 3 + 2]
                             );
                             p.applyEuler(
                                 new Euler(
