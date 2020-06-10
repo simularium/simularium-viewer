@@ -75,19 +75,18 @@ function onAgentMeshBeforeRender(
     if (!material.uniforms) {
         return;
     }
-    if (!material.uniforms.IN_typeId) {
-        return;
-    }
-    if (!material.uniforms.IN_instanceId) {
-        return;
-    }
     const u = this.userData;
     if (!u) {
         return;
     }
-    material.uniforms.IN_typeId.value = Number(u.materialType);
-    material.uniforms.IN_instanceId.value = Number(u.index);
-    material.uniformsNeedUpdate = true;
+    if (material.uniforms.IN_typeId) {
+        material.uniforms.IN_typeId.value = Number(u.materialType);
+        material.uniformsNeedUpdate = true;
+    }
+    if (material.uniforms.IN_instanceId) {
+        material.uniforms.IN_instanceId.value = Number(u.index);
+        material.uniformsNeedUpdate = true;
+    }
 }
 
 interface HSL {
@@ -158,6 +157,7 @@ class VisGeometry {
     public colorsData: Float32Array;
     public lightsGroup: Group;
     public agentMeshGroup: Group;
+    public agentPDBGroup: Group;
     public agentFiberGroup: Group;
     public agentPathGroup: Group;
     private raycaster: Raycaster;
@@ -229,6 +229,7 @@ class VisGeometry {
         this.scene = new Scene();
         this.lightsGroup = new Group();
         this.agentMeshGroup = new Group();
+        this.agentPDBGroup = new Group();
         this.agentFiberGroup = new Group();
         this.agentPathGroup = new Group();
 
@@ -482,6 +483,9 @@ class VisGeometry {
         this.agentMeshGroup = new Group();
         this.agentMeshGroup.name = "agent meshes";
         this.scene.add(this.agentMeshGroup);
+        this.agentPDBGroup = new Group();
+        this.agentPDBGroup.name = "agent pdbs";
+        this.scene.add(this.agentPDBGroup);
         this.agentFiberGroup = new Group();
         this.agentFiberGroup.name = "agent fibers";
         this.scene.add(this.agentFiberGroup);
@@ -617,8 +621,6 @@ class VisGeometry {
         if (this.dl && this.fixLightsToCamera) {
             // position directional light at camera (facing scene, as headlight!)
             this.dl.position.setFromMatrixColumn(this.camera.matrixWorld, 2);
-
-            //this.dl.position.copy(this.camera.position);
         }
         if (this.hemiLight && this.fixLightsToCamera) {
             // make hemi light come down from vertical of screen (camera up)
@@ -634,6 +636,7 @@ class VisGeometry {
             // group will be added to a different scene, and thus removed from this scene
             this.moleculeRenderer.setMeshGroups(
                 this.agentMeshGroup,
+                this.agentPDBGroup,
                 this.agentFiberGroup
             );
             this.moleculeRenderer.setHighlightInstance(this.followObjectIndex);
@@ -641,11 +644,14 @@ class VisGeometry {
             this.renderer.autoClear = false;
             // restore mesh group back to this.scene
             this.scene.add(this.agentMeshGroup);
+            this.scene.add(this.agentPDBGroup);
             this.scene.add(this.agentFiberGroup);
             this.agentMeshGroup.visible = false;
+            this.agentPDBGroup.visible = false;
             this.agentFiberGroup.visible = false;
             this.renderer.render(this.scene, this.camera);
             this.agentMeshGroup.visible = true;
+            this.agentPDBGroup.visible = true;
             this.agentFiberGroup.visible = true;
             this.renderer.autoClear = true;
         }

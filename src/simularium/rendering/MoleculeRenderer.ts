@@ -254,8 +254,16 @@ class MoleculeRenderer {
         this.gbufferPass.createMoleculeBuffer(n);
     }
 
-    public setMeshGroups(agentMeshGroup: Group, agentFiberGroup: Group): void {
-        this.gbufferPass.setMeshGroups(agentMeshGroup, agentFiberGroup);
+    public setMeshGroups(
+        agentMeshGroup: Group,
+        agentPDBGroup: Group,
+        agentFiberGroup: Group
+    ): void {
+        this.gbufferPass.setMeshGroups(
+            agentMeshGroup,
+            agentPDBGroup,
+            agentFiberGroup
+        );
     }
 
     public resize(x, y): void {
