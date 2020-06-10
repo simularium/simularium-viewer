@@ -89,6 +89,11 @@ function onAgentMeshBeforeRender(
     }
 }
 
+interface AgentTypeGeometry {
+    meshName: string;
+    pdbName: string;
+}
+
 interface HSL {
     h: number;
     s: number;
@@ -121,7 +126,7 @@ class VisGeometry {
     public renderStyle: RenderStyle;
     public backgroundColor: Color;
     public pathEndColor: Color;
-    public visGeomMap: Map<number, string>;
+    public visGeomMap: Map<number, AgentTypeGeometry>;
     public meshRegistry: Map<string | number, Mesh>;
     public pdbRegistry: Map<string | number, PDBModel>;
     public meshLoadAttempted: Map<string, boolean>;
@@ -167,8 +172,9 @@ class VisGeometry {
 
     public constructor(loggerLevel) {
         this.renderStyle = RenderStyle.GENERIC;
-        this.visGeomMap = new Map<number, string>();
         this.supportsMoleculeRendering = false;
+
+        this.visGeomMap = new Map<number, AgentTypeGeometry>();
         this.meshRegistry = new Map<string | number, Mesh>();
         this.pdbRegistry = new Map<string | number, PDBModel>();
         this.meshLoadAttempted = new Map<string, boolean>();
@@ -446,7 +452,7 @@ class VisGeometry {
     public onNewRuntimeGeometryType(meshName): void {
         // find all typeIds for this meshName
         let typeIds = [...this.visGeomMap.entries()]
-            .filter(({ 1: v }) => v === meshName)
+            .filter(({ 1: v }) => v.meshName === meshName)
             .map(([k]) => k);
 
         // assuming the meshGeom has already been added to the registry
@@ -806,6 +812,7 @@ class VisGeometry {
 
     public addMesh(meshName, mesh): void {
         this.meshRegistry.set(meshName, mesh);
+
         if (!mesh.name) {
             mesh.name = meshName;
         }
@@ -878,13 +885,12 @@ class VisGeometry {
     /**
      *   Map Type ID -> Geometry
      */
-    public mapIdToGeom(id, meshName): void {
+    public mapIdToGeom(id, meshName, pdbName): void {
         this.logger.debug("Mesh for id ", id, " set to ", meshName);
-        this.visGeomMap.set(id, meshName);
+        this.visGeomMap.set(id, { meshName, pdbName });
         if (meshName.includes("membrane")) {
             this.membrane.typeId = id;
         }
-
         if (
             meshName &&
             !this.meshRegistry.has(meshName) &&
@@ -895,7 +901,6 @@ class VisGeometry {
         }
 
         // try load pdb file also.
-        const pdbName = this.getPdbNameFromMeshName(meshName);
         if (
             pdbName &&
             !this.pdbRegistry.has(pdbName) &&
@@ -912,11 +917,14 @@ class VisGeometry {
 
     public getGeomFromId(id: number): Mesh | null {
         if (this.visGeomMap.has(id)) {
-            const meshName = this.visGeomMap.get(id);
-            if (meshName && this.meshRegistry.has(meshName)) {
-                let mesh = this.meshRegistry.get(meshName);
-                if (mesh) {
-                    return mesh;
+            const entry = this.visGeomMap.get(id);
+            if (entry) {
+                const meshName = entry.meshName;
+                if (meshName && this.meshRegistry.has(meshName)) {
+                    let mesh = this.meshRegistry.get(meshName);
+                    if (mesh) {
+                        return mesh;
+                    }
                 }
             }
         }
@@ -926,9 +934,9 @@ class VisGeometry {
 
     public getPdbFromId(id: number): PDBModel | null {
         if (this.visGeomMap.has(id)) {
-            const meshName = this.visGeomMap.get(id);
-            if (meshName) {
-                const pdbName = this.getPdbNameFromMeshName(meshName);
+            const entry = this.visGeomMap.get(id);
+            if (entry) {
+                const pdbName = entry.pdbName;
                 if (pdbName && this.pdbRegistry.has(pdbName)) {
                     const pdb = this.pdbRegistry.get(pdbName);
                     if (pdb) {
@@ -957,7 +965,14 @@ class VisGeometry {
                             "WARNING: Ignoring deprecated bounding box data"
                         );
                     } else {
-                        self.mapIdToGeom(Number(id), entry.mesh);
+                        // mesh name is entry.mesh
+                        // pdb name is entry.pdb
+                        // look for a pdb name if not provided.
+                        const pdbname =
+                            entry.pdb ||
+                            self.getPdbNameFromMeshName(entry.mesh);
+
+                        self.mapIdToGeom(Number(id), entry.mesh, pdbname);
                         self.setScaleForId(Number(id), entry.scale);
                     }
                 });
