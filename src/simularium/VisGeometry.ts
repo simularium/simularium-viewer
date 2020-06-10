@@ -161,12 +161,14 @@ class VisGeometry {
     public agentFiberGroup: Group;
     public agentPathGroup: Group;
     private raycaster: Raycaster;
+    private supportsMoleculeRendering: boolean;
 
     private errorMesh: Mesh;
 
     public constructor(loggerLevel) {
         this.renderStyle = RenderStyle.GENERIC;
         this.visGeomMap = new Map<number, string>();
+        this.supportsMoleculeRendering = false;
         this.meshRegistry = new Map<string | number, Mesh>();
         this.pdbRegistry = new Map<string | number, PDBModel>();
         this.meshLoadAttempted = new Map<string, boolean>();
@@ -303,6 +305,15 @@ class VisGeometry {
     }
 
     public switchRenderStyle(): void {
+        // if target render style is supported, then change, otherwise don't.
+        if (
+            this.renderStyle === RenderStyle.GENERIC &&
+            !this.supportsMoleculeRendering
+        ) {
+            console.log("Warning: molecule rendering not supported");
+            return;
+        }
+
         this.renderStyle =
             this.renderStyle === RenderStyle.GENERIC
                 ? RenderStyle.MOLECULAR
@@ -513,8 +524,12 @@ class VisGeometry {
         this.lightsGroup.add(this.hemiLight);
 
         if (WEBGL.isWebGL2Available() === false) {
+            this.renderStyle == RenderStyle.GENERIC;
             this.renderer = new WebGLRenderer();
         } else {
+            // TODO: consider switching to molecule rendering by default here??
+
+            this.supportsMoleculeRendering = true;
             const canvas = document.createElement("canvas");
             const context: WebGLRenderingContext = canvas.getContext("webgl2", {
                 alpha: false,
