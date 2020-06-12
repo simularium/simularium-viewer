@@ -2,6 +2,7 @@ import { WEBGL } from "three/examples/jsm/WebGL.js";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
+import AgentMesh from "./AgentMesh";
 import PDBModel from "./PDBModel";
 
 import {
@@ -137,7 +138,7 @@ class VisGeometry {
     public desatMaterials: Material[];
     public highlightMaterial: MeshBasicMaterial;
     public followObjectIndex: number;
-    public runTimeMeshes: Mesh[];
+    public visAgents: AgentMesh[];
     public runTimeFiberMeshes: Map<string, Mesh>;
     public mlastNumberOfAgents: number;
     public colorVariant: number;
@@ -187,7 +188,7 @@ class VisGeometry {
             color: new Color(1, 0, 0),
         });
         this.followObjectIndex = NO_AGENT;
-        this.runTimeMeshes = [];
+        this.visAgents = [];
         this.runTimeFiberMeshes = new Map();
         this.mlastNumberOfAgents = 0;
         this.colorVariant = 50;
@@ -392,28 +393,14 @@ class VisGeometry {
         }
 
         if (this.followObjectIndex !== NO_AGENT) {
-            const runtimeMesh = this.getMesh(this.followObjectIndex);
-            // find the baseMaterial by examining the followObject
-            let material = null;
-            if (runtimeMesh.userData) {
-                material = runtimeMesh.userData.baseMaterial;
-            } else {
-                runtimeMesh.traverse(child => {
-                    if (child.userData) {
-                        material = child.userData.baseMaterial;
-                    }
-                });
-            }
-
-            if (material) {
-                this.assignMaterial(runtimeMesh, material);
-            }
+            const runtimeAgentMesh = this.visAgents[this.followObjectIndex];
+            runtimeAgentMesh.setSelected(false);
         }
         this.followObjectIndex = obj;
 
         if (obj !== NO_AGENT) {
-            const runtimeMesh = this.getMesh(obj);
-            this.assignMaterial(runtimeMesh, this.highlightMaterial);
+            const runtimeAgentMesh = this.visAgents[obj];
+            runtimeAgentMesh.setSelected(true);
         }
     }
 
@@ -429,18 +416,14 @@ class VisGeometry {
         this.highlightedId = id;
 
         // go over all objects and update material
-        let nMeshes = this.runTimeMeshes.length;
+        const nMeshes = this.visAgents.length;
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
-            const runtimeMesh = this.getMesh(i);
-            if (runtimeMesh.userData && runtimeMesh.userData.active) {
-                runtimeMesh.userData.baseMaterial = this.getMaterial(
-                    runtimeMesh.userData.materialType,
-                    runtimeMesh.userData.typeId
-                );
-                this.assignMaterial(
-                    runtimeMesh,
-                    runtimeMesh.userData.baseMaterial
-                );
+            const runtimeMesh = this.visAgents[i];
+            if (runtimeMesh.active) {
+                const isHighlighted =
+                    this.highlightedId == -1 ||
+                    this.highlightedId == runtimeMesh.typeId;
+                runtimeMesh.setHighlighted(isHighlighted);
             }
         }
     }
@@ -460,21 +443,15 @@ class VisGeometry {
 
         // go over all objects and update mesh of this typeId
         // if this happens before the first updateScene, then the runtimeMeshes don't have type id's yet.
-        let nMeshes = this.runTimeMeshes.length;
+        const nMeshes = this.visAgents.length;
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
-            let runtimeMesh = this.getMesh(i);
-            if (
-                runtimeMesh.userData &&
-                typeIds.includes(runtimeMesh.userData.typeId)
-            ) {
-                const isFollowedObject = i === this.followObjectIndex;
-
-                runtimeMesh = this.setupMeshGeometry(
-                    i,
-                    runtimeMesh,
-                    meshGeom,
-                    isFollowedObject
-                );
+            let runtimeMesh = this.visAgents[i];
+            if (typeIds.includes(runtimeMesh.typeId)) {
+                // const isFollowedObject = i === this.followObjectIndex;
+                this.agentMeshGroup.remove(runtimeMesh.mesh);
+                runtimeMesh.setupMeshGeometry(meshGeom);
+                //runtimeMesh.setColor(this.getColor(i));
+                this.agentMeshGroup.add(runtimeMesh.mesh);
             }
         }
     }
@@ -617,7 +594,7 @@ class VisGeometry {
     }
 
     public render(time): void {
-        if (this.runTimeMeshes.length == 0) {
+        if (this.visAgents.length == 0) {
             return;
         }
 
@@ -752,6 +729,15 @@ class VisGeometry {
         this.moleculeRenderer.updateColors(numColors, this.colorsData);
     }
 
+    private getColor(index): Color {
+        index = index % (this.colorsData.length / 4);
+        return new Color(
+            this.colorsData[index * 4],
+            this.colorsData[index * 4 + 1],
+            this.colorsData[index * 4 + 2]
+        );
+    }
+
     public createMeshes(): void {
         this.geomCount = MAX_MESHES;
         const sphereGeom = this.getSphereGeom();
@@ -769,12 +755,11 @@ class VisGeometry {
 
         // create placeholder meshes and fibers
         for (let i = 0; i < this.geomCount; i += 1) {
-            const runtimeMesh = new Mesh(sphereGeom, materials[0]);
+            // 1. mesh geometries
 
-            runtimeMesh.name = `Mesh_${i.toString()}`;
-            runtimeMesh.visible = false;
-            this.runTimeMeshes[i] = runtimeMesh;
-            this.agentMeshGroup.add(runtimeMesh);
+            this.visAgents[i] = new AgentMesh(`Mesh_${i.toString()}`);
+
+            // 2. fibers
 
             const fibercurve = new LineCurve3(
                 new Vector3(0, 0, 0),
@@ -820,14 +805,6 @@ class VisGeometry {
             this.membrane.mesh = mesh;
             this.assignMembraneMaterial(mesh);
         }
-    }
-
-    public getMesh(index): Mesh {
-        return this.runTimeMeshes[index];
-    }
-
-    public resetMesh(index, obj): void {
-        this.runTimeMeshes[index] = obj;
     }
 
     public getFiberMesh(name: string): Mesh {
@@ -1094,52 +1071,29 @@ class VisGeometry {
 
             if (visType === visTypes.ID_VIS_TYPE_DEFAULT) {
                 const materialType = (typeId + 1) * this.colorVariant;
-                let runtimeMesh = this.getMesh(i);
                 const isFollowedObject = i === this.followObjectIndex;
-                const lastTypeId = runtimeMesh.userData
-                    ? runtimeMesh.userData.typeId
-                    : -1;
+                const agentMesh = this.visAgents[i];
 
-                if (!runtimeMesh.userData) {
-                    // TODO can we ever get here?
-                    console.log("runtimemesh has no userdata in updateScene");
-                    runtimeMesh.userData = {
-                        active: true,
-                        baseMaterial: this.getMaterial(materialType, typeId),
-                        index: i,
-                        typeId: typeId,
-                        materialType: materialType,
-                    };
-                } else {
-                    runtimeMesh.userData.active = true;
-                    runtimeMesh.userData.baseMaterial = this.getMaterial(
-                        materialType,
-                        typeId
-                    );
-                    runtimeMesh.userData.index = i;
-                    runtimeMesh.userData.typeId = typeId;
-                    runtimeMesh.userData.materialType = materialType;
-                }
+                const lastTypeId = agentMesh.typeId;
 
-                if (
-                    runtimeMesh.geometry === sphereGeometry ||
-                    typeId !== lastTypeId
-                ) {
+                agentMesh.typeId = typeId;
+                agentMesh.agentIndex = i;
+                agentMesh.active = true;
+                //agentMesh.materialType= materialType;
+                if (typeId !== lastTypeId) {
+                    // OR IF GEOMETRY IS SPHERE AND getGeomFromId RETURNS ANYTHING...
                     const meshGeom = this.getGeomFromId(typeId);
-                    if (meshGeom && meshGeom.children) {
-                        runtimeMesh = this.setupMeshGeometry(
-                            i,
-                            runtimeMesh,
-                            meshGeom,
-                            isFollowedObject
-                        );
-                    } else {
-                        this.assignMaterial(
-                            runtimeMesh,
-                            runtimeMesh.userData.baseMaterial
-                        );
+                    if (meshGeom) {
+                        // remove old object from scene
+                        this.agentMeshGroup.remove(agentMesh.mesh);
+                        agentMesh.setupMeshGeometry(meshGeom);
+                        this.agentMeshGroup.add(agentMesh.mesh);
+                        // re-add new object to scene
                     }
+                    agentMesh.setColor(this.getColor(materialType));
                 }
+
+                const runtimeMesh = agentMesh.mesh;
 
                 dx = agentData.x - runtimeMesh.position.x;
                 dy = agentData.y - runtimeMesh.position.y;
@@ -1322,8 +1276,8 @@ class VisGeometry {
             direction.normalize();
 
             const newTarget = new Vector3();
-            const followedObject = this.getMesh(this.followObjectIndex);
-            newTarget.copy(followedObject.position);
+            const followedObject = this.visAgents[this.followObjectIndex];
+            newTarget.copy(followedObject.mesh.position);
 
             // update controls target for orbiting
             if (lerpTarget) {
@@ -1335,7 +1289,7 @@ class VisGeometry {
             // update new camera position
             const newPosition = new Vector3();
             newPosition.subVectors(
-                followedObject.position,
+                followedObject.mesh.position,
                 direction.multiplyScalar(-distance)
             );
             if (lerpPosition) {
@@ -1345,8 +1299,12 @@ class VisGeometry {
             }
         }
     }
-
+    /*
     public setupMeshGeometry(i, runtimeMesh, meshGeom, isFollowedObject): Mesh {
+        //  remove from scene
+        // add new to scene
+        // resetmesh
+
         // remember current transform
         const p = runtimeMesh.position;
         const r = runtimeMesh.rotation;
@@ -1400,7 +1358,7 @@ class VisGeometry {
 
         return runtimeMesh;
     }
-
+*/
     public assignMaterial(
         runtimeMesh: Object3D,
         material: MeshBasicMaterial | LineBasicMaterial
@@ -1456,14 +1414,6 @@ class VisGeometry {
         }
     }
 
-    public getMaterialOfAgentIndex(idx): MeshBasicMaterial | undefined {
-        const runtimeMesh = this.getMesh(idx);
-        if (runtimeMesh.userData) {
-            return runtimeMesh.userData.baseMaterial;
-        }
-        return undefined;
-    }
-
     public findPathForAgentIndex(idx): PathData | null {
         let path = this.paths.find(path => {
             return path.agent === idx;
@@ -1509,8 +1459,7 @@ class VisGeometry {
 
         if (!color) {
             // get the agent's color. is there a simpler way?
-            const mat = this.getMaterialOfAgentIndex(idx);
-            color = mat && mat.color ? mat.color.clone() : new Color(0xffffff);
+            color = this.visAgents[idx].color.clone();
         }
 
         const pathdata: PathData = {
@@ -1660,11 +1609,11 @@ class VisGeometry {
     }
 
     public setShowMeshes(showMeshes): void {
-        let nMeshes = this.runTimeMeshes.length;
+        const nMeshes = this.visAgents.length;
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
-            const runtimeMesh = this.getMesh(i);
-            if (runtimeMesh.userData && runtimeMesh.userData.active) {
-                runtimeMesh.visible = showMeshes;
+            const runtimeMesh = this.visAgents[i];
+            if (runtimeMesh.active) {
+                runtimeMesh.mesh.visible = showMeshes;
             }
         }
     }
@@ -1683,17 +1632,15 @@ class VisGeometry {
     }
 
     public hideUnusedMeshes(numberOfAgents): void {
-        let nMeshes = this.runTimeMeshes.length;
+        const nMeshes = this.visAgents.length;
         for (let i = numberOfAgents; i < MAX_MESHES && i < nMeshes; i += 1) {
-            const runtimeMesh = this.getMesh(i);
-            if (runtimeMesh.visible === false) {
+            const runtimeMesh = this.visAgents[i];
+            if (runtimeMesh.mesh.visible === false) {
                 break;
             }
 
-            runtimeMesh.visible = false;
-            if (runtimeMesh.userData) {
-                runtimeMesh.userData.active = false;
-            }
+            runtimeMesh.mesh.visible = false;
+            runtimeMesh.active = false;
 
             // hide the path if we're hiding the agent. should we remove the path here?
             this.showPathForAgentIndex(i, false);
@@ -1728,21 +1675,13 @@ class VisGeometry {
 
     public resetAllGeometry(): void {
         // set all runtime meshes back to spheres.
-        const sphereGeom = this.getSphereGeom();
-        let nMeshes = this.runTimeMeshes.length;
+        const nMeshes = this.visAgents.length;
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
-            if (this.runTimeMeshes[i].userData) {
-                const runtimeMesh = this.setupMeshGeometry(
-                    i,
-                    this.runTimeMeshes[i],
-                    new Mesh(sphereGeom),
-                    false
-                );
-                this.assignMaterial(
-                    runtimeMesh,
-                    new MeshLambertMaterial({ color: 0xff00ff })
-                );
-            }
+            const runtimeMesh = this.visAgents[i];
+            this.agentMeshGroup.remove(runtimeMesh.mesh);
+            runtimeMesh.resetMesh();
+            this.agentMeshGroup.add(runtimeMesh.mesh);
+            runtimeMesh.setColor(0xff00ff);
         }
     }
 

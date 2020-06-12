@@ -1,7 +1,12 @@
 import parsePdb from "parse-pdb";
-import { BufferGeometry, Float32BufferAttribute, Points, Vector3 } from "three";
+import {
+    BufferGeometry,
+    Float32BufferAttribute,
+    Points,
+    ShaderMaterial,
+    Vector3,
+} from "three";
 
-import KMeans from "./rendering/KMeans";
 import KMeans3d from "./rendering/KMeans3d";
 
 class PDBModel {
@@ -12,6 +17,7 @@ class PDBModel {
     private particles: Points[];
     private lods: Float32Array[];
     private lodSizes: number[];
+    //private materials: ShaderMaterial[];
 
     public constructor(filePath: string) {
         this.filePath = filePath;
