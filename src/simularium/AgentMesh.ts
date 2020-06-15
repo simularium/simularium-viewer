@@ -8,6 +8,7 @@ import {
     ShaderMaterial,
     SphereBufferGeometry,
     Vector2,
+    WebGLRenderer,
 } from "three";
 
 import MembraneShader from "./rendering/MembraneShader";
@@ -55,6 +56,17 @@ export default class AgentMesh {
         facesUVScale: new Vector2(40.0, 40.0),
         sidesUVScale: new Vector2(2.0, 40.0),
     };
+    public static updateMembrane(time: number, renderer: WebGLRenderer) {
+        AgentMesh.membraneData.facesMaterial.uniforms.iTime.value = time;
+        AgentMesh.membraneData.sidesMaterial.uniforms.iTime.value = time;
+
+        renderer.getDrawingBufferSize(
+            AgentMesh.membraneData.facesMaterial.uniforms.iResolution.value
+        );
+        renderer.getDrawingBufferSize(
+            AgentMesh.membraneData.sidesMaterial.uniforms.iResolution.value
+        );
+    }
 
     public mesh: Object3D;
     public agentIndex: number;
@@ -106,7 +118,7 @@ export default class AgentMesh {
     }
 
     private assignMaterial(material: Material) {
-        if (this.name.includes("membrane")) {
+        if (this.mesh.name.includes("membrane")) {
             return this.assignMembraneMaterial();
         }
 

@@ -14,22 +14,17 @@ import {
     Color,
     DirectionalLight,
     Euler,
-    Geometry,
     Group,
     HemisphereLight,
     LineBasicMaterial,
     LineCurve3,
     LineSegments,
-    Material,
     Mesh,
-    MeshBasicMaterial,
     MeshLambertMaterial,
     Object3D,
     PerspectiveCamera,
     Raycaster,
     Scene,
-    ShaderMaterial,
-    SphereBufferGeometry,
     TubeBufferGeometry,
     Vector2,
     Vector3,
@@ -45,7 +40,6 @@ import { ILogger } from "js-logger/src/types";
 
 import { AgentData } from "./VisData";
 
-import MembraneShader from "./rendering/MembraneShader";
 import MoleculeRenderer from "./rendering/MoleculeRenderer";
 
 const MAX_PATH_LEN = 32;
@@ -54,6 +48,7 @@ const DEFAULT_BACKGROUND_COLOR = new Color(0.121569, 0.13333, 0.17647);
 const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 const NO_AGENT = -1;
+const UNASSIGNED_AGENT_COLOR = 0xff00ff;
 
 enum RenderStyle {
     GENERIC,
@@ -62,32 +57,6 @@ enum RenderStyle {
 
 function lerp(x0: number, x1: number, alpha: number): number {
     return x0 + (x1 - x0) * alpha;
-}
-
-function onAgentMeshBeforeRender(
-    this: Object3D,
-    renderer,
-    scene,
-    camera,
-    geometry,
-    material,
-    group
-): void {
-    if (!material.uniforms) {
-        return;
-    }
-    const u = this.userData;
-    if (!u) {
-        return;
-    }
-    if (material.uniforms.IN_typeId) {
-        material.uniforms.IN_typeId.value = Number(u.materialType);
-        material.uniformsNeedUpdate = true;
-    }
-    if (material.uniforms.IN_instanceId) {
-        material.uniforms.IN_instanceId.value = Number(u.index);
-        material.uniformsNeedUpdate = true;
-    }
 }
 
 interface AgentTypeGeometry {
@@ -113,16 +82,6 @@ interface PathData {
     line: LineSegments | null;
 }
 
-interface MembraneInfo {
-    typeId: number;
-    mesh?: Mesh;
-    runtimeMeshIndex: number;
-    faces: { name: string }[];
-    sides: { name: string }[];
-    facesMaterial: ShaderMaterial;
-    sidesMaterial: ShaderMaterial;
-}
-
 class VisGeometry {
     public renderStyle: RenderStyle;
     public backgroundColor: Color;
@@ -134,9 +93,6 @@ class VisGeometry {
     public pdbLoadAttempted: Map<string, boolean>;
     public scaleMapping: Map<number, number>;
     public geomCount: number;
-    public materials: Material[];
-    public desatMaterials: Material[];
-    public highlightMaterial: MeshBasicMaterial;
     public followObjectIndex: number;
     public visAgents: AgentMesh[];
     public runTimeFiberMeshes: Map<string, Mesh>;
@@ -145,8 +101,6 @@ class VisGeometry {
     public fixLightsToCamera: boolean;
     public highlightedId: number;
     public paths: PathData[];
-    public sphereGeometry: SphereBufferGeometry;
-    public membrane: MembraneInfo;
     public mlogger: ILogger;
     public renderer: WebGLRenderer;
     public scene: Scene;
@@ -168,6 +122,7 @@ class VisGeometry {
     public agentPathGroup: Group;
     private raycaster: Raycaster;
     private supportsMoleculeRendering: boolean;
+    private membraneAgent?: AgentMesh;
 
     private errorMesh: Mesh;
 
@@ -182,11 +137,6 @@ class VisGeometry {
         this.pdbLoadAttempted = new Map<string, boolean>();
         this.scaleMapping = new Map<number, number>();
         this.geomCount = MAX_MESHES;
-        this.materials = [];
-        this.desatMaterials = [];
-        this.highlightMaterial = new MeshBasicMaterial({
-            color: new Color(1, 0, 0),
-        });
         this.followObjectIndex = NO_AGENT;
         this.visAgents = [];
         this.runTimeFiberMeshes = new Map();
@@ -198,33 +148,9 @@ class VisGeometry {
         // will store data for all agents that are drawing paths
         this.paths = [];
 
-        // the canonical default geometry instance
-        this.sphereGeometry = new SphereBufferGeometry(1, 32, 32);
         this.setupScene();
 
-        this.membrane = {
-            // assume only one membrane mesh
-            typeId: -1,
-            mesh: undefined,
-            runtimeMeshIndex: -1,
-            faces: [{ name: "curved_5nm_Right" }, { name: "curved_5nm_Left" }],
-            sides: [
-                { name: "curved_5nm_Bottom" },
-                { name: "curved_5nm_Top" },
-                { name: "curved_5nm_Back" },
-                { name: "curved_5nm_Front" },
-            ],
-            facesMaterial: MembraneShader.MembraneShader.clone(),
-            sidesMaterial: MembraneShader.MembraneShader.clone(),
-        };
-        this.membrane.facesMaterial.uniforms.uvscale.value = new Vector2(
-            40.0,
-            40.0
-        );
-        this.membrane.sidesMaterial.uniforms.uvscale.value = new Vector2(
-            2.0,
-            40.0
-        );
+        this.membraneAgent = undefined;
 
         this.moleculeRenderer = new MoleculeRenderer();
 
@@ -259,7 +185,7 @@ class VisGeometry {
             this.boundingBox,
             BOUNDING_BOX_COLOR
         );
-        this.errorMesh = new Mesh(this.sphereGeometry);
+        this.errorMesh = new Mesh(AgentMesh.sphereGeometry);
         this.currentSceneAgents = [];
         this.colorsData = new Float32Array(0);
         if (loggerLevel === jsLogger.DEBUG) {
@@ -388,7 +314,7 @@ class VisGeometry {
     }
 
     public setFollowObject(obj: number): void {
-        if (obj === this.membrane.runtimeMeshIndex) {
+        if (this.membraneAgent && obj === this.membraneAgent.agentIndex) {
             return;
         }
 
@@ -450,7 +376,9 @@ class VisGeometry {
                 // const isFollowedObject = i === this.followObjectIndex;
                 this.agentMeshGroup.remove(runtimeMesh.mesh);
                 runtimeMesh.setupMeshGeometry(meshGeom);
-                //runtimeMesh.setColor(this.getColor(i));
+                runtimeMesh.setColor(
+                    this.getColorForTypeId(runtimeMesh.typeId)
+                );
                 this.agentMeshGroup.add(runtimeMesh.mesh);
             }
         }
@@ -600,16 +528,8 @@ class VisGeometry {
 
         var elapsedSeconds = time / 1000;
 
-        if (this.membrane.mesh) {
-            this.membrane.facesMaterial.uniforms.iTime.value = elapsedSeconds;
-            this.membrane.sidesMaterial.uniforms.iTime.value = elapsedSeconds;
-
-            this.renderer.getDrawingBufferSize(
-                this.membrane.facesMaterial.uniforms.iResolution.value
-            );
-            this.renderer.getDrawingBufferSize(
-                this.membrane.sidesMaterial.uniforms.iResolution.value
-            );
+        if (this.membraneAgent) {
+            AgentMesh.updateMembrane(elapsedSeconds, this.renderer);
         }
 
         this.controls.update();
@@ -712,24 +632,12 @@ class VisGeometry {
             this.colorsData[i * 4 + 2] =
                 ((colors[i] & 0x000000ff) >> 0) / 255.0;
             this.colorsData[i * 4 + 3] = 1.0;
-
-            this.materials.push(new MeshLambertMaterial({ color: colors[i] }));
-            let hsl: HSL = { h: 0, s: 0, l: 0 };
-            const desatColor = new Color(colors[i]);
-            hsl = desatColor.getHSL(hsl);
-            desatColor.setHSL(hsl.h, 0.5 * hsl.s, hsl.l);
-            this.desatMaterials.push(
-                new MeshLambertMaterial({
-                    color: desatColor,
-                    opacity: 0.25,
-                    transparent: true,
-                })
-            );
         }
         this.moleculeRenderer.updateColors(numColors, this.colorsData);
     }
 
-    private getColor(index): Color {
+    private getColorForTypeId(typeId): Color {
+        let index = (typeId + 1) * this.colorVariant;
         index = index % (this.colorsData.length / 4);
         return new Color(
             this.colorsData[index * 4],
@@ -740,8 +648,6 @@ class VisGeometry {
 
     public createMeshes(): void {
         this.geomCount = MAX_MESHES;
-        const sphereGeom = this.getSphereGeom();
-        const { materials } = this;
 
         // empty buffer of molecule positions, to be filled. (init all to origin)
         this.moleculeRenderer.createMoleculeBuffer(
@@ -754,6 +660,9 @@ class VisGeometry {
         // draw quad to composite the buffers into final frame
 
         // create placeholder meshes and fibers
+        const mat = new MeshLambertMaterial({
+            color: UNASSIGNED_AGENT_COLOR,
+        });
         for (let i = 0; i < this.geomCount; i += 1) {
             // 1. mesh geometries
 
@@ -766,7 +675,7 @@ class VisGeometry {
                 new Vector3(1, 1, 1)
             );
             const geometry = new TubeBufferGeometry(fibercurve, 1, 1, 1, false);
-            const runtimeFiberMesh = new Mesh(geometry, materials[0]);
+            const runtimeFiberMesh = new Mesh(geometry, mat);
             runtimeFiberMesh.name = `Fiber_${i.toString()}`;
             runtimeFiberMesh.visible = false;
             this.runTimeFiberMeshes.set(
@@ -775,7 +684,10 @@ class VisGeometry {
             );
             this.agentFiberGroup.add(runtimeFiberMesh);
 
-            const runtimeFiberEndcapMesh0 = new Mesh(sphereGeom, materials[0]);
+            const runtimeFiberEndcapMesh0 = new Mesh(
+                AgentMesh.sphereGeometry,
+                mat
+            );
             runtimeFiberEndcapMesh0.name = `FiberEnd0_${i.toString()}`;
             runtimeFiberEndcapMesh0.visible = false;
             this.runTimeFiberMeshes.set(
@@ -784,7 +696,10 @@ class VisGeometry {
             );
             this.agentFiberGroup.add(runtimeFiberEndcapMesh0);
 
-            const runtimeFiberEndcapMesh1 = new Mesh(sphereGeom, materials[0]);
+            const runtimeFiberEndcapMesh1 = new Mesh(
+                AgentMesh.sphereGeometry,
+                mat
+            );
             runtimeFiberEndcapMesh1.name = `FiberEnd1_${i.toString()}`;
             runtimeFiberEndcapMesh1.visible = false;
             this.runTimeFiberMeshes.set(
@@ -801,10 +716,6 @@ class VisGeometry {
         if (!mesh.name) {
             mesh.name = meshName;
         }
-        if (meshName.includes("membrane")) {
-            this.membrane.mesh = mesh;
-            this.assignMembraneMaterial(mesh);
-        }
     }
 
     public getFiberMesh(name: string): Mesh {
@@ -814,23 +725,6 @@ class VisGeometry {
         }
 
         return this.errorMesh;
-    }
-
-    public getMaterial(index, typeId): Material {
-        // if no highlight, or if this is the highlighed type, then use regular material, otherwise use desaturated.
-        // todo strings or numbers for these ids?????
-        const isHighlighted =
-            this.highlightedId == -1 || this.highlightedId == typeId;
-
-        // membrane is special
-        if (typeId === this.membrane.typeId) {
-            return isHighlighted
-                ? this.membrane.facesMaterial
-                : this.desatMaterials[0];
-        }
-
-        let matArray = isHighlighted ? this.materials : this.desatMaterials;
-        return matArray[Number(index) % matArray.length];
     }
 
     /**
@@ -865,9 +759,6 @@ class VisGeometry {
     public mapIdToGeom(id, meshName, pdbName): void {
         this.logger.debug("Mesh for id ", id, " set to ", meshName);
         this.visGeomMap.set(id, { meshName, pdbName });
-        if (meshName.includes("membrane")) {
-            this.membrane.typeId = id;
-        }
         if (
             meshName &&
             !this.meshRegistry.has(meshName) &&
@@ -998,33 +889,10 @@ class VisGeometry {
     }
 
     /**
-     *   Default Geometry
-     */
-    public getSphereGeom(): BufferGeometry | Geometry {
-        const sphereId = -1;
-        if (!this.meshRegistry.has(sphereId)) {
-            this.meshRegistry.set(sphereId, new Mesh(this.sphereGeometry));
-        }
-
-        if (this.meshRegistry.has(sphereId)) {
-            let sphereMesh = this.meshRegistry.get(sphereId);
-            if (sphereMesh) {
-                let geom = sphereMesh.geometry;
-                if (geom) {
-                    return geom;
-                }
-            }
-        }
-
-        return this.sphereGeometry;
-    }
-
-    /**
      *   Update Scene
      * */
     public updateScene(agents): void {
         this.currentSceneAgents = agents;
-        const sphereGeometry = this.getSphereGeom();
         let fiberIndex = 0;
 
         // these have been set to correspond to backend values
@@ -1084,13 +952,14 @@ class VisGeometry {
                     // OR IF GEOMETRY IS SPHERE AND getGeomFromId RETURNS ANYTHING...
                     const meshGeom = this.getGeomFromId(typeId);
                     if (meshGeom) {
-                        // remove old object from scene
                         this.agentMeshGroup.remove(agentMesh.mesh);
                         agentMesh.setupMeshGeometry(meshGeom);
                         this.agentMeshGroup.add(agentMesh.mesh);
-                        // re-add new object to scene
+                        if (meshGeom.name.includes("membrane")) {
+                            this.membraneAgent = agentMesh;
+                        }
                     }
-                    agentMesh.setColor(this.getColor(materialType));
+                    agentMesh.setColor(this.getColorForTypeId(typeId));
                 }
 
                 const runtimeMesh = agentMesh.mesh;
@@ -1297,120 +1166,6 @@ class VisGeometry {
             } else {
                 this.camera.position.copy(newPosition);
             }
-        }
-    }
-    /*
-    public setupMeshGeometry(i, runtimeMesh, meshGeom, isFollowedObject): Mesh {
-        //  remove from scene
-        // add new to scene
-        // resetmesh
-
-        // remember current transform
-        const p = runtimeMesh.position;
-        const r = runtimeMesh.rotation;
-        const s = runtimeMesh.scale;
-
-        if (this.membrane.mesh === meshGeom) {
-            if (
-                this.membrane.mesh &&
-                runtimeMesh.children.length !==
-                    this.membrane.mesh.children.length
-            ) {
-                // to avoid a deep clone of userData, just reuse the instance
-                const userData = runtimeMesh.userData;
-                const visible = runtimeMesh.visible;
-                runtimeMesh.userData = null;
-                this.agentMeshGroup.remove(runtimeMesh);
-                runtimeMesh = this.membrane.mesh.clone();
-                runtimeMesh.userData = userData;
-                runtimeMesh.visible = visible;
-                this.assignMembraneMaterial(runtimeMesh);
-                this.agentMeshGroup.add(runtimeMesh);
-                this.resetMesh(i, runtimeMesh);
-                this.membrane.runtimeMeshIndex = i;
-            }
-        } else {
-            // to avoid a deep clone of userData, just reuse the instance
-            const userData = runtimeMesh.userData;
-            const visible = runtimeMesh.visible;
-            runtimeMesh.userData = null;
-            this.agentMeshGroup.remove(runtimeMesh);
-            runtimeMesh = meshGeom.clone();
-            runtimeMesh.userData = userData;
-            runtimeMesh.visible = visible;
-            this.agentMeshGroup.add(runtimeMesh);
-            this.resetMesh(i, runtimeMesh);
-
-            if (isFollowedObject) {
-                this.assignMaterial(runtimeMesh, this.highlightMaterial);
-            } else {
-                this.assignMaterial(
-                    runtimeMesh,
-                    runtimeMesh.userData.baseMaterial
-                );
-            }
-        }
-
-        // restore transform
-        runtimeMesh.position.copy(p);
-        runtimeMesh.rotation.copy(r);
-        runtimeMesh.scale.copy(s);
-
-        return runtimeMesh;
-    }
-*/
-    public assignMaterial(
-        runtimeMesh: Object3D,
-        material: MeshBasicMaterial | LineBasicMaterial
-    ): void {
-        if (runtimeMesh.name.includes("membrane")) {
-            return this.assignMembraneMaterial(runtimeMesh);
-        }
-
-        if (runtimeMesh instanceof Mesh) {
-            runtimeMesh.material = material;
-            runtimeMesh.onBeforeRender = onAgentMeshBeforeRender.bind(
-                runtimeMesh
-            );
-        } else {
-            runtimeMesh.traverse(child => {
-                if (child instanceof Mesh) {
-                    child.material = material;
-                    child.onBeforeRender = onAgentMeshBeforeRender.bind(child);
-                    child.userData = runtimeMesh.userData;
-                }
-            });
-        }
-    }
-
-    public assignMembraneMaterial(runtimeMesh): void {
-        const isHighlighted =
-            this.highlightedId == -1 ||
-            this.highlightedId == runtimeMesh.userData.typeId;
-
-        if (isHighlighted) {
-            // at this time, assign separate material parameters to the faces and sides of the membrane
-            const faceNames = this.membrane.faces.map(el => {
-                return el.name;
-            });
-            const sideNames = this.membrane.sides.map(el => {
-                return el.name;
-            });
-            runtimeMesh.traverse(child => {
-                if (child instanceof Mesh) {
-                    if (faceNames.includes(child.name)) {
-                        child.material = this.membrane.facesMaterial;
-                    } else if (sideNames.includes(child.name)) {
-                        child.material = this.membrane.sidesMaterial;
-                    }
-                }
-            });
-        } else {
-            runtimeMesh.traverse(child => {
-                if (child instanceof Mesh) {
-                    child.material = this.desatMaterials[0];
-                }
-            });
         }
     }
 
@@ -1681,7 +1436,7 @@ class VisGeometry {
             this.agentMeshGroup.remove(runtimeMesh.mesh);
             runtimeMesh.resetMesh();
             this.agentMeshGroup.add(runtimeMesh.mesh);
-            runtimeMesh.setColor(0xff00ff);
+            runtimeMesh.setColor(UNASSIGNED_AGENT_COLOR);
         }
     }
 
