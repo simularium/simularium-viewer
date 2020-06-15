@@ -48,7 +48,6 @@ const DEFAULT_BACKGROUND_COLOR = new Color(0.121569, 0.13333, 0.17647);
 const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 const NO_AGENT = -1;
-const UNASSIGNED_AGENT_COLOR = 0xff00ff;
 
 enum RenderStyle {
     GENERIC,
@@ -368,7 +367,7 @@ class VisGeometry {
         const meshGeom = this.meshRegistry.get(meshName);
 
         // go over all objects and update mesh of this typeId
-        // if this happens before the first updateScene, then the runtimeMeshes don't have type id's yet.
+        // if this happens before the first updateScene, then the visAgents don't have type id's yet.
         const nMeshes = this.visAgents.length;
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
             let runtimeMesh = this.visAgents[i];
@@ -661,7 +660,7 @@ class VisGeometry {
 
         // create placeholder meshes and fibers
         const mat = new MeshLambertMaterial({
-            color: UNASSIGNED_AGENT_COLOR,
+            color: AgentMesh.UNASSIGNED_MESH_COLOR,
         });
         for (let i = 0; i < this.geomCount; i += 1) {
             // 1. mesh geometries
@@ -758,7 +757,7 @@ class VisGeometry {
      */
     public mapIdToGeom(id, meshName, pdbName): void {
         this.logger.debug("Mesh for id ", id, " set to ", meshName);
-        this.visGeomMap.set(id, { meshName, pdbName });
+        this.visGeomMap.set(id, { meshName: meshName, pdbName: pdbName });
         if (
             meshName &&
             !this.meshRegistry.has(meshName) &&
@@ -1436,7 +1435,6 @@ class VisGeometry {
             this.agentMeshGroup.remove(runtimeMesh.mesh);
             runtimeMesh.resetMesh();
             this.agentMeshGroup.add(runtimeMesh.mesh);
-            runtimeMesh.setColor(UNASSIGNED_AGENT_COLOR);
         }
     }
 

@@ -26,6 +26,7 @@ function desaturate(color: Color): Color {
 }
 
 export default class AgentMesh {
+    public static UNASSIGNED_MESH_COLOR = 0xff00ff;
     public static sphereGeometry: SphereBufferGeometry = new SphereBufferGeometry(
         1,
         32,
@@ -81,7 +82,7 @@ export default class AgentMesh {
 
     public constructor(name: string) {
         this.name = name;
-        this.color = new Color(1, 0, 0);
+        this.color = new Color(AgentMesh.UNASSIGNED_MESH_COLOR);
         this.active = false;
         this.agentIndex = -1;
         this.typeId = -1;
@@ -102,6 +103,9 @@ export default class AgentMesh {
     public resetMesh() {
         this.mesh = new Mesh(AgentMesh.sphereGeometry, this.baseMaterial);
         this.mesh.userData = { index: this.agentIndex };
+        this.highlighted = false;
+        this.selected = true;
+        this.setColor(AgentMesh.UNASSIGNED_MESH_COLOR);
     }
 
     public setColor(color) {
@@ -198,7 +202,8 @@ export default class AgentMesh {
             return;
         }
         if (material.uniforms.IN_typeId) {
-            material.uniforms.IN_typeId.value = Number(this.typeId);
+            // HACK reconcile this with VisGeometry.colorVariant
+            material.uniforms.IN_typeId.value = Number((this.typeId + 1) * 50);
             material.uniformsNeedUpdate = true;
         }
         if (material.uniforms.IN_instanceId) {
