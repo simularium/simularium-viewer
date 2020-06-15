@@ -76,6 +76,8 @@ export default class AgentMesh {
     public desatMaterial: Material;
     public color: Color;
     public name: string;
+    public highlighted: boolean;
+    public selected: boolean;
 
     public constructor(name: string) {
         this.name = name;
@@ -83,6 +85,9 @@ export default class AgentMesh {
         this.active = false;
         this.agentIndex = -1;
         this.typeId = -1;
+        this.highlighted = false;
+        // all are selected by default.  deselecting will desaturate.
+        this.selected = true;
         this.baseMaterial = new MeshLambertMaterial({
             color: new Color(this.color),
         });
@@ -90,11 +95,13 @@ export default class AgentMesh {
             color: desaturate(this.color),
         });
         this.mesh = new Mesh(AgentMesh.sphereGeometry, this.baseMaterial);
+        this.mesh.userData = { index: this.agentIndex };
         this.mesh.visible = false;
     }
 
     public resetMesh() {
         this.mesh = new Mesh(AgentMesh.sphereGeometry, this.baseMaterial);
+        this.mesh.userData = { index: this.agentIndex };
     }
 
     public setColor(color) {
@@ -105,21 +112,31 @@ export default class AgentMesh {
         this.desatMaterial = new MeshBasicMaterial({
             color: desaturate(this.color),
         });
+        // because this is a new material, we need to re-install it on the geometry
+        // TODO deal with highlight and selection state
+        this.assignMaterial();
     }
 
     public setHighlighted(highlighted: boolean) {
-        this.assignMaterial(
-            highlighted ? AgentMesh.highlightMaterial : this.baseMaterial
-        );
+        this.highlighted = highlighted;
+        this.assignMaterial();
     }
 
     public setSelected(selected: boolean) {
-        this.assignMaterial(selected ? this.baseMaterial : this.desatMaterial);
+        this.selected = selected;
+        this.assignMaterial();
     }
 
-    private assignMaterial(material: Material) {
+    private assignMaterial() {
         if (this.mesh.name.includes("membrane")) {
             return this.assignMembraneMaterial();
+        }
+
+        let material = this.desatMaterial;
+        if (this.highlighted) {
+            material = AgentMesh.highlightMaterial;
+        } else if (this.selected) {
+            material = this.baseMaterial;
         }
 
         if (this.mesh instanceof Mesh) {
@@ -138,10 +155,7 @@ export default class AgentMesh {
     }
 
     public assignMembraneMaterial(): void {
-        // TODO: highlight/dehighlight
-        const isHighlighted = true;
-
-        if (isHighlighted) {
+        if (this.selected) {
             // at this time, assign separate material parameters to the faces and sides of the membrane
             const faceNames = AgentMesh.membraneData.faces.map(el => {
                 return el.name;
@@ -202,6 +216,7 @@ export default class AgentMesh {
         const visible = this.mesh.visible;
 
         this.mesh = meshGeom.clone();
+        this.mesh.userData = { index: this.agentIndex };
 
         this.mesh.visible = visible;
         // restore transform
@@ -209,7 +224,6 @@ export default class AgentMesh {
         this.mesh.rotation.copy(r);
         this.mesh.scale.copy(s);
 
-        // TODO : maintain proper highlight or selection state!
-        this.assignMaterial(this.baseMaterial);
+        this.assignMaterial();
     }
 }

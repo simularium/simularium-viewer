@@ -320,13 +320,13 @@ class VisGeometry {
 
         if (this.followObjectIndex !== NO_AGENT) {
             const runtimeAgentMesh = this.visAgents[this.followObjectIndex];
-            runtimeAgentMesh.setSelected(false);
+            runtimeAgentMesh.setHighlighted(false);
         }
         this.followObjectIndex = obj;
 
         if (obj !== NO_AGENT) {
             const runtimeAgentMesh = this.visAgents[obj];
-            runtimeAgentMesh.setSelected(true);
+            runtimeAgentMesh.setHighlighted(true);
         }
     }
 
@@ -958,8 +958,8 @@ class VisGeometry {
                         if (meshGeom.name.includes("membrane")) {
                             this.membraneAgent = agentMesh;
                         }
+                        agentMesh.setColor(this.getColorForTypeId(typeId));
                     }
-                    agentMesh.setColor(this.getColorForTypeId(typeId));
                 }
 
                 const runtimeMesh = agentMesh.mesh;
