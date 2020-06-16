@@ -57,7 +57,7 @@ export default class AgentMesh {
         facesUVScale: new Vector2(40.0, 40.0),
         sidesUVScale: new Vector2(2.0, 40.0),
     };
-    public static updateMembrane(time: number, renderer: WebGLRenderer) {
+    public static updateMembrane(time: number, renderer: WebGLRenderer): void {
         AgentMesh.membraneData.facesMaterial.uniforms.iTime.value = time;
         AgentMesh.membraneData.sidesMaterial.uniforms.iTime.value = time;
 
@@ -72,6 +72,7 @@ export default class AgentMesh {
     public mesh: Object3D;
     public agentIndex: number;
     public typeId: number;
+    public colorIndex: number;
     public active: boolean;
     public baseMaterial: Material;
     public desatMaterial: Material;
@@ -86,6 +87,7 @@ export default class AgentMesh {
         this.active = false;
         this.agentIndex = -1;
         this.typeId = -1;
+        this.colorIndex = 0;
         this.highlighted = false;
         // all are selected by default.  deselecting will desaturate.
         this.selected = true;
@@ -100,7 +102,7 @@ export default class AgentMesh {
         this.mesh.visible = false;
     }
 
-    public resetMesh() {
+    public resetMesh(): void {
         this.mesh = new Mesh(AgentMesh.sphereGeometry, this.baseMaterial);
         this.mesh.userData = { index: this.agentIndex };
         this.highlighted = false;
@@ -108,8 +110,9 @@ export default class AgentMesh {
         this.setColor(AgentMesh.UNASSIGNED_MESH_COLOR);
     }
 
-    public setColor(color) {
+    public setColor(color, colorIndex = 0): void {
         this.color = color;
+        this.colorIndex = colorIndex;
         this.baseMaterial = new MeshLambertMaterial({
             color: new Color(this.color),
         });
@@ -121,17 +124,17 @@ export default class AgentMesh {
         this.assignMaterial();
     }
 
-    public setHighlighted(highlighted: boolean) {
+    public setHighlighted(highlighted: boolean): void {
         this.highlighted = highlighted;
         this.assignMaterial();
     }
 
-    public setSelected(selected: boolean) {
+    public setSelected(selected: boolean): void {
         this.selected = selected;
         this.assignMaterial();
     }
 
-    private assignMaterial() {
+    private assignMaterial(): void {
         if (this.mesh.name.includes("membrane")) {
             return this.assignMembraneMaterial();
         }
@@ -195,15 +198,15 @@ export default class AgentMesh {
         scene,
         camera,
         geometry,
-        material,
-        group
+        material
+        /* group */
     ): void {
         if (!material.uniforms) {
             return;
         }
+        // colorIndex is not necessarily equal to typeId but is generally a 1-1 mapping.
         if (material.uniforms.IN_typeId) {
-            // HACK reconcile this with VisGeometry.colorVariant
-            material.uniforms.IN_typeId.value = Number((this.typeId + 1) * 50);
+            material.uniforms.IN_typeId.value = this.colorIndex;
             material.uniformsNeedUpdate = true;
         }
         if (material.uniforms.IN_instanceId) {
@@ -212,7 +215,7 @@ export default class AgentMesh {
         }
     }
 
-    public setupMeshGeometry(meshGeom) {
+    public setupMeshGeometry(meshGeom): void {
         // remember current transform
         const p = this.mesh.position;
         const r = this.mesh.rotation;

@@ -3,7 +3,7 @@ import {
     BufferGeometry,
     Float32BufferAttribute,
     Points,
-    ShaderMaterial,
+    //ShaderMaterial,
     Vector3,
 } from "three";
 
@@ -47,7 +47,7 @@ class PDBModel {
             });
     }
 
-    private fixupCoordinates() {
+    private fixupCoordinates(): void {
         const PDB_COORDINATE_SCALE = new Vector3(-0.1, 0.1, -0.1);
 
         for (var i = 0; i < this.pdb.atoms.length; ++i) {
@@ -112,9 +112,8 @@ class PDBModel {
         }
     }
 
-    private precomputeLOD() {
+    private precomputeLOD(): void {
         const n = this.pdb.atoms.length;
-        const atoms = this.pdb.atoms;
 
         this.lodSizes = [
             n,
@@ -144,7 +143,7 @@ class PDBModel {
         //console.profileEnd("KMEANS" + this.name);
     }
 
-    public getLod(lod) {
+    public getLod(lod): Float32Array {
         return this.lods[lod];
     }
 }

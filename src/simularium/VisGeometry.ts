@@ -372,11 +372,11 @@ class VisGeometry {
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
             let runtimeMesh = this.visAgents[i];
             if (typeIds.includes(runtimeMesh.typeId)) {
-                // const isFollowedObject = i === this.followObjectIndex;
                 this.agentMeshGroup.remove(runtimeMesh.mesh);
                 runtimeMesh.setupMeshGeometry(meshGeom);
                 runtimeMesh.setColor(
-                    this.getColorForTypeId(runtimeMesh.typeId)
+                    this.getColorForTypeId(runtimeMesh.typeId),
+                    this.getColorIndexForTypeId(runtimeMesh.typeId)
                 );
                 this.agentMeshGroup.add(runtimeMesh.mesh);
             }
@@ -635,9 +635,13 @@ class VisGeometry {
         this.moleculeRenderer.updateColors(numColors, this.colorsData);
     }
 
+    private getColorIndexForTypeId(typeId): number {
+        const index = (typeId + 1) * this.colorVariant;
+        return index % (this.colorsData.length / 4);
+    }
+
     private getColorForTypeId(typeId): Color {
-        let index = (typeId + 1) * this.colorVariant;
-        index = index % (this.colorsData.length / 4);
+        const index = this.getColorIndexForTypeId(typeId);
         return new Color(
             this.colorsData[index * 4],
             this.colorsData[index * 4 + 1],
@@ -938,7 +942,6 @@ class VisGeometry {
 
             if (visType === visTypes.ID_VIS_TYPE_DEFAULT) {
                 const materialType = (typeId + 1) * this.colorVariant;
-                const isFollowedObject = i === this.followObjectIndex;
                 const agentMesh = this.visAgents[i];
 
                 const lastTypeId = agentMesh.typeId;
@@ -957,7 +960,10 @@ class VisGeometry {
                         if (meshGeom.name.includes("membrane")) {
                             this.membraneAgent = agentMesh;
                         }
-                        agentMesh.setColor(this.getColorForTypeId(typeId));
+                        agentMesh.setColor(
+                            this.getColorForTypeId(typeId),
+                            this.getColorIndexForTypeId(typeId)
+                        );
                     }
                 }
 
@@ -986,9 +992,9 @@ class VisGeometry {
                     const pdb = this.getPdbFromId(typeId);
                     if (pdb && pdb.pdb) {
                         // select LOD
-                        const distance = this.camera.position.distanceTo(
-                            runtimeMesh.position
-                        );
+                        // const distance = this.camera.position.distanceTo(
+                        //     runtimeMesh.position
+                        // );
 
                         let lod = 1;
                         // if (distance < 40) {
