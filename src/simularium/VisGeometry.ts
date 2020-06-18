@@ -1150,15 +1150,6 @@ class VisGeometry {
             }
         });
 
-        // if (this.renderStyle === RenderStyle.MOLECULAR) {
-        //     // pick group of stuff to draw?
-        //     this.moleculeRenderer.updateMolecules(
-        //         buf,
-        //         typeids,
-        //         instanceids,
-        //         atomIndex // total number of atoms
-        //     );
-        // }
         this.hideUnusedFibers(fiberIndex);
     }
 

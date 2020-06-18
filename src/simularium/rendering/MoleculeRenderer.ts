@@ -235,11 +235,6 @@ class MoleculeRenderer {
         }
     }
 
-    // TODO this is a geometry/scene update and should be updated through some other means?
-    public updateMolecules(positions, typeids, instanceids, numAtoms): void {
-        this.gbufferPass.update(positions, typeids, instanceids, numAtoms);
-    }
-
     // colorsData is a Float32Array of rgb triples
     public updateColors(numColors, colorsData): void {
         this.compositePass.updateColors(numColors, colorsData);
