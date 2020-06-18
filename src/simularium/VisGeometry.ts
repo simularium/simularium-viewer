@@ -592,17 +592,40 @@ class VisGeometry {
             // meshes only.
             this.renderer.render(this.scene, this.camera);
         } else {
+            // select visibility and representation.
+            // and set lod for pdbs.
+            for (let i = 0; i < this.visAgents.length; ++i) {
+                const agent = this.visAgents[i];
+                if (agent.active) {
+                    for (let j = 0; j < agent.pdbObjects.length; ++j) {
+                        agent.pdbObjects[j].visible = false;
+                    }
+                    if (
+                        agent.pdbModel &&
+                        agent.pdbModel.pdb &&
+                        agent.pdbObjects.length > 0
+                    ) {
+                        agent.mesh.visible = false;
+                        // if it has any pdb objects then set up the LOD visibility.
+                        const distances = [40, 100, 150, Number.MAX_VALUE];
+                        const distance = this.camera.position.distanceTo(
+                            agent.mesh.position
+                        );
+                        for (let j = 0; j < agent.pdbObjects.length; ++j) {
+                            // the first distance less than.
+                            if (distance < distances[j]) {
+                                agent.pdbObjects[j].visible = true;
+                                break;
+                            }
+                        }
+                    } else {
+                        agent.mesh.visible = true;
+                    }
+                }
+            }
+
             this.scene.updateMatrixWorld();
             this.scene.autoUpdate = false;
-            // figure out which meshes vs pdbs will be drawn.
-            // for (let i = 0; i < this.visAgents.length; ++i) {
-            //     const agent = this.visAgents[i];
-            //     if (agent.active) {
-            //         // mesh or pdb?
-            //         // compute lod from distance.
-            //         // transform is stored in mesh.
-            //     }
-            // }
             this.moleculeRenderer.setMeshGroups(
                 this.agentMeshGroup,
                 this.agentPDBGroup,
@@ -1053,33 +1076,6 @@ class VisGeometry {
                         obj.scale.z = 1.0; //agentData.cr * scale;
 
                         obj.visible = false;
-                    }
-                }
-                // need to translate rotate scale each object.
-                // buffer of mat4x4s per agent?
-
-                if (this.renderStyle === RenderStyle.MOLECULAR) {
-                    const pdb = agentMesh.pdbModel;
-                    if (pdb && pdb.pdb) {
-                        // switch off mesh in favor of pdb.
-                        runtimeMesh.visible = false;
-                        agentMesh.pdbObjects[1].visible = true;
-
-                        // select LOD
-                        // const distance = this.camera.position.distanceTo(
-                        //     runtimeMesh.position
-                        // );
-                        // if (distance < 40) {
-                        //     lod = 0;
-                        // } else if (distance < 100) {
-                        //     lod = 1;
-                        // } else if (distance < 150) {
-                        //     lod = 2;
-                        // } else {
-                        //     lod = 3;
-                        // }
-                    } else {
-                        // just draw the mesh in molecular renderer?
                     }
                 }
 
