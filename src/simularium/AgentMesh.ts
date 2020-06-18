@@ -12,6 +12,7 @@ import {
 } from "three";
 
 import MembraneShader from "./rendering/MembraneShader";
+import PDBModel from "./PDBModel";
 
 function desaturate(color: Color): Color {
     const desatColor = new Color(color);
@@ -70,6 +71,9 @@ export default class AgentMesh {
     }
 
     public mesh: Object3D;
+    // TODO can this default to a trivial single-atom pdb model?
+    public pdbModel?: PDBModel;
+    public pdbObjects: Object3D[];
     public agentIndex: number;
     public typeId: number;
     public colorIndex: number;
@@ -100,6 +104,9 @@ export default class AgentMesh {
         this.mesh = new Mesh(AgentMesh.sphereGeometry, this.baseMaterial);
         this.mesh.userData = { index: this.agentIndex };
         this.mesh.visible = false;
+
+        this.pdbModel = undefined;
+        this.pdbObjects = [];
     }
 
     public resetMesh(): void {
@@ -146,6 +153,11 @@ export default class AgentMesh {
             material = this.baseMaterial;
         }
 
+        for (let i = 0; i < this.pdbObjects.length; ++i) {
+            this.pdbObjects[
+                i
+            ].onBeforeRender = this.onAgentMeshBeforeRender.bind(this);
+        }
         if (this.mesh instanceof Mesh) {
             this.mesh.material = material;
             this.mesh.onBeforeRender = this.onAgentMeshBeforeRender.bind(this);
@@ -233,5 +245,10 @@ export default class AgentMesh {
         this.mesh.scale.copy(s);
 
         this.assignMaterial();
+    }
+
+    public setupPdb(pdb): void {
+        this.pdbModel = pdb;
+        this.pdbObjects = pdb.instantiate();
     }
 }

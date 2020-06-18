@@ -1,11 +1,5 @@
 import parsePdb from "parse-pdb";
-import {
-    BufferGeometry,
-    Float32BufferAttribute,
-    Points,
-    //ShaderMaterial,
-    Vector3,
-} from "three";
+import { BufferGeometry, Float32BufferAttribute, Points, Vector3 } from "three";
 
 import KMeans3d from "./rendering/KMeans3d";
 
@@ -14,7 +8,6 @@ class PDBModel {
     public name: string;
     public pdb: any;
     private geometry: BufferGeometry[];
-    private particles: Points[];
     private lods: Float32Array[];
     private lodSizes: number[];
     //private materials: ShaderMaterial[];
@@ -23,7 +16,6 @@ class PDBModel {
         this.filePath = filePath;
         this.name = filePath;
         this.pdb = null;
-        this.particles = [];
         this.geometry = [];
         this.lods = [];
         this.lodSizes = [];
@@ -41,10 +33,30 @@ class PDBModel {
                 self.fixupCoordinates();
                 console.log("PDB FILE HAS " + self.pdb.atoms.length + " ATOMS");
                 self.checkChains();
-                // TODO look at this when ready to do instancing refactor
-                //self.createGPUBuffers();
                 self.precomputeLOD();
+                self.createGPUBuffers();
             });
+    }
+
+    // build a fake random pdb
+    public create(nAtoms: number, atomSpread: number = 10) {
+        const atoms: { x: number; y: number; z: number }[] = [];
+        // always put one atom at the center
+        atoms.push({
+            x: 0,
+            y: 0,
+            z: 0,
+        });
+        for (let i = 1; i < nAtoms; ++i) {
+            atoms.push({
+                x: (Math.random() - 0.5) * atomSpread,
+                y: (Math.random() - 0.5) * atomSpread,
+                z: (Math.random() - 0.5) * atomSpread,
+            });
+        }
+        this.pdb = { atoms: [] };
+        this.precomputeLOD();
+        this.createGPUBuffers();
     }
 
     private fixupCoordinates(): void {
@@ -86,10 +98,10 @@ class PDBModel {
             //const chainIds = new Float32Array(n);
             for (let j = 0; j < n; j++) {
                 // position
-                vertices[i * 4] = this.lods[i][j * 3];
-                vertices[i * 4 + 1] = this.lods[i][j * 3 + 1];
-                vertices[i * 4 + 2] = this.lods[i][j * 3 + 2];
-                vertices[i * 4 + 3] = 1;
+                vertices[j * 4] = this.lods[i][j * 3];
+                vertices[j * 4 + 1] = this.lods[i][j * 3 + 1];
+                vertices[j * 4 + 2] = this.lods[i][j * 3 + 2];
+                vertices[j * 4 + 3] = 1;
                 // residueIds[i] = this.pdb.atoms[i].resSeq; // resSeq might not be the right number here. might want the residue itself's index
                 // const chain = this.pdb.chains.get(this.pdb.atoms[i].chainId);
                 // chainIds[i] = chain ? chain.id : 0;
@@ -106,9 +118,7 @@ class PDBModel {
             //     "vChainId",
             //     new Float32BufferAttribute(chainIds, 1)
             // );
-            const object = new Points(geometry);
             this.geometry.push(geometry);
-            this.particles.push(object);
         }
     }
 
@@ -117,9 +127,9 @@ class PDBModel {
 
         this.lodSizes = [
             n,
-            Math.floor(n / 8),
-            Math.floor(n / 32),
-            Math.floor(n / 128),
+            Math.max(Math.floor(n / 8), 1),
+            Math.max(Math.floor(n / 32), 1),
+            Math.max(Math.floor(n / 128), 1),
         ];
         this.lods = [new Float32Array(n * 3)];
 
@@ -143,8 +153,14 @@ class PDBModel {
         //console.profileEnd("KMEANS" + this.name);
     }
 
-    public getLod(lod): Float32Array {
-        return this.lods[lod];
+    public instantiate(): Points[] {
+        const lodobjects: Points[] = [];
+        for (let i = 0; i < this.lods.length; ++i) {
+            const obj = new Points(this.geometry[i]);
+            obj.visible = false;
+            lodobjects.push(obj);
+        }
+        return lodobjects;
     }
 }
 

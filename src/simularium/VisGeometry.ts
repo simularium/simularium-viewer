@@ -116,8 +116,8 @@ class VisGeometry {
     public colorsData: Float32Array;
     public lightsGroup: Group;
     public agentMeshGroup: Group;
-    public agentPDBGroup: Group;
     public agentFiberGroup: Group;
+    public agentPDBGroup: Group;
     public agentPathGroup: Group;
     private raycaster: Raycaster;
     private supportsMoleculeRendering: boolean;
@@ -163,8 +163,8 @@ class VisGeometry {
         this.scene = new Scene();
         this.lightsGroup = new Group();
         this.agentMeshGroup = new Group();
-        this.agentPDBGroup = new Group();
         this.agentFiberGroup = new Group();
+        this.agentPDBGroup = new Group();
         this.agentPathGroup = new Group();
 
         this.camera = new PerspectiveCamera(75, 100 / 100, 0.1, 10000);
@@ -383,6 +383,32 @@ class VisGeometry {
         }
     }
 
+    public onNewPdb(pdbName): void {
+        // find all typeIds for this meshName
+        let typeIds = [...this.visGeomMap.entries()]
+            .filter(({ 1: v }) => v.pdbName === pdbName)
+            .map(([k]) => k);
+
+        // assuming the pdb has already been added to the registry
+        const pdb = this.pdbRegistry.get(pdbName);
+
+        // go over all objects and update mesh of this typeId
+        // if this happens before the first updateScene, then the visAgents don't have type id's yet.
+        const nMeshes = this.visAgents.length;
+        for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
+            let runtimeMesh = this.visAgents[i];
+            if (typeIds.includes(runtimeMesh.typeId)) {
+                for (let lod = 0; lod < runtimeMesh.pdbObjects.length; ++lod) {
+                    this.agentPDBGroup.remove(runtimeMesh.pdbObjects[lod]);
+                }
+                runtimeMesh.setupPdb(pdb);
+                for (let lod = 0; lod < runtimeMesh.pdbObjects.length; ++lod) {
+                    this.agentPDBGroup.add(runtimeMesh.pdbObjects[lod]);
+                }
+            }
+        }
+    }
+
     public setUpControls(element): void {
         this.controls = new OrbitControls(this.camera, element);
         this.controls.maxDistance = 750;
@@ -404,12 +430,12 @@ class VisGeometry {
         this.agentMeshGroup = new Group();
         this.agentMeshGroup.name = "agent meshes";
         this.scene.add(this.agentMeshGroup);
-        this.agentPDBGroup = new Group();
-        this.agentPDBGroup.name = "agent pdbs";
-        this.scene.add(this.agentPDBGroup);
         this.agentFiberGroup = new Group();
         this.agentFiberGroup.name = "agent fibers";
         this.scene.add(this.agentFiberGroup);
+        this.agentPDBGroup = new Group();
+        this.agentPDBGroup.name = "agent pdbs";
+        this.scene.add(this.agentPDBGroup);
         this.agentPathGroup = new Group();
         this.agentPathGroup.name = "agent paths";
         this.scene.add(this.agentPathGroup);
@@ -457,6 +483,21 @@ class VisGeometry {
         this.renderer.clear();
 
         this.camera.position.z = 120;
+    }
+
+    public loadPdb(pdbName): void {
+        const pdbmodel = new PDBModel(pdbName);
+        pdbmodel.download().then(
+            () => {
+                this.logger.debug("Finished loading pdb: ", pdbName);
+                this.pdbRegistry.set(pdbName, pdbmodel);
+                this.onNewPdb(pdbName);
+            },
+            reason => {
+                console.error(reason);
+                this.logger.debug("Failed to load pdb: ", pdbName);
+            }
+        );
     }
 
     public loadObj(meshName): void {
@@ -535,6 +576,7 @@ class VisGeometry {
 
         this.animateCamera();
 
+        // update light sources due to camera moves
         if (this.dl && this.fixLightsToCamera) {
             // position directional light at camera (facing scene, as headlight!)
             this.dl.position.setFromMatrixColumn(this.camera.matrixWorld, 2);
@@ -548,28 +590,46 @@ class VisGeometry {
         }
 
         if (this.renderStyle == RenderStyle.GENERIC) {
+            // meshes only.
             this.renderer.render(this.scene, this.camera);
         } else {
-            // group will be added to a different scene, and thus removed from this scene
+            // figure out which meshes vs pdbs will be drawn.
+            // for (let i = 0; i < this.visAgents.length; ++i) {
+            //     const agent = this.visAgents[i];
+            //     if (agent.active) {
+            //         // mesh or pdb?
+            //         // compute lod from distance.
+            //         // transform is stored in mesh.
+            //     }
+            // }
             this.moleculeRenderer.setMeshGroups(
                 this.agentMeshGroup,
                 this.agentPDBGroup,
                 this.agentFiberGroup
             );
             this.moleculeRenderer.setHighlightInstance(this.followObjectIndex);
-            this.moleculeRenderer.render(this.renderer, this.camera, null);
+            this.boundingBoxMesh.visible = false;
+            this.agentPathGroup.visible = false;
+            this.moleculeRenderer.render(
+                this.renderer,
+                this.scene,
+                this.camera,
+                null
+            );
+
+            // final pass, add extra stuff on top: bounding box and line paths
+            this.boundingBoxMesh.visible = true;
+            this.agentPathGroup.visible = true;
+
             this.renderer.autoClear = false;
-            // restore mesh group back to this.scene
-            this.scene.add(this.agentMeshGroup);
-            this.scene.add(this.agentPDBGroup);
-            this.scene.add(this.agentFiberGroup);
+            // hide everything except the wireframe and paths, and render with the standard renderer
             this.agentMeshGroup.visible = false;
-            this.agentPDBGroup.visible = false;
             this.agentFiberGroup.visible = false;
+            this.agentPDBGroup.visible = false;
             this.renderer.render(this.scene, this.camera);
             this.agentMeshGroup.visible = true;
-            this.agentPDBGroup.visible = true;
             this.agentFiberGroup.visible = true;
+            this.agentPDBGroup.visible = true;
             this.renderer.autoClear = true;
         }
     }
@@ -651,12 +711,6 @@ class VisGeometry {
 
     public createMeshes(): void {
         this.geomCount = MAX_MESHES;
-
-        // empty buffer of molecule positions, to be filled. (init all to origin)
-        this.moleculeRenderer.createMoleculeBuffer(
-            this.geomCount * 2000
-            //            this.geomCount * this.numAtomsPerAgent
-        );
 
         //multipass render:
         // draw moleculebuffer into several render targets to store depth, normals, colors
@@ -777,11 +831,7 @@ class VisGeometry {
             !this.pdbRegistry.has(pdbName) &&
             !this.pdbLoadAttempted.get(pdbName)
         ) {
-            const pdbmodel = new PDBModel(pdbName);
-            pdbmodel.download().then(() => {
-                this.pdbRegistry.set(pdbName, pdbmodel);
-                this.logger.debug("Finished loading pdb: ", pdbName);
-            });
+            this.loadPdb(pdbName);
             this.pdbLoadAttempted.set(pdbName, true);
         }
     }
@@ -905,35 +955,6 @@ class VisGeometry {
         });
 
         let dx, dy, dz;
-        // The agents sent over are mapped by an integer id
-
-        // compute size of buffers
-        // this is ugly: a new loop over all agents to add up the pdb sizes
-        // TODO Future instancing changes may obviate the whole thing.
-        let numAtoms = 0;
-        if (this.renderStyle === RenderStyle.MOLECULAR) {
-            agents.forEach(agentData => {
-                const visType = agentData["vis-type"];
-                const typeId = agentData.type;
-                if (visType === visTypes.ID_VIS_TYPE_DEFAULT) {
-                    if (this.renderStyle === RenderStyle.MOLECULAR) {
-                        const pdb = this.getPdbFromId(typeId);
-                        if (pdb && pdb.pdb) {
-                            numAtoms += pdb.pdb.atoms.length;
-                        } else {
-                            numAtoms += this.numAtomsPerAgent;
-                        }
-                    }
-                }
-            });
-        }
-        let atomIndex = 0;
-        const buf = new Float32Array(4 * numAtoms);
-        const typeids = new Float32Array(numAtoms);
-        const instanceids = new Float32Array(numAtoms);
-
-        // temp vector to hold some calculations
-        const p = new Vector3();
 
         agents.forEach((agentData, i) => {
             const visType = agentData["vis-type"];
@@ -965,6 +986,30 @@ class VisGeometry {
                             this.getColorIndexForTypeId(typeId)
                         );
                     }
+                    const pdbGeom = this.getPdbFromId(typeId);
+                    if (pdbGeom) {
+                        for (
+                            let lod = 0;
+                            lod < agentMesh.pdbObjects.length;
+                            ++lod
+                        ) {
+                            this.agentPDBGroup.remove(
+                                agentMesh.pdbObjects[lod]
+                            );
+                        }
+                        agentMesh.setupPdb(pdbGeom);
+                        for (
+                            let lod = 0;
+                            lod < agentMesh.pdbObjects.length;
+                            ++lod
+                        ) {
+                            this.agentPDBGroup.add(agentMesh.pdbObjects[lod]);
+                        }
+                        agentMesh.setColor(
+                            this.getColorForTypeId(typeId),
+                            this.getColorIndexForTypeId(typeId)
+                        );
+                    }
                 }
 
                 const runtimeMesh = agentMesh.mesh;
@@ -984,19 +1029,44 @@ class VisGeometry {
                 runtimeMesh.scale.x = agentData.cr * scale;
                 runtimeMesh.scale.y = agentData.cr * scale;
                 runtimeMesh.scale.z = agentData.cr * scale;
+                // update pdb transforms too
+                const pdb = agentMesh.pdbModel;
+                if (pdb && pdb.pdb) {
+                    for (
+                        let lod = 0;
+                        lod < agentMesh.pdbObjects.length;
+                        ++lod
+                    ) {
+                        const obj = agentMesh.pdbObjects[lod];
+                        obj.position.x = agentData.x;
+                        obj.position.y = agentData.y;
+                        obj.position.z = agentData.z;
 
+                        obj.rotation.x = agentData.xrot;
+                        obj.rotation.y = agentData.yrot;
+                        obj.rotation.z = agentData.zrot;
+
+                        obj.scale.x = 1.0; //agentData.cr * scale;
+                        obj.scale.y = 1.0; //agentData.cr * scale;
+                        obj.scale.z = 1.0; //agentData.cr * scale;
+
+                        obj.visible = false;
+                    }
+                }
                 // need to translate rotate scale each object.
                 // buffer of mat4x4s per agent?
 
                 if (this.renderStyle === RenderStyle.MOLECULAR) {
-                    const pdb = this.getPdbFromId(typeId);
+                    const pdb = agentMesh.pdbModel;
                     if (pdb && pdb.pdb) {
+                        // switch off mesh in favor of pdb.
+                        runtimeMesh.visible = false;
+                        agentMesh.pdbObjects[1].visible = true;
+
                         // select LOD
                         // const distance = this.camera.position.distanceTo(
                         //     runtimeMesh.position
                         // );
-
-                        let lod = 1;
                         // if (distance < 40) {
                         //     lod = 0;
                         // } else if (distance < 100) {
@@ -1006,51 +1076,8 @@ class VisGeometry {
                         // } else {
                         //     lod = 3;
                         // }
-                        const atoms = pdb.getLod(lod);
-                        // transform and add all pdb atoms to the atom buffer
-                        for (let k = 0; k < atoms.length / 3; ++k) {
-                            // flip handedness to match previous obj files.
-                            // divide by 10 to go from angstroms(pdb) to nanometers
-                            p.set(
-                                atoms[k * 3],
-                                atoms[k * 3 + 1],
-                                atoms[k * 3 + 2]
-                            );
-                            p.applyEuler(
-                                new Euler(
-                                    agentData.xrot,
-                                    agentData.yrot,
-                                    agentData.zrot
-                                )
-                            );
-                            p.add(runtimeMesh.position);
-                            buf[atomIndex * 4 + 0] = p.x;
-                            buf[atomIndex * 4 + 1] = p.y;
-                            buf[atomIndex * 4 + 2] = p.z;
-                            buf[atomIndex * 4 + 3] = 1.0;
-                            typeids[atomIndex] = materialType;
-                            instanceids[atomIndex] = i;
-                            atomIndex++;
-                        }
                     } else {
-                        // if no pdb, but we want to show atoms as spheres:
-                        // add random spheres (close to the agent position) to the atom buffer
-                        // TODO: to be removed when this is production ready
-                        for (let k = 0; k < this.numAtomsPerAgent; ++k) {
-                            buf[atomIndex * 4 + 0] =
-                                agentData.x +
-                                (Math.random() - 0.5) * this.atomSpread;
-                            buf[atomIndex * 4 + 1] =
-                                agentData.y +
-                                (Math.random() - 0.5) * this.atomSpread;
-                            buf[atomIndex * 4 + 2] =
-                                agentData.z +
-                                (Math.random() - 0.5) * this.atomSpread;
-                            buf[atomIndex * 4 + 3] = 1.0;
-                            typeids[atomIndex] = materialType;
-                            instanceids[atomIndex] = i;
-                            atomIndex++;
-                        }
+                        // just draw the mesh in molecular renderer?
                     }
                 }
 
@@ -1125,14 +1152,15 @@ class VisGeometry {
             }
         });
 
-        if (this.renderStyle === RenderStyle.MOLECULAR) {
-            this.moleculeRenderer.updateMolecules(
-                buf,
-                typeids,
-                instanceids,
-                atomIndex // total number of atoms
-            );
-        }
+        // if (this.renderStyle === RenderStyle.MOLECULAR) {
+        //     // pick group of stuff to draw?
+        //     this.moleculeRenderer.updateMolecules(
+        //         buf,
+        //         typeids,
+        //         instanceids,
+        //         atomIndex // total number of atoms
+        //     );
+        // }
         this.hideUnusedFibers(fiberIndex);
     }
 

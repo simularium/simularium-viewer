@@ -195,7 +195,6 @@ varying float IN_radius;
 const colorMaterial = new ShaderMaterial({
     uniforms: {
         radius: { value: 1.0 },
-        color: { value: new Color(0x44ff44) },
         iResolution: { value: new Vector2() },
         Scale: { value: 1.0 },
         projectionMatrix: { value: new Matrix4() },
@@ -210,7 +209,6 @@ const colorMaterial = new ShaderMaterial({
 const normalMaterial = new ShaderMaterial({
     uniforms: {
         radius: { value: 1.0 },
-        color: { value: new Color(0x44ff44) },
         iResolution: { value: new Vector2() },
         Scale: { value: 1.0 },
         projectionMatrix: { value: new Matrix4() },
@@ -223,7 +221,6 @@ const normalMaterial = new ShaderMaterial({
 const positionMaterial = new ShaderMaterial({
     uniforms: {
         radius: { value: 1.0 },
-        color: { value: new Color(0x44ff44) },
         iResolution: { value: new Vector2() },
         Scale: { value: 1.0 },
         projectionMatrix: { value: new Matrix4() },

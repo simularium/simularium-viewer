@@ -32,7 +32,7 @@ class MoleculeRenderer {
     public ssaoBufferBlurred2: WebGLRenderTarget;
 
     public constructor() {
-        this.gbufferPass = new GBufferPass(1);
+        this.gbufferPass = new GBufferPass();
         // radius, threshold, falloff in view space coordinates.
         this.ssao1Pass = new SSAO1Pass(4.5, 150, 150);
         this.ssao2Pass = new SSAO1Pass(4.5, 150, 150);
@@ -139,12 +139,10 @@ class MoleculeRenderer {
             bghueoffset: 1,
             bgchromaoffset: 0,
             bgluminanceoffset: 0.2,
-            showAtoms: this.gbufferPass.getShowAtoms(),
         };
 
         /////////////////////////////////////////////////////////////////////
         // init from settings object
-        this.gbufferPass.setShowAtoms(settings.showAtoms);
         this.gbufferPass.setAtomRadius(settings.atomRadius);
         this.ssao1Pass.pass.material.uniforms.radius.value = settings.aoradius1;
         this.blur1Pass.setRadius(settings.blurradius1);
@@ -171,9 +169,6 @@ class MoleculeRenderer {
         /////////////////////////////////////////////////////////////////////
 
         var self = this;
-        gui.add(settings, "showAtoms").onChange(value => {
-            self.gbufferPass.setShowAtoms(value);
-        });
         gui.add(settings, "atomRadius", 0.01, 10.0).onChange(value => {
             self.gbufferPass.setAtomRadius(value);
         });
@@ -250,10 +245,6 @@ class MoleculeRenderer {
         this.compositePass.updateColors(numColors, colorsData);
     }
 
-    public createMoleculeBuffer(n): void {
-        this.gbufferPass.createMoleculeBuffer(n);
-    }
-
     public setMeshGroups(
         agentMeshGroup: Group,
         agentPDBGroup: Group,
@@ -288,11 +279,7 @@ class MoleculeRenderer {
         this.drawBufferPass.resize(x, y);
     }
 
-    public setShowAtoms(show): void {
-        this.gbufferPass.setShowAtoms(show);
-    }
-
-    public render(renderer, camera, target): void {
+    public render(renderer, scene, camera, target): void {
         // currently rendering is a limited # of draw calls of POINTS objects and one draw call per mesh TRIANGLES object (reusing same geometry buffer)
         // transforms are happening serially on cpu side because all objects are packed into buffer
         //    could use buffer of transforms and per-instance indices to index into it
@@ -335,6 +322,7 @@ class MoleculeRenderer {
         // TODO: MRT
         this.gbufferPass.render(
             renderer,
+            scene,
             camera,
             this.colorBuffer,
             this.normalBuffer,
