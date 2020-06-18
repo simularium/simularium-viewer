@@ -597,9 +597,6 @@ class VisGeometry {
             for (let i = 0; i < this.visAgents.length; ++i) {
                 const agent = this.visAgents[i];
                 if (agent.active) {
-                    for (let j = 0; j < agent.pdbObjects.length; ++j) {
-                        agent.pdbObjects[j].visible = false;
-                    }
                     if (
                         agent.pdbModel &&
                         agent.pdbModel.pdb &&
@@ -611,14 +608,15 @@ class VisGeometry {
                         const distance = this.camera.position.distanceTo(
                             agent.mesh.position
                         );
-                        for (let j = 0; j < agent.pdbObjects.length; ++j) {
+                        for (let j = 0; j < distances.length; ++j) {
                             // the first distance less than.
                             if (distance < distances[j]) {
-                                agent.pdbObjects[j].visible = true;
+                                agent.selectLOD(j);
                                 break;
                             }
                         }
                     } else {
+                        agent.setPDBInvisible();
                         agent.mesh.visible = true;
                     }
                 }

@@ -125,7 +125,6 @@ class MoleculeRenderer {
 
     public setupGui(gui): void {
         var settings = {
-            atomRadius: 0.25,
             aoradius1: 2.2,
             aoradius2: 5,
             blurradius1: 1.5,
@@ -143,7 +142,6 @@ class MoleculeRenderer {
 
         /////////////////////////////////////////////////////////////////////
         // init from settings object
-        this.gbufferPass.setAtomRadius(settings.atomRadius);
         this.ssao1Pass.pass.material.uniforms.radius.value = settings.aoradius1;
         this.blur1Pass.setRadius(settings.blurradius1);
         this.ssao1Pass.pass.material.uniforms.ssaoThreshold.value =
@@ -169,9 +167,6 @@ class MoleculeRenderer {
         /////////////////////////////////////////////////////////////////////
 
         var self = this;
-        gui.add(settings, "atomRadius", 0.01, 10.0).onChange(value => {
-            self.gbufferPass.setAtomRadius(value);
-        });
         gui.add(settings, "aoradius1", 0.01, 10.0).onChange(value => {
             self.ssao1Pass.pass.material.uniforms.radius.value = value;
         });

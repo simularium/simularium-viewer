@@ -74,6 +74,7 @@ export default class AgentMesh {
     // TODO can this default to a trivial single-atom pdb model?
     public pdbModel?: PDBModel;
     public pdbObjects: Object3D[];
+    public lod: number;
     public agentIndex: number;
     public typeId: number;
     public colorIndex: number;
@@ -107,6 +108,7 @@ export default class AgentMesh {
 
         this.pdbModel = undefined;
         this.pdbObjects = [];
+        this.lod = 0;
     }
 
     public resetMesh(): void {
@@ -225,6 +227,10 @@ export default class AgentMesh {
             material.uniforms.IN_instanceId.value = Number(this.agentIndex);
             material.uniformsNeedUpdate = true;
         }
+        if (material.uniforms.radius) {
+            material.uniforms.radius.value = (this.lod + 1) * 0.25; // * 8;
+            material.uniformsNeedUpdate = true;
+        }
     }
 
     public setupMeshGeometry(meshGeom): void {
@@ -250,5 +256,20 @@ export default class AgentMesh {
     public setupPdb(pdb): void {
         this.pdbModel = pdb;
         this.pdbObjects = pdb.instantiate();
+    }
+
+    public selectLOD(index): void {
+        this.setPDBInvisible();
+        if (index < 0 || index >= this.pdbObjects.length) {
+            index = this.pdbObjects.length - 1;
+        }
+        this.lod = index;
+        this.pdbObjects[index].visible = true;
+    }
+
+    public setPDBInvisible(): void {
+        for (let j = 0; j < this.pdbObjects.length; ++j) {
+            this.pdbObjects[j].visible = false;
+        }
     }
 }

@@ -54,12 +54,6 @@ class GBufferPass {
         this.agentFiberGroup = agentFiberGroup;
     }
 
-    public setAtomRadius(r): void {
-        this.colorMaterialPDB.uniforms.radius.value = r;
-        this.normalMaterialPDB.uniforms.radius.value = r;
-        this.positionMaterialPDB.uniforms.radius.value = r;
-    }
-
     public resize(width, height): void {
         this.colorMaterialPDB.uniforms.iResolution.value = new Vector2(
             width,
