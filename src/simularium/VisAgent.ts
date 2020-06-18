@@ -26,7 +26,7 @@ function desaturate(color: Color): Color {
     return desatColor;
 }
 
-export default class AgentMesh {
+export default class VisAgent {
     public static UNASSIGNED_MESH_COLOR = 0xff00ff;
     public static sphereGeometry: SphereBufferGeometry = new SphereBufferGeometry(
         1,
@@ -59,14 +59,14 @@ export default class AgentMesh {
         sidesUVScale: new Vector2(2.0, 40.0),
     };
     public static updateMembrane(time: number, renderer: WebGLRenderer): void {
-        AgentMesh.membraneData.facesMaterial.uniforms.iTime.value = time;
-        AgentMesh.membraneData.sidesMaterial.uniforms.iTime.value = time;
+        VisAgent.membraneData.facesMaterial.uniforms.iTime.value = time;
+        VisAgent.membraneData.sidesMaterial.uniforms.iTime.value = time;
 
         renderer.getDrawingBufferSize(
-            AgentMesh.membraneData.facesMaterial.uniforms.iResolution.value
+            VisAgent.membraneData.facesMaterial.uniforms.iResolution.value
         );
         renderer.getDrawingBufferSize(
-            AgentMesh.membraneData.sidesMaterial.uniforms.iResolution.value
+            VisAgent.membraneData.sidesMaterial.uniforms.iResolution.value
         );
     }
 
@@ -88,7 +88,7 @@ export default class AgentMesh {
 
     public constructor(name: string) {
         this.name = name;
-        this.color = new Color(AgentMesh.UNASSIGNED_MESH_COLOR);
+        this.color = new Color(VisAgent.UNASSIGNED_MESH_COLOR);
         this.active = false;
         this.agentIndex = -1;
         this.typeId = -1;
@@ -102,7 +102,7 @@ export default class AgentMesh {
         this.desatMaterial = new MeshBasicMaterial({
             color: desaturate(this.color),
         });
-        this.mesh = new Mesh(AgentMesh.sphereGeometry, this.baseMaterial);
+        this.mesh = new Mesh(VisAgent.sphereGeometry, this.baseMaterial);
         this.mesh.userData = { index: this.agentIndex };
         this.mesh.visible = false;
 
@@ -112,11 +112,17 @@ export default class AgentMesh {
     }
 
     public resetMesh(): void {
-        this.mesh = new Mesh(AgentMesh.sphereGeometry, this.baseMaterial);
+        this.mesh = new Mesh(VisAgent.sphereGeometry, this.baseMaterial);
         this.mesh.userData = { index: this.agentIndex };
         this.highlighted = false;
         this.selected = true;
-        this.setColor(AgentMesh.UNASSIGNED_MESH_COLOR);
+        this.setColor(VisAgent.UNASSIGNED_MESH_COLOR);
+    }
+
+    public resetPDB(): void {
+        this.pdbModel = undefined;
+        this.pdbObjects = [];
+        this.lod = 0;
     }
 
     public setColor(color, colorIndex = 0): void {
@@ -150,7 +156,7 @@ export default class AgentMesh {
 
         let material = this.desatMaterial;
         if (this.highlighted) {
-            material = AgentMesh.highlightMaterial;
+            material = VisAgent.highlightMaterial;
         } else if (this.selected) {
             material = this.baseMaterial;
         }
@@ -178,25 +184,25 @@ export default class AgentMesh {
     public assignMembraneMaterial(): void {
         if (this.selected) {
             // at this time, assign separate material parameters to the faces and sides of the membrane
-            const faceNames = AgentMesh.membraneData.faces.map(el => {
+            const faceNames = VisAgent.membraneData.faces.map(el => {
                 return el.name;
             });
-            const sideNames = AgentMesh.membraneData.sides.map(el => {
+            const sideNames = VisAgent.membraneData.sides.map(el => {
                 return el.name;
             });
             this.mesh.traverse(child => {
                 if (child instanceof Mesh) {
                     if (faceNames.includes(child.name)) {
-                        child.material = AgentMesh.membraneData.facesMaterial;
+                        child.material = VisAgent.membraneData.facesMaterial;
                     } else if (sideNames.includes(child.name)) {
-                        child.material = AgentMesh.membraneData.sidesMaterial;
+                        child.material = VisAgent.membraneData.sidesMaterial;
                     }
                 }
             });
-            AgentMesh.membraneData.facesMaterial.uniforms.uvscale.value =
-                AgentMesh.membraneData.facesUVScale;
-            AgentMesh.membraneData.sidesMaterial.uniforms.uvscale.value =
-                AgentMesh.membraneData.sidesUVScale;
+            VisAgent.membraneData.facesMaterial.uniforms.uvscale.value =
+                VisAgent.membraneData.facesUVScale;
+            VisAgent.membraneData.sidesMaterial.uniforms.uvscale.value =
+                VisAgent.membraneData.sidesUVScale;
         } else {
             this.mesh.traverse(child => {
                 if (child instanceof Mesh) {
@@ -207,7 +213,7 @@ export default class AgentMesh {
     }
 
     private onAgentMeshBeforeRender(
-        this: AgentMesh,
+        this: VisAgent,
         renderer,
         scene,
         camera,
@@ -271,5 +277,19 @@ export default class AgentMesh {
         for (let j = 0; j < this.pdbObjects.length; ++j) {
             this.pdbObjects[j].visible = false;
         }
+    }
+
+    public hideAndDeactivate(): void {
+        this.mesh.visible = false;
+        this.setPDBInvisible();
+        this.active = false;
+    }
+
+    public hasDrawablePDB(): boolean {
+        return (
+            this.pdbModel !== undefined &&
+            this.pdbModel.pdb !== null &&
+            this.pdbObjects.length > 0
+        );
     }
 }
