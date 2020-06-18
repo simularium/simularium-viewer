@@ -17,6 +17,7 @@ function areArraysClose(a, b, epsilon): boolean {
     }
     return true;
 }
+
 function findMin(arr): number {
     let m = Number.MAX_VALUE;
     for (let i = 0; i < arr.length; ++i) {
@@ -25,12 +26,14 @@ function findMin(arr): number {
         }
     }
     return m;
-
-    //return arr.reduce((x, y) => Math.min(x, y), Number.MAX_VALUE);
 }
 
 /**
  * KMeans
+ *       This is a ported and optimized version of code explained here:
+ *       https://miguelmota.com/blog/k-means-clustering-in-javascript/
+ *       https://burakkanber.com/blog/machine-learning-k-means-clustering-in-javascript-part-1/
+ *
  * @constructor
  * @desc KMeans constructor
  * @param {object} options - options object
@@ -208,14 +211,8 @@ export default class KMeans {
             // After calculating all the distances from the data point to each cluster centroid,
             // we pick the closest (smallest) distances.
             const minReading = findMin(this.tmpDistances);
-            // const minReading = this.tmpDistances.reduce(
-            //     (x, y) => Math.min(x, y),
-            //     Number.MAX_VALUE
-            // );
             this.assignments[i] = this.tmpDistances.indexOf(minReading);
         }
-
-        //return assignments;
     }
 
     /**
@@ -247,9 +244,6 @@ export default class KMeans {
             sums[meanIndex * 3] += px;
             sums[meanIndex * 3 + 1] += py;
             sums[meanIndex * 3 + 2] += pz;
-            // for (dim = 0; dim < mean.length; dim++) {
-            //     sums[meanIndex][dim] += point[dim];
-            // }
         }
 
         /* If cluster centroid (mean) is not longer assigned to any points,
@@ -280,7 +274,6 @@ export default class KMeans {
          * move cluster centroid closer to average point.
          */
         // compare ALL the means to the sums.
-        //if (this.means.toString() !== sums.toString()) {
         if (!areArraysClose(this.means, sums, 0.01)) {
             var diff;
             moved = true;

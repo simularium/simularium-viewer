@@ -3,14 +3,55 @@ import { BufferGeometry, Float32BufferAttribute, Points, Vector3 } from "three";
 
 import KMeans3d from "./rendering/KMeans3d";
 
+interface PDBAtom {
+    serial?: number;
+    name?: string;
+    altLoc?: string;
+    resName?: string;
+    chainID?: string;
+    resSeq?: number;
+    iCode?: string;
+    x: number;
+    y: number;
+    z: number;
+    occupancy?: number;
+    tempFactor?: number;
+    element?: string;
+    charge?: string;
+}
+interface PDBSeqRes {
+    serNum: number;
+    chainID: string;
+    numRes: number;
+    resNames: string[];
+}
+interface PDBResidue {
+    id: number;
+    serNum: number;
+    chainID: string;
+    resName: string;
+    atoms: PDBAtom[];
+}
+interface PDBChain {
+    id: number;
+    chainID: string;
+    residues: PDBResidue[];
+}
+
+interface PDBType {
+    atoms: PDBAtom[];
+    seqRes: PDBSeqRes[];
+    residues: PDBResidue[];
+    chains: Map<string, PDBChain>;
+}
+
 class PDBModel {
     public filePath: string;
     public name: string;
-    public pdb: any;
+    public pdb: PDBType | null;
     private geometry: BufferGeometry[];
     private lods: Float32Array[];
     private lodSizes: number[];
-    //private materials: ShaderMaterial[];
 
     public constructor(filePath: string) {
         this.filePath = filePath;
@@ -29,7 +70,7 @@ class PDBModel {
             .then(data => {
                 // note pdb atom coordinates are in angstroms
                 // 1 nm is 10 angstroms
-                self.pdb = parsePdb(data);
+                self.pdb = parsePdb(data) as PDBType;
                 self.fixupCoordinates();
                 console.log("PDB FILE HAS " + self.pdb.atoms.length + " ATOMS");
                 self.checkChains();
@@ -40,7 +81,7 @@ class PDBModel {
 
     // build a fake random pdb
     public create(nAtoms: number, atomSpread: number = 10): void {
-        const atoms: { x: number; y: number; z: number }[] = [];
+        const atoms: PDBAtom[] = [];
         // always put one atom at the center
         atoms.push({
             x: 0,
@@ -54,12 +95,20 @@ class PDBModel {
                 z: (Math.random() - 0.5) * atomSpread,
             });
         }
-        this.pdb = { atoms: [] };
+        this.pdb = {
+            atoms: atoms,
+            seqRes: [],
+            residues: [],
+            chains: new Map(),
+        };
         this.precomputeLOD();
         this.createGPUBuffers();
     }
 
     private fixupCoordinates(): void {
+        if (!this.pdb) {
+            return;
+        }
         const PDB_COORDINATE_SCALE = new Vector3(-0.1, 0.1, -0.1);
 
         for (var i = 0; i < this.pdb.atoms.length; ++i) {
@@ -70,17 +119,21 @@ class PDBModel {
     }
 
     private checkChains(): void {
+        if (!this.pdb) {
+            return;
+        }
         if (!this.pdb.chains) {
             this.pdb.chains = new Map();
         }
         if (!this.pdb.chains.size) {
             for (var i = 0; i < this.pdb.atoms.length; ++i) {
                 const atom = this.pdb.atoms[i];
-                if (!this.pdb.chains.get(atom.chainID)) {
+                if (atom.chainID && !this.pdb.chains.get(atom.chainID)) {
                     this.pdb.chains.set(atom.chainID, {
                         id: this.pdb.chains.size,
                         chainID: atom.chainID,
                         // No need to save numRes, can just do chain.residues.length
+                        residues: [],
                     });
                 }
             }
@@ -123,6 +176,9 @@ class PDBModel {
     }
 
     private precomputeLOD(): void {
+        if (!this.pdb) {
+            return;
+        }
         const n = this.pdb.atoms.length;
 
         this.lodSizes = [

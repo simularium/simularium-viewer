@@ -1,5 +1,4 @@
 import MeshGBufferShaders from "./MeshGBufferShaders";
-import MoleculeGBufferShaders from "./MoleculeGBufferShaders";
 import PDBGBufferShaders from "./PDBGBufferShaders";
 
 import { Color, Group, ShaderMaterial, Vector2, Scene } from "three";
@@ -18,9 +17,6 @@ import { Color, Group, ShaderMaterial, Vector2, Scene } from "three";
 
 // draw positions, normals, and instance and type ids of objects
 class GBufferPass {
-    public colorMaterial: ShaderMaterial;
-    public normalMaterial: ShaderMaterial;
-    public positionMaterial: ShaderMaterial;
     public colorMaterialMesh: ShaderMaterial;
     public normalMaterialMesh: ShaderMaterial;
     public positionMaterialMesh: ShaderMaterial;
@@ -36,10 +32,6 @@ class GBufferPass {
         this.agentMeshGroup = new Group();
         this.agentPDBGroup = new Group();
         this.agentFiberGroup = new Group();
-
-        this.colorMaterial = MoleculeGBufferShaders.colorMaterial;
-        this.normalMaterial = MoleculeGBufferShaders.normalMaterial;
-        this.positionMaterial = MoleculeGBufferShaders.positionMaterial;
 
         this.colorMaterialMesh = MeshGBufferShaders.colorMaterial;
         this.normalMaterialMesh = MeshGBufferShaders.normalMaterial;
@@ -63,27 +55,12 @@ class GBufferPass {
     }
 
     public setAtomRadius(r): void {
-        this.colorMaterial.uniforms.radius.value = r;
-        this.normalMaterial.uniforms.radius.value = r;
-        this.positionMaterial.uniforms.radius.value = r;
         this.colorMaterialPDB.uniforms.radius.value = r;
         this.normalMaterialPDB.uniforms.radius.value = r;
         this.positionMaterialPDB.uniforms.radius.value = r;
     }
 
     public resize(width, height): void {
-        this.colorMaterial.uniforms.iResolution.value = new Vector2(
-            width,
-            height
-        );
-        this.normalMaterial.uniforms.iResolution.value = new Vector2(
-            width,
-            height
-        );
-        this.positionMaterial.uniforms.iResolution.value = new Vector2(
-            width,
-            height
-        );
         this.colorMaterialPDB.uniforms.iResolution.value = new Vector2(
             width,
             height
@@ -110,13 +87,6 @@ class GBufferPass {
         const a = renderer.getClearAlpha();
         // alpha == -1 is a marker to discard pixels later
         renderer.setClearColor(new Color(0.0, 0.0, 0.0), -1.0);
-
-        this.colorMaterial.uniforms.projectionMatrix.value =
-            camera.projectionMatrix;
-        this.normalMaterial.uniforms.projectionMatrix.value =
-            camera.projectionMatrix;
-        this.positionMaterial.uniforms.projectionMatrix.value =
-            camera.projectionMatrix;
 
         this.colorMaterialMesh.uniforms.projectionMatrix.value =
             camera.projectionMatrix;
@@ -196,49 +166,11 @@ class GBufferPass {
         scene.overrideMaterial = this.positionMaterialPDB;
         renderer.render(scene, camera);
 
-        renderer.autoClear = true;
-
-        /*
-
-
-        this.agentMeshGroup.visible = true;
-        this.agentFiberGroup.visible = true;
-        this.agentPDBGroup.visible = false;
-
-        // TODO : MRT
-        renderer.setRenderTarget(colorBuffer);
-        scene.overrideMaterial = this.colorMaterialMesh;
-        renderer.render(scene, camera);
-
-        renderer.setRenderTarget(normalBuffer);
-        scene.overrideMaterial = this.normalMaterialMesh;
-        renderer.render(scene, camera);
-
-        renderer.setRenderTarget(positionBuffer);
-        scene.overrideMaterial = this.positionMaterialMesh;
-        renderer.render(scene, camera);
-
-        renderer.autoClear = false;
-
-        this.agentMeshGroup.visible = false;
-        this.agentFiberGroup.visible = false;
-        this.agentPDBGroup.visible = true;
-
-        renderer.setRenderTarget(colorBuffer);
-        scene.overrideMaterial = this.colorMaterialPDB;
-        renderer.render(scene, camera);
-
-        renderer.setRenderTarget(normalBuffer);
-        scene.overrideMaterial = this.normalMaterialPDB;
-        renderer.render(scene, camera);
-
-        renderer.setRenderTarget(positionBuffer);
-        scene.overrideMaterial = this.positionMaterialPDB;
-        renderer.render(scene, camera);
-*/
+        // restore state before returning
         scene.overrideMaterial = null;
 
         renderer.autoClear = true;
+
         renderer.setClearColor(c, a);
     }
 }
