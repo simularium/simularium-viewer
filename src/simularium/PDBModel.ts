@@ -39,7 +39,7 @@ class PDBModel {
     }
 
     // build a fake random pdb
-    public create(nAtoms: number, atomSpread: number = 10) {
+    public create(nAtoms: number, atomSpread: number = 10): void {
         const atoms: { x: number; y: number; z: number }[] = [];
         // always put one atom at the center
         atoms.push({

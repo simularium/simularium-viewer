@@ -62,8 +62,6 @@ class GBufferPass {
         this.agentFiberGroup = agentFiberGroup;
     }
 
-    public update(positions, typeIds, instanceIds, numVertices): void {}
-
     public setAtomRadius(r): void {
         this.colorMaterial.uniforms.radius.value = r;
         this.normalMaterial.uniforms.radius.value = r;

@@ -13,7 +13,6 @@ import {
     CatmullRomCurve3,
     Color,
     DirectionalLight,
-    Euler,
     Group,
     HemisphereLight,
     LineBasicMaterial,
@@ -962,7 +961,6 @@ class VisGeometry {
             const scale = this.getScaleForId(typeId);
 
             if (visType === visTypes.ID_VIS_TYPE_DEFAULT) {
-                const materialType = (typeId + 1) * this.colorVariant;
                 const agentMesh = this.visAgents[i];
 
                 const lastTypeId = agentMesh.typeId;

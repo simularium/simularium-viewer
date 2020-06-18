@@ -1,4 +1,4 @@
-import { Color, FrontSide, Matrix4, ShaderMaterial, Vector2 } from "three";
+import { FrontSide, Matrix4, ShaderMaterial, Vector2 } from "three";
 
 const vertexShader = `
 precision highp float;
