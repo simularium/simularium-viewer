@@ -1,5 +1,6 @@
 import MeshGBufferShaders from "./MeshGBufferShaders";
 import MoleculeGBufferShaders from "./MoleculeGBufferShaders";
+import PDBGBufferShaders from "./PDBGBufferShaders";
 
 import {
     BufferAttribute,
@@ -33,10 +34,14 @@ class GBufferPass {
     public colorMaterialMesh: ShaderMaterial;
     public normalMaterialMesh: ShaderMaterial;
     public positionMaterialMesh: ShaderMaterial;
+    public colorMaterialPDB: ShaderMaterial;
+    public normalMaterialPDB: ShaderMaterial;
+    public positionMaterialPDB: ShaderMaterial;
     public particles: Points;
     public scene: Scene;
     public geometry: BufferGeometry;
     public agentMeshGroup: Group;
+    public agentPDBGroup: Group;
     public agentFiberGroup: Group;
     private showAtoms: boolean;
     private moleculeBufferSize: number;
@@ -44,6 +49,7 @@ class GBufferPass {
     public constructor(n) {
         this.showAtoms = false;
         this.agentMeshGroup = new Group();
+        this.agentPDBGroup = new Group();
         this.agentFiberGroup = new Group();
         this.geometry = new BufferGeometry();
 
@@ -57,6 +63,10 @@ class GBufferPass {
         this.colorMaterialMesh = MeshGBufferShaders.colorMaterial;
         this.normalMaterialMesh = MeshGBufferShaders.normalMaterial;
         this.positionMaterialMesh = MeshGBufferShaders.positionMaterial;
+
+        this.colorMaterialPDB = PDBGBufferShaders.colorMaterial;
+        this.normalMaterialPDB = PDBGBufferShaders.normalMaterial;
+        this.positionMaterialPDB = PDBGBufferShaders.positionMaterial;
 
         // could break up into a few particles buffers at the cost of separate draw calls...
         this.particles = new Points(this.geometry, this.colorMaterial);
@@ -102,8 +112,13 @@ class GBufferPass {
         }
     }
 
-    public setMeshGroups(agentMeshGroup: Group, agentFiberGroup: Group): void {
+    public setMeshGroups(
+        agentMeshGroup: Group,
+        agentPDBGroup: Group,
+        agentFiberGroup: Group
+    ): void {
         this.agentMeshGroup = agentMeshGroup;
+        this.agentPDBGroup = agentPDBGroup;
         this.agentFiberGroup = agentFiberGroup;
     }
 
@@ -141,6 +156,9 @@ class GBufferPass {
         this.colorMaterial.uniforms.radius.value = r;
         this.normalMaterial.uniforms.radius.value = r;
         this.positionMaterial.uniforms.radius.value = r;
+        this.colorMaterialPDB.uniforms.radius.value = r;
+        this.normalMaterialPDB.uniforms.radius.value = r;
+        this.positionMaterialPDB.uniforms.radius.value = r;
     }
 
     public resize(width, height): void {
@@ -210,6 +228,8 @@ class GBufferPass {
             this.agentFiberGroup.visible = prevVisFiber;
             meshScene.overrideMaterial = null;
         } else {
+            //meshScene.add(this.agentPDBGroup);
+
             // TODO : MRT
             renderer.setRenderTarget(colorBuffer);
             this.particles.material = this.colorMaterial;

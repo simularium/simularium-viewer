@@ -75,19 +75,18 @@ function onAgentMeshBeforeRender(
     if (!material.uniforms) {
         return;
     }
-    if (!material.uniforms.IN_typeId) {
-        return;
-    }
-    if (!material.uniforms.IN_instanceId) {
-        return;
-    }
     const u = this.userData;
     if (!u) {
         return;
     }
-    material.uniforms.IN_typeId.value = Number(u.materialType);
-    material.uniforms.IN_instanceId.value = Number(u.index);
-    material.uniformsNeedUpdate = true;
+    if (material.uniforms.IN_typeId) {
+        material.uniforms.IN_typeId.value = Number(u.materialType);
+        material.uniformsNeedUpdate = true;
+    }
+    if (material.uniforms.IN_instanceId) {
+        material.uniforms.IN_instanceId.value = Number(u.index);
+        material.uniformsNeedUpdate = true;
+    }
 }
 
 interface HSL {
@@ -158,6 +157,7 @@ class VisGeometry {
     public colorsData: Float32Array;
     public lightsGroup: Group;
     public agentMeshGroup: Group;
+    public agentPDBGroup: Group;
     public agentFiberGroup: Group;
     public agentPathGroup: Group;
     private raycaster: Raycaster;
@@ -229,6 +229,7 @@ class VisGeometry {
         this.scene = new Scene();
         this.lightsGroup = new Group();
         this.agentMeshGroup = new Group();
+        this.agentPDBGroup = new Group();
         this.agentFiberGroup = new Group();
         this.agentPathGroup = new Group();
 
@@ -482,6 +483,9 @@ class VisGeometry {
         this.agentMeshGroup = new Group();
         this.agentMeshGroup.name = "agent meshes";
         this.scene.add(this.agentMeshGroup);
+        this.agentPDBGroup = new Group();
+        this.agentPDBGroup.name = "agent pdbs";
+        this.scene.add(this.agentPDBGroup);
         this.agentFiberGroup = new Group();
         this.agentFiberGroup.name = "agent fibers";
         this.scene.add(this.agentFiberGroup);
@@ -617,8 +621,6 @@ class VisGeometry {
         if (this.dl && this.fixLightsToCamera) {
             // position directional light at camera (facing scene, as headlight!)
             this.dl.position.setFromMatrixColumn(this.camera.matrixWorld, 2);
-
-            //this.dl.position.copy(this.camera.position);
         }
         if (this.hemiLight && this.fixLightsToCamera) {
             // make hemi light come down from vertical of screen (camera up)
@@ -634,6 +636,7 @@ class VisGeometry {
             // group will be added to a different scene, and thus removed from this scene
             this.moleculeRenderer.setMeshGroups(
                 this.agentMeshGroup,
+                this.agentPDBGroup,
                 this.agentFiberGroup
             );
             this.moleculeRenderer.setHighlightInstance(this.followObjectIndex);
@@ -641,11 +644,14 @@ class VisGeometry {
             this.renderer.autoClear = false;
             // restore mesh group back to this.scene
             this.scene.add(this.agentMeshGroup);
+            this.scene.add(this.agentPDBGroup);
             this.scene.add(this.agentFiberGroup);
             this.agentMeshGroup.visible = false;
+            this.agentPDBGroup.visible = false;
             this.agentFiberGroup.visible = false;
             this.renderer.render(this.scene, this.camera);
             this.agentMeshGroup.visible = true;
+            this.agentPDBGroup.visible = true;
             this.agentFiberGroup.visible = true;
             this.renderer.autoClear = true;
         }
@@ -1127,14 +1133,30 @@ class VisGeometry {
                 if (this.renderStyle === RenderStyle.MOLECULAR) {
                     const pdb = this.getPdbFromId(typeId);
                     if (pdb && pdb.pdb) {
+                        // select LOD
+                        const distance = this.camera.position.distanceTo(
+                            runtimeMesh.position
+                        );
+
+                        let lod = 1;
+                        // if (distance < 40) {
+                        //     lod = 0;
+                        // } else if (distance < 100) {
+                        //     lod = 1;
+                        // } else if (distance < 150) {
+                        //     lod = 2;
+                        // } else {
+                        //     lod = 3;
+                        // }
+                        const atoms = pdb.getLod(lod);
                         // transform and add all pdb atoms to the atom buffer
-                        for (let k = 0; k < pdb.pdb.atoms.length; ++k) {
+                        for (let k = 0; k < atoms.length / 3; ++k) {
                             // flip handedness to match previous obj files.
                             // divide by 10 to go from angstroms(pdb) to nanometers
                             p.set(
-                                -pdb.pdb.atoms[k].x / 10.0,
-                                pdb.pdb.atoms[k].y / 10.0,
-                                -pdb.pdb.atoms[k].z / 10.0
+                                atoms[k * 3],
+                                atoms[k * 3 + 1],
+                                atoms[k * 3 + 2]
                             );
                             p.applyEuler(
                                 new Euler(
