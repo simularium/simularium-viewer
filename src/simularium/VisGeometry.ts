@@ -592,6 +592,8 @@ class VisGeometry {
             // meshes only.
             this.renderer.render(this.scene, this.camera);
         } else {
+            this.scene.updateMatrixWorld();
+            this.scene.autoUpdate = false;
             // figure out which meshes vs pdbs will be drawn.
             // for (let i = 0; i < this.visAgents.length; ++i) {
             //     const agent = this.visAgents[i];
@@ -630,6 +632,8 @@ class VisGeometry {
             this.agentFiberGroup.visible = true;
             this.agentPDBGroup.visible = true;
             this.renderer.autoClear = true;
+
+            this.scene.autoUpdate = false;
         }
     }
 
