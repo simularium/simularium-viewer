@@ -1,15 +1,55 @@
 import parsePdb from "parse-pdb";
 import { BufferGeometry, Float32BufferAttribute, Points, Vector3 } from "three";
 
-import KMeans from "./rendering/KMeans";
 import KMeans3d from "./rendering/KMeans3d";
+
+interface PDBAtom {
+    serial?: number;
+    name?: string;
+    altLoc?: string;
+    resName?: string;
+    chainID?: string;
+    resSeq?: number;
+    iCode?: string;
+    x: number;
+    y: number;
+    z: number;
+    occupancy?: number;
+    tempFactor?: number;
+    element?: string;
+    charge?: string;
+}
+interface PDBSeqRes {
+    serNum: number;
+    chainID: string;
+    numRes: number;
+    resNames: string[];
+}
+interface PDBResidue {
+    id: number;
+    serNum: number;
+    chainID: string;
+    resName: string;
+    atoms: PDBAtom[];
+}
+interface PDBChain {
+    id: number;
+    chainID: string;
+    residues: PDBResidue[];
+}
+
+interface PDBType {
+    atoms: PDBAtom[];
+    seqRes: PDBSeqRes[];
+    residues: PDBResidue[];
+    chains: Map<string, PDBChain>;
+}
 
 class PDBModel {
     public filePath: string;
     public name: string;
-    public pdb: any;
+    public pdb: PDBType | null;
     private geometry: BufferGeometry[];
-    private particles: Points[];
     private lods: Float32Array[];
     private lodSizes: number[];
 
@@ -17,7 +57,6 @@ class PDBModel {
         this.filePath = filePath;
         this.name = filePath;
         this.pdb = null;
-        this.particles = [];
         this.geometry = [];
         this.lods = [];
         this.lodSizes = [];
@@ -31,17 +70,45 @@ class PDBModel {
             .then(data => {
                 // note pdb atom coordinates are in angstroms
                 // 1 nm is 10 angstroms
-                self.pdb = parsePdb(data);
+                self.pdb = parsePdb(data) as PDBType;
                 self.fixupCoordinates();
                 console.log("PDB FILE HAS " + self.pdb.atoms.length + " ATOMS");
                 self.checkChains();
-                // TODO look at this when ready to do instancing refactor
-                //self.createGPUBuffers();
                 self.precomputeLOD();
+                self.createGPUBuffers();
             });
     }
 
-    private fixupCoordinates() {
+    // build a fake random pdb
+    public create(nAtoms: number, atomSpread: number = 10): void {
+        const atoms: PDBAtom[] = [];
+        // always put one atom at the center
+        atoms.push({
+            x: 0,
+            y: 0,
+            z: 0,
+        });
+        for (let i = 1; i < nAtoms; ++i) {
+            atoms.push({
+                x: (Math.random() - 0.5) * atomSpread,
+                y: (Math.random() - 0.5) * atomSpread,
+                z: (Math.random() - 0.5) * atomSpread,
+            });
+        }
+        this.pdb = {
+            atoms: atoms,
+            seqRes: [],
+            residues: [],
+            chains: new Map(),
+        };
+        this.precomputeLOD();
+        this.createGPUBuffers();
+    }
+
+    private fixupCoordinates(): void {
+        if (!this.pdb) {
+            return;
+        }
         const PDB_COORDINATE_SCALE = new Vector3(-0.1, 0.1, -0.1);
 
         for (var i = 0; i < this.pdb.atoms.length; ++i) {
@@ -52,17 +119,21 @@ class PDBModel {
     }
 
     private checkChains(): void {
+        if (!this.pdb) {
+            return;
+        }
         if (!this.pdb.chains) {
             this.pdb.chains = new Map();
         }
         if (!this.pdb.chains.size) {
             for (var i = 0; i < this.pdb.atoms.length; ++i) {
                 const atom = this.pdb.atoms[i];
-                if (!this.pdb.chains.get(atom.chainID)) {
+                if (atom.chainID && !this.pdb.chains.get(atom.chainID)) {
                     this.pdb.chains.set(atom.chainID, {
                         id: this.pdb.chains.size,
                         chainID: atom.chainID,
                         // No need to save numRes, can just do chain.residues.length
+                        residues: [],
                     });
                 }
             }
@@ -80,10 +151,10 @@ class PDBModel {
             //const chainIds = new Float32Array(n);
             for (let j = 0; j < n; j++) {
                 // position
-                vertices[i * 4] = this.lods[i][j * 3];
-                vertices[i * 4 + 1] = this.lods[i][j * 3 + 1];
-                vertices[i * 4 + 2] = this.lods[i][j * 3 + 2];
-                vertices[i * 4 + 3] = 1;
+                vertices[j * 4] = this.lods[i][j * 3];
+                vertices[j * 4 + 1] = this.lods[i][j * 3 + 1];
+                vertices[j * 4 + 2] = this.lods[i][j * 3 + 2];
+                vertices[j * 4 + 3] = 1;
                 // residueIds[i] = this.pdb.atoms[i].resSeq; // resSeq might not be the right number here. might want the residue itself's index
                 // const chain = this.pdb.chains.get(this.pdb.atoms[i].chainId);
                 // chainIds[i] = chain ? chain.id : 0;
@@ -100,21 +171,21 @@ class PDBModel {
             //     "vChainId",
             //     new Float32BufferAttribute(chainIds, 1)
             // );
-            const object = new Points(geometry);
             this.geometry.push(geometry);
-            this.particles.push(object);
         }
     }
 
-    private precomputeLOD() {
+    private precomputeLOD(): void {
+        if (!this.pdb) {
+            return;
+        }
         const n = this.pdb.atoms.length;
-        const atoms = this.pdb.atoms;
 
         this.lodSizes = [
             n,
-            Math.floor(n / 8),
-            Math.floor(n / 32),
-            Math.floor(n / 128),
+            Math.max(Math.floor(n / 8), 1),
+            Math.max(Math.floor(n / 32), 1),
+            Math.max(Math.floor(n / 128), 1),
         ];
         this.lods = [new Float32Array(n * 3)];
 
@@ -138,8 +209,14 @@ class PDBModel {
         //console.profileEnd("KMEANS" + this.name);
     }
 
-    public getLod(lod) {
-        return this.lods[lod];
+    public instantiate(): Points[] {
+        const lodobjects: Points[] = [];
+        for (let i = 0; i < this.lods.length; ++i) {
+            const obj = new Points(this.geometry[i]);
+            obj.visible = false;
+            lodobjects.push(obj);
+        }
+        return lodobjects;
     }
 }
 

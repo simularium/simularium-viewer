@@ -9,7 +9,7 @@ interface KMeansOptions {
 }
 
 // assumes arrays of equal length
-function areArraysClose(a, b, epsilon) {
+function areArraysClose(a, b, epsilon): boolean {
     for (let i = 0; i < a.length; ++i) {
         if (Math.abs(a[i] - b[i]) > epsilon) {
             return false;
@@ -17,7 +17,8 @@ function areArraysClose(a, b, epsilon) {
     }
     return true;
 }
-function findMin(arr) {
+
+function findMin(arr): number {
     let m = Number.MAX_VALUE;
     for (let i = 0; i < arr.length; ++i) {
         if (arr[i] < m) {
@@ -25,12 +26,14 @@ function findMin(arr) {
         }
     }
     return m;
-
-    //return arr.reduce((x, y) => Math.min(x, y), Number.MAX_VALUE);
 }
 
 /**
  * KMeans
+ *       This is a ported and optimized version of code explained here:
+ *       https://miguelmota.com/blog/k-means-clustering-in-javascript/
+ *       https://burakkanber.com/blog/machine-learning-k-means-clustering-in-javascript-part-1/
+ *
  * @constructor
  * @desc KMeans constructor
  * @param {object} options - options object
@@ -40,15 +43,15 @@ function findMin(arr) {
  */
 export default class KMeans {
     public k: number;
-    public data: any;
-    public assignments: any;
-    public extents: any;
-    public ranges: any;
-    public means: any;
+    public data: Float32Array;
+    public assignments: Int32Array;
+    public extents: number[];
+    public ranges: number[];
+    public means: Float32Array;
     public iterations: number;
     public drawDelay: number;
     public timer: number;
-    private tmpDistances: any;
+    private tmpDistances: Float32Array;
 
     public constructor(opts: KMeansOptions) {
         // Number of cluster centroids.
@@ -99,7 +102,7 @@ export default class KMeans {
      * console.log(extents); // [2,1,1, 4,7,3]
      */
 
-    public dataDimensionExtents(data) {
+    public dataDimensionExtents(data): number[] {
         //data = data || this.data;
         var extents = [1000000, 1000000, 1000000, -1000000, -1000000, -1000000];
 
@@ -138,7 +141,7 @@ export default class KMeans {
      * var ranges = kmeans.dataExtentRanges(extents);
      * console.log(ranges); // [2,6]
      */
-    public dataExtentRanges() {
+    public dataExtentRanges(): number[] {
         return [
             this.extents[3] - this.extents[0],
             this.extents[4] - this.extents[1],
@@ -154,7 +157,7 @@ export default class KMeans {
      * var means = kmeans.seeds();
      * console.log(means); // [2,3,7, 4,5,2, 5,2,1]
      */
-    public seeds() {
+    public seeds(): Float32Array {
         var means = new Float32Array(this.k * 3);
         for (let i = 0; i < this.k; ++i) {
             means[i * 3] = this.extents[0] + Math.random() * this.ranges[0];
@@ -180,7 +183,7 @@ export default class KMeans {
      *
      * http://en.wikipedia.org/wiki/Euclidean_distance
      */
-    public assignClusterToDataPoints() {
+    public assignClusterToDataPoints(): void {
         for (var i = 0; i < this.data.length / 3; i++) {
             var x = this.data[i * 3];
             var y = this.data[i * 3 + 1];
@@ -208,14 +211,8 @@ export default class KMeans {
             // After calculating all the distances from the data point to each cluster centroid,
             // we pick the closest (smallest) distances.
             const minReading = findMin(this.tmpDistances);
-            // const minReading = this.tmpDistances.reduce(
-            //     (x, y) => Math.min(x, y),
-            //     Number.MAX_VALUE
-            // );
             this.assignments[i] = this.tmpDistances.indexOf(minReading);
         }
-
-        //return assignments;
     }
 
     /**
@@ -223,12 +220,11 @@ export default class KMeans {
      * @desc Update the positions of the the cluster centroids (means) to the average positions
      * of all data points that belong to that mean.
      */
-    public moveMeans() {
+    public moveMeans(): boolean {
         // sums are 3d points
         var sums = new Float32Array(this.means.length).fill(0);
         var counts = new Int32Array(this.means.length / 3).fill(0);
         var moved = false;
-        var i;
         var meanIndex;
         var dim;
 
@@ -242,20 +238,12 @@ export default class KMeans {
             var px = this.data[pointIndex * 3];
             var py = this.data[pointIndex * 3 + 1];
             var pz = this.data[pointIndex * 3 + 2];
-            var mx = this.means[meanIndex * 3];
-            var my = this.means[meanIndex * 3 + 1];
-            var mz = this.means[meanIndex * 3 + 2];
-            var point = this.data[pointIndex];
-            var mean = this.means[meanIndex];
 
             counts[meanIndex]++;
 
             sums[meanIndex * 3] += px;
             sums[meanIndex * 3 + 1] += py;
             sums[meanIndex * 3 + 2] += pz;
-            // for (dim = 0; dim < mean.length; dim++) {
-            //     sums[meanIndex][dim] += point[dim];
-            // }
         }
 
         /* If cluster centroid (mean) is not longer assigned to any points,
@@ -286,7 +274,6 @@ export default class KMeans {
          * move cluster centroid closer to average point.
          */
         // compare ALL the means to the sums.
-        //if (this.means.toString() !== sums.toString()) {
         if (!areArraysClose(this.means, sums, 0.01)) {
             var diff;
             moved = true;
@@ -321,7 +308,7 @@ export default class KMeans {
      * and checks if cluster centroids (means) have moved, otherwise
      * end program.
      */
-    public run() {
+    public run(): void {
         let meansMoved = true;
 
         // tune this value for performance vs quality
@@ -336,25 +323,5 @@ export default class KMeans {
             // Returns true if the cluster centroids have moved location since the last iteration.
             meansMoved = this.moveMeans();
         } while (meansMoved && this.iterations < maxIterations);
-        //console.log("Iteration took for completion: " + this.iterations);
-
-        // while (meansMoved) {
-        //     ++this.iterations;
-        //     // Reassign points to nearest cluster centroids.
-        //     this.assignments = this.assignClusterToDataPoints();
-
-        //     // Returns true if the cluster centroids have moved location since the last iteration.
-        //     meansMoved = this.moveMeans();
-        // }
-
-        // /* If cluster centroids moved then
-        //  *rerun to reassign points to new cluster centroid (means) positions.
-        //  */
-        // if (meansMoved) {
-        //     this.timer = setTimeout(this.run.bind(this), this.drawDelay);
-        // } else {
-        //     // Otherwise task has completed.
-        //     console.log("Iteration took for completion: " + this.iterations);
-        // }
     }
 }
