@@ -1040,6 +1040,9 @@ class VisGeometry {
                 // update pdb transforms too
                 const pdb = visAgent.pdbModel;
                 if (pdb && pdb.pdb) {
+                    // TODO Consider grouping these under one single transform,
+                    // to save cpu in updating the same transform redundantly.
+                    // Also see the THREE.LOD object type.
                     for (let lod = 0; lod < visAgent.pdbObjects.length; ++lod) {
                         const obj = visAgent.pdbObjects[lod];
                         obj.position.x = agentData.x;
