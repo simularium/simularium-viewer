@@ -109,8 +109,6 @@ class VisGeometry {
     public boundingBoxMesh: Box3Helper;
     public hemiLight: HemisphereLight;
     public moleculeRenderer: MoleculeRenderer;
-    public atomSpread: number = 3.0;
-    public numAtomsPerAgent: number = 8;
     public currentSceneAgents: AgentData[];
     public colorsData: Float32Array;
     public lightsGroup: Group;
@@ -205,8 +203,6 @@ class VisGeometry {
     public setupGui(): void {
         const gui = new dat.GUI();
         var settings = {
-            atomSpread: this.atomSpread,
-            numAtoms: this.numAtomsPerAgent,
             bgcolor: {
                 r: this.backgroundColor.r * 255,
                 g: this.backgroundColor.g * 255,
@@ -221,16 +217,6 @@ class VisGeometry {
                 value.b / 255.0,
             ]);
         });
-        gui.add(settings, "atomSpread", 0.01, 8.0).onChange(value => {
-            self.atomSpread = value;
-            self.updateScene(self.currentSceneAgents);
-        });
-        gui.add(settings, "numAtoms", 1, 400)
-            .step(1)
-            .onChange(value => {
-                self.numAtomsPerAgent = Math.floor(value);
-                self.updateScene(self.currentSceneAgents);
-            });
 
         this.moleculeRenderer.setupGui(gui);
     }
