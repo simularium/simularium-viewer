@@ -818,7 +818,7 @@ class VisGeometry {
     public getFiberMesh(name: string): Mesh {
         let mesh = this.runTimeFiberMeshes.get(name);
         if (mesh) {
-            mesh;
+            return mesh;
         }
 
         return this.errorMesh;
