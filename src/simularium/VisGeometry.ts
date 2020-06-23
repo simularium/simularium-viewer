@@ -121,6 +121,7 @@ class VisGeometry {
     private raycaster: Raycaster;
     private supportsMoleculeRendering: boolean;
     private membraneAgent?: VisAgent;
+    private lodBias: number;
 
     private errorMesh: Mesh;
 
@@ -142,6 +143,7 @@ class VisGeometry {
         this.colorVariant = 50;
         this.fixLightsToCamera = true;
         this.highlightedId = -1;
+        this.lodBias = 0;
 
         // will store data for all agents that are drawing paths
         this.paths = [];
@@ -210,6 +212,7 @@ class VisGeometry {
                 g: this.backgroundColor.g * 255,
                 b: this.backgroundColor.b * 255,
             },
+            lodBias: this.lodBias,
         };
         var self = this;
         gui.addColor(settings, "bgcolor").onChange(value => {
@@ -219,6 +222,13 @@ class VisGeometry {
                 value.b / 255.0,
             ]);
         });
+        gui.add(settings, "lodBias")
+            .min(0)
+            .max(3)
+            .step(1)
+            .onChange(value => {
+                self.lodBias = value;
+            });
 
         this.moleculeRenderer.setupGui(gui);
     }
@@ -600,6 +610,11 @@ class VisGeometry {
                         for (let j = 0; j < distances.length; ++j) {
                             // the first distance less than.
                             if (distance < distances[j]) {
+                                // add lodBias but keep within range.
+                                j = Math.min(
+                                    j + this.lodBias,
+                                    distances.length - 1
+                                );
                                 agent.selectLOD(j);
                                 break;
                             }
