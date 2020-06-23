@@ -100,11 +100,6 @@ const fragmentShader =
     uniform float iTime;
     uniform vec2 iResolution;
     uniform vec2 uvscale;
-#if USE_SIM
-    uniform sampler2D iChannel0;
-    uniform vec2 iChannelResolution0;
-#endif
-    uniform sampler2D splat;
 
     uniform vec3 ambientLightColor;
 
@@ -310,48 +305,6 @@ const fragmentShader =
         col = mix(NOISE_BACKGROUND_COLOR, NOISE_COLOR, 1.0 - (1.0-ns)*(1.0-ns)*lightfg);
 
         // 2. second layer: read from the particle simulation
-#if USE_SIM
-        uv = vUv;
-
-        vec2 pixel = uv*vec2(float(GridX),float(GridY));
-        vec2 grid = floor(uv*vec2(float(GridX),float(GridY)));
-        float pixelsize = float(GridX)/iResolution.x;
-
-        float minrad = Radius;
-        vec2 minvec = vec2(0.0,0.0);
-        vec3 moleculecolor = bg;
-        float aa = 0.0;
-        for(int y=-1;y<=1;y++) // check surrounding grids for particle
-            for(int x=-1;x<=1;x++)
-            {
-                vec2 grid2 = grid+vec2(float(x),float(y));
-                vec2 pos = getPos(grid2);
-                float d = length(pixel-pos);
-                if (d<minrad && pos.x!=0.0)
-                {
-                    minvec = pixel-pos;
-                    aa = min((minrad-d)/pixelsize,1.);
-                    minrad = d;
-                    moleculecolor = getColorSize(grid2).xyz;
-                    
-                    // show buggy joint particles with different color
-                    // if (getColorSize(grid2).a>1.0) moleculecolor = vec3(1.,0.,0.);
-                }
-            }
-
-        // bumpy/lit particle normal?
-        vec3 normal = vec3(minvec, sqrt(1.0-dot(minvec, minvec)));
-        float lightfg = dot(normal, LIGHT_DIR_UV);
-
-        // final color mix:
-        col = mix(
-            col*lightbg,
-            lightfg * moleculecolor * smoothstep(0.5, 0.4, length(minvec*0.5) ) * texture2D(splat, (minvec/2.0 - 0.5) ).rgb,
-            aa);
-            
-        // debug grids in use  
-        //if (getColorSize(grid).a!=0.0) col=mix(col,vec3(1.,1.,1.),getColorSize(grid).a*0.3);
-#endif
         ReflectedLight reflectedLight = ReflectedLight( vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ), vec3( 0.0 ) );
         reflectedLight.indirectDiffuse = getAmbientLightIrradiance( ambientLightColor );
         reflectedLight.indirectDiffuse += vIndirectFront;
@@ -372,7 +325,6 @@ const MembraneShader = new ShaderMaterial({
         iChannelResolution0: {
             value: new Vector2(dataTextureSize, dataTextureSize),
         },
-        splat: { value: null },
         ///// LIGHTING
         ambientLightColor: { value: null },
         lightProbe: { value: null },
@@ -392,7 +344,6 @@ const MembraneShader = new ShaderMaterial({
     fragmentShader: fragmentShader,
     defines: {
         PI: "3.14159265359",
-        USE_SIM: "0",
         PHYSICALLY_CORRECT_LIGHTS: "1",
     },
     lights: true,
