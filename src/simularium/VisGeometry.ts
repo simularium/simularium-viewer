@@ -903,7 +903,12 @@ class VisGeometry {
         const jsonRequest = new Request(filePath);
         const self = this;
         return fetch(jsonRequest)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Error fetching ${filePath}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 self.resetMapping();
                 const jsonData = data;
