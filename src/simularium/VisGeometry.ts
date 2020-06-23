@@ -82,6 +82,18 @@ interface PathData {
     line: LineSegments | null;
 }
 
+// DANGEROUS HACK
+// Monkey patch updateMatrixWorld to skip over invisible objects
+(function() {
+    let _updateMatrixWorld = Object3D.prototype.updateMatrixWorld;
+    Object3D.prototype.updateMatrixWorld = function() {
+        if (!this.visible) {
+            return;
+        }
+        _updateMatrixWorld.apply(this);
+    };
+})();
+
 class VisGeometry {
     public renderStyle: RenderStyle;
     public backgroundColor: Color;
