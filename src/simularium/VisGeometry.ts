@@ -975,7 +975,9 @@ class VisGeometry {
      * */
     public updateScene(agents): void {
         this.currentSceneAgents = agents;
+
         let fiberIndex = 0;
+        let meshIndex = 0;
 
         // these have been set to correspond to backend values
         const visTypes = Object.freeze({
@@ -991,12 +993,12 @@ class VisGeometry {
             const scale = this.getScaleForId(typeId);
 
             if (visType === visTypes.ID_VIS_TYPE_DEFAULT) {
-                const visAgent = this.visAgents[i];
+                const visAgent = this.visAgents[meshIndex];
 
                 const lastTypeId = visAgent.typeId;
 
                 visAgent.typeId = typeId;
-                visAgent.agentIndex = i;
+                visAgent.agentIndex = meshIndex;
                 visAgent.active = true;
                 if (typeId !== lastTypeId) {
                     // OR IF GEOMETRY IS SPHERE AND getGeomFromId RETURNS ANYTHING...
@@ -1060,7 +1062,7 @@ class VisGeometry {
                     obj.visible = false;
                 }
 
-                const path = this.findPathForAgentIndex(i);
+                const path = this.findPathForAgentIndex(meshIndex);
                 if (path) {
                     this.addPointToPath(
                         path,
@@ -1072,6 +1074,8 @@ class VisGeometry {
                         dz
                     );
                 }
+
+                meshIndex += 1;
             } else if (visType === visTypes.ID_VIS_TYPE_FIBER) {
                 const name = `Fiber_${fiberIndex}`;
 
@@ -1131,7 +1135,9 @@ class VisGeometry {
             }
         });
 
+        // TODO get these out of here or only execute them if the number of meshes and fibers has changed.
         this.hideUnusedFibers(fiberIndex);
+        this.hideUnusedMeshes(meshIndex);
     }
 
     public animateCamera(): void {
@@ -1445,6 +1451,7 @@ class VisGeometry {
 
         const numberOfAgents = agents.length;
         if (this.lastNumberOfAgents > numberOfAgents) {
+            // This doesn't work because we don't know which are mesh and which are fibers
             this.hideUnusedMeshes(numberOfAgents);
         }
         this.lastNumberOfAgents = numberOfAgents;
