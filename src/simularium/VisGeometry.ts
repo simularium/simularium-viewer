@@ -576,7 +576,7 @@ class VisGeometry {
     }
 
     public render(time): void {
-        if (this.visAgents.length == 0) {
+        if (this.visAgents.length === 0) {
             return;
         }
 
@@ -773,7 +773,7 @@ class VisGeometry {
             );
             const geometry = new TubeBufferGeometry(fibercurve, 1, 1, 1, false);
             const runtimeFiberMesh = new Mesh(geometry, mat);
-            runtimeFiberMesh.name = `Fiber_${i.toString()}`;
+            runtimeFiberMesh.name = `Fiber_${i}`;
             runtimeFiberMesh.visible = false;
             this.runTimeFiberMeshes.set(
                 runtimeFiberMesh.name,
@@ -785,7 +785,7 @@ class VisGeometry {
                 VisAgent.sphereGeometry,
                 mat
             );
-            runtimeFiberEndcapMesh0.name = `FiberEnd0_${i.toString()}`;
+            runtimeFiberEndcapMesh0.name = `FiberEnd0_${i}`;
             runtimeFiberEndcapMesh0.visible = false;
             this.runTimeFiberMeshes.set(
                 runtimeFiberEndcapMesh0.name,
@@ -797,7 +797,7 @@ class VisGeometry {
                 VisAgent.sphereGeometry,
                 mat
             );
-            runtimeFiberEndcapMesh1.name = `FiberEnd1_${i.toString()}`;
+            runtimeFiberEndcapMesh1.name = `FiberEnd1_${i}`;
             runtimeFiberEndcapMesh1.visible = false;
             this.runTimeFiberMeshes.set(
                 runtimeFiberEndcapMesh1.name,
@@ -1068,7 +1068,7 @@ class VisGeometry {
                     );
                 }
             } else if (visType === visTypes.ID_VIS_TYPE_FIBER) {
-                const name = `Fiber_${fiberIndex.toString()}`;
+                const name = `Fiber_${fiberIndex}`;
 
                 const runtimeFiberMesh = this.getFiberMesh(name);
 
@@ -1100,7 +1100,7 @@ class VisGeometry {
                 runtimeFiberMesh.geometry = fibergeometry;
                 runtimeFiberMesh.visible = true;
 
-                const nameEnd0 = `FiberEnd0_${fiberIndex.toString()}`;
+                const nameEnd0 = `FiberEnd0_${fiberIndex}`;
                 const runtimeFiberEncapMesh0 = this.getFiberMesh(nameEnd0);
                 runtimeFiberEncapMesh0.position.x = curvePoints[0].x;
                 runtimeFiberEncapMesh0.position.y = curvePoints[0].y;
@@ -1109,7 +1109,7 @@ class VisGeometry {
                 runtimeFiberEncapMesh0.scale.y = collisionRadius * scale * 0.5;
                 runtimeFiberEncapMesh0.scale.z = collisionRadius * scale * 0.5;
                 runtimeFiberEncapMesh0.visible = true;
-                const nameEnd1 = `FiberEnd1_${fiberIndex.toString()}`;
+                const nameEnd1 = `FiberEnd1_${fiberIndex}`;
                 const runtimeFiberEncapMesh1 = this.getFiberMesh(nameEnd1);
                 runtimeFiberEncapMesh1.position.x =
                     curvePoints[curvePoints.length - 1].x;
@@ -1397,17 +1397,17 @@ class VisGeometry {
 
     public hideUnusedFibers(numberOfFibers): void {
         for (let i = numberOfFibers; i < MAX_MESHES; i += 1) {
-            const name = `Fiber_${i.toString()}`;
+            const name = `Fiber_${i}`;
             const fiberMesh = this.getFiberMesh(name);
 
             if (fiberMesh.visible === false) {
                 break;
             }
 
-            const nameEnd0 = `FiberEnd0_${i.toString()}`;
+            const nameEnd0 = `FiberEnd0_${i}`;
             const end0 = this.getFiberMesh(nameEnd0);
 
-            const nameEnd1 = `FiberEnd1_${i.toString()}`;
+            const nameEnd1 = `FiberEnd1_${i}`;
             const end1 = this.getFiberMesh(nameEnd1);
 
             fiberMesh.visible = false;
