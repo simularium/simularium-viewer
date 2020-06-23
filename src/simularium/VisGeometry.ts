@@ -395,13 +395,9 @@ class VisGeometry {
     }
 
     private resetAgentPDB(visAgent, pdb): void {
-        for (let lod = 0; lod < visAgent.pdbObjects.length; ++lod) {
-            this.agentPDBGroup.remove(visAgent.pdbObjects[lod]);
-        }
+        this.agentPDBGroup.remove(visAgent.pdbObjects);
         visAgent.setupPdb(pdb);
-        for (let lod = 0; lod < visAgent.pdbObjects.length; ++lod) {
-            this.agentPDBGroup.add(visAgent.pdbObjects[lod]);
-        }
+        this.agentPDBGroup.add(visAgent.pdbObjects);
     }
 
     public setUpControls(element): void {
@@ -1016,22 +1012,20 @@ class VisGeometry {
                     // TODO Consider grouping these under one single transform,
                     // to save cpu in updating the same transform redundantly.
                     // Also see the THREE.LOD object type.
-                    for (let lod = 0; lod < visAgent.pdbObjects.length; ++lod) {
-                        const obj = visAgent.pdbObjects[lod];
-                        obj.position.x = agentData.x;
-                        obj.position.y = agentData.y;
-                        obj.position.z = agentData.z;
+                    const obj = visAgent.pdbObjects;
+                    obj.position.x = agentData.x;
+                    obj.position.y = agentData.y;
+                    obj.position.z = agentData.z;
 
-                        obj.rotation.x = agentData.xrot;
-                        obj.rotation.y = agentData.yrot;
-                        obj.rotation.z = agentData.zrot;
+                    obj.rotation.x = agentData.xrot;
+                    obj.rotation.y = agentData.yrot;
+                    obj.rotation.z = agentData.zrot;
 
-                        obj.scale.x = 1.0; //agentData.cr * scale;
-                        obj.scale.y = 1.0; //agentData.cr * scale;
-                        obj.scale.z = 1.0; //agentData.cr * scale;
+                    obj.scale.x = 1.0; //agentData.cr * scale;
+                    obj.scale.y = 1.0; //agentData.cr * scale;
+                    obj.scale.z = 1.0; //agentData.cr * scale;
 
-                        obj.visible = false;
-                    }
+                    obj.visible = false;
                 }
 
                 const path = this.findPathForAgentIndex(i);
@@ -1409,9 +1403,7 @@ class VisGeometry {
             visAgent.resetMesh();
             this.agentMeshGroup.add(visAgent.mesh);
 
-            for (let j = 0; j < visAgent.pdbObjects.length; ++j) {
-                this.agentPDBGroup.remove(visAgent.pdbObjects[j]);
-            }
+            this.agentPDBGroup.remove(visAgent.pdbObjects);
             visAgent.resetPDB();
         }
     }

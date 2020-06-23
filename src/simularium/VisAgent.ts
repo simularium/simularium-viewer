@@ -1,10 +1,12 @@
 import {
     Color,
+    Group,
     Material,
     Mesh,
     MeshBasicMaterial,
     MeshLambertMaterial,
     Object3D,
+    Points,
     ShaderMaterial,
     SphereBufferGeometry,
     Vector2,
@@ -73,7 +75,7 @@ export default class VisAgent {
     public mesh: Object3D;
     // TODO can this default to a trivial single-atom pdb model?
     public pdbModel?: PDBModel;
-    public pdbObjects: Object3D[];
+    public pdbObjects: Group;
     public lod: number;
     public agentIndex: number;
     public typeId: number;
@@ -107,7 +109,7 @@ export default class VisAgent {
         this.mesh.visible = false;
 
         this.pdbModel = undefined;
-        this.pdbObjects = [];
+        this.pdbObjects = new Group();
         this.lod = 0;
     }
 
@@ -121,7 +123,7 @@ export default class VisAgent {
 
     public resetPDB(): void {
         this.pdbModel = undefined;
-        this.pdbObjects = [];
+        this.pdbObjects = new Group();
         this.lod = 0;
     }
 
@@ -161,11 +163,12 @@ export default class VisAgent {
             material = this.baseMaterial;
         }
 
-        for (let i = 0; i < this.pdbObjects.length; ++i) {
-            this.pdbObjects[
-                i
-            ].onBeforeRender = this.onAgentMeshBeforeRender.bind(this);
-        }
+        this.pdbObjects.traverse(child => {
+            if (child instanceof Points) {
+                child.onBeforeRender = this.onAgentMeshBeforeRender.bind(this);
+            }
+        });
+
         if (this.mesh instanceof Mesh) {
             this.mesh.material = material;
             this.mesh.onBeforeRender = this.onAgentMeshBeforeRender.bind(this);
@@ -266,16 +269,18 @@ export default class VisAgent {
 
     public selectLOD(index): void {
         this.setPDBInvisible();
-        if (index < 0 || index >= this.pdbObjects.length) {
-            index = this.pdbObjects.length - 1;
+        this.pdbObjects.visible = true;
+        if (index < 0 || index >= this.pdbObjects.children.length) {
+            index = this.pdbObjects.children.length - 1;
         }
         this.lod = index;
-        this.pdbObjects[index].visible = true;
+        this.pdbObjects.children[index].visible = true;
     }
 
     public setPDBInvisible(): void {
-        for (let j = 0; j < this.pdbObjects.length; ++j) {
-            this.pdbObjects[j].visible = false;
+        this.pdbObjects.visible = false;
+        for (let j = 0; j < this.pdbObjects.children.length; ++j) {
+            this.pdbObjects.children[j].visible = false;
         }
     }
 
@@ -289,7 +294,7 @@ export default class VisAgent {
         return (
             this.pdbModel !== undefined &&
             this.pdbModel.pdb !== null &&
-            this.pdbObjects.length > 0
+            this.pdbObjects.children.length > 0
         );
     }
 }

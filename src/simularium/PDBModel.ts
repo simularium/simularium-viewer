@@ -1,5 +1,11 @@
 import parsePdb from "parse-pdb";
-import { BufferGeometry, Float32BufferAttribute, Points, Vector3 } from "three";
+import {
+    BufferGeometry,
+    Float32BufferAttribute,
+    Points,
+    Vector3,
+    Group,
+} from "three";
 
 import KMeans3d from "./rendering/KMeans3d";
 
@@ -218,14 +224,16 @@ class PDBModel {
         //console.profileEnd("KMEANS" + this.name);
     }
 
-    public instantiate(): Points[] {
-        const lodobjects: Points[] = [];
+    public instantiate(): Group {
+        const pdblodgroup = new Group();
+        pdblodgroup.name = this.name;
+        pdblodgroup.visible = false;
         for (let i = 0; i < this.lods.length; ++i) {
             const obj = new Points(this.geometry[i]);
             obj.visible = false;
-            lodobjects.push(obj);
+            pdblodgroup.add(obj);
         }
-        return lodobjects;
+        return pdblodgroup;
     }
 }
 
