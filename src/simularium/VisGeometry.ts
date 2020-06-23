@@ -47,6 +47,8 @@ const DEFAULT_BACKGROUND_COLOR = new Color(0.121569, 0.13333, 0.17647);
 const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 const NO_AGENT = -1;
+const ASSET_URL_PREFIX =
+    "https://aics-agentviz-data.s3.us-east-2.amazonaws.com/meshes/obj";
 
 enum RenderStyle {
     GENERIC,
@@ -480,7 +482,8 @@ class VisGeometry {
 
     public loadPdb(pdbName): void {
         const pdbmodel = new PDBModel(pdbName);
-        pdbmodel.download().then(
+
+        pdbmodel.download(`${ASSET_URL_PREFIX}/${pdbName}`).then(
             () => {
                 this.logger.debug("Finished loading pdb: ", pdbName);
                 this.pdbRegistry.set(pdbName, pdbmodel);
@@ -496,7 +499,7 @@ class VisGeometry {
     public loadObj(meshName): void {
         const objLoader = new OBJLoader();
         objLoader.load(
-            `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/meshes/obj/${meshName}`,
+            `${ASSET_URL_PREFIX}/${meshName}`,
             object => {
                 this.logger.debug("Finished loading mesh: ", meshName);
                 this.addMesh(meshName, object);
@@ -812,23 +815,12 @@ class VisGeometry {
         this.scaleMapping.clear();
     }
 
-    private getPdbNameFromMeshName(meshName: string): string {
-        // arp2 arp3 actin
-        if (meshName === "arp2.obj") {
-            return "assets/arp2.pdb";
-        } else if (meshName === "arp3.obj") {
-            return "assets/arp3.pdb";
-        } else if (meshName === "actin.obj") {
-            return "assets/actin.pdb";
-        }
-        return "";
-    }
-
     /**
      *   Map Type ID -> Geometry
      */
     public mapIdToGeom(id, meshName, pdbName): void {
         this.logger.debug("Mesh for id ", id, " set to ", meshName);
+        this.logger.debug("PDB for id ", id, " set to ", pdbName);
         this.visGeomMap.set(id, { meshName: meshName, pdbName: pdbName });
         if (
             meshName &&
@@ -902,12 +894,7 @@ class VisGeometry {
                     } else {
                         // mesh name is entry.mesh
                         // pdb name is entry.pdb
-                        // look for a pdb name if not provided.
-                        const pdbname =
-                            entry.pdb ||
-                            self.getPdbNameFromMeshName(entry.mesh);
-
-                        self.mapIdToGeom(Number(id), entry.mesh, pdbname);
+                        self.mapIdToGeom(Number(id), entry.mesh, entry.pdb);
                         self.setScaleForId(Number(id), entry.scale);
                     }
                 });

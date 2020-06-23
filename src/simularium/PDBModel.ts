@@ -62,8 +62,8 @@ class PDBModel {
         this.lodSizes = [];
     }
 
-    public download(): Promise<void> {
-        const pdbRequest = new Request(this.filePath);
+    public download(url): Promise<void> {
+        const pdbRequest = new Request(url);
         const self = this;
         return fetch(pdbRequest)
             .then(response => {
