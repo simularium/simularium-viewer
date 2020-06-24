@@ -647,7 +647,7 @@ class VisGeometry {
                         for (let j = 0; j < distances.length; ++j) {
                             // the first distance less than.
                             if (distance < distances[j]) {
-                                // add lodBias but keep within range.
+                                // add lodBias but keep within range. Assumes lodBias >= 0.
                                 j = Math.min(
                                     j + this.lodBias,
                                     distances.length - 1
@@ -1090,9 +1090,6 @@ class VisGeometry {
                 // update pdb transforms too
                 const pdb = visAgent.pdbModel;
                 if (pdb && pdb.pdb) {
-                    // TODO Consider grouping these under one single transform,
-                    // to save cpu in updating the same transform redundantly.
-                    // Also see the THREE.LOD object type.
                     const obj = visAgent.pdbObjects;
                     obj.position.x = agentData.x;
                     obj.position.y = agentData.y;
