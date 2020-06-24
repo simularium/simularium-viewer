@@ -118,7 +118,7 @@ export default class VisAgent {
         this.mesh.userData = { index: this.agentIndex };
         this.highlighted = false;
         this.selected = true;
-        this.setColor(VisAgent.UNASSIGNED_MESH_COLOR);
+        this.setColor(new Color(VisAgent.UNASSIGNED_MESH_COLOR));
     }
 
     public resetPDB(): void {
@@ -127,7 +127,7 @@ export default class VisAgent {
         this.lod = 0;
     }
 
-    public setColor(color, colorIndex = 0): void {
+    public setColor(color: Color, colorIndex: number = 0): void {
         this.color = color;
         this.colorIndex = colorIndex;
         this.baseMaterial = new MeshLambertMaterial({
