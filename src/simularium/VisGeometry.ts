@@ -94,6 +94,31 @@ interface PathData {
     };
 })();
 
+function onFiberBeforeRender(
+    this: Mesh,
+    renderer,
+    scene,
+    camera,
+    geometry,
+    material
+    /* group */
+): void {
+    if (!material.uniforms) {
+        return;
+    }
+    // colorIndex is not necessarily equal to typeId but is generally a 1-1 mapping.
+    if (material.uniforms.IN_typeId) {
+        material.uniforms.IN_typeId.value = this.userData.colorIndex;
+        material.uniformsNeedUpdate = true;
+    }
+    if (material.uniforms.IN_instanceId) {
+        material.uniforms.IN_instanceId.value = Number(
+            this.userData.agentIndex
+        );
+        material.uniformsNeedUpdate = true;
+    }
+}
+
 class VisGeometry {
     private renderStyle: RenderStyle;
     private backgroundColor: Color;
@@ -775,6 +800,13 @@ class VisGeometry {
             const runtimeFiberMesh = new Mesh(geometry, mat);
             runtimeFiberMesh.name = `Fiber_${i}`;
             runtimeFiberMesh.visible = false;
+            runtimeFiberMesh.onBeforeRender = onFiberBeforeRender.bind(
+                runtimeFiberMesh
+            );
+            runtimeFiberMesh.userData = {
+                agentIndex: i,
+                colorIndex: 0,
+            };
             this.runTimeFiberMeshes.set(
                 runtimeFiberMesh.name,
                 runtimeFiberMesh
@@ -787,6 +819,14 @@ class VisGeometry {
             );
             runtimeFiberEndcapMesh0.name = `FiberEnd0_${i}`;
             runtimeFiberEndcapMesh0.visible = false;
+            runtimeFiberEndcapMesh0.onBeforeRender = onFiberBeforeRender.bind(
+                runtimeFiberEndcapMesh0
+            );
+            runtimeFiberEndcapMesh0.userData = {
+                agentIndex: i,
+                colorIndex: 0,
+            };
+
             this.runTimeFiberMeshes.set(
                 runtimeFiberEndcapMesh0.name,
                 runtimeFiberEndcapMesh0
@@ -799,6 +839,13 @@ class VisGeometry {
             );
             runtimeFiberEndcapMesh1.name = `FiberEnd1_${i}`;
             runtimeFiberEndcapMesh1.visible = false;
+            runtimeFiberEndcapMesh1.onBeforeRender = onFiberBeforeRender.bind(
+                runtimeFiberEndcapMesh1
+            );
+            runtimeFiberEndcapMesh1.userData = {
+                agentIndex: i,
+                colorIndex: 0,
+            };
             this.runTimeFiberMeshes.set(
                 runtimeFiberEndcapMesh1.name,
                 runtimeFiberEndcapMesh1
@@ -998,7 +1045,7 @@ class VisGeometry {
                 const lastTypeId = visAgent.typeId;
 
                 visAgent.typeId = typeId;
-                visAgent.agentIndex = meshIndex;
+                visAgent.agentIndex = i;
                 visAgent.active = true;
                 if (typeId !== lastTypeId) {
                     // OR IF GEOMETRY IS SPHERE AND getGeomFromId RETURNS ANYTHING...
@@ -1130,6 +1177,14 @@ class VisGeometry {
                 runtimeFiberEncapMesh1.scale.y = collisionRadius * scale * 0.5;
                 runtimeFiberEncapMesh1.scale.z = collisionRadius * scale * 0.5;
                 runtimeFiberEncapMesh1.visible = true;
+
+                const colorIndex = this.getColorIndexForTypeId(typeId);
+                runtimeFiberMesh.userData.colorIndex = colorIndex;
+                runtimeFiberEncapMesh0.userData.colorIndex = colorIndex;
+                runtimeFiberEncapMesh1.userData.colorIndex = colorIndex;
+                runtimeFiberMesh.userData.agentIndex = i;
+                runtimeFiberEncapMesh0.userData.agentIndex = i;
+                runtimeFiberEncapMesh1.userData.agentIndex = i;
 
                 fiberIndex += 1;
             }
