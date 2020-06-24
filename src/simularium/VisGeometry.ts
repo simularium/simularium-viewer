@@ -1433,6 +1433,7 @@ class VisGeometry {
     }
 
     public resetAllGeometry(): void {
+        this.membraneAgent = undefined;
         // set all runtime meshes back to spheres.
         const nMeshes = this.visAgents.length;
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
