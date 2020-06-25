@@ -18,7 +18,6 @@ import {
     LineBasicMaterial,
     LineSegments,
     Mesh,
-    MeshLambertMaterial,
     Object3D,
     PerspectiveCamera,
     Raycaster,
@@ -746,12 +745,9 @@ class VisGeometry {
         // draw moleculebuffer into several render targets to store depth, normals, colors
         // draw quad to composite the buffers into final frame
 
-        // create placeholder meshes and fibers
-        const mat = new MeshLambertMaterial({
-            color: VisAgent.UNASSIGNED_MESH_COLOR,
-        });
+        // create placeholder agents
         for (let i = 0; i < this.geomCount; i += 1) {
-            this.visAgents[i] = new VisAgent(`Mesh_${i.toString()}`);
+            this.visAgents[i] = new VisAgent(`Agent_${i}`);
         }
     }
 
