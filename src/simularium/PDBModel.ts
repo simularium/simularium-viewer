@@ -68,7 +68,9 @@ class PDBModel {
         return fetch(pdbRequest)
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`Error fetching ${this.filePath}`);
+                    throw new Error(
+                        `Error fetching ${this.filePath} from ${url}`
+                    );
                 }
                 return response.text();
             })
