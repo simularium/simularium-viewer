@@ -28,7 +28,7 @@ function desaturate(color: Color): Color {
         l: number;
     } = { h: 0, s: 0, l: 0 };
     hsl = desatColor.getHSL(hsl);
-    desatColor.setHSL(hsl.h, 0.5 * hsl.s, hsl.l);
+    desatColor.setHSL(hsl.h, 0.25 * hsl.s, hsl.l);
     return desatColor;
 }
 
@@ -109,6 +109,8 @@ export default class VisAgent {
         });
         this.desatMaterial = new MeshBasicMaterial({
             color: desaturate(this.color),
+            transparent: true,
+            opacity: 0.4,
         });
         this.mesh = new Mesh(VisAgent.sphereGeometry, this.baseMaterial);
         this.mesh.userData = { index: this.agentIndex };
@@ -142,6 +144,8 @@ export default class VisAgent {
         });
         this.desatMaterial = new MeshBasicMaterial({
             color: desaturate(this.color),
+            transparent: true,
+            opacity: 0.4,
         });
         // because this is a new material, we need to re-install it on the geometry
         // TODO deal with highlight and selection state
@@ -236,7 +240,11 @@ export default class VisAgent {
         }
         // colorIndex is not necessarily equal to typeId but is generally a 1-1 mapping.
         if (material.uniforms.IN_typeId) {
-            material.uniforms.IN_typeId.value = this.colorIndex;
+            // negate the value if deselected.
+            // by default everything is selected.
+            // see implementation in CompositePass.ts for how the value is interpreted
+            material.uniforms.IN_typeId.value =
+                this.colorIndex * (this.selected ? 1 : -1);
             material.uniformsNeedUpdate = true;
         }
         if (material.uniforms.IN_instanceId) {

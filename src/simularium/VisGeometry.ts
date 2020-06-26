@@ -336,7 +336,7 @@ class VisGeometry {
                 const isHighlighted =
                     this.highlightedId == -1 ||
                     this.highlightedId == visAgent.typeId;
-                visAgent.setHighlighted(isHighlighted);
+                visAgent.setSelected(isHighlighted);
             }
         }
     }
@@ -628,6 +628,7 @@ class VisGeometry {
                 this.agentFiberGroup
             );
             this.moleculeRenderer.setHighlightInstance(this.followObjectIndex);
+            this.moleculeRenderer.setTypeSelectMode(this.highlightedId !== -1);
             this.boundingBoxMesh.visible = false;
             this.agentPathGroup.visible = false;
             this.moleculeRenderer.render(
@@ -666,17 +667,23 @@ class VisGeometry {
             };
 
             this.raycaster.setFromCamera(mouse, this.camera);
-            // only intersect the agent mesh group.
-            // TODO: intersect fibers also
-            const intersects = this.raycaster.intersectObjects(
+            // intersect the agent mesh group.
+            let intersects = this.raycaster.intersectObjects(
                 this.agentMeshGroup.children,
                 true
             );
+            // try fibers next
+            if (!intersects.length) {
+                intersects = this.raycaster.intersectObjects(
+                    this.agentFiberGroup.children,
+                    true
+                );
+            }
 
             if (intersects && intersects.length) {
                 let obj = intersects[0].object;
                 // if the object has a parent and the parent is not the scene, use that.
-                // assumption: obj file meshes load into their own Groups
+                // assumption: obj file meshes or fibers load into their own Groups
                 // and have only one level of hierarchy.
                 if (!obj.userData || !obj.userData.index) {
                     if (obj.parent && obj.parent !== this.agentMeshGroup) {
@@ -919,9 +926,10 @@ class VisGeometry {
             visAgent.agentIndex = i;
             visAgent.active = true;
 
+            // if not fiber...
             if (visType === VisTypes.ID_VIS_TYPE_DEFAULT) {
+                // did the agent type change since the last sim time?
                 if (typeId !== lastTypeId) {
-                    // OR IF GEOMETRY IS SPHERE AND getGeomFromId RETURNS ANYTHING...
                     const meshGeom = this.getGeomFromId(typeId);
                     if (meshGeom) {
                         this.resetAgentGeometry(visAgent, meshGeom);
@@ -994,6 +1002,7 @@ class VisGeometry {
                     );
                 }
             } else if (visType === VisTypes.ID_VIS_TYPE_FIBER) {
+                // see if we need to initialize this agent as a fiber
                 if (visType !== visAgent.visType) {
                     const meshGeom = VisAgent.makeFiber();
                     if (meshGeom) {
@@ -1005,6 +1014,14 @@ class VisGeometry {
                         );
                         visAgent.visType = visType;
                     }
+                }
+                // did the agent type change since the last sim time?
+                if (typeId !== lastTypeId) {
+                    // for fibers we currently only check the color
+                    visAgent.setColor(
+                        this.getColorForTypeId(typeId),
+                        this.getColorIndexForTypeId(typeId)
+                    );
                 }
 
                 visAgent.updateFiber(agentData.subpoints, agentData.cr, scale);
