@@ -1,5 +1,8 @@
 import {
+    CatmullRomCurve3,
     Color,
+    Group,
+    LineCurve3,
     Material,
     Mesh,
     MeshBasicMaterial,
@@ -7,12 +10,15 @@ import {
     Object3D,
     ShaderMaterial,
     SphereBufferGeometry,
+    TubeBufferGeometry,
     Vector2,
+    Vector3,
     WebGLRenderer,
 } from "three";
 
 import MembraneShader from "./rendering/MembraneShader";
 import PDBModel from "./PDBModel";
+import VisTypes from "./VisTypes";
 
 function desaturate(color: Color): Color {
     const desatColor = new Color(color);
@@ -85,8 +91,10 @@ export default class VisAgent {
     public name: string;
     public highlighted: boolean;
     public selected: boolean;
+    public visType: number;
 
     public constructor(name: string) {
+        this.visType = VisTypes.ID_VIS_TYPE_DEFAULT;
         this.name = name;
         this.color = new Color(VisAgent.UNASSIGNED_MESH_COLOR);
         this.active = false;
@@ -166,6 +174,7 @@ export default class VisAgent {
                 i
             ].onBeforeRender = this.onAgentMeshBeforeRender.bind(this);
         }
+
         if (this.mesh instanceof Mesh) {
             this.mesh.material = material;
             this.mesh.onBeforeRender = this.onAgentMeshBeforeRender.bind(this);
@@ -291,5 +300,94 @@ export default class VisAgent {
             this.pdbModel.pdb !== null &&
             this.pdbObjects.length > 0
         );
+    }
+
+    public updateFiber(
+        subpoints,
+        collisionRadius: number,
+        scale: number
+    ): void {
+        // assume a known structure.
+        // first child is fiber
+        // second and third children are endcaps
+
+        if (this.mesh.children.length !== 3) {
+            console.error("Bad mesh structure for fiber");
+            return;
+        }
+
+        // put all the subpoints into a Vector3[]
+        const curvePoints: Vector3[] = [];
+        const numSubPoints = subpoints.length;
+        if (numSubPoints % 3 !== 0) {
+            console.warn(
+                "Warning, subpoints array does not contain a multiple of 3"
+            );
+            return;
+        }
+        for (let j = 0; j < numSubPoints; j += 3) {
+            const x = subpoints[j];
+            const y = subpoints[j + 1];
+            const z = subpoints[j + 2];
+            curvePoints.push(new Vector3(x, y, z));
+        }
+
+        // set up new fiber as curved tube
+        const fibercurve = new CatmullRomCurve3(curvePoints);
+        const fibergeometry = new TubeBufferGeometry(
+            fibercurve,
+            (4 * numSubPoints) / 3,
+            collisionRadius * scale * 0.5,
+            8,
+            false
+        );
+
+        (this.mesh.children[0] as Mesh).geometry = fibergeometry;
+
+        // update transform of endcap 0
+        const runtimeFiberEncapMesh0 = this.mesh.children[1] as Mesh;
+        runtimeFiberEncapMesh0.position.x = curvePoints[0].x;
+        runtimeFiberEncapMesh0.position.y = curvePoints[0].y;
+        runtimeFiberEncapMesh0.position.z = curvePoints[0].z;
+        runtimeFiberEncapMesh0.scale.x = collisionRadius * scale * 0.5;
+        runtimeFiberEncapMesh0.scale.y = collisionRadius * scale * 0.5;
+        runtimeFiberEncapMesh0.scale.z = collisionRadius * scale * 0.5;
+
+        // update transform of endcap 1
+        const runtimeFiberEncapMesh1 = this.mesh.children[2] as Mesh;
+        runtimeFiberEncapMesh1.position.x =
+            curvePoints[curvePoints.length - 1].x;
+        runtimeFiberEncapMesh1.position.y =
+            curvePoints[curvePoints.length - 1].y;
+        runtimeFiberEncapMesh1.position.z =
+            curvePoints[curvePoints.length - 1].z;
+        runtimeFiberEncapMesh1.scale.x = collisionRadius * scale * 0.5;
+        runtimeFiberEncapMesh1.scale.y = collisionRadius * scale * 0.5;
+        runtimeFiberEncapMesh1.scale.z = collisionRadius * scale * 0.5;
+    }
+
+    // make a single generic fiber and return it
+    public static makeFiber(): Group {
+        const fibercurve = new LineCurve3(
+            new Vector3(0, 0, 0),
+            new Vector3(1, 1, 1)
+        );
+        const geometry = new TubeBufferGeometry(fibercurve, 1, 1, 1, false);
+        const fiberMesh = new Mesh(geometry);
+        fiberMesh.name = `Fiber`;
+
+        const fiberEndcapMesh0 = new Mesh(VisAgent.sphereGeometry);
+        fiberEndcapMesh0.name = `FiberEnd0`;
+
+        const fiberEndcapMesh1 = new Mesh(VisAgent.sphereGeometry);
+        fiberEndcapMesh1.name = `FiberEnd1`;
+
+        const fiberGroup = new Group();
+        fiberGroup.add(fiberMesh);
+        fiberGroup.add(fiberEndcapMesh0);
+        fiberGroup.add(fiberEndcapMesh1);
+        // downstream code will switch this flag
+        fiberGroup.visible = false;
+        return fiberGroup;
     }
 }

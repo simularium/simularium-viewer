@@ -3,6 +3,7 @@ import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 import VisAgent from "./VisAgent";
+import VisTypes from "./VisTypes";
 import PDBModel from "./PDBModel";
 
 import {
@@ -10,21 +11,17 @@ import {
     Box3Helper,
     BufferAttribute,
     BufferGeometry,
-    CatmullRomCurve3,
     Color,
     DirectionalLight,
     Group,
     HemisphereLight,
     LineBasicMaterial,
-    LineCurve3,
     LineSegments,
     Mesh,
-    MeshLambertMaterial,
     Object3D,
     PerspectiveCamera,
     Raycaster,
     Scene,
-    TubeBufferGeometry,
     Vector2,
     Vector3,
     VertexColors,
@@ -93,7 +90,6 @@ class VisGeometry {
     public geomCount: number;
     public followObjectIndex: number;
     public visAgents: VisAgent[];
-    public runTimeFiberMeshes: Map<string, Mesh>;
     public mlastNumberOfAgents: number;
     public colorVariant: number;
     public fixLightsToCamera: boolean;
@@ -137,7 +133,6 @@ class VisGeometry {
         this.geomCount = MAX_MESHES;
         this.followObjectIndex = NO_AGENT;
         this.visAgents = [];
-        this.runTimeFiberMeshes = new Map();
         this.mlastNumberOfAgents = 0;
         this.colorVariant = 50;
         this.fixLightsToCamera = true;
@@ -384,6 +379,12 @@ class VisGeometry {
         this.agentMeshGroup.remove(visAgent.mesh);
         visAgent.setupMeshGeometry(meshGeom);
         this.agentMeshGroup.add(visAgent.mesh);
+    }
+
+    private resetAgentFiber(visAgent, meshGeom): void {
+        this.agentFiberGroup.remove(visAgent.mesh);
+        visAgent.setupMeshGeometry(meshGeom);
+        this.agentFiberGroup.add(visAgent.mesh);
     }
 
     public onNewPdb(pdbName): void {
@@ -744,54 +745,9 @@ class VisGeometry {
         // draw moleculebuffer into several render targets to store depth, normals, colors
         // draw quad to composite the buffers into final frame
 
-        // create placeholder meshes and fibers
-        const mat = new MeshLambertMaterial({
-            color: VisAgent.UNASSIGNED_MESH_COLOR,
-        });
+        // create placeholder agents
         for (let i = 0; i < this.geomCount; i += 1) {
-            // 1. mesh geometries
-
-            this.visAgents[i] = new VisAgent(`Mesh_${i.toString()}`);
-
-            // 2. fibers
-
-            const fibercurve = new LineCurve3(
-                new Vector3(0, 0, 0),
-                new Vector3(1, 1, 1)
-            );
-            const geometry = new TubeBufferGeometry(fibercurve, 1, 1, 1, false);
-            const runtimeFiberMesh = new Mesh(geometry, mat);
-            runtimeFiberMesh.name = `Fiber_${i.toString()}`;
-            runtimeFiberMesh.visible = false;
-            this.runTimeFiberMeshes.set(
-                runtimeFiberMesh.name,
-                runtimeFiberMesh
-            );
-            this.agentFiberGroup.add(runtimeFiberMesh);
-
-            const runtimeFiberEndcapMesh0 = new Mesh(
-                VisAgent.sphereGeometry,
-                mat
-            );
-            runtimeFiberEndcapMesh0.name = `FiberEnd0_${i.toString()}`;
-            runtimeFiberEndcapMesh0.visible = false;
-            this.runTimeFiberMeshes.set(
-                runtimeFiberEndcapMesh0.name,
-                runtimeFiberEndcapMesh0
-            );
-            this.agentFiberGroup.add(runtimeFiberEndcapMesh0);
-
-            const runtimeFiberEndcapMesh1 = new Mesh(
-                VisAgent.sphereGeometry,
-                mat
-            );
-            runtimeFiberEndcapMesh1.name = `FiberEnd1_${i.toString()}`;
-            runtimeFiberEndcapMesh1.visible = false;
-            this.runTimeFiberMeshes.set(
-                runtimeFiberEndcapMesh1.name,
-                runtimeFiberEndcapMesh1
-            );
-            this.agentFiberGroup.add(runtimeFiberEndcapMesh1);
+            this.visAgents[i] = new VisAgent(`Agent_${i}`);
         }
     }
 
@@ -801,15 +757,6 @@ class VisGeometry {
         if (!mesh.name) {
             mesh.name = meshName;
         }
-    }
-
-    public getFiberMesh(name: string): Mesh {
-        let mesh = this.runTimeFiberMeshes.get(name);
-        if (mesh) {
-            mesh;
-        }
-
-        return this.errorMesh;
     }
 
     /**
@@ -974,13 +921,6 @@ class VisGeometry {
      * */
     public updateScene(agents): void {
         this.currentSceneAgents = agents;
-        let fiberIndex = 0;
-
-        // these have been set to correspond to backend values
-        const visTypes = Object.freeze({
-            ID_VIS_TYPE_DEFAULT: 1000,
-            ID_VIS_TYPE_FIBER: 1001,
-        });
 
         let dx, dy, dz;
 
@@ -989,14 +929,15 @@ class VisGeometry {
             const typeId = agentData.type;
             const scale = this.getScaleForId(typeId);
 
-            if (visType === visTypes.ID_VIS_TYPE_DEFAULT) {
-                const visAgent = this.visAgents[i];
+            const visAgent = this.visAgents[i];
 
-                const lastTypeId = visAgent.typeId;
+            const lastTypeId = visAgent.typeId;
 
-                visAgent.typeId = typeId;
-                visAgent.agentIndex = i;
-                visAgent.active = true;
+            visAgent.typeId = typeId;
+            visAgent.agentIndex = i;
+            visAgent.active = true;
+
+            if (visType === VisTypes.ID_VIS_TYPE_DEFAULT) {
                 if (typeId !== lastTypeId) {
                     // OR IF GEOMETRY IS SPHERE AND getGeomFromId RETURNS ANYTHING...
                     const meshGeom = this.getGeomFromId(typeId);
@@ -1070,66 +1011,26 @@ class VisGeometry {
                         dz
                     );
                 }
-            } else if (visType === visTypes.ID_VIS_TYPE_FIBER) {
-                const name = `Fiber_${fiberIndex.toString()}`;
-
-                const runtimeFiberMesh = this.getFiberMesh(name);
-
-                const curvePoints: Vector3[] = [];
-                const { subpoints } = agentData;
-                const numSubPoints = subpoints.length;
-                if (numSubPoints % 3 !== 0) {
-                    this.logger.warn(
-                        "Warning, subpoints array does not contain a multiple of 3"
-                    );
-                    this.logger.warn(agentData);
-                    return;
+            } else if (visType === VisTypes.ID_VIS_TYPE_FIBER) {
+                if (visType !== visAgent.visType) {
+                    const meshGeom = VisAgent.makeFiber();
+                    if (meshGeom) {
+                        meshGeom.name = `Fiber_${i}`;
+                        this.resetAgentFiber(visAgent, meshGeom);
+                        visAgent.setColor(
+                            this.getColorForTypeId(typeId),
+                            this.getColorIndexForTypeId(typeId)
+                        );
+                        visAgent.visType = visType;
+                    }
                 }
-                const collisionRadius = agentData.cr;
-                for (let j = 0; j < numSubPoints; j += 3) {
-                    const x = subpoints[j];
-                    const y = subpoints[j + 1];
-                    const z = subpoints[j + 2];
-                    curvePoints.push(new Vector3(x, y, z));
-                }
-                const fibercurve = new CatmullRomCurve3(curvePoints);
-                const fibergeometry = new TubeBufferGeometry(
-                    fibercurve,
-                    (4 * numSubPoints) / 3,
-                    collisionRadius * scale * 0.5,
-                    8,
-                    false
-                );
-                runtimeFiberMesh.geometry = fibergeometry;
-                runtimeFiberMesh.visible = true;
 
-                const nameEnd0 = `FiberEnd0_${fiberIndex.toString()}`;
-                const runtimeFiberEncapMesh0 = this.getFiberMesh(nameEnd0);
-                runtimeFiberEncapMesh0.position.x = curvePoints[0].x;
-                runtimeFiberEncapMesh0.position.y = curvePoints[0].y;
-                runtimeFiberEncapMesh0.position.z = curvePoints[0].z;
-                runtimeFiberEncapMesh0.scale.x = collisionRadius * scale * 0.5;
-                runtimeFiberEncapMesh0.scale.y = collisionRadius * scale * 0.5;
-                runtimeFiberEncapMesh0.scale.z = collisionRadius * scale * 0.5;
-                runtimeFiberEncapMesh0.visible = true;
-                const nameEnd1 = `FiberEnd1_${fiberIndex.toString()}`;
-                const runtimeFiberEncapMesh1 = this.getFiberMesh(nameEnd1);
-                runtimeFiberEncapMesh1.position.x =
-                    curvePoints[curvePoints.length - 1].x;
-                runtimeFiberEncapMesh1.position.y =
-                    curvePoints[curvePoints.length - 1].y;
-                runtimeFiberEncapMesh1.position.z =
-                    curvePoints[curvePoints.length - 1].z;
-                runtimeFiberEncapMesh1.scale.x = collisionRadius * scale * 0.5;
-                runtimeFiberEncapMesh1.scale.y = collisionRadius * scale * 0.5;
-                runtimeFiberEncapMesh1.scale.z = collisionRadius * scale * 0.5;
-                runtimeFiberEncapMesh1.visible = true;
-
-                fiberIndex += 1;
+                visAgent.updateFiber(agentData.subpoints, agentData.cr, scale);
+                visAgent.mesh.visible = true;
             }
         });
 
-        this.hideUnusedFibers(fiberIndex);
+        this.hideUnusedAgents(agents.length);
     }
 
     public animateCamera(): void {
@@ -1387,7 +1288,7 @@ class VisGeometry {
         }
     }
 
-    public hideUnusedMeshes(numberOfAgents): void {
+    public hideUnusedAgents(numberOfAgents): void {
         const nMeshes = this.visAgents.length;
         for (let i = numberOfAgents; i < MAX_MESHES && i < nMeshes; i += 1) {
             const visAgent = this.visAgents[i];
@@ -1398,30 +1299,8 @@ class VisGeometry {
         }
     }
 
-    public hideUnusedFibers(numberOfFibers): void {
-        for (let i = numberOfFibers; i < MAX_MESHES; i += 1) {
-            const name = `Fiber_${i.toString()}`;
-            const fiberMesh = this.getFiberMesh(name);
-
-            if (fiberMesh.visible === false) {
-                break;
-            }
-
-            const nameEnd0 = `FiberEnd0_${i.toString()}`;
-            const end0 = this.getFiberMesh(nameEnd0);
-
-            const nameEnd1 = `FiberEnd1_${i.toString()}`;
-            const end1 = this.getFiberMesh(nameEnd1);
-
-            fiberMesh.visible = false;
-            end0.visible = false;
-            end1.visible = false;
-        }
-    }
-
     public clear(): void {
-        this.hideUnusedMeshes(0);
-        this.hideUnusedFibers(0);
+        this.hideUnusedAgents(0);
     }
 
     public resetAllGeometry(): void {
@@ -1445,7 +1324,7 @@ class VisGeometry {
 
         const numberOfAgents = agents.length;
         if (this.lastNumberOfAgents > numberOfAgents) {
-            this.hideUnusedMeshes(numberOfAgents);
+            this.hideUnusedAgents(numberOfAgents);
         }
         this.lastNumberOfAgents = numberOfAgents;
     }
