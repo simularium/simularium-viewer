@@ -44,6 +44,8 @@ const DEFAULT_BACKGROUND_COLOR = new Color(0.121569, 0.13333, 0.17647);
 const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 const NO_AGENT = -1;
+const ASSET_URL_PREFIX =
+    "https://aics-agentviz-data.s3.us-east-2.amazonaws.com/meshes/obj";
 
 enum RenderStyle {
     GENERIC,
@@ -90,7 +92,7 @@ class VisGeometry {
     public geomCount: number;
     public followObjectIndex: number;
     public visAgents: VisAgent[];
-    public mlastNumberOfAgents: number;
+    public lastNumberOfAgents: number;
     public colorVariant: number;
     public fixLightsToCamera: boolean;
     public highlightedId: number;
@@ -133,7 +135,7 @@ class VisGeometry {
         this.geomCount = MAX_MESHES;
         this.followObjectIndex = NO_AGENT;
         this.visAgents = [];
-        this.mlastNumberOfAgents = 0;
+        this.lastNumberOfAgents = 0;
         this.colorVariant = 50;
         this.fixLightsToCamera = true;
         this.highlightedId = -1;
@@ -251,14 +253,6 @@ class VisGeometry {
         return this.mlogger;
     }
 
-    public get lastNumberOfAgents(): number {
-        return this.mlastNumberOfAgents;
-    }
-
-    public set lastNumberOfAgents(val) {
-        this.mlastNumberOfAgents = val;
-    }
-
     public get renderDom(): HTMLElement {
         return this.renderer.domElement;
     }
@@ -366,7 +360,7 @@ class VisGeometry {
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
             let visAgent = this.visAgents[i];
             if (typeIds.includes(visAgent.typeId)) {
-                this.resetAgentMesh(visAgent, meshGeom);
+                this.resetAgentGeometry(visAgent, meshGeom);
                 visAgent.setColor(
                     this.getColorForTypeId(visAgent.typeId),
                     this.getColorIndexForTypeId(visAgent.typeId)
@@ -375,16 +369,15 @@ class VisGeometry {
         }
     }
 
-    private resetAgentMesh(visAgent, meshGeom): void {
+    private resetAgentGeometry(visAgent, meshGeom): void {
         this.agentMeshGroup.remove(visAgent.mesh);
-        visAgent.setupMeshGeometry(meshGeom);
-        this.agentMeshGroup.add(visAgent.mesh);
-    }
-
-    private resetAgentFiber(visAgent, meshGeom): void {
         this.agentFiberGroup.remove(visAgent.mesh);
         visAgent.setupMeshGeometry(meshGeom);
-        this.agentFiberGroup.add(visAgent.mesh);
+        if (visAgent.visType === VisTypes.ID_VIS_TYPE_DEFAULT) {
+            this.agentMeshGroup.add(visAgent.mesh);
+        } else if (visAgent.visType === VisTypes.ID_VIS_TYPE_FIBER) {
+            this.agentFiberGroup.add(visAgent.mesh);
+        }
     }
 
     public onNewPdb(pdbName): void {
@@ -495,7 +488,7 @@ class VisGeometry {
 
     public loadPdb(pdbName): void {
         const pdbmodel = new PDBModel(pdbName);
-        pdbmodel.download().then(
+        pdbmodel.download(`${ASSET_URL_PREFIX}/${pdbName}`).then(
             () => {
                 this.logger.debug("Finished loading pdb: ", pdbName);
                 this.pdbRegistry.set(pdbName, pdbmodel);
@@ -511,7 +504,7 @@ class VisGeometry {
     public loadObj(meshName): void {
         const objLoader = new OBJLoader();
         objLoader.load(
-            `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/meshes/obj/${meshName}`,
+            `${ASSET_URL_PREFIX}/${meshName}`,
             object => {
                 this.logger.debug("Finished loading mesh: ", meshName);
                 this.addMesh(meshName, object);
@@ -570,7 +563,7 @@ class VisGeometry {
     }
 
     public render(time): void {
-        if (this.visAgents.length == 0) {
+        if (this.visAgents.length === 0) {
             return;
         }
 
@@ -773,23 +766,12 @@ class VisGeometry {
         this.scaleMapping.clear();
     }
 
-    private getPdbNameFromMeshName(meshName: string): string {
-        // arp2 arp3 actin
-        if (meshName === "arp2.obj") {
-            return "assets/arp2.pdb";
-        } else if (meshName === "arp3.obj") {
-            return "assets/arp3.pdb";
-        } else if (meshName === "actin.obj") {
-            return "assets/actin.pdb";
-        }
-        return "";
-    }
-
     /**
      *   Map Type ID -> Geometry
      */
     public mapIdToGeom(id, meshName, pdbName): void {
         this.logger.debug("Mesh for id ", id, " set to ", meshName);
+        this.logger.debug("PDB for id ", id, " set to ", pdbName);
         this.visGeomMap.set(id, { meshName: meshName, pdbName: pdbName });
         if (
             meshName &&
@@ -849,7 +831,12 @@ class VisGeometry {
         const jsonRequest = new Request(filePath);
         const self = this;
         return fetch(jsonRequest)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch ${filePath}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 self.resetMapping();
                 const jsonData = data;
@@ -863,12 +850,7 @@ class VisGeometry {
                     } else {
                         // mesh name is entry.mesh
                         // pdb name is entry.pdb
-                        // look for a pdb name if not provided.
-                        const pdbname =
-                            entry.pdb ||
-                            self.getPdbNameFromMeshName(entry.mesh);
-
-                        self.mapIdToGeom(Number(id), entry.mesh, pdbname);
+                        self.mapIdToGeom(Number(id), entry.mesh, entry.pdb);
                         self.setScaleForId(Number(id), entry.scale);
                     }
                 });
@@ -942,7 +924,7 @@ class VisGeometry {
                     // OR IF GEOMETRY IS SPHERE AND getGeomFromId RETURNS ANYTHING...
                     const meshGeom = this.getGeomFromId(typeId);
                     if (meshGeom) {
-                        this.resetAgentMesh(visAgent, meshGeom);
+                        this.resetAgentGeometry(visAgent, meshGeom);
                         if (meshGeom.name.includes("membrane")) {
                             this.membraneAgent = visAgent;
                         }
@@ -1016,7 +998,7 @@ class VisGeometry {
                     const meshGeom = VisAgent.makeFiber();
                     if (meshGeom) {
                         meshGeom.name = `Fiber_${i}`;
-                        this.resetAgentFiber(visAgent, meshGeom);
+                        this.resetAgentGeometry(visAgent, meshGeom);
                         visAgent.setColor(
                             this.getColorForTypeId(typeId),
                             this.getColorIndexForTypeId(typeId)
@@ -1304,11 +1286,15 @@ class VisGeometry {
     }
 
     public resetAllGeometry(): void {
+        this.membraneAgent = undefined;
+
         // set all runtime meshes back to spheres.
         const nMeshes = this.visAgents.length;
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
             const visAgent = this.visAgents[i];
+            // try to remove from both groups, mesh could be fiber or plain mesh
             this.agentMeshGroup.remove(visAgent.mesh);
+            this.agentFiberGroup.remove(visAgent.mesh);
             visAgent.resetMesh();
             this.agentMeshGroup.add(visAgent.mesh);
 
@@ -1323,7 +1309,10 @@ class VisGeometry {
         this.updateScene(agents);
 
         const numberOfAgents = agents.length;
-        if (this.lastNumberOfAgents > numberOfAgents) {
+        if (
+            this.lastNumberOfAgents > numberOfAgents ||
+            this.lastNumberOfAgents === 0
+        ) {
             this.hideUnusedAgents(numberOfAgents);
         }
         this.lastNumberOfAgents = numberOfAgents;

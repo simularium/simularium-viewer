@@ -62,20 +62,31 @@ class PDBModel {
         this.lodSizes = [];
     }
 
-    public download(): Promise<void> {
-        const pdbRequest = new Request(this.filePath);
+    public download(url): Promise<void> {
+        const pdbRequest = new Request(url);
         const self = this;
         return fetch(pdbRequest)
-            .then(response => response.text())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(
+                        `Error fetching ${this.filePath} from ${url}`
+                    );
+                }
+                return response.text();
+            })
             .then(data => {
                 // note pdb atom coordinates are in angstroms
                 // 1 nm is 10 angstroms
                 self.pdb = parsePdb(data) as PDBType;
-                self.fixupCoordinates();
-                console.log("PDB FILE HAS " + self.pdb.atoms.length + " ATOMS");
-                self.checkChains();
-                self.precomputeLOD();
-                self.createGPUBuffers();
+                if (self.pdb.atoms.length > 0) {
+                    self.fixupCoordinates();
+                    console.log(
+                        "PDB FILE HAS " + self.pdb.atoms.length + " ATOMS"
+                    );
+                    self.checkChains();
+                    self.precomputeLOD();
+                    self.createGPUBuffers();
+                }
             });
     }
 
