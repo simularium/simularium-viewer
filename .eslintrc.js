@@ -11,7 +11,18 @@ module.exports = {
     },
     plugins: ["@typescript-eslint"],
     rules: {
-        "@typescript-eslint/camelcase": ["warn", { properties: "always" }],
+        "@typescript-eslint/naming-convention": ["warn", {
+            "selector": "default",
+            "format": ["camelCase", "PascalCase"]
+        }, {
+            "selector": "variable",
+            "format": ["camelCase"]
+        }, {
+            "selector": "typeLike",
+            "format": ["PascalCase"]
+        }],
         "@typescript-eslint/indent": ["off"],
+        "prefer-const": ["warn"],
+        "no-var": ["warn"]
     },
 };

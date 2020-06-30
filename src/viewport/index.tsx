@@ -17,7 +17,7 @@ interface ViewportProps {
     loggerLevel: string;
     onTimeChange: (timeData: TimeData) => void | undefined;
     simulariumController: SimulariumController;
-    onJsonDataArrived: Function;
+    onJsonDataArrived(any): void;
     onTrajectoryFileInfoChanged: (
         cachedData: TrajectoryFileInfo
     ) => void | undefined;
@@ -41,7 +41,7 @@ interface FrameJSON {
 //  which is part of the HTML standard on all browsers
 //  and needed below
 interface FileHTML extends File {
-    text: Function;
+    text(): Promise<string>;
 }
 
 // This function returns a promise that resolves after all of the objects in
@@ -375,7 +375,7 @@ class Viewport extends React.Component<ViewportProps> {
         const { simulariumController } = this.props;
         const { visData } = simulariumController;
         const framesPerSecond = 60; // how often the view-port rendering is refreshed per second
-        const timePerFrame = 1000 / framesPerSecond; // the time interval at which to re-render
+        const timePerFrame = 1; //1000 / framesPerSecond; // the time interval at which to re-render
         const now = Date.now();
         const elapsedTime = now - this.lastRenderTime;
         const totalElapsedTime = now - this.startTime;

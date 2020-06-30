@@ -1,7 +1,10 @@
+import * as Comlink from "comlink";
 import parsePdb from "parse-pdb";
 import { BufferGeometry, Float32BufferAttribute, Points, Vector3 } from "three";
 
 import KMeans3d from "./rendering/KMeans3d";
+import * as workerPath from "file-loader?name=[name].js!./KMeansWorker";
+import { KMeansWorker } from "./KMeansWorker";
 
 interface PDBAtom {
     serial?: number;
@@ -198,24 +201,35 @@ class PDBModel {
             Math.max(Math.floor(n / 32), 1),
             Math.max(Math.floor(n / 128), 1),
         ];
-        this.lods = [new Float32Array(n * 3)];
+        this.lods = [];
+
+        // put all the points in a flat array
+        const allData = new Float32Array(n * 3);
+        for (var i = 0; i < n; i++) {
+            allData[i * 3] = this.pdb.atoms[i].x;
+            allData[i * 3 + 1] = this.pdb.atoms[i].y;
+            allData[i * 3 + 2] = this.pdb.atoms[i].z;
+        }
 
         // fill LOD 0 with the raw points
-        for (var i = 0; i < n; i++) {
-            this.lods[0][i * 3] = this.pdb.atoms[i].x;
-            this.lods[0][i * 3 + 1] = this.pdb.atoms[i].y;
-            this.lods[0][i * 3 + 2] = this.pdb.atoms[i].z;
-        }
+        this.lods.push(allData.slice());
 
         // compute the remaining LODs
         // should they each use the raw data or should they use the previous LOD?
 
         //console.profile("KMEANS" + this.name);
-        const km30 = new KMeans3d({ k: this.lodSizes[1], data: this.lods[0] });
+        const worker = new Worker(workerPath);
+        const obj = Comlink.wrap<KMeansWorker>(worker);
+        obj.run(
+            this.lodSizes[1],
+            Comlink.transfer(allData, [allData.buffer])
+        ).then(retData => this.lods.push(retData));
+
+        const km30 = new KMeans3d({ k: this.lodSizes[1], data: allData });
         this.lods.push(km30.means);
-        const km31 = new KMeans3d({ k: this.lodSizes[2], data: this.lods[0] });
+        const km31 = new KMeans3d({ k: this.lodSizes[2], data: allData });
         this.lods.push(km31.means);
-        const km32 = new KMeans3d({ k: this.lodSizes[3], data: this.lods[0] });
+        const km32 = new KMeans3d({ k: this.lodSizes[3], data: allData });
         this.lods.push(km32.means);
         //console.profileEnd("KMEANS" + this.name);
     }
