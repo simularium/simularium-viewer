@@ -367,6 +367,8 @@ class VisGeometry {
                 );
             }
         }
+
+        this.updateScene(this.currentSceneAgents);
     }
 
     private resetAgentGeometry(visAgent, meshGeom): void {
@@ -398,6 +400,8 @@ class VisGeometry {
                 this.resetAgentPDB(visAgent, pdb);
             }
         }
+
+        this.updateScene(this.currentSceneAgents);
     }
 
     private resetAgentPDB(visAgent, pdb): void {

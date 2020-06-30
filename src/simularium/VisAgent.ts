@@ -123,6 +123,7 @@ export default class VisAgent {
 
     public resetMesh(): void {
         this.visType = VisTypes.ID_VIS_TYPE_DEFAULT;
+        this.typeId = -1;
         this.mesh = new Mesh(VisAgent.sphereGeometry, this.baseMaterial);
         this.mesh.userData = { index: this.agentIndex };
         this.highlighted = false;
