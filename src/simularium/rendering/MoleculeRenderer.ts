@@ -213,8 +213,14 @@ class MoleculeRenderer {
     public setBackgroundColor(color): void {
         this.compositePass.pass.material.uniforms.backgroundColor.value = color;
     }
-    public setHighlightInstance(instance): void {
+    public setHighlightInstance(instance: number): void {
         this.compositePass.pass.material.uniforms.highlightInstance.value = instance;
+    }
+
+    public setTypeSelectMode(isTypeSelected: boolean): void {
+        this.compositePass.pass.material.uniforms.typeSelectMode.value = isTypeSelected
+            ? 1
+            : 0;
     }
 
     public hitTest(renderer, x, y): number {
