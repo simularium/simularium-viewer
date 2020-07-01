@@ -44,7 +44,7 @@ task lint(type: NodeTask) {
     dependsOn npmInstall
 
     script = file("${npmBin}/eslint")
-    args = ["src/**/*"]
+    args = ["src/**/*.ts", "src/**/*.tsx"]
 }
 
 task test(type: NodeTask) {
