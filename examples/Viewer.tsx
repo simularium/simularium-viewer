@@ -46,8 +46,6 @@ const intialState = {
     totalDuration: 100,
 };
 
-const changeFile = (file: string) => () => simulariumController.changeFile(file);
-
 class Viewer extends React.Component<{}, ViewerState> {
     private viewerRef: React.RefObject<SimulariumViewer>;
 
@@ -69,6 +67,10 @@ class Viewer extends React.Component<{}, ViewerState> {
             const width = container.clientWidth;
             this.setState({ height, width });
         });
+    }
+
+    private changeFile(file: string) {
+        simulariumController.changeFile(file);
     }
 
     public handleJsonMeshData(jsonData): void {
@@ -120,29 +122,65 @@ class Viewer extends React.Component<{}, ViewerState> {
     public render(): JSX.Element {
         return (
             <div className="container" style={{ height: "90%", width: "75%" }}>
-                <button onClick={() => simulariumController.start()}>Start</button>
-                <button onClick={() => simulariumController.pause()}>Pause</button>
-                <button onClick={() => simulariumController.resume()}>Resume</button>
-                <button onClick={() => simulariumController.stop()}>stop</button>
-                <button onClick={changeFile("test_traj1.h5")}>TEST</button>
-                <button onClick={changeFile("microtubules_v2_shrinking.h5")}>
+                <button onClick={() => simulariumController.start()}>
+                    Start
+                </button>
+                <button onClick={() => simulariumController.pause()}>
+                    Pause
+                </button>
+                <button onClick={() => simulariumController.resume()}>
+                    Resume
+                </button>
+                <button onClick={() => simulariumController.stop()}>
+                    stop
+                </button>
+                <button onClick={() => this.changeFile("test_traj1.h5")}>
+                    TEST
+                </button>
+                <button
+                    onClick={() =>
+                        this.changeFile("microtubules_v2_shrinking.h5")
+                    }
+                >
                     MTub
                 </button>
-                <button onClick={changeFile("aster.cmo")}>Aster</button>
-                <button onClick={changeFile("actin34_0.h5")}>Actin 34</button>
-                <button onClick={changeFile("microtubules30_1.h5")}>
+                <button onClick={() => this.changeFile("aster.cmo")}>
+                    Aster
+                </button>
+                <button onClick={() => this.changeFile("actin34_0.h5")}>
+                    Actin 34
+                </button>
+                <button onClick={() => this.changeFile("microtubules30_1.h5")}>
                     MT 30
                 </button>
-                <button onClick={changeFile("ATPsynthase_1.h5")}>ATP 1</button>
-                <button onClick={changeFile("ATPsynthase_2.h5")}>ATP 2</button>
-                <button onClick={changeFile("ATPsynthase_3.h5")}>ATP 3</button>
-                <button onClick={changeFile("ATPsynthase_4.h5")}>ATP 4</button>
-                <button onClick={changeFile("ATPsynthase_5.h5")}>ATP 5</button>
-                <button onClick={changeFile("ATPsynthase_6.h5")}>ATP 6</button>
-                <button onClick={changeFile("ATPsynthase_7.h5")}>ATP 7</button>
-                <button onClick={changeFile("ATPsynthase_8.h5")}>ATP 8</button>
-                <button onClick={changeFile("ATPsynthase_9.h5")}>ATP 9</button>
-                <button onClick={changeFile("ATPsynthase_10.h5")}>
+                <button onClick={() => this.changeFile("ATPsynthase_1.h5")}>
+                    ATP 1
+                </button>
+                <button onClick={() => this.changeFile("ATPsynthase_2.h5")}>
+                    ATP 2
+                </button>
+                <button onClick={() => this.changeFile("ATPsynthase_3.h5")}>
+                    ATP 3
+                </button>
+                <button onClick={() => this.changeFile("ATPsynthase_4.h5")}>
+                    ATP 4
+                </button>
+                <button onClick={() => this.changeFile("ATPsynthase_5.h5")}>
+                    ATP 5
+                </button>
+                <button onClick={() => this.changeFile("ATPsynthase_6.h5")}>
+                    ATP 6
+                </button>
+                <button onClick={() => this.changeFile("ATPsynthase_7.h5")}>
+                    ATP 7
+                </button>
+                <button onClick={() => this.changeFile("ATPsynthase_8.h5")}>
+                    ATP 8
+                </button>
+                <button onClick={() => this.changeFile("ATPsynthase_9.h5")}>
+                    ATP 9
+                </button>
+                <button onClick={() => this.changeFile("ATPsynthase_10.h5")}>
                     ATP 10
                 </button>
                 <br />
