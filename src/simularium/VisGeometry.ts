@@ -121,11 +121,10 @@ class VisGeometry {
     private membraneAgent?: VisAgent;
     private resetCameraOnNewScene: boolean;
 
-    private errorMesh: Mesh;
-
     public constructor(loggerLevel) {
         this.renderStyle = RenderStyle.GENERIC;
         this.supportsMoleculeRendering = false;
+        // TODO: pass this flag in from the outside
         this.resetCameraOnNewScene = true;
 
         this.visGeomMap = new Map<number, AgentTypeGeometry>();
@@ -182,7 +181,6 @@ class VisGeometry {
             this.boundingBox,
             BOUNDING_BOX_COLOR
         );
-        this.errorMesh = new Mesh(VisAgent.sphereGeometry);
         this.currentSceneAgents = [];
         this.colorsData = new Float32Array(0);
         if (loggerLevel === jsLogger.DEBUG) {
