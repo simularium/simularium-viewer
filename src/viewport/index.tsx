@@ -1,7 +1,8 @@
 import * as React from "react";
 import jsLogger from "js-logger";
 import Stats from "three/examples/jsm/libs/stats.module.js";
-
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSyncAlt } from "@fortawesome/free-solid-svg-icons";
 import SimulariumController from "../controller";
 
 import { forOwn } from "lodash";
@@ -140,14 +141,17 @@ class Viewport extends React.Component<ViewportProps> {
             0x0066ff,
         ];
 
-        this.visGeometry = new VisGeometry(loggerLevel);
         this.animate = this.animate.bind(this);
+        this.dispatchUpdatedTime = this.dispatchUpdatedTime.bind(this);
+        this.handleTimeChange = this.handleTimeChange.bind(this);
+        this.renderViewControls = this.renderViewControls.bind(this);
+        this.resetCamera = this.resetCamera.bind(this);
+
+        this.visGeometry = new VisGeometry(loggerLevel);
         this.visGeometry.setupScene();
         this.visGeometry.createMaterials(colors);
         this.visGeometry.createMeshes();
         this.vdomRef = React.createRef();
-        this.dispatchUpdatedTime = this.dispatchUpdatedTime.bind(this);
-        this.handleTimeChange = this.handleTimeChange.bind(this);
         this.lastRenderTime = Date.now();
         this.startTime = Date.now();
         this.onPickObject = this.onPickObject.bind(this);
@@ -433,12 +437,23 @@ class Viewport extends React.Component<ViewportProps> {
         this.animationRequestID = requestAnimationFrame(this.animate);
     }
 
+    public renderViewControls(): React.ReactElement {
+        return (
+            <div className="view-controls">
+                <button onClick={this.resetCamera} className="btn">
+                    <FontAwesomeIcon icon={faSyncAlt} />
+                </button>
+            </div>
+        );
+    }
+
     public render(): React.ReactElement<HTMLElement> {
         const { width, height } = this.props;
 
         // style is specified below so that the size
         // can be passed as a react property
         return (
+            <>
             <div
                 id="vdom"
                 style={{
@@ -447,7 +462,10 @@ class Viewport extends React.Component<ViewportProps> {
                     position: "relative",
                 }}
                 ref={this.vdomRef}
-            ></div>
+            >
+            {this.renderViewControls()}
+            </div>
+            </>
         );
     }
 }
