@@ -661,7 +661,7 @@ class VisGeometry {
             this.agentPDBGroup.visible = true;
             this.renderer.autoClear = true;
 
-            this.scene.autoUpdate = false;
+            this.scene.autoUpdate = true;
         }
     }
 
