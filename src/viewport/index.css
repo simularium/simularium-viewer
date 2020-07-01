@@ -11,12 +11,12 @@
 }
 
 .view-controls svg {
-    font-size: 24px;
+    font-size: 22px;
 }
 
 .view-controls button {
     -webkit-appearance: none;
-    padding: 2px;
+    padding: 0;
     background-color: white;
     border: solid 1px #979797;
 }

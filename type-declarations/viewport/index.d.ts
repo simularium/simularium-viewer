@@ -60,6 +60,7 @@ declare class Viewport extends React.Component<ViewportProps> {
     private dispatchUpdatedTime;
     stopAnimate(): void;
     animate(): void;
+    renderViewControls(): React.ReactElement;
     render(): React.ReactElement<HTMLElement>;
 }
 export default Viewport;
