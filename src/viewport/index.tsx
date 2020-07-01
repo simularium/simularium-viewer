@@ -144,7 +144,6 @@ class Viewport extends React.Component<ViewportProps> {
         this.animate = this.animate.bind(this);
         this.dispatchUpdatedTime = this.dispatchUpdatedTime.bind(this);
         this.handleTimeChange = this.handleTimeChange.bind(this);
-        this.renderViewControls = this.renderViewControls.bind(this);
         this.resetCamera = this.resetCamera.bind(this);
 
         this.visGeometry = new VisGeometry(loggerLevel);
