@@ -48,7 +48,7 @@ interface FileHTML extends File {
 //  the 'files' parameter have been parsed into text and put in the `outParsedFiles` parameter
 function parseFilesToText(
     files: FileHTML[],
-    outParsedFiles: object[]
+    outParsedFiles: any[]
 ): Promise<void> {
     var p = Promise.resolve();
     files.forEach(file => {
