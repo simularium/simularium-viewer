@@ -11,20 +11,12 @@
 }
 
 .view-controls svg {
-    height: 100%;
-    width: 100%;
     font-size: 24px;
-    color: #737373;
-}
-
-.view-controls .fa-sync-alt {
-    /* this particular icon is the mirror of the mockup */
-    transform: rotate3d(0, 1, 0, 180deg);
 }
 
 .view-controls button {
     -webkit-appearance: none;
-    padding: 0;
+    padding: 2px;
     background-color: white;
     border: solid 1px #979797;
 }

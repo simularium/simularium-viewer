@@ -440,7 +440,11 @@ class Viewport extends React.Component<ViewportProps> {
         return (
             <div className="view-controls">
                 <button onClick={this.resetCamera} className="btn">
-                    <FontAwesomeIcon icon={faSyncAlt} />
+                    <FontAwesomeIcon
+                        icon={faSyncAlt}
+                        transform="flip-h"
+                        style={{ color: "#737373" }}
+                    />
                 </button>
             </div>
         );
