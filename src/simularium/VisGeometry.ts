@@ -119,12 +119,14 @@ class VisGeometry {
     private raycaster: Raycaster;
     private supportsMoleculeRendering: boolean;
     private membraneAgent?: VisAgent;
+    private resetCameraOnNewScene: boolean;
 
     private errorMesh: Mesh;
 
     public constructor(loggerLevel) {
         this.renderStyle = RenderStyle.GENERIC;
         this.supportsMoleculeRendering = false;
+        this.resetCameraOnNewScene = true;
 
         this.visGeomMap = new Map<number, AgentTypeGeometry>();
         this.meshRegistry = new Map<string | number, Mesh>();
@@ -290,6 +292,9 @@ class VisGeometry {
         } else {
             this.resetBounds(DEFAULT_VOLUME_BOUNDS);
         }
+        if (this.resetCameraOnNewScene) {
+            this.resetCamera();
+        }
     }
 
     public resetCamera(): void {
@@ -317,9 +322,8 @@ class VisGeometry {
         }
     }
 
-    // equivalent to setFollowObject(NO_AGENT)
     public unfollow(): void {
-        this.followObjectIndex = NO_AGENT;
+        this.setFollowObject(NO_AGENT);
     }
 
     public setHighlightById(id): void {
@@ -1085,18 +1089,6 @@ class VisGeometry {
         return null;
     }
 
-    public removePathForObject(obj): void {
-        if (obj && obj.userData && obj.userData.index !== undefined) {
-            this.removePathForAgentIndex(obj.userData.index);
-        }
-    }
-
-    public addPathForObject(obj): void {
-        if (obj && obj.userData && obj.userData.index !== undefined) {
-            this.addPathForAgentIndex(obj.userData.index);
-        }
-    }
-
     // assumes color is a threejs color, or null/undefined
     public addPathForAgentIndex(
         idx,
@@ -1168,10 +1160,20 @@ class VisGeometry {
             );
             return;
         }
+        this.removeOnePath(pathindex);
+    }
+
+    private removeOnePath(pathindex) {
         const path = this.paths[pathindex];
         this.agentPathGroup.remove(path.line as Object3D);
 
         this.paths.splice(pathindex, 1);
+    }
+
+    private removeAllPaths() {
+        while (this.paths.length > 0) {
+            this.removeOnePath(0);
+        }
     }
 
     public addPointToPath(path, x, y, z, dx, dy, dz): void {
@@ -1307,6 +1309,9 @@ class VisGeometry {
     }
 
     public resetAllGeometry(): void {
+        this.unfollow();
+        this.removeAllPaths();
+
         this.membraneAgent = undefined;
 
         // set all runtime meshes back to spheres.
