@@ -11,6 +11,7 @@ module.exports = {
     },
     plugins: ["@typescript-eslint"],
     rules: {
+        "@typescript-eslint/ban-types": ["warn"],
         "@typescript-eslint/naming-convention": [
             "warn",
             {
@@ -28,6 +29,8 @@ module.exports = {
         ],
         "@typescript-eslint/indent": ["off"],
         "@typescript-eslint/no-empty-function": ["warn"],
+        "@typescript-eslint/no-inferrable-types": ["warn"],
+        "@typescript-eslint/no-this-alias": ["warn"],
         "prefer-const": ["warn"],
         "prefer-spread": ["warn"],
         "no-var": ["warn"],
