@@ -2,6 +2,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const path = require('path');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+//const WorkerPlugin = require("worker-plugin");
 
 module.exports = {
     entry: './examples/index.tsx',
@@ -19,14 +20,10 @@ module.exports = {
             filename: 'style.[contenthash].css'
         }),
         new CopyWebpackPlugin([{
-                from: 'examples/assets',
-                to: path.resolve(__dirname, 'public/assets')
-            },
-            {
-                from: 'src/simularium/assets',
-                to: path.resolve(__dirname, 'public/assets')
-            },
-        ]),
+            from: 'examples/assets',
+            to: path.resolve(__dirname, 'public/assets')
+        }]),
+        //new WorkerPlugin()
     ],
     devServer: {
         publicPath: '/public/',
@@ -35,7 +32,7 @@ module.exports = {
     },
     module: {
         rules: [{
-                test: /\.tsx?$/,
+                test: /\.(j|t)sx?$/,
                 exclude: /node_modules/,
                 use: [{
                     loader: 'babel-loader'
@@ -61,18 +58,18 @@ module.exports = {
                     'file-loader'
                 ]
             },
-            {
-                test: /\.Worker\.(js|ts)$/i,
-                use: [{
-                    loader: 'comlink-loader',
-                    //   options: {
-                    //     singleton: true
-                    //   }
-                }]
-            }
+            // {
+            //     test: /Worker$/i,
+            //     use: [{
+            //         loader: 'comlink-loader',
+            //         options: {
+            //             singleton: false
+            //         }
+            //     }]
+            // }
         ],
     },
     resolve: {
-        extensions: [".ts", ".tsx", ".js", ".jsx"],
+        extensions: [".ts", ".tsx", ".js", ".jsx", ".json"],
     },
 };

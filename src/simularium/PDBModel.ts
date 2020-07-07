@@ -5,12 +5,8 @@ import * as Comlink from "comlink";
 import parsePdb from "parse-pdb";
 import { BufferGeometry, Float32BufferAttribute, Points, Vector3 } from "three";
 
-import KMeans3d from "./rendering/KMeans3d";
-// import * as workerPath from "file-loader?name=[name].js!./KMeansWorker";
-//import { KMeansWorkerType } from "./worker/KMeansWorker";
-//import KMeansWorker from "worker-loader!./worker/KMeansWorker";
-//import MyWorker from "comlink-loader!./worker/KMeansWorker";
-import { KMeansWorker } from "./worker/KMeansWorker";
+//import { KMeansWorker } from "./worker/KMeansWorker";
+import KMeansWorkerClass from "comlink-loader!./worker/KMeansWorker";
 
 interface PDBAtom {
     serial?: number;
@@ -228,14 +224,13 @@ class PDBModel {
 
         // compute the remaining LODs
         // should they each use the raw data or should they use the previous LOD?
-
-        const workerobj = await new KMeansWorker();
+        const inst = new KMeansWorkerClass();
+        const workerobj = await new inst.KMeansWorker();
 
         const retData = await workerobj.run(
             n,
             Comlink.transfer(allData, [allData.buffer])
         );
-
         this.lods.push({
             geometry: this.createGPUBuffer(retData[0]),
             vertices: retData[0],
@@ -248,6 +243,46 @@ class PDBModel {
             geometry: this.createGPUBuffer(retData[2]),
             vertices: retData[2],
         });
+
+        /*
+        return workerobj
+            .run(n, Comlink.transfer(allData, [allData.buffer]))
+            .then(retData => {
+                this.lods.push({
+                    geometry: this.createGPUBuffer(retData[0]),
+                    vertices: retData[0],
+                });
+                this.lods.push({
+                    geometry: this.createGPUBuffer(retData[1]),
+                    vertices: retData[1],
+                });
+                this.lods.push({
+                    geometry: this.createGPUBuffer(retData[2]),
+                    vertices: retData[2],
+                });
+            });
+*/
+        ///////////////////////
+
+        // const workerobj = await new KMeansWorker();
+
+        // const retData = await workerobj.run(
+        //     n,
+        //     Comlink.transfer(allData, [allData.buffer])
+        // );
+
+        // this.lods.push({
+        //     geometry: this.createGPUBuffer(retData[0]),
+        //     vertices: retData[0],
+        // });
+        // this.lods.push({
+        //     geometry: this.createGPUBuffer(retData[1]),
+        //     vertices: retData[1],
+        // });
+        // this.lods.push({
+        //     geometry: this.createGPUBuffer(retData[2]),
+        //     vertices: retData[2],
+        // });
     }
 
     public instantiate(): Points[] {
