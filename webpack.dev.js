@@ -1,4 +1,3 @@
-
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const path = require('path');
@@ -16,10 +15,17 @@ module.exports = {
         new HtmlWebpackPlugin({
             template: './examples/index.html'
         }),
-        new MiniCssExtractPlugin({ filename: 'style.[contenthash].css' }),
-        new CopyWebpackPlugin([
-            { from: 'examples/assets', to: path.resolve(__dirname, 'public/assets') },
-            { from: 'src/simularium/assets', to: path.resolve(__dirname, 'public/assets') },
+        new MiniCssExtractPlugin({
+            filename: 'style.[contenthash].css'
+        }),
+        new CopyWebpackPlugin([{
+                from: 'examples/assets',
+                to: path.resolve(__dirname, 'public/assets')
+            },
+            {
+                from: 'src/simularium/assets',
+                to: path.resolve(__dirname, 'public/assets')
+            },
         ]),
     ],
     devServer: {
@@ -28,22 +34,24 @@ module.exports = {
         disableHostCheck: true
     },
     module: {
-        rules: [
-            {
+        rules: [{
                 test: /\.tsx?$/,
                 exclude: /node_modules/,
-                use: [
-                    { loader: 'babel-loader' },
-                ],
+                use: [{
+                    loader: 'babel-loader'
+                }, ],
             },
             {
                 test: /\.css/,
                 include: [
                     path.resolve(__dirname, "examples"),
                 ],
-                use: [
-                    { loader: MiniCssExtractPlugin.loader },
-                    { loader: "css-loader" },
+                use: [{
+                        loader: MiniCssExtractPlugin.loader
+                    },
+                    {
+                        loader: "css-loader"
+                    },
                 ],
 
             },
@@ -53,6 +61,15 @@ module.exports = {
                     'file-loader'
                 ]
             },
+            {
+                test: /\.Worker\.(js|ts)$/i,
+                use: [{
+                    loader: 'comlink-loader',
+                    //   options: {
+                    //     singleton: true
+                    //   }
+                }]
+            }
         ],
     },
     resolve: {

@@ -10,14 +10,22 @@ module.exports = {
     },
     mode: 'development',
     module: {
-        rules: [
-            {
+        rules: [{
                 test: /\.(j|t)sx?$/,
                 exclude: /node_modules/,
-                use: [
-                    { loader: 'babel-loader' },
-                ],
-            }
+                use: [{
+                    loader: 'babel-loader'
+                }, ],
+            },
+            // {
+            //     test: /KMeansWorker\.(js|ts)$/i,
+            //     use: [{
+            //         loader: 'comlink-loader',
+            //         //   options: {
+            //         //     singleton: true
+            //         //   }
+            //     }]
+            // }
         ],
     },
     resolve: {
