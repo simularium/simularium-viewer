@@ -6,7 +6,7 @@ import parsePdb from "parse-pdb";
 import { BufferGeometry, Float32BufferAttribute, Points, Vector3 } from "three";
 
 //import { KMeansWorker } from "./worker/KMeansWorker";
-import KMeansWorkerClass from "comlink-loader!./worker/KMeansWorker";
+import KMeansWorkerClass from "comlink-loader?inline=true!./worker/KMeansWorker";
 
 interface PDBAtom {
     serial?: number;

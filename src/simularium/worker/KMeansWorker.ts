@@ -1,3 +1,4 @@
+import "regenerator-runtime/runtime";
 //import * as Comlink from "comlink";
 
 import KMeans3d from "../rendering/KMeans3d";
@@ -19,7 +20,7 @@ export class KMeansWorker {
             results.push(km3.means);
             //console.log("Processed LOD " + i);
         }
-        //console.log("FINISHED PROCESSING KMEANS");
+        console.log("FINISHED PROCESSING KMEANS");
         return results;
     }
 }
