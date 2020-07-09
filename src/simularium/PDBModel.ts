@@ -155,7 +155,7 @@ class PDBModel {
 
     private createGPUBuffer(coordinates): BufferGeometry {
         const geometry = new BufferGeometry();
-        const n = coordinates.length / 3; //this.lodSizes[i];
+        const n = coordinates.length / 3;
         const vertices = new Float32Array(n * 4);
         // FUTURE: Add residue and chain information when we want it to matter for display
         for (let j = 0; j < n; j++) {
@@ -191,6 +191,12 @@ class PDBModel {
         const geometry0 = this.createGPUBuffer(lod0);
         this.lods.push({ geometry: geometry0, vertices: lod0 });
 
+        const sizes: number[] = [
+            Math.max(Math.floor(n / 8), 1),
+            Math.max(Math.floor(n / 32), 1),
+            Math.max(Math.floor(n / 128), 1),
+        ];
+
         // compute the remaining LODs asynchronously.
         // TODO: try to allow updating one by one instead of waiting for all to complete.
 
@@ -200,23 +206,18 @@ class PDBModel {
 
         const retData = await workerobj.run(
             n,
+            sizes,
             Comlink.transfer(allData, [allData.buffer])
         );
 
         // the worker is done;  update the new LODs
 
-        this.lods.push({
-            geometry: this.createGPUBuffer(retData[0]),
-            vertices: retData[0],
-        });
-        this.lods.push({
-            geometry: this.createGPUBuffer(retData[1]),
-            vertices: retData[1],
-        });
-        this.lods.push({
-            geometry: this.createGPUBuffer(retData[2]),
-            vertices: retData[2],
-        });
+        for (let i = 0; i < sizes.length; ++i) {
+            this.lods.push({
+                geometry: this.createGPUBuffer(retData[i]),
+                vertices: retData[i],
+            });
+        }
     }
 
     public instantiate(): Points[] {
