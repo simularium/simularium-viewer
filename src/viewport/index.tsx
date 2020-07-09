@@ -375,7 +375,7 @@ class Viewport extends React.Component<ViewportProps> {
         const { simulariumController } = this.props;
         const { visData } = simulariumController;
         const framesPerSecond = 60; // how often the view-port rendering is refreshed per second
-        const timePerFrame = 1; //1000 / framesPerSecond; // the time interval at which to re-render
+        const timePerFrame = 1000 / framesPerSecond; // the time interval at which to re-render
         const now = Date.now();
         const elapsedTime = now - this.lastRenderTime;
         const totalElapsedTime = now - this.startTime;
