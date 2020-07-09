@@ -23,3 +23,5 @@ class KMeansWorker {
 export type KMeansWorkerType = typeof KMeansWorker;
 
 Comlink.expose(KMeansWorker);
+
+export default self as any;

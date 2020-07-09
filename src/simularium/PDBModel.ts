@@ -6,6 +6,7 @@ import parsePdb from "parse-pdb";
 import { BufferGeometry, Float32BufferAttribute, Points, Vector3 } from "three";
 
 import KMeansWorkerModule from "./worker/KMeansWorker";
+import { KMeansWorkerType } from "./worker/KMeansWorker";
 
 interface PDBAtom {
     serial?: number;
@@ -186,13 +187,6 @@ class PDBModel {
         return geometry;
     }
 
-    // private createGPUBuffers(): void {
-    //     for (let i = 0; i < this.lods.length; ++i) {
-    //         const geometry = this.createGPUBuffer(this.lods[i]);
-    //         this.geometry.push(geometry);
-    //     }
-    // }
-
     private async setupGeometry(): Promise<void> {
         if (!this.pdb) {
             console.log("setupgeometry called with no pdb data");
@@ -213,18 +207,20 @@ class PDBModel {
         const geometry0 = this.createGPUBuffer(lod0);
         this.lods.push({ geometry: geometry0, vertices: lod0 });
 
-        // compute the remaining LODs
-        // should they each use the raw data or should they use the previous LOD?
+        // compute the remaining LODs asynchronously.
+        // TODO: try to allow updating one by one instead of waiting for all to complete.
+
         const worker = new KMeansWorkerModule();
-        const kMeansWorkerClass = Comlink.wrap<
-            KMeansWorkerModule.KMeansWorkerType
-        >(worker);
+        const kMeansWorkerClass = Comlink.wrap<KMeansWorkerType>(worker);
         const workerobj = await new kMeansWorkerClass();
 
         const retData = await workerobj.run(
             n,
             Comlink.transfer(allData, [allData.buffer])
         );
+
+        // the worker is done;  update the new LODs
+
         this.lods.push({
             geometry: this.createGPUBuffer(retData[0]),
             vertices: retData[0],
