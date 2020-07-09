@@ -1,4 +1,3 @@
-//import "core-js/stable";
 import "regenerator-runtime/runtime";
 
 import * as Comlink from "comlink";
@@ -158,32 +157,17 @@ class PDBModel {
         const geometry = new BufferGeometry();
         const n = coordinates.length / 3; //this.lodSizes[i];
         const vertices = new Float32Array(n * 4);
-        // residue ids? a RESIDUE belongs to a CHAIN
-        //const residueIds = new Float32Array(n);
-        // chain ids? a CHAIN has many RESIDUES
-        //const chainIds = new Float32Array(n);
+        // FUTURE: Add residue and chain information when we want it to matter for display
         for (let j = 0; j < n; j++) {
-            // position
             vertices[j * 4] = coordinates[j * 3];
             vertices[j * 4 + 1] = coordinates[j * 3 + 1];
             vertices[j * 4 + 2] = coordinates[j * 3 + 2];
             vertices[j * 4 + 3] = 1;
-            // residueIds[i] = this.pdb.atoms[i].resSeq; // resSeq might not be the right number here. might want the residue itself's index
-            // const chain = this.pdb.chains.get(this.pdb.atoms[i].chainId);
-            // chainIds[i] = chain ? chain.id : 0;
         }
         geometry.setAttribute(
             "position",
             new Float32BufferAttribute(vertices, 4)
         );
-        // geometry.setAttribute(
-        //     "vResidueId",
-        //     new Float32BufferAttribute(residueIds, 1)
-        // );
-        // geometry.setAttribute(
-        //     "vChainId",
-        //     new Float32BufferAttribute(chainIds, 1)
-        // );
         return geometry;
     }
 
