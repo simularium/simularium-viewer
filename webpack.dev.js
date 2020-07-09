@@ -58,15 +58,14 @@ module.exports = {
                     'file-loader'
                 ]
             },
-            // {
-            //     test: /Worker$/i,
-            //     use: [{
-            //         loader: 'comlink-loader',
-            //         options: {
-            //             singleton: false
-            //         }
-            //     }]
-            // }
+            {
+                test: /KMeansWorker\.(js|ts)$/i,
+                use: [{
+                    loader: "worker-loader?inline=true"
+                }, {
+                    loader: "babel-loader"
+                }]
+            }
         ],
     },
     resolve: {

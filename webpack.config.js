@@ -17,15 +17,14 @@ module.exports = {
                     loader: 'babel-loader'
                 }, ],
             },
-            // {
-            //     test: /KMeansWorker\.(js|ts)$/i,
-            //     use: [{
-            //         loader: 'comlink-loader',
-            //         //   options: {
-            //         //     singleton: true
-            //         //   }
-            //     }]
-            // }
+            {
+                test: /KMeansWorker\.(js|ts)$/i,
+                use: [{
+                    loader: "worker-loader?inline=true"
+                }, {
+                    loader: "babel-loader"
+                }]
+            }
         ],
     },
     resolve: {
