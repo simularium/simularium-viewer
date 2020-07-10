@@ -49,7 +49,7 @@ interface PDBType {
     chains: Map<string, PDBChain>;
 }
 
-type LOD = {
+type LevelOfDetail = {
     geometry: BufferGeometry;
     vertices: Float32Array;
 };
@@ -58,7 +58,7 @@ class PDBModel {
     public filePath: string;
     public name: string;
     public pdb: PDBType | null;
-    private lods: LOD[];
+    private lods: LevelOfDetail[];
 
     public constructor(filePath: string) {
         this.filePath = filePath;
