@@ -7,6 +7,8 @@ import { BufferGeometry, Float32BufferAttribute, Points, Vector3 } from "three";
 import KMeansWorkerModule from "./worker/KMeansWorker";
 import { KMeansWorkerType } from "./worker/KMeansWorker";
 
+const MAX_PDB_WORKERS = 4;
+
 interface PDBAtom {
     serial?: number;
     name?: string;
@@ -59,6 +61,7 @@ class PDBModel {
     public name: string;
     public pdb: PDBType | null;
     private lods: LevelOfDetail[];
+    private static numLiveWorkers: number = 0;
 
     public constructor(filePath: string) {
         this.filePath = filePath;
@@ -197,8 +200,24 @@ class PDBModel {
             Math.max(Math.floor(n / 128), 1),
         ];
 
+        if (PDBModel.numLiveWorkers >= MAX_PDB_WORKERS) {
+            console.error(
+                "Can not process PDB levels of detail; too many concurrent workers in flight"
+            );
+            // use full geometry for each LOD.
+            for (let i = 0; i < sizes.length; ++i) {
+                this.lods.push({
+                    geometry: geometry0,
+                    vertices: lod0,
+                });
+            }
+            return Promise.resolve();
+        }
+
         // compute the remaining LODs asynchronously.
         // TODO: try to allow updating one by one instead of waiting for all to complete.
+
+        PDBModel.numLiveWorkers++;
 
         const worker = new KMeansWorkerModule();
         const kMeansWorkerClass = Comlink.wrap<KMeansWorkerType>(worker);
@@ -210,8 +229,10 @@ class PDBModel {
             Comlink.transfer(allData, [allData.buffer])
         );
 
-        // the worker is done;  update the new LODs
+        // the worker is done
+        PDBModel.numLiveWorkers--;
 
+        // update the new LODs
         for (let i = 0; i < sizes.length; ++i) {
             this.lods.push({
                 geometry: this.createGPUBuffer(retData[i]),
