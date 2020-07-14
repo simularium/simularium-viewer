@@ -1,0 +1,22 @@
+.view-controls {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+}
+
+.view-controls .btn {
+    height: 28px;
+    width: 28px;
+    cursor: pointer;
+}
+
+.view-controls svg {
+    font-size: 22px;
+}
+
+.view-controls button {
+    -webkit-appearance: none;
+    padding: 0;
+    background-color: white;
+    border: solid 1px #979797;
+}

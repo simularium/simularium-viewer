@@ -228,9 +228,6 @@ class Viewer extends React.Component<{}, ViewerState> {
                 >
                     ShowPaths
                 </button>
-                <button onClick={() => this.viewerRef.current.resetCamera()}>
-                    ResetCamera
-                </button>
                 <button
                     onClick={() => this.viewerRef.current.switchRenderStyle()}
                 >
