@@ -11,7 +11,28 @@ module.exports = {
     },
     plugins: ["@typescript-eslint"],
     rules: {
-        "@typescript-eslint/camelcase": ["warn", { properties: "always" }],
+        "@typescript-eslint/ban-types": ["warn"],
+        "@typescript-eslint/naming-convention": [
+            "warn",
+            {
+                selector: "default",
+                format: ["camelCase", "PascalCase"],
+            },
+            {
+                selector: "variable",
+                format: ["camelCase", "UPPER_CASE"],
+            },
+            {
+                selector: "typeLike",
+                format: ["PascalCase"],
+            },
+        ],
         "@typescript-eslint/indent": ["off"],
+        "@typescript-eslint/no-empty-function": ["warn"],
+        "@typescript-eslint/no-inferrable-types": ["warn"],
+        "@typescript-eslint/no-this-alias": ["warn"],
+        "prefer-const": ["warn"],
+        "prefer-spread": ["warn"],
+        "no-var": ["warn"],
     },
 };

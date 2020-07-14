@@ -17,7 +17,7 @@ interface ViewportProps {
     loggerLevel: string;
     onTimeChange: (timeData: TimeData) => void | undefined;
     simulariumController: SimulariumController;
-    onJsonDataArrived: Function;
+    onJsonDataArrived(any): void;
     onTrajectoryFileInfoChanged: (
         cachedData: TrajectoryFileInfo
     ) => void | undefined;
@@ -41,14 +41,14 @@ interface FrameJSON {
 //  which is part of the HTML standard on all browsers
 //  and needed below
 interface FileHTML extends File {
-    text: Function;
+    text(): Promise<string>;
 }
 
 // This function returns a promise that resolves after all of the objects in
 //  the 'files' parameter have been parsed into text and put in the `outParsedFiles` parameter
 function parseFilesToText(
     files: FileHTML[],
-    outParsedFiles: object[]
+    outParsedFiles: any[]
 ): Promise<void> {
     var p = Promise.resolve();
     files.forEach(file => {

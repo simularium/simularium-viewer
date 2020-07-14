@@ -281,6 +281,8 @@ export default class VisAgent {
     public setupPdb(pdb): void {
         this.pdbModel = pdb;
         this.pdbObjects = pdb.instantiate();
+
+        this.assignMaterial();
     }
 
     public selectLOD(index): void {

@@ -1,7 +1,13 @@
+import "regenerator-runtime/runtime";
+
+import * as Comlink from "comlink";
 import parsePdb from "parse-pdb";
 import { BufferGeometry, Float32BufferAttribute, Points, Vector3 } from "three";
 
-import KMeans3d from "./rendering/KMeans3d";
+import KMeansWorkerModule from "./worker/KMeansWorker";
+import { KMeansWorkerType } from "./worker/KMeansWorker";
+
+const MAX_PDB_WORKERS = 4;
 
 interface PDBAtom {
     serial?: number;
@@ -45,26 +51,27 @@ interface PDBType {
     chains: Map<string, PDBChain>;
 }
 
+type LevelOfDetail = {
+    geometry: BufferGeometry;
+    vertices: Float32Array;
+};
+
 class PDBModel {
     public filePath: string;
     public name: string;
     public pdb: PDBType | null;
-    private geometry: BufferGeometry[];
-    private lods: Float32Array[];
-    private lodSizes: number[];
+    private lods: LevelOfDetail[];
+    private static numLiveWorkers: number = 0;
 
     public constructor(filePath: string) {
         this.filePath = filePath;
         this.name = filePath;
         this.pdb = null;
-        this.geometry = [];
         this.lods = [];
-        this.lodSizes = [];
     }
 
     public download(url): Promise<void> {
         const pdbRequest = new Request(url);
-        const self = this;
         return fetch(pdbRequest)
             .then(response => {
                 if (!response.ok) {
@@ -77,21 +84,20 @@ class PDBModel {
             .then(data => {
                 // note pdb atom coordinates are in angstroms
                 // 1 nm is 10 angstroms
-                self.pdb = parsePdb(data) as PDBType;
-                if (self.pdb.atoms.length > 0) {
-                    self.fixupCoordinates();
+                this.pdb = parsePdb(data) as PDBType;
+                if (this.pdb.atoms.length > 0) {
+                    this.fixupCoordinates();
                     console.log(
-                        "PDB FILE HAS " + self.pdb.atoms.length + " ATOMS"
+                        "PDB FILE HAS " + this.pdb.atoms.length + " ATOMS"
                     );
-                    self.checkChains();
-                    self.precomputeLOD();
-                    self.createGPUBuffers();
+                    this.checkChains();
+                    return this.setupGeometry();
                 }
             });
     }
 
     // build a fake random pdb
-    public create(nAtoms: number, atomSpread: number = 10): void {
+    public create(nAtoms: number, atomSpread: number = 10): Promise<void> {
         const atoms: PDBAtom[] = [];
         // always put one atom at the center
         atoms.push({
@@ -112,8 +118,7 @@ class PDBModel {
             residues: [],
             chains: new Map(),
         };
-        this.precomputeLOD();
-        this.createGPUBuffers();
+        return this.setupGeometry();
     }
 
     private fixupCoordinates(): void {
@@ -151,79 +156,95 @@ class PDBModel {
         }
     }
 
-    private createGPUBuffers(): void {
-        for (let i = 0; i < this.lods.length; ++i) {
-            const geometry = new BufferGeometry();
-            const n = this.lodSizes[i];
-            const vertices = new Float32Array(n * 4);
-            // residue ids? a RESIDUE belongs to a CHAIN
-            //const residueIds = new Float32Array(n);
-            // chain ids? a CHAIN has many RESIDUES
-            //const chainIds = new Float32Array(n);
-            for (let j = 0; j < n; j++) {
-                // position
-                vertices[j * 4] = this.lods[i][j * 3];
-                vertices[j * 4 + 1] = this.lods[i][j * 3 + 1];
-                vertices[j * 4 + 2] = this.lods[i][j * 3 + 2];
-                vertices[j * 4 + 3] = 1;
-                // residueIds[i] = this.pdb.atoms[i].resSeq; // resSeq might not be the right number here. might want the residue itself's index
-                // const chain = this.pdb.chains.get(this.pdb.atoms[i].chainId);
-                // chainIds[i] = chain ? chain.id : 0;
-            }
-            geometry.setAttribute(
-                "position",
-                new Float32BufferAttribute(vertices, 4)
-            );
-            // geometry.setAttribute(
-            //     "vResidueId",
-            //     new Float32BufferAttribute(residueIds, 1)
-            // );
-            // geometry.setAttribute(
-            //     "vChainId",
-            //     new Float32BufferAttribute(chainIds, 1)
-            // );
-            this.geometry.push(geometry);
+    private createGPUBuffer(coordinates): BufferGeometry {
+        const geometry = new BufferGeometry();
+        const n = coordinates.length / 3;
+        const vertices = new Float32Array(n * 4);
+        // FUTURE: Add residue and chain information when we want it to matter for display
+        for (let j = 0; j < n; j++) {
+            vertices[j * 4] = coordinates[j * 3];
+            vertices[j * 4 + 1] = coordinates[j * 3 + 1];
+            vertices[j * 4 + 2] = coordinates[j * 3 + 2];
+            vertices[j * 4 + 3] = 1;
         }
+        geometry.setAttribute(
+            "position",
+            new Float32BufferAttribute(vertices, 4)
+        );
+        return geometry;
     }
 
-    private precomputeLOD(): void {
+    private async setupGeometry(): Promise<void> {
         if (!this.pdb) {
-            return;
+            console.log("setupgeometry called with no pdb data");
+            return Promise.resolve();
         }
         const n = this.pdb.atoms.length;
 
-        this.lodSizes = [
-            n,
+        // put all the points in a flat array
+        const allData = new Float32Array(n * 3);
+        for (var i = 0; i < n; i++) {
+            allData[i * 3] = this.pdb.atoms[i].x;
+            allData[i * 3 + 1] = this.pdb.atoms[i].y;
+            allData[i * 3 + 2] = this.pdb.atoms[i].z;
+        }
+
+        // fill LOD 0 with the raw points
+        const lod0 = allData.slice();
+        const geometry0 = this.createGPUBuffer(lod0);
+        this.lods.push({ geometry: geometry0, vertices: lod0 });
+
+        const sizes: number[] = [
             Math.max(Math.floor(n / 8), 1),
             Math.max(Math.floor(n / 32), 1),
             Math.max(Math.floor(n / 128), 1),
         ];
-        this.lods = [new Float32Array(n * 3)];
 
-        // fill LOD 0 with the raw points
-        for (var i = 0; i < n; i++) {
-            this.lods[0][i * 3] = this.pdb.atoms[i].x;
-            this.lods[0][i * 3 + 1] = this.pdb.atoms[i].y;
-            this.lods[0][i * 3 + 2] = this.pdb.atoms[i].z;
+        if (PDBModel.numLiveWorkers >= MAX_PDB_WORKERS) {
+            console.error(
+                "Can not process PDB levels of detail; too many concurrent workers in flight"
+            );
+            // use full geometry for each LOD.
+            for (let i = 0; i < sizes.length; ++i) {
+                this.lods.push({
+                    geometry: geometry0,
+                    vertices: lod0,
+                });
+            }
+            return Promise.resolve();
         }
 
-        // compute the remaining LODs
-        // should they each use the raw data or should they use the previous LOD?
+        // compute the remaining LODs asynchronously.
+        // TODO: try to allow updating one by one instead of waiting for all to complete.
 
-        //console.profile("KMEANS" + this.name);
-        const km30 = new KMeans3d({ k: this.lodSizes[1], data: this.lods[0] });
-        this.lods.push(km30.means);
-        const km31 = new KMeans3d({ k: this.lodSizes[2], data: this.lods[0] });
-        this.lods.push(km31.means);
-        const km32 = new KMeans3d({ k: this.lodSizes[3], data: this.lods[0] });
-        this.lods.push(km32.means);
-        //console.profileEnd("KMEANS" + this.name);
+        PDBModel.numLiveWorkers++;
+
+        const worker = new KMeansWorkerModule();
+        const kMeansWorkerClass = Comlink.wrap<KMeansWorkerType>(worker);
+        const workerobj = await new kMeansWorkerClass();
+
+        const retData = await workerobj.run(
+            n,
+            sizes,
+            Comlink.transfer(allData, [allData.buffer])
+        );
+
+        // the worker is done
+        PDBModel.numLiveWorkers--;
+
+        // update the new LODs
+        for (let i = 0; i < sizes.length; ++i) {
+            this.lods.push({
+                geometry: this.createGPUBuffer(retData[i]),
+                vertices: retData[i],
+            });
+        }
     }
 
     public instantiate(): Points[] {
         const lodobjects: Points[] = [];
         for (let i = 0; i < this.lods.length; ++i) {
-            const obj = new Points(this.geometry[i]);
+            const obj = new Points(this.lods[i].geometry);
             obj.visible = false;
             lodobjects.push(obj);
         }

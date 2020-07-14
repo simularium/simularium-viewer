@@ -100,8 +100,10 @@ class Viewer extends React.Component<{}, ViewerState> {
 
     public handleTrajectoryInfo(data): void {
         console.log("Trajectory info arrived", data);
-        this.state.totalDuration = data.totalDuration;
-        this.state.timeStep = data.timeStepSize;
+        this.setState({
+            totalDuration: data.totalDuration,
+            timeStep: data.timeStepSize,
+        });
 
         currentTime = 0;
         currentFrame = 0;
