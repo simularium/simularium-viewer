@@ -1,4 +1,5 @@
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import PDBModel from "../agentsim/PDBModel";
 import { Box3, Box3Helper, BufferGeometry, Color, DirectionalLight, Geometry, Group, HemisphereLight, LineBasicMaterial, LineSegments, Material, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, Scene, ShaderMaterial, SphereBufferGeometry, WebGLRenderer } from "three";
 import { ILogger } from "js-logger/src/types";
 import { AgentData } from "./VisData";
@@ -38,7 +39,9 @@ declare class VisGeometry {
     pathEndColor: Color;
     visGeomMap: Map<number, string>;
     meshRegistry: Map<string | number, Mesh>;
+    pdbRegistry: Map<string | number, PDBModel>;
     meshLoadAttempted: Map<string, boolean>;
+    pdbLoadAttempted: Map<string, boolean>;
     scaleMapping: Map<number, number>;
     geomCount: number;
     materials: Material[];
@@ -115,11 +118,13 @@ declare class VisGeometry {
      *   Data Management
      */
     resetMapping(): void;
+    private getPdbNameFromMeshName;
     /**
      *   Map Type ID -> Geometry
      */
     mapIdToGeom(id: any, meshName: any): void;
     getGeomFromId(id: number): Mesh | null;
+    getPdbFromId(id: number): PDBModel | null;
     mapFromJSON(name: any, filePath: any, callback?: any): Promise<void | Response>;
     resetBounds(boundsAsArray: any): void;
     setScaleForId(id: number, scale: number): void;

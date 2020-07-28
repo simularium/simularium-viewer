@@ -1,17 +1,13 @@
-import { Color, FrontSide, Matrix4, ShaderMaterial, Vector2 } from "three";
+import { FrontSide, Matrix4, ShaderMaterial, Vector2 } from "three";
 
 const vertexShader = `
 precision highp float;
-
-attribute float vTypeId;
-attribute float vInstanceId;
 
     uniform vec2 iResolution;
     uniform float Scale;
     varying vec3 IN_viewPos;
     varying float IN_radius;
-    flat out int IN_typeId;
-    flat out int IN_instanceId;
+
     // varying vec4 IN_color;
     // flat int IN_atomId;
     uniform float radius;
@@ -35,8 +31,6 @@ attribute float vInstanceId;
         //gl_PointSize = 10.0;
         //gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
         IN_radius = radius;
-        IN_typeId = int(vTypeId);
-        IN_instanceId = int(vInstanceId);
     }
 `;
 
@@ -45,14 +39,15 @@ precision highp float;
 
 varying vec3 IN_viewPos;
 varying float IN_radius;
-flat in int IN_typeId;
-flat in int IN_instanceId;
-    // varying vec4 IN_color;
+
+// varying vec4 IN_color;
     // flat int IN_instanceId;
     // flat int IN_atomId;
 
     uniform vec2 iResolution;
-
+    uniform float IN_typeId;
+    uniform float IN_instanceId;
+    
     uniform float Scale;
     uniform mat4 modelViewMatrix;
     uniform mat4 projectionMatrix;
@@ -91,7 +86,7 @@ flat in int IN_instanceId;
         //gl_FragColor = vec4(fragPosDepth, 0.0, 0.0, 1.0);
         // gl_FragColor = vec4(gl_PointCoord.xy, 0.0, 1.0);
         
-        gl_FragColor = vec4(float(IN_typeId), float(IN_instanceId), fragViewPos.z, fragPosDepth);
+        gl_FragColor = vec4(IN_typeId, IN_instanceId, fragViewPos.z, fragPosDepth);
         //gl_FragColor = vec4(float(IN_typeId)/50.0, float(IN_typeId)/50.0, float(IN_typeId)/50.0, 1.0);
         //gl_FragColor = vec4(84.0/255.0, 179.0/255.0, 162.0/255.0, 1.0);
     }
@@ -103,8 +98,6 @@ precision highp float;
 
 varying vec3 IN_viewPos;
 varying float IN_radius;
-flat in int IN_typeId;
-flat in int IN_instanceId;
 
     // varying vec4 IN_color;
     // flat int IN_instanceId;
@@ -154,8 +147,6 @@ precision highp float;
 
 varying vec3 IN_viewPos;
 varying float IN_radius;
-flat in int IN_typeId;
-flat in int IN_instanceId;
 
     // varying vec4 IN_color;
     // flat int IN_instanceId;
@@ -204,10 +195,11 @@ flat in int IN_instanceId;
 const colorMaterial = new ShaderMaterial({
     uniforms: {
         radius: { value: 1.0 },
-        color: { value: new Color(0x44ff44) },
         iResolution: { value: new Vector2() },
         Scale: { value: 1.0 },
         projectionMatrix: { value: new Matrix4() },
+        IN_typeId: { value: 0 },
+        IN_instanceId: { value: 0 },
     },
     vertexShader: vertexShader,
     fragmentShader: fragmentShader,
@@ -217,7 +209,6 @@ const colorMaterial = new ShaderMaterial({
 const normalMaterial = new ShaderMaterial({
     uniforms: {
         radius: { value: 1.0 },
-        color: { value: new Color(0x44ff44) },
         iResolution: { value: new Vector2() },
         Scale: { value: 1.0 },
         projectionMatrix: { value: new Matrix4() },
@@ -230,7 +221,6 @@ const normalMaterial = new ShaderMaterial({
 const positionMaterial = new ShaderMaterial({
     uniforms: {
         radius: { value: 1.0 },
-        color: { value: new Color(0x44ff44) },
         iResolution: { value: new Vector2() },
         Scale: { value: 1.0 },
         projectionMatrix: { value: new Matrix4() },

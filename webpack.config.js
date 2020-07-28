@@ -1,23 +1,36 @@
-const path = require('path');
+const path = require("path");
 
 module.exports = {
-    entry: './src/index.ts',
+    entry: "./src/index.ts",
     output: {
-        filename: 'index.js',
-        library: 'simularium-viewer',
-        libraryTarget: 'umd',
-        path: path.resolve(__dirname, 'dist'),
+        filename: "index.js",
+        library: "simularium-viewer",
+        libraryTarget: "umd",
+        path: path.resolve(__dirname, "dist"),
     },
-    mode: 'development',
+    mode: "development",
     module: {
         rules: [
             {
                 test: /\.(j|t)sx?$/,
                 exclude: /node_modules/,
                 use: [
-                    { loader: 'babel-loader' },
+                    {
+                        loader: "babel-loader",
+                    },
                 ],
-            }
+            },
+            {
+                test: /KMeansWorker\.(js|ts)$/i,
+                use: [
+                    {
+                        loader: "worker-loader?inline=true",
+                    },
+                    {
+                        loader: "babel-loader",
+                    },
+                ],
+            },
         ],
     },
     resolve: {

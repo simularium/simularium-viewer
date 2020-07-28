@@ -32,7 +32,7 @@ class MoleculeRenderer {
     public ssaoBufferBlurred2: WebGLRenderTarget;
 
     public constructor() {
-        this.gbufferPass = new GBufferPass(1);
+        this.gbufferPass = new GBufferPass();
         // radius, threshold, falloff in view space coordinates.
         this.ssao1Pass = new SSAO1Pass(4.5, 150, 150);
         this.ssao2Pass = new SSAO1Pass(4.5, 150, 150);
@@ -125,29 +125,48 @@ class MoleculeRenderer {
 
     public setupGui(gui): void {
         var settings = {
-            atomRadius: 1.0,
-            aoradius1: 4.5,
-            aoradius2: 4.5,
-            blurradius1: 10.0,
-            blurradius2: 10.0,
-            aothreshold1: 150,
-            aofalloff1: 150,
-            aothreshold2: 150,
-            aofalloff2: 150,
+            aoradius1: 2.2,
+            aoradius2: 5,
+            blurradius1: 1.5,
+            blurradius2: 0.7,
+            aothreshold1: 75,
+            aofalloff1: 100,
+            aothreshold2: 75,
+            aofalloff2: 75,
             atomBeginDistance: 150.0,
             chainBeginDistance: 225.0,
             bghueoffset: 1,
             bgchromaoffset: 0,
             bgluminanceoffset: 0.2,
-            showAtoms: this.gbufferPass.getShowAtoms(),
         };
+
+        /////////////////////////////////////////////////////////////////////
+        // init from settings object
+        this.ssao1Pass.pass.material.uniforms.radius.value = settings.aoradius1;
+        this.blur1Pass.setRadius(settings.blurradius1);
+        this.ssao1Pass.pass.material.uniforms.ssaoThreshold.value =
+            settings.aothreshold1;
+        this.ssao1Pass.pass.material.uniforms.ssaoFalloff.value =
+            settings.aofalloff1;
+        this.ssao2Pass.pass.material.uniforms.radius.value = settings.aoradius2;
+        this.blur2Pass.setRadius(settings.blurradius2);
+        this.ssao2Pass.pass.material.uniforms.ssaoThreshold.value =
+            settings.aothreshold2;
+        this.ssao2Pass.pass.material.uniforms.ssaoFalloff.value =
+            settings.aofalloff2;
+        this.compositePass.pass.material.uniforms.atomicBeginDistance.value =
+            settings.atomBeginDistance;
+        this.compositePass.pass.material.uniforms.chainBeginDistance.value =
+            settings.chainBeginDistance;
+        this.compositePass.pass.material.uniforms.bgHCLoffset.value.x =
+            settings.bghueoffset;
+        this.compositePass.pass.material.uniforms.bgHCLoffset.value.y =
+            settings.bgchromaoffset;
+        this.compositePass.pass.material.uniforms.bgHCLoffset.value.z =
+            settings.bgluminanceoffset;
+        /////////////////////////////////////////////////////////////////////
+
         var self = this;
-        gui.add(settings, "showAtoms").onChange(value => {
-            self.gbufferPass.setShowAtoms(value);
-        });
-        gui.add(settings, "atomRadius", 0.01, 10.0).onChange(value => {
-            self.gbufferPass.setAtomRadius(value);
-        });
         gui.add(settings, "aoradius1", 0.01, 10.0).onChange(value => {
             self.ssao1Pass.pass.material.uniforms.radius.value = value;
         });
@@ -194,8 +213,14 @@ class MoleculeRenderer {
     public setBackgroundColor(color): void {
         this.compositePass.pass.material.uniforms.backgroundColor.value = color;
     }
-    public setHighlightInstance(instance): void {
+    public setHighlightInstance(instance: number): void {
         this.compositePass.pass.material.uniforms.highlightInstance.value = instance;
+    }
+
+    public setTypeSelectMode(isTypeSelected: boolean): void {
+        this.compositePass.pass.material.uniforms.typeSelectMode.value = isTypeSelected
+            ? 1
+            : 0;
     }
 
     public hitTest(renderer, x, y): number {
@@ -211,33 +236,21 @@ class MoleculeRenderer {
         }
     }
 
-    // TODO this is a geometry/scene update and should be updated through some other means?
-    public updateMolecules(
-        positions,
-        typeids,
-        instanceids,
-        numAgents,
-        numAtomsPerAgent
-    ): void {
-        this.gbufferPass.update(
-            positions,
-            typeids,
-            instanceids,
-            numAgents * numAtomsPerAgent
-        );
-    }
-
     // colorsData is a Float32Array of rgb triples
     public updateColors(numColors, colorsData): void {
         this.compositePass.updateColors(numColors, colorsData);
     }
 
-    public createMoleculeBuffer(n): void {
-        this.gbufferPass.createMoleculeBuffer(n);
-    }
-
-    public setMeshGroups(agentMeshGroup: Group, agentFiberGroup: Group): void {
-        this.gbufferPass.setMeshGroups(agentMeshGroup, agentFiberGroup);
+    public setMeshGroups(
+        agentMeshGroup: Group,
+        agentPDBGroup: Group,
+        agentFiberGroup: Group
+    ): void {
+        this.gbufferPass.setMeshGroups(
+            agentMeshGroup,
+            agentPDBGroup,
+            agentFiberGroup
+        );
     }
 
     public resize(x, y): void {
@@ -262,11 +275,28 @@ class MoleculeRenderer {
         this.drawBufferPass.resize(x, y);
     }
 
-    public setShowAtoms(show): void {
-        this.gbufferPass.setShowAtoms(show);
-    }
+    public render(renderer, scene, camera, target): void {
+        // currently rendering is a draw call per PDB POINTS objects and one draw call per mesh TRIANGLES object (reusing same geometry buffer)
 
-    public render(renderer, camera, target): void {
+        // threejs does not allow:
+        //   multiple render targets : i have to do 3x the vtx processing work to draw
+        //   instancing is limited and not generalized : draw call overhead
+        //   transform feedback (capture the post-transform state of an object and resubmit it multiple times)
+        //   WEBGL_multi_draw extension support??? : draw call overhead
+        //     chrome flags Enable Draft webgl extensions
+
+        // webgl2 :  FF, Chrome, Edge, Android
+        //    NOT: safari, ios safari  (due in 2020?)
+
+        // no geometry or tessellation shaders in webgl2 at all
+
+        // options to proceed:
+        //   1. custom webgl renderer.  could still use some threejs classes for camera, matrices and maybe canvas handling
+        //   2. fork threejs and mod (some of the asked for features are languishing in PRs)
+        // Both options are time consuming.  #2 is probably quicker to implement, possibly less optimal JS code,
+        //   more robust against varying user configs
+        // we still need to maintain the simple mesh rendering for webgl1 devices.
+
         // DEPTH HANDLING STRATEGY:
         // gbuffer pass writes gl_FragDepth
         // depth buffer should be not written to or tested again after this.
@@ -275,6 +305,7 @@ class MoleculeRenderer {
         // TODO: MRT
         this.gbufferPass.render(
             renderer,
+            scene,
             camera,
             this.colorBuffer,
             this.normalBuffer,
