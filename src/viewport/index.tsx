@@ -52,20 +52,10 @@ interface FileHTML extends File {
 
 // This function returns a promise that resolves after all of the objects in
 //  the 'files' parameter have been parsed into text and put in the `outParsedFiles` parameter
-function parseFilesToText(
-    files: FileHTML[],
-    outParsedFiles: VisDataMessage[]
-): Promise<void> {
-    let p = Promise.resolve();
-    files.forEach(file => {
-        p = p.then(() => {
-            return file.text().then(text => {
-                const json = JSON.parse(text);
-                outParsedFiles.push(json as VisDataMessage);
-            });
-        });
-    });
-    return p;
+function parseFilesToText(files: FileHTML[]): Promise<FrameJSON[]> {
+    return Promise.all(
+        files.map(file => file.text().then(text => JSON.parse(text)))
+    );
 }
 
 function sortFrames(a: FrameJSON, b: FrameJSON): number {
@@ -291,19 +281,20 @@ class Viewport extends React.Component<ViewportProps> {
 
         const files: FileList = input.files || data.files;
         this.clearCache();
-
-        const parsedFiles = [];
         const filesArr: FileHTML[] = Array.from(files) as FileHTML[];
-        const p = parseFilesToText(filesArr, parsedFiles);
-
-        p.then(() => {
+        const p = parseFilesToText(filesArr);
+        // needed to keep from autoplaying since we cache all the frames
+        this.props.simulariumController.pause();
+        p.then(parsedFiles => {
             parsedFiles.sort(sortFrames);
             this.visGeometry.resetMapping();
 
             const frameJSON = parsedFiles[0];
+            const fileName = filesArr[0].name;
             this.cacheJSON(frameJSON);
         }).then(() => {
             this.configDragAndDrop();
+            this.lastRenderedAgentTime = -1;
         });
     };
 
