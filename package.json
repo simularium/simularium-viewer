@@ -29,6 +29,7 @@
         "@babel/preset-react": "^7.0.0",
         "@babel/preset-typescript": "~7.1",
         "@types/jest": "^26.0.3",
+        "@types/lodash": "^4.14.158",
         "@types/react": "^16.8.25",
         "@typescript-eslint/eslint-plugin": "~3.4.0",
         "@typescript-eslint/parser": "~3.4.0",
