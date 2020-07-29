@@ -280,18 +280,14 @@ class Viewport extends React.Component<ViewportProps> {
 
         p.then(parsedFiles => {
             parsedFiles.sort(sortFrames);
-            this.visGeometry.resetMapping();
             const frameJSON = parsedFiles[0];
             const fileName = filesArr[0].name;
-            this.lastRenderTime = -1;
             this.props.simulariumController.changeFile(
                 fileName,
                 true,
                 frameJSON
             );
-        }).then(() => {
-            // this.configDragAndDrop();
-        });
+        })
     };
 
     public addEventHandlersToCanvas(): void {
