@@ -77,7 +77,7 @@ export default class SimulariumController {
         this.netConnection.requestTrajectoryFileInfo(this.playBackFile);
     }
 
-    public gotoTime(timeNs): void {
+    public gotoTime(timeNs: number): void {
         if (this.visData.hasLocalCacheForTime(timeNs)) {
             this.visData.gotoTime(timeNs);
         } else {
@@ -90,7 +90,7 @@ export default class SimulariumController {
         }
     }
 
-    public playFromTime(timeNs): void {
+    public playFromTime(timeNs: number): void {
         this.gotoTime(timeNs);
         this.isPaused = false;
     }
@@ -103,10 +103,10 @@ export default class SimulariumController {
         this.isPaused = false;
     }
 
-    public changeFile(newFile): void {
-        if (newFile !== this.playBackFile) {
+    public changeFile(newFileName: string): void {
+        if (newFileName !== this.playBackFile) {
             this.fileChanged = true;
-            this.playBackFile = newFile;
+            this.playBackFile = newFileName;
 
             this.visData.WaitForFrame(0);
             this.visData.clearCache();

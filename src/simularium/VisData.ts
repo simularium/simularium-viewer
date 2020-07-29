@@ -65,7 +65,7 @@ class VisData {
 
     public static parse(visDataMsg): ParsedBundle {
         let parsedAgentDataArray: AgentData[][] = [];
-        let frameDataArray: FrameData[] = [];
+        const frameDataArray: FrameData[] = [];
         visDataMsg.bundleData.forEach(frame => {
             // IMPORTANT: Order of this array needs to perfectly match the incoming data.
             const agentObjectKeys = [
@@ -194,7 +194,7 @@ class VisData {
         );
     }
 
-    public gotoTime(timeNs): void {
+    public gotoTime(timeNs: number): void {
         this.cacheFrame = -1;
 
         for (
@@ -240,7 +240,7 @@ class VisData {
     /**
      * Data management
      * */
-    public WaitForFrame(frameNumber): void {
+    public WaitForFrame(frameNumber: number): void {
         this.frameToWaitFor = frameNumber;
         this.lockedForFrame = true;
     }
@@ -300,10 +300,9 @@ class VisData {
             throw Error(
                 "cache not cleared before cacheing a new drag-and-drop file"
             );
-            return;
         }
 
-        let frames = VisData.parse(visDataMsg);
+        const frames = VisData.parse(visDataMsg);
         Array.prototype.push.apply(this.frameDataCache, frames.frameDataArray);
         Array.prototype.push.apply(
             this.frameCache,
@@ -312,11 +311,11 @@ class VisData {
     }
 
     public dragAndDropFileInfo(): TrajectoryFileInfo {
-        let max: number[] = [0, 0, 0];
-        let min: number[] = [0, 0, 0];
+        const max: number[] = [0, 0, 0];
+        const min: number[] = [0, 0, 0];
 
         if (this.frameCache.length === 0) {
-            throw Error("No data in cache for drag-and-drop file");
+            console.error("No data in cache for drag-and-drop file");
             return {
                 boxSizeX: 0,
                 boxSizeY: 0,
@@ -327,50 +326,14 @@ class VisData {
         }
 
         this.frameCache.forEach(element => {
-            let radius =
-                Math.max.apply(
-                    Math,
-                    element.map(agent => {
-                        return agent.cr;
-                    })
-                ) * 1.1;
-            let maxx: number = Math.max.apply(
-                Math,
-                element.map(agent => {
-                    return agent.x;
-                })
-            );
-            let maxy: number = Math.max.apply(
-                Math,
-                element.map(agent => {
-                    return agent.y;
-                })
-            );
-            let maxz: number = Math.max.apply(
-                Math,
-                element.map(agent => {
-                    return agent.z;
-                })
-            );
-
-            let minx: number = Math.min.apply(
-                Math,
-                element.map(agent => {
-                    return agent.x;
-                })
-            );
-            let miny: number = Math.min.apply(
-                Math,
-                element.map(agent => {
-                    return agent.y;
-                })
-            );
-            let minz: number = Math.min.apply(
-                Math,
-                element.map(agent => {
-                    return agent.z;
-                })
-            );
+            const radius: number =
+                Math.max(...element.map(agent => agent.cr)) * 1.1;
+            const maxx: number = Math.max(...element.map(agent => agent.x));
+            const maxy: number = Math.max(...element.map(agent => agent.y));
+            const maxz: number = Math.max(...element.map(agent => agent.z));
+            const minx: number = Math.min(...element.map(agent => agent.x));
+            const miny: number = Math.min(...element.map(agent => agent.y));
+            const minz: number = Math.min(...element.map(agent => agent.z));
 
             max[0] = Math.max(max[0], 2 * maxx + radius);
             max[1] = Math.max(max[1], 2 * maxy + radius);
@@ -381,11 +344,11 @@ class VisData {
             min[2] = Math.min(max[2], 2 * minz - radius);
         });
 
-        let timeStepSize =
+        const timeStepSize =
             this.frameDataCache.length > 1
                 ? this.frameDataCache[1].time - this.frameDataCache[0].time
                 : 1;
-        let totalDuration =
+        const totalDuration =
             this.frameDataCache[this.frameCache.length - 1].frameNumber *
             timeStepSize;
 
