@@ -315,14 +315,7 @@ class VisData {
         const min: number[] = [0, 0, 0];
 
         if (this.frameCache.length === 0) {
-            console.error("No data in cache for drag-and-drop file");
-            return {
-                boxSizeX: 0,
-                boxSizeY: 0,
-                boxSizeZ: 0,
-                totalDuration: 1,
-                timeStepSize: 1,
-            };
+            throw Error("No data in cache for drag-and-drop file");
         }
 
         this.frameCache.forEach(element => {
