@@ -260,11 +260,6 @@ class Viewport extends React.Component<ViewportProps> {
         this.props.simulariumController.pause();
     };
 
-    private clearCache = () => {
-        this.props.simulariumController.disableNetworkCommands();
-        this.props.simulariumController.clearLocalCache();
-    };
-
     public onDragOver = (e: Event): void => {
         if (e.stopPropagation) {
             e.stopPropagation();
@@ -280,21 +275,22 @@ class Viewport extends React.Component<ViewportProps> {
         const data: DataTransfer = event.dataTransfer as DataTransfer;
 
         const files: FileList = input.files || data.files;
-        this.clearCache();
         const filesArr: FileHTML[] = Array.from(files) as FileHTML[];
         const p = parseFilesToText(filesArr);
-        // needed to keep from autoplaying since we cache all the frames
-        this.props.simulariumController.pause();
+
         p.then(parsedFiles => {
             parsedFiles.sort(sortFrames);
             this.visGeometry.resetMapping();
-
             const frameJSON = parsedFiles[0];
             const fileName = filesArr[0].name;
-            this.cacheJSON(frameJSON);
+            this.lastRenderTime = -1;
+            this.props.simulariumController.changeFile(
+                fileName,
+                true,
+                frameJSON
+            );
         }).then(() => {
-            this.configDragAndDrop();
-            this.lastRenderedAgentTime = -1;
+            // this.configDragAndDrop();
         });
     };
 
@@ -387,8 +383,8 @@ class Viewport extends React.Component<ViewportProps> {
             if (simulariumController.hasChangedFile) {
                 this.visGeometry.clear();
                 this.visGeometry.resetMapping();
-
-                const p = this.visGeometry.mapFromJSON(
+                const p = simulariumController.isLocalFile ? Promise.resolve() :
+                this.visGeometry.mapFromJSON(
                     simulariumController.getFile(),
                     getJsonUrl(simulariumController.getFile())
                 );

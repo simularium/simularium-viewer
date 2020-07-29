@@ -22,6 +22,7 @@ export default class SimulariumController {
     private isPaused: boolean;
     private fileChanged: boolean;
     private playBackFile: string;
+    private localFile: boolean;
 
     public constructor(params: SimulariumControllerParams) {
         this.visData = new VisData();
@@ -42,13 +43,18 @@ export default class SimulariumController {
         this.networkEnabled = true;
         this.isPaused = false;
         this.fileChanged = false;
+        this.localFile = false;
     }
 
     public get hasChangedFile(): boolean {
         return this.fileChanged;
     }
 
-    public connect(): Promise<string> {
+    public get isLocalFile(): boolean {
+        return this.localFile;
+    }
+
+    public connect(): Promise<{}> {
         return this.netConnection.connectToRemoteServer(
             this.netConnection.getIp()
         );
@@ -115,15 +121,29 @@ export default class SimulariumController {
         this.isPaused = false;
     }
 
-    public changeFile(newFileName: string): void {
+    public changeFile(
+        newFileName: string,
+        isLocalFile = false,
+        framesToCache?
+    ): void {
         if (newFileName !== this.playBackFile) {
             this.fileChanged = true;
             this.playBackFile = newFileName;
+            this.localFile = isLocalFile;
+            this.visData.clearCache();
+            this.stop();
+
+            if (isLocalFile) {
+                this.disableNetworkCommands();
+                this.cacheJSON(framesToCache);
+                const trajectoryFileInfo = this.dragAndDropFileInfo();
+                this.netConnection.onTrajectoryFileInfoArrive(
+                    trajectoryFileInfo
+                );
+                return;
+            }
 
             this.visData.WaitForFrame(0);
-            this.visData.clearCache();
-
-            this.stop();
             this.start().then(() => {
                 this.netConnection.requestSingleFrame(0);
             });
