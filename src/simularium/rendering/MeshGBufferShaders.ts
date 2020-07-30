@@ -23,8 +23,8 @@ precision highp float;
 varying vec3 IN_viewPos;
 varying vec3 IN_viewNormal;
 
-uniform int IN_typeId;
-uniform int IN_instanceId;
+uniform int typeId;
+uniform int instanceId;
 
 uniform mat4 projectionMatrix;
           
@@ -38,7 +38,7 @@ void main()	{
     // TODO: is this the smae as gl_FragCoord.z ???
     float fragPosDepth = (((f - n) * fragPosNDC.z) + n + f) / 2.0;
 
-    gl_FragColor = vec4(float(IN_typeId), float(IN_instanceId), fragViewPos.z, fragPosDepth);
+    gl_FragColor = vec4(float(typeId), float(instanceId), fragViewPos.z, fragPosDepth);
 }
 `;
 
@@ -70,8 +70,8 @@ void main()	{
 
 const colorMaterial = new ShaderMaterial({
     uniforms: {
-        IN_typeId: { value: 0 },
-        IN_instanceId: { value: 0 },
+        typeId: { value: 0 },
+        instanceId: { value: 0 },
         projectionMatrix: { value: new Matrix4() },
     },
     vertexShader: vertexShader,

@@ -1,4 +1,13 @@
-import { Color, DataTexture, FloatType, RGBAFormat, Vector3 } from "three";
+import {
+    Color,
+    DataTexture,
+    FloatType,
+    PerspectiveCamera,
+    RGBAFormat,
+    Vector3,
+    WebGLRenderer,
+    WebGLRenderTarget,
+} from "three";
 
 import RenderToBuffer from "./RenderToBuffer";
 
@@ -269,7 +278,7 @@ class CompositePass {
     }
 
     // colorsData is a Float32Array of rgba
-    public updateColors(numColors, colorsData): void {
+    public updateColors(numColors: number, colorsData: Float32Array): void {
         this.pass.material.uniforms.colorsBuffer.value = new DataTexture(
             colorsData,
             numColors,
@@ -280,15 +289,17 @@ class CompositePass {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public resize(x, y): void {}
+    public resize(x: number, y: number): void {
+        /* do nothing */
+    }
 
     public render(
-        renderer,
-        camera,
-        target,
-        ssaoBuffer1,
-        ssaoBuffer2,
-        colorBuffer
+        renderer: WebGLRenderer,
+        camera: PerspectiveCamera,
+        target: WebGLRenderTarget,
+        ssaoBuffer1: WebGLRenderTarget,
+        ssaoBuffer2: WebGLRenderTarget,
+        colorBuffer: WebGLRenderTarget
     ): void {
         this.pass.material.uniforms.zNear.value = camera.near;
         this.pass.material.uniforms.zFar.value = camera.far;

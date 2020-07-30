@@ -1,4 +1,4 @@
-import { Color, Vector2 } from "three";
+import { Color, Vector2, WebGLRenderer, WebGLRenderTarget } from "three";
 
 import RenderToBuffer from "./RenderToBuffer";
 
@@ -148,29 +148,29 @@ class BlurPass {
     public blurXpass: BlurXPass;
     public blurYpass: BlurYPass;
 
-    public constructor(radius) {
+    public constructor(radius: number) {
         this.blurXpass = new BlurXPass();
         this.blurYpass = new BlurYPass();
 
         this.setRadius(radius);
     }
 
-    public resize(x, y): void {
+    public resize(x: number, y: number): void {
         this.blurXpass.resize(x, y);
         this.blurYpass.resize(x, y);
     }
 
-    public setRadius(r): void {
+    public setRadius(r: number): void {
         this.blurXpass.pass.material.uniforms.amount.value = r;
         this.blurYpass.pass.material.uniforms.amount.value = r;
     }
 
     public render(
-        renderer,
-        target,
-        source,
-        positions,
-        intermediateBuffer
+        renderer: WebGLRenderer,
+        target: WebGLRenderTarget,
+        source: WebGLRenderTarget,
+        positions: WebGLRenderTarget,
+        intermediateBuffer: WebGLRenderTarget
     ): void {
         const c = renderer.getClearColor().clone();
         const a = renderer.getClearAlpha();

@@ -1,5 +1,8 @@
 module.exports = {
-    extends: ["plugin:@typescript-eslint/recommended"],
+    extends: [
+        "plugin:@typescript-eslint/recommended",
+        "plugin:react/recommended",
+    ],
     env: {
         mocha: true,
         es6: true,
@@ -9,7 +12,7 @@ module.exports = {
     parserOptions: {
         project: "./tsconfig.json",
     },
-    plugins: ["@typescript-eslint"],
+    plugins: ["@typescript-eslint", "react"],
     rules: {
         "@typescript-eslint/ban-types": ["warn"],
         "@typescript-eslint/naming-convention": [
@@ -23,8 +26,16 @@ module.exports = {
                 format: ["camelCase", "UPPER_CASE"],
             },
             {
+                selector: "property",
+                format: ["camelCase", "UPPER_CASE"],
+            },
+            {
                 selector: "typeLike",
                 format: ["PascalCase"],
+            },
+            {
+                selector: "enumMember",
+                format: ["UPPER_CASE"],
             },
         ],
         "@typescript-eslint/indent": ["off"],
@@ -34,5 +45,10 @@ module.exports = {
         "prefer-const": ["warn"],
         "prefer-spread": ["warn"],
         "no-var": ["warn"],
+    },
+    settings: {
+        react: {
+            version: "detect",
+        },
     },
 };

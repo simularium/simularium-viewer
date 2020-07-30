@@ -1,7 +1,16 @@
 import MeshGBufferShaders from "./MeshGBufferShaders";
 import PDBGBufferShaders from "./PDBGBufferShaders";
 
-import { Color, Group, ShaderMaterial, Vector2, Scene } from "three";
+import {
+    Color,
+    Group,
+    ShaderMaterial,
+    Vector2,
+    Scene,
+    WebGLRenderer,
+    PerspectiveCamera,
+    WebGLRenderTarget,
+} from "three";
 
 // strategy:
 // 0. based on depth, aggregate atoms in the molecule into larger spheres using clustering ?
@@ -54,7 +63,7 @@ class GBufferPass {
         this.agentFiberGroup = agentFiberGroup;
     }
 
-    public resize(width, height): void {
+    public resize(width: number, height: number): void {
         this.colorMaterialPDB.uniforms.iResolution.value = new Vector2(
             width,
             height
@@ -70,12 +79,12 @@ class GBufferPass {
     }
 
     public render(
-        renderer,
-        scene,
-        camera,
-        colorBuffer,
-        normalBuffer,
-        positionBuffer
+        renderer: WebGLRenderer,
+        scene: Scene,
+        camera: PerspectiveCamera,
+        colorBuffer: WebGLRenderTarget,
+        normalBuffer: WebGLRenderTarget,
+        positionBuffer: WebGLRenderTarget
     ): void {
         const c = renderer.getClearColor().clone();
         const a = renderer.getClearAlpha();

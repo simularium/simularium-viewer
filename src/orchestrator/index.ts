@@ -6,17 +6,21 @@ interface NodeConfig {
     environment: string;
 }
 
+interface OrchestratorParams {
+    serviceAddr: string;
+}
+
 export default class Orchestrator {
     private serviceAddr: string;
 
-    public constructor(params) {
+    public constructor(params: OrchestratorParams) {
         this.serviceAddr = params.serviceAddr || "https://localhost:5000";
     }
 
     public getNodes(
         params: string
     ): Promise<NodeConfig[]> | Promise<undefined> {
-        let nodeFetch = fetch(this.serviceAddr + "/get?" + params);
+        const nodeFetch = fetch(this.serviceAddr + "/get?" + params);
 
         return nodeFetch
             .then(response => {
@@ -34,18 +38,18 @@ export default class Orchestrator {
     }
 
     public getFreeNodes(): Promise<NodeConfig[]> | Promise<undefined> {
-        let params = "state=free";
+        const params = "state=free";
         return this.getNodes(params);
     }
 
     public getSimNode(
         simId: string
     ): Promise<NodeConfig[]> | Promise<undefined> {
-        let params: string = "simulation=" + simId;
+        const params: string = "simulation=" + simId;
         return this.getNodes(params);
     }
 
-    public reserveNode(config: NodeConfig, simulation: string) {
+    public reserveNode(config: NodeConfig, simulation: string): void {
         fetch(
             this.serviceAddr +
                 "/assign" +
@@ -57,7 +61,7 @@ export default class Orchestrator {
         );
     }
 
-    public freeNode(config: NodeConfig) {
+    public freeNode(config: NodeConfig): void {
         fetch(
             this.serviceAddr +
                 "/assign?" +

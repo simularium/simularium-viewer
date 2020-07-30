@@ -7,7 +7,12 @@ import SimulariumController from "../controller";
 
 import { forOwn } from "lodash";
 
-import { VisGeometry, TrajectoryFileInfo, NO_AGENT } from "../simularium";
+import {
+    VisDataMessage,
+    VisGeometry,
+    TrajectoryFileInfo,
+    NO_AGENT,
+} from "../simularium";
 
 export type PropColor = string | number | [number, number, number];
 
@@ -22,7 +27,7 @@ interface ViewportProps {
     onTrajectoryFileInfoChanged: (
         cachedData: TrajectoryFileInfo
     ) => void | undefined;
-    highlightedParticleType: number | string;
+    highlightedParticleType: number;
     loadInitialData: boolean;
     showMeshes: boolean;
     showPaths: boolean;
@@ -49,14 +54,14 @@ interface FileHTML extends File {
 //  the 'files' parameter have been parsed into text and put in the `outParsedFiles` parameter
 function parseFilesToText(
     files: FileHTML[],
-    outParsedFiles: any[]
+    outParsedFiles: VisDataMessage[]
 ): Promise<void> {
     let p = Promise.resolve();
     files.forEach(file => {
         p = p.then(() => {
             return file.text().then(text => {
                 const json = JSON.parse(text);
-                outParsedFiles.push(json);
+                outParsedFiles.push(json as VisDataMessage);
             });
         });
     });
@@ -277,7 +282,8 @@ class Viewport extends React.Component<ViewportProps> {
         e.preventDefault();
     };
 
-    public onDrop = (e: Event): void=> {
+
+    public onDrop = (e: Event): void => {
         this.onDragOver(e);
         const event = e as DragEvent;
         const input = event.target as HTMLInputElement;
@@ -289,6 +295,7 @@ class Viewport extends React.Component<ViewportProps> {
         const parsedFiles = [];
         const filesArr: FileHTML[] = Array.from(files) as FileHTML[];
         const p = parseFilesToText(filesArr, parsedFiles);
+
         p.then(() => {
             parsedFiles.sort(sortFrames);
             this.visGeometry.resetMapping();
@@ -460,17 +467,17 @@ class Viewport extends React.Component<ViewportProps> {
         // can be passed as a react property
         return (
             <>
-            <div
-                id="vdom"
-                style={{
-                    height: height,
-                    width: width,
-                    position: "relative",
-                }}
-                ref={this.vdomRef}
-            >
-            {this.renderViewControls()}
-            </div>
+                <div
+                    id="vdom"
+                    style={{
+                        height: height,
+                        width: width,
+                        position: "relative",
+                    }}
+                    ref={this.vdomRef}
+                >
+                    {this.renderViewControls()}
+                </div>
             </>
         );
     }

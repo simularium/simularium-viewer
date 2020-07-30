@@ -17,7 +17,6 @@ import {
     HemisphereLight,
     LineBasicMaterial,
     LineSegments,
-    Mesh,
     Object3D,
     PerspectiveCamera,
     Raycaster,
@@ -32,8 +31,9 @@ import {
 import * as dat from "dat.gui";
 
 import jsLogger from "js-logger";
-import { ILogger } from "js-logger/src/types";
+import { ILogger, ILogLevel } from "js-logger/src/types";
 
+import { TrajectoryFileInfo } from "./TrajectoryFileInfo";
 import { AgentData } from "./VisData";
 
 import MoleculeRenderer from "./rendering/MoleculeRenderer";
@@ -76,7 +76,7 @@ interface PathData {
     colors: Float32Array;
     geometry: BufferGeometry;
     material: LineBasicMaterial;
-    line: LineSegments | null;
+    line: LineSegments;
 }
 
 class VisGeometry {
@@ -84,7 +84,7 @@ class VisGeometry {
     public backgroundColor: Color;
     public pathEndColor: Color;
     public visGeomMap: Map<number, AgentTypeGeometry>;
-    public meshRegistry: Map<string | number, Mesh>;
+    public meshRegistry: Map<string | number, Object3D>;
     public pdbRegistry: Map<string | number, PDBModel>;
     public meshLoadAttempted: Map<string, boolean>;
     public pdbLoadAttempted: Map<string, boolean>;
@@ -107,8 +107,8 @@ class VisGeometry {
     public boundingBoxMesh: Box3Helper;
     public hemiLight: HemisphereLight;
     public moleculeRenderer: MoleculeRenderer;
-    public atomSpread: number = 3.0;
-    public numAtomsPerAgent: number = 8;
+    public atomSpread = 3.0;
+    public numAtomsPerAgent = 8;
     public currentSceneAgents: AgentData[];
     public colorsData: Float32Array;
     public lightsGroup: Group;
@@ -121,14 +121,14 @@ class VisGeometry {
     private membraneAgent?: VisAgent;
     private resetCameraOnNewScene: boolean;
 
-    public constructor(loggerLevel) {
+    public constructor(loggerLevel: ILogLevel) {
         this.renderStyle = RenderStyle.GENERIC;
         this.supportsMoleculeRendering = false;
         // TODO: pass this flag in from the outside
         this.resetCameraOnNewScene = true;
 
         this.visGeomMap = new Map<number, AgentTypeGeometry>();
-        this.meshRegistry = new Map<string | number, Mesh>();
+        this.meshRegistry = new Map<string | number, Object3D>();
         this.pdbRegistry = new Map<string | number, PDBModel>();
         this.meshLoadAttempted = new Map<string, boolean>();
         this.pdbLoadAttempted = new Map<string, boolean>();
@@ -189,7 +189,9 @@ class VisGeometry {
         this.raycaster = new Raycaster();
     }
 
-    public setBackgroundColor(c): void {
+    public setBackgroundColor(
+        c: string | number | [number, number, number]
+    ): void {
         // convert from a PropColor to a THREE.Color
         this.backgroundColor = Array.isArray(c)
             ? new Color(c[0], c[1], c[2])
@@ -201,7 +203,7 @@ class VisGeometry {
 
     public setupGui(): void {
         const gui = new dat.GUI();
-        var settings = {
+        const settings = {
             atomSpread: this.atomSpread,
             numAtoms: this.numAtomsPerAgent,
             bgcolor: {
@@ -210,23 +212,22 @@ class VisGeometry {
                 b: this.backgroundColor.b * 255,
             },
         };
-        var self = this;
         gui.addColor(settings, "bgcolor").onChange(value => {
-            self.setBackgroundColor([
+            this.setBackgroundColor([
                 value.r / 255.0,
                 value.g / 255.0,
                 value.b / 255.0,
             ]);
         });
         gui.add(settings, "atomSpread", 0.01, 8.0).onChange(value => {
-            self.atomSpread = value;
-            self.updateScene(self.currentSceneAgents);
+            this.atomSpread = value;
+            this.updateScene(this.currentSceneAgents);
         });
         gui.add(settings, "numAtoms", 1, 400)
             .step(1)
             .onChange(value => {
-                self.numAtomsPerAgent = Math.floor(value);
-                self.updateScene(self.currentSceneAgents);
+                this.numAtomsPerAgent = Math.floor(value);
+                this.updateScene(this.currentSceneAgents);
             });
 
         this.moleculeRenderer.setupGui(gui);
@@ -257,7 +258,7 @@ class VisGeometry {
         return this.renderer.domElement;
     }
 
-    public handleTrajectoryData(trajectoryData): void {
+    public handleTrajectoryData(trajectoryData: TrajectoryFileInfo): void {
         // get bounds.
         if (
             trajectoryData.hasOwnProperty("boxSizeX") &&
@@ -324,7 +325,7 @@ class VisGeometry {
         this.setFollowObject(NO_AGENT);
     }
 
-    public setHighlightById(id): void {
+    public setHighlightById(id: number): void {
         if (this.highlightedId === id) {
             return;
         }
@@ -347,20 +348,24 @@ class VisGeometry {
         this.setHighlightById(-1);
     }
 
-    public onNewRuntimeGeometryType(meshName): void {
+    public onNewRuntimeGeometryType(meshName: string): void {
         // find all typeIds for this meshName
-        let typeIds = [...this.visGeomMap.entries()]
+        const typeIds = [...this.visGeomMap.entries()]
             .filter(({ 1: v }) => v.meshName === meshName)
             .map(([k]) => k);
 
         // assuming the meshGeom has already been added to the registry
         const meshGeom = this.meshRegistry.get(meshName);
+        if (meshGeom === undefined) {
+            console.error(`Mesh name ${meshName} not found in mesh registry`);
+            return;
+        }
 
         // go over all objects and update mesh of this typeId
         // if this happens before the first updateScene, then the visAgents don't have type id's yet.
         const nMeshes = this.visAgents.length;
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
-            let visAgent = this.visAgents[i];
+            const visAgent = this.visAgents[i];
             if (typeIds.includes(visAgent.typeId)) {
                 this.resetAgentGeometry(visAgent, meshGeom);
                 visAgent.setColor(
@@ -373,7 +378,7 @@ class VisGeometry {
         this.updateScene(this.currentSceneAgents);
     }
 
-    private resetAgentGeometry(visAgent, meshGeom): void {
+    private resetAgentGeometry(visAgent: VisAgent, meshGeom: Object3D): void {
         this.agentMeshGroup.remove(visAgent.mesh);
         this.agentFiberGroup.remove(visAgent.mesh);
         visAgent.setupMeshGeometry(meshGeom);
@@ -384,9 +389,9 @@ class VisGeometry {
         }
     }
 
-    public onNewPdb(pdbName): void {
+    public onNewPdb(pdbName: string): void {
         // find all typeIds for this meshName
-        let typeIds = [...this.visGeomMap.entries()]
+        const typeIds = [...this.visGeomMap.entries()]
             .filter(({ 1: v }) => v.pdbName === pdbName)
             .map(([k]) => k);
 
@@ -397,7 +402,7 @@ class VisGeometry {
         // if this happens before the first updateScene, then the visAgents don't have type id's yet.
         const nMeshes = this.visAgents.length;
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
-            let visAgent = this.visAgents[i];
+            const visAgent = this.visAgents[i];
             if (typeIds.includes(visAgent.typeId)) {
                 this.resetAgentPDB(visAgent, pdb);
             }
@@ -416,7 +421,7 @@ class VisGeometry {
         }
     }
 
-    public setUpControls(element): void {
+    public setUpControls(element: HTMLElement): void {
         this.controls = new OrbitControls(this.camera, element);
         this.controls.maxDistance = 750;
         this.controls.minDistance = 5;
@@ -428,8 +433,8 @@ class VisGeometry {
      *   Setup ThreeJS Scene
      * */
     public setupScene(): void {
-        let initWidth = 100;
-        let initHeight = 100;
+        const initWidth = 100;
+        const initHeight = 100;
         this.scene = new Scene();
         this.lightsGroup = new Group();
         this.lightsGroup.name = "lights";
@@ -492,7 +497,7 @@ class VisGeometry {
         this.camera.position.z = 120;
     }
 
-    public loadPdb(pdbName): void {
+    public loadPdb(pdbName: string): void {
         const pdbmodel = new PDBModel(pdbName);
         pdbmodel.download(`${ASSET_URL_PREFIX}/${pdbName}`).then(
             () => {
@@ -507,7 +512,7 @@ class VisGeometry {
         );
     }
 
-    public loadObj(meshName): void {
+    public loadObj(meshName: string): void {
         const objLoader = new OBJLoader();
         objLoader.load(
             `${ASSET_URL_PREFIX}/${meshName}`,
@@ -529,20 +534,20 @@ class VisGeometry {
         );
     }
 
-    public resize(width, height): void {
+    public resize(width: number, height: number): void {
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(width, height);
         this.moleculeRenderer.resize(width, height);
     }
 
-    public reparent(parent): void {
-        if (parent === "undefined" || parent == null) {
+    public reparent(parent?: HTMLElement | null): void {
+        if (parent === undefined || parent == null) {
             return;
         }
 
-        let height = parent.scrollHeight;
-        let width = parent.scrollWidth;
+        const height = parent.scrollHeight;
+        const width = parent.scrollWidth;
         parent.appendChild(this.renderer.domElement);
         this.setUpControls(this.renderer.domElement);
         this.camera.aspect = width / height;
@@ -568,12 +573,12 @@ class VisGeometry {
         this.controls.enabled = true;
     }
 
-    public render(time): void {
+    public render(time: number): void {
         if (this.visAgents.length === 0) {
             return;
         }
 
-        var elapsedSeconds = time / 1000;
+        const elapsedSeconds = time / 1000;
 
         if (this.membraneAgent) {
             VisAgent.updateMembrane(elapsedSeconds, this.renderer);
@@ -713,7 +718,7 @@ class VisGeometry {
     /**
      *   Run Time Mesh functions
      */
-    public createMaterials(colors): void {
+    public createMaterials(colors: number[]): void {
         const numColors = colors.length;
         // fill buffer of colors:
         this.colorsData = new Float32Array(numColors * 4);
@@ -757,7 +762,7 @@ class VisGeometry {
         }
     }
 
-    public addMesh(meshName, mesh): void {
+    public addMesh(meshName: string, mesh: Object3D): void {
         this.meshRegistry.set(meshName, mesh);
 
         if (!mesh.name) {
@@ -782,7 +787,7 @@ class VisGeometry {
     /**
      *   Map Type ID -> Geometry
      */
-    public mapIdToGeom(id, meshName, pdbName): void {
+    public mapIdToGeom(id: number, meshName: string, pdbName: string): void {
         this.logger.debug("Mesh for id ", id, " set to ", meshName);
         this.logger.debug("PDB for id ", id, " set to ", pdbName);
         this.visGeomMap.set(id, { meshName: meshName, pdbName: pdbName });
@@ -806,13 +811,13 @@ class VisGeometry {
         }
     }
 
-    public getGeomFromId(id: number): Mesh | null {
+    public getGeomFromId(id: number): Object3D | null {
         if (this.visGeomMap.has(id)) {
             const entry = this.visGeomMap.get(id);
             if (entry) {
                 const meshName = entry.meshName;
                 if (meshName && this.meshRegistry.has(meshName)) {
-                    let mesh = this.meshRegistry.get(meshName);
+                    const mesh = this.meshRegistry.get(meshName);
                     if (mesh) {
                         return mesh;
                     }
@@ -840,9 +845,12 @@ class VisGeometry {
         return null;
     }
 
-    public mapFromJSON(name, filePath, callback?): Promise<void | Response> {
+    public mapFromJSON(
+        name: string,
+        filePath: string,
+        callback?: (any) => void
+    ): Promise<void | Response> {
         const jsonRequest = new Request(filePath);
-        const self = this;
         return fetch(jsonRequest)
             .then(response => {
                 if (!response.ok) {
@@ -851,9 +859,9 @@ class VisGeometry {
                 return response.json();
             })
             .then(data => {
-                self.resetMapping();
+                this.resetMapping();
                 const jsonData = data;
-                self.logger.debug("JSON Mesh mapping loaded: ", jsonData);
+                this.logger.debug("JSON Mesh mapping loaded: ", jsonData);
                 Object.keys(jsonData).forEach(id => {
                     const entry = jsonData[id];
                     if (id === "size") {
@@ -863,8 +871,8 @@ class VisGeometry {
                     } else {
                         // mesh name is entry.mesh
                         // pdb name is entry.pdb
-                        self.mapIdToGeom(Number(id), entry.mesh, entry.pdb);
-                        self.setScaleForId(Number(id), entry.scale);
+                        this.mapIdToGeom(Number(id), entry.mesh, entry.pdb);
+                        this.setScaleForId(Number(id), entry.scale);
                     }
                 });
                 if (callback) {
@@ -873,7 +881,7 @@ class VisGeometry {
             });
     }
 
-    public resetBounds(boundsAsArray): void {
+    public resetBounds(boundsAsArray?: number[]): void {
         if (!boundsAsArray) {
             console.log("invalid bounds received");
             return;
@@ -902,7 +910,7 @@ class VisGeometry {
 
     public getScaleForId(id: number): number {
         if (this.scaleMapping.has(id)) {
-            let scale = this.scaleMapping.get(id);
+            const scale = this.scaleMapping.get(id);
             if (scale) {
                 return scale;
             }
@@ -914,7 +922,7 @@ class VisGeometry {
     /**
      *   Update Scene
      * */
-    public updateScene(agents): void {
+    public updateScene(agents: AgentData[]): void {
         this.currentSceneAgents = agents;
 
         let dx, dy, dz;
@@ -996,7 +1004,7 @@ class VisGeometry {
                 }
 
                 const path = this.findPathForAgentIndex(i);
-                if (path) {
+                if (path && path.line) {
                     this.addPointToPath(
                         path,
                         agentData.x,
@@ -1076,8 +1084,8 @@ class VisGeometry {
         }
     }
 
-    public findPathForAgentIndex(idx): PathData | null {
-        let path = this.paths.find(path => {
+    public findPathForAgentIndex(idx: number): PathData | null {
+        const path = this.paths.find(path => {
             return path.agent === idx;
         });
 
@@ -1089,7 +1097,7 @@ class VisGeometry {
 
     // assumes color is a threejs color, or null/undefined
     public addPathForAgentIndex(
-        idx,
+        idx: number,
         maxSegments?: number,
         color?: Color
     ): PathData {
@@ -1112,41 +1120,44 @@ class VisGeometry {
             color = this.visAgents[idx].color.clone();
         }
 
+        const pointsArray = new Float32Array(maxSegments * 3 * 2);
+        const colorsArray = new Float32Array(maxSegments * 3 * 2);
+        const lineGeometry = new BufferGeometry();
+        lineGeometry.setAttribute(
+            "position",
+            new BufferAttribute(pointsArray, 3)
+        );
+        lineGeometry.setAttribute("color", new BufferAttribute(colorsArray, 3));
+        // path starts empty: draw range spans nothing
+        lineGeometry.setDrawRange(0, 0);
+
+        // the line will be colored per-vertex
+        const lineMaterial = new LineBasicMaterial({
+            vertexColors: VertexColors,
+        });
+
+        const lineObject = new LineSegments(lineGeometry, lineMaterial);
+        lineObject.frustumCulled = false;
+
         const pathdata: PathData = {
             agent: idx,
             numSegments: 0,
             maxSegments: maxSegments,
             color: color,
-            points: new Float32Array(maxSegments * 3 * 2),
-            colors: new Float32Array(maxSegments * 3 * 2),
-            geometry: new BufferGeometry(),
-            material: new LineBasicMaterial({
-                // the line will be colored per-vertex
-                vertexColors: VertexColors,
-            }),
-            // will create line "lazily" when the line has more than 1 point(?)
-            line: null,
+            points: pointsArray,
+            colors: colorsArray,
+            geometry: lineGeometry,
+            material: lineMaterial,
+            line: lineObject,
         };
 
-        pathdata.geometry.setAttribute(
-            "position",
-            new BufferAttribute(pathdata.points, 3)
-        );
-        pathdata.geometry.setAttribute(
-            "color",
-            new BufferAttribute(pathdata.colors, 3)
-        );
-        // path starts empty: draw range spans nothing
-        pathdata.geometry.setDrawRange(0, 0);
-        pathdata.line = new LineSegments(pathdata.geometry, pathdata.material);
-        pathdata.line.frustumCulled = false;
         this.agentPathGroup.add(pathdata.line);
 
         this.paths.push(pathdata);
         return pathdata;
     }
 
-    public removePathForAgentIndex(idx): void {
+    public removePathForAgentIndex(idx: number): void {
         const pathindex = this.paths.findIndex(path => {
             return path.agent === idx;
         });
@@ -1174,7 +1185,15 @@ class VisGeometry {
         }
     }
 
-    public addPointToPath(path, x, y, z, dx, dy, dz): void {
+    public addPointToPath(
+        path: PathData,
+        x: number,
+        y: number,
+        z: number,
+        dx: number,
+        dy: number,
+        dz: number
+    ): void {
         if (x === dx && y === dy && z === dz) {
             return;
         }
@@ -1243,7 +1262,8 @@ class VisGeometry {
                     b
                 );
             }
-            path.line.geometry.attributes.color.needsUpdate = true;
+            ((path.line.geometry as BufferGeometry).attributes
+                .color as BufferAttribute).needsUpdate = true;
         }
         // add a segment to this line
         path.points[path.numSegments * 2 * 3 + 0] = x - dx;
@@ -1255,20 +1275,24 @@ class VisGeometry {
 
         path.numSegments++;
 
-        path.line.geometry.setDrawRange(0, path.numSegments * 2);
-        path.line.geometry.attributes.position.needsUpdate = true; // required after the first render
+        (path.line.geometry as BufferGeometry).setDrawRange(
+            0,
+            path.numSegments * 2
+        );
+        ((path.line.geometry as BufferGeometry).attributes
+            .position as BufferAttribute).needsUpdate = true; // required after the first render
     }
 
-    public setShowPaths(showPaths): void {
+    public setShowPaths(showPaths: boolean): void {
         for (let i = 0; i < this.paths.length; ++i) {
-            let line = this.paths[i].line;
+            const line = this.paths[i].line;
             if (line) {
                 line.visible = showPaths;
             }
         }
     }
 
-    public setShowMeshes(showMeshes): void {
+    public setShowMeshes(showMeshes: boolean): void {
         const nMeshes = this.visAgents.length;
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
             const visAgent = this.visAgents[i];
@@ -1278,11 +1302,11 @@ class VisGeometry {
         }
     }
 
-    public setShowBounds(showBounds): void {
+    public setShowBounds(showBounds: boolean): void {
         this.boundingBoxMesh.visible = showBounds;
     }
 
-    public showPathForAgentIndex(idx, visible): void {
+    public showPathForAgentIndex(idx: number, visible: boolean): void {
         const path = this.findPathForAgentIndex(idx);
         if (path) {
             if (path.line) {
@@ -1291,7 +1315,7 @@ class VisGeometry {
         }
     }
 
-    public hideUnusedAgents(numberOfAgents): void {
+    public hideUnusedAgents(numberOfAgents: number): void {
         const nMeshes = this.visAgents.length;
         for (let i = numberOfAgents; i < MAX_MESHES && i < nMeshes; i += 1) {
             const visAgent = this.visAgents[i];
@@ -1329,7 +1353,7 @@ class VisGeometry {
         }
     }
 
-    public update(agents): void {
+    public update(agents: AgentData[]): void {
         this.updateScene(agents);
 
         const numberOfAgents = agents.length;

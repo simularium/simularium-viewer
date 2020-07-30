@@ -8,12 +8,15 @@ import {
     RGBAFormat,
     Vector2,
     Vector3,
+    PerspectiveCamera,
+    WebGLRenderer,
+    WebGLRenderTarget,
 } from "three";
 
 class SSAO1Pass {
     public pass: RenderToBuffer;
 
-    public constructor(radius, threshold, falloff) {
+    public constructor(radius: number, threshold: number, falloff: number) {
         this.pass = new RenderToBuffer({
             uniforms: {
                 iResolution: { value: new Vector2(2, 2) },
@@ -105,13 +108,19 @@ class SSAO1Pass {
         });
     }
 
-    public resize(x, y): void {
+    public resize(x: number, y: number): void {
         this.pass.material.uniforms.iResolution.value = new Vector2(x, y);
         this.pass.material.uniforms.width.value = x;
         this.pass.material.uniforms.height.value = y;
     }
 
-    public render(renderer, camera, target, normals, positions): void {
+    public render(
+        renderer: WebGLRenderer,
+        camera: PerspectiveCamera,
+        target: WebGLRenderTarget,
+        normals: WebGLRenderTarget,
+        positions: WebGLRenderTarget
+    ): void {
         this.pass.material.uniforms.projectionMatrix.value =
             camera.projectionMatrix;
         this.pass.material.uniforms.viewPosTex.value = positions.texture;

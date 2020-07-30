@@ -363,7 +363,7 @@ const fragmentShader =
     }
 `;
 
-const MembraneShader = new ShaderMaterial({
+const membraneShader = new ShaderMaterial({
     uniforms: {
         iTime: { value: 1.0 },
         iResolution: { value: new Vector2() },
@@ -399,5 +399,5 @@ const MembraneShader = new ShaderMaterial({
 });
 
 export default {
-    MembraneShader: MembraneShader,
+    membraneShader: membraneShader,
 };

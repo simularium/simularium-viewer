@@ -27,6 +27,19 @@ interface ParsedBundle {
     parsedAgentDataArray: AgentData[][];
 }
 
+export interface VisDataFrame {
+    data: number[];
+    frameNumber: number;
+    time: number;
+}
+
+export interface VisDataMessage {
+    msgType: number;
+    bundleStart: number;
+    bundleSize: number;
+    bundleData: VisDataFrame[];
+}
+
 class VisData {
     private frameCache: AgentData[][];
     private frameDataCache: FrameData[];
@@ -63,8 +76,9 @@ class VisData {
      *   of the application, since network latency is a major bottle-neck)
      * */
 
-    public static parse(visDataMsg): ParsedBundle {
-        let parsedAgentDataArray: AgentData[][] = [];
+
+    public static parse(visDataMsg: VisDataMessage): ParsedBundle {
+        const parsedAgentDataArray: AgentData[][] = [];
         const frameDataArray: FrameData[] = [];
         visDataMsg.bundleData.forEach(frame => {
             // IMPORTANT: Order of this array needs to perfectly match the incoming data.
@@ -181,7 +195,7 @@ class VisData {
     /**
      *   Functions to check update
      * */
-    public hasLocalCacheForTime(timeNs): boolean {
+    public hasLocalCacheForTime(timeNs: number): boolean {
         if (this.frameDataCache.length > 0 && timeNs === 0) {
             return true;
         } else if (this.frameDataCache.length < 2) {
@@ -202,7 +216,7 @@ class VisData {
             frame < numFrames;
             frame++
         ) {
-            let frameTime = this.frameDataCache[frame].time;
+            const frameTime = this.frameDataCache[frame].time;
             if (timeNs < frameTime) {
                 this.cacheFrame = Math.max(frame - 1, 0);
                 break;
@@ -251,7 +265,7 @@ class VisData {
         this.cacheFrame = 0;
     }
 
-    public parseAgentsFromNetData(visDataMsg): void {
+    public parseAgentsFromNetData(visDataMsg: VisDataMessage): void {
         /**
          *   visDataMsg = {
          *       ...
@@ -281,7 +295,7 @@ class VisData {
         ) {
             this.webWorker.postMessage(visDataMsg);
         } else {
-            let frames = VisData.parse(visDataMsg);
+            const frames = VisData.parse(visDataMsg);
             Array.prototype.push.apply(
                 this.frameDataCache,
                 frames.frameDataArray
@@ -295,7 +309,7 @@ class VisData {
 
     // for use w/ a drag-and-drop trajectory file
     //  save a file for playback
-    public cacheJSON(visDataMsg): void {
+    public cacheJSON(visDataMsg: VisDataMessage): void {
         if (this.frameCache.length > 0) {
             throw Error(
                 "cache not cleared before cacheing a new drag-and-drop file"
