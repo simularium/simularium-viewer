@@ -8,11 +8,12 @@ import SimulariumController from "../controller";
 import { forOwn } from "lodash";
 
 import {
-    VisDataMessage,
     VisGeometry,
     TrajectoryFileInfo,
     NO_AGENT,
+    VisDataMessage,
 } from "../simularium";
+import { VisDataFrame } from "../simularium/VisData";
 
 export type PropColor = string | number | [number, number, number];
 
@@ -39,10 +40,6 @@ interface TimeData {
     frameNumber: number;
 }
 
-interface FrameJSON {
-    frameNumber: number;
-}
-
 // Typescript's File definition is missing this function
 //  which is part of the HTML standard on all browsers
 //  and needed below
@@ -52,14 +49,15 @@ interface FileHTML extends File {
 
 // This function returns a promise that resolves after all of the objects in
 //  the 'files' parameter have been parsed into text and put in the `outParsedFiles` parameter
-function parseFilesToText(files: FileHTML[]): Promise<FrameJSON[]> {
+function parseFilesToText(files: FileHTML[]): Promise<VisDataMessage[]> {
     return Promise.all(
-        files.map(file => file.text().then(text => JSON.parse(text)))
+        files.map(file => file.text().then(text => JSON.parse(text) as VisDataMessage))
     );
 }
 
-function sortFrames(a: FrameJSON, b: FrameJSON): number {
-    return a.frameNumber > b.frameNumber ? 1 : -1;
+
+function sortFrames(a: VisDataFrame, b: VisDataFrame): number {
+    return a.frameNumber - b.frameNumber;
 }
 
 function getJsonUrl(trajectoryName: string): string {
@@ -245,21 +243,6 @@ class Viewport extends React.Component<ViewportProps> {
         }
     }
 
-    private cacheJSON = json => {
-        this.props.simulariumController.cacheJSON(json);
-    };
-
-    private configDragAndDrop = () => {
-        const trajectoryFileInfo = this.props.simulariumController.dragAndDropFileInfo();
-
-        const { netConnection } = this.props.simulariumController;
-        this.lastRenderTime = -1;
-        netConnection.onTrajectoryFileInfoArrive(trajectoryFileInfo);
-
-        // needed to keep drag n drop from auto-playing since we cache all the frames
-        this.props.simulariumController.pause();
-    };
-
     public onDragOver = (e: Event): void => {
         if (e.stopPropagation) {
             e.stopPropagation();
@@ -279,15 +262,15 @@ class Viewport extends React.Component<ViewportProps> {
         const p = parseFilesToText(filesArr);
 
         p.then(parsedFiles => {
-            parsedFiles.sort(sortFrames);
             const frameJSON = parsedFiles[0];
+            frameJSON.bundleData.sort(sortFrames);
             const fileName = filesArr[0].name;
             this.props.simulariumController.changeFile(
                 fileName,
                 true,
                 frameJSON
             );
-        })
+        });
     };
 
     public addEventHandlersToCanvas(): void {

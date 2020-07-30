@@ -54,7 +54,7 @@ export default class SimulariumController {
         return this.localFile;
     }
 
-    public connect(): Promise<{}> {
+    public connect(): Promise<string> {
         return this.netConnection.connectToRemoteServer(
             this.netConnection.getIp()
         );
@@ -124,8 +124,9 @@ export default class SimulariumController {
     public changeFile(
         newFileName: string,
         isLocalFile = false,
-        framesToCache?
+        framesToCache?: VisDataMessage
     ): void {
+        console.log(framesToCache);
         if (newFileName !== this.playBackFile) {
             this.fileChanged = true;
             this.playBackFile = newFileName;
@@ -135,7 +136,7 @@ export default class SimulariumController {
 
             this.stop();
 
-            if (isLocalFile) {
+            if (isLocalFile && framesToCache) {
                 this.disableNetworkCommands();
                 this.cacheJSON(framesToCache);
                 const trajectoryFileInfo = this.dragAndDropFileInfo();
