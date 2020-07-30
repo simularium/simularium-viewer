@@ -1,10 +1,18 @@
 import {
+    IUniform,
     Mesh,
     OrthographicCamera,
     PlaneBufferGeometry,
     Scene,
     ShaderMaterial,
+    WebGLRenderer,
+    WebGLRenderTarget,
 } from "three";
+
+interface RenderToBufferParams {
+    fragmentShader: string;
+    uniforms: { [uniform: string]: IUniform };
+}
 
 class RenderToBuffer {
     public scene: Scene;
@@ -13,7 +21,7 @@ class RenderToBuffer {
     public camera: OrthographicCamera;
     public mesh: Mesh;
 
-    public constructor(paramsObj) {
+    public constructor(paramsObj: RenderToBufferParams) {
         // paramsobj should have:
         // fragmentShader
         // uniforms
@@ -48,7 +56,10 @@ class RenderToBuffer {
         this.camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
     }
 
-    public render(renderer, target): void {
+    public render(
+        renderer: WebGLRenderer,
+        target: WebGLRenderTarget | null
+    ): void {
         renderer.setRenderTarget(target);
         renderer.render(this.scene, this.camera);
     }

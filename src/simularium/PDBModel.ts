@@ -61,7 +61,7 @@ class PDBModel {
     public name: string;
     public pdb: PDBType | null;
     private lods: LevelOfDetail[];
-    private static numLiveWorkers: number = 0;
+    private static numLiveWorkers = 0;
 
     public constructor(filePath: string) {
         this.filePath = filePath;
@@ -70,7 +70,7 @@ class PDBModel {
         this.lods = [];
     }
 
-    public download(url): Promise<void> {
+    public download(url: string): Promise<void> {
         const pdbRequest = new Request(url);
         return fetch(pdbRequest)
             .then(response => {
@@ -97,7 +97,7 @@ class PDBModel {
     }
 
     // build a fake random pdb
-    public create(nAtoms: number, atomSpread: number = 10): Promise<void> {
+    public create(nAtoms: number, atomSpread = 10): Promise<void> {
         const atoms: PDBAtom[] = [];
         // always put one atom at the center
         atoms.push({
@@ -127,7 +127,7 @@ class PDBModel {
         }
         const PDB_COORDINATE_SCALE = new Vector3(-0.1, 0.1, -0.1);
 
-        for (var i = 0; i < this.pdb.atoms.length; ++i) {
+        for (let i = 0; i < this.pdb.atoms.length; ++i) {
             this.pdb.atoms[i].x *= PDB_COORDINATE_SCALE.x;
             this.pdb.atoms[i].y *= PDB_COORDINATE_SCALE.y;
             this.pdb.atoms[i].z *= PDB_COORDINATE_SCALE.z;
@@ -142,7 +142,7 @@ class PDBModel {
             this.pdb.chains = new Map();
         }
         if (!this.pdb.chains.size) {
-            for (var i = 0; i < this.pdb.atoms.length; ++i) {
+            for (let i = 0; i < this.pdb.atoms.length; ++i) {
                 const atom = this.pdb.atoms[i];
                 if (atom.chainID && !this.pdb.chains.get(atom.chainID)) {
                     this.pdb.chains.set(atom.chainID, {
@@ -183,7 +183,7 @@ class PDBModel {
 
         // put all the points in a flat array
         const allData = new Float32Array(n * 3);
-        for (var i = 0; i < n; i++) {
+        for (let i = 0; i < n; i++) {
             allData[i * 3] = this.pdb.atoms[i].x;
             allData[i * 3 + 1] = this.pdb.atoms[i].y;
             allData[i * 3 + 2] = this.pdb.atoms[i].z;

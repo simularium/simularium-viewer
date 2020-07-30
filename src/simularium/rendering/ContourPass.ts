@@ -1,3 +1,5 @@
+import { WebGLRenderer, WebGLRenderTarget } from "three";
+
 import RenderToBuffer from "./RenderToBuffer";
 
 class ContourPass {
@@ -52,9 +54,16 @@ class ContourPass {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public resize(x, y): void {}
+    public resize(x: number, y: number): void {
+        /* do nothing */
+    }
 
-    public render(renderer, target, colorBuffer, instanceIdBuffer): void {
+    public render(
+        renderer: WebGLRenderer,
+        target: WebGLRenderTarget | null,
+        colorBuffer: WebGLRenderTarget,
+        instanceIdBuffer: WebGLRenderTarget
+    ): void {
         // this render pass has to fill frag depth for future render passes
         this.pass.material.depthWrite = true;
         this.pass.material.depthTest = true;

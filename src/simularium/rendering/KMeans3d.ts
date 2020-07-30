@@ -102,14 +102,21 @@ export default class KMeans {
      * console.log(extents); // [2,1,1, 4,7,3]
      */
 
-    public dataDimensionExtents(data): number[] {
+    public dataDimensionExtents(data: Float32Array): number[] {
         //data = data || this.data;
-        var extents = [1000000, 1000000, 1000000, -1000000, -1000000, -1000000];
+        const extents = [
+            1000000,
+            1000000,
+            1000000,
+            -1000000,
+            -1000000,
+            -1000000,
+        ];
 
-        for (var i = 0; i < data.length / 3; i++) {
-            var x = data[i * 3];
-            var y = data[i * 3 + 1];
-            var z = data[i * 3 + 2];
+        for (let i = 0; i < data.length / 3; i++) {
+            const x = data[i * 3];
+            const y = data[i * 3 + 1];
+            const z = data[i * 3 + 2];
             if (x < extents[0]) {
                 extents[0] = x;
             }
@@ -158,7 +165,7 @@ export default class KMeans {
      * console.log(means); // [2,3,7, 4,5,2, 5,2,1]
      */
     public seeds(): Float32Array {
-        var means = new Float32Array(this.k * 3);
+        const means = new Float32Array(this.k * 3);
         for (let i = 0; i < this.k; ++i) {
             means[i * 3] = this.extents[0] + Math.random() * this.ranges[0];
             means[i * 3 + 1] = this.extents[1] + Math.random() * this.ranges[1];
@@ -184,22 +191,22 @@ export default class KMeans {
      * http://en.wikipedia.org/wiki/Euclidean_distance
      */
     public assignClusterToDataPoints(): void {
-        for (var i = 0; i < this.data.length / 3; i++) {
-            var x = this.data[i * 3];
-            var y = this.data[i * 3 + 1];
-            var z = this.data[i * 3 + 2];
+        for (let i = 0; i < this.data.length / 3; i++) {
+            const x = this.data[i * 3];
+            const y = this.data[i * 3 + 1];
+            const z = this.data[i * 3 + 2];
 
             // populate distance from point i to cluster j for all j.
-            for (var j = 0; j < this.means.length / 3; j++) {
-                var mx = this.means[j * 3];
-                var my = this.means[j * 3 + 1];
-                var mz = this.means[j * 3 + 2];
+            for (let j = 0; j < this.means.length / 3; j++) {
+                const mx = this.means[j * 3];
+                const my = this.means[j * 3 + 1];
+                const mz = this.means[j * 3 + 2];
 
                 /* We calculate the Euclidean distance.
                  * √((pi-qi)^2+...+(pn-qn)^2)
                  */
 
-                var sum =
+                const sum =
                     (x - mx) * (x - mx) +
                     (y - my) * (y - my) +
                     (z - mz) * (z - mz);
@@ -222,22 +229,22 @@ export default class KMeans {
      */
     public moveMeans(): boolean {
         // sums are 3d points
-        var sums = new Float32Array(this.means.length).fill(0);
-        var counts = new Int32Array(this.means.length / 3).fill(0);
-        var moved = false;
-        var meanIndex;
-        var dim;
+        const sums = new Float32Array(this.means.length).fill(0);
+        const counts = new Int32Array(this.means.length / 3).fill(0);
+        let moved = false;
+        let meanIndex;
+        let dim;
 
         // For each cluster, get sum of point coordinates in every dimension.
         for (
-            var pointIndex = 0;
+            let pointIndex = 0;
             pointIndex < this.assignments.length;
             pointIndex++
         ) {
             meanIndex = this.assignments[pointIndex];
-            var px = this.data[pointIndex * 3];
-            var py = this.data[pointIndex * 3 + 1];
-            var pz = this.data[pointIndex * 3 + 2];
+            const px = this.data[pointIndex * 3];
+            const py = this.data[pointIndex * 3 + 1];
+            const pz = this.data[pointIndex * 3 + 2];
 
             counts[meanIndex]++;
 
@@ -275,7 +282,7 @@ export default class KMeans {
          */
         // compare ALL the means to the sums.
         if (!areArraysClose(this.means, sums, 0.01)) {
-            var diff;
+            let diff;
             moved = true;
 
             // Nudge means 1/nth of the way toward average point.
@@ -285,7 +292,7 @@ export default class KMeans {
                         sums[meanIndex * 3 + dim] -
                         this.means[meanIndex * 3 + dim];
                     if (Math.abs(diff) > 0.1) {
-                        var stepsPerIteration = 10;
+                        const stepsPerIteration = 10;
                         this.means[meanIndex * 3 + dim] +=
                             diff / stepsPerIteration;
                         this.means[meanIndex * 3 + dim] =

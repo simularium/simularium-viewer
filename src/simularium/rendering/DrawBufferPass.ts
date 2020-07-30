@@ -1,4 +1,4 @@
-import { Color, Vector4 } from "three";
+import { Color, Vector4, WebGLRenderer, WebGLRenderTarget } from "three";
 
 import RenderToBuffer from "./RenderToBuffer";
 
@@ -30,17 +30,23 @@ class DrawBufferPass {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public resize(x, y): void {}
+    public resize(x: number, y: number): void {
+        /* do nothing */
+    }
 
-    public setScale(x, y, z, w): void {
+    public setScale(x: number, y: number, z: number, w: number): void {
         this.pass.material.uniforms.scale.value = new Vector4(x, y, z, w);
     }
 
-    public setBias(x, y, z, w): void {
+    public setBias(x: number, y: number, z: number, w: number): void {
         this.pass.material.uniforms.bias.value = new Vector4(x, y, z, w);
     }
 
-    public render(renderer, target, bufferToDraw): void {
+    public render(
+        renderer: WebGLRenderer,
+        target: WebGLRenderTarget,
+        bufferToDraw: WebGLRenderTarget
+    ): void {
         this.pass.material.uniforms.colorTex.value = bufferToDraw.texture;
 
         const c = renderer.getClearColor().clone();
