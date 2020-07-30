@@ -263,7 +263,11 @@ class Viewport extends React.Component<ViewportProps> {
         const trajectoryFileInfo = this.props.simulariumController.dragAndDropFileInfo();
 
         const { netConnection } = this.props.simulariumController;
+        this.lastRenderTime = -1;
         netConnection.onTrajectoryFileInfoArrive(trajectoryFileInfo);
+
+        // needed to keep drag n drop from auto-playing since we cache all the frames
+        this.props.simulariumController.pause();
     };
 
     private clearCache = () => {
@@ -277,6 +281,7 @@ class Viewport extends React.Component<ViewportProps> {
         }
         e.preventDefault();
     };
+
 
     public onDrop = (e: Event): void => {
         this.onDragOver(e);

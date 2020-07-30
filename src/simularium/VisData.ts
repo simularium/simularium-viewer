@@ -76,6 +76,7 @@ class VisData {
      *   of the application, since network latency is a major bottle-neck)
      * */
 
+
     public static parse(visDataMsg: VisDataMessage): ParsedBundle {
         const parsedAgentDataArray: AgentData[][] = [];
         const frameDataArray: FrameData[] = [];
@@ -313,7 +314,6 @@ class VisData {
             throw Error(
                 "cache not cleared before cacheing a new drag-and-drop file"
             );
-            return;
         }
 
         const frames = VisData.parse(visDataMsg);
@@ -330,13 +330,6 @@ class VisData {
 
         if (this.frameCache.length === 0) {
             throw Error("No data in cache for drag-and-drop file");
-            return {
-                boxSizeX: 0,
-                boxSizeY: 0,
-                boxSizeZ: 0,
-                totalDuration: 1,
-                timeStepSize: 1,
-            };
         }
 
         this.frameCache.forEach(element => {

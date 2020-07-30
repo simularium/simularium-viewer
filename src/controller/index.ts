@@ -115,10 +115,10 @@ export default class SimulariumController {
         this.isPaused = false;
     }
 
-    public changeFile(newFile: string): void {
-        if (newFile !== this.playBackFile) {
+    public changeFile(newFileName: string): void {
+        if (newFileName !== this.playBackFile) {
             this.fileChanged = true;
-            this.playBackFile = newFile;
+            this.playBackFile = newFileName;
 
             this.visData.WaitForFrame(0);
             this.visData.clearCache();
