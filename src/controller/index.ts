@@ -130,7 +130,9 @@ export default class SimulariumController {
             this.fileChanged = true;
             this.playBackFile = newFileName;
             this.localFile = isLocalFile;
+            this.visData.WaitForFrame(0);
             this.visData.clearCache();
+
             this.stop();
 
             if (isLocalFile) {
@@ -143,7 +145,6 @@ export default class SimulariumController {
                 return;
             }
 
-            this.visData.WaitForFrame(0);
             this.start().then(() => {
                 this.netConnection.requestSingleFrame(0);
             });
