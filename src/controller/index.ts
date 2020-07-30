@@ -137,6 +137,7 @@ export default class SimulariumController {
             this.stop();
 
             if (isLocalFile && framesToCache) {
+                this.pause();
                 this.disableNetworkCommands();
                 this.cacheJSON(framesToCache);
                 const trajectoryFileInfo = this.dragAndDropFileInfo();
