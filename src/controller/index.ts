@@ -135,7 +135,10 @@ export default class SimulariumController {
 
             this.stop();
 
-            if (isLocalFile && framesToCache) {
+            if (isLocalFile) {
+                if (!framesToCache) {
+                    throw Error("local file needs to include frames");
+                }
                 this.pause();
                 this.disableNetworkCommands();
                 this.cacheJSON(framesToCache);
