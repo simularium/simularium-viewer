@@ -126,7 +126,6 @@ export default class SimulariumController {
         isLocalFile = false,
         framesToCache?: VisDataMessage
     ): void {
-        console.log(framesToCache);
         if (newFileName !== this.playBackFile) {
             this.fileChanged = true;
             this.playBackFile = newFileName;
