@@ -6,7 +6,17 @@
     "module": "es/index.js",
     "browser": "dist/index.js",
     "types": "type-declarations",
-    "scripts": {},
+    "scripts": {
+        "lint": "eslint src/**/*.ts src/**/*.tsx",
+        "test": "jest src/**/*.test.ts",
+        "typeCheck": "tsc -p tsconfig.json --noEmit",
+        "generateTypes": "tsc -p tsconfig.base.json --emitDeclarationOnly",
+        "bundle": "BABEL_ENV=es NODE_ENV=production webpack --config webpack.config.js",
+        "transpileES": "TS_NODE_PROJECT=tsconfig.es.json BABEL_ENV=es babel src --out-dir es --extensions .ts,.tsx --ignore src/**/*.test.ts",
+        "transpileCommonJs": "TS_NODE_PROJECT=tsconfig.commonjs.json babel src --out-dir lib --extensions .ts,.tsx --ignore src/**/*.test.ts",
+        "processCSS": "postcss src/viewport/index.css --output style/style.css",
+        "build": "npm run generateTypes & npm run bundle & npm run transpileES & npm run transpileCommonJs & npm run processCSS"
+    },
     "files": [
         "es",
         "lib",
