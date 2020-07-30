@@ -6,12 +6,17 @@ import ContourPass from "./ContourPass";
 import DrawBufferPass from "./DrawBufferPass";
 
 import {
+    Color,
     FloatType,
+    Group,
     NearestFilter,
     RGBAFormat,
+    Scene,
+    WebGLRenderer,
     WebGLRenderTarget,
-    Group,
+    PerspectiveCamera,
 } from "three";
+import * as dat from "dat.gui";
 
 class MoleculeRenderer {
     public gbufferPass: GBufferPass;
@@ -123,8 +128,8 @@ class MoleculeRenderer {
         this.ssaoBufferBlurred2.texture.generateMipmaps = false;
     }
 
-    public setupGui(gui): void {
-        var settings = {
+    public setupGui(gui: dat.GUI): void {
+        const settings = {
             aoradius1: 2.2,
             aoradius2: 5,
             blurradius1: 1.5,
@@ -166,51 +171,50 @@ class MoleculeRenderer {
             settings.bgluminanceoffset;
         /////////////////////////////////////////////////////////////////////
 
-        var self = this;
         gui.add(settings, "aoradius1", 0.01, 10.0).onChange(value => {
-            self.ssao1Pass.pass.material.uniforms.radius.value = value;
+            this.ssao1Pass.pass.material.uniforms.radius.value = value;
         });
         gui.add(settings, "blurradius1", 0.01, 10.0).onChange(value => {
-            self.blur1Pass.setRadius(value);
+            this.blur1Pass.setRadius(value);
         });
         gui.add(settings, "aothreshold1", 0.01, 300.0).onChange(value => {
-            self.ssao1Pass.pass.material.uniforms.ssaoThreshold.value = value;
+            this.ssao1Pass.pass.material.uniforms.ssaoThreshold.value = value;
         });
         gui.add(settings, "aofalloff1", 0.01, 300.0).onChange(value => {
-            self.ssao1Pass.pass.material.uniforms.ssaoFalloff.value = value;
+            this.ssao1Pass.pass.material.uniforms.ssaoFalloff.value = value;
         });
         gui.add(settings, "aoradius2", 0.01, 10.0).onChange(value => {
-            self.ssao2Pass.pass.material.uniforms.radius.value = value;
+            this.ssao2Pass.pass.material.uniforms.radius.value = value;
         });
         gui.add(settings, "blurradius2", 0.01, 10.0).onChange(value => {
-            self.blur2Pass.setRadius(value);
+            this.blur2Pass.setRadius(value);
         });
         gui.add(settings, "aothreshold2", 0.01, 300.0).onChange(value => {
-            self.ssao2Pass.pass.material.uniforms.ssaoThreshold.value = value;
+            this.ssao2Pass.pass.material.uniforms.ssaoThreshold.value = value;
         });
         gui.add(settings, "aofalloff2", 0.01, 300.0).onChange(value => {
-            self.ssao2Pass.pass.material.uniforms.ssaoFalloff.value = value;
+            this.ssao2Pass.pass.material.uniforms.ssaoFalloff.value = value;
         });
 
         gui.add(settings, "atomBeginDistance", 0.0, 300.0).onChange(value => {
-            self.compositePass.pass.material.uniforms.atomicBeginDistance.value = value;
+            this.compositePass.pass.material.uniforms.atomicBeginDistance.value = value;
         });
         gui.add(settings, "chainBeginDistance", 0.0, 300.0).onChange(value => {
-            self.compositePass.pass.material.uniforms.chainBeginDistance.value = value;
+            this.compositePass.pass.material.uniforms.chainBeginDistance.value = value;
         });
 
         gui.add(settings, "bghueoffset", 0.0, 1.0).onChange(value => {
-            self.compositePass.pass.material.uniforms.bgHCLoffset.value.x = value;
+            this.compositePass.pass.material.uniforms.bgHCLoffset.value.x = value;
         });
         gui.add(settings, "bgchromaoffset", 0.0, 1.0).onChange(value => {
-            self.compositePass.pass.material.uniforms.bgHCLoffset.value.y = value;
+            this.compositePass.pass.material.uniforms.bgHCLoffset.value.y = value;
         });
         gui.add(settings, "bgluminanceoffset", 0.0, 1.0).onChange(value => {
-            self.compositePass.pass.material.uniforms.bgHCLoffset.value.z = value;
+            this.compositePass.pass.material.uniforms.bgHCLoffset.value.z = value;
         });
     }
 
-    public setBackgroundColor(color): void {
+    public setBackgroundColor(color: Color): void {
         this.compositePass.pass.material.uniforms.backgroundColor.value = color;
     }
     public setHighlightInstance(instance: number): void {
@@ -223,9 +227,9 @@ class MoleculeRenderer {
             : 0;
     }
 
-    public hitTest(renderer, x, y): number {
+    public hitTest(renderer: WebGLRenderer, x: number, y: number): number {
         const pixel = new Float32Array(4).fill(-1);
-        // (IN_typeId), (IN_instanceId), fragViewPos.z, fragPosDepth;
+        // (typeId), (instanceId), fragViewPos.z, fragPosDepth;
         renderer.readRenderTargetPixels(this.colorBuffer, x, y, 1, 1, pixel);
         if (pixel[3] === -1) {
             return -1;
@@ -237,7 +241,7 @@ class MoleculeRenderer {
     }
 
     // colorsData is a Float32Array of rgb triples
-    public updateColors(numColors, colorsData): void {
+    public updateColors(numColors: number, colorsData: Float32Array): void {
         this.compositePass.updateColors(numColors, colorsData);
     }
 
@@ -253,7 +257,7 @@ class MoleculeRenderer {
         );
     }
 
-    public resize(x, y): void {
+    public resize(x: number, y: number): void {
         this.colorBuffer.setSize(x, y);
         // TODO : MRT AND SHARE DEPTH BUFFER
         this.normalBuffer.setSize(x, y);
@@ -275,7 +279,12 @@ class MoleculeRenderer {
         this.drawBufferPass.resize(x, y);
     }
 
-    public render(renderer, scene, camera, target): void {
+    public render(
+        renderer: WebGLRenderer,
+        scene: Scene,
+        camera: PerspectiveCamera,
+        target: WebGLRenderTarget | null
+    ): void {
         // currently rendering is a draw call per PDB POINTS objects and one draw call per mesh TRIANGLES object (reusing same geometry buffer)
 
         // threejs does not allow:

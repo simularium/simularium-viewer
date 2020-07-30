@@ -33,7 +33,7 @@ function desaturate(color: Color): Color {
 }
 
 export default class VisAgent {
-    public static UNASSIGNED_MESH_COLOR = 0xff00ff;
+    private static readonly UNASSIGNED_MESH_COLOR = 0xff00ff;
     public static sphereGeometry: SphereBufferGeometry = new SphereBufferGeometry(
         1,
         32,
@@ -59,8 +59,8 @@ export default class VisAgent {
             { name: "curved_5nm_Back" },
             { name: "curved_5nm_Front" },
         ],
-        facesMaterial: MembraneShader.MembraneShader.clone(),
-        sidesMaterial: MembraneShader.MembraneShader.clone(),
+        facesMaterial: MembraneShader.membraneShader.clone(),
+        sidesMaterial: MembraneShader.membraneShader.clone(),
         facesUVScale: new Vector2(40.0, 40.0),
         sidesUVScale: new Vector2(2.0, 40.0),
     };
@@ -137,7 +137,7 @@ export default class VisAgent {
         this.lod = 0;
     }
 
-    public setColor(color: Color, colorIndex: number = 0): void {
+    public setColor(color: Color, colorIndex = 0): void {
         this.color = color;
         this.colorIndex = colorIndex;
         this.baseMaterial = new MeshLambertMaterial({
@@ -240,16 +240,16 @@ export default class VisAgent {
             return;
         }
         // colorIndex is not necessarily equal to typeId but is generally a 1-1 mapping.
-        if (material.uniforms.IN_typeId) {
+        if (material.uniforms.typeId) {
             // negate the value if deselected.
             // by default everything is selected.
             // see implementation in CompositePass.ts for how the value is interpreted
-            material.uniforms.IN_typeId.value =
+            material.uniforms.typeId.value =
                 this.colorIndex * (this.selected ? 1 : -1);
             material.uniformsNeedUpdate = true;
         }
-        if (material.uniforms.IN_instanceId) {
-            material.uniforms.IN_instanceId.value = Number(this.agentIndex);
+        if (material.uniforms.instanceId) {
+            material.uniforms.instanceId.value = Number(this.agentIndex);
             material.uniformsNeedUpdate = true;
         }
         if (material.uniforms.radius) {
@@ -258,7 +258,7 @@ export default class VisAgent {
         }
     }
 
-    public setupMeshGeometry(meshGeom): void {
+    public setupMeshGeometry(meshGeom: Object3D): void {
         // remember current transform
         const p = this.mesh.position;
         const r = this.mesh.rotation;
@@ -278,14 +278,14 @@ export default class VisAgent {
         this.assignMaterial();
     }
 
-    public setupPdb(pdb): void {
+    public setupPdb(pdb: PDBModel): void {
         this.pdbModel = pdb;
         this.pdbObjects = pdb.instantiate();
 
         this.assignMaterial();
     }
 
-    public selectLOD(index): void {
+    public selectLOD(index: number): void {
         this.setPDBInvisible();
         if (index < 0 || index >= this.pdbObjects.length) {
             index = this.pdbObjects.length - 1;
@@ -315,7 +315,7 @@ export default class VisAgent {
     }
 
     public updateFiber(
-        subpoints,
+        subpoints: number[],
         collisionRadius: number,
         scale: number
     ): void {

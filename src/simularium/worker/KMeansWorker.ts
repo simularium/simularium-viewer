@@ -18,4 +18,6 @@ export type KMeansWorkerType = typeof KMeansWorker;
 
 Comlink.expose(KMeansWorker);
 
+// I know of no other way to deal with this, see the documentation for webpack's worker-loader.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default self as any;

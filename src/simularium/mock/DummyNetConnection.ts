@@ -1,4 +1,7 @@
 import { NetConnection } from "../";
+import { NetConnectionParams, NetMessageType } from "../NetConnection";
+
+import { VisDataFrame, VisDataMessage } from "../VisData";
 
 interface TestDataBundle {
     bundleSize: number;
@@ -16,7 +19,7 @@ export class DummyNetConnection extends NetConnection {
     public timeStep: number;
     private fileName: string;
 
-    public constructor(opts) {
+    public constructor(opts: NetConnectionParams) {
         super(opts);
 
         this.isStreamingData = false;
@@ -37,16 +40,16 @@ export class DummyNetConnection extends NetConnection {
         frameNumber: number,
         bundleSize: number
     ): TestDataBundle {
-        const msg = {
-            msgType: this.msgTypes.ID_VIS_DATA_ARRIVE,
+        const msg: VisDataMessage = {
+            msgType: NetMessageType.ID_VIS_DATA_ARRIVE,
             bundleStart: frameNumber,
             bundleSize: bundleSize,
-            bundleData: [] as object[],
+            bundleData: [],
         };
 
-        const bundleData: object[] = [];
+        const bundleData: VisDataFrame[] = [];
         for (let i = 0; i < bundleSize; i++) {
-            const data = {
+            const data: VisDataFrame = {
                 frameNumber: frameNumber,
                 time: frameNumber * this.timeStep,
                 data: [
@@ -130,7 +133,7 @@ export class DummyNetConnection extends NetConnection {
     public requestTrajectoryFileInfo(fileName: string): void {
         setTimeout(() => {
             const tfi = {
-                msgType: this.msgTypes.ID_TRAJECTORY_FILE_INFO,
+                msgType: NetMessageType.ID_TRAJECTORY_FILE_INFO,
                 boxSizeX: 100,
                 boxSizeY: 100,
                 boxSizeZ: 20,

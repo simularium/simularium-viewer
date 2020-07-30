@@ -4,7 +4,7 @@ const vertexShader = `
 precision highp float;
 
     uniform vec2 iResolution;
-    uniform float Scale;
+    uniform float scale;
     varying vec3 IN_viewPos;
     varying float IN_radius;
 
@@ -18,7 +18,7 @@ precision highp float;
         //IN_viewZ = modelViewPosition.z;
         //IN_radius = 20.0;
         // IN_color = vec4(1.0, 0.0, 0.0, 1.0);
-        // IN_instanceId = 1;
+        // instanceId = 1;
         // IN_atomId = 1;
 
         gl_Position = projectionMatrix * modelViewPosition;
@@ -27,7 +27,7 @@ precision highp float;
         //gl_PointSize = IN_radius;
         //center = (0.5 * gl_Position.xy/gl_Position.w + 0.5) * vpSize;
 
-        gl_PointSize = iResolution.y * projectionMatrix[1][1] * radius * Scale / gl_Position.w;
+        gl_PointSize = iResolution.y * projectionMatrix[1][1] * radius * scale / gl_Position.w;
         //gl_PointSize = 10.0;
         //gl_Position = vec4(0.0, 0.0, 0.0, 1.0);
         IN_radius = radius;
@@ -41,14 +41,14 @@ varying vec3 IN_viewPos;
 varying float IN_radius;
 
 // varying vec4 IN_color;
-    // flat int IN_instanceId;
+    // flat int instanceId;
     // flat int IN_atomId;
 
     uniform vec2 iResolution;
-    uniform float IN_typeId;
-    uniform float IN_instanceId;
+    uniform float typeId;
+    uniform float instanceId;
     
-    uniform float Scale;
+    uniform float scale;
     uniform mat4 modelViewMatrix;
     uniform mat4 projectionMatrix;
     
@@ -68,7 +68,7 @@ varying float IN_radius;
 
         vec3 fragViewPos = IN_viewPos;
         // adding pushes Z back. so "center" of sphere is "frontmost"
-        fragViewPos.z += IN_radius * Scale * sqrt(1.0 - lensqr);
+        fragViewPos.z += IN_radius * scale * sqrt(1.0 - lensqr);
         //out_viewPos = vec4(fragViewPos.x, fragViewPos.y, fragViewPos.z, 1.0); // view space position buffer, for ssao
       
         vec4 fragPosClip = projectionMatrix * vec4(fragViewPos, 1.0);
@@ -79,15 +79,15 @@ varying float IN_radius;
         gl_FragDepth = fragPosDepth;
       
         //out_color = IN_color;
-        //out_instanceId = vec4(float(IN_instanceId), 0, 0, 1.0);
+        //out_instanceId = vec4(float(instanceId), 0, 0, 1.0);
         //out_atomId = vec4(float(IN_atomId), 0, 0, 1.0);
 
 
         //gl_FragColor = vec4(fragPosDepth, 0.0, 0.0, 1.0);
         // gl_FragColor = vec4(gl_PointCoord.xy, 0.0, 1.0);
         
-        gl_FragColor = vec4(IN_typeId, IN_instanceId, fragViewPos.z, fragPosDepth);
-        //gl_FragColor = vec4(float(IN_typeId)/50.0, float(IN_typeId)/50.0, float(IN_typeId)/50.0, 1.0);
+        gl_FragColor = vec4(typeId, instanceId, fragViewPos.z, fragPosDepth);
+        //gl_FragColor = vec4(float(typeId)/50.0, float(typeId)/50.0, float(typeId)/50.0, 1.0);
         //gl_FragColor = vec4(84.0/255.0, 179.0/255.0, 162.0/255.0, 1.0);
     }
 
@@ -100,12 +100,12 @@ varying vec3 IN_viewPos;
 varying float IN_radius;
 
     // varying vec4 IN_color;
-    // flat int IN_instanceId;
+    // flat int instanceId;
     // flat int IN_atomId;
 
     uniform vec2 iResolution;
 
-    uniform float Scale;
+    uniform float scale;
     uniform mat4 modelViewMatrix;
     uniform mat4 projectionMatrix;
     
@@ -122,7 +122,7 @@ varying float IN_radius;
 
         vec3 fragViewPos = IN_viewPos;
         // adding pushes Z back. so "center" of sphere is "frontmost"
-        fragViewPos.z += IN_radius * Scale * sqrt(1.0 - lensqr);
+        fragViewPos.z += IN_radius * scale * sqrt(1.0 - lensqr);
         //out_viewPos = vec4(fragViewPos.x, fragViewPos.y, fragViewPos.z, 1.0); // view space position buffer, for ssao
       
         vec4 fragPosClip = projectionMatrix * vec4(fragViewPos, 1.0);
@@ -133,7 +133,7 @@ varying float IN_radius;
         gl_FragDepth = fragPosDepth;
       
         //out_color = IN_color;
-        //out_instanceId = vec4(float(IN_instanceId), 0, 0, 1.0);
+        //out_instanceId = vec4(float(instanceId), 0, 0, 1.0);
         //out_atomId = vec4(float(IN_atomId), 0, 0, 1.0);
 
 
@@ -149,12 +149,12 @@ varying vec3 IN_viewPos;
 varying float IN_radius;
 
     // varying vec4 IN_color;
-    // flat int IN_instanceId;
+    // flat int instanceId;
     // flat int IN_atomId;
 
     uniform vec2 iResolution;
 
-    uniform float Scale;
+    uniform float scale;
     uniform mat4 modelViewMatrix;
     uniform mat4 projectionMatrix;
     
@@ -171,7 +171,7 @@ varying float IN_radius;
 
         vec3 fragViewPos = IN_viewPos;
         // adding pushes Z back. so "center" of sphere is "frontmost"
-        fragViewPos.z += IN_radius * Scale * sqrt(1.0 - lensqr);
+        fragViewPos.z += IN_radius * scale * sqrt(1.0 - lensqr);
         //out_viewPos = vec4(fragViewPos.x, fragViewPos.y, fragViewPos.z, 1.0); // view space position buffer, for ssao
       
         vec4 fragPosClip = projectionMatrix * vec4(fragViewPos, 1.0);
@@ -182,7 +182,7 @@ varying float IN_radius;
         gl_FragDepth = fragPosDepth;
       
         //out_color = IN_color;
-        //out_instanceId = vec4(float(IN_instanceId), 0, 0, 1.0);
+        //out_instanceId = vec4(float(instanceId), 0, 0, 1.0);
         //out_atomId = vec4(float(IN_atomId), 0, 0, 1.0);
 
 
@@ -196,10 +196,10 @@ const colorMaterial = new ShaderMaterial({
     uniforms: {
         radius: { value: 1.0 },
         iResolution: { value: new Vector2() },
-        Scale: { value: 1.0 },
+        scale: { value: 1.0 },
         projectionMatrix: { value: new Matrix4() },
-        IN_typeId: { value: 0 },
-        IN_instanceId: { value: 0 },
+        typeId: { value: 0 },
+        instanceId: { value: 0 },
     },
     vertexShader: vertexShader,
     fragmentShader: fragmentShader,
@@ -210,7 +210,7 @@ const normalMaterial = new ShaderMaterial({
     uniforms: {
         radius: { value: 1.0 },
         iResolution: { value: new Vector2() },
-        Scale: { value: 1.0 },
+        scale: { value: 1.0 },
         projectionMatrix: { value: new Matrix4() },
     },
     vertexShader: vertexShader,
@@ -222,7 +222,7 @@ const positionMaterial = new ShaderMaterial({
     uniforms: {
         radius: { value: 1.0 },
         iResolution: { value: new Vector2() },
-        Scale: { value: 1.0 },
+        scale: { value: 1.0 },
         projectionMatrix: { value: new Matrix4() },
     },
     vertexShader: vertexShader,

@@ -7,7 +7,12 @@ import SimulariumController from "../controller";
 
 import { forOwn } from "lodash";
 
-import { VisGeometry, TrajectoryFileInfo, NO_AGENT } from "../simularium";
+import {
+    VisDataMessage,
+    VisGeometry,
+    TrajectoryFileInfo,
+    NO_AGENT,
+} from "../simularium";
 
 export type PropColor = string | number | [number, number, number];
 
@@ -22,7 +27,7 @@ interface ViewportProps {
     onTrajectoryFileInfoChanged: (
         cachedData: TrajectoryFileInfo
     ) => void | undefined;
-    highlightedParticleType: number | string;
+    highlightedParticleType: number;
     loadInitialData: boolean;
     showMeshes: boolean;
     showPaths: boolean;
@@ -49,14 +54,14 @@ interface FileHTML extends File {
 //  the 'files' parameter have been parsed into text and put in the `outParsedFiles` parameter
 function parseFilesToText(
     files: FileHTML[],
-    outParsedFiles: any[]
+    outParsedFiles: VisDataMessage[]
 ): Promise<void> {
-    var p = Promise.resolve();
+    let p = Promise.resolve();
     files.forEach(file => {
         p = p.then(() => {
             return file.text().then(text => {
-                let json = JSON.parse(text);
-                outParsedFiles.push(json);
+                const json = JSON.parse(text);
+                outParsedFiles.push(json as VisDataMessage);
             });
         });
     });
@@ -192,7 +197,7 @@ class Viewport extends React.Component<ViewportProps> {
 
         simulariumController.connect().then(() => {
             if (loadInitialData) {
-                let fileName = simulariumController.getFile();
+                const fileName = simulariumController.getFile();
                 this.visGeometry
                     .mapFromJSON(
                         fileName,
@@ -266,31 +271,31 @@ class Viewport extends React.Component<ViewportProps> {
         this.props.simulariumController.clearLocalCache();
     };
 
-    public onDragOver = (e: Event) => {
+    public onDragOver = (e: Event): void => {
         if (e.stopPropagation) {
             e.stopPropagation();
         }
         e.preventDefault();
     };
 
-    public onDrop = (e: Event) => {
+    public onDrop = (e: Event): void => {
         this.onDragOver(e);
-        let event = e as DragEvent;
-        let input = event.target as HTMLInputElement;
-        let data: DataTransfer = event.dataTransfer as DataTransfer;
+        const event = e as DragEvent;
+        const input = event.target as HTMLInputElement;
+        const data: DataTransfer = event.dataTransfer as DataTransfer;
 
-        let files: FileList = input.files || data.files;
+        const files: FileList = input.files || data.files;
         this.clearCache();
 
-        let parsedFiles = [];
-        let filesArr: FileHTML[] = Array.from(files) as FileHTML[];
-        let p = parseFilesToText(filesArr, parsedFiles);
+        const parsedFiles = [];
+        const filesArr: FileHTML[] = Array.from(files) as FileHTML[];
+        const p = parseFilesToText(filesArr, parsedFiles);
 
         p.then(() => {
             parsedFiles.sort(sortFrames);
             this.visGeometry.resetMapping();
 
-            let frameJSON = parsedFiles[0];
+            const frameJSON = parsedFiles[0];
             this.cacheJSON(frameJSON);
         }).then(() => {
             this.configDragAndDrop();
@@ -387,7 +392,7 @@ class Viewport extends React.Component<ViewportProps> {
                 this.visGeometry.clear();
                 this.visGeometry.resetMapping();
 
-                let p = this.visGeometry.mapFromJSON(
+                const p = this.visGeometry.mapFromJSON(
                     simulariumController.getFile(),
                     getJsonUrl(simulariumController.getFile())
                 );
@@ -416,7 +421,7 @@ class Viewport extends React.Component<ViewportProps> {
             }
 
             if (visData.currentFrameData.time != this.lastRenderedAgentTime) {
-                let currentAgents = visData.currentFrame();
+                const currentAgents = visData.currentFrame();
                 if (currentAgents.length > 0) {
                     this.dispatchUpdatedTime(visData.currentFrameData);
                     this.visGeometry.update(currentAgents);
@@ -457,17 +462,17 @@ class Viewport extends React.Component<ViewportProps> {
         // can be passed as a react property
         return (
             <>
-            <div
-                id="vdom"
-                style={{
-                    height: height,
-                    width: width,
-                    position: "relative",
-                }}
-                ref={this.vdomRef}
-            >
-            {this.renderViewControls()}
-            </div>
+                <div
+                    id="vdom"
+                    style={{
+                        height: height,
+                        width: width,
+                        position: "relative",
+                    }}
+                    ref={this.vdomRef}
+                >
+                    {this.renderViewControls()}
+                </div>
             </>
         );
     }

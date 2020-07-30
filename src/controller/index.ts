@@ -1,7 +1,19 @@
 import jsLogger from "js-logger";
-import { NetConnection, VisData, TrajectoryFileInfo } from "../simularium";
+import {
+    NetConnection,
+    NetConnectionParams,
+    VisData,
+    VisDataMessage,
+    TrajectoryFileInfo,
+} from "../simularium";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
+
+interface SimulariumControllerParams {
+    netConnection?: NetConnection;
+    netConnectionSettings?: NetConnectionParams;
+    trajectoryPlaybackFile?: string;
+}
 
 export default class SimulariumController {
     public netConnection: NetConnection;
@@ -11,7 +23,7 @@ export default class SimulariumController {
     private fileChanged: boolean;
     private playBackFile: string;
 
-    public constructor(params) {
+    public constructor(params: SimulariumControllerParams) {
         this.visData = new VisData();
 
         if (params.netConnection) {
@@ -22,7 +34,7 @@ export default class SimulariumController {
             );
         }
 
-        this.playBackFile = params.trajectoryPlaybackFile;
+        this.playBackFile = params.trajectoryPlaybackFile || "";
         this.netConnection.onTrajectoryDataArrive = this.visData.parseAgentsFromNetData.bind(
             this.visData
         );
@@ -36,7 +48,7 @@ export default class SimulariumController {
         return this.fileChanged;
     }
 
-    public connect(): Promise<{}> {
+    public connect(): Promise<string> {
         return this.netConnection.connectToRemoteServer(
             this.netConnection.getIp()
         );
@@ -77,7 +89,7 @@ export default class SimulariumController {
         this.netConnection.requestTrajectoryFileInfo(this.playBackFile);
     }
 
-    public gotoTime(timeNs): void {
+    public gotoTime(timeNs: number): void {
         if (this.visData.hasLocalCacheForTime(timeNs)) {
             this.visData.gotoTime(timeNs);
         } else {
@@ -90,7 +102,7 @@ export default class SimulariumController {
         }
     }
 
-    public playFromTime(timeNs): void {
+    public playFromTime(timeNs: number): void {
         this.gotoTime(timeNs);
         this.isPaused = false;
     }
@@ -103,7 +115,7 @@ export default class SimulariumController {
         this.isPaused = false;
     }
 
-    public changeFile(newFile): void {
+    public changeFile(newFile: string): void {
         if (newFile !== this.playBackFile) {
             this.fileChanged = true;
             this.playBackFile = newFile;
@@ -134,7 +146,7 @@ export default class SimulariumController {
         }
     }
 
-    public cacheJSON(json): void {
+    public cacheJSON(json: VisDataMessage): void {
         this.visData.cacheJSON(json);
     }
 
