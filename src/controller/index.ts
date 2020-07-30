@@ -3,6 +3,7 @@ import {
     NetConnection,
     NetConnectionParams,
     VisData,
+    VisDataMessage,
     TrajectoryFileInfo,
 } from "../simularium";
 
@@ -145,7 +146,7 @@ export default class SimulariumController {
         }
     }
 
-    public cacheJSON(json: any): void {
+    public cacheJSON(json: VisDataMessage): void {
         this.visData.cacheJSON(json);
     }
 

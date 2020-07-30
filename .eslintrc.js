@@ -12,7 +12,7 @@ module.exports = {
     parserOptions: {
         project: "./tsconfig.json",
     },
-    plugins: ["@typescript-eslint"],
+    plugins: ["@typescript-eslint", "react"],
     rules: {
         "@typescript-eslint/ban-types": ["warn"],
         "@typescript-eslint/naming-convention": [
@@ -45,5 +45,10 @@ module.exports = {
         "prefer-const": ["warn"],
         "prefer-spread": ["warn"],
         "no-var": ["warn"],
+    },
+    settings: {
+        react: {
+            version: "detect",
+        },
     },
 };

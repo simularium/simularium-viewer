@@ -7,7 +7,12 @@ import SimulariumController from "../controller";
 
 import { forOwn } from "lodash";
 
-import { VisGeometry, TrajectoryFileInfo, NO_AGENT } from "../simularium";
+import {
+    VisDataMessage,
+    VisGeometry,
+    TrajectoryFileInfo,
+    NO_AGENT,
+} from "../simularium";
 
 export type PropColor = string | number | [number, number, number];
 
@@ -49,14 +54,14 @@ interface FileHTML extends File {
 //  the 'files' parameter have been parsed into text and put in the `outParsedFiles` parameter
 function parseFilesToText(
     files: FileHTML[],
-    outParsedFiles: any[]
+    outParsedFiles: VisDataMessage[]
 ): Promise<void> {
     let p = Promise.resolve();
     files.forEach(file => {
         p = p.then(() => {
             return file.text().then(text => {
                 const json = JSON.parse(text);
-                outParsedFiles.push(json);
+                outParsedFiles.push(json as VisDataMessage);
             });
         });
     });
