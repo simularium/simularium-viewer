@@ -8,11 +8,12 @@ import SimulariumController from "../controller";
 import { forOwn } from "lodash";
 
 import {
-    VisDataMessage,
     VisGeometry,
     TrajectoryFileInfo,
     NO_AGENT,
+    VisDataMessage,
 } from "../simularium";
+import { VisDataFrame } from "../simularium/VisData";
 
 export type PropColor = string | number | [number, number, number];
 
@@ -39,10 +40,6 @@ interface TimeData {
     frameNumber: number;
 }
 
-interface FrameJSON {
-    frameNumber: number;
-}
-
 // Typescript's File definition is missing this function
 //  which is part of the HTML standard on all browsers
 //  and needed below
@@ -52,24 +49,15 @@ interface FileHTML extends File {
 
 // This function returns a promise that resolves after all of the objects in
 //  the 'files' parameter have been parsed into text and put in the `outParsedFiles` parameter
-function parseFilesToText(
-    files: FileHTML[],
-    outParsedFiles: VisDataMessage[]
-): Promise<void> {
-    let p = Promise.resolve();
-    files.forEach(file => {
-        p = p.then(() => {
-            return file.text().then(text => {
-                const json = JSON.parse(text);
-                outParsedFiles.push(json as VisDataMessage);
-            });
-        });
-    });
-    return p;
+function parseFilesToText(files: FileHTML[]): Promise<VisDataMessage[]> {
+    return Promise.all(
+        files.map(file => file.text().then(text => JSON.parse(text) as VisDataMessage))
+    );
 }
 
-function sortFrames(a: FrameJSON, b: FrameJSON): number {
-    return a.frameNumber > b.frameNumber ? 1 : -1;
+
+function sortFrames(a: VisDataFrame, b: VisDataFrame): number {
+    return a.frameNumber - b.frameNumber;
 }
 
 function getJsonUrl(trajectoryName: string): string {
@@ -255,26 +243,6 @@ class Viewport extends React.Component<ViewportProps> {
         }
     }
 
-    private cacheJSON = json => {
-        this.props.simulariumController.cacheJSON(json);
-    };
-
-    private configDragAndDrop = () => {
-        const trajectoryFileInfo = this.props.simulariumController.dragAndDropFileInfo();
-
-        const { netConnection } = this.props.simulariumController;
-        this.lastRenderTime = -1;
-        netConnection.onTrajectoryFileInfoArrive(trajectoryFileInfo);
-
-        // needed to keep drag n drop from auto-playing since we cache all the frames
-        this.props.simulariumController.pause();
-    };
-
-    private clearCache = () => {
-        this.props.simulariumController.disableNetworkCommands();
-        this.props.simulariumController.clearLocalCache();
-    };
-
     public onDragOver = (e: Event): void => {
         if (e.stopPropagation) {
             e.stopPropagation();
@@ -290,20 +258,18 @@ class Viewport extends React.Component<ViewportProps> {
         const data: DataTransfer = event.dataTransfer as DataTransfer;
 
         const files: FileList = input.files || data.files;
-        this.clearCache();
-
-        const parsedFiles = [];
         const filesArr: FileHTML[] = Array.from(files) as FileHTML[];
-        const p = parseFilesToText(filesArr, parsedFiles);
+        const p = parseFilesToText(filesArr);
 
-        p.then(() => {
-            parsedFiles.sort(sortFrames);
-            this.visGeometry.resetMapping();
-
+        p.then(parsedFiles => {
             const frameJSON = parsedFiles[0];
-            this.cacheJSON(frameJSON);
-        }).then(() => {
-            this.configDragAndDrop();
+            frameJSON.bundleData.sort(sortFrames);
+            const fileName = filesArr[0].name;
+            this.props.simulariumController.changeFile(
+                fileName,
+                true,
+                frameJSON
+            );
         });
     };
 
@@ -396,8 +362,9 @@ class Viewport extends React.Component<ViewportProps> {
             if (simulariumController.hasChangedFile) {
                 this.visGeometry.clear();
                 this.visGeometry.resetMapping();
-
-                const p = this.visGeometry.mapFromJSON(
+                // skip fetch if local file
+                const p = simulariumController.isLocalFile ? Promise.resolve() :
+                this.visGeometry.mapFromJSON(
                     simulariumController.getFile(),
                     getJsonUrl(simulariumController.getFile())
                 );
