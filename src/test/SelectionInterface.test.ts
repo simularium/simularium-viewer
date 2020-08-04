@@ -29,11 +29,13 @@ describe("SelectionInterface module", () => {
             expect(si.containsName("name"));
         });
 
-        /*test("Validates input: empty name", () => {
-      const input = "#no_name";
-      const si = new SelectionInterface();
-      expect(si.decode(input)).toThrowError();
-    });*/
+        test("Validates input: empty name", () => {
+            const input = "#no_name";
+            const si = new SelectionInterface();
+            expect(() => {
+                si.decode(input);
+            }).toThrowError();
+        });
     });
 
     describe("Parses Id-Name mapping", () => {
