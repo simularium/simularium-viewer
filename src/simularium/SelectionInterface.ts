@@ -78,14 +78,13 @@ class SelectionInterface {
         const entryList = this.entries[name];
         const indices: number[] = [];
 
-        for (let i = 0, l = entryList.length; i < l; i++) {
-            const entry: IdMapEntry = entryList[i];
+        entryList.forEach(entry => {
             if (!tags || tags.every(t => entry.tags.includes(t))) {
                 if (entry.id > 0) {
                     indices.push(entry.id);
                 }
             }
-        }
+        });
 
         return indices;
     }
