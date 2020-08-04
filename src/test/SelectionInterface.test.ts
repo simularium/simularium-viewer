@@ -9,6 +9,13 @@ const idMapping = {
     6: "duplicate#tagged",
 };
 
+const selectionState = {
+    highlightedNames: ["second", "third"],
+    highlightedTags: ["tagged"],
+    hiddenNames: ["duplicate"],
+    hiddenTags: ["first"],
+};
+
 describe("SelectionInterface module", () => {
     describe("Handles Input", () => {
         test("Can decode valid encoded input", () => {
@@ -38,7 +45,7 @@ describe("SelectionInterface module", () => {
         });
     });
 
-    describe("Parses Id-Name mapping", () => {
+    describe("Parsing", () => {
         test("Parse id-name mapping", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
@@ -91,6 +98,24 @@ describe("SelectionInterface module", () => {
             const ids = si.getIdsByTags(["tagged", "last"]);
 
             expect(ids).toEqual([4]);
+        });
+    });
+
+    describe("Highlight & Hide", () => {
+        test("Highlights using selection state info", () => {
+            const si = new SelectionInterface();
+            si.parse(idMapping);
+
+            const ids = si.getHighlightedIds(selectionState);
+            expect(ids).toEqual([3]);
+        });
+
+        test("Hides  using selection state info", () => {
+            const si = new SelectionInterface();
+            si.parse(idMapping);
+
+            const ids = si.getVisibleIds(selectionState);
+            expect(ids).toEqual([2, 3, 4]);
         });
     });
 });
