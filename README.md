@@ -16,7 +16,69 @@ Drag a Simularium Visualization-Data-Format file into the window (WebGL) area of
 **remote-streaming**  
 Connect to a [simularium-engine](https://github.com/allen-cell-animated/simularium-engine) instance, and stream data through a web-socket connection.
 
-## Installation
+## Installation in your project
+1. `npm i @aics/simularium-viewer`
+2. In Viewer.jsx/tsx: `import SimulariumViewer, { NetConnection, SimulariumController } from "@aics/simularium-viewer";`
+3. In Viewer.jsx/tsx 
+```
+const netConnectionSettings = {
+    serverIp: "staging-node1-agentviz-backend.cellexplore.net",
+    serverPort: 9002,
+};
+
+const simulariumController = new SimulariumController({
+    trajectoryPlaybackFile: "ATPsynthase_9.h5",
+    netConnectionSettings: netConnectionSettings,
+});
+class Viewer extends React.Component {
+
+    public constructor(props) {
+        super(props);
+        this.viewerRef = React.createRef();
+
+        this.state = {
+               highlightId: -1,
+                pauseOn: -1,
+                particleTypeIds: [],
+                currentFrame: 0,
+                currentTime: 0,
+                showMeshes: true,
+                showPaths: true,
+                timeStep: 1,
+                totalDuration: 100,
+                }
+    }
+
+    handleTimeChange = (timeData) => {
+        console.log(timeData)
+    }
+
+    handleJsonMeshData = (jsonData) => {
+        console.log(jsonData)
+    }
+    onTrajectoryFileInfoChanged = (trajData) => {
+        console.log(trajData)
+    }
+    
+    render () {
+
+        return (<SimulariumViewer
+                    ref={this.viewerRef}
+                    height={500}
+                    width={500}
+                    onTimeChange={this.handleTimeChange}
+                    simulariumController={simulariumController}
+                    onJsonDataArrived={this.handleJsonMeshData}
+                    onTrajectoryFileInfoChanged={this.handleTrajectoryInfo}
+                    highlightedParticleType={this.state.highlightId}
+                    loadInitialData={true}
+                    showMeshes={this.state.showMeshes}
+                    showPaths={this.state.showPaths}
+                />)
+    }
+```
+
+## Run locally
 
 1. Run `npm install` to install the dependencies.
 2. Run `./gradlew start`
