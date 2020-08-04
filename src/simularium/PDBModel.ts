@@ -7,7 +7,7 @@ import { BufferGeometry, Float32BufferAttribute, Points, Vector3 } from "three";
 import KMeansWorkerModule from "./worker/KMeansWorker";
 import { KMeansWorkerType } from "./worker/KMeansWorker";
 
-const MAX_PDB_WORKERS = 4;
+import TaskQueue from "./worker/TaskQueue";
 
 interface PDBAtom {
     serial?: number;
@@ -174,11 +174,12 @@ class PDBModel {
         return geometry;
     }
 
-    private async setupGeometry(): Promise<void> {
+    private makeFlatPositionArray(): Float32Array {
         if (!this.pdb) {
-            console.log("setupgeometry called with no pdb data");
-            return Promise.resolve();
+            console.error("makeFlatPositionArray: pdb not loaded yet");
+            return new Float32Array();
         }
+
         const n = this.pdb.atoms.length;
 
         // put all the points in a flat array
@@ -188,6 +189,18 @@ class PDBModel {
             allData[i * 3 + 1] = this.pdb.atoms[i].y;
             allData[i * 3 + 2] = this.pdb.atoms[i].z;
         }
+        return allData;
+    }
+
+    private async setupGeometry(): Promise<void> {
+        if (!this.pdb) {
+            console.log("setupgeometry called with no pdb data");
+            return Promise.resolve();
+        }
+        const n = this.pdb.atoms.length;
+
+        // put all the points in a flat array
+        const allData = this.makeFlatPositionArray();
 
         // fill LOD 0 with the raw points
         const lod0 = allData.slice();
@@ -200,37 +213,15 @@ class PDBModel {
             Math.max(Math.floor(n / 128), 1),
         ];
 
-        if (PDBModel.numLiveWorkers >= MAX_PDB_WORKERS) {
-            console.error(
-                "Can not process PDB levels of detail; too many concurrent workers in flight"
-            );
-            // use full geometry for each LOD.
-            for (let i = 0; i < sizes.length; ++i) {
-                this.lods.push({
-                    geometry: geometry0,
-                    vertices: lod0,
-                });
-            }
-            return Promise.resolve();
-        }
+        // alternative strategies:
+        // 1. for small atom counts, apply kmeans synchronously
+        // 2. randomly sample the atoms spatially for lower LOD without doing intensive kmeans
 
-        // compute the remaining LODs asynchronously.
-        // TODO: try to allow updating one by one instead of waiting for all to complete.
-
-        PDBModel.numLiveWorkers++;
-
-        const worker = new KMeansWorkerModule();
-        const kMeansWorkerClass = Comlink.wrap<KMeansWorkerType>(worker);
-        const workerobj = await new kMeansWorkerClass();
-
-        const retData = await workerobj.run(
-            n,
-            sizes,
-            Comlink.transfer(allData, [allData.buffer])
-        );
-
-        // the worker is done
-        PDBModel.numLiveWorkers--;
+        // Enqueue this LOD calculation
+        const retData = (await TaskQueue.enqueue(() =>
+            this.processPdbLod(n, sizes, allData)
+        )) as Float32Array[];
+        // ... continue on when it's done
 
         // update the new LODs
         for (let i = 0; i < sizes.length; ++i) {
@@ -249,6 +240,21 @@ class PDBModel {
             lodobjects.push(obj);
         }
         return lodobjects;
+    }
+
+    private async processPdbLod(n, sizes, allData) {
+        const worker = new KMeansWorkerModule();
+        const kMeansWorkerClass = Comlink.wrap<KMeansWorkerType>(worker);
+        const workerobj = await new kMeansWorkerClass();
+
+        const retData = await workerobj.run(
+            n,
+            sizes,
+            Comlink.transfer(allData, [allData.buffer])
+        );
+
+        worker.terminate();
+        return retData;
     }
 }
 
