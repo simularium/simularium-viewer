@@ -21,6 +21,7 @@
         "es",
         "lib",
         "dist",
+        "style",
         "type-declarations",
         "README.md",
         "package.json"

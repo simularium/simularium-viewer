@@ -1,7 +1,6 @@
 import React from "react";
 
-import SimulariumViewer, { NetConnection, SimulariumController } from "../dist";
-import { Orchestrator } from "../dist";
+import SimulariumViewer, { SimulariumController } from "../dist";
 import "./style.css";
 import { CLIENT_RENEG_WINDOW } from "tls";
 
