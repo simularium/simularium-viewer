@@ -151,7 +151,7 @@ class Viewport extends React.Component<ViewportProps> {
         this.stats.showPanel(1);
 
         this.handlers = {
-            contextmenu: this.onPickObject,
+            click: this.onPickObject,
             dragover: this.onDragOver,
             drop: this.onDrop,
         };
