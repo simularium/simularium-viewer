@@ -18,9 +18,11 @@ Connect to a [simularium-engine](https://github.com/allen-cell-animated/simulari
 
 ## Installation in your project
 1. `npm i @aics/simularium-viewer`
-2. In Viewer.jsx/tsx: `import SimulariumViewer, { NetConnection, SimulariumController } from "@aics/simularium-viewer";`
-3. In Viewer.jsx/tsx 
+2. In Viewer.jsx/tsx 
 ```
+import SimulariumViewer, { SimulariumController } from "@aics/simularium-viewer";
+import "@aics/simularium-viewer/style/style.css";
+
 const netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
     serverPort: 9002,
@@ -59,7 +61,7 @@ class Viewer extends React.Component {
     onTrajectoryFileInfoChanged = (trajData) => {
         console.log(trajData)
     }
-    
+
     render () {
 
         return (<SimulariumViewer
