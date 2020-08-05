@@ -11,11 +11,15 @@ const MAX_ACTIVE_WORKERS = 4;
 
 export default class TaskQueue {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    static queue: QueueItem<any>[] = [];
-    static pendingPromise = false;
-    static numActiveWorkers = 0;
+    private queue: QueueItem<any>[] = [];
+    private numActiveWorkers = 0;
+    private toCancel: QueueItem<any>[] = [];
+    private cancelRequested = false;
 
-    static enqueue<T>(promise: () => Promise<T>): Promise<T> {
+    // add a task to the queue and start it immediately if not too busy
+    public enqueue<T>(promise: () => Promise<T>): Promise<T> {
+        // we will defer the resolve/reject until the item
+        // is dequeued and its inner promise is resolved
         return new Promise<T>((resolve, reject) => {
             this.queue.push({
                 promise,
@@ -26,7 +30,40 @@ export default class TaskQueue {
         });
     }
 
-    static dequeue(): boolean {
+    public getLength(): number {
+        return this.queue.length;
+    }
+    public getNumActive(): number {
+        return this.numActiveWorkers;
+    }
+
+    public stopAll(): void {
+        this.cancelRequested = true;
+
+        // take whatever is in the queue and append it to the toCancel list.
+        // and make sure it is removed from queue
+        this.toCancel = this.toCancel.concat(
+            this.queue.splice(0, this.queue.length)
+        );
+    }
+
+    private dequeue(): boolean {
+        // if there is anything to cancel, remove and reject
+        while (this.toCancel.length > 0) {
+            const item = this.toCancel.pop();
+            if (item) {
+                item.reject("Cancelled");
+            }
+        }
+        // if (this.cancelRequested) {
+        //     while (this.queue.length > 0) {
+        //         const item = this.queue.pop();
+        //         if (item) {
+        //             item.reject("Cancelled");
+        //         }
+        //     }
+        //     this.cancelRequested = false;
+        // }
         if (this.numActiveWorkers >= MAX_ACTIVE_WORKERS) {
             // too many workers; keeping in queue
             return false;
@@ -39,6 +76,7 @@ export default class TaskQueue {
             // we will process from the queue.
             // increment the number of concurrent tasks happening.
             this.numActiveWorkers++;
+            // run the task
             item.promise()
                 .then(value => {
                     this.numActiveWorkers--;
