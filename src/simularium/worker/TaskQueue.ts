@@ -1,5 +1,5 @@
 interface QueueItem<T> {
-    // this is the actual task and the unknown is the return type
+    // this is the actual task and the T is the return type
     promise: () => Promise<T>;
     // value is of promise's type
     resolve: (value?: T | PromiseLike<T> | undefined) => void;
