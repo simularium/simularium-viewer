@@ -1,8 +1,8 @@
-interface QueueItem {
+interface QueueItem<T> {
     // this is the actual task and the unknown is the return type
-    promise: () => Promise<unknown>;
+    promise: () => Promise<T>;
     // value is of promise's type
-    resolve: (value?: unknown | PromiseLike<unknown>) => void;
+    resolve: (value?: T | PromiseLike<T> | undefined) => void;
     // reason is really any
     reject: (reason?: unknown) => void;
 }
@@ -10,12 +10,13 @@ interface QueueItem {
 const MAX_ACTIVE_WORKERS = 4;
 
 export default class TaskQueue {
-    static queue: QueueItem[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    static queue: QueueItem<any>[] = [];
     static pendingPromise = false;
     static numActiveWorkers = 0;
 
-    static enqueue(promise: () => Promise<unknown>): Promise<unknown> {
-        return new Promise((resolve, reject) => {
+    static enqueue<T>(promise: () => Promise<T>): Promise<T> {
+        return new Promise<T>((resolve, reject) => {
             this.queue.push({
                 promise,
                 resolve,

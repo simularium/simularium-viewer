@@ -218,9 +218,9 @@ class PDBModel {
         // 2. randomly sample the atoms spatially for lower LOD without doing intensive kmeans
 
         // Enqueue this LOD calculation
-        const retData = (await TaskQueue.enqueue(() =>
-            this.processPdbLod(n, sizes, allData)
-        )) as Float32Array[];
+        const retData: Float32Array[] = await TaskQueue.enqueue<Float32Array[]>(
+            () => this.processPdbLod(n, sizes, allData)
+        );
         // ... continue on when it's done
 
         // update the new LODs
