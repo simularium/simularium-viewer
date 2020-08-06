@@ -254,7 +254,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                     onTrajectoryFileInfoChanged={this.handleTrajectoryInfo.bind(
                         this
                     )}
-                    selectionStateInfo={this.state.selectionInfo}
+                    selectionStateInfo={this.state.selectionStateInfo}
                     onUIDisplayDataChanged={this.handleUIDisplayData.bind(this)}
                     highlightedParticleType={this.state.highlightId}
                     loadInitialData={true}
