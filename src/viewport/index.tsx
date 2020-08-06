@@ -35,12 +35,14 @@ interface ViewportProps {
     showBounds: boolean;
 }
 
+interface Click {
+    x: number;
+    y: number;
+    time: number;
+}
+
 interface ViewportState {
-    lastClick: {
-        x: number;
-        y: number;
-        time: number;
-    }
+    lastClick: Click
 }
 
 interface TimeData {
@@ -160,6 +162,8 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
         this.handlers = {
             click: this.handleClickStart,
+            touchstart: this.handleTouchStart,
+            touchend: this.handleTouchEnd,
             mousedown: this.handleClickStart,
             mouseup: this.handleMouseUp,
             dragover: this.onDragOver,
@@ -289,9 +293,49 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         });
     };
 
+    public isClick = (thisClick: Click): boolean => {
+        const { lastClick } = this.state;
+
+        if (Date.now() - lastClick.time > 500) {
+            // long click
+            return false;
+        }
+        if (thisClick.x - lastClick.x !== 0 && thisClick.y - lastClick.y !== 0) {
+            // mouse moved just rotate the field
+            return false;
+        }
+        return true;
+    }
+
+    public handleTouchStart = (e: Event): void => {
+        const event = e as TouchEvent;
+        const touch = event.touches[0];
+        this.setState({
+            lastClick: {
+                x: touch.pageX,
+                y: touch.pageY,
+                time: Date.now(),
+            },
+        });
+    };
+
+    public handleTouchEnd = (e: Event): void => {
+        const event = e as TouchEvent;
+         const touch = event.changedTouches[0];
+         const thisClick = {
+             x: touch.pageX,
+             y: touch.pageY,
+             time: Date.now(),
+         };
+
+         if (this.isClick(thisClick)) {
+             // pass event to pick object because it was a true click and not a drag
+             this.onPickObject(e);
+         }
+    };
+
     public handleClickStart = (e: Event): void => {
         const event = e as MouseEvent;
-
         this.setState({
             lastClick: {
                 x: event.x,
@@ -303,17 +347,15 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
     public handleMouseUp = (e: Event): void => {
         const event = e as MouseEvent;
-        const { lastClick } = this.state;
-        if (Date.now() - lastClick.time > 500) {
-            // long click
-            return;
+        const thisClick = {
+            x: event.x,
+            y: event.y,
+            time: Date.now()
         }
-        if (event.x - lastClick.x !== 0 && event.y - lastClick.y !== 0 ) {
-            // mouse moved just rotate the field
-            return;
+        if (this.isClick(thisClick)) {
+            // pass event to pick object because it was a true click and not a drag
+            this.onPickObject(e);
         }
-        // pass event to pick object because it was a true click and not a drag
-        this.onPickObject(e);
     };
 
     public addEventHandlersToCanvas(): void {
@@ -346,7 +388,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
     public onPickObject(e: Event): void {
         const event = e as MouseEvent;
-
+        console.log(event);
         // TODO: intersect with scene's children not including lights?
         // can we select a smaller number of things to hit test?
         const oldFollowObject = this.visGeometry.getFollowObject();
@@ -354,9 +396,13 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
         // hit testing
         const intersectedObject = this.visGeometry.hitTest(event);
+        console.log('intersection', intersectedObject)
         if (intersectedObject !== NO_AGENT) {
             this.hit = true;
-            if (oldFollowObject !== intersectedObject && oldFollowObject !== NO_AGENT) {
+            if (
+                oldFollowObject !== intersectedObject &&
+                oldFollowObject !== NO_AGENT
+            ) {
                 this.visGeometry.removePathForAgentIndex(oldFollowObject);
             }
             this.visGeometry.setFollowObject(intersectedObject);
