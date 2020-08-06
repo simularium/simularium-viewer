@@ -1,6 +1,6 @@
 {
     "name": "@aics/simularium-viewer",
-    "version": "1.2.10",
+    "version": "1.2.9",
     "description": "An npm package to view simulations.",
     "main": "lib/index.js",
     "module": "es/index.js",
@@ -15,7 +15,8 @@
         "transpileES": "TS_NODE_PROJECT=tsconfig.es.json BABEL_ENV=es babel src --out-dir es --extensions .ts,.tsx --ignore src/**/*.test.ts",
         "transpileCommonJs": "TS_NODE_PROJECT=tsconfig.commonjs.json babel src --out-dir lib --extensions .ts,.tsx --ignore src/**/*.test.ts",
         "processCSS": "postcss src/viewport/index.css --output style/style.css",
-        "build": "npm run generateTypes & npm run bundle & npm run transpileES & npm run transpileCommonJs & npm run processCSS"
+        "build": "npm run generateTypes & npm run bundle & npm run transpileES & npm run transpileCommonJs & npm run processCSS",
+        "version-patch": "npm version patch | xargs -n 1 git push tag && git push origin master"
     },
     "files": [
         "es",
@@ -39,6 +40,7 @@
         "@babel/preset-env": "~7.3",
         "@babel/preset-react": "^7.0.0",
         "@babel/preset-typescript": "~7.1",
+        "@types/dat.gui": "^0.7.5",
         "@types/jest": "^26.0.3",
         "@types/lodash": "^4.14.158",
         "@types/react": "^16.8.25",
