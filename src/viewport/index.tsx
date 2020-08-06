@@ -186,7 +186,7 @@ class Viewport extends React.Component<ViewportProps> {
                 this.visGeometry
                     .mapFromJSON(
                         fileName,
-                        simulariumController.getJsonFile(),
+                        simulariumController.getGeometryFile(),
                         simulariumController.getAssetPrefix(),
                         onJsonDataArrived
                     )
@@ -364,7 +364,7 @@ class Viewport extends React.Component<ViewportProps> {
                     ? Promise.resolve()
                     : this.visGeometry.mapFromJSON(
                           simulariumController.getFile(),
-                          simulariumController.getJsonFile(),
+                          simulariumController.getGeometryFile(),
                           simulariumController.getAssetPrefix()
                       );
 

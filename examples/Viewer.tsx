@@ -1,6 +1,6 @@
 import React from "react";
 
-import SimulariumViewer, { SimulariumController } from "../src";
+import SimulariumViewer, { SimulariumController } from "../dist";
 import "./style.css";
 
 const netConnectionSettings = {

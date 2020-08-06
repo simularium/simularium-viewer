@@ -155,7 +155,7 @@ export default class SimulariumController {
         newFileName: string,
         isLocalFile = false,
         framesToCache?: VisDataMessage,
-        jsonFile?: string,
+        geometryFile?: string,
         assetPrefix?: string
     ): void {
         if (newFileName !== this.playBackFile) {
@@ -163,7 +163,7 @@ export default class SimulariumController {
             this.playBackFile = newFileName;
             this.localFile = isLocalFile;
             this.geometryFile = this.resolveGeometryFile(
-                jsonFile || "",
+                geometryFile || "",
                 newFileName
             );
             this.assetPrefix = assetPrefix ? assetPrefix : DEFAULT_ASSET_PREFIX;
@@ -200,7 +200,7 @@ export default class SimulariumController {
         return this.playBackFile;
     }
 
-    public getJsonFile(): string {
+    public getGeometryFile(): string {
         return this.geometryFile;
     }
 

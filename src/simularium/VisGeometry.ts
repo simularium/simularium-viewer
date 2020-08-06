@@ -879,7 +879,7 @@ class VisGeometry {
                 return response.json();
             })
             .then(data => {
-                this.setVisDataFromJson(
+                this.setGeometryData(
                     data as AgentTypeVisDataMap,
                     assetPath,
                     callback
@@ -887,13 +887,16 @@ class VisGeometry {
             });
     }
 
-    public setVisDataFromJson(
+    public setGeometryData(
         jsonData: AgentTypeVisDataMap,
         assetPath: string,
         callback?: (any) => void
     ): void {
+        // clear things out in advance of loading all new geometry
         this.resetMapping();
+
         this.logger.debug("JSON Mesh mapping loaded: ", jsonData);
+
         Object.keys(jsonData).forEach(id => {
             const entry = jsonData[id];
             if (id === "size") {
