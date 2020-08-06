@@ -303,12 +303,12 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
     public handleMouseUp = (e: Event): void => {
         const event = e as MouseEvent;
-
-        if (Date.now() - this.state.lastClick.time > 500) {
+        const { lastClick } = this.state;
+        if (Date.now() - lastClick.time > 500) {
             // long click
             return;
         }
-        if (event.x - this.state.lastClick.x !== 0 && event.y - this.state.lastClick.y !== 0 ) {
+        if (event.x - lastClick.x !== 0 && event.y - lastClick.y !== 0 ) {
             // mouse moved just rotate the field
             return;
         }
