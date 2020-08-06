@@ -86,8 +86,13 @@ class Viewer extends React.Component<{}, ViewerState> {
         }
     }
 
-    public highlightParticleType(typeId): void {
-        this.setState({ highlightId: typeId });
+    public highlightParticleType(name): void {
+        this.setState({ selectionStateInfo: {
+          highlightedNames: [name],
+          highlightedTags: [],
+          hiddenNames: [],
+          hiddenTags: [],
+        } });
     }
 
     public playOneFrame(): void {
@@ -112,8 +117,8 @@ class Viewer extends React.Component<{}, ViewerState> {
         simulariumController.gotoTime(event.target.value);
     }
 
-    public handleUIDisplayData(data): void {
-        this.setState({ particleTypeNames: Object.keys(jsonData) });
+    public handleUIDisplayData(uiDisplayData): void {
+        this.setState({ particleTypeNames: uiDisplayData.map(a => a.name) });
     }
 
     public gotoNextFrame(): void {
@@ -249,6 +254,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                     onTrajectoryFileInfoChanged={this.handleTrajectoryInfo.bind(
                         this
                     )}
+                    selectionStateInfo={this.state.selectionInfo}
                     onUIDisplayDataChanged={this.handleUIDisplayData.bind(this)}
                     highlightedParticleType={this.state.highlightId}
                     loadInitialData={true}

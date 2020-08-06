@@ -246,8 +246,10 @@ class Viewport extends React.Component<ViewportProps> {
             selectionStateInfo
         } = this.props;
 
-        const ids = this.selectionInterface.getHighlightedIds(selectionStateInfo);
-        this.visGeometry.setHighlightByIds(ids);
+        if(selectionStateInfo) {          
+          const ids = this.selectionInterface.getHighlightedIds(selectionStateInfo);
+          this.visGeometry.setHighlightByIds(ids);
+        }
 
         this.visGeometry.setShowMeshes(showMeshes);
         this.visGeometry.setShowPaths(showPaths);
