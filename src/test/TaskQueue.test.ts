@@ -1,9 +1,9 @@
 import "regenerator-runtime/runtime";
 
-import TaskQueue from "../simularium/worker/TaskQueue";
+import { TaskQueue } from "../simularium/worker/TaskQueue";
 
 const delay = t => {
-    const resultPromise = new Promise((resolve, reject) => {
+    const resultPromise = new Promise(resolve => {
         setTimeout(() => resolve(t), t);
     });
     return resultPromise;
@@ -13,7 +13,7 @@ describe("TaskQueue module", () => {
     // note that tests all add more than 4 tasks to exceed the max concurrency of the queue
     test("it resolves tasks that finish synchronously", () => {
         const add = (x, y) => {
-            const resultPromise = new Promise((resolve, reject) => {
+            const resultPromise = new Promise(resolve => {
                 resolve(x + y);
             });
             return resultPromise;
@@ -32,7 +32,7 @@ describe("TaskQueue module", () => {
     });
     test("it resolves all delayed tasks", async () => {
         const addDelayed = (x, y, t) => {
-            const resultPromise = new Promise((resolve, reject) => {
+            const resultPromise = new Promise(resolve => {
                 setTimeout(() => resolve(x + y), t);
             });
             return resultPromise;
@@ -99,7 +99,7 @@ describe("TaskQueue module", () => {
     });
     test("it handles the case when some tasks throw", async () => {
         const addButThrowOdd = (x, y) => {
-            const resultPromise = new Promise((resolve, reject) => {
+            const resultPromise = new Promise(resolve => {
                 if ((x + y) % 2) {
                     throw "Odd sums are thrown";
                 }

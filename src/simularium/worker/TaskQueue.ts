@@ -9,12 +9,12 @@ interface QueueItem<T> {
 
 const MAX_ACTIVE_WORKERS = 4;
 
-export default class TaskQueue {
+// class is exported mainly for testing convenience.
+// a "global" instance is also provided as the default export below.
+export class TaskQueue {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private queue: QueueItem<any>[] = [];
     private numActiveWorkers = 0;
-    private toCancel: QueueItem<any>[] = [];
-    private cancelRequested = false;
 
     // add a task to the queue and start it immediately if not too busy
     public enqueue<T>(promise: () => Promise<T>): Promise<T> {
@@ -38,32 +38,16 @@ export default class TaskQueue {
     }
 
     public stopAll(): void {
-        this.cancelRequested = true;
-
-        // take whatever is in the queue and append it to the toCancel list.
-        // and make sure it is removed from queue
-        this.toCancel = this.toCancel.concat(
-            this.queue.splice(0, this.queue.length)
-        );
-    }
-
-    private dequeue(): boolean {
-        // if there is anything to cancel, remove and reject
-        while (this.toCancel.length > 0) {
-            const item = this.toCancel.pop();
+        // note that items in flight will still complete
+        while (this.queue.length > 0) {
+            const item = this.queue.pop();
             if (item) {
                 item.reject("Cancelled");
             }
         }
-        // if (this.cancelRequested) {
-        //     while (this.queue.length > 0) {
-        //         const item = this.queue.pop();
-        //         if (item) {
-        //             item.reject("Cancelled");
-        //         }
-        //     }
-        //     this.cancelRequested = false;
-        // }
+    }
+
+    private dequeue(): boolean {
         if (this.numActiveWorkers >= MAX_ACTIVE_WORKERS) {
             // too many workers; keeping in queue
             return false;
@@ -99,3 +83,7 @@ export default class TaskQueue {
         return true;
     }
 }
+
+// by default, export a "singleton" of this class.
+const taskQueue = new TaskQueue();
+export default taskQueue;
