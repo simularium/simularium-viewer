@@ -51,17 +51,14 @@ interface FileHTML extends File {
 //  the 'files' parameter have been parsed into text and put in the `outParsedFiles` parameter
 function parseFilesToText(files: FileHTML[]): Promise<VisDataMessage[]> {
     return Promise.all(
-        files.map(file => file.text().then(text => JSON.parse(text) as VisDataMessage))
+        files.map(file =>
+            file.text().then(text => JSON.parse(text) as VisDataMessage)
+        )
     );
 }
 
-
 function sortFrames(a: VisDataFrame, b: VisDataFrame): number {
     return a.frameNumber - b.frameNumber;
-}
-
-function getJsonUrl(trajectoryName: string): string {
-    return `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${trajectoryName}.json`;
 }
 
 class Viewport extends React.Component<ViewportProps> {
@@ -189,7 +186,8 @@ class Viewport extends React.Component<ViewportProps> {
                 this.visGeometry
                     .mapFromJSON(
                         fileName,
-                        getJsonUrl(fileName),
+                        simulariumController.getJsonFile(),
+                        simulariumController.getAssetPrefix(),
                         onJsonDataArrived
                     )
                     .then(() => {
@@ -249,7 +247,6 @@ class Viewport extends React.Component<ViewportProps> {
         }
         e.preventDefault();
     };
-
 
     public onDrop = (e: Event): void => {
         this.onDragOver(e);
@@ -363,11 +360,13 @@ class Viewport extends React.Component<ViewportProps> {
                 this.visGeometry.clear();
                 this.visGeometry.resetMapping();
                 // skip fetch if local file
-                const p = simulariumController.isLocalFile ? Promise.resolve() :
-                this.visGeometry.mapFromJSON(
-                    simulariumController.getFile(),
-                    getJsonUrl(simulariumController.getFile())
-                );
+                const p = simulariumController.isLocalFile
+                    ? Promise.resolve()
+                    : this.visGeometry.mapFromJSON(
+                          simulariumController.getFile(),
+                          simulariumController.getJsonFile(),
+                          simulariumController.getAssetPrefix()
+                      );
 
                 p.then(() => {
                     this.visGeometry.render(totalElapsedTime);

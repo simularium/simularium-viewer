@@ -88,7 +88,7 @@ class PDBModel {
                 if (this.pdb.atoms.length > 0) {
                     this.fixupCoordinates();
                     console.log(
-                        "PDB FILE HAS " + this.pdb.atoms.length + " ATOMS"
+                        `PDB ${this.name} has ${this.pdb.atoms.length} atoms`
                     );
                     this.checkChains();
                     return this.setupGeometry();
