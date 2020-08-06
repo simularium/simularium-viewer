@@ -330,7 +330,14 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
          if (this.isClick(thisClick)) {
              // pass event to pick object because it was a true click and not a drag
-             this.onPickObject(e);
+             const canvas = this.vdomRef.current;
+             if (!canvas) {
+                 return;
+             }
+             const r = canvas.getBoundingClientRect();
+             const offsetX = touch.clientX - r.left;
+             const offsetY = touch.clientY - r.top;
+             this.onPickObject(offsetX, offsetY);
          }
     };
 
@@ -354,7 +361,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         }
         if (this.isClick(thisClick)) {
             // pass event to pick object because it was a true click and not a drag
-            this.onPickObject(e);
+            this.onPickObject(event.offsetX, event.offsetY);
         }
     };
 
@@ -386,17 +393,14 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         this.visGeometry.switchRenderStyle();
     }
 
-    public onPickObject(e: Event): void {
-        const event = e as MouseEvent;
-        console.log(event);
+    public onPickObject(posX: number, posY: number): void {
         // TODO: intersect with scene's children not including lights?
         // can we select a smaller number of things to hit test?
         const oldFollowObject = this.visGeometry.getFollowObject();
         this.visGeometry.setFollowObject(NO_AGENT);
 
         // hit testing
-        const intersectedObject = this.visGeometry.hitTest(event);
-        console.log('intersection', intersectedObject)
+        const intersectedObject = this.visGeometry.hitTest(posX, posY);
         if (intersectedObject !== NO_AGENT) {
             this.hit = true;
             if (

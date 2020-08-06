@@ -668,13 +668,13 @@ class VisGeometry {
         }
     }
 
-    public hitTest(event: MouseEvent): number {
+    public hitTest(offsetX: number, offsetY: number): number {
         const size = new Vector2();
         this.renderer.getSize(size);
         if (this.renderStyle === RenderStyle.GENERIC) {
             const mouse = {
-                x: (event.offsetX / size.x) * 2 - 1,
-                y: -(event.offsetY / size.y) * 2 + 1,
+                x: (offsetX / size.x) * 2 - 1,
+                y: -(offsetY / size.y) * 2 + 1,
             };
 
             this.raycaster.setFromCamera(mouse, this.camera);
@@ -709,8 +709,8 @@ class VisGeometry {
             // read from instance buffer pixel!
             return this.moleculeRenderer.hitTest(
                 this.renderer,
-                event.offsetX,
-                size.y - event.offsetY
+                offsetX,
+                size.y - offsetY
             );
         }
     }
