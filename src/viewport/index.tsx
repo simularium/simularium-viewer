@@ -35,6 +35,14 @@ interface ViewportProps {
     showBounds: boolean;
 }
 
+interface ViewportState {
+    lastClick: {
+        x: number;
+        y: number;
+        time: number;
+    }
+}
+
 interface TimeData {
     time: number;
     frameNumber: number;
@@ -64,7 +72,7 @@ function getJsonUrl(trajectoryName: string): string {
     return `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${trajectoryName}.json`;
 }
 
-class Viewport extends React.Component<ViewportProps> {
+class Viewport extends React.Component<ViewportProps, ViewportState> {
     private visGeometry: VisGeometry;
     private lastRenderTime: number;
     private startTime: number;
@@ -151,13 +159,22 @@ class Viewport extends React.Component<ViewportProps> {
         this.stats.showPanel(1);
 
         this.handlers = {
-            click: this.onPickObject,
+            click: this.handleClickStart,
+            mousedown: this.handleClickStart,
+            mouseup: this.handleMouseUp,
             dragover: this.onDragOver,
             drop: this.onDrop,
         };
         this.hit = false;
         this.animationRequestID = 0;
         this.lastRenderedAgentTime = -1;
+        this.state = {
+            lastClick: {
+                x: 0,
+                y: 0,
+                time: 0,
+            },
+        };
     }
 
     public componentDidMount(): void {
@@ -250,7 +267,6 @@ class Viewport extends React.Component<ViewportProps> {
         e.preventDefault();
     };
 
-
     public onDrop = (e: Event): void => {
         this.onDragOver(e);
         const event = e as DragEvent;
@@ -271,6 +287,33 @@ class Viewport extends React.Component<ViewportProps> {
                 frameJSON
             );
         });
+    };
+
+    public handleClickStart = (e: Event): void => {
+        const event = e as MouseEvent;
+
+        this.setState({
+            lastClick: {
+                x: event.x,
+                y: event.y,
+                time: Date.now(),
+            },
+        });
+    };
+
+    public handleMouseUp = (e: Event): void => {
+        const event = e as MouseEvent;
+
+        if (Date.now() - this.state.lastClick.time > 500) {
+            // long click
+            return;
+        }
+        if (event.x - this.state.lastClick.x !== 0 && event.y - this.state.lastClick.y !== 0 ) {
+            // mouse moved just rotate the field
+            return;
+        }
+        // pass event to pick object because it was a true click and not a drag
+        this.onPickObject(e);
     };
 
     public addEventHandlersToCanvas(): void {
@@ -313,13 +356,14 @@ class Viewport extends React.Component<ViewportProps> {
         const intersectedObject = this.visGeometry.hitTest(event);
         if (intersectedObject !== NO_AGENT) {
             this.hit = true;
-            if (oldFollowObject !== intersectedObject) {
+            if (oldFollowObject !== intersectedObject && oldFollowObject !== NO_AGENT) {
                 this.visGeometry.removePathForAgentIndex(oldFollowObject);
             }
             this.visGeometry.setFollowObject(intersectedObject);
             this.visGeometry.addPathForAgentIndex(intersectedObject);
         } else {
             if (oldFollowObject !== NO_AGENT) {
+                this.resetCamera();
                 this.visGeometry.removePathForAgentIndex(oldFollowObject);
             }
             if (this.hit) {
@@ -363,11 +407,12 @@ class Viewport extends React.Component<ViewportProps> {
                 this.visGeometry.clear();
                 this.visGeometry.resetMapping();
                 // skip fetch if local file
-                const p = simulariumController.isLocalFile ? Promise.resolve() :
-                this.visGeometry.mapFromJSON(
-                    simulariumController.getFile(),
-                    getJsonUrl(simulariumController.getFile())
-                );
+                const p = simulariumController.isLocalFile
+                    ? Promise.resolve()
+                    : this.visGeometry.mapFromJSON(
+                          simulariumController.getFile(),
+                          getJsonUrl(simulariumController.getFile())
+                      );
 
                 p.then(() => {
                     this.visGeometry.render(totalElapsedTime);
