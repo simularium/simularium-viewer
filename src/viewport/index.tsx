@@ -164,7 +164,6 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         this.stats.showPanel(1);
 
         this.handlers = {
-            click: this.handleClickStart,
             touchstart: this.handleTouchStart,
             touchend: this.handleTouchEnd,
             mousedown: this.handleClickStart,
