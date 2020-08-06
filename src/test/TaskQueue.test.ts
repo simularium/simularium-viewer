@@ -2,16 +2,6 @@ import "regenerator-runtime/runtime";
 
 import TaskQueue from "../simularium/worker/TaskQueue";
 
-const addButThrowOdd = (x, y) => {
-    const resultPromise = new Promise((resolve, reject) => {
-        if ((x + y) % 2) {
-            throw "Odd sums are thrown";
-        }
-        resolve(x + y);
-    });
-    return resultPromise;
-};
-
 const delay = t => {
     const resultPromise = new Promise((resolve, reject) => {
         setTimeout(() => resolve(t), t);
@@ -108,6 +98,15 @@ describe("TaskQueue module", () => {
         await expect(p5).resolves.toEqual(12);
     });
     test("it handles the case when some tasks throw", async () => {
+        const addButThrowOdd = (x, y) => {
+            const resultPromise = new Promise((resolve, reject) => {
+                if ((x + y) % 2) {
+                    throw "Odd sums are thrown";
+                }
+                resolve(x + y);
+            });
+            return resultPromise;
+        };
         const q = new TaskQueue();
         const p0 = q.enqueue(() => addButThrowOdd(1, 2));
         const p1 = q.enqueue(() => addButThrowOdd(2, 4));
@@ -155,14 +154,31 @@ describe("TaskQueue module", () => {
         q.stopAll();
         expect(q.getLength()).toBe(0);
 
-        await expect(p4).rejects.toEqual("Cancelled");
-        await expect(p5).rejects.toEqual("Cancelled");
-        await expect(p0).resolves.toBe(1000);
-        await expect(p1).resolves.toBe(1001);
-        await expect(p2).resolves.toBe(1002);
-        await expect(p3).resolves.toBe(1003);
+        p0.then(value => {
+            expect(value).toBe(1000);
+        });
+        p1.then(value => {
+            expect(value).toBe(1001);
+        });
+        p2.then(value => {
+            expect(value).toBe(1002);
+        });
+        p3.then(value => {
+            expect(value).toBe(1003);
+        });
+        p4.then(null, error => {
+            expect(error).toBe("Cancelled");
+        });
+        p5.then(null, error => {
+            expect(error).toBe("Cancelled");
+        });
     });
     test("it can queue new tasks after cancelling", async () => {
+        // enqueue 6 items
+        // cancel queue
+        // then enqueue another.
+        // We expect the first 4 times to complete, the next two rejected, and the last to complete.
+
         const q = new TaskQueue();
         const p0 = q.enqueue(() => delay(1000));
         const p1 = q.enqueue(() => delay(1001));
@@ -178,12 +194,26 @@ describe("TaskQueue module", () => {
         const p6 = q.enqueue(() => delay(1006));
         expect(q.getLength()).toBe(1);
 
-        await expect(p4).rejects.toEqual("Cancelled");
-        await expect(p5).rejects.toEqual("Cancelled");
-        await expect(p0).resolves.toBe(1000);
-        await expect(p1).resolves.toBe(1001);
-        await expect(p2).resolves.toBe(1002);
-        await expect(p3).resolves.toBe(1003);
-        await expect(p6).resolves.toBe(1006);
+        p0.then(value => {
+            expect(value).toBe(1000);
+        });
+        p1.then(value => {
+            expect(value).toBe(1001);
+        });
+        p2.then(value => {
+            expect(value).toBe(1002);
+        });
+        p3.then(value => {
+            expect(value).toBe(1003);
+        });
+        p4.then(null, error => {
+            expect(error).toBe("Cancelled");
+        });
+        p5.then(null, error => {
+            expect(error).toBe("Cancelled");
+        });
+        p6.then(value => {
+            expect(value).toBe(1006);
+        });
     });
 });
