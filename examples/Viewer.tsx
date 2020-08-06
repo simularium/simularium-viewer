@@ -12,7 +12,7 @@ const netConnectionSettings = {
 interface ViewerState {
     highlightId: number;
     pauseOn: number;
-    particleTypeIds: string[];
+    particleTypeNames: string[];
     currentFrame: number;
     currentTime: number;
     height: number;
@@ -34,7 +34,7 @@ let currentTime = 0;
 const intialState = {
     highlightId: -1,
     pauseOn: -1,
-    particleTypeIds: [],
+    particleTypeNames: [],
     currentFrame: 0,
     currentTime: 0,
     height: 800,
@@ -73,7 +73,7 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public handleJsonMeshData(jsonData): void {
-        this.setState({ particleTypeIds: Object.keys(jsonData) });
+        //this.setState({ particleTypeIds: Object.keys(jsonData) });
     }
 
     public handleTimeChange(timeData): void {
@@ -110,6 +110,10 @@ class Viewer extends React.Component<{}, ViewerState> {
 
     public handleScrubTime(event): void {
         simulariumController.gotoTime(event.target.value);
+    }
+
+    public handleUIDisplayData(data): void {
+        this.setState({ particleTypeNames: Object.keys(jsonData) });
     }
 
     public gotoNextFrame(): void {
@@ -205,7 +209,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                     }
                 >
                     <option value="-1">None</option>
-                    {this.state.particleTypeIds.map((id, i) => {
+                    {this.state.particleTypeNames.map((id, i) => {
                         return (
                             <option key={id} value={id}>
                                 {id}
@@ -245,6 +249,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                     onTrajectoryFileInfoChanged={this.handleTrajectoryInfo.bind(
                         this
                     )}
+                    onUIDisplayDataChanged={this.handleUIDisplayData.bind(this)}
                     highlightedParticleType={this.state.highlightId}
                     loadInitialData={true}
                     showMeshes={this.state.showMeshes}

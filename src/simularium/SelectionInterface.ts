@@ -17,6 +17,18 @@ export interface SelectionStateInfo {
     hiddenTags: string[];
 }
 
+interface DisplayStateEntry {
+    name: string;
+    id: string;
+}
+
+interface UIDisplayEntry {
+    name: string;
+    display_states: DisplayStateEntry[];
+}
+
+export type UIDisplayData = UIDisplayEntry[];
+
 class SelectionInterface {
     private entries: Map<string, IdMapEntry>;
 
@@ -43,6 +55,8 @@ class SelectionInterface {
     }
 
     public parse(idNameMapping: IdMap): void {
+        this.clear();
+
         Object.keys(idNameMapping).forEach(id => {
             this.decode(idNameMapping[id], parseInt(id));
         });
@@ -144,6 +158,32 @@ class SelectionInterface {
         });
 
         return indices;
+    }
+
+    public clear(): void {
+        this.entries = new Map<string, IdMapEntry>();
+    }
+
+    public getUIDisplayData(): UIDisplayData {
+        let uiDisplayData: UIDisplayData = [];
+
+        Object.keys(this.entries).forEach(name => {
+            const display_states: DisplayStateEntry[] = [];
+            let uiEntry = { name: name, display_states: display_states };
+            this.entries[name].forEach(entry => {
+                entry.tags.forEach(tag => {
+                    const display_state: DisplayStateEntry = {
+                        name: tag,
+                        id: tag,
+                    };
+                    uiEntry.display_states.push(display_state);
+                });
+            });
+
+            uiDisplayData.push(uiEntry);
+        });
+
+        return uiDisplayData;
     }
 }
 

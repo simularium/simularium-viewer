@@ -118,4 +118,13 @@ describe("SelectionInterface module", () => {
             expect(ids).toEqual([2, 3, 4]);
         });
     });
+
+    describe("UI Display Data", () => {
+        test("Doesn't crash", () => {
+            const si = new SelectionInterface();
+            si.parse(idMapping);
+
+            const uiDisplayData = si.getUIDisplayData();
+        });
+    });
 });
