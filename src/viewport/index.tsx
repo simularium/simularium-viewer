@@ -74,6 +74,9 @@ function getJsonUrl(trajectoryName: string): string {
     return `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${trajectoryName}.json`;
 }
 
+// max time in milliseconds for a mouse/touch interaction to be considered a click;
+const MAX_CLICK_TIME = 500;
+
 class Viewport extends React.Component<ViewportProps, ViewportState> {
     private visGeometry: VisGeometry;
     private lastRenderTime: number;
@@ -296,7 +299,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
     public isClick = (thisClick: Click): boolean => {
         const { lastClick } = this.state;
 
-        if (Date.now() - lastClick.time > 500) {
+        if (Date.now() - lastClick.time > MAX_CLICK_TIME) {
             // long click
             return false;
         }
