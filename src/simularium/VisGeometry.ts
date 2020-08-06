@@ -326,6 +326,11 @@ class VisGeometry {
     }
 
     public setHighlightByIds(ids: number[]): void {
+        // -1 is being used to indicate no selection
+        ids = ids.filter(function(x) {
+            return x > -1;
+        });
+
         this.highlightedIds = ids;
 
         // go over all objects and update material
@@ -334,7 +339,7 @@ class VisGeometry {
             const visAgent = this.visAgents[i];
             if (visAgent.active) {
                 const isHighlighted =
-                    this.highlightedIds &&
+                    this.highlightedIds.length === 0 ||
                     this.highlightedIds.includes(visAgent.typeId);
                 visAgent.setSelected(isHighlighted);
             }
