@@ -10,6 +10,8 @@ const netConnectionSettings = {
 };
 
 interface ViewerState {
+    selectedName: string;
+    selectedTag: string;
     pauseOn: number;
     particleTypeNames: string[];
     particleTypeTags: string[];
@@ -21,6 +23,7 @@ interface ViewerState {
     showPaths: boolean;
     timeStep: number;
     totalDuration: number;
+    uiDisplayData: UIDisplayData;
 }
 
 const simulariumController = new SimulariumController({
@@ -32,6 +35,8 @@ let currentFrame = 0;
 let currentTime = 0;
 
 const intialState = {
+    selectedTag: "UI_VAR_ALL_TAGS",
+    selectedName: "UI_VAR_ALL_NAMES",
     pauseOn: -1,
     particleTypeNames: [],
     particleTypeTags: [],
@@ -88,6 +93,9 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public highlightParticleTypeByName(name): void {
+        this.setState({ selectedName: name });
+        this.highlightParticleTypeByTag("UI_VAR_ALL_TAGS");
+
         if(name === "UI_VAR_ALL_NAMES") {
           this.setState(prevState => ({
             selectionStateInfo: {
@@ -95,8 +103,6 @@ class Viewer extends React.Component<{}, ViewerState> {
               highlightedNames: [], // specify none, show all that match tags
             }
           }));
-
-          console.log(this.state.selectionStateInfo);
         } else {
           this.setState(prevState => ({
             selectionStateInfo: {
@@ -108,6 +114,8 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public highlightParticleTypeByTag(tag): void {
+        this.setState({ selectedTag: tag });
+
         if(tag === "UI_VAR_ALL_TAGS") {
           this.setState(prevState => ({
             selectionStateInfo: {
@@ -148,9 +156,12 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public handleUIDisplayData(uiDisplayData): void {
+
+        console.log(this.state.uiDisplayData);
         // This is a bad example, a more sensible front-end would probably
         //  store the tags associated w/ the names they are attached to
         this.setState({ particleTypeNames: uiDisplayData.map(a => a.name) });
+        this.setState({ uiDisplayData: uiDisplayData });
 
         const tagsArrArr = uiDisplayData.map(a => a.display_states.map(b => b.id));
         const allTags = [].concat.apply([], tagsArrArr);
@@ -164,6 +175,36 @@ class Viewer extends React.Component<{}, ViewerState> {
 
     public gotoPreviousFrame(): void {
         simulariumController.gotoTime(currentTime - this.state.timeStep - 1e-9);
+    }
+
+    private tagOptions() {
+      let optionsDom = {};
+
+      if(this.state.selectedName === "UI_VAR_ALL_NAMES"){
+        optionsDom = this.state.particleTypeTags.map((id, i) => {
+            return (
+                <option key={id} value={id}>
+                    {id}
+                </option>
+            );
+        });
+      } else {
+        let matches = this.state.uiDisplayData.filter(entry => {
+          return entry.name === this.state.selectedName
+        });
+
+        if(!matches.length > 0) { return; }
+
+        optionsDom = matches[0].display_states.map((state, i) => {
+            return (
+                <option key={state.id} value={state.id}>
+                    {state.id}
+                </option>
+            );
+        });
+      }
+
+      return optionsDom;
     }
 
     public render(): JSX.Element {
@@ -249,6 +290,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                     onChange={event =>
                         this.highlightParticleTypeByName(event.target.value)
                     }
+                    value={this.state.selectedName}
                 >
                     <option value="UI_VAR_ALL_NAMES">All Types</option>
                     {this.state.particleTypeNames.map((id, i) => {
@@ -263,15 +305,10 @@ class Viewer extends React.Component<{}, ViewerState> {
                     onChange={event =>
                         this.highlightParticleTypeByTag(event.target.value)
                     }
+                    value={this.state.selectedTag}
                 >
                     <option value="UI_VAR_ALL_TAGS">All Tags</option>
-                    {this.state.particleTypeTags.map((id, i) => {
-                        return (
-                            <option key={id} value={id}>
-                                {id}
-                            </option>
-                        );
-                    })}
+                    {this.tagOptions()}
                 </select>
                 <button
                     onClick={() =>

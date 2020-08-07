@@ -56,11 +56,12 @@ class SelectionInterface {
 
     public parse(idNameMapping: IdMap): void {
         this.clear();
-        const uniqueNames = [...new Set(Object.keys(idNameMapping))];
 
-        uniqueNames.forEach(id => {
+        Object.keys(idNameMapping).forEach(id => {
             this.decode(idNameMapping[id], parseInt(id));
         });
+
+        console.log(this.entries);
     }
 
     public decode(encodedName: string, idParam?: number): void {
@@ -186,8 +187,15 @@ class SelectionInterface {
         Object.keys(this.entries).forEach(name => {
             const display_states: DisplayStateEntry[] = [];
             let uiEntry = { name: name, display_states: display_states };
+            let encounteredTags = [];
+
             this.entries[name].forEach(entry => {
                 entry.tags.forEach(tag => {
+                    if (encounteredTags.includes(tag)) {
+                        return;
+                    }
+                    encounteredTags.push(tag);
+
                     const display_state: DisplayStateEntry = {
                         name: tag,
                         id: tag,
