@@ -61,7 +61,7 @@ interface AgentTypeGeometry {
     pdbName: string;
 }
 
-interface MeshModel {
+interface MeshLoadRequest {
     mesh: Object3D;
     cancelled: boolean;
 }
@@ -98,7 +98,7 @@ class VisGeometry {
     public backgroundColor: Color;
     public pathEndColor: Color;
     public visGeomMap: Map<number, AgentTypeGeometry>;
-    public meshRegistry: Map<string | number, MeshModel>;
+    public meshRegistry: Map<string | number, MeshLoadRequest>;
     public pdbRegistry: Map<string | number, PDBModel>;
     public meshLoadAttempted: Map<string, boolean>;
     public pdbLoadAttempted: Map<string, boolean>;
@@ -142,7 +142,7 @@ class VisGeometry {
         this.resetCameraOnNewScene = true;
 
         this.visGeomMap = new Map<number, AgentTypeGeometry>();
-        this.meshRegistry = new Map<string | number, MeshModel>();
+        this.meshRegistry = new Map<string | number, MeshLoadRequest>();
         this.pdbRegistry = new Map<string | number, PDBModel>();
         this.meshLoadAttempted = new Map<string, boolean>();
         this.pdbLoadAttempted = new Map<string, boolean>();
@@ -1387,7 +1387,7 @@ class VisGeometry {
         this.hideUnusedAgents(0);
     }
 
-    public resetAllGeometry(): void {
+    private cancelAllAsyncProcessing(): void {
         // don't process any queued requests
         TaskQueue.stopAll();
         // signal to cancel any pending pdbs
@@ -1398,6 +1398,10 @@ class VisGeometry {
         this.meshRegistry.forEach((value, key) => {
             value.cancelled = true;
         });
+    }
+
+    public resetAllGeometry(): void {
+        this.cancelAllAsyncProcessing();
 
         this.unfollow();
         this.removeAllPaths();
