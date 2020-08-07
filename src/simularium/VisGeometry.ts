@@ -520,7 +520,12 @@ class VisGeometry {
         this.pdbRegistry.set(pdbName, pdbmodel);
         pdbmodel.download(`${assetPath}/${pdbName}`).then(
             () => {
-                if (!pdbmodel.isCancelled()) {
+                const pdbEntry = this.pdbRegistry.get(pdbName);
+                if (
+                    pdbEntry &&
+                    pdbEntry === pdbmodel &&
+                    !pdbEntry.isCancelled()
+                ) {
                     this.logger.debug("Finished loading pdb: ", pdbName);
                     this.onNewPdb(pdbName);
                 }
