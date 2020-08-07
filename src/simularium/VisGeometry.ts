@@ -1395,19 +1395,23 @@ class VisGeometry {
     }
 
     private cancelAllAsyncProcessing(): void {
+        // note that this leaves cancelled things in the registries.
+        // This should be called before the registries are cleared and probably
+        // only makes sense to do if they are indeed about to be cleared.
+
         // don't process any queued requests
         TaskQueue.stopAll();
         // signal to cancel any pending pdbs
-        this.pdbRegistry.forEach((value, key) => {
+        this.pdbRegistry.forEach(value => {
             value.setCancelled();
         });
         // signal to cancel any pending mesh downloads
-        this.meshRegistry.forEach((value, key) => {
+        this.meshRegistry.forEach(value => {
             value.cancelled = true;
         });
     }
 
-    public resetAllGeometry(): void {
+    private resetAllGeometry(): void {
         this.cancelAllAsyncProcessing();
 
         this.unfollow();
