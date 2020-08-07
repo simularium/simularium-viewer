@@ -124,7 +124,7 @@ describe("SelectionInterface module", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
 
-            const uiDisplayData = si.getUIDisplayData();
+            si.getUIDisplayData();
         });
     });
 });

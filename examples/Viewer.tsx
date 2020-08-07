@@ -159,7 +159,7 @@ class Viewer extends React.Component<{}, ViewerState> {
         this.setState({ particleTypeNames: uiDisplayData.map(a => a.name) });
         this.setState({ uiDisplayData: uiDisplayData });
 
-        const tagsArrArr = uiDisplayData.map(a => a.display_states.map(b => b.id));
+        const tagsArrArr = uiDisplayData.map(a => a.displayStates.map(b => b.id));
         const allTags = [].concat.apply([], tagsArrArr);
         const uniqueTags = [... new Set(allTags)];
         this.setState({ particleTypeTags: uniqueTags });
@@ -191,7 +191,7 @@ class Viewer extends React.Component<{}, ViewerState> {
 
         if(!matches.length > 0) { return; }
 
-        optionsDom = matches[0].display_states.map((state, i) => {
+        optionsDom = matches[0].displayStates.map((state, i) => {
             return (
                 <option key={state.id} value={state.id}>
                     {state.id}

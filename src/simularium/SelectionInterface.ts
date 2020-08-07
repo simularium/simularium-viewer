@@ -24,7 +24,7 @@ interface DisplayStateEntry {
 
 interface UIDisplayEntry {
     name: string;
-    display_states: DisplayStateEntry[];
+    displayStates: DisplayStateEntry[];
 }
 
 export type UIDisplayData = UIDisplayEntry[];
@@ -120,7 +120,7 @@ class SelectionInterface {
      */
     public getHighlightedIds(info: SelectionStateInfo): number[] {
         let names = info.highlightedNames || [];
-        let tags: string[] = info.highlightedTags || [];
+        const tags: string[] = info.highlightedTags || [];
         let indices: number[] = [];
 
         // If no name is specified, search all entries for matching tags
@@ -149,7 +149,7 @@ class SelectionInterface {
     public getVisibleIds(info: SelectionStateInfo): number[] {
         const hiddenNames = info.hiddenNames || [];
         const hiddenTags = info.hiddenTags || [];
-        let indices: number[] = [];
+        const indices: number[] = [];
 
         Object.keys(this.entries).forEach(name => {
             // If the name is on the hidden list...
@@ -180,12 +180,12 @@ class SelectionInterface {
     }
 
     public getUIDisplayData(): UIDisplayData {
-        let uiDisplayData: UIDisplayData = [];
+        const uiDisplayData: UIDisplayData = [];
 
         Object.keys(this.entries).forEach(name => {
-            const display_states: DisplayStateEntry[] = [];
-            let uiEntry = { name: name, display_states: display_states };
-            let encounteredTags = [];
+            const displayStates: DisplayStateEntry[] = [];
+            const uiEntry = { name: name, displayStates: displayStates };
+            const encounteredTags: string[] = [];
 
             this.entries[name].forEach(entry => {
                 entry.tags.forEach(tag => {
@@ -194,11 +194,11 @@ class SelectionInterface {
                     }
                     encounteredTags.push(tag);
 
-                    const display_state: DisplayStateEntry = {
+                    const displayState: DisplayStateEntry = {
                         name: tag,
                         id: tag,
                     };
-                    uiEntry.display_states.push(display_state);
+                    uiEntry.displayStates.push(displayState);
                 });
             });
 
