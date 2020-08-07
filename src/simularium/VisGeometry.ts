@@ -532,8 +532,10 @@ class VisGeometry {
             },
             reason => {
                 this.pdbRegistry.delete(pdbName);
-                console.error(reason);
-                this.logger.debug("Failed to load pdb: ", pdbName);
+                if (reason !== "Cancelled") {
+                    console.error(reason);
+                    this.logger.debug("Failed to load pdb: ", pdbName);
+                }
             }
         );
     }
