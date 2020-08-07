@@ -60,8 +60,6 @@ class SelectionInterface {
         Object.keys(idNameMapping).forEach(id => {
             this.decode(idNameMapping[id], parseInt(id));
         });
-
-        console.log(this.entries);
     }
 
     public decode(encodedName: string, idParam?: number): void {

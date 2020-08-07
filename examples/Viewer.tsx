@@ -156,10 +156,6 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public handleUIDisplayData(uiDisplayData): void {
-
-        console.log(this.state.uiDisplayData);
-        // This is a bad example, a more sensible front-end would probably
-        //  store the tags associated w/ the names they are attached to
         this.setState({ particleTypeNames: uiDisplayData.map(a => a.name) });
         this.setState({ uiDisplayData: uiDisplayData });
 
