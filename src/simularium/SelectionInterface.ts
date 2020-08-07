@@ -56,8 +56,9 @@ class SelectionInterface {
 
     public parse(idNameMapping: IdMap): void {
         this.clear();
+        const uniqueNames = [...new Set(Object.keys(idNameMapping))];
 
-        Object.keys(idNameMapping).forEach(id => {
+        uniqueNames.forEach(id => {
             this.decode(idNameMapping[id], parseInt(id));
         });
     }
@@ -79,7 +80,8 @@ class SelectionInterface {
             throw Error("invalid name: " + encodedName);
         }
 
-        const entry = { id: id, name: name, tags: tags };
+        const uniqueTags = [...new Set(tags)];
+        const entry = { id: id, name: name, tags: uniqueTags };
 
         if (!Object.keys(this.entries).includes(name)) {
             this.entries[name] = [];
@@ -118,12 +120,22 @@ class SelectionInterface {
      * selection state info, it will be considered hilighted
      */
     public getHighlightedIds(info: SelectionStateInfo): number[] {
-        const names = info.highlightedNames;
-        const tags = info.highlightedTags;
+        let names = info.highlightedNames || [];
+        let tags: string[] = info.highlightedTags || [];
         let indices: number[] = [];
 
+        // If no name is specified, search all entries for matching tags
+        if (names.length === 0) {
+            names = Object.keys(this.entries);
+        }
+
+        // If there are tags but no name,
+        //  search all names for matching tags
+
         Object.keys(this.entries).forEach(name => {
-            if (names.includes(name)) {
+            if (!names || names.length === 0 || names.includes(name)) {
+                // If no tags are specified, this will return all register a
+                //  match for all entries
                 indices = indices.concat(this.getIds(name, tags));
             }
         });
@@ -136,13 +148,17 @@ class SelectionInterface {
      * or a tag specified, it will be considered hidden
      */
     public getVisibleIds(info: SelectionStateInfo): number[] {
-        const hiddenNames = info.hiddenNames;
-        const hiddenTags = info.hiddenTags;
+        const hiddenNames = info.hiddenNames || [];
+        const hiddenTags = info.hiddenTags || [];
         let indices: number[] = [];
 
         Object.keys(this.entries).forEach(name => {
             // If the name is on the hidden list...
-            if (!hiddenNames.includes(name)) {
+            if (
+                !hiddenNames ||
+                hiddenNames.length === 0 ||
+                !hiddenNames.includes(name)
+            ) {
                 const entryList = this.entries[name];
 
                 entryList.forEach(entry => {

@@ -248,7 +248,6 @@ class Viewport extends React.Component<ViewportProps> {
 
         if(selectionStateInfo) {
           const ids = this.selectionInterface.getHighlightedIds(selectionStateInfo);
-          console.log(selectionStateInfo, " initiated highlight of ", ids);
           this.visGeometry.setHighlightByIds(ids);
         }
 
