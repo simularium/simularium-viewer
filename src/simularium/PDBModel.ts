@@ -94,7 +94,6 @@ class PDBModel {
             })
             .then(data => {
                 if (this.cancelled) {
-                    console.log("CANCELLED");
                     return Promise.reject("Cancelled");
                 }
                 // note pdb atom coordinates are in angstroms
