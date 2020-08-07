@@ -1,10 +1,7 @@
-// The input format consumed by this object
-interface IdMap {
-    [key: number]: string;
-}
+import { EncodedTypeMapping } from "./TrajectoryFileInfo";
 
 // An individual entry parsed from an encoded name
-interface IdMapEntry {
+interface DecodedTypeEntry {
     id: number;
     name: string;
     tags: string[];
@@ -30,10 +27,10 @@ interface UIDisplayEntry {
 export type UIDisplayData = UIDisplayEntry[];
 
 class SelectionInterface {
-    private entries: Map<string, IdMapEntry>;
+    private entries: Map<string, DecodedTypeEntry>;
 
     public constructor() {
-        this.entries = new Map<string, IdMapEntry>();
+        this.entries = new Map<string, DecodedTypeEntry>();
     }
 
     public containsName(name: string): boolean {
@@ -54,7 +51,7 @@ class SelectionInterface {
         return found;
     }
 
-    public parse(idNameMapping: IdMap): void {
+    public parse(idNameMapping: EncodedTypeMapping): void {
         this.clear();
 
         Object.keys(idNameMapping).forEach(id => {
@@ -176,7 +173,7 @@ class SelectionInterface {
     }
 
     public clear(): void {
-        this.entries = new Map<string, IdMapEntry>();
+        this.entries = new Map<string, DecodedTypeEntry>();
     }
 
     public getUIDisplayData(): UIDisplayData {
