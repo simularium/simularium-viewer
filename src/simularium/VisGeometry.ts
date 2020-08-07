@@ -551,6 +551,7 @@ class VisGeometry {
             object => {
                 const meshEntry = this.meshRegistry.get(meshName);
                 if ((meshEntry && meshEntry.cancelled) || !meshEntry) {
+                    this.meshRegistry.delete(meshName);
                     return;
                 }
 
