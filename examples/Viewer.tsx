@@ -180,34 +180,30 @@ class Viewer extends React.Component<{}, ViewerState> {
         simulariumController.gotoTime(currentTime - this.state.timeStep - 1e-9);
     }
 
-    private tagOptions() {
-      let optionsDom = {};
-
+    private getTagOptions(): string[] {
       if(this.state.selectedName === UI_VAR_ALL_NAMES){
-        optionsDom = this.state.particleTypeTags.map((id, i) => {
-            return (
-                <option key={id} value={id}>
-                    {id}
-                </option>
-            );
-        });
+        return this.state.particleTypeTags;
       } else {
         let matches = this.state.uiDisplayData.filter(entry => {
-          return entry.name === this.state.selectedName
+          return entry.name === this.state.selectedName;
         });
 
-        if(!matches.length > 0) { return; }
-
-        optionsDom = matches[0].displayStates.map((state, i) => {
-            return (
-                <option key={state.id} value={state.id}>
-                    {state.id}
-                </option>
-            );
-        });
+        if(matches) {
+          return matches[0].displayStates.map(state => { return state.id; });
+        } else {
+          return [];
+        }
       }
+    }
 
-      return optionsDom;
+    private getTagDom() {
+      return this.getTagOptions().map((id, i) => {
+          return (
+              <option key={id} value={id}>
+                  {id}
+              </option>
+          );
+      });
     }
 
     public render(): JSX.Element {
@@ -311,7 +307,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                     value={this.state.selectedTag}
                 >
                     <option value={UI_VAR_ALL_TAGS}>All Tags</option>
-                    {this.tagOptions()}
+                    {this.getTagDom()}
                 </select>
                 <button
                     onClick={() =>
