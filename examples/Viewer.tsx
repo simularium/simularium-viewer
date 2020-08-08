@@ -196,8 +196,8 @@ class Viewer extends React.Component<{}, ViewerState> {
       }
     }
 
-    private getTagDom() {
-      return this.getTagOptions().map((id, i) => {
+    private getOptionsDom(optionsArray) {
+      return optionsArray.map((id, i) => {
           return (
               <option key={id} value={id}>
                   {id}
@@ -307,7 +307,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                     value={this.state.selectedTag}
                 >
                     <option value={UI_VAR_ALL_TAGS}>All Tags</option>
-                    {this.getTagDom()}
+                    {this.getOptionsDom(this.getTagOptions())}
                 </select>
                 <button
                     onClick={() =>
