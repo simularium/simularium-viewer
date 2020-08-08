@@ -171,11 +171,8 @@ class SelectionInterface {
     }
 
     public getUIDisplayData(): UIDisplayData {
-        const uiDisplayData: UIDisplayData = [];
-
-        Object.keys(this.entries).forEach(name => {
+        return Object.keys(this.entries).map(name => {
             const displayStates: DisplayStateEntry[] = [];
-            const uiEntry = { name: name, displayStates: displayStates };
             const encounteredTags: string[] = [];
 
             this.entries[name].forEach(entry => {
@@ -189,14 +186,15 @@ class SelectionInterface {
                         name: tag,
                         id: tag,
                     };
-                    uiEntry.displayStates.push(displayState);
+                    displayStates.push(displayState);
                 });
             });
 
-            uiDisplayData.push(uiEntry);
+            return {
+                name,
+                displayStates,
+            };
         });
-
-        return uiDisplayData;
     }
 }
 
