@@ -38,17 +38,11 @@ class SelectionInterface {
     }
 
     public containsTag(tag: string): boolean {
-        let found = false;
-
-        Object.values(this.entries).forEach(entriesArr => {
-            entriesArr.forEach(entry => {
-                if (entry.tags.includes(tag)) {
-                    found = true;
-                }
+        return Object.values(this.entries).some(entriesArr => {
+            return entriesArr.some(entry => {
+                return entry.tags.includes(tag);
             });
         });
-
-        return found;
     }
 
     public parse(idNameMapping: EncodedTypeMapping): void {
