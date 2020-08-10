@@ -181,19 +181,19 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     private getTagOptions(): string[] {
-      if(this.state.selectedName === UI_VAR_ALL_NAMES){
-        return this.state.particleTypeTags;
-      } else {
-        let matches = this.state.uiDisplayData.filter(entry => {
-          return entry.name === this.state.selectedName;
-        });
-
-        if(matches) {
-          return matches[0].displayStates.map(state => { return state.id; });
+        if(this.state.selectedName === UI_VAR_ALL_NAMES){
+            return this.state.particleTypeTags;
         } else {
-          return [];
+            let matches = this.state.uiDisplayData.filter(entry => {
+                return entry.name === this.state.selectedName;
+            });
+
+            if(matches) {
+                return matches[0].displayStates.map(state => { return state.id; });
+            } else {
+                return [];
+            }
         }
-      }
     }
 
     private getOptionsDom(optionsArray) {
