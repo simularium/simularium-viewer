@@ -39,6 +39,16 @@ interface ViewportProps {
     selectionStateInfo: SelectionStateInfo;
 }
 
+interface Click {
+    x: number;
+    y: number;
+    time: number;
+}
+
+interface ViewportState {
+    lastClick: Click
+}
+
 interface TimeData {
     time: number;
     frameNumber: number;
@@ -65,7 +75,16 @@ function sortFrames(a: VisDataFrame, b: VisDataFrame): number {
     return a.frameNumber - b.frameNumber;
 }
 
-class Viewport extends React.Component<ViewportProps> {
+function getJsonUrl(trajectoryName: string): string {
+    return `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${trajectoryName}.json`;
+}
+
+// max time in milliseconds for a mouse/touch interaction to be considered a click;
+const MAX_CLICK_TIME = 300;
+// for float errors
+const CLICK_TOLERANCE = 1e-4;
+
+class Viewport extends React.Component<ViewportProps, ViewportState> {
     private visGeometry: VisGeometry;
     private selectionInterface: SelectionInterface;
     private lastRenderTime: number;
@@ -152,15 +171,25 @@ class Viewport extends React.Component<ViewportProps> {
         this.stats.showPanel(1);
 
         this.handlers = {
-            click: this.onPickObject,
+            touchstart: this.handleTouchStart,
+            touchend: this.handleTouchEnd,
+            mousedown: this.handleClickStart,
+            mouseup: this.handleMouseUp,
             dragover: this.onDragOver,
             drop: this.onDrop,
         };
         this.hit = false;
         this.animationRequestID = 0;
         this.lastRenderedAgentTime = -1;
-
         this.selectionInterface = new SelectionInterface();
+        this.state = {
+            lastClick: {
+                x: 0,
+                y: 0,
+                time: 0,
+            },
+        };
+
     }
 
     public componentDidMount(): void {
@@ -287,6 +316,79 @@ class Viewport extends React.Component<ViewportProps> {
         });
     };
 
+    public isClick = (thisClick: Click): boolean => {
+        const { lastClick } = this.state;
+        
+        if (Date.now() - lastClick.time > MAX_CLICK_TIME) {
+            // long click
+            return false;
+        }
+
+        if (Math.abs(thisClick.x - lastClick.x) > CLICK_TOLERANCE || Math.abs(thisClick.y - lastClick.y) > CLICK_TOLERANCE) {
+            // mouse moved just rotate the field
+            return false;
+        }
+        return true;
+    }
+
+    public handleTouchStart = (e: Event): void => {
+        const event = e as TouchEvent;
+        const touch = event.touches[0];
+        this.setState({
+            lastClick: {
+                x: touch.pageX,
+                y: touch.pageY,
+                time: Date.now(),
+            },
+        });
+    };
+
+    public handleTouchEnd = (e: Event): void => {
+        const event = e as TouchEvent;
+         const touch = event.changedTouches[0];
+         const thisClick = {
+             x: touch.pageX,
+             y: touch.pageY,
+             time: Date.now(),
+         };
+
+         if (this.isClick(thisClick)) {
+             // pass event to pick object because it was a true click and not a drag
+             const canvas = this.vdomRef.current;
+             if (!canvas) {
+                 return;
+             }
+             const r = canvas.getBoundingClientRect();
+             const offsetX = touch.clientX - r.left;
+             const offsetY = touch.clientY - r.top;
+             this.onPickObject(offsetX, offsetY);
+         }
+    };
+
+    public handleClickStart = (e: Event): void => {
+        const event = e as MouseEvent;
+        this.setState({
+            lastClick: {
+                x: event.x,
+                y: event.y,
+                time: Date.now(),
+            },
+        });
+    };
+
+    public handleMouseUp = (e: Event): void => {
+        const event = e as MouseEvent;
+        const thisClick = {
+            x: event.x,
+            y: event.y,
+            time: Date.now()
+        }
+        if (this.isClick(thisClick)) {
+            // pass event to pick object because it was a true click and not a drag
+            this.onPickObject(event.offsetX, event.offsetY);
+        }
+    };
+
     public addEventHandlersToCanvas(): void {
         forOwn(this.handlers, (handler, eventName) =>
             this.visGeometry.renderDom.addEventListener(
@@ -315,25 +417,27 @@ class Viewport extends React.Component<ViewportProps> {
         this.visGeometry.switchRenderStyle();
     }
 
-    public onPickObject(e: Event): void {
-        const event = e as MouseEvent;
-
+    public onPickObject(posX: number, posY: number): void {
         // TODO: intersect with scene's children not including lights?
         // can we select a smaller number of things to hit test?
         const oldFollowObject = this.visGeometry.getFollowObject();
         this.visGeometry.setFollowObject(NO_AGENT);
 
         // hit testing
-        const intersectedObject = this.visGeometry.hitTest(event);
+        const intersectedObject = this.visGeometry.hitTest(posX, posY);
         if (intersectedObject !== NO_AGENT) {
             this.hit = true;
-            if (oldFollowObject !== intersectedObject) {
+            if (
+                oldFollowObject !== intersectedObject &&
+                oldFollowObject !== NO_AGENT
+            ) {
                 this.visGeometry.removePathForAgentIndex(oldFollowObject);
             }
             this.visGeometry.setFollowObject(intersectedObject);
             this.visGeometry.addPathForAgentIndex(intersectedObject);
         } else {
             if (oldFollowObject !== NO_AGENT) {
+                this.resetCamera();
                 this.visGeometry.removePathForAgentIndex(oldFollowObject);
             }
             if (this.hit) {
