@@ -368,9 +368,9 @@ class VisGeometry {
             .filter(({ 1: v }) => v.meshName === meshName)
             .map(([k]) => k);
 
-        // assuming the meshGeom has already been added to the registry
-        const meshGeom = this.meshRegistry.get(meshName);
-        if (meshGeom === undefined) {
+        // assuming the meshLoadRequest has already been added to the registry
+        const meshLoadRequest = this.meshRegistry.get(meshName);
+        if (meshLoadRequest === undefined) {
             console.error(`Mesh name ${meshName} not found in mesh registry`);
             return;
         }
@@ -381,7 +381,7 @@ class VisGeometry {
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
             const visAgent = this.visAgents[i];
             if (typeIds.includes(visAgent.typeId)) {
-                this.resetAgentGeometry(visAgent, meshGeom.mesh);
+                this.resetAgentGeometry(visAgent, meshLoadRequest.mesh);
                 visAgent.setColor(
                     this.getColorForTypeId(visAgent.typeId),
                     this.getColorIndexForTypeId(visAgent.typeId)
@@ -549,8 +549,11 @@ class VisGeometry {
         objLoader.load(
             `${assetPath}/${meshName}`,
             object => {
-                const meshEntry = this.meshRegistry.get(meshName);
-                if ((meshEntry && meshEntry.cancelled) || !meshEntry) {
+                const meshLoadRequest = this.meshRegistry.get(meshName);
+                if (
+                    (meshLoadRequest && meshLoadRequest.cancelled) ||
+                    !meshLoadRequest
+                ) {
                     this.meshRegistry.delete(meshName);
                     return;
                 }
@@ -861,9 +864,9 @@ class VisGeometry {
             if (entry) {
                 const meshName = entry.meshName;
                 if (meshName && this.meshRegistry.has(meshName)) {
-                    const mesh = this.meshRegistry.get(meshName);
-                    if (mesh) {
-                        return mesh.mesh;
+                    const meshLoadRequest = this.meshRegistry.get(meshName);
+                    if (meshLoadRequest) {
+                        return meshLoadRequest.mesh;
                     }
                 }
             }
