@@ -10,6 +10,9 @@ import { forOwn } from "lodash";
 import {
     VisGeometry,
     TrajectoryFileInfo,
+    SelectionInterface,
+    SelectionStateInfo,
+    UIDisplayData,
     NO_AGENT,
     VisDataMessage,
 } from "../simularium";
@@ -28,11 +31,12 @@ interface ViewportProps {
     onTrajectoryFileInfoChanged: (
         cachedData: TrajectoryFileInfo
     ) => void | undefined;
-    highlightedParticleType: number;
+    onUIDisplayDataChanged: (data: UIDisplayData) => void | undefined;
     loadInitialData: boolean;
     showMeshes: boolean;
     showPaths: boolean;
     showBounds: boolean;
+    selectionStateInfo: SelectionStateInfo;
 }
 
 interface Click {
@@ -82,6 +86,7 @@ const CLICK_TOLERANCE = 1e-4;
 
 class Viewport extends React.Component<ViewportProps, ViewportState> {
     private visGeometry: VisGeometry;
+    private selectionInterface: SelectionInterface;
     private lastRenderTime: number;
     private startTime: number;
     private vdomRef: React.RefObject<HTMLInputElement>;
@@ -97,7 +102,6 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         backgroundColor: [0.121569, 0.13333, 0.17647],
         height: 800,
         width: 800,
-        highlightedParticleType: -1,
         loadInitialData: true,
         showMeshes: true,
         showPaths: true,
@@ -177,6 +181,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         this.hit = false;
         this.animationRequestID = 0;
         this.lastRenderedAgentTime = -1;
+        this.selectionInterface = new SelectionInterface();
         this.state = {
             lastClick: {
                 x: 0,
@@ -184,12 +189,14 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                 time: 0,
             },
         };
+
     }
 
     public componentDidMount(): void {
         const {
             simulariumController,
             onTrajectoryFileInfoChanged,
+            onUIDisplayDataChanged,
             loadInitialData,
             onJsonDataArrived,
         } = this.props;
@@ -206,7 +213,11 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             msg: TrajectoryFileInfo
         ) => {
             this.visGeometry.handleTrajectoryData(msg);
+            this.selectionInterface.parse(msg.typeMapping);
             onTrajectoryFileInfoChanged(msg);
+
+            const uiDisplayData = this.selectionInterface.getUIDisplayData();
+            onUIDisplayDataChanged(uiDisplayData);
         };
 
         simulariumController.connect().then(() => {
@@ -259,8 +270,14 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             showMeshes,
             showPaths,
             showBounds,
+            selectionStateInfo
         } = this.props;
-        this.visGeometry.setHighlightById(this.props.highlightedParticleType);
+
+        if(selectionStateInfo) {
+          const ids = this.selectionInterface.getHighlightedIds(selectionStateInfo);
+          this.visGeometry.setHighlightByIds(ids);
+        }
+
         this.visGeometry.setShowMeshes(showMeshes);
         this.visGeometry.setShowPaths(showPaths);
         this.visGeometry.setShowBounds(showBounds);
