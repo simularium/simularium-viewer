@@ -75,7 +75,9 @@ function getJsonUrl(trajectoryName: string): string {
 }
 
 // max time in milliseconds for a mouse/touch interaction to be considered a click;
-const MAX_CLICK_TIME = 500;
+const MAX_CLICK_TIME = 300;
+// for float errors
+const CLICK_TOLERANCE = 1e-4;
 
 class Viewport extends React.Component<ViewportProps, ViewportState> {
     private visGeometry: VisGeometry;
@@ -297,12 +299,13 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
     public isClick = (thisClick: Click): boolean => {
         const { lastClick } = this.state;
-
+        
         if (Date.now() - lastClick.time > MAX_CLICK_TIME) {
             // long click
             return false;
         }
-        if (thisClick.x - lastClick.x !== 0 && thisClick.y - lastClick.y !== 0) {
+
+        if (Math.abs(thisClick.x - lastClick.x) > CLICK_TOLERANCE || Math.abs(thisClick.y - lastClick.y) > CLICK_TOLERANCE) {
             // mouse moved just rotate the field
             return false;
         }
