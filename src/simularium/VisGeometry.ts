@@ -6,6 +6,7 @@ import VisAgent from "./VisAgent";
 import VisTypes from "./VisTypes";
 import PDBModel from "./PDBModel";
 import TaskQueue from "./worker/TaskQueue";
+import { REASON_CANCELLED } from "./worker/TaskQueue";
 
 import {
     Box3,
@@ -532,7 +533,7 @@ class VisGeometry {
             },
             reason => {
                 this.pdbRegistry.delete(pdbName);
-                if (reason !== "Cancelled") {
+                if (reason !== REASON_CANCELLED) {
                     console.error(reason);
                     this.logger.debug("Failed to load pdb: ", pdbName);
                 }

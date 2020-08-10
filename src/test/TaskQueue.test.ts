@@ -1,6 +1,6 @@
 import "regenerator-runtime/runtime";
 
-import { TaskQueue } from "../simularium/worker/TaskQueue";
+import { TaskQueue, REASON_CANCELLED } from "../simularium/worker/TaskQueue";
 
 const delay = t => {
     const resultPromise = new Promise(resolve => {
@@ -167,10 +167,10 @@ describe("TaskQueue module", () => {
             expect(value).toBe(1003);
         });
         p4.then(null, error => {
-            expect(error).toBe("Cancelled");
+            expect(error).toBe(REASON_CANCELLED);
         });
         p5.then(null, error => {
-            expect(error).toBe("Cancelled");
+            expect(error).toBe(REASON_CANCELLED);
         });
     });
     test("it can queue new tasks after cancelling", async () => {
@@ -207,10 +207,10 @@ describe("TaskQueue module", () => {
             expect(value).toBe(1003);
         });
         p4.then(null, error => {
-            expect(error).toBe("Cancelled");
+            expect(error).toBe(REASON_CANCELLED);
         });
         p5.then(null, error => {
-            expect(error).toBe("Cancelled");
+            expect(error).toBe(REASON_CANCELLED);
         });
         p6.then(value => {
             expect(value).toBe(1006);

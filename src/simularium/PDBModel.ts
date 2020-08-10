@@ -8,6 +8,7 @@ import KMeansWorkerModule from "./worker/KMeansWorker";
 import { KMeansWorkerType } from "./worker/KMeansWorker";
 
 import TaskQueue from "./worker/TaskQueue";
+import { REASON_CANCELLED } from "./worker/TaskQueue";
 
 interface PDBAtom {
     serial?: number;
@@ -94,7 +95,7 @@ class PDBModel {
             })
             .then(data => {
                 if (this.cancelled) {
-                    return Promise.reject("Cancelled");
+                    return Promise.reject(REASON_CANCELLED);
                 }
                 // note pdb atom coordinates are in angstroms
                 // 1 nm is 10 angstroms
