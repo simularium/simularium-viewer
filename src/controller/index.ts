@@ -13,7 +13,13 @@ interface SimulariumControllerParams {
     netConnection?: NetConnection;
     netConnectionSettings?: NetConnectionParams;
     trajectoryPlaybackFile?: string;
+    trajectoryGeometryFile?: string;
+    // a URL prefix to locate the assets in the trajectoryGeometryFile
+    assetLocation?: string;
 }
+
+const DEFAULT_ASSET_PREFIX =
+    "https://aics-agentviz-data.s3.us-east-2.amazonaws.com/meshes/obj";
 
 export default class SimulariumController {
     public netConnection: NetConnection;
@@ -23,6 +29,10 @@ export default class SimulariumController {
     private fileChanged: boolean;
     private playBackFile: string;
     private localFile: boolean;
+    // used to map geometry to agent types
+    private geometryFile: string;
+    // used to locate geometry assets
+    private assetPrefix: string;
 
     public constructor(params: SimulariumControllerParams) {
         this.visData = new VisData();
@@ -44,6 +54,26 @@ export default class SimulariumController {
         this.isPaused = false;
         this.fileChanged = false;
         this.localFile = false;
+        this.geometryFile = this.resolveGeometryFile(
+            params.trajectoryGeometryFile || "",
+            this.playBackFile
+        );
+        this.assetPrefix = params.assetLocation || DEFAULT_ASSET_PREFIX;
+    }
+
+    private resolveGeometryFile(
+        geometryFile: string,
+        playbackFileName: string
+    ): string {
+        // if we got a geometryFile, assume it's a complete URL
+        if (geometryFile) {
+            return geometryFile;
+        }
+        // if there's no geometryFile, then make an assumption about the playbackFileName
+        if (playbackFileName) {
+            return `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${playbackFileName}.json`;
+        }
+        return "";
     }
 
     public get hasChangedFile(): boolean {
@@ -124,12 +154,19 @@ export default class SimulariumController {
     public changeFile(
         newFileName: string,
         isLocalFile = false,
-        framesToCache?: VisDataMessage
+        framesToCache?: VisDataMessage,
+        geometryFile?: string,
+        assetPrefix?: string
     ): void {
         if (newFileName !== this.playBackFile) {
             this.fileChanged = true;
             this.playBackFile = newFileName;
             this.localFile = isLocalFile;
+            this.geometryFile = this.resolveGeometryFile(
+                geometryFile || "",
+                newFileName
+            );
+            this.assetPrefix = assetPrefix ? assetPrefix : DEFAULT_ASSET_PREFIX;
             this.visData.WaitForFrame(0);
             this.visData.clearCache();
 
@@ -161,6 +198,14 @@ export default class SimulariumController {
 
     public getFile(): string {
         return this.playBackFile;
+    }
+
+    public getGeometryFile(): string {
+        return this.geometryFile;
+    }
+
+    public getAssetPrefix(): string {
+        return this.assetPrefix;
     }
 
     public disableNetworkCommands(): void {

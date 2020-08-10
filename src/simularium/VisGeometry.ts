@@ -44,8 +44,6 @@ const DEFAULT_BACKGROUND_COLOR = new Color(0.121569, 0.13333, 0.17647);
 const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 const NO_AGENT = -1;
-const ASSET_URL_PREFIX =
-    "https://aics-agentviz-data.s3.us-east-2.amazonaws.com/meshes/obj";
 
 enum RenderStyle {
     GENERIC,
@@ -78,6 +76,15 @@ interface PathData {
     material: LineBasicMaterial;
     line: LineSegments;
 }
+
+// per agent type Visdata format
+interface AgentTypeVisData {
+    mesh?: string;
+    scale: number;
+    pdb?: string;
+}
+
+type AgentTypeVisDataMap = Map<string, AgentTypeVisData>;
 
 class VisGeometry {
     public renderStyle: RenderStyle;
@@ -405,6 +412,10 @@ class VisGeometry {
             const visAgent = this.visAgents[i];
             if (typeIds.includes(visAgent.typeId)) {
                 this.resetAgentPDB(visAgent, pdb);
+                visAgent.setColor(
+                    this.getColorForTypeId(visAgent.typeId),
+                    this.getColorIndexForTypeId(visAgent.typeId)
+                );
             }
         }
 
@@ -497,9 +508,9 @@ class VisGeometry {
         this.camera.position.z = 120;
     }
 
-    public loadPdb(pdbName: string): void {
+    public loadPdb(pdbName: string, assetPath: string): void {
         const pdbmodel = new PDBModel(pdbName);
-        pdbmodel.download(`${ASSET_URL_PREFIX}/${pdbName}`).then(
+        pdbmodel.download(`${assetPath}/${pdbName}`).then(
             () => {
                 this.logger.debug("Finished loading pdb: ", pdbName);
                 this.pdbRegistry.set(pdbName, pdbmodel);
@@ -512,10 +523,10 @@ class VisGeometry {
         );
     }
 
-    public loadObj(meshName: string): void {
+    public loadObj(meshName: string, assetPath: string): void {
         const objLoader = new OBJLoader();
         objLoader.load(
-            `${ASSET_URL_PREFIX}/${meshName}`,
+            `${assetPath}/${meshName}`,
             object => {
                 this.logger.debug("Finished loading mesh: ", meshName);
                 this.addMesh(meshName, object);
@@ -787,7 +798,12 @@ class VisGeometry {
     /**
      *   Map Type ID -> Geometry
      */
-    public mapIdToGeom(id: number, meshName: string, pdbName: string): void {
+    public mapIdToGeom(
+        id: number,
+        meshName: string,
+        pdbName: string,
+        assetPath: string
+    ): void {
         this.logger.debug("Mesh for id ", id, " set to ", meshName);
         this.logger.debug("PDB for id ", id, " set to ", pdbName);
         this.visGeomMap.set(id, { meshName: meshName, pdbName: pdbName });
@@ -796,7 +812,7 @@ class VisGeometry {
             !this.meshRegistry.has(meshName) &&
             !this.meshLoadAttempted.get(meshName)
         ) {
-            this.loadObj(meshName);
+            this.loadObj(meshName, assetPath);
             this.meshLoadAttempted.set(meshName, true);
         }
 
@@ -806,7 +822,7 @@ class VisGeometry {
             !this.pdbRegistry.has(pdbName) &&
             !this.pdbLoadAttempted.get(pdbName)
         ) {
-            this.loadPdb(pdbName);
+            this.loadPdb(pdbName, assetPath);
             this.pdbLoadAttempted.set(pdbName, true);
         }
     }
@@ -848,8 +864,12 @@ class VisGeometry {
     public mapFromJSON(
         name: string,
         filePath: string,
+        assetPath: string,
         callback?: (any) => void
     ): Promise<void | Response> {
+        if (!filePath) {
+            return Promise.resolve();
+        }
         const jsonRequest = new Request(filePath);
         return fetch(jsonRequest)
             .then(response => {
@@ -859,26 +879,38 @@ class VisGeometry {
                 return response.json();
             })
             .then(data => {
-                this.resetMapping();
-                const jsonData = data;
-                this.logger.debug("JSON Mesh mapping loaded: ", jsonData);
-                Object.keys(jsonData).forEach(id => {
-                    const entry = jsonData[id];
-                    if (id === "size") {
-                        console.log(
-                            "WARNING: Ignoring deprecated bounding box data"
-                        );
-                    } else {
-                        // mesh name is entry.mesh
-                        // pdb name is entry.pdb
-                        this.mapIdToGeom(Number(id), entry.mesh, entry.pdb);
-                        this.setScaleForId(Number(id), entry.scale);
-                    }
-                });
-                if (callback) {
-                    callback(jsonData);
-                }
+                this.setGeometryData(
+                    data as AgentTypeVisDataMap,
+                    assetPath,
+                    callback
+                );
             });
+    }
+
+    public setGeometryData(
+        jsonData: AgentTypeVisDataMap,
+        assetPath: string,
+        callback?: (any) => void
+    ): void {
+        // clear things out in advance of loading all new geometry
+        this.resetMapping();
+
+        this.logger.debug("JSON Mesh mapping loaded: ", jsonData);
+
+        Object.keys(jsonData).forEach(id => {
+            const entry = jsonData[id];
+            if (id === "size") {
+                console.log("WARNING: Ignoring deprecated bounding box data");
+            } else {
+                // mesh name is entry.mesh
+                // pdb name is entry.pdb
+                this.mapIdToGeom(Number(id), entry.mesh, entry.pdb, assetPath);
+                this.setScaleForId(Number(id), entry.scale);
+            }
+        });
+        if (callback) {
+            callback(jsonData);
+        }
     }
 
     public resetBounds(boundsAsArray?: number[]): void {
@@ -901,6 +933,11 @@ class VisGeometry {
         );
         this.boundingBoxMesh.visible = visible;
         this.scene.add(this.boundingBoxMesh);
+
+        if (this.controls) {
+            this.controls.maxDistance =
+                this.boundingBox.max.distanceTo(this.boundingBox.min) * 1.414;
+        }
     }
 
     public setScaleForId(id: number, scale: number): void {

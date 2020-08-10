@@ -2,7 +2,6 @@ import React from "react";
 
 import SimulariumViewer, { SimulariumController } from "../dist";
 import "./style.css";
-import { CLIENT_RENEG_WINDOW } from "tls";
 
 const netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",

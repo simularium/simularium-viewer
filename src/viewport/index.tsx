@@ -61,10 +61,11 @@ interface FileHTML extends File {
 //  the 'files' parameter have been parsed into text and put in the `outParsedFiles` parameter
 function parseFilesToText(files: FileHTML[]): Promise<VisDataMessage[]> {
     return Promise.all(
-        files.map(file => file.text().then(text => JSON.parse(text) as VisDataMessage))
+        files.map(file =>
+            file.text().then(text => JSON.parse(text) as VisDataMessage)
+        )
     );
 }
-
 
 function sortFrames(a: VisDataFrame, b: VisDataFrame): number {
     return a.frameNumber - b.frameNumber;
@@ -214,7 +215,8 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                 this.visGeometry
                     .mapFromJSON(
                         fileName,
-                        getJsonUrl(fileName),
+                        simulariumController.getGeometryFile(),
+                        simulariumController.getAssetPrefix(),
                         onJsonDataArrived
                     )
                     .then(() => {
@@ -466,7 +468,8 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                     ? Promise.resolve()
                     : this.visGeometry.mapFromJSON(
                           simulariumController.getFile(),
-                          getJsonUrl(simulariumController.getFile())
+                          simulariumController.getGeometryFile(),
+                          simulariumController.getAssetPrefix()
                       );
 
                 p.then(() => {
