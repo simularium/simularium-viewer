@@ -42,7 +42,7 @@ import { AgentData } from "./VisData";
 import MoleculeRenderer from "./rendering/MoleculeRenderer";
 
 const MAX_PATH_LEN = 32;
-const MAX_MESHES = 20000;
+const MAX_MESHES = 100000;
 const DEFAULT_BACKGROUND_COLOR = new Color(0.121569, 0.13333, 0.17647);
 const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
@@ -135,6 +135,7 @@ class VisGeometry {
     private supportsMoleculeRendering: boolean;
     private membraneAgent?: VisAgent;
     private resetCameraOnNewScene: boolean;
+    private lodBias: number;
 
     public constructor(loggerLevel: ILogLevel) {
         this.renderStyle = RenderStyle.GENERIC;
@@ -198,6 +199,7 @@ class VisGeometry {
         );
         this.currentSceneAgents = [];
         this.colorsData = new Float32Array(0);
+        this.lodBias = 0;
         if (loggerLevel === jsLogger.DEBUG) {
             this.setupGui();
         }
@@ -219,6 +221,7 @@ class VisGeometry {
     public setupGui(): void {
         const gui = new dat.GUI();
         const settings = {
+            lodBias: this.lodBias,
             atomSpread: this.atomSpread,
             numAtoms: this.numAtomsPerAgent,
             bgcolor: {
@@ -227,6 +230,12 @@ class VisGeometry {
                 b: this.backgroundColor.b * 255,
             },
         };
+        gui.add(settings, "lodBias", 0, 4)
+            .step(1)
+            .onChange(value => {
+                this.lodBias = value;
+                this.updateScene(this.currentSceneAgents);
+            });
         gui.addColor(settings, "bgcolor").onChange(value => {
             this.setBackgroundColor([
                 value.r / 255.0,
@@ -529,6 +538,14 @@ class VisGeometry {
                 ) {
                     this.logger.debug("Finished loading pdb: ", pdbName);
                     this.onNewPdb(pdbName);
+                    // initiate async LOD processing
+                    pdbmodel.generateLOD().then(() => {
+                        this.logger.debug(
+                            "Finished loading pdb LODs: ",
+                            pdbName
+                        );
+                        this.onNewPdb(pdbName);
+                    });
                 }
             },
             reason => {
@@ -671,7 +688,7 @@ class VisGeometry {
                         for (let j = 0; j < distances.length; ++j) {
                             // the first distance less than.
                             if (distance < distances[j]) {
-                                agent.selectLOD(j);
+                                agent.selectLOD(j + this.lodBias);
                                 break;
                             }
                         }
@@ -803,7 +820,7 @@ class VisGeometry {
     public createMeshes(): void {
         this.geomCount = MAX_MESHES;
 
-        //multipass render:
+        // multipass render:
         // draw moleculebuffer into several render targets to store depth, normals, colors
         // draw quad to composite the buffers into final frame
 
@@ -838,7 +855,11 @@ class VisGeometry {
     ): void {
         this.logger.debug("Mesh for id ", id, " set to ", meshName);
         this.logger.debug("PDB for id ", id, " set to ", pdbName);
-        this.visGeomMap.set(id, { meshName: meshName, pdbName: pdbName });
+        const unassignedName = `${VisAgent.UNASSIGNED_NAME_PREFIX}-${id}`;
+        this.visGeomMap.set(id, {
+            meshName: meshName || unassignedName,
+            pdbName: pdbName || unassignedName,
+        });
         if (
             meshName &&
             !this.meshRegistry.has(meshName) &&
@@ -846,6 +867,13 @@ class VisGeometry {
         ) {
             this.loadObj(meshName, assetPath);
             this.meshLoadAttempted.set(meshName, true);
+        } else if (!this.meshRegistry.has(unassignedName)) {
+            // assign mesh sphere
+            this.meshRegistry.set(unassignedName, {
+                mesh: new Mesh(VisAgent.sphereGeometry),
+                cancelled: false,
+            });
+            this.onNewRuntimeGeometryType(unassignedName);
         }
 
         // try load pdb file also.
@@ -856,6 +884,11 @@ class VisGeometry {
         ) {
             this.loadPdb(pdbName, assetPath);
             this.pdbLoadAttempted.set(pdbName, true);
+        } else if (!this.pdbRegistry.has(unassignedName)) {
+            // assign single atom pdb
+            const pdbmodel = new PDBModel(pdbName);
+            pdbmodel.create(1);
+            this.pdbRegistry.set(unassignedName, pdbmodel);
         }
     }
 
@@ -1424,20 +1457,29 @@ class VisGeometry {
 
         this.membraneAgent = undefined;
 
+        // remove geometry from all visible scene groups.
+        // Object3D.remove can be slow, and just doing it in-order here
+        // is faster than doing it in the loop over all visAgents
+        for (let i = this.agentMeshGroup.children.length - 1; i >= 0; i--) {
+            this.agentMeshGroup.remove(this.agentMeshGroup.children[i]);
+        }
+        for (let i = this.agentFiberGroup.children.length - 1; i >= 0; i--) {
+            this.agentFiberGroup.remove(this.agentFiberGroup.children[i]);
+        }
+        for (let i = this.agentPDBGroup.children.length - 1; i >= 0; i--) {
+            this.agentPDBGroup.remove(this.agentPDBGroup.children[i]);
+        }
+
         // set all runtime meshes back to spheres.
         const nMeshes = this.visAgents.length;
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
             const visAgent = this.visAgents[i];
-            // try to remove from both groups, mesh could be fiber or plain mesh
-            this.agentMeshGroup.remove(visAgent.mesh);
-            this.agentFiberGroup.remove(visAgent.mesh);
-            visAgent.resetMesh();
-            this.agentMeshGroup.add(visAgent.mesh);
-
-            for (let j = 0; j < visAgent.pdbObjects.length; ++j) {
-                this.agentPDBGroup.remove(visAgent.pdbObjects[j]);
+            if (visAgent.active) {
+                visAgent.resetMesh();
+                // re-add as mesh by default
+                this.agentMeshGroup.add(visAgent.mesh);
+                visAgent.resetPDB();
             }
-            visAgent.resetPDB();
         }
     }
 

@@ -34,6 +34,7 @@ function desaturate(color: Color): Color {
 
 export default class VisAgent {
     private static readonly UNASSIGNED_MESH_COLOR = 0xff00ff;
+    public static readonly UNASSIGNED_NAME_PREFIX = "Unassigned";
     public static sphereGeometry: SphereBufferGeometry = new SphereBufferGeometry(
         1,
         32,
@@ -310,7 +311,8 @@ export default class VisAgent {
         return (
             this.pdbModel !== undefined &&
             this.pdbModel.pdb !== null &&
-            this.pdbObjects.length > 0
+            this.pdbObjects.length > 0 &&
+            !this.pdbModel.name.startsWith(VisAgent.UNASSIGNED_NAME_PREFIX)
         );
     }
 

@@ -74,7 +74,7 @@ export default class KMeans {
         this.ranges = this.dataExtentRanges();
 
         // Generate random cluster centroid points.
-        this.means = this.seeds();
+        this.means = KMeans.randomSeeds(this.k, this.data);
 
         // Keep track of number of times centroids move.
         this.iterations = 0;
@@ -170,6 +170,26 @@ export default class KMeans {
             means[i * 3] = this.extents[0] + Math.random() * this.ranges[0];
             means[i * 3 + 1] = this.extents[1] + Math.random() * this.ranges[1];
             means[i * 3 + 2] = this.extents[2] + Math.random() * this.ranges[2];
+        }
+
+        return means;
+    }
+
+    public static randomSeeds(k: number, data: Float32Array): Float32Array {
+        // choose k random items from the original data set
+        const numItems = data.length / 3;
+        const selected: Set<number> = new Set();
+        while (
+            selected.add(Math.floor(Math.random() * numItems) | 0).size < k
+        ) {}
+        const items: number[] = [...selected];
+
+        const means = new Float32Array(k * 3);
+        for (let i = 0; i < k; ++i) {
+            // select a random point from our initial set
+            means[i * 3] = data[items[i] * 3];
+            means[i * 3 + 1] = data[items[i] * 3 + 1];
+            means[i * 3 + 2] = data[items[i] * 3 + 2];
         }
 
         return means;
@@ -320,6 +340,11 @@ export default class KMeans {
 
         // tune this value for performance vs quality
         const maxIterations = 150;
+        // no kmeans call should take more than this amount of time
+        const timeLimitMs = 5000;
+
+        const startTimeMs = Date.now();
+        let time = 0;
 
         do {
             ++this.iterations;
@@ -329,6 +354,12 @@ export default class KMeans {
 
             // Returns true if the cluster centroids have moved location since the last iteration.
             meansMoved = this.moveMeans();
-        } while (meansMoved && this.iterations < maxIterations);
+
+            time = Date.now() - startTimeMs;
+        } while (
+            meansMoved &&
+            this.iterations < maxIterations &&
+            !(time > timeLimitMs)
+        );
     }
 }
