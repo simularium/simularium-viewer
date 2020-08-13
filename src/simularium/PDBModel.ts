@@ -2,11 +2,18 @@ import "regenerator-runtime/runtime";
 
 import * as Comlink from "comlink";
 import parsePdb from "parse-pdb";
-import { BufferGeometry, Float32BufferAttribute, Points, Vector3 } from "three";
+import {
+    Box3,
+    BufferGeometry,
+    Float32BufferAttribute,
+    Points,
+    Vector3,
+} from "three";
 
 import KMeansWorkerModule from "./worker/KMeansWorker";
 import { KMeansWorkerType } from "./worker/KMeansWorker";
 
+import KMeans from "./rendering/KMeans3d";
 import TaskQueue from "./worker/TaskQueue";
 import { REASON_CANCELLED } from "./worker/TaskQueue";
 
@@ -61,7 +68,10 @@ class PDBModel {
     public filePath: string;
     public name: string;
     public pdb: PDBType | null;
+    // number of atoms for each level of detail
+    private lodSizes: number[];
     private lods: LevelOfDetail[];
+    private bounds: Box3;
     // cancelled means we have abandoned this pdb
     // and if it is still initializing, it should be dropped/ignored as soon as processing is done
     private cancelled: boolean;
@@ -71,7 +81,9 @@ class PDBModel {
         this.name = filePath;
         this.pdb = null;
         this.lods = [];
+        this.lodSizes = [];
         this.cancelled = false;
+        this.bounds = new Box3();
     }
 
     public setCancelled(): void {
@@ -80,6 +92,10 @@ class PDBModel {
 
     public isCancelled(): boolean {
         return this.cancelled;
+    }
+
+    public getNumAtoms(): number {
+        return this.pdb ? this.pdb.atoms.length : 0;
     }
 
     public download(url: string): Promise<void> {
@@ -106,7 +122,7 @@ class PDBModel {
                         `PDB ${this.name} has ${this.pdb.atoms.length} atoms`
                     );
                     this.checkChains();
-                    return this.setupGeometry();
+                    return this.initializeLOD();
                 }
             });
     }
@@ -133,13 +149,16 @@ class PDBModel {
             residues: [],
             chains: new Map(),
         };
-        return this.setupGeometry();
+        this.fixupCoordinates();
+        this.initializeLOD();
+        return Promise.resolve();
     }
 
     private fixupCoordinates(): void {
         if (!this.pdb) {
             return;
         }
+        // PDB Angstroms to Simularium nanometers
         const PDB_COORDINATE_SCALE = new Vector3(-0.1, 0.1, -0.1);
 
         for (let i = 0; i < this.pdb.atoms.length; ++i) {
@@ -147,6 +166,26 @@ class PDBModel {
             this.pdb.atoms[i].y *= PDB_COORDINATE_SCALE.y;
             this.pdb.atoms[i].z *= PDB_COORDINATE_SCALE.z;
         }
+
+        // compute bounds:
+        let minx = this.pdb.atoms[0].x;
+        let miny = this.pdb.atoms[0].x;
+        let minz = this.pdb.atoms[0].x;
+        let maxx = this.pdb.atoms[0].x;
+        let maxy = this.pdb.atoms[0].x;
+        let maxz = this.pdb.atoms[0].x;
+        for (let i = 1; i < this.pdb.atoms.length; ++i) {
+            maxx = Math.max(maxx, this.pdb.atoms[i].x);
+            maxy = Math.max(maxy, this.pdb.atoms[i].y);
+            maxz = Math.max(maxz, this.pdb.atoms[i].z);
+            minx = Math.min(minx, this.pdb.atoms[i].x);
+            miny = Math.min(miny, this.pdb.atoms[i].y);
+            minz = Math.min(minz, this.pdb.atoms[i].z);
+        }
+        this.bounds = new Box3(
+            new Vector3(minx, miny, minz),
+            new Vector3(maxx, maxy, maxz)
+        );
     }
 
     private checkChains(): void {
@@ -207,12 +246,23 @@ class PDBModel {
         return allData;
     }
 
-    private async setupGeometry(): Promise<void> {
+    private initializeLOD(): void {
         if (!this.pdb) {
-            console.log("setupgeometry called with no pdb data");
-            return Promise.resolve();
+            console.error("initializeLOD called with no pdb data");
+            return;
         }
         const n = this.pdb.atoms.length;
+
+        this.lodSizes = [
+            n,
+            Math.max(Math.floor(n / 8), 1),
+            Math.max(Math.floor(n / 32), 1),
+            Math.max(Math.floor(n / 128), 1),
+        ];
+
+        // select random points for the initial quick LOD guess.
+        // alternative strategy:
+        // for small atom counts, apply kmeans synchronously
 
         // put all the points in a flat array
         const allData = this.makeFlatPositionArray();
@@ -221,16 +271,30 @@ class PDBModel {
         const lod0 = allData.slice();
         const geometry0 = this.createGPUBuffer(lod0);
         this.lods.push({ geometry: geometry0, vertices: lod0 });
+        // start at 1, and add the rest
+        for (let i = 1; i < this.lodSizes.length; ++i) {
+            const loddata = KMeans.randomSeeds(this.lodSizes[i], allData);
+            this.lods.push({
+                geometry: this.createGPUBuffer(loddata),
+                vertices: loddata,
+            });
+        }
+    }
 
-        const sizes: number[] = [
-            Math.max(Math.floor(n / 8), 1),
-            Math.max(Math.floor(n / 32), 1),
-            Math.max(Math.floor(n / 128), 1),
-        ];
+    public async generateLOD(): Promise<void> {
+        if (!this.pdb || this.lods.length < 4) {
+            console.log(
+                "generateLOD called with no pdb data or uninitialized LODs"
+            );
+            return Promise.resolve();
+        }
 
-        // alternative strategies:
-        // 1. for small atom counts, apply kmeans synchronously
-        // 2. randomly sample the atoms spatially for lower LOD without doing intensive kmeans
+        const n = this.pdb.atoms.length;
+
+        // put all the points in a flat array
+        const allData = this.makeFlatPositionArray();
+
+        const sizes: number[] = this.lodSizes.slice(1);
 
         // Enqueue this LOD calculation
         const retData: Float32Array[] = await TaskQueue.enqueue<Float32Array[]>(
@@ -240,10 +304,10 @@ class PDBModel {
 
         // update the new LODs
         for (let i = 0; i < sizes.length; ++i) {
-            this.lods.push({
+            this.lods[i + 1] = {
                 geometry: this.createGPUBuffer(retData[i]),
                 vertices: retData[i],
-            });
+            };
         }
     }
 
