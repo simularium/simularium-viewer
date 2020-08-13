@@ -357,7 +357,6 @@ class Viewport extends React.Component<ViewportProps> {
         const totalElapsedTime = now - this.startTime;
         if (elapsedTime > timePerFrame) {
             if (simulariumController.hasChangedFile) {
-                this.visGeometry.clear();
                 this.visGeometry.resetMapping();
                 // skip fetch if local file
                 const p = simulariumController.isLocalFile

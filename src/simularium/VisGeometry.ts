@@ -849,8 +849,8 @@ class VisGeometry {
      */
     public mapIdToGeom(
         id: number,
-        meshName: string,
-        pdbName: string,
+        meshName: string | undefined,
+        pdbName: string | undefined,
         assetPath: string
     ): void {
         this.logger.debug("Mesh for id ", id, " set to ", meshName);
@@ -886,7 +886,7 @@ class VisGeometry {
             this.pdbLoadAttempted.set(pdbName, true);
         } else if (!this.pdbRegistry.has(unassignedName)) {
             // assign single atom pdb
-            const pdbmodel = new PDBModel(pdbName);
+            const pdbmodel = new PDBModel(unassignedName);
             pdbmodel.create(1);
             this.pdbRegistry.set(unassignedName, pdbmodel);
         }
@@ -963,7 +963,7 @@ class VisGeometry {
         this.logger.debug("JSON Mesh mapping loaded: ", jsonData);
 
         Object.keys(jsonData).forEach(id => {
-            const entry = jsonData[id];
+            const entry: AgentTypeVisData = jsonData[id];
             if (id === "size") {
                 console.log("WARNING: Ignoring deprecated bounding box data");
             } else {
@@ -1052,19 +1052,21 @@ class VisGeometry {
                         if (meshGeom.name.includes("membrane")) {
                             this.membraneAgent = visAgent;
                         }
-                        visAgent.setColor(
-                            this.getColorForTypeId(typeId),
-                            this.getColorIndexForTypeId(typeId)
-                        );
                     }
                     const pdbGeom = this.getPdbFromId(typeId);
                     if (pdbGeom) {
                         this.resetAgentPDB(visAgent, pdbGeom);
-                        visAgent.setColor(
-                            this.getColorForTypeId(typeId),
-                            this.getColorIndexForTypeId(typeId)
+                    }
+                    if (!pdbGeom && !meshGeom) {
+                        this.resetAgentGeometry(
+                            visAgent,
+                            new Mesh(VisAgent.sphereGeometry)
                         );
                     }
+                    visAgent.setColor(
+                        this.getColorForTypeId(typeId),
+                        this.getColorIndexForTypeId(typeId)
+                    );
                 }
 
                 const runtimeMesh = visAgent.mesh;
