@@ -8,6 +8,7 @@ import KMeansWorkerModule from "./worker/KMeansWorker";
 import { KMeansWorkerType } from "./worker/KMeansWorker";
 
 import TaskQueue from "./worker/TaskQueue";
+import { REASON_CANCELLED } from "./worker/TaskQueue";
 
 interface PDBAtom {
     serial?: number;
@@ -61,13 +62,24 @@ class PDBModel {
     public name: string;
     public pdb: PDBType | null;
     private lods: LevelOfDetail[];
-    private static numLiveWorkers = 0;
+    // cancelled means we have abandoned this pdb
+    // and if it is still initializing, it should be dropped/ignored as soon as processing is done
+    private cancelled: boolean;
 
     public constructor(filePath: string) {
         this.filePath = filePath;
         this.name = filePath;
         this.pdb = null;
         this.lods = [];
+        this.cancelled = false;
+    }
+
+    public setCancelled(): void {
+        this.cancelled = true;
+    }
+
+    public isCancelled(): boolean {
+        return this.cancelled;
     }
 
     public download(url: string): Promise<void> {
@@ -82,6 +94,9 @@ class PDBModel {
                 return response.text();
             })
             .then(data => {
+                if (this.cancelled) {
+                    return Promise.reject(REASON_CANCELLED);
+                }
                 // note pdb atom coordinates are in angstroms
                 // 1 nm is 10 angstroms
                 this.pdb = parsePdb(data) as PDBType;
