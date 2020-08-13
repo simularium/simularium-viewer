@@ -76,7 +76,6 @@ class VisData {
      *   of the application, since network latency is a major bottle-neck)
      * */
 
-
     public static parse(visDataMsg: VisDataMessage): ParsedBundle {
         const parsedAgentDataArray: AgentData[][] = [];
         const frameDataArray: FrameData[] = [];
@@ -365,6 +364,7 @@ class VisData {
             boxSizeZ: max[2] - min[2],
             totalDuration: totalDuration,
             timeStepSize: timeStepSize,
+            typeMapping: {},
         };
     }
 

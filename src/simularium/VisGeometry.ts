@@ -110,7 +110,7 @@ class VisGeometry {
     public lastNumberOfAgents: number;
     public colorVariant: number;
     public fixLightsToCamera: boolean;
-    public highlightedId: number;
+    public highlightedIds: number[];
     public paths: PathData[];
     public mlogger: ILogger;
     public renderer: WebGLRenderer;
@@ -155,7 +155,7 @@ class VisGeometry {
         this.lastNumberOfAgents = 0;
         this.colorVariant = 50;
         this.fixLightsToCamera = true;
-        this.highlightedId = -1;
+        this.highlightedIds = [];
 
         // will store data for all agents that are drawing paths
         this.paths = [];
@@ -349,27 +349,24 @@ class VisGeometry {
         this.setFollowObject(NO_AGENT);
     }
 
-    public setHighlightById(id: number): void {
-        if (this.highlightedId === id) {
-            return;
-        }
-        this.highlightedId = id;
+    public setHighlightByIds(ids: number[]): void {
+        this.highlightedIds = ids;
 
         // go over all objects and update material
         const nMeshes = this.visAgents.length;
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
             const visAgent = this.visAgents[i];
             if (visAgent.active) {
-                const isHighlighted =
-                    this.highlightedId == -1 ||
-                    this.highlightedId == visAgent.typeId;
+                const isHighlighted = this.highlightedIds.includes(
+                    visAgent.typeId
+                );
                 visAgent.setSelected(isHighlighted);
             }
         }
     }
 
     public dehighlight(): void {
-        this.setHighlightById(-1);
+        this.setHighlightByIds([]);
     }
 
     public onNewRuntimeGeometryType(meshName: string): void {
@@ -707,7 +704,10 @@ class VisGeometry {
                 this.agentFiberGroup
             );
             this.moleculeRenderer.setHighlightInstance(this.followObjectIndex);
-            this.moleculeRenderer.setTypeSelectMode(this.highlightedId !== -1);
+            this.moleculeRenderer.setTypeSelectMode(
+                this.highlightedIds !== undefined &&
+                    this.highlightedIds.length > 0
+            );
             this.boundingBoxMesh.visible = false;
             this.agentPathGroup.visible = false;
             this.moleculeRenderer.render(
@@ -736,13 +736,13 @@ class VisGeometry {
         }
     }
 
-    public hitTest(event: MouseEvent): number {
+    public hitTest(offsetX: number, offsetY: number): number {
         const size = new Vector2();
         this.renderer.getSize(size);
         if (this.renderStyle === RenderStyle.GENERIC) {
             const mouse = {
-                x: (event.offsetX / size.x) * 2 - 1,
-                y: -(event.offsetY / size.y) * 2 + 1,
+                x: (offsetX / size.x) * 2 - 1,
+                y: -(offsetY / size.y) * 2 + 1,
             };
 
             this.raycaster.setFromCamera(mouse, this.camera);
@@ -777,8 +777,8 @@ class VisGeometry {
             // read from instance buffer pixel!
             return this.moleculeRenderer.hitTest(
                 this.renderer,
-                event.offsetX,
-                size.y - event.offsetY
+                offsetX,
+                size.y - offsetY
             );
         }
     }
