@@ -56,7 +56,7 @@ class SelectionInterface {
     public decode(encodedName: string, idParam?: number): void {
         let name = "";
         let tags: string[] = [];
-        const id = idParam ? idParam : -1;
+        const id = idParam !== undefined ? idParam : -1;
 
         if (encodedName.includes("#")) {
             const s = encodedName.split("#");
@@ -86,7 +86,7 @@ class SelectionInterface {
 
         entryList.forEach(entry => {
             if (!tags || tags.every(t => entry.tags.includes(t))) {
-                if (entry.id > 0) {
+                if (entry.id >= 0) {
                     indices.push(entry.id);
                 }
             }
