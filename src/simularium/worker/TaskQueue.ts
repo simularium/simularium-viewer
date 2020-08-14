@@ -9,6 +9,8 @@ interface QueueItem<T> {
 
 const MAX_ACTIVE_WORKERS = 4;
 
+export const REASON_CANCELLED = "Cancelled";
+
 // class is exported mainly for testing convenience.
 // a "global" instance is also provided as the default export below.
 export class TaskQueue {
@@ -42,7 +44,7 @@ export class TaskQueue {
         while (this.queue.length > 0) {
             const item = this.queue.pop();
             if (item) {
-                item.reject("Cancelled");
+                item.reject(REASON_CANCELLED);
             }
         }
     }

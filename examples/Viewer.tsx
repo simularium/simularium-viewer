@@ -2,7 +2,6 @@ import React from "react";
 
 import SimulariumViewer, { SimulariumController } from "../dist";
 import "./style.css";
-import { CLIENT_RENEG_WINDOW } from "tls";
 
 const netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
@@ -10,9 +9,11 @@ const netConnectionSettings = {
 };
 
 interface ViewerState {
-    highlightId: number;
+    selectedName: string;
+    selectedTag: string;
     pauseOn: number;
-    particleTypeIds: string[];
+    particleTypeNames: string[];
+    particleTypeTags: string[];
     currentFrame: number;
     currentTime: number;
     height: number;
@@ -21,6 +22,7 @@ interface ViewerState {
     showPaths: boolean;
     timeStep: number;
     totalDuration: number;
+    uiDisplayData: UIDisplayData;
 }
 
 const simulariumController = new SimulariumController({
@@ -31,10 +33,15 @@ const simulariumController = new SimulariumController({
 let currentFrame = 0;
 let currentTime = 0;
 
+const UI_VAR_ALL_TAGS = "UI_VAR_ALL_TAGS";
+const UI_VAR_ALL_NAMES = "UI_VAR_ALL_NAMES"
+
 const intialState = {
-    highlightId: -1,
+    selectedTag: UI_VAR_ALL_TAGS,
+    selectedName: UI_VAR_ALL_NAMES,
     pauseOn: -1,
-    particleTypeIds: [],
+    particleTypeNames: [],
+    particleTypeTags: [],
     currentFrame: 0,
     currentTime: 0,
     height: 800,
@@ -43,6 +50,7 @@ const intialState = {
     showPaths: true,
     timeStep: 1,
     totalDuration: 100,
+    uiDisplayData: {},
 };
 
 class Viewer extends React.Component<{}, ViewerState> {
@@ -54,7 +62,8 @@ class Viewer extends React.Component<{}, ViewerState> {
         this.handleJsonMeshData = this.handleJsonMeshData.bind(this);
         this.handleTimeChange = this.handleTimeChange.bind(this);
         this.playOneFrame = this.playOneFrame.bind(this);
-        this.highlightParticleType = this.highlightParticleType.bind(this);
+        this.highlightParticleTypeByName = this.highlightParticleTypeByName.bind(this);
+        this.highlightParticleTypeByTag = this.highlightParticleTypeByTag.bind(this);
         this.state = intialState;
     }
 
@@ -73,7 +82,7 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public handleJsonMeshData(jsonData): void {
-        this.setState({ particleTypeIds: Object.keys(jsonData) });
+        console.log("Mesh JSON Data: ", jsonData);
     }
 
     public handleTimeChange(timeData): void {
@@ -86,8 +95,46 @@ class Viewer extends React.Component<{}, ViewerState> {
         }
     }
 
-    public highlightParticleType(typeId): void {
-        this.setState({ highlightId: typeId });
+    public highlightParticleTypeByName(name): void {
+        this.highlightParticleTypeByTag(UI_VAR_ALL_TAGS);
+
+        if(name === UI_VAR_ALL_NAMES) {
+          this.setState(prevState => ({
+            selectionStateInfo: {
+              ...prevState.selectionStateInfo,
+              highlightedNames: [], // specify none, show all that match tags
+            },
+            selectedName: name,
+          }));
+        } else {
+          this.setState(prevState => ({
+            selectionStateInfo: {
+              ...prevState.selectionStateInfo,
+              highlightedNames: [name],
+            },
+            selectedName: name,
+          }));
+        }
+    }
+
+    public highlightParticleTypeByTag(tag): void {
+        if(tag === UI_VAR_ALL_TAGS) {
+          this.setState(prevState => ({
+            selectionStateInfo: {
+              ...prevState.selectionStateInfo,
+              highlightedTags: [], // specify none -> show all mathcing name
+            },
+            selectedTag: tag,
+          }));
+        } else {
+          this.setState(prevState => ({
+            selectionStateInfo: {
+              ...prevState.selectionStateInfo,
+              highlightedTags: [tag],
+            },
+            selectedTag: tag,
+          }));
+        }
     }
 
     public playOneFrame(): void {
@@ -112,12 +159,50 @@ class Viewer extends React.Component<{}, ViewerState> {
         simulariumController.gotoTime(event.target.value);
     }
 
+    public handleUIDisplayData(uiDisplayData): void {
+        const tagsArrArr = uiDisplayData.map(a => a.displayStates.map(b => b.id));
+        const allTags = [].concat.apply([], tagsArrArr);
+        const uniqueTags = [... new Set(allTags)];
+
+        this.setState({
+            particleTypeNames: uiDisplayData.map(a => a.name),
+            uiDisplayData: uiDisplayData,
+            particleTypeTags: uniqueTags,
+        });
+    }
+
     public gotoNextFrame(): void {
         simulariumController.gotoTime(currentTime + this.state.timeStep + 1e-9);
     }
 
     public gotoPreviousFrame(): void {
         simulariumController.gotoTime(currentTime - this.state.timeStep - 1e-9);
+    }
+
+    private getTagOptions(): string[] {
+        if(this.state.selectedName === UI_VAR_ALL_NAMES){
+            return this.state.particleTypeTags;
+        } else {
+            let matches = this.state.uiDisplayData.filter(entry => {
+                return entry.name === this.state.selectedName;
+            });
+
+            if(matches) {
+                return matches[0].displayStates.map(state => { return state.id; });
+            } else {
+                return [];
+            }
+        }
+    }
+
+    private getOptionsDom(optionsArray) {
+      return optionsArray.map((id, i) => {
+          return (
+              <option key={id} value={id}>
+                  {id}
+              </option>
+          );
+      });
     }
 
     public render(): JSX.Element {
@@ -201,17 +286,27 @@ class Viewer extends React.Component<{}, ViewerState> {
                 <br />
                 <select
                     onChange={event =>
-                        this.highlightParticleType(event.target.value)
+                        this.highlightParticleTypeByName(event.target.value)
                     }
+                    value={this.state.selectedName}
                 >
-                    <option value="-1">None</option>
-                    {this.state.particleTypeIds.map((id, i) => {
+                    <option value={UI_VAR_ALL_NAMES}>All Types</option>
+                    {this.state.particleTypeNames.map((id, i) => {
                         return (
                             <option key={id} value={id}>
                                 {id}
                             </option>
                         );
                     })}
+                </select>
+                <select
+                    onChange={event =>
+                        this.highlightParticleTypeByTag(event.target.value)
+                    }
+                    value={this.state.selectedTag}
+                >
+                    <option value={UI_VAR_ALL_TAGS}>All Tags</option>
+                    {this.getOptionsDom(this.getTagOptions())}
                 </select>
                 <button
                     onClick={() =>
@@ -245,7 +340,8 @@ class Viewer extends React.Component<{}, ViewerState> {
                     onTrajectoryFileInfoChanged={this.handleTrajectoryInfo.bind(
                         this
                     )}
-                    highlightedParticleType={this.state.highlightId}
+                    selectionStateInfo={this.state.selectionStateInfo}
+                    onUIDisplayDataChanged={this.handleUIDisplayData.bind(this)}
                     loadInitialData={true}
                     showMeshes={this.state.showMeshes}
                     showPaths={this.state.showPaths}

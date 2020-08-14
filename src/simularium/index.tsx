@@ -6,6 +6,7 @@ export {
 } from "./NetConnection";
 export { VisData, VisDataMessage } from "./VisData";
 export { ThreadUtil } from "./ThreadUtil";
-export { TrajectoryFileInfo } from "./TrajectoryFileInfo";
+export { TrajectoryFileInfo, EncodedTypeMapping } from "./TrajectoryFileInfo";
+export { SelectionInterface, SelectionStateInfo, UIDisplayData } from "./SelectionInterface";
 
 export { DummyNetConnection } from "./mock/DummyNetConnection";

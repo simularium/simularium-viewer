@@ -10,6 +10,9 @@ import { forOwn } from "lodash";
 import {
     VisGeometry,
     TrajectoryFileInfo,
+    SelectionInterface,
+    SelectionStateInfo,
+    UIDisplayData,
     NO_AGENT,
     VisDataMessage,
 } from "../simularium";
@@ -28,11 +31,22 @@ interface ViewportProps {
     onTrajectoryFileInfoChanged: (
         cachedData: TrajectoryFileInfo
     ) => void | undefined;
-    highlightedParticleType: number;
+    onUIDisplayDataChanged: (data: UIDisplayData) => void | undefined;
     loadInitialData: boolean;
     showMeshes: boolean;
     showPaths: boolean;
     showBounds: boolean;
+    selectionStateInfo: SelectionStateInfo;
+}
+
+interface Click {
+    x: number;
+    y: number;
+    time: number;
+}
+
+interface ViewportState {
+    lastClick: Click
 }
 
 interface TimeData {
@@ -51,10 +65,11 @@ interface FileHTML extends File {
 //  the 'files' parameter have been parsed into text and put in the `outParsedFiles` parameter
 function parseFilesToText(files: FileHTML[]): Promise<VisDataMessage[]> {
     return Promise.all(
-        files.map(file => file.text().then(text => JSON.parse(text) as VisDataMessage))
+        files.map(file =>
+            file.text().then(text => JSON.parse(text) as VisDataMessage)
+        )
     );
 }
-
 
 function sortFrames(a: VisDataFrame, b: VisDataFrame): number {
     return a.frameNumber - b.frameNumber;
@@ -64,8 +79,14 @@ function getJsonUrl(trajectoryName: string): string {
     return `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${trajectoryName}.json`;
 }
 
-class Viewport extends React.Component<ViewportProps> {
+// max time in milliseconds for a mouse/touch interaction to be considered a click;
+const MAX_CLICK_TIME = 300;
+// for float errors
+const CLICK_TOLERANCE = 1e-4;
+
+class Viewport extends React.Component<ViewportProps, ViewportState> {
     private visGeometry: VisGeometry;
+    private selectionInterface: SelectionInterface;
     private lastRenderTime: number;
     private startTime: number;
     private vdomRef: React.RefObject<HTMLInputElement>;
@@ -81,7 +102,6 @@ class Viewport extends React.Component<ViewportProps> {
         backgroundColor: [0.121569, 0.13333, 0.17647],
         height: 800,
         width: 800,
-        highlightedParticleType: -1,
         loadInitialData: true,
         showMeshes: true,
         showPaths: true,
@@ -151,19 +171,32 @@ class Viewport extends React.Component<ViewportProps> {
         this.stats.showPanel(1);
 
         this.handlers = {
-            click: this.onPickObject,
+            touchstart: this.handleTouchStart,
+            touchend: this.handleTouchEnd,
+            mousedown: this.handleClickStart,
+            mouseup: this.handleMouseUp,
             dragover: this.onDragOver,
             drop: this.onDrop,
         };
         this.hit = false;
         this.animationRequestID = 0;
         this.lastRenderedAgentTime = -1;
+        this.selectionInterface = new SelectionInterface();
+        this.state = {
+            lastClick: {
+                x: 0,
+                y: 0,
+                time: 0,
+            },
+        };
+
     }
 
     public componentDidMount(): void {
         const {
             simulariumController,
             onTrajectoryFileInfoChanged,
+            onUIDisplayDataChanged,
             loadInitialData,
             onJsonDataArrived,
         } = this.props;
@@ -180,7 +213,11 @@ class Viewport extends React.Component<ViewportProps> {
             msg: TrajectoryFileInfo
         ) => {
             this.visGeometry.handleTrajectoryData(msg);
+            this.selectionInterface.parse(msg.typeMapping);
             onTrajectoryFileInfoChanged(msg);
+
+            const uiDisplayData = this.selectionInterface.getUIDisplayData();
+            onUIDisplayDataChanged(uiDisplayData);
         };
 
         simulariumController.connect().then(() => {
@@ -189,7 +226,8 @@ class Viewport extends React.Component<ViewportProps> {
                 this.visGeometry
                     .mapFromJSON(
                         fileName,
-                        getJsonUrl(fileName),
+                        simulariumController.getGeometryFile(),
+                        simulariumController.getAssetPrefix(),
                         onJsonDataArrived
                     )
                     .then(() => {
@@ -232,8 +270,14 @@ class Viewport extends React.Component<ViewportProps> {
             showMeshes,
             showPaths,
             showBounds,
+            selectionStateInfo
         } = this.props;
-        this.visGeometry.setHighlightById(this.props.highlightedParticleType);
+
+        if(selectionStateInfo) {
+          const ids = this.selectionInterface.getHighlightedIds(selectionStateInfo);
+          this.visGeometry.setHighlightByIds(ids);
+        }
+
         this.visGeometry.setShowMeshes(showMeshes);
         this.visGeometry.setShowPaths(showPaths);
         this.visGeometry.setShowBounds(showBounds);
@@ -249,7 +293,6 @@ class Viewport extends React.Component<ViewportProps> {
         }
         e.preventDefault();
     };
-
 
     public onDrop = (e: Event): void => {
         this.onDragOver(e);
@@ -271,6 +314,79 @@ class Viewport extends React.Component<ViewportProps> {
                 frameJSON
             );
         });
+    };
+
+    public isClick = (thisClick: Click): boolean => {
+        const { lastClick } = this.state;
+        
+        if (Date.now() - lastClick.time > MAX_CLICK_TIME) {
+            // long click
+            return false;
+        }
+
+        if (Math.abs(thisClick.x - lastClick.x) > CLICK_TOLERANCE || Math.abs(thisClick.y - lastClick.y) > CLICK_TOLERANCE) {
+            // mouse moved just rotate the field
+            return false;
+        }
+        return true;
+    }
+
+    public handleTouchStart = (e: Event): void => {
+        const event = e as TouchEvent;
+        const touch = event.touches[0];
+        this.setState({
+            lastClick: {
+                x: touch.pageX,
+                y: touch.pageY,
+                time: Date.now(),
+            },
+        });
+    };
+
+    public handleTouchEnd = (e: Event): void => {
+        const event = e as TouchEvent;
+         const touch = event.changedTouches[0];
+         const thisClick = {
+             x: touch.pageX,
+             y: touch.pageY,
+             time: Date.now(),
+         };
+
+         if (this.isClick(thisClick)) {
+             // pass event to pick object because it was a true click and not a drag
+             const canvas = this.vdomRef.current;
+             if (!canvas) {
+                 return;
+             }
+             const r = canvas.getBoundingClientRect();
+             const offsetX = touch.clientX - r.left;
+             const offsetY = touch.clientY - r.top;
+             this.onPickObject(offsetX, offsetY);
+         }
+    };
+
+    public handleClickStart = (e: Event): void => {
+        const event = e as MouseEvent;
+        this.setState({
+            lastClick: {
+                x: event.x,
+                y: event.y,
+                time: Date.now(),
+            },
+        });
+    };
+
+    public handleMouseUp = (e: Event): void => {
+        const event = e as MouseEvent;
+        const thisClick = {
+            x: event.x,
+            y: event.y,
+            time: Date.now()
+        }
+        if (this.isClick(thisClick)) {
+            // pass event to pick object because it was a true click and not a drag
+            this.onPickObject(event.offsetX, event.offsetY);
+        }
     };
 
     public addEventHandlersToCanvas(): void {
@@ -301,25 +417,27 @@ class Viewport extends React.Component<ViewportProps> {
         this.visGeometry.switchRenderStyle();
     }
 
-    public onPickObject(e: Event): void {
-        const event = e as MouseEvent;
-
+    public onPickObject(posX: number, posY: number): void {
         // TODO: intersect with scene's children not including lights?
         // can we select a smaller number of things to hit test?
         const oldFollowObject = this.visGeometry.getFollowObject();
         this.visGeometry.setFollowObject(NO_AGENT);
 
         // hit testing
-        const intersectedObject = this.visGeometry.hitTest(event);
+        const intersectedObject = this.visGeometry.hitTest(posX, posY);
         if (intersectedObject !== NO_AGENT) {
             this.hit = true;
-            if (oldFollowObject !== intersectedObject) {
+            if (
+                oldFollowObject !== intersectedObject &&
+                oldFollowObject !== NO_AGENT
+            ) {
                 this.visGeometry.removePathForAgentIndex(oldFollowObject);
             }
             this.visGeometry.setFollowObject(intersectedObject);
             this.visGeometry.addPathForAgentIndex(intersectedObject);
         } else {
             if (oldFollowObject !== NO_AGENT) {
+                this.resetCamera();
                 this.visGeometry.removePathForAgentIndex(oldFollowObject);
             }
             if (this.hit) {
@@ -360,14 +478,15 @@ class Viewport extends React.Component<ViewportProps> {
         const totalElapsedTime = now - this.startTime;
         if (elapsedTime > timePerFrame) {
             if (simulariumController.hasChangedFile) {
-                this.visGeometry.clear();
                 this.visGeometry.resetMapping();
                 // skip fetch if local file
-                const p = simulariumController.isLocalFile ? Promise.resolve() :
-                this.visGeometry.mapFromJSON(
-                    simulariumController.getFile(),
-                    getJsonUrl(simulariumController.getFile())
-                );
+                const p = simulariumController.isLocalFile
+                    ? Promise.resolve()
+                    : this.visGeometry.mapFromJSON(
+                          simulariumController.getFile(),
+                          simulariumController.getGeometryFile(),
+                          simulariumController.getAssetPrefix()
+                      );
 
                 p.then(() => {
                     this.visGeometry.render(totalElapsedTime);
