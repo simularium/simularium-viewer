@@ -80,10 +80,10 @@ class Viewer extends React.Component {
     }
 ```
 
-## Run locally
+## Run an example app locally
 
 1. Run `npm install` to install the dependencies.
-2. Run `./gradlew start`
+2. Run `npm start`
 3. Navigate to http://localhost:8080/public/
 
 This will run the example in `/examples/Viewer.tsx`, demonstrating the viewer's functionality.
@@ -111,5 +111,10 @@ For full package documentation please visit
 | start  | runs an example app from `examples` for testing. Runs at `localhost:8080/public/`. Run ./gradlew build to see new changes from `src` |
 
 ## Development
+
+Before pushing a branch run the following checks locally:
+1. `npm run lint`
+2. `npm run typeCheck`
+3. `npm run test`
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for information related to developing the code.
