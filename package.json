@@ -7,6 +7,7 @@
     "browser": "dist/index.js",
     "types": "type-declarations",
     "scripts": {
+        "start": "webpack-dev-server --config webpack.dev.js",
         "lint": "eslint src/**/*.ts src/**/*.tsx",
         "test": "jest src/**/*.test.ts",
         "typeCheck": "tsc -p tsconfig.json --noEmit",
