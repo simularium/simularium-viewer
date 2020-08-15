@@ -1,5 +1,5 @@
 ![Node.js CI](https://github.com/allen-cell-animated/simularium-viewer/workflows/Node.js%20CI/badge.svg)
-
+![NPM Package Publish](https://github.com/allen-cell-animated/simularium-viewer/workflows/NPM%20Package/badge.svg)
 # Simularium Viewer
 
 npm package to view simularium trajectories
