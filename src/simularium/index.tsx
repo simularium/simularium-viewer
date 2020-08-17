@@ -1,6 +1,5 @@
 export type {
     NetConnectionParams,
-    NetMessageType,
 } from "./NetConnection";
 export type { VisDataMessage } from "./VisData";
 export type { 
@@ -10,6 +9,7 @@ export type {
 
 export {
     NetConnection,
+    NetMessageEnum
 } from "./NetConnection";
 export { VisGeometry, NO_AGENT } from "./VisGeometry";
 export { VisData } from "./VisData";

@@ -1,5 +1,5 @@
 import { NetConnection } from "../";
-import { NetConnectionParams, NetMessageType } from "../NetConnection";
+import { NetConnectionParams, NetMessageEnum } from "../NetConnection";
 
 import { VisDataFrame, VisDataMessage } from "../VisData";
 
@@ -41,7 +41,7 @@ export class DummyNetConnection extends NetConnection {
         bundleSize: number
     ): TestDataBundle {
         const msg: VisDataMessage = {
-            msgType: NetMessageType.ID_VIS_DATA_ARRIVE,
+            msgType: NetMessageEnum.ID_VIS_DATA_ARRIVE,
             bundleStart: frameNumber,
             bundleSize: bundleSize,
             bundleData: [],
@@ -98,7 +98,7 @@ export class DummyNetConnection extends NetConnection {
     }
 
     public connectToRemoteServer(uri: string): Promise<string> {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
             setTimeout(() => {
                 this.isConnected = true;
                 resolve(uri);
@@ -133,7 +133,7 @@ export class DummyNetConnection extends NetConnection {
     public requestTrajectoryFileInfo(fileName: string): void {
         setTimeout(() => {
             const tfi = {
-                msgType: NetMessageType.ID_TRAJECTORY_FILE_INFO,
+                msgType: NetMessageEnum.ID_TRAJECTORY_FILE_INFO,
                 boxSizeX: 100,
                 boxSizeY: 100,
                 boxSizeZ: 20,
