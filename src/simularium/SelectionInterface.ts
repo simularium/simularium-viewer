@@ -110,8 +110,14 @@ class SelectionInterface {
      * selection state info, it will be considered hilighted
      */
     public getHighlightedIds(info: SelectionStateInfo): number[] {
-        let names = info.highlightedNames || [];
-        const tags: string[] = info.highlightedTags || [];
+        let names =
+            info.highlightedNames.filter(element => {
+                return element != undefined && element != "";
+            }) || [];
+        const tags: string[] =
+            info.highlightedTags.filter(element => {
+                return element != undefined && element != "";
+            }) || [];
         let indices: number[] = [];
 
         // If no name is specified, search all entries for matching tags
@@ -138,8 +144,14 @@ class SelectionInterface {
      * or a tag specified, it will be considered hidden
      */
     public getVisibleIds(info: SelectionStateInfo): number[] {
-        const hiddenNames = info.hiddenNames || [];
-        const hiddenTags = info.hiddenTags || [];
+        const hiddenNames =
+            info.hiddenNames.filter(element => {
+                return element != undefined && element != "";
+            }) || [];
+        const hiddenTags =
+            info.hiddenTags.filter(element => {
+                return element != undefined && element != "";
+            }) || [];
         const indices: number[] = [];
 
         Object.keys(this.entries).forEach(name => {
