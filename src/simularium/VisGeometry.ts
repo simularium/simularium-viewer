@@ -48,7 +48,7 @@ const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 const NO_AGENT = -1;
 
-enum RenderStyle {
+export enum RenderStyle {
     GENERIC,
     MOLECULAR,
 }
@@ -138,7 +138,7 @@ class VisGeometry {
     private lodBias: number;
 
     public constructor(loggerLevel: ILogLevel) {
-        this.renderStyle = RenderStyle.GENERIC;
+        this.renderStyle = RenderStyle.MOLECULAR;
         this.supportsMoleculeRendering = false;
         // TODO: pass this flag in from the outside
         this.resetCameraOnNewScene = true;
@@ -257,21 +257,26 @@ class VisGeometry {
         this.moleculeRenderer.setupGui(gui);
     }
 
-    public switchRenderStyle(): void {
+    public setRenderStyle(renderStyle: RenderStyle): void {
         // if target render style is supported, then change, otherwise don't.
         if (
-            this.renderStyle === RenderStyle.GENERIC &&
+            renderStyle === RenderStyle.MOLECULAR &&
             !this.supportsMoleculeRendering
         ) {
             console.log("Warning: molecule rendering not supported");
             return;
         }
 
-        this.renderStyle =
+        this.renderStyle = renderStyle;
+        this.updateScene(this.currentSceneAgents);
+    }
+
+    public switchRenderStyle(): void {
+        this.setRenderStyle(
             this.renderStyle === RenderStyle.GENERIC
                 ? RenderStyle.MOLECULAR
-                : RenderStyle.GENERIC;
-        this.updateScene(this.currentSceneAgents);
+                : RenderStyle.GENERIC
+        );
     }
 
     public get logger(): ILogger {
