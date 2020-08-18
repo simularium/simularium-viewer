@@ -1,6 +1,8 @@
 import React from "react";
+import type { UIDisplayData, SelectionStateInfo } from "../type-declarations";
 
-import SimulariumViewer, { SimulariumController, RenderStyle } from "../dist";
+import SimulariumViewer, { SimulariumController, RenderStyle } from "../src";
+
 import "./style.css";
 
 const netConnectionSettings = {
@@ -19,6 +21,7 @@ interface ViewerState {
     currentTime: number;
     height: number;
     width: number;
+    selectionStateInfo: SelectionStateInfo
     showMeshes: boolean;
     showPaths: boolean;
     timeStep: number;
@@ -52,21 +55,27 @@ const intialState = {
     showPaths: true,
     timeStep: 1,
     totalDuration: 100,
-    uiDisplayData: {},
+    uiDisplayData: [],
+    selectionStateInfo: {
+        highlightedTags: [],
+        highlightedNames: [],
+        hiddenNames: [],
+        hiddenTags: []
+    }
 };
 
 class Viewer extends React.Component<{}, ViewerState> {
-    private viewerRef: React.RefObject<SimulariumViewer>;
+    private viewerRef: React.RefObject<typeof SimulariumViewer>;
 
     public constructor(props) {
         super(props);
         this.viewerRef = React.createRef();
         this.handleJsonMeshData = this.handleJsonMeshData.bind(this);
         this.handleTimeChange = this.handleTimeChange.bind(this);
-        this.playOneFrame = this.playOneFrame.bind(this);
         this.highlightParticleTypeByName = this.highlightParticleTypeByName.bind(this);
         this.highlightParticleTypeByTag = this.highlightParticleTypeByTag.bind(this);
-        this.state = intialState;
+        this.getTagOptions = this.getTagOptions.bind(this);
+        this.state = initialState;
     }
 
     public componentDidMount(): void {
@@ -97,11 +106,12 @@ class Viewer extends React.Component<{}, ViewerState> {
         }
     }
 
-    public highlightParticleTypeByName(name): void {
+    public highlightParticleTypeByName(name: string): void {
         this.highlightParticleTypeByTag(UI_VAR_ALL_TAGS);
 
         if(name === UI_VAR_ALL_NAMES) {
           this.setState(prevState => ({
+              ...this.state,
             selectionStateInfo: {
               ...prevState.selectionStateInfo,
               highlightedNames: [], // specify none, show all that match tags
@@ -110,6 +120,7 @@ class Viewer extends React.Component<{}, ViewerState> {
           }));
         } else {
           this.setState(prevState => ({
+            ...this.state,
             selectionStateInfo: {
               ...prevState.selectionStateInfo,
               highlightedNames: [name],
@@ -119,7 +130,7 @@ class Viewer extends React.Component<{}, ViewerState> {
         }
     }
 
-    public highlightParticleTypeByTag(tag): void {
+    public highlightParticleTypeByTag(tag: string): void {
         if(tag === UI_VAR_ALL_TAGS) {
           this.setState(prevState => ({
             selectionStateInfo: {
@@ -139,13 +150,6 @@ class Viewer extends React.Component<{}, ViewerState> {
         }
     }
 
-    public playOneFrame(): void {
-        const frame = Number(document.querySelector("#frame-number").value);
-        simulariumController.playFromFrame(frame);
-
-        this.setState({ pauseOn: frame + 1 });
-    }
-
     public handleTrajectoryInfo(data): void {
         console.log("Trajectory info arrived", data);
         this.setState({
@@ -161,10 +165,12 @@ class Viewer extends React.Component<{}, ViewerState> {
         simulariumController.gotoTime(event.target.value);
     }
 
-    public handleUIDisplayData(uiDisplayData): void {
-        const tagsArrArr = uiDisplayData.map(a => a.displayStates.map(b => b.id));
-        const allTags = [].concat.apply([], tagsArrArr);
-        const uniqueTags = [... new Set(allTags)];
+    public handleUIDisplayData(uiDisplayData: UIDisplayData): void {
+        const allTags = uiDisplayData.reduce((fullArray: string[], subarray) => {
+            fullArray = [...fullArray, ...subarray.displayStates.map(b => b.id)];
+            return fullArray;
+        }, []);
+        const uniqueTags: string[] = [... new Set(allTags)];
 
         this.setState({
             particleTypeNames: uiDisplayData.map(a => a.name),
@@ -185,11 +191,11 @@ class Viewer extends React.Component<{}, ViewerState> {
         if(this.state.selectedName === UI_VAR_ALL_NAMES){
             return this.state.particleTypeTags;
         } else {
-            let matches = this.state.uiDisplayData.filter(entry => {
+            const matches = this.state.uiDisplayData.filter(entry => {
                 return entry.name === this.state.selectedName;
             });
 
-            if(matches) {
+            if (matches[0]) {
                 return matches[0].displayStates.map(state => { return state.id; });
             } else {
                 return [];

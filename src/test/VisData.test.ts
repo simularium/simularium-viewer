@@ -1,4 +1,4 @@
-import { VisData, VisDataMessage, NetMessageType } from "../simularium";
+import { VisData, VisDataMessage, NetMessageEnum } from "../simularium";
 
 // Sample data of a single agent of type '7'
 //  moving linearly from (0,0,0) to (5,5,5)
@@ -134,7 +134,7 @@ describe("VisData module", () => {
                 62, //"subpoint-3",
             ];
             const visDataMsg: VisDataMessage = {
-                msgType: NetMessageType.ID_VIS_DATA_ARRIVE,
+                msgType: NetMessageEnum.ID_VIS_DATA_ARRIVE,
                 bundleData: [
                     {
                         data: testData,
@@ -185,7 +185,7 @@ describe("VisData module", () => {
                 63, //"subpoint-4",
             ];
             const visDataMsgTooShort = {
-                msgType: NetMessageType.ID_VIS_DATA_ARRIVE,
+                msgType: NetMessageEnum.ID_VIS_DATA_ARRIVE,
                 bundleData: [
                     {
                         data: tooShort,
@@ -212,7 +212,7 @@ describe("VisData module", () => {
                 62, //"subpoint-3",
             ];
             const visDataMsgTooLong = {
-                msgType: NetMessageType.ID_VIS_DATA_ARRIVE,
+                msgType: NetMessageEnum.ID_VIS_DATA_ARRIVE,
                 bundleData: [
                     {
                         data: tooLong,

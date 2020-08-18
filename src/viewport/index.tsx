@@ -77,10 +77,6 @@ function sortFrames(a: VisDataFrame, b: VisDataFrame): number {
     return a.frameNumber - b.frameNumber;
 }
 
-function getJsonUrl(trajectoryName: string): string {
-    return `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${trajectoryName}.json`;
-}
-
 // max time in milliseconds for a mouse/touch interaction to be considered a click;
 const MAX_CLICK_TIME = 300;
 // for float errors
