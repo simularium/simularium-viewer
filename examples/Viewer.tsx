@@ -1,6 +1,6 @@
 import React from "react";
 
-import SimulariumViewer, { SimulariumController } from "../dist";
+import SimulariumViewer, { SimulariumController, RenderStyle } from "../dist";
 import "./style.css";
 
 const netConnectionSettings = {
@@ -9,6 +9,7 @@ const netConnectionSettings = {
 };
 
 interface ViewerState {
+    renderStyle: RenderStyle;
     selectedName: string;
     selectedTag: string;
     pauseOn: number;
@@ -34,9 +35,10 @@ let currentFrame = 0;
 let currentTime = 0;
 
 const UI_VAR_ALL_TAGS = "UI_VAR_ALL_TAGS";
-const UI_VAR_ALL_NAMES = "UI_VAR_ALL_NAMES"
+const UI_VAR_ALL_NAMES = "UI_VAR_ALL_NAMES";
 
 const intialState = {
+    renderStyle: RenderStyle.MOLECULAR,
     selectedTag: UI_VAR_ALL_TAGS,
     selectedName: UI_VAR_ALL_NAMES,
     pauseOn: -1,
@@ -323,13 +325,21 @@ class Viewer extends React.Component<{}, ViewerState> {
                     ShowPaths
                 </button>
                 <button
-                    onClick={() => this.viewerRef.current.switchRenderStyle()}
+                    onClick={() =>
+                        this.setState({
+                            renderStyle:
+                                this.state.renderStyle === RenderStyle.GENERIC
+                                    ? RenderStyle.MOLECULAR
+                                    : RenderStyle.GENERIC,
+                        })
+                    }
                 >
                     Switch Render
                 </button>
 
                 <SimulariumViewer
                     ref={this.viewerRef}
+                    renderStyle={this.state.renderStyle}
                     height={this.state.height}
                     width={this.state.width}
                     devgui={false}

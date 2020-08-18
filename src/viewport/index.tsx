@@ -284,11 +284,10 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             this.visGeometry.setHighlightByIds(ids);
         }
 
-        if (prevProps.renderStyle !== renderStyle) {
-            // note that if the system does not support the molecular render style, then
-            // the visGeometry's internal render style will be different than what this prop says.
-            this.visGeometry.setRenderStyle(renderStyle);
-        }
+        // note that if the system does not support the molecular render style, then
+        // the visGeometry's internal render style will be different than what this prop says.
+        this.visGeometry.setRenderStyle(renderStyle);
+
         this.visGeometry.setShowMeshes(showMeshes);
         this.visGeometry.setShowPaths(showPaths);
         this.visGeometry.setShowBounds(showBounds);
@@ -422,10 +421,6 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
     public resetCamera(): void {
         this.visGeometry.resetCamera();
-    }
-
-    public switchRenderStyle(): void {
-        this.visGeometry.switchRenderStyle();
     }
 
     public onPickObject(posX: number, posY: number): void {
@@ -580,4 +575,5 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
     }
 }
 
+export { RenderStyle };
 export default Viewport;

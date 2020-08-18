@@ -1,4 +1,4 @@
-import Viewport from "./viewport";
+import Viewport, { RenderStyle } from "./viewport";
 
 import SimulariumController from "./controller";
 import { NetConnection } from "./simularium/NetConnection";
@@ -9,5 +9,6 @@ export {
     NetConnection,
     DummyNetConnection,
     Orchestrator,
+    RenderStyle,
 };
 export default Viewport;

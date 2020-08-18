@@ -271,14 +271,6 @@ class VisGeometry {
         this.updateScene(this.currentSceneAgents);
     }
 
-    public switchRenderStyle(): void {
-        this.setRenderStyle(
-            this.renderStyle === RenderStyle.GENERIC
-                ? RenderStyle.MOLECULAR
-                : RenderStyle.GENERIC
-        );
-    }
-
     public get logger(): ILogger {
         return this.mlogger;
     }
