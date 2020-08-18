@@ -34,6 +34,7 @@ function desaturate(color: Color): Color {
 
 export default class VisAgent {
     private static readonly UNASSIGNED_MESH_COLOR = 0xff00ff;
+    public static readonly UNASSIGNED_NAME_PREFIX = "Unassigned";
     public static sphereGeometry: SphereBufferGeometry = new SphereBufferGeometry(
         1,
         32,
@@ -185,7 +186,7 @@ export default class VisAgent {
             this.mesh.material = material;
             this.mesh.onBeforeRender = this.onAgentMeshBeforeRender.bind(this);
         } else {
-            this.mesh.traverse(child => {
+            this.mesh.traverse((child) => {
                 if (child instanceof Mesh) {
                     child.material = material;
                     child.onBeforeRender = this.onAgentMeshBeforeRender.bind(
@@ -199,13 +200,13 @@ export default class VisAgent {
     public assignMembraneMaterial(): void {
         if (this.selected) {
             // at this time, assign separate material parameters to the faces and sides of the membrane
-            const faceNames = VisAgent.membraneData.faces.map(el => {
+            const faceNames = VisAgent.membraneData.faces.map((el) => {
                 return el.name;
             });
-            const sideNames = VisAgent.membraneData.sides.map(el => {
+            const sideNames = VisAgent.membraneData.sides.map((el) => {
                 return el.name;
             });
-            this.mesh.traverse(child => {
+            this.mesh.traverse((child) => {
                 if (child instanceof Mesh) {
                     if (faceNames.includes(child.name)) {
                         child.material = VisAgent.membraneData.facesMaterial;
@@ -219,7 +220,7 @@ export default class VisAgent {
             VisAgent.membraneData.sidesMaterial.uniforms.uvscale.value =
                 VisAgent.membraneData.sidesUVScale;
         } else {
-            this.mesh.traverse(child => {
+            this.mesh.traverse((child) => {
                 if (child instanceof Mesh) {
                     child.material = this.desatMaterial;
                 }
@@ -310,7 +311,8 @@ export default class VisAgent {
         return (
             this.pdbModel !== undefined &&
             this.pdbModel.pdb !== null &&
-            this.pdbObjects.length > 0
+            this.pdbObjects.length > 0 &&
+            !this.pdbModel.name.startsWith(VisAgent.UNASSIGNED_NAME_PREFIX)
         );
     }
 

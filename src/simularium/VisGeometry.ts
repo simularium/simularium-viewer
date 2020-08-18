@@ -5,6 +5,8 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import VisAgent from "./VisAgent";
 import VisTypes from "./VisTypes";
 import PDBModel from "./PDBModel";
+import TaskQueue from "./worker/TaskQueue";
+import { REASON_CANCELLED } from "./worker/TaskQueue";
 
 import {
     Box3,
@@ -26,6 +28,7 @@ import {
     VertexColors,
     WebGLRenderer,
     WebGLRendererParameters,
+    Mesh,
 } from "three";
 
 import * as dat from "dat.gui";
@@ -39,7 +42,7 @@ import { AgentData } from "./VisData";
 import MoleculeRenderer from "./rendering/MoleculeRenderer";
 
 const MAX_PATH_LEN = 32;
-const MAX_MESHES = 20000;
+const MAX_MESHES = 100000;
 const DEFAULT_BACKGROUND_COLOR = new Color(0.121569, 0.13333, 0.17647);
 const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
@@ -57,6 +60,11 @@ function lerp(x0: number, x1: number, alpha: number): number {
 interface AgentTypeGeometry {
     meshName: string;
     pdbName: string;
+}
+
+interface MeshLoadRequest {
+    mesh: Object3D;
+    cancelled: boolean;
 }
 
 interface HSL {
@@ -91,7 +99,7 @@ class VisGeometry {
     public backgroundColor: Color;
     public pathEndColor: Color;
     public visGeomMap: Map<number, AgentTypeGeometry>;
-    public meshRegistry: Map<string | number, Object3D>;
+    public meshRegistry: Map<string | number, MeshLoadRequest>;
     public pdbRegistry: Map<string | number, PDBModel>;
     public meshLoadAttempted: Map<string, boolean>;
     public pdbLoadAttempted: Map<string, boolean>;
@@ -127,6 +135,7 @@ class VisGeometry {
     private supportsMoleculeRendering: boolean;
     private membraneAgent?: VisAgent;
     private resetCameraOnNewScene: boolean;
+    private lodBias: number;
 
     public constructor(loggerLevel: ILogLevel) {
         this.renderStyle = RenderStyle.GENERIC;
@@ -135,7 +144,7 @@ class VisGeometry {
         this.resetCameraOnNewScene = true;
 
         this.visGeomMap = new Map<number, AgentTypeGeometry>();
-        this.meshRegistry = new Map<string | number, Object3D>();
+        this.meshRegistry = new Map<string | number, MeshLoadRequest>();
         this.pdbRegistry = new Map<string | number, PDBModel>();
         this.meshLoadAttempted = new Map<string, boolean>();
         this.pdbLoadAttempted = new Map<string, boolean>();
@@ -190,6 +199,7 @@ class VisGeometry {
         );
         this.currentSceneAgents = [];
         this.colorsData = new Float32Array(0);
+        this.lodBias = 0;
         if (loggerLevel === jsLogger.DEBUG) {
             this.setupGui();
         }
@@ -211,6 +221,7 @@ class VisGeometry {
     public setupGui(): void {
         const gui = new dat.GUI();
         const settings = {
+            lodBias: this.lodBias,
             atomSpread: this.atomSpread,
             numAtoms: this.numAtomsPerAgent,
             bgcolor: {
@@ -219,20 +230,26 @@ class VisGeometry {
                 b: this.backgroundColor.b * 255,
             },
         };
-        gui.addColor(settings, "bgcolor").onChange(value => {
+        gui.add(settings, "lodBias", 0, 4)
+            .step(1)
+            .onChange((value) => {
+                this.lodBias = value;
+                this.updateScene(this.currentSceneAgents);
+            });
+        gui.addColor(settings, "bgcolor").onChange((value) => {
             this.setBackgroundColor([
                 value.r / 255.0,
                 value.g / 255.0,
                 value.b / 255.0,
             ]);
         });
-        gui.add(settings, "atomSpread", 0.01, 8.0).onChange(value => {
+        gui.add(settings, "atomSpread", 0.01, 8.0).onChange((value) => {
             this.atomSpread = value;
             this.updateScene(this.currentSceneAgents);
         });
         gui.add(settings, "numAtoms", 1, 400)
             .step(1)
-            .onChange(value => {
+            .onChange((value) => {
                 this.numAtomsPerAgent = Math.floor(value);
                 this.updateScene(this.currentSceneAgents);
             });
@@ -358,9 +375,9 @@ class VisGeometry {
             .filter(({ 1: v }) => v.meshName === meshName)
             .map(([k]) => k);
 
-        // assuming the meshGeom has already been added to the registry
-        const meshGeom = this.meshRegistry.get(meshName);
-        if (meshGeom === undefined) {
+        // assuming the meshLoadRequest has already been added to the registry
+        const meshLoadRequest = this.meshRegistry.get(meshName);
+        if (meshLoadRequest === undefined) {
             console.error(`Mesh name ${meshName} not found in mesh registry`);
             return;
         }
@@ -371,7 +388,7 @@ class VisGeometry {
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
             const visAgent = this.visAgents[i];
             if (typeIds.includes(visAgent.typeId)) {
-                this.resetAgentGeometry(visAgent, meshGeom);
+                this.resetAgentGeometry(visAgent, meshLoadRequest.mesh);
                 visAgent.setColor(
                     this.getColorForTypeId(visAgent.typeId),
                     this.getColorIndexForTypeId(visAgent.typeId)
@@ -507,36 +524,76 @@ class VisGeometry {
 
     public loadPdb(pdbName: string, assetPath: string): void {
         const pdbmodel = new PDBModel(pdbName);
+        this.pdbRegistry.set(pdbName, pdbmodel);
         pdbmodel.download(`${assetPath}/${pdbName}`).then(
             () => {
-                this.logger.debug("Finished loading pdb: ", pdbName);
-                this.pdbRegistry.set(pdbName, pdbmodel);
-                this.onNewPdb(pdbName);
+                const pdbEntry = this.pdbRegistry.get(pdbName);
+                if (
+                    pdbEntry &&
+                    pdbEntry === pdbmodel &&
+                    !pdbEntry.isCancelled()
+                ) {
+                    this.logger.debug("Finished loading pdb: ", pdbName);
+                    this.onNewPdb(pdbName);
+                    // initiate async LOD processing
+                    pdbmodel.generateLOD().then(() => {
+                        this.logger.debug(
+                            "Finished loading pdb LODs: ",
+                            pdbName
+                        );
+                        this.onNewPdb(pdbName);
+                    });
+                }
             },
-            reason => {
-                console.error(reason);
-                this.logger.debug("Failed to load pdb: ", pdbName);
+            (reason) => {
+                this.pdbRegistry.delete(pdbName);
+                if (reason !== REASON_CANCELLED) {
+                    console.error(reason);
+                    this.logger.debug("Failed to load pdb: ", pdbName);
+                }
             }
         );
     }
 
     public loadObj(meshName: string, assetPath: string): void {
         const objLoader = new OBJLoader();
+        this.meshRegistry.set(meshName, {
+            mesh: new Mesh(VisAgent.sphereGeometry),
+            cancelled: false,
+        });
         objLoader.load(
             `${assetPath}/${meshName}`,
-            object => {
+            (object) => {
+                const meshLoadRequest = this.meshRegistry.get(meshName);
+                if (
+                    (meshLoadRequest && meshLoadRequest.cancelled) ||
+                    !meshLoadRequest
+                ) {
+                    this.meshRegistry.delete(meshName);
+                    return;
+                }
+
                 this.logger.debug("Finished loading mesh: ", meshName);
-                this.addMesh(meshName, object);
+                // insert new mesh into meshRegistry
+                this.meshRegistry.set(meshName, {
+                    mesh: object,
+                    cancelled: false,
+                });
+                if (!object.name) {
+                    object.name = meshName;
+                }
                 this.onNewRuntimeGeometryType(meshName);
             },
-            xhr => {
+            (xhr) => {
                 this.logger.debug(
                     meshName,
                     " ",
                     `${(xhr.loaded / xhr.total) * 100}% loaded`
                 );
             },
-            error => {
+            (error) => {
+                this.meshRegistry.delete(meshName);
+                console.error(error);
                 this.logger.debug("Failed to load mesh: ", error, meshName);
             }
         );
@@ -628,7 +685,7 @@ class VisGeometry {
                         for (let j = 0; j < distances.length; ++j) {
                             // the first distance less than.
                             if (distance < distances[j]) {
-                                agent.selectLOD(j);
+                                agent.selectLOD(j + this.lodBias);
                                 break;
                             }
                         }
@@ -763,21 +820,13 @@ class VisGeometry {
     public createMeshes(): void {
         this.geomCount = MAX_MESHES;
 
-        //multipass render:
+        // multipass render:
         // draw moleculebuffer into several render targets to store depth, normals, colors
         // draw quad to composite the buffers into final frame
 
         // create placeholder agents
         for (let i = 0; i < this.geomCount; i += 1) {
             this.visAgents[i] = new VisAgent(`Agent_${i}`);
-        }
-    }
-
-    public addMesh(meshName: string, mesh: Object3D): void {
-        this.meshRegistry.set(meshName, mesh);
-
-        if (!mesh.name) {
-            mesh.name = meshName;
         }
     }
 
@@ -800,13 +849,17 @@ class VisGeometry {
      */
     public mapIdToGeom(
         id: number,
-        meshName: string,
-        pdbName: string,
+        meshName: string | undefined,
+        pdbName: string | undefined,
         assetPath: string
     ): void {
         this.logger.debug("Mesh for id ", id, " set to ", meshName);
         this.logger.debug("PDB for id ", id, " set to ", pdbName);
-        this.visGeomMap.set(id, { meshName: meshName, pdbName: pdbName });
+        const unassignedName = `${VisAgent.UNASSIGNED_NAME_PREFIX}-${id}`;
+        this.visGeomMap.set(id, {
+            meshName: meshName || unassignedName,
+            pdbName: pdbName || unassignedName,
+        });
         if (
             meshName &&
             !this.meshRegistry.has(meshName) &&
@@ -814,6 +867,13 @@ class VisGeometry {
         ) {
             this.loadObj(meshName, assetPath);
             this.meshLoadAttempted.set(meshName, true);
+        } else if (!this.meshRegistry.has(unassignedName)) {
+            // assign mesh sphere
+            this.meshRegistry.set(unassignedName, {
+                mesh: new Mesh(VisAgent.sphereGeometry),
+                cancelled: false,
+            });
+            this.onNewRuntimeGeometryType(unassignedName);
         }
 
         // try load pdb file also.
@@ -824,6 +884,11 @@ class VisGeometry {
         ) {
             this.loadPdb(pdbName, assetPath);
             this.pdbLoadAttempted.set(pdbName, true);
+        } else if (!this.pdbRegistry.has(unassignedName)) {
+            // assign single atom pdb
+            const pdbmodel = new PDBModel(unassignedName);
+            pdbmodel.create(1);
+            this.pdbRegistry.set(unassignedName, pdbmodel);
         }
     }
 
@@ -833,9 +898,9 @@ class VisGeometry {
             if (entry) {
                 const meshName = entry.meshName;
                 if (meshName && this.meshRegistry.has(meshName)) {
-                    const mesh = this.meshRegistry.get(meshName);
-                    if (mesh) {
-                        return mesh;
+                    const meshLoadRequest = this.meshRegistry.get(meshName);
+                    if (meshLoadRequest) {
+                        return meshLoadRequest.mesh;
                     }
                 }
             }
@@ -872,13 +937,13 @@ class VisGeometry {
         }
         const jsonRequest = new Request(filePath);
         return fetch(jsonRequest)
-            .then(response => {
+            .then((response) => {
                 if (!response.ok) {
                     throw new Error(`Failed to fetch ${filePath}`);
                 }
                 return response.json();
             })
-            .then(data => {
+            .then((data) => {
                 this.setGeometryData(
                     data as AgentTypeVisDataMap,
                     assetPath,
@@ -897,8 +962,8 @@ class VisGeometry {
 
         this.logger.debug("JSON Mesh mapping loaded: ", jsonData);
 
-        Object.keys(jsonData).forEach(id => {
-            const entry = jsonData[id];
+        Object.keys(jsonData).forEach((id) => {
+            const entry: AgentTypeVisData = jsonData[id];
             if (id === "size") {
                 console.log("WARNING: Ignoring deprecated bounding box data");
             } else {
@@ -987,19 +1052,21 @@ class VisGeometry {
                         if (meshGeom.name.includes("membrane")) {
                             this.membraneAgent = visAgent;
                         }
-                        visAgent.setColor(
-                            this.getColorForTypeId(typeId),
-                            this.getColorIndexForTypeId(typeId)
-                        );
                     }
                     const pdbGeom = this.getPdbFromId(typeId);
                     if (pdbGeom) {
                         this.resetAgentPDB(visAgent, pdbGeom);
-                        visAgent.setColor(
-                            this.getColorForTypeId(typeId),
-                            this.getColorIndexForTypeId(typeId)
+                    }
+                    if (!pdbGeom && !meshGeom) {
+                        this.resetAgentGeometry(
+                            visAgent,
+                            new Mesh(VisAgent.sphereGeometry)
                         );
                     }
+                    visAgent.setColor(
+                        this.getColorForTypeId(typeId),
+                        this.getColorIndexForTypeId(typeId)
+                    );
                 }
 
                 const runtimeMesh = visAgent.mesh;
@@ -1122,7 +1189,7 @@ class VisGeometry {
     }
 
     public findPathForAgentIndex(idx: number): PathData | null {
-        const path = this.paths.find(path => {
+        const path = this.paths.find((path) => {
             return path.agent === idx;
         });
 
@@ -1195,7 +1262,7 @@ class VisGeometry {
     }
 
     public removePathForAgentIndex(idx: number): void {
-        const pathindex = this.paths.findIndex(path => {
+        const pathindex = this.paths.findIndex((path) => {
             return path.agent === idx;
         });
         if (pathindex === -1) {
@@ -1367,26 +1434,54 @@ class VisGeometry {
         this.hideUnusedAgents(0);
     }
 
-    public resetAllGeometry(): void {
+    private cancelAllAsyncProcessing(): void {
+        // note that this leaves cancelled things in the registries.
+        // This should be called before the registries are cleared and probably
+        // only makes sense to do if they are indeed about to be cleared.
+
+        // don't process any queued requests
+        TaskQueue.stopAll();
+        // signal to cancel any pending pdbs
+        this.pdbRegistry.forEach((value) => {
+            value.setCancelled();
+        });
+        // signal to cancel any pending mesh downloads
+        this.meshRegistry.forEach((value) => {
+            value.cancelled = true;
+        });
+    }
+
+    private resetAllGeometry(): void {
+        this.cancelAllAsyncProcessing();
+
         this.unfollow();
         this.removeAllPaths();
 
         this.membraneAgent = undefined;
 
+        // remove geometry from all visible scene groups.
+        // Object3D.remove can be slow, and just doing it in-order here
+        // is faster than doing it in the loop over all visAgents
+        for (let i = this.agentMeshGroup.children.length - 1; i >= 0; i--) {
+            this.agentMeshGroup.remove(this.agentMeshGroup.children[i]);
+        }
+        for (let i = this.agentFiberGroup.children.length - 1; i >= 0; i--) {
+            this.agentFiberGroup.remove(this.agentFiberGroup.children[i]);
+        }
+        for (let i = this.agentPDBGroup.children.length - 1; i >= 0; i--) {
+            this.agentPDBGroup.remove(this.agentPDBGroup.children[i]);
+        }
+
         // set all runtime meshes back to spheres.
         const nMeshes = this.visAgents.length;
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
             const visAgent = this.visAgents[i];
-            // try to remove from both groups, mesh could be fiber or plain mesh
-            this.agentMeshGroup.remove(visAgent.mesh);
-            this.agentFiberGroup.remove(visAgent.mesh);
-            visAgent.resetMesh();
-            this.agentMeshGroup.add(visAgent.mesh);
-
-            for (let j = 0; j < visAgent.pdbObjects.length; ++j) {
-                this.agentPDBGroup.remove(visAgent.pdbObjects[j]);
+            if (visAgent.active) {
+                visAgent.resetMesh();
+                // re-add as mesh by default
+                this.agentMeshGroup.add(visAgent.mesh);
+                visAgent.resetPDB();
             }
-            visAgent.resetPDB();
         }
     }
 

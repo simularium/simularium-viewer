@@ -11,7 +11,7 @@ interface MessageEventLike {
 }
 
 // these have been set to correspond to backend values
-export const enum NetMessageType {
+export const enum NetMessageEnum {
     ID_UNDEFINED_WEB_REQUEST = 0,
     ID_VIS_DATA_ARRIVE = 1,
     ID_VIS_DATA_REQUEST = 2,
@@ -107,7 +107,7 @@ export class NetConnection {
 
         const msg: NetMessage = JSON.parse(event.data);
         const msgType = msg.msgType;
-        const numMsgTypes = NetMessageType.LENGTH;
+        const numMsgTypes = NetMessageEnum.LENGTH;
 
         if (msgType > numMsgTypes || msgType < 1) {
             // this suggests either the back-end is out of sync, or a connection to an unknown back-end
@@ -121,29 +121,29 @@ export class NetConnection {
         }
 
         switch (msgType) {
-            case NetMessageType.ID_VIS_DATA_ARRIVE:
+            case NetMessageEnum.ID_VIS_DATA_ARRIVE:
                 this.onTrajectoryDataArrive(msg);
                 break;
-            case NetMessageType.ID_UPDATE_TIME_STEP:
+            case NetMessageEnum.ID_UPDATE_TIME_STEP:
                 // TODO: callback to handle time step update
                 break;
-            case NetMessageType.ID_UPDATE_RATE_PARAM:
+            case NetMessageEnum.ID_UPDATE_RATE_PARAM:
                 // TODO: callback to handle rate param
                 break;
-            case NetMessageType.ID_HEARTBEAT_PING:
+            case NetMessageEnum.ID_HEARTBEAT_PING:
                 this.sendWebSocketRequest(
                     {
                         connId: msg.connId,
-                        msgType: NetMessageType.ID_HEARTBEAT_PONG,
+                        msgType: NetMessageEnum.ID_HEARTBEAT_PONG,
                     },
                     "Heartbeat pong"
                 );
                 break;
-            case NetMessageType.ID_MODEL_DEFINITION:
+            case NetMessageEnum.ID_MODEL_DEFINITION:
                 this.logger.debug("Model Definition Arrived");
                 // TODO: callback to handle model definition
                 break;
-            case NetMessageType.ID_TRAJECTORY_FILE_INFO:
+            case NetMessageEnum.ID_TRAJECTORY_FILE_INFO:
                 this.logger.debug("Trajectory file info Arrived");
                 this.onTrajectoryFileInfoArrive(msg);
                 break;
@@ -192,7 +192,7 @@ export class NetConnection {
     }
 
     private connectToUriAsync(address): Promise<string> {
-        const connectPromise = new Promise<string>(resolve => {
+        const connectPromise = new Promise<string>((resolve) => {
             this.connectToUri(address);
             resolve("Succesfully connected to uri!");
         });
@@ -248,7 +248,7 @@ export class NetConnection {
         }
 
         const jsonData = {
-            msgType: NetMessageType.ID_UPDATE_TIME_STEP,
+            msgType: NetMessageEnum.ID_UPDATE_TIME_STEP,
             timeStep: newTimeStep,
         };
         this.sendWebSocketRequest(jsonData, "Update Time-Step");
@@ -260,7 +260,7 @@ export class NetConnection {
         }
 
         const jsonData = {
-            msgType: NetMessageType.ID_UPDATE_RATE_PARAM,
+            msgType: NetMessageEnum.ID_UPDATE_RATE_PARAM,
             paramName: paramName,
             paramValue: paramValue,
         };
@@ -274,7 +274,7 @@ export class NetConnection {
 
         const dataToSend = {
             model: model,
-            msgType: NetMessageType.ID_MODEL_DEFINITION,
+            msgType: NetMessageEnum.ID_MODEL_DEFINITION,
         };
         this.sendWebSocketRequest(dataToSend, "Model Definition");
     }
@@ -290,7 +290,7 @@ export class NetConnection {
      */
     public startRemoteSimPreRun(timeStep: number, numTimeSteps: number): void {
         const jsonData = {
-            msgType: NetMessageType.ID_VIS_DATA_REQUEST,
+            msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
             mode: PlayBackType.ID_PRE_RUN_SIMULATION,
             timeStep: timeStep,
             numTimeSteps: numTimeSteps,
@@ -303,7 +303,7 @@ export class NetConnection {
 
     public startRemoteSimLive(): void {
         const jsonData = {
-            msgType: NetMessageType.ID_VIS_DATA_REQUEST,
+            msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
             mode: PlayBackType.ID_LIVE_SIMULATION,
         };
 
@@ -314,7 +314,7 @@ export class NetConnection {
 
     public startRemoteTrajectoryPlayback(fileName: string): Promise<void> {
         const jsonData = {
-            msgType: NetMessageType.ID_VIS_DATA_REQUEST,
+            msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
             mode: PlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
             "file-name": fileName,
         };
@@ -333,7 +333,7 @@ export class NetConnection {
         }
 
         const jsonData = {
-            msgType: NetMessageType.ID_PLAY_CACHE,
+            msgType: NetMessageEnum.ID_PLAY_CACHE,
             "frame-num": cacheFrame,
         };
         this.sendWebSocketRequest(jsonData, "Play Simulation Cache from Frame");
@@ -344,7 +344,7 @@ export class NetConnection {
             return;
         }
         this.sendWebSocketRequest(
-            { msgType: NetMessageType.ID_VIS_DATA_PAUSE },
+            { msgType: NetMessageEnum.ID_VIS_DATA_PAUSE },
             "Pause Simulation"
         );
     }
@@ -354,7 +354,7 @@ export class NetConnection {
             return;
         }
         this.sendWebSocketRequest(
-            { msgType: NetMessageType.ID_VIS_DATA_RESUME },
+            { msgType: NetMessageEnum.ID_VIS_DATA_RESUME },
             "Resume Simulation"
         );
     }
@@ -364,7 +364,7 @@ export class NetConnection {
             return;
         }
         this.sendWebSocketRequest(
-            { msgType: NetMessageType.ID_VIS_DATA_ABORT },
+            { msgType: NetMessageEnum.ID_VIS_DATA_ABORT },
             "Abort Simulation"
         );
     }
@@ -372,7 +372,7 @@ export class NetConnection {
     public requestSingleFrame(startFrameNumber: number): void {
         this.sendWebSocketRequest(
             {
-                msgType: NetMessageType.ID_VIS_DATA_REQUEST,
+                msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
                 mode: PlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
                 frameNumber: startFrameNumber,
             },
@@ -383,7 +383,7 @@ export class NetConnection {
     public playRemoteSimCacheFromTime(timeNanoSeconds: number): void {
         this.sendWebSocketRequest(
             {
-                msgType: NetMessageType.ID_PLAY_CACHE,
+                msgType: NetMessageEnum.ID_PLAY_CACHE,
                 time: timeNanoSeconds,
             },
             "Play Simulation Cache from Time"
@@ -393,7 +393,7 @@ export class NetConnection {
     public gotoRemoteSimulationTime(timeNanoSeconds: number): void {
         this.sendWebSocketRequest(
             {
-                msgType: NetMessageType.ID_GOTO_SIMULATION_TIME,
+                msgType: NetMessageEnum.ID_GOTO_SIMULATION_TIME,
                 time: timeNanoSeconds,
             },
             "Load single frame at specified Time"
@@ -403,7 +403,7 @@ export class NetConnection {
     public requestTrajectoryFileInfo(fileName: string): void {
         this.sendWebSocketRequest(
             {
-                msgType: NetMessageType.ID_INIT_TRAJECTORY_FILE,
+                msgType: NetMessageEnum.ID_INIT_TRAJECTORY_FILE,
                 fileName: fileName,
             },
             "Initialize trajectory file info"
