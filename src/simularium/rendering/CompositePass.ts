@@ -21,8 +21,6 @@ class CompositePass {
                 ssaoTex1: { value: null },
                 ssaoTex2: { value: null },
                 atomIdTex: { value: null },
-                instanceIdTex: { value: null },
-                depthBufferTex: { value: null },
                 // colors indexed by particle type id
                 colorsBuffer: { value: null },
                 backgroundColor: { value: new Color(1, 1, 1) },
@@ -41,8 +39,6 @@ class CompositePass {
             uniform sampler2D ssaoTex1;
             uniform sampler2D ssaoTex2;
             uniform sampler2D atomIdTex;
-            uniform sampler2D instanceIdTex;
-            uniform sampler2D depthBufferTex;
 
             uniform sampler2D colorsBuffer;
             
@@ -267,12 +263,12 @@ class CompositePass {
                     //color.xyz = vec3(0.0, 1.0, 0.0);
                 }
             
-                if (highlightInstance == col0.y) {
-                    color.xyz = vec3(1.0, 0.0, 0.0);
-                }
+                //if (highlightInstance == col0.y) {
+                //    color.xyz = vec3(1.0, 0.0, 0.0);
+                //}
 
                 gl_FragColor = vec4(occ1 * occ2 * color.xyz, 1.0);
-            }            
+            }
             `,
         });
     }

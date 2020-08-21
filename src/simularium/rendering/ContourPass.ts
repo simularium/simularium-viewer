@@ -10,12 +10,16 @@ class ContourPass {
             uniforms: {
                 colorTex: { value: null },
                 instanceIdTex: { value: null },
+                normalsTex: { value: null },
+                highlightInstance: { value: -1 },
             },
             fragmentShader: `
             in vec2 vUv;
             
             uniform sampler2D colorTex;
             uniform sampler2D instanceIdTex;
+            uniform sampler2D normalsTex;
+            uniform float highlightInstance;
 
             void main(void)
             {
@@ -38,14 +42,34 @@ class ContourPass {
             
               vec4 finalColor;
               if ( (X == R) && (X == L) && (X == T) && (X == B) )
-              { //~ current pixel is NOT on the edge
+              {
+                //~ current pixel is NOT on the edge
                 finalColor = col;
               }
               else
-              { //~ current pixel lies on the edge
+              {
+                //~ current pixel lies on the edge
+                // outline pixel color is a blackened version of the color
                 finalColor = mix(vec4(0,0,0,1), col, 0.8);
+
               }
-            
+              if (X == int(highlightInstance)) {
+                float thickness = 4.0;
+                R = int(texture(instanceIdTex, vUv + vec2(wStep*thickness, 0)).g);
+                L = int(texture(instanceIdTex, vUv + vec2(-wStep*thickness, 0)).g);
+                T = int(texture(instanceIdTex, vUv + vec2(0, hStep*thickness)).g);
+                B = int(texture(instanceIdTex, vUv + vec2(0, -hStep*thickness)).g);
+                if ( (X != R) || (X != L) || (X != T) || (X != B) )
+                {
+                  //~ current pixel lies on the edge
+                  // outline pixel color is a whitened version of the color
+                  finalColor = mix(vec4(1,1,1,1), col, 0.2);
+  
+                }
+    
+
+            }
+        
               gl_FragDepth = instance.w >= 0.0 ? instance.w : 1.0;
               gl_FragColor = finalColor;
             }
@@ -62,7 +86,8 @@ class ContourPass {
         renderer: WebGLRenderer,
         target: WebGLRenderTarget | null,
         colorBuffer: WebGLRenderTarget,
-        instanceIdBuffer: WebGLRenderTarget
+        instanceIdBuffer: WebGLRenderTarget,
+        normalsBuffer: WebGLRenderTarget
     ): void {
         // this render pass has to fill frag depth for future render passes
         this.pass.material.depthWrite = true;
@@ -70,6 +95,7 @@ class ContourPass {
         this.pass.material.uniforms.colorTex.value = colorBuffer.texture;
         this.pass.material.uniforms.instanceIdTex.value =
             instanceIdBuffer.texture;
+        this.pass.material.uniforms.normalsTex.value = normalsBuffer.texture;
 
         // const c = renderer.getClearColor().clone();
         // const a = renderer.getClearAlpha();
