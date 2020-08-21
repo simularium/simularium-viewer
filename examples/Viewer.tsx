@@ -21,7 +21,7 @@ interface ViewerState {
     currentTime: number;
     height: number;
     width: number;
-    selectionStateInfo: SelectionStateInfo
+    selectionStateInfo: SelectionStateInfo;
     showMeshes: boolean;
     showPaths: boolean;
     timeStep: number;
@@ -40,7 +40,7 @@ let currentTime = 0;
 const UI_VAR_ALL_TAGS = "UI_VAR_ALL_TAGS";
 const UI_VAR_ALL_NAMES = "UI_VAR_ALL_NAMES";
 
-const intialState = {
+const initialState = {
     renderStyle: RenderStyle.MOLECULAR,
     selectedTag: UI_VAR_ALL_TAGS,
     selectedName: UI_VAR_ALL_NAMES,
