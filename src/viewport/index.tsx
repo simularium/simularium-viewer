@@ -17,10 +17,12 @@ import {
     VisDataMessage,
 } from "../simularium";
 import { VisDataFrame } from "../simularium/VisData";
+import { RenderStyle } from "../simularium/VisGeometry";
 
 export type PropColor = string | number | [number, number, number];
 
 interface ViewportProps {
+    renderStyle: RenderStyle;
     backgroundColor: PropColor;
     height: number;
     width: number;
@@ -95,6 +97,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
     private stats: Stats;
 
     public static defaultProps = {
+        renderStyle: RenderStyle.MOLECULAR,
         backgroundColor: [0.121569, 0.13333, 0.17647],
         height: 800,
         width: 800,
@@ -263,16 +266,23 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             backgroundColor,
             height,
             width,
+            renderStyle,
             showMeshes,
             showPaths,
             showBounds,
-            selectionStateInfo
+            selectionStateInfo,
         } = this.props;
 
-        if(selectionStateInfo) {
-          const ids = this.selectionInterface.getHighlightedIds(selectionStateInfo);
-          this.visGeometry.setHighlightByIds(ids);
+        if (selectionStateInfo) {
+            const ids = this.selectionInterface.getHighlightedIds(
+                selectionStateInfo
+            );
+            this.visGeometry.setHighlightByIds(ids);
         }
+
+        // note that if the system does not support the molecular render style, then
+        // the visGeometry's internal render style will be different than what this prop says.
+        this.visGeometry.setRenderStyle(renderStyle);
 
         this.visGeometry.setShowMeshes(showMeshes);
         this.visGeometry.setShowPaths(showPaths);
@@ -407,10 +417,6 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
     public resetCamera(): void {
         this.visGeometry.resetCamera();
-    }
-
-    public switchRenderStyle(): void {
-        this.visGeometry.switchRenderStyle();
     }
 
     public onPickObject(posX: number, posY: number): void {
@@ -565,4 +571,5 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
     }
 }
 
+export { RenderStyle };
 export default Viewport;

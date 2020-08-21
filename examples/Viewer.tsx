@@ -1,7 +1,7 @@
 import React from "react";
 import type { UIDisplayData, SelectionStateInfo } from "../type-declarations";
 
-import SimulariumViewer, { SimulariumController } from "../src";
+import SimulariumViewer, { SimulariumController, RenderStyle } from "../src";
 
 import "./style.css";
 
@@ -11,6 +11,7 @@ const netConnectionSettings = {
 };
 
 interface ViewerState {
+    renderStyle: RenderStyle;
     selectedName: string;
     selectedTag: string;
     pauseOn: number;
@@ -20,7 +21,7 @@ interface ViewerState {
     currentTime: number;
     height: number;
     width: number;
-    selectionStateInfo: SelectionStateInfo
+    selectionStateInfo: SelectionStateInfo;
     showMeshes: boolean;
     showPaths: boolean;
     timeStep: number;
@@ -37,9 +38,10 @@ let currentFrame = 0;
 let currentTime = 0;
 
 const UI_VAR_ALL_TAGS = "UI_VAR_ALL_TAGS";
-const UI_VAR_ALL_NAMES = "UI_VAR_ALL_NAMES"
+const UI_VAR_ALL_NAMES = "UI_VAR_ALL_NAMES";
 
 const initialState = {
+    renderStyle: RenderStyle.MOLECULAR,
     selectedTag: UI_VAR_ALL_TAGS,
     selectedName: UI_VAR_ALL_NAMES,
     pauseOn: -1,
@@ -329,13 +331,21 @@ class Viewer extends React.Component<{}, ViewerState> {
                     ShowPaths
                 </button>
                 <button
-                    onClick={() => this.viewerRef.current.switchRenderStyle()}
+                    onClick={() =>
+                        this.setState({
+                            renderStyle:
+                                this.state.renderStyle === RenderStyle.GENERIC
+                                    ? RenderStyle.MOLECULAR
+                                    : RenderStyle.GENERIC,
+                        })
+                    }
                 >
                     Switch Render
                 </button>
 
                 <SimulariumViewer
                     ref={this.viewerRef}
+                    renderStyle={this.state.renderStyle}
                     height={this.state.height}
                     width={this.state.width}
                     devgui={false}

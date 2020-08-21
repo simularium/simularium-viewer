@@ -11,7 +11,7 @@ export {
     NetConnection,
     NetMessageEnum
 } from "./NetConnection";
-export { VisGeometry, NO_AGENT } from "./VisGeometry";
+export { VisGeometry, RenderStyle, NO_AGENT } from "./VisGeometry";
 export { VisData } from "./VisData";
 export { ThreadUtil } from "./ThreadUtil";
 export { 
