@@ -118,3 +118,8 @@ Before pushing a branch run the following checks locally:
 3. `npm run test`
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for information related to developing the code.
+
+## Publishing
+1. Make a new version: `npm version [patch/minor/major]`
+2. Push the new package.json version: `git push origin master`
+3. Push the new tag: `git push origin [NEW_TAG]`
