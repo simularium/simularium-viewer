@@ -439,7 +439,6 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             this.visGeometry.addPathForAgentIndex(intersectedObject);
         } else {
             if (oldFollowObject !== NO_AGENT) {
-                this.resetCamera();
                 this.visGeometry.removePathForAgentIndex(oldFollowObject);
             }
             if (this.hit) {
