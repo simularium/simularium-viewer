@@ -263,10 +263,6 @@ class CompositePass {
                     //color.xyz = vec3(0.0, 1.0, 0.0);
                 }
             
-                //if (highlightInstance == col0.y) {
-                //    color.xyz = vec3(1.0, 0.0, 0.0);
-                //}
-
                 gl_FragColor = vec4(occ1 * occ2 * color.xyz, 1.0);
             }
             `,
