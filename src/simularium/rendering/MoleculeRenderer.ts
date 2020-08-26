@@ -171,45 +171,47 @@ class MoleculeRenderer {
             settings.bgluminanceoffset;
         /////////////////////////////////////////////////////////////////////
 
-        gui.add(settings, "aoradius1", 0.01, 10.0).onChange(value => {
+        gui.add(settings, "aoradius1", 0.01, 10.0).onChange((value) => {
             this.ssao1Pass.pass.material.uniforms.radius.value = value;
         });
-        gui.add(settings, "blurradius1", 0.01, 10.0).onChange(value => {
+        gui.add(settings, "blurradius1", 0.01, 10.0).onChange((value) => {
             this.blur1Pass.setRadius(value);
         });
-        gui.add(settings, "aothreshold1", 0.01, 300.0).onChange(value => {
+        gui.add(settings, "aothreshold1", 0.01, 300.0).onChange((value) => {
             this.ssao1Pass.pass.material.uniforms.ssaoThreshold.value = value;
         });
-        gui.add(settings, "aofalloff1", 0.01, 300.0).onChange(value => {
+        gui.add(settings, "aofalloff1", 0.01, 300.0).onChange((value) => {
             this.ssao1Pass.pass.material.uniforms.ssaoFalloff.value = value;
         });
-        gui.add(settings, "aoradius2", 0.01, 10.0).onChange(value => {
+        gui.add(settings, "aoradius2", 0.01, 10.0).onChange((value) => {
             this.ssao2Pass.pass.material.uniforms.radius.value = value;
         });
-        gui.add(settings, "blurradius2", 0.01, 10.0).onChange(value => {
+        gui.add(settings, "blurradius2", 0.01, 10.0).onChange((value) => {
             this.blur2Pass.setRadius(value);
         });
-        gui.add(settings, "aothreshold2", 0.01, 300.0).onChange(value => {
+        gui.add(settings, "aothreshold2", 0.01, 300.0).onChange((value) => {
             this.ssao2Pass.pass.material.uniforms.ssaoThreshold.value = value;
         });
-        gui.add(settings, "aofalloff2", 0.01, 300.0).onChange(value => {
+        gui.add(settings, "aofalloff2", 0.01, 300.0).onChange((value) => {
             this.ssao2Pass.pass.material.uniforms.ssaoFalloff.value = value;
         });
 
-        gui.add(settings, "atomBeginDistance", 0.0, 300.0).onChange(value => {
+        gui.add(settings, "atomBeginDistance", 0.0, 300.0).onChange((value) => {
             this.compositePass.pass.material.uniforms.atomicBeginDistance.value = value;
         });
-        gui.add(settings, "chainBeginDistance", 0.0, 300.0).onChange(value => {
-            this.compositePass.pass.material.uniforms.chainBeginDistance.value = value;
-        });
+        gui.add(settings, "chainBeginDistance", 0.0, 300.0).onChange(
+            (value) => {
+                this.compositePass.pass.material.uniforms.chainBeginDistance.value = value;
+            }
+        );
 
-        gui.add(settings, "bghueoffset", 0.0, 1.0).onChange(value => {
+        gui.add(settings, "bghueoffset", 0.0, 1.0).onChange((value) => {
             this.compositePass.pass.material.uniforms.bgHCLoffset.value.x = value;
         });
-        gui.add(settings, "bgchromaoffset", 0.0, 1.0).onChange(value => {
+        gui.add(settings, "bgchromaoffset", 0.0, 1.0).onChange((value) => {
             this.compositePass.pass.material.uniforms.bgHCLoffset.value.y = value;
         });
-        gui.add(settings, "bgluminanceoffset", 0.0, 1.0).onChange(value => {
+        gui.add(settings, "bgluminanceoffset", 0.0, 1.0).onChange((value) => {
             this.compositePass.pass.material.uniforms.bgHCLoffset.value.z = value;
         });
     }
@@ -219,6 +221,7 @@ class MoleculeRenderer {
     }
     public setHighlightInstance(instance: number): void {
         this.compositePass.pass.material.uniforms.highlightInstance.value = instance;
+        this.contourPass.pass.material.uniforms.highlightInstance.value = instance;
     }
 
     public setTypeSelectMode(isTypeSelected: boolean): void {
@@ -352,8 +355,9 @@ class MoleculeRenderer {
             this.blurIntermediateBuffer
         );
 
-        // render composite pass into normal buffer, overwriting the normals data!
-        const compositeTarget = this.normalBuffer;
+        // render composite pass into this buffer, overwriting whatever was there!
+        // Be sure this buffer is not needed anymore!
+        const compositeTarget = this.blurIntermediateBuffer;
 
         // render into default render target
         this.compositePass.render(
@@ -370,7 +374,8 @@ class MoleculeRenderer {
             target,
             compositeTarget,
             // this is the buffer with the instance ids and fragdepth!
-            this.colorBuffer
+            this.colorBuffer,
+            this.normalBuffer
         );
 
         // DEBUGGING some of the intermediate buffers:
