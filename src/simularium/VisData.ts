@@ -361,9 +361,11 @@ class VisData {
             timeStepSize;
 
         const idsArr = [...idsSet].sort();
-        const typeMapping = new Object(
-            idsArr.map((obj) => [obj, obj as string])
-        );
+        let typeMapping = {};
+
+        idsArr.forEach((id) => {
+            typeMapping[id] = id.toString();
+        });
 
         return {
             boxSizeX: max[0] - min[0],
