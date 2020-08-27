@@ -213,8 +213,14 @@ export default class VisAgent {
                 if (child instanceof Mesh) {
                     if (faceNames.includes(child.name)) {
                         child.material = VisAgent.membraneData.facesMaterial;
+                        child.onBeforeRender = this.onAgentMeshBeforeRender.bind(
+                            this
+                        );
                     } else if (sideNames.includes(child.name)) {
                         child.material = VisAgent.membraneData.sidesMaterial;
+                        child.onBeforeRender = this.onAgentMeshBeforeRender.bind(
+                            this
+                        );
                     }
                 }
             });
@@ -226,6 +232,9 @@ export default class VisAgent {
             this.mesh.traverse((child) => {
                 if (child instanceof Mesh) {
                     child.material = this.desatMaterial;
+                    child.onBeforeRender = this.onAgentMeshBeforeRender.bind(
+                        this
+                    );
                 }
             });
         }
