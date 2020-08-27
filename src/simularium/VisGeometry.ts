@@ -232,24 +232,24 @@ class VisGeometry {
         };
         gui.add(settings, "lodBias", 0, 4)
             .step(1)
-            .onChange(value => {
+            .onChange((value) => {
                 this.lodBias = value;
                 this.updateScene(this.currentSceneAgents);
             });
-        gui.addColor(settings, "bgcolor").onChange(value => {
+        gui.addColor(settings, "bgcolor").onChange((value) => {
             this.setBackgroundColor([
                 value.r / 255.0,
                 value.g / 255.0,
                 value.b / 255.0,
             ]);
         });
-        gui.add(settings, "atomSpread", 0.01, 8.0).onChange(value => {
+        gui.add(settings, "atomSpread", 0.01, 8.0).onChange((value) => {
             this.atomSpread = value;
             this.updateScene(this.currentSceneAgents);
         });
         gui.add(settings, "numAtoms", 1, 400)
             .step(1)
-            .onChange(value => {
+            .onChange((value) => {
                 this.numAtomsPerAgent = Math.floor(value);
                 this.updateScene(this.currentSceneAgents);
             });
@@ -542,7 +542,7 @@ class VisGeometry {
                     });
                 }
             },
-            reason => {
+            (reason) => {
                 this.pdbRegistry.delete(pdbName);
                 if (reason !== REASON_CANCELLED) {
                     console.error(reason);
@@ -560,7 +560,7 @@ class VisGeometry {
         });
         objLoader.load(
             `${assetPath}/${meshName}`,
-            object => {
+            (object) => {
                 const meshLoadRequest = this.meshRegistry.get(meshName);
                 if (
                     (meshLoadRequest && meshLoadRequest.cancelled) ||
@@ -581,14 +581,14 @@ class VisGeometry {
                 }
                 this.onNewRuntimeGeometryType(meshName);
             },
-            xhr => {
+            (xhr) => {
                 this.logger.debug(
                     meshName,
                     " ",
                     `${(xhr.loaded / xhr.total) * 100}% loaded`
                 );
             },
-            error => {
+            (error) => {
                 this.meshRegistry.delete(meshName);
                 console.error(error);
                 this.logger.debug("Failed to load mesh: ", error, meshName);
@@ -934,13 +934,13 @@ class VisGeometry {
         }
         const jsonRequest = new Request(filePath);
         return fetch(jsonRequest)
-            .then(response => {
+            .then((response) => {
                 if (!response.ok) {
                     throw new Error(`Failed to fetch ${filePath}`);
                 }
                 return response.json();
             })
-            .then(data => {
+            .then((data) => {
                 this.setGeometryData(
                     data as AgentTypeVisDataMap,
                     assetPath,
@@ -959,7 +959,7 @@ class VisGeometry {
 
         this.logger.debug("JSON Mesh mapping loaded: ", jsonData);
 
-        Object.keys(jsonData).forEach(id => {
+        Object.keys(jsonData).forEach((id) => {
             const entry: AgentTypeVisData = jsonData[id];
             if (id === "size") {
                 console.log("WARNING: Ignoring deprecated bounding box data");
@@ -1030,6 +1030,7 @@ class VisGeometry {
             const visType = agentData["vis-type"];
             const typeId = agentData.type;
             const scale = this.getScaleForId(typeId);
+            const radius = agentData.cr ? agentData.cr : 1;
 
             const visAgent = this.visAgents[i];
 
@@ -1080,9 +1081,10 @@ class VisGeometry {
                 runtimeMesh.rotation.z = agentData.zrot;
                 runtimeMesh.visible = true;
 
-                runtimeMesh.scale.x = agentData.cr * scale;
-                runtimeMesh.scale.y = agentData.cr * scale;
-                runtimeMesh.scale.z = agentData.cr * scale;
+                runtimeMesh.scale.x = radius * scale;
+                runtimeMesh.scale.y = radius * scale;
+                runtimeMesh.scale.z = radius * scale;
+
                 // update pdb transforms too
                 const pdb = visAgent.pdbModel;
                 if (pdb && pdb.pdb) {
@@ -1186,7 +1188,7 @@ class VisGeometry {
     }
 
     public findPathForAgentIndex(idx: number): PathData | null {
-        const path = this.paths.find(path => {
+        const path = this.paths.find((path) => {
             return path.agent === idx;
         });
 
@@ -1259,7 +1261,7 @@ class VisGeometry {
     }
 
     public removePathForAgentIndex(idx: number): void {
-        const pathindex = this.paths.findIndex(path => {
+        const pathindex = this.paths.findIndex((path) => {
             return path.agent === idx;
         });
         if (pathindex === -1) {
@@ -1439,11 +1441,11 @@ class VisGeometry {
         // don't process any queued requests
         TaskQueue.stopAll();
         // signal to cancel any pending pdbs
-        this.pdbRegistry.forEach(value => {
+        this.pdbRegistry.forEach((value) => {
             value.setCancelled();
         });
         // signal to cancel any pending mesh downloads
-        this.meshRegistry.forEach(value => {
+        this.meshRegistry.forEach((value) => {
             value.cancelled = true;
         });
     }
