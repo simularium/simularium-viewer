@@ -11,6 +11,7 @@ export interface AgentData {
     xrot: number;
     yrot: number;
     zrot: number;
+    instanceId: number;
     visType: number;
     type: number;
     cr: number;
@@ -76,27 +77,44 @@ class VisData {
      *   of the application, since network latency is a major bottle-neck)
      * */
 
-    public static parse(visDataMsg: VisDataMessage): ParsedBundle {
+    public static parse(
+        visDataMsg: VisDataMessage,
+        hasInstanceIds: boolean
+    ): ParsedBundle {
         const parsedAgentDataArray: AgentData[][] = [];
         const frameDataArray: FrameData[] = [];
-        visDataMsg.bundleData.forEach(frame => {
+        visDataMsg.bundleData.forEach((frame) => {
             // IMPORTANT: Order of this array needs to perfectly match the incoming data.
-            const agentObjectKeys = [
-                "vis-type",
-                "type",
-                "x",
-                "y",
-                "z",
-                "xrot",
-                "yrot",
-                "zrot",
-                "cr",
-                "nSubPoints",
-            ];
+            const agentObjectKeys = hasInstanceIds
+                ? [
+                      "vis-type",
+                      "instanceId",
+                      "type",
+                      "x",
+                      "y",
+                      "z",
+                      "xrot",
+                      "yrot",
+                      "zrot",
+                      "cr",
+                      "nSubPoints",
+                  ]
+                : [
+                      "vis-type",
+                      "type",
+                      "x",
+                      "y",
+                      "z",
+                      "xrot",
+                      "yrot",
+                      "zrot",
+                      "cr",
+                      "nSubPoints",
+                  ];
             const visData = frame.data;
             const parsedAgentData: AgentData[] = [];
             const nSubPointsIndex = agentObjectKeys.findIndex(
-                ele => ele === "nSubPoints"
+                (ele) => ele === "nSubPoints"
             );
 
             const parseOneAgent = (agentArray): AgentData => {
@@ -130,7 +148,11 @@ class VisData {
                     throw Error("malformed data: indexing off");
                 }
 
-                parsedAgentData.push(parseOneAgent(agentSubSetArray));
+                const agent = parseOneAgent(agentSubSetArray);
+                if (!hasInstanceIds) {
+                    agent.instanceId = parsedAgentData.length;
+                }
+                parsedAgentData.push(agent);
             }
 
             const frameData: FrameData = {
@@ -154,7 +176,8 @@ class VisData {
                 this.convertVisDataWorkFunctionToString()
             );
 
-            this.webWorker.onmessage = event => {
+            // event.data is of type ParsedBundle
+            this.webWorker.onmessage = (event) => {
                 Array.prototype.push.apply(
                     this.frameDataCache,
                     event.data.frameDataArray
@@ -294,7 +317,7 @@ class VisData {
         ) {
             this.webWorker.postMessage(visDataMsg);
         } else {
-            const frames = VisData.parse(visDataMsg);
+            const frames = VisData.parse(visDataMsg, true);
             Array.prototype.push.apply(
                 this.frameDataCache,
                 frames.frameDataArray
@@ -331,15 +354,15 @@ class VisData {
             throw Error("No data in cache for drag-and-drop file");
         }
 
-        this.frameCache.forEach(element => {
+        this.frameCache.forEach((element) => {
             const radius: number =
-                Math.max(...element.map(agent => agent.cr)) * 1.1;
-            const maxx: number = Math.max(...element.map(agent => agent.x));
-            const maxy: number = Math.max(...element.map(agent => agent.y));
-            const maxz: number = Math.max(...element.map(agent => agent.z));
-            const minx: number = Math.min(...element.map(agent => agent.x));
-            const miny: number = Math.min(...element.map(agent => agent.y));
-            const minz: number = Math.min(...element.map(agent => agent.z));
+                Math.max(...element.map((agent) => agent.cr)) * 1.1;
+            const maxx: number = Math.max(...element.map((agent) => agent.x));
+            const maxy: number = Math.max(...element.map((agent) => agent.y));
+            const maxz: number = Math.max(...element.map((agent) => agent.z));
+            const minx: number = Math.min(...element.map((agent) => agent.x));
+            const miny: number = Math.min(...element.map((agent) => agent.y));
+            const minz: number = Math.min(...element.map((agent) => agent.z));
 
             max[0] = Math.max(max[0], 2 * maxx + radius);
             max[1] = Math.max(max[1], 2 * maxy + radius);
@@ -369,13 +392,14 @@ class VisData {
     }
 
     public convertVisDataWorkFunctionToString(): string {
+        // e.data is of type VisDataMessage
         return `function visDataWorkerFunc() {
         self.addEventListener('message', (e) => {
             const visDataMsg = e.data;
             const {
                 frameDataArray,
                 parsedAgentDataArray,
-            } = ${VisData.parse}(visDataMsg)
+            } = ${VisData.parse}(visDataMsg, false)
 
             postMessage({
                 frameDataArray,

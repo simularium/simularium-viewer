@@ -32,6 +32,8 @@ function desaturate(color: Color): Color {
     return desatColor;
 }
 
+const NO_AGENT = -1;
+
 export default class VisAgent {
     private static readonly UNASSIGNED_MESH_COLOR = 0xff00ff;
     public static readonly UNASSIGNED_NAME_PREFIX = "Unassigned";
@@ -82,7 +84,6 @@ export default class VisAgent {
     public pdbModel?: PDBModel;
     public pdbObjects: Object3D[];
     public lod: number;
-    public agentIndex: number;
     public typeId: number;
     public colorIndex: number;
     public active: boolean;
@@ -93,13 +94,14 @@ export default class VisAgent {
     public highlighted: boolean;
     public selected: boolean;
     public visType: number;
+    public id: number;
 
     public constructor(name: string) {
+        this.id = NO_AGENT;
         this.visType = VisTypes.ID_VIS_TYPE_DEFAULT;
         this.name = name;
         this.color = new Color(VisAgent.UNASSIGNED_MESH_COLOR);
         this.active = false;
-        this.agentIndex = -1;
         this.typeId = -1;
         this.colorIndex = 0;
         this.highlighted = false;
@@ -114,7 +116,7 @@ export default class VisAgent {
             opacity: 0.4,
         });
         this.mesh = new Mesh(VisAgent.sphereGeometry, this.baseMaterial);
-        this.mesh.userData = { index: this.agentIndex };
+        this.mesh.userData = { id: this.id };
         this.mesh.visible = false;
 
         this.pdbModel = undefined;
@@ -123,10 +125,11 @@ export default class VisAgent {
     }
 
     public resetMesh(): void {
+        this.id = NO_AGENT;
         this.visType = VisTypes.ID_VIS_TYPE_DEFAULT;
         this.typeId = -1;
         this.mesh = new Mesh(VisAgent.sphereGeometry, this.baseMaterial);
-        this.mesh.userData = { index: this.agentIndex };
+        this.mesh.userData = { id: this.id };
         this.highlighted = false;
         this.selected = true;
         this.setColor(new Color(VisAgent.UNASSIGNED_MESH_COLOR));
@@ -186,7 +189,7 @@ export default class VisAgent {
             this.mesh.material = material;
             this.mesh.onBeforeRender = this.onAgentMeshBeforeRender.bind(this);
         } else {
-            this.mesh.traverse(child => {
+            this.mesh.traverse((child) => {
                 if (child instanceof Mesh) {
                     child.material = material;
                     child.onBeforeRender = this.onAgentMeshBeforeRender.bind(
@@ -200,13 +203,13 @@ export default class VisAgent {
     public assignMembraneMaterial(): void {
         if (this.selected) {
             // at this time, assign separate material parameters to the faces and sides of the membrane
-            const faceNames = VisAgent.membraneData.faces.map(el => {
+            const faceNames = VisAgent.membraneData.faces.map((el) => {
                 return el.name;
             });
-            const sideNames = VisAgent.membraneData.sides.map(el => {
+            const sideNames = VisAgent.membraneData.sides.map((el) => {
                 return el.name;
             });
-            this.mesh.traverse(child => {
+            this.mesh.traverse((child) => {
                 if (child instanceof Mesh) {
                     if (faceNames.includes(child.name)) {
                         child.material = VisAgent.membraneData.facesMaterial;
@@ -220,7 +223,7 @@ export default class VisAgent {
             VisAgent.membraneData.sidesMaterial.uniforms.uvscale.value =
                 VisAgent.membraneData.sidesUVScale;
         } else {
-            this.mesh.traverse(child => {
+            this.mesh.traverse((child) => {
                 if (child instanceof Mesh) {
                     child.material = this.desatMaterial;
                 }
@@ -250,7 +253,7 @@ export default class VisAgent {
             material.uniformsNeedUpdate = true;
         }
         if (material.uniforms.instanceId) {
-            material.uniforms.instanceId.value = Number(this.agentIndex);
+            material.uniforms.instanceId.value = Number(this.id);
             material.uniformsNeedUpdate = true;
         }
         if (material.uniforms.radius) {
@@ -268,7 +271,7 @@ export default class VisAgent {
         const visible = this.mesh.visible;
 
         this.mesh = meshGeom.clone();
-        this.mesh.userData = { index: this.agentIndex };
+        this.mesh.userData = { id: this.id };
 
         this.mesh.visible = visible;
         // restore transform
