@@ -79,7 +79,7 @@ class VisData {
     public static parse(visDataMsg: VisDataMessage): ParsedBundle {
         const parsedAgentDataArray: AgentData[][] = [];
         const frameDataArray: FrameData[] = [];
-        visDataMsg.bundleData.forEach(frame => {
+        visDataMsg.bundleData.forEach((frame) => {
             // IMPORTANT: Order of this array needs to perfectly match the incoming data.
             const agentObjectKeys = [
                 "vis-type",
@@ -96,7 +96,7 @@ class VisData {
             const visData = frame.data;
             const parsedAgentData: AgentData[] = [];
             const nSubPointsIndex = agentObjectKeys.findIndex(
-                ele => ele === "nSubPoints"
+                (ele) => ele === "nSubPoints"
             );
 
             const parseOneAgent = (agentArray): AgentData => {
@@ -154,7 +154,7 @@ class VisData {
                 this.convertVisDataWorkFunctionToString()
             );
 
-            this.webWorker.onmessage = event => {
+            this.webWorker.onmessage = (event) => {
                 Array.prototype.push.apply(
                     this.frameDataCache,
                     event.data.frameDataArray
@@ -326,20 +326,22 @@ class VisData {
     public dragAndDropFileInfo(): TrajectoryFileInfo {
         const max: number[] = [0, 0, 0];
         const min: number[] = [0, 0, 0];
+        let idsSet = new Set();
 
         if (this.frameCache.length === 0) {
             throw Error("No data in cache for drag-and-drop file");
         }
 
-        this.frameCache.forEach(element => {
+        this.frameCache.forEach((element) => {
             const radius: number =
-                Math.max(...element.map(agent => agent.cr)) * 1.1;
-            const maxx: number = Math.max(...element.map(agent => agent.x));
-            const maxy: number = Math.max(...element.map(agent => agent.y));
-            const maxz: number = Math.max(...element.map(agent => agent.z));
-            const minx: number = Math.min(...element.map(agent => agent.x));
-            const miny: number = Math.min(...element.map(agent => agent.y));
-            const minz: number = Math.min(...element.map(agent => agent.z));
+                Math.max(...element.map((agent) => agent.cr)) * 1.1;
+            const maxx: number = Math.max(...element.map((agent) => agent.x));
+            const maxy: number = Math.max(...element.map((agent) => agent.y));
+            const maxz: number = Math.max(...element.map((agent) => agent.z));
+            const minx: number = Math.min(...element.map((agent) => agent.x));
+            const miny: number = Math.min(...element.map((agent) => agent.y));
+            const minz: number = Math.min(...element.map((agent) => agent.z));
+            element.map((agent) => agent.type).forEach((id) => idsSet.add(id));
 
             max[0] = Math.max(max[0], 2 * maxx + radius);
             max[1] = Math.max(max[1], 2 * maxy + radius);
@@ -358,13 +360,18 @@ class VisData {
             this.frameDataCache[this.frameCache.length - 1].frameNumber *
             timeStepSize;
 
+        const idsArr = [...idsSet].sort();
+        const typeMapping = new Object(
+            idsArr.map((obj) => [obj, obj as string])
+        );
+
         return {
             boxSizeX: max[0] - min[0],
             boxSizeY: max[1] - min[0],
             boxSizeZ: max[2] - min[2],
             totalDuration: totalDuration,
             timeStepSize: timeStepSize,
-            typeMapping: {},
+            typeMapping: typeMapping,
         };
     }
 
