@@ -77,40 +77,24 @@ class VisData {
      *   of the application, since network latency is a major bottle-neck)
      * */
 
-    public static parse(
-        visDataMsg: VisDataMessage,
-        hasInstanceIds: boolean
-    ): ParsedBundle {
+    public static parse(visDataMsg: VisDataMessage): ParsedBundle {
         const parsedAgentDataArray: AgentData[][] = [];
         const frameDataArray: FrameData[] = [];
         visDataMsg.bundleData.forEach((frame) => {
             // IMPORTANT: Order of this array needs to perfectly match the incoming data.
-            const agentObjectKeys = hasInstanceIds
-                ? [
-                      "vis-type",
-                      "instanceId",
-                      "type",
-                      "x",
-                      "y",
-                      "z",
-                      "xrot",
-                      "yrot",
-                      "zrot",
-                      "cr",
-                      "nSubPoints",
-                  ]
-                : [
-                      "vis-type",
-                      "type",
-                      "x",
-                      "y",
-                      "z",
-                      "xrot",
-                      "yrot",
-                      "zrot",
-                      "cr",
-                      "nSubPoints",
-                  ];
+            const agentObjectKeys = [
+                "vis-type",
+                "instanceId",
+                "type",
+                "x",
+                "y",
+                "z",
+                "xrot",
+                "yrot",
+                "zrot",
+                "cr",
+                "nSubPoints",
+            ];
             const visData = frame.data;
             const parsedAgentData: AgentData[] = [];
             const nSubPointsIndex = agentObjectKeys.findIndex(
@@ -149,9 +133,6 @@ class VisData {
                 }
 
                 const agent = parseOneAgent(agentSubSetArray);
-                if (!hasInstanceIds) {
-                    agent.instanceId = parsedAgentData.length;
-                }
                 parsedAgentData.push(agent);
             }
 
@@ -317,7 +298,7 @@ class VisData {
         ) {
             this.webWorker.postMessage(visDataMsg);
         } else {
-            const frames = VisData.parse(visDataMsg, false);
+            const frames = VisData.parse(visDataMsg);
             Array.prototype.push.apply(
                 this.frameDataCache,
                 frames.frameDataArray
@@ -338,7 +319,7 @@ class VisData {
             );
         }
 
-        const frames = VisData.parse(visDataMsg, true);
+        const frames = VisData.parse(visDataMsg);
         Array.prototype.push.apply(this.frameDataCache, frames.frameDataArray);
         Array.prototype.push.apply(
             this.frameCache,
@@ -399,7 +380,7 @@ class VisData {
             const {
                 frameDataArray,
                 parsedAgentDataArray,
-            } = ${VisData.parse}(visDataMsg, false)
+            } = ${VisData.parse}(visDataMsg)
 
             postMessage({
                 frameDataArray,

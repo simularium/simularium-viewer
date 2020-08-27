@@ -12,27 +12,27 @@ const testData = {
         {
             frameNumber: 0,
             time: 0,
-            data: [1000, 7, 1, 1, 1, 0, 0, 0, 1, 0],
+            data: [1000, 0, 7, 1, 1, 1, 0, 0, 0, 1, 0],
         },
         {
             frameNumber: 1,
             time: 5,
-            data: [1000, 7, 2, 2, 2, 0, 22.5, 0, 1, 0],
+            data: [1000, 0, 7, 2, 2, 2, 0, 22.5, 0, 1, 0],
         },
         {
             frameNumber: 2,
             time: 10,
-            data: [1000, 7, 3, 3, 3, 0, 45, 0, 1, 0],
+            data: [1000, 0, 7, 3, 3, 3, 0, 45, 0, 1, 0],
         },
         {
             frameNumber: 3,
             time: 15,
-            data: [1000, 7, 4, 4, 4, 0, 67.5, 0, 1, 0],
+            data: [1000, 0, 7, 4, 4, 4, 0, 67.5, 0, 1, 0],
         },
         {
             frameNumber: 4,
             time: 20,
-            data: [1000, 7, 5, 5, 5, 0, 90, 0, 1, 0],
+            data: [1000, 0, 7, 5, 5, 5, 0, 90, 0, 1, 0],
         },
     ],
 };
@@ -44,6 +44,7 @@ const parsedData = [
             nSubPoints: 0,
             subpoints: [],
             type: 7,
+            instanceId: 0,
             "vis-type": 1000,
             x: 1,
             xrot: 0,
@@ -59,6 +60,7 @@ const parsedData = [
             nSubPoints: 0,
             subpoints: [],
             type: 7,
+            instanceId: 0,
             "vis-type": 1000,
             x: 2,
             xrot: 0,
@@ -74,6 +76,7 @@ const parsedData = [
             nSubPoints: 0,
             subpoints: [],
             type: 7,
+            instanceId: 0,
             "vis-type": 1000,
             x: 3,
             xrot: 0,
@@ -89,6 +92,7 @@ const parsedData = [
             nSubPoints: 0,
             subpoints: [],
             type: 7,
+            instanceId: 0,
             "vis-type": 1000,
             x: 4,
             xrot: 0,
@@ -104,6 +108,7 @@ const parsedData = [
             nSubPoints: 0,
             subpoints: [],
             type: 7,
+            instanceId: 0,
             "vis-type": 1000,
             x: 5,
             xrot: 0,
@@ -120,6 +125,7 @@ describe("VisData module", () => {
         test("it returns an array of objects of agent data and time stamp data", () => {
             const testData = [
                 10, //"vis-type",
+                15, //"instanceId",
                 20, //"type",
                 30, //"x",
                 31, //"y",
@@ -156,6 +162,7 @@ describe("VisData module", () => {
                         nSubPoints: 3,
                         subpoints: [60, 61, 62], //"subpoint-1", "subpoint-2", "subpoint-3"],
                         type: 20, //"type",
+                        instanceId: 15, //"instanceId",
                         "vis-type": 10, //"vis-type",
                         x: 30, //"x",
                         xrot: 40, //"xrot",
@@ -170,6 +177,7 @@ describe("VisData module", () => {
         test("it throws an error if number of supoints does not match the nSubpoints value", () => {
             const tooShort = [
                 10, //"vis-type",
+                15, //"instanceId",
                 20, //"type",
                 30, //"x",
                 31, //"y",
@@ -198,6 +206,7 @@ describe("VisData module", () => {
             };
             const tooLong = [
                 10, //"vis-type",
+                15, //"instanceId",
                 20, //"type",
                 30, //"x",
                 31, //"y",
@@ -245,7 +254,7 @@ describe("VisData module", () => {
                     {
                         frameNumber: 1,
                         time: 0,
-                        data: [1000, 7, 1, 1, 1, 0, 0, 0, 1, 0],
+                        data: [1000, 0, 7, 1, 1, 1, 0, 0, 0, 1, 0],
                     },
                 ],
             };
@@ -256,6 +265,7 @@ describe("VisData module", () => {
                     nSubPoints: 0,
                     subpoints: [],
                     type: 7,
+                    instanceId: 0,
                     "vis-type": 1000,
                     x: 1,
                     xrot: 0,
