@@ -360,7 +360,7 @@ class VisData {
             this.frameDataCache[this.frameCache.length - 1].frameNumber *
             timeStepSize;
 
-        const idsArr = [...idsSet].sort();
+        const idsArr: number[] = [...idsSet].sort() as number[];
         const typeMapping = {};
 
         idsArr.forEach((id) => {
