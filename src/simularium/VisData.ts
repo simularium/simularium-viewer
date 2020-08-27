@@ -341,7 +341,7 @@ class VisData {
             const minx: number = Math.min(...element.map((agent) => agent.x));
             const miny: number = Math.min(...element.map((agent) => agent.y));
             const minz: number = Math.min(...element.map((agent) => agent.z));
-            element.map((agent) => agent.type).forEach((id) => idsSet.add(id));
+            element.map((agent) => idsSet.add(agent.type));
 
             max[0] = Math.max(max[0], 2 * maxx + radius);
             max[1] = Math.max(max[1], 2 * maxy + radius);
