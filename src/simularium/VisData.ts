@@ -326,7 +326,7 @@ class VisData {
     public dragAndDropFileInfo(): TrajectoryFileInfo {
         const max: number[] = [0, 0, 0];
         const min: number[] = [0, 0, 0];
-        let idsSet = new Set();
+        const idsSet = new Set();
 
         if (this.frameCache.length === 0) {
             throw Error("No data in cache for drag-and-drop file");
@@ -361,7 +361,7 @@ class VisData {
             timeStepSize;
 
         const idsArr = [...idsSet].sort();
-        let typeMapping = {};
+        const typeMapping = {};
 
         idsArr.forEach((id) => {
             typeMapping[id] = id.toString();
