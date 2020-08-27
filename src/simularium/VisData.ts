@@ -330,6 +330,7 @@ class VisData {
     public dragAndDropFileInfo(): TrajectoryFileInfo {
         const max: number[] = [0, 0, 0];
         const min: number[] = [0, 0, 0];
+        const idsSet = new Set();
 
         if (this.frameCache.length === 0) {
             throw Error("No data in cache for drag-and-drop file");
@@ -344,6 +345,7 @@ class VisData {
             const minx: number = Math.min(...element.map((agent) => agent.x));
             const miny: number = Math.min(...element.map((agent) => agent.y));
             const minz: number = Math.min(...element.map((agent) => agent.z));
+            element.map((agent) => idsSet.add(agent.type));
 
             max[0] = Math.max(max[0], 2 * maxx + radius);
             max[1] = Math.max(max[1], 2 * maxy + radius);
@@ -362,13 +364,20 @@ class VisData {
             this.frameDataCache[this.frameCache.length - 1].frameNumber *
             timeStepSize;
 
+        const idsArr: number[] = [...idsSet].sort() as number[];
+        const typeMapping = {};
+
+        idsArr.forEach((id) => {
+            typeMapping[id] = id.toString();
+        });
+
         return {
             boxSizeX: max[0] - min[0],
             boxSizeY: max[1] - min[0],
             boxSizeZ: max[2] - min[2],
             totalDuration: totalDuration,
             timeStepSize: timeStepSize,
-            typeMapping: {},
+            typeMapping: typeMapping,
         };
     }
 

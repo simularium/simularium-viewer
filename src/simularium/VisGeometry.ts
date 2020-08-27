@@ -1039,6 +1039,7 @@ class VisGeometry {
             const instanceId = agentData.instanceId;
             const typeId = agentData.type;
             const scale = this.getScaleForId(typeId);
+            const radius = agentData.cr ? agentData.cr : 1;
 
             const visAgent = this.visAgents[i];
             visAgent.id = instanceId;
@@ -1091,9 +1092,10 @@ class VisGeometry {
                 runtimeMesh.rotation.z = agentData.zrot;
                 runtimeMesh.visible = true;
 
-                runtimeMesh.scale.x = agentData.cr * scale;
-                runtimeMesh.scale.y = agentData.cr * scale;
-                runtimeMesh.scale.z = agentData.cr * scale;
+                runtimeMesh.scale.x = radius * scale;
+                runtimeMesh.scale.y = radius * scale;
+                runtimeMesh.scale.z = radius * scale;
+
                 // update pdb transforms too
                 const pdb = visAgent.pdbModel;
                 if (pdb && pdb.pdb) {
