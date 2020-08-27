@@ -317,7 +317,7 @@ class VisData {
         ) {
             this.webWorker.postMessage(visDataMsg);
         } else {
-            const frames = VisData.parse(visDataMsg, true);
+            const frames = VisData.parse(visDataMsg, false);
             Array.prototype.push.apply(
                 this.frameDataCache,
                 frames.frameDataArray
@@ -338,7 +338,7 @@ class VisData {
             );
         }
 
-        const frames = VisData.parse(visDataMsg);
+        const frames = VisData.parse(visDataMsg, true);
         Array.prototype.push.apply(this.frameDataCache, frames.frameDataArray);
         Array.prototype.push.apply(
             this.frameCache,
