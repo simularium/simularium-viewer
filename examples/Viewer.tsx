@@ -4,6 +4,7 @@ import type { UIDisplayData, SelectionStateInfo } from "../type-declarations";
 import SimulariumViewer, { SimulariumController, RenderStyle } from "../src";
 
 import "./style.css";
+import { isEqual } from "lodash";
 
 const netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
@@ -49,7 +50,7 @@ const initialState = {
     particleTypeTags: [],
     currentFrame: 0,
     currentTime: 0,
-    height: 800,
+    height: 700,
     width: 800,
     showMeshes: true,
     showPaths: true,
@@ -60,8 +61,8 @@ const initialState = {
         highlightedTags: [],
         highlightedNames: [],
         hiddenNames: [],
-        hiddenTags: []
-    }
+        hiddenTags: [],
+    },
 };
 
 class Viewer extends React.Component<{}, ViewerState> {
@@ -72,8 +73,12 @@ class Viewer extends React.Component<{}, ViewerState> {
         this.viewerRef = React.createRef();
         this.handleJsonMeshData = this.handleJsonMeshData.bind(this);
         this.handleTimeChange = this.handleTimeChange.bind(this);
-        this.highlightParticleTypeByName = this.highlightParticleTypeByName.bind(this);
-        this.highlightParticleTypeByTag = this.highlightParticleTypeByTag.bind(this);
+        this.highlightParticleTypeByName = this.highlightParticleTypeByName.bind(
+            this
+        );
+        this.highlightParticleTypeByTag = this.highlightParticleTypeByTag.bind(
+            this
+        );
         this.getTagOptions = this.getTagOptions.bind(this);
         this.state = initialState;
     }
@@ -106,47 +111,67 @@ class Viewer extends React.Component<{}, ViewerState> {
         }
     }
 
+    public turnAgentsOnOff(nameToToggle: string) {
+        let currentHiddenNames = this.state.selectionStateInfo.hiddenNames;
+        let nextHiddenNames = [];
+        if (currentHiddenNames.includes(nameToToggle)) {
+            nextHiddenNames = currentHiddenNames.filter(
+                (hiddenName) => hiddenName !== nameToToggle
+            );
+        } else {
+            nextHiddenNames = [...currentHiddenNames, nameToToggle];
+        }
+        console.log(nextHiddenNames)
+        this.setState({
+            ...this.state,
+            selectionStateInfo: {
+                ...this.state.selectionStateInfo,
+                hiddenNames: nextHiddenNames,
+            },
+        });
+    }
+
     public highlightParticleTypeByName(name: string): void {
         this.highlightParticleTypeByTag(UI_VAR_ALL_TAGS);
 
-        if(name === UI_VAR_ALL_NAMES) {
-          this.setState(prevState => ({
-              ...this.state,
-            selectionStateInfo: {
-              ...prevState.selectionStateInfo,
-              highlightedNames: [], // specify none, show all that match tags
-            },
-            selectedName: name,
-          }));
+        if (name === UI_VAR_ALL_NAMES) {
+            this.setState((prevState) => ({
+                ...this.state,
+                selectionStateInfo: {
+                    ...prevState.selectionStateInfo,
+                    highlightedNames: [], // specify none, show all that match tags
+                },
+                selectedName: name,
+            }));
         } else {
-          this.setState(prevState => ({
-            ...this.state,
-            selectionStateInfo: {
-              ...prevState.selectionStateInfo,
-              highlightedNames: [name],
-            },
-            selectedName: name,
-          }));
+            this.setState((prevState) => ({
+                ...this.state,
+                selectionStateInfo: {
+                    ...prevState.selectionStateInfo,
+                    highlightedNames: [name],
+                },
+                selectedName: name,
+            }));
         }
     }
 
     public highlightParticleTypeByTag(tag: string): void {
-        if(tag === UI_VAR_ALL_TAGS) {
-          this.setState(prevState => ({
-            selectionStateInfo: {
-              ...prevState.selectionStateInfo,
-              highlightedTags: [], // specify none -> show all mathcing name
-            },
-            selectedTag: tag,
-          }));
+        if (tag === UI_VAR_ALL_TAGS) {
+            this.setState((prevState) => ({
+                selectionStateInfo: {
+                    ...prevState.selectionStateInfo,
+                    highlightedTags: [], // specify none -> show all mathcing name
+                },
+                selectedTag: tag,
+            }));
         } else {
-          this.setState(prevState => ({
-            selectionStateInfo: {
-              ...prevState.selectionStateInfo,
-              highlightedTags: [tag],
-            },
-            selectedTag: tag,
-          }));
+            this.setState((prevState) => ({
+                selectionStateInfo: {
+                    ...prevState.selectionStateInfo,
+                    highlightedTags: [tag],
+                },
+                selectedTag: tag,
+            }));
         }
     }
 
@@ -166,16 +191,25 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public handleUIDisplayData(uiDisplayData: UIDisplayData): void {
-        const allTags = uiDisplayData.reduce((fullArray: string[], subarray) => {
-            fullArray = [...fullArray, ...subarray.displayStates.map(b => b.id)];
-            return fullArray;
-        }, []);
-        const uniqueTags: string[] = [... new Set(allTags)];
-
+        const allTags = uiDisplayData.reduce(
+            (fullArray: string[], subarray) => {
+                fullArray = [
+                    ...fullArray,
+                    ...subarray.displayStates.map((b) => b.id),
+                ];
+                return fullArray;
+            },
+            []
+        );
+        const uniqueTags: string[] = [...new Set(allTags)];
+        if (isEqual(uiDisplayData, this.state.uiDisplayData)) {
+            return;
+        }
         this.setState({
-            particleTypeNames: uiDisplayData.map(a => a.name),
+            particleTypeNames: uiDisplayData.map((a) => a.name),
             uiDisplayData: uiDisplayData,
             particleTypeTags: uniqueTags,
+            selectionStateInfo: initialState.selectionStateInfo,
         });
     }
 
@@ -188,15 +222,17 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     private getTagOptions(): string[] {
-        if(this.state.selectedName === UI_VAR_ALL_NAMES){
+        if (this.state.selectedName === UI_VAR_ALL_NAMES) {
             return this.state.particleTypeTags;
         } else {
-            const matches = this.state.uiDisplayData.filter(entry => {
+            const matches = this.state.uiDisplayData.filter((entry) => {
                 return entry.name === this.state.selectedName;
             });
 
             if (matches[0]) {
-                return matches[0].displayStates.map(state => { return state.id; });
+                return matches[0].displayStates.map((state) => {
+                    return state.id;
+                });
             } else {
                 return [];
             }
@@ -204,13 +240,13 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     private getOptionsDom(optionsArray) {
-      return optionsArray.map((id, i) => {
-          return (
-              <option key={id} value={id}>
-                  {id}
-              </option>
-          );
-      });
+        return optionsArray.map((id, i) => {
+            return (
+                <option key={id} value={id}>
+                    {id}
+                </option>
+            );
+        });
     }
 
     public render(): JSX.Element {
@@ -293,7 +329,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                 </button>
                 <br />
                 <select
-                    onChange={event =>
+                    onChange={(event) =>
                         this.highlightParticleTypeByName(event.target.value)
                     }
                     value={this.state.selectedName}
@@ -308,7 +344,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                     })}
                 </select>
                 <select
-                    onChange={event =>
+                    onChange={(event) =>
                         this.highlightParticleTypeByTag(event.target.value)
                     }
                     value={this.state.selectedTag}
@@ -316,9 +352,27 @@ class Viewer extends React.Component<{}, ViewerState> {
                     <option value={UI_VAR_ALL_TAGS}>All Tags</option>
                     {this.getOptionsDom(this.getTagOptions())}
                 </select>
+                {this.state.particleTypeNames.map((id, i) => {
+                    return (
+                        <>
+                            <label htmlFor={id}>{id}</label>
+                            <input
+                                type="checkbox"
+                                onClick={(event) =>
+                                    this.turnAgentsOnOff(event.target.value)
+                                }
+                                key={id}
+                                value={id}
+                                defaultChecked={true}
+                            />
+                        </>
+                    );
+                })}
                 <button
                     onClick={() =>
-                        this.setState({ showMeshes: !this.state.showMeshes })
+                        this.setState({
+                            showMeshes: !this.state.showMeshes,
+                        })
                     }
                 >
                     ShowMeshes
