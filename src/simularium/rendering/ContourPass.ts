@@ -53,7 +53,7 @@ class ContourPass {
                 finalColor = mix(vec4(0,0,0,1), col, 0.8);
 
               }
-              if (X == int(highlightInstance)) {
+              if (X >= 0 && X == int(highlightInstance)) {
                 float thickness = 4.0;
                 R = int(texture(instanceIdTex, vUv + vec2(wStep*thickness, 0)).g);
                 L = int(texture(instanceIdTex, vUv + vec2(-wStep*thickness, 0)).g);

@@ -105,8 +105,9 @@ class VisGeometry {
     public pdbLoadAttempted: Map<string, boolean>;
     public scaleMapping: Map<number, number>;
     public geomCount: number;
-    public followObjectIndex: number;
+    public followObjectId: number;
     public visAgents: VisAgent[];
+    public visAgentInstances: Map<number, VisAgent>;
     public lastNumberOfAgents: number;
     public colorVariant: number;
     public fixLightsToCamera: boolean;
@@ -150,8 +151,9 @@ class VisGeometry {
         this.pdbLoadAttempted = new Map<string, boolean>();
         this.scaleMapping = new Map<number, number>();
         this.geomCount = MAX_MESHES;
-        this.followObjectIndex = NO_AGENT;
+        this.followObjectId = NO_AGENT;
         this.visAgents = [];
+        this.visAgentInstances = new Map<number, VisAgent>();
         this.lastNumberOfAgents = 0;
         this.colorVariant = 50;
         this.fixLightsToCamera = true;
@@ -322,22 +324,28 @@ class VisGeometry {
     }
 
     public getFollowObject(): number {
-        return this.followObjectIndex;
+        return this.followObjectId;
     }
 
     public setFollowObject(obj: number): void {
-        if (this.membraneAgent && obj === this.membraneAgent.agentIndex) {
+        if (this.membraneAgent && obj === this.membraneAgent.id) {
             return;
         }
 
-        if (this.followObjectIndex !== NO_AGENT) {
-            const visAgent = this.visAgents[this.followObjectIndex];
+        if (this.followObjectId !== NO_AGENT) {
+            const visAgent = this.visAgentInstances[this.followObjectId];
+            if (!visAgent) {
+                console.error("NO AGENT FOR INSTANCE " + this.followObjectId);
+            }
             visAgent.setHighlighted(false);
         }
-        this.followObjectIndex = obj;
+        this.followObjectId = obj;
 
         if (obj !== NO_AGENT) {
-            const visAgent = this.visAgents[obj];
+            const visAgent = this.visAgentInstances[obj];
+            if (!visAgent) {
+                console.error("NO AGENT FOR INSTANCE " + this.followObjectId);
+            }
             visAgent.setHighlighted(true);
         }
     }
@@ -700,7 +708,7 @@ class VisGeometry {
                 this.agentPDBGroup,
                 this.agentFiberGroup
             );
-            this.moleculeRenderer.setHighlightInstance(this.followObjectIndex);
+            this.moleculeRenderer.setHighlightInstance(this.followObjectId);
             this.moleculeRenderer.setTypeSelectMode(
                 this.highlightedIds !== undefined &&
                     this.highlightedIds.length > 0
@@ -761,12 +769,12 @@ class VisGeometry {
                 // if the object has a parent and the parent is not the scene, use that.
                 // assumption: obj file meshes or fibers load into their own Groups
                 // and have only one level of hierarchy.
-                if (!obj.userData || !obj.userData.index) {
+                if (!obj.userData || !obj.userData.id) {
                     if (obj.parent && obj.parent !== this.agentMeshGroup) {
                         obj = obj.parent;
                     }
                 }
-                return obj.userData.index;
+                return obj.userData.id;
             } else {
                 return NO_AGENT;
             }
@@ -1028,16 +1036,19 @@ class VisGeometry {
 
         agents.forEach((agentData, i) => {
             const visType = agentData["vis-type"];
+            const instanceId = agentData.instanceId;
             const typeId = agentData.type;
             const scale = this.getScaleForId(typeId);
             const radius = agentData.cr ? agentData.cr : 1;
 
             const visAgent = this.visAgents[i];
+            visAgent.id = instanceId;
+            visAgent.mesh.userData.id = instanceId;
+            this.visAgentInstances[instanceId] = visAgent;
 
             const lastTypeId = visAgent.typeId;
 
             visAgent.typeId = typeId;
-            visAgent.agentIndex = i;
             visAgent.active = true;
 
             // if not fiber...
@@ -1106,7 +1117,7 @@ class VisGeometry {
                     }
                 }
 
-                const path = this.findPathForAgentIndex(i);
+                const path = this.findPathForAgent(instanceId);
                 if (path && path.line) {
                     this.addPointToPath(
                         path,
@@ -1153,7 +1164,7 @@ class VisGeometry {
         const lerpTarget = true;
         const lerpPosition = true;
         const lerpRate = 0.2;
-        if (this.followObjectIndex !== NO_AGENT) {
+        if (this.followObjectId !== NO_AGENT) {
             // keep camera at same distance from target.
             const direction = new Vector3().subVectors(
                 this.camera.position,
@@ -1163,7 +1174,7 @@ class VisGeometry {
             direction.normalize();
 
             const newTarget = new Vector3();
-            const followedObject = this.visAgents[this.followObjectIndex];
+            const followedObject = this.visAgents[this.followObjectId];
             newTarget.copy(followedObject.mesh.position);
 
             // update controls target for orbiting
@@ -1187,9 +1198,9 @@ class VisGeometry {
         }
     }
 
-    public findPathForAgentIndex(idx: number): PathData | null {
+    public findPathForAgent(id: number): PathData | null {
         const path = this.paths.find((path) => {
-            return path.agent === idx;
+            return path.agent === id;
         });
 
         if (path) {
@@ -1199,14 +1210,14 @@ class VisGeometry {
     }
 
     // assumes color is a threejs color, or null/undefined
-    public addPathForAgentIndex(
-        idx: number,
+    public addPathForAgent(
+        id: number,
         maxSegments?: number,
         color?: Color
     ): PathData {
         // make sure the idx is not already in our list.
         // could be optimized...
-        const foundpath = this.findPathForAgentIndex(idx);
+        const foundpath = this.findPathForAgent(id);
         if (foundpath) {
             if (foundpath.line) {
                 foundpath.line.visible = true;
@@ -1220,7 +1231,12 @@ class VisGeometry {
 
         if (!color) {
             // get the agent's color. is there a simpler way?
-            color = this.visAgents[idx].color.clone();
+            const agent = this.visAgentInstances[id];
+            if (agent) {
+                color = agent.color.clone();
+            } else {
+                console.error("COULD NOT FIND AGENT INSTANCE " + id);
+            }
         }
 
         const pointsArray = new Float32Array(maxSegments * 3 * 2);
@@ -1243,10 +1259,10 @@ class VisGeometry {
         lineObject.frustumCulled = false;
 
         const pathdata: PathData = {
-            agent: idx,
+            agent: id,
             numSegments: 0,
             maxSegments: maxSegments,
-            color: color,
+            color: color || new Color(0xffffff),
             points: pointsArray,
             colors: colorsArray,
             geometry: lineGeometry,
@@ -1260,14 +1276,14 @@ class VisGeometry {
         return pathdata;
     }
 
-    public removePathForAgentIndex(idx: number): void {
+    public removePathForAgent(id: number): void {
         const pathindex = this.paths.findIndex((path) => {
-            return path.agent === idx;
+            return path.agent === id;
         });
         if (pathindex === -1) {
             console.log(
                 "attempted to remove path for agent " +
-                    idx +
+                    id +
                     " that doesn't exist."
             );
             return;
@@ -1409,8 +1425,8 @@ class VisGeometry {
         this.boundingBoxMesh.visible = showBounds;
     }
 
-    public showPathForAgentIndex(idx: number, visible: boolean): void {
-        const path = this.findPathForAgentIndex(idx);
+    public showPathForAgent(id: number, visible: boolean): void {
+        const path = this.findPathForAgent(id);
         if (path) {
             if (path.line) {
                 path.line.visible = visible;
@@ -1425,7 +1441,7 @@ class VisGeometry {
             visAgent.hideAndDeactivate();
 
             // hide the path if we're hiding the agent. should we remove the path here?
-            this.showPathForAgentIndex(i, false);
+            this.showPathForAgent(visAgent.id, false);
         }
     }
 

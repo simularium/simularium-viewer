@@ -54,6 +54,7 @@ export class DummyNetConnection extends NetConnection {
                 time: frameNumber * this.timeStep,
                 data: [
                     1000,
+                    0,
                     43,
                     Math.cos(frameNumber / 4) * 5,
                     Math.sin(frameNumber / 4) * 5,

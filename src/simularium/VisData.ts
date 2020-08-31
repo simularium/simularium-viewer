@@ -11,6 +11,7 @@ export interface AgentData {
     xrot: number;
     yrot: number;
     zrot: number;
+    instanceId: number;
     visType: number;
     type: number;
     cr: number;
@@ -83,6 +84,7 @@ class VisData {
             // IMPORTANT: Order of this array needs to perfectly match the incoming data.
             const agentObjectKeys = [
                 "vis-type",
+                "instanceId",
                 "type",
                 "x",
                 "y",
@@ -130,7 +132,8 @@ class VisData {
                     throw Error("malformed data: indexing off");
                 }
 
-                parsedAgentData.push(parseOneAgent(agentSubSetArray));
+                const agent = parseOneAgent(agentSubSetArray);
+                parsedAgentData.push(agent);
             }
 
             const frameData: FrameData = {
@@ -154,6 +157,7 @@ class VisData {
                 this.convertVisDataWorkFunctionToString()
             );
 
+            // event.data is of type ParsedBundle
             this.webWorker.onmessage = (event) => {
                 Array.prototype.push.apply(
                     this.frameDataCache,
@@ -378,6 +382,7 @@ class VisData {
     }
 
     public convertVisDataWorkFunctionToString(): string {
+        // e.data is of type VisDataMessage
         return `function visDataWorkerFunc() {
         self.addEventListener('message', (e) => {
             const visDataMsg = e.data;
