@@ -101,7 +101,7 @@ class PDBModel {
     public download(url: string): Promise<void> {
         const pdbRequest = new Request(url);
         return fetch(pdbRequest)
-            .then(response => {
+            .then((response) => {
                 if (!response.ok) {
                     throw new Error(
                         `Error fetching ${this.filePath} from ${url}`
@@ -109,7 +109,7 @@ class PDBModel {
                 }
                 return response.text();
             })
-            .then(data => {
+            .then((data) => {
                 if (this.cancelled) {
                     return Promise.reject(REASON_CANCELLED);
                 }
@@ -159,7 +159,7 @@ class PDBModel {
             return;
         }
         // PDB Angstroms to Simularium nanometers
-        const PDB_COORDINATE_SCALE = new Vector3(-0.1, 0.1, -0.1);
+        const PDB_COORDINATE_SCALE = new Vector3(0.1, 0.1, 0.1);
 
         for (let i = 0; i < this.pdb.atoms.length; ++i) {
             this.pdb.atoms[i].x *= PDB_COORDINATE_SCALE.x;
