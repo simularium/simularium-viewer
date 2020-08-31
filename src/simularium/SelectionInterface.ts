@@ -47,7 +47,9 @@ class SelectionInterface {
 
     public parse(idNameMapping: EncodedTypeMapping): void {
         this.clear();
-
+        if (!idNameMapping) {
+            return;
+        }
         Object.keys(idNameMapping).forEach((id) => {
             this.decode(idNameMapping[id], parseInt(id));
         });
