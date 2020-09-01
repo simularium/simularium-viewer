@@ -126,7 +126,7 @@ class SelectionInterface {
         if (names.length === 0) {
             names = Object.keys(this.entries);
         }
-        console.log(this.entries);
+
         // If there are tags but no name,
         //  search all names for matching tags
 
