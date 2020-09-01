@@ -333,7 +333,7 @@ export default class VisAgent {
 
         for (let j = 0; j < distanceStops.length; ++j) {
             // the first distance less than.
-            if (myDistance < distances[j]) {
+            if (myDistance < distanceStops[j]) {
                 this.selectLOD(j + lodBias);
                 break;
             }
