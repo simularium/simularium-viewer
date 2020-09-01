@@ -335,10 +335,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
         p.then((parsedFiles) => {
             const simulariumFile = parsedFiles[0];
-            const { spatialData, trajectoryInfo } = simulariumFile;
-            console.log(simulariumFile);
-            simulariumController.dragAndDropFileInfo = trajectoryInfo;
-            spatialData.bundleData.sort(sortFrames);
+            simulariumFile.spatialData.bundleData.sort(sortFrames);
             const fileName = filesArr[0].name;
             simulariumController.changeFile(fileName, true, simulariumFile);
         });
