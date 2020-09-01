@@ -18,6 +18,7 @@ import {
 } from "../simularium";
 import { VisDataFrame } from "../simularium/VisData";
 import { RenderStyle } from "../simularium/VisGeometry";
+import { SimulariumFileFormat } from "../simularium/TrajectoryFileInfo";
 
 export type PropColor = string | number | [number, number, number];
 
@@ -65,10 +66,10 @@ interface FileHTML extends File {
 
 // This function returns a promise that resolves after all of the objects in
 //  the 'files' parameter have been parsed into text and put in the `outParsedFiles` parameter
-function parseFilesToText(files: FileHTML[]): Promise<VisDataMessage[]> {
+function parseFilesToText(files: FileHTML[]): Promise<SimulariumFileFormat[]> {
     return Promise.all(
         files.map((file) =>
-            file.text().then((text) => JSON.parse(text) as VisDataMessage)
+            file.text().then((text) => JSON.parse(text) as SimulariumFileFormat)
         )
     );
 }
@@ -324,12 +325,13 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
         p.then((parsedFiles) => {
             const frameJSON = parsedFiles[0];
-            frameJSON.bundleData.sort(sortFrames);
+            const { spatialData } = frameJSON;
+            spatialData.bundleData.sort(sortFrames);
             const fileName = filesArr[0].name;
             this.props.simulariumController.changeFile(
                 fileName,
                 true,
-                frameJSON
+                spatialData
             );
         });
     };
