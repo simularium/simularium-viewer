@@ -1,5 +1,6 @@
 import * as util from "./ThreadUtil";
-import { TrajectoryFileInfo } from "./TrajectoryFileInfo";
+import { TrajectoryFileInfo, EncodedTypeMapping } from "./TrajectoryFileInfo";
+import { difference } from "lodash";
 
 /**
  * Parse Agents from Net Data
@@ -329,6 +330,19 @@ class VisData {
     }
 
     public set dragAndDropFileInfo(fileInfo: TrajectoryFileInfo) {
+        // NOTE: this may be a temporary check as we're troubleshooting new file formats
+        const missingIds = this.checkTypeMapping(fileInfo.typeMapping);
+
+        if (missingIds.length) {
+            const include = confirm(
+                `Your file typeMapping is missing names for the following type ids: ${missingIds}. Do you want to include them in the interactive interface?`
+            );
+            if (include) {
+                missingIds.forEach((id) => {
+                    fileInfo.typeMapping[id] = { name: id.toString() };
+                });
+            }
+        }
         this._dragAndDropFileInfo = fileInfo;
     }
 
@@ -337,6 +351,22 @@ class VisData {
             return this.calculateDragAndDropFileInfo();
         }
         return this._dragAndDropFileInfo;
+    }
+
+    public checkTypeMapping(typeMappingFromFile: EncodedTypeMapping): number[] {
+        const idsInFrameData = new Set();
+        const idsInTypeMapping = Object.keys(typeMappingFromFile).map(Number);
+
+        if (this.frameCache.length === 0) {
+            console.log("no data to check type mapping against");
+            return [];
+        }
+
+        this.frameCache.forEach((element) => {
+            element.map((agent) => idsInFrameData.add(agent.type));
+        });
+        const idsArr: number[] = [...idsInFrameData].sort() as number[];
+        return difference(idsArr, idsInTypeMapping).sort();
     }
 
     public calculateDragAndDropFileInfo(): TrajectoryFileInfo {
@@ -377,7 +407,7 @@ class VisData {
         const typeMapping = {};
 
         idsArr.forEach((id) => {
-            typeMapping[id] = id.toString();
+            typeMapping[id] = { name: id.toString() };
         });
 
         return {
