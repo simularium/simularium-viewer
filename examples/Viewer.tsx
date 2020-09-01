@@ -191,6 +191,7 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public handleUIDisplayData(uiDisplayData: UIDisplayData): void {
+        console.log("uiDisplayData", uiDisplayData);
         const allTags = uiDisplayData.reduce(
             (fullArray: string[], subarray) => {
                 fullArray = [
@@ -264,7 +265,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                 <button onClick={() => simulariumController.stop()}>
                     stop
                 </button>
-                <button onClick={() => this.changeFile("test_traj1.h5")}>
+                {/* <button onClick={() => this.changeFile("test_traj1.h5")}>
                     TEST
                 </button>
                 <button
@@ -312,7 +313,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                 </button>
                 <button onClick={() => this.changeFile("ATPsynthase_10.h5")}>
                     ATP 10
-                </button>
+                </button> */}
                 <br />
                 <input
                     type="range"

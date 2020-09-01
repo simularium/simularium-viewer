@@ -93,6 +93,7 @@ export default class VisAgent {
     public name: string;
     public highlighted: boolean;
     public selected: boolean;
+    public hidden: boolean;
     public visType: number;
     public id: number;
 
@@ -105,6 +106,7 @@ export default class VisAgent {
         this.typeId = -1;
         this.colorIndex = 0;
         this.highlighted = false;
+        this.hidden = false;
         // all are selected by default.  deselecting will desaturate.
         this.selected = true;
         this.baseMaterial = new MeshLambertMaterial({
@@ -155,6 +157,10 @@ export default class VisAgent {
         // because this is a new material, we need to re-install it on the geometry
         // TODO deal with highlight and selection state
         this.assignMaterial();
+    }
+
+    public setVisibility(hidden: boolean): void {
+        this.hidden = hidden;
     }
 
     public setHighlighted(highlighted: boolean): void {
@@ -313,9 +319,32 @@ export default class VisAgent {
         }
     }
 
-    public hideAndDeactivate(): void {
+    public renderAsMesh(): void {
+        this.setPDBInvisible();
+        this.mesh.visible = true;
+    }
+
+    public renderWithPDB(distance: number, lodBias: number): void {
+        this.mesh.visible = false;
+        // if it has any pdb objects then set up the LOD visibility.
+        const distances = [40, 100, 150, Number.MAX_VALUE];
+
+        for (let j = 0; j < distances.length; ++j) {
+            // the first distance less than.
+            if (distance < distances[j]) {
+                this.selectLOD(j + lodBias);
+                break;
+            }
+        }
+    }
+
+    public hide(): void {
         this.mesh.visible = false;
         this.setPDBInvisible();
+    }
+
+    public hideAndDeactivate(): void {
+        this.hide();
         this.active = false;
     }
 

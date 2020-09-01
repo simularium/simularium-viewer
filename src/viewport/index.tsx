@@ -48,7 +48,7 @@ interface Click {
 }
 
 interface ViewportState {
-    lastClick: Click;
+    lastClick: Click
 }
 
 interface TimeData {
@@ -273,20 +273,33 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         } = this.props;
 
         if (selectionStateInfo) {
-            const ids = this.selectionInterface.getHighlightedIds(
+            const highLightedIds = this.selectionInterface.getHighlightedIds(
                 selectionStateInfo
             );
-            this.visGeometry.setHighlightByIds(ids);
+            const hiddenIds = this.selectionInterface.getHiddenIds(
+                selectionStateInfo
+            );
+            this.visGeometry.setVisibleByIds(hiddenIds);
+            this.visGeometry.setHighlightByIds(highLightedIds);
         }
 
         // note that if the system does not support the molecular render style, then
         // the visGeometry's internal render style will be different than what this prop says.
-        this.visGeometry.setRenderStyle(renderStyle);
-
-        this.visGeometry.setShowMeshes(showMeshes);
-        this.visGeometry.setShowPaths(showPaths);
-        this.visGeometry.setShowBounds(showBounds);
-        this.visGeometry.setBackgroundColor(backgroundColor);
+        if (renderStyle !== prevProps.renderStyle) {
+            this.visGeometry.setRenderStyle(renderStyle);
+        }
+        if (showMeshes !== prevProps.showMeshes) {
+            this.visGeometry.setShowMeshes(showMeshes);
+        }
+        if (showPaths !== prevProps.showPaths) {
+            this.visGeometry.setShowPaths(showPaths);
+        }
+        if (showBounds !== prevProps.showBounds) {
+            this.visGeometry.setShowBounds(showBounds);
+        }
+        if (backgroundColor !== prevProps.backgroundColor) {
+            this.visGeometry.setBackgroundColor(backgroundColor);
+        }
         if (prevProps.height !== height || prevProps.width !== width) {
             this.visGeometry.resize(width, height);
         }
