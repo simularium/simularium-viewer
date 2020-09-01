@@ -211,17 +211,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             msg: TrajectoryFileInfo
         ) => {
             this.visGeometry.handleTrajectoryData(msg);
-
-            // NOTE: may not be necessary with new file format
-            const typeMapping = msg.typeMapping || {};
-            if (isEmpty(typeMapping)) {
-                for (const key in msg) {
-                    if (!isNaN(Number(key))) {
-                        typeMapping[key] = msg[key];
-                    }
-                }
-            }
-            this.selectionInterface.parse(typeMapping);
+            this.selectionInterface.parse(msg.typeMapping);
             onTrajectoryFileInfoChanged(msg);
 
             const uiDisplayData = this.selectionInterface.getUIDisplayData();
