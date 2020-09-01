@@ -112,6 +112,7 @@ class VisGeometry {
     public colorVariant: number;
     public fixLightsToCamera: boolean;
     public highlightedIds: number[];
+    public hiddenIds: number[];
     public paths: PathData[];
     public mlogger: ILogger;
     public renderer: WebGLRenderer;
@@ -137,6 +138,7 @@ class VisGeometry {
     private membraneAgent?: VisAgent;
     private resetCameraOnNewScene: boolean;
     private lodBias: number;
+    private lodDistanceStops: number[];
 
     public constructor(loggerLevel: ILogLevel) {
         this.renderStyle = RenderStyle.MOLECULAR;
@@ -158,6 +160,7 @@ class VisGeometry {
         this.colorVariant = 50;
         this.fixLightsToCamera = true;
         this.highlightedIds = [];
+        this.hiddenIds = [];
 
         // will store data for all agents that are drawing paths
         this.paths = [];
@@ -202,6 +205,7 @@ class VisGeometry {
         this.currentSceneAgents = [];
         this.colorsData = new Float32Array(0);
         this.lodBias = 0;
+        this.lodDistanceStops = [40, 100, 150, Number.MAX_VALUE];
         if (loggerLevel === jsLogger.DEBUG) {
             this.setupGui();
         }
@@ -352,6 +356,21 @@ class VisGeometry {
 
     public unfollow(): void {
         this.setFollowObject(NO_AGENT);
+    }
+
+    public setVisibleByIds(hiddenIds: number[]): void {
+        this.hiddenIds = hiddenIds;
+
+        // go over all objects and update material
+        const nMeshes = this.visAgents.length;
+        for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
+            const visAgent = this.visAgents[i];
+            if (visAgent.active) {
+                const isHidden = this.hiddenIds.includes(visAgent.typeId);
+                visAgent.setHidden(isHidden);
+            }
+        }
+        this.updateScene(this.currentSceneAgents);
     }
 
     public setHighlightByIds(ids: number[]): void {
@@ -680,23 +699,19 @@ class VisGeometry {
             for (let i = 0; i < this.visAgents.length; ++i) {
                 const agent = this.visAgents[i];
                 if (agent.active) {
-                    if (agent.hasDrawablePDB()) {
-                        agent.mesh.visible = false;
-                        // if it has any pdb objects then set up the LOD visibility.
-                        const distances = [40, 100, 150, Number.MAX_VALUE];
-                        const distance = this.camera.position.distanceTo(
+                    if (agent.hidden) {
+                        agent.hide();
+                    } else if (agent.hasDrawablePDB()) {
+                        const agentDistance = this.camera.position.distanceTo(
                             agent.mesh.position
                         );
-                        for (let j = 0; j < distances.length; ++j) {
-                            // the first distance less than.
-                            if (distance < distances[j]) {
-                                agent.selectLOD(j + this.lodBias);
-                                break;
-                            }
-                        }
+                        agent.renderAsPDB(
+                            agentDistance,
+                            this.lodDistanceStops,
+                            this.lodBias
+                        );
                     } else {
-                        agent.setPDBInvisible();
-                        agent.mesh.visible = true;
+                        agent.renderAsMesh();
                     }
                 }
             }
@@ -1050,6 +1065,10 @@ class VisGeometry {
 
             visAgent.typeId = typeId;
             visAgent.active = true;
+            if (visAgent.hidden) {
+                visAgent.hide();
+                return;
+            }
 
             // if not fiber...
             if (visType === VisTypes.ID_VIS_TYPE_DEFAULT) {
@@ -1411,12 +1430,13 @@ class VisGeometry {
         }
     }
 
-    public setShowMeshes(showMeshes: boolean): void {
+    public toggleAllAgentsHidden(hideAllAgents: boolean): void {
         const nMeshes = this.visAgents.length;
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
             const visAgent = this.visAgents[i];
+
             if (visAgent.active) {
-                visAgent.mesh.visible = showMeshes;
+                visAgent.setHidden(hideAllAgents);
             }
         }
     }

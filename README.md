@@ -44,7 +44,7 @@ class Viewer extends React.Component {
                 particleTypeIds: [],
                 currentFrame: 0,
                 currentTime: 0,
-                showMeshes: true,
+                hideAllAgents: false,
                 showPaths: true,
                 timeStep: 1,
                 totalDuration: 100,
@@ -74,7 +74,7 @@ class Viewer extends React.Component {
                     onTrajectoryFileInfoChanged={this.handleTrajectoryInfo}
                     highlightedParticleType={this.state.highlightId}
                     loadInitialData={true}
-                    showMeshes={this.state.showMeshes}
+                    hideAllAgents={this.state.hideAllAgents}
                     showPaths={this.state.showPaths}
                 />)
     }

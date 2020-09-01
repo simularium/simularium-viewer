@@ -7,6 +7,8 @@ const idMapping = {
     4: "fourth#last_tagged",
     5: "duplicate",
     6: "duplicate#tagged",
+    7: "seventh#first",
+    8: "first",
 };
 
 const selectionState = {
@@ -81,7 +83,7 @@ describe("SelectionInterface module", () => {
             si.parse(idMapping);
             const ids = si.getIdsByTags(["first"]);
 
-            expect(ids).toEqual([1]);
+            expect(ids).toEqual([1, 7]);
         });
 
         test("Selection works: select multiple by tag", () => {
@@ -101,21 +103,47 @@ describe("SelectionInterface module", () => {
         });
     });
 
-    describe("Highlight & Hide", () => {
-        test("Highlights using selection state info", () => {
+    describe("getHighlightedIds", () => {
+        test("returns list of highlighted ids using selection state info", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
 
             const ids = si.getHighlightedIds(selectionState);
             expect(ids).toEqual([3]);
         });
+    });
 
-        test("Hides  using selection state info", () => {
+    describe("getHiddenIds", () => {
+        test("returns all list of ids whose names match hiddenNames OR whose tags match hiddenTags", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
 
-            const ids = si.getVisibleIds(selectionState);
-            expect(ids).toEqual([2, 3, 4]);
+            const ids = si.getHiddenIds(selectionState);
+            expect(ids).toEqual([1, 5, 6, 7]);
+        });
+        test("if no names or tags are hidden, returns empty array", () => {
+            const si = new SelectionInterface();
+            si.parse(idMapping);
+            const noHiddenNamesTags = {
+                highlightedNames: ["second", "third"],
+                highlightedTags: ["tagged"],
+                hiddenNames: [],
+                hiddenTags: [],
+            };
+            const ids = si.getHiddenIds(noHiddenNamesTags);
+            expect(ids).toEqual([]);
+        });
+        test("if no names hidden, returns only matching tags", () => {
+            const si = new SelectionInterface();
+            si.parse(idMapping);
+            const noHiddenNames = {
+                highlightedNames: ["second", "third"],
+                highlightedTags: ["tagged"],
+                hiddenNames: [],
+                hiddenTags: ["first"],
+            };
+            const ids = si.getHiddenIds(noHiddenNames);
+            expect(ids).toEqual([1, 7]);
         });
     });
 

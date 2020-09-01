@@ -47,7 +47,6 @@ class SelectionInterface {
 
     public parse(idNameMapping: EncodedTypeMapping): void {
         this.clear();
-
         if (!idNameMapping) {
             throw new Error(
                 "Trajectory is missing agent type mapping information."
@@ -137,7 +136,7 @@ class SelectionInterface {
             if (!names || names.length === 0 || names.includes(name)) {
                 // If no tags are specified, this will return all register a
                 //  match for all entries
-                indices = indices.concat(this.getIds(name, tags));
+                indices = [...indices, ...this.getIds(name, tags)];
             }
         });
 
@@ -148,39 +147,34 @@ class SelectionInterface {
      * If an entry has a name specified in the selection state info
      * or a tag specified, it will be considered hidden
      */
-    public getVisibleIds(info: SelectionStateInfo): number[] {
-        const hiddenNames =
-            info.hiddenNames.filter((element) => {
-                return element != undefined && element != "";
-            }) || [];
-        const hiddenTags =
-            info.hiddenTags.filter((element) => {
-                return element != undefined && element != "";
-            }) || [];
-        const indices: number[] = [];
-
+    public getHiddenIds(info: SelectionStateInfo): number[] {
+        const hiddenNames: string[] = info.hiddenNames.filter((element) => {
+            return element != undefined && element != "";
+        });
+        const hiddenTags: string[] = info.hiddenTags.filter((element) => {
+            return element != undefined && element != "";
+        });
+        const hiddenIndices: number[] = [];
+        if (hiddenNames.length === 0 && hiddenTags.length === 0) {
+            return [];
+        }
         Object.keys(this.entries).forEach((name) => {
-            // If the name is on the hidden list...
-            if (
-                !hiddenNames ||
-                hiddenNames.length === 0 ||
-                !hiddenNames.includes(name)
-            ) {
-                const entryList = this.entries[name];
-
-                entryList.forEach((entry) => {
-                    // And no tags on the hidden list are found...
-                    if (hiddenTags.every((t) => !entry.tags.includes(t))) {
-                        if (entry.id > 0) {
-                            // This entry is visible
-                            indices.push(entry.id);
-                        }
+            const entryList = this.entries[name];
+            entryList.forEach((entry) => {
+                if (hiddenNames.length > 0 && hiddenNames.includes(name)) {
+                    // if name matches, include
+                    hiddenIndices.push(entry.id);
+                }
+                // if entry has tags, also check against hiddenTags
+                if (entry.tags.length > 0) {
+                    if (hiddenTags.every((t) => entry.tags.includes(t))) {
+                        hiddenIndices.push(entry.id);
                     }
-                });
-            }
+                }
+            });
         });
 
-        return indices;
+        return hiddenIndices;
     }
 
     public clear(): void {

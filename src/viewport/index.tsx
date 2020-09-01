@@ -35,7 +35,7 @@ interface ViewportProps {
     ) => void | undefined;
     onUIDisplayDataChanged: (data: UIDisplayData) => void | undefined;
     loadInitialData: boolean;
-    showMeshes: boolean;
+    hideAllAgents: boolean;
     showPaths: boolean;
     showBounds: boolean;
     selectionStateInfo: SelectionStateInfo;
@@ -48,7 +48,7 @@ interface Click {
 }
 
 interface ViewportState {
-    lastClick: Click;
+    lastClick: Click
 }
 
 interface TimeData {
@@ -102,7 +102,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         height: 800,
         width: 800,
         loadInitialData: true,
-        showMeshes: true,
+        hideAllAgents: false,
         showPaths: true,
         showBounds: true,
     };
@@ -266,27 +266,40 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             height,
             width,
             renderStyle,
-            showMeshes,
+            hideAllAgents,
             showPaths,
             showBounds,
             selectionStateInfo,
         } = this.props;
 
         if (selectionStateInfo) {
-            const ids = this.selectionInterface.getHighlightedIds(
+            const highlightedIds = this.selectionInterface.getHighlightedIds(
                 selectionStateInfo
             );
-            this.visGeometry.setHighlightByIds(ids);
+            const hiddenIds = this.selectionInterface.getHiddenIds(
+                selectionStateInfo
+            );
+            this.visGeometry.setVisibleByIds(hiddenIds);
+            this.visGeometry.setHighlightByIds(highlightedIds);
         }
 
         // note that if the system does not support the molecular render style, then
         // the visGeometry's internal render style will be different than what this prop says.
-        this.visGeometry.setRenderStyle(renderStyle);
-
-        this.visGeometry.setShowMeshes(showMeshes);
-        this.visGeometry.setShowPaths(showPaths);
-        this.visGeometry.setShowBounds(showBounds);
-        this.visGeometry.setBackgroundColor(backgroundColor);
+        if (renderStyle !== prevProps.renderStyle) {
+            this.visGeometry.setRenderStyle(renderStyle);
+        }
+        if (hideAllAgents !== prevProps.hideAllAgents) {
+            this.visGeometry.toggleAllAgentsHidden(hideAllAgents);
+        }
+        if (showPaths !== prevProps.showPaths) {
+            this.visGeometry.setShowPaths(showPaths);
+        }
+        if (showBounds !== prevProps.showBounds) {
+            this.visGeometry.setShowBounds(showBounds);
+        }
+        if (backgroundColor !== prevProps.backgroundColor) {
+            this.visGeometry.setBackgroundColor(backgroundColor);
+        }
         if (prevProps.height !== height || prevProps.width !== width) {
             this.visGeometry.resize(width, height);
         }
