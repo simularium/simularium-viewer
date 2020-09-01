@@ -114,21 +114,19 @@ class SelectionInterface {
      * selection state info, it will be considered hilighted
      */
     public getHighlightedIds(info: SelectionStateInfo): number[] {
-        let names =
-            info.highlightedNames.filter((element) => {
-                return element != undefined && element != "";
-            }) || [];
-        const tags: string[] =
-            info.highlightedTags.filter((element) => {
-                return element != undefined && element != "";
-            }) || [];
+        let names: string[] = info.highlightedNames.filter((element) => {
+            return element != undefined && element != "";
+        });
+        const tags: string[] = info.highlightedTags.filter((element) => {
+            return element != undefined && element != "";
+        });
         let indices: number[] = [];
 
         // If no name is specified, search all entries for matching tags
         if (names.length === 0) {
             names = Object.keys(this.entries);
         }
-
+        console.log(this.entries);
         // If there are tags but no name,
         //  search all names for matching tags
 

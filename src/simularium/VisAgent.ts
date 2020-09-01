@@ -159,7 +159,7 @@ export default class VisAgent {
         this.assignMaterial();
     }
 
-    public setVisibility(hidden: boolean): void {
+    public setHidden(hidden: boolean): void {
         this.hidden = hidden;
     }
 

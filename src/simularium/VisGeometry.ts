@@ -361,7 +361,7 @@ class VisGeometry {
             const visAgent = this.visAgents[i];
             if (visAgent.active) {
                 const isHidden = this.hiddenIds.includes(visAgent.typeId);
-                visAgent.setVisibility(isHidden);
+                visAgent.setHidden(isHidden);
             }
         }
         this.updateScene(this.currentSceneAgents);
@@ -1426,7 +1426,7 @@ class VisGeometry {
             const visAgent = this.visAgents[i];
 
             if (visAgent.active) {
-                visAgent.setVisibility(showMeshes);
+                visAgent.setHidden(showMeshes);
             }
         }
     }

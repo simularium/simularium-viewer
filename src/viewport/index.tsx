@@ -289,8 +289,8 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             const hiddenIds = this.selectionInterface.getHiddenIds(
                 selectionStateInfo
             );
-            this.visGeometry.setVisibleByIds(hiddenIds);
             this.visGeometry.setHighlightByIds(highlightedIds);
+            this.visGeometry.setVisibleByIds(hiddenIds);
         }
 
         // note that if the system does not support the molecular render style, then
