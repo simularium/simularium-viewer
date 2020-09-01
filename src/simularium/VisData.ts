@@ -49,6 +49,7 @@ class VisData {
     private frameToWaitFor: number;
     private lockedForFrame: boolean;
     private cacheFrame: number;
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     private _dragAndDropFileInfo: TrajectoryFileInfo | null;
     /**
      *   Parses a stream of data sent from the backend
@@ -371,9 +372,6 @@ class VisData {
             this.frameDataCache.length > 1
                 ? this.frameDataCache[1].time - this.frameDataCache[0].time
                 : 1;
-        const totalDuration =
-            this.frameDataCache[this.frameCache.length - 1].frameNumber *
-            timeStepSize;
 
         const idsArr: number[] = [...idsSet].sort() as number[];
         const typeMapping = {};
