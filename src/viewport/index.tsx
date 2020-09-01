@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSyncAlt } from "@fortawesome/free-solid-svg-icons";
 import SimulariumController from "../controller";
 
-import { forOwn, isEmpty } from "lodash";
+import { forOwn } from "lodash";
 
 import {
     VisGeometry,
