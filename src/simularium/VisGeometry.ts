@@ -1430,13 +1430,13 @@ class VisGeometry {
         }
     }
 
-    public setShowMeshes(showMeshes: boolean): void {
+    public toggleAllAgentsHidden(hideAllAgents: boolean): void {
         const nMeshes = this.visAgents.length;
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
             const visAgent = this.visAgents[i];
 
             if (visAgent.active) {
-                visAgent.setHidden(showMeshes);
+                visAgent.setHidden(hideAllAgents);
             }
         }
     }

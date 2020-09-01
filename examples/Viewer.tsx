@@ -23,7 +23,7 @@ interface ViewerState {
     height: number;
     width: number;
     selectionStateInfo: SelectionStateInfo;
-    showMeshes: boolean;
+    hideAllAgents: boolean;
     showPaths: boolean;
     timeStep: number;
     totalDuration: number;
@@ -52,7 +52,7 @@ const initialState = {
     currentTime: 0,
     height: 700,
     width: 800,
-    showMeshes: true,
+    hideAllAgents: false,
     showPaths: true,
     timeStep: 1,
     totalDuration: 100,
@@ -372,11 +372,11 @@ class Viewer extends React.Component<{}, ViewerState> {
                 <button
                     onClick={() =>
                         this.setState({
-                            showMeshes: !this.state.showMeshes,
+                            hideAllAgents: !this.state.hideAllAgents,
                         })
                     }
                 >
-                    ShowMeshes
+                    {this.state.hideAllAgents ? "Show all": "Hide all"}
                 </button>
                 <button
                     onClick={() =>
@@ -414,7 +414,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                     selectionStateInfo={this.state.selectionStateInfo}
                     onUIDisplayDataChanged={this.handleUIDisplayData.bind(this)}
                     loadInitialData={true}
-                    showMeshes={this.state.showMeshes}
+                    hideAllAgents={this.state.hideAllAgents}
                     showPaths={this.state.showPaths}
                 />
             </div>

@@ -35,7 +35,7 @@ interface ViewportProps {
     ) => void | undefined;
     onUIDisplayDataChanged: (data: UIDisplayData) => void | undefined;
     loadInitialData: boolean;
-    showMeshes: boolean;
+    hideAllAgents: boolean;
     showPaths: boolean;
     showBounds: boolean;
     selectionStateInfo: SelectionStateInfo;
@@ -102,7 +102,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         height: 800,
         width: 800,
         loadInitialData: true,
-        showMeshes: true,
+        hideAllAgents: false,
         showPaths: true,
         showBounds: true,
     };
@@ -266,7 +266,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             height,
             width,
             renderStyle,
-            showMeshes,
+            hideAllAgents,
             showPaths,
             showBounds,
             selectionStateInfo,
@@ -288,8 +288,8 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         if (renderStyle !== prevProps.renderStyle) {
             this.visGeometry.setRenderStyle(renderStyle);
         }
-        if (showMeshes !== prevProps.showMeshes) {
-            this.visGeometry.setShowMeshes(showMeshes);
+        if (hideAllAgents !== prevProps.hideAllAgents) {
+            this.visGeometry.toggleAllAgentsHidden(hideAllAgents);
         }
         if (showPaths !== prevProps.showPaths) {
             this.visGeometry.setShowPaths(showPaths);
