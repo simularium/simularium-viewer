@@ -44,7 +44,7 @@ class Viewer extends React.Component {
                 particleTypeIds: [],
                 currentFrame: 0,
                 currentTime: 0,
-                hideAllAgents: true,
+                hideAllAgents: false,
                 showPaths: true,
                 timeStep: 1,
                 totalDuration: 100,
