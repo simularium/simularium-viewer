@@ -138,6 +138,7 @@ class VisGeometry {
     private membraneAgent?: VisAgent;
     private resetCameraOnNewScene: boolean;
     private lodBias: number;
+    private lodDistanceStops: number[];
 
     public constructor(loggerLevel: ILogLevel) {
         this.renderStyle = RenderStyle.MOLECULAR;
@@ -204,6 +205,7 @@ class VisGeometry {
         this.currentSceneAgents = [];
         this.colorsData = new Float32Array(0);
         this.lodBias = 0;
+        this.lodDistanceStops = [40, 100, 150, Number.MAX_VALUE];
         if (loggerLevel === jsLogger.DEBUG) {
             this.setupGui();
         }
@@ -700,10 +702,14 @@ class VisGeometry {
                     if (agent.hidden) {
                         agent.hide();
                     } else if (agent.hasDrawablePDB()) {
-                        const distance = this.camera.position.distanceTo(
+                        const agentDistance = this.camera.position.distanceTo(
                             agent.mesh.position
                         );
-                        agent.renderWithPDB(distance, this.lodBias);
+                        agent.renderAsPDB(
+                            agentDistance,
+                            this.lodDistanceStops,
+                            this.lodBias
+                        );
                     } else {
                         agent.renderAsMesh();
                     }

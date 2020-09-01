@@ -324,14 +324,16 @@ export default class VisAgent {
         this.mesh.visible = true;
     }
 
-    public renderWithPDB(distance: number, lodBias: number): void {
+    public renderAsPDB(
+        myDistance: number,
+        distanceStops: number[],
+        lodBias: number
+    ): void {
         this.mesh.visible = false;
-        // if it has any pdb objects then set up the LOD visibility.
-        const distances = [40, 100, 150, Number.MAX_VALUE];
 
-        for (let j = 0; j < distances.length; ++j) {
+        for (let j = 0; j < distanceStops.length; ++j) {
             // the first distance less than.
-            if (distance < distances[j]) {
+            if (myDistance < distances[j]) {
                 this.selectLOD(j + lodBias);
                 break;
             }
