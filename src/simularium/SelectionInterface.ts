@@ -48,7 +48,9 @@ class SelectionInterface {
     public parse(idNameMapping: EncodedTypeMapping): void {
         this.clear();
         if (!idNameMapping) {
-            return;
+            throw new Error(
+                "Trajectory is missing agent type mapping information."
+            );
         }
         Object.keys(idNameMapping).forEach((id) => {
             this.decode(idNameMapping[id], parseInt(id));
