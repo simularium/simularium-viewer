@@ -53,7 +53,7 @@ class SelectionInterface {
             );
         }
         Object.keys(idNameMapping).forEach((id) => {
-            this.decode(idNameMapping[id], parseInt(id));
+            this.decode(idNameMapping[id].name, parseInt(id));
         });
     }
 

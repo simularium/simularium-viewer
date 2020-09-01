@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSyncAlt } from "@fortawesome/free-solid-svg-icons";
 import SimulariumController from "../controller";
 
-import { forOwn } from "lodash";
+import { forOwn, isEmpty } from "lodash";
 
 import {
     VisGeometry,
@@ -14,7 +14,6 @@ import {
     SelectionStateInfo,
     UIDisplayData,
     NO_AGENT,
-    VisDataMessage,
 } from "../simularium";
 import { VisDataFrame } from "../simularium/VisData";
 import { RenderStyle } from "../simularium/VisGeometry";
@@ -212,7 +211,17 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             msg: TrajectoryFileInfo
         ) => {
             this.visGeometry.handleTrajectoryData(msg);
-            this.selectionInterface.parse(msg.typeMapping);
+
+            // NOTE: may not be necessary with new file format
+            const typeMapping = msg.typeMapping || {};
+            if (isEmpty(typeMapping)) {
+                for (const key in msg) {
+                    if (!isNaN(Number(key))) {
+                        typeMapping[key] = msg[key];
+                    }
+                }
+            }
+            this.selectionInterface.parse(typeMapping);
             onTrajectoryFileInfoChanged(msg);
 
             const uiDisplayData = this.selectionInterface.getUIDisplayData();
@@ -315,6 +324,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
     public onDrop = (e: Event): void => {
         this.onDragOver(e);
+        const { simulariumController } = this.props;
         const event = e as DragEvent;
         const input = event.target as HTMLInputElement;
         const data: DataTransfer = event.dataTransfer as DataTransfer;
@@ -324,15 +334,13 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         const p = parseFilesToText(filesArr);
 
         p.then((parsedFiles) => {
-            const frameJSON = parsedFiles[0];
-            const { spatialData } = frameJSON;
+            const simulariumFile = parsedFiles[0];
+            const { spatialData, trajectoryInfo } = simulariumFile;
+            console.log(simulariumFile);
+            simulariumController.dragAndDropFileInfo = trajectoryInfo;
             spatialData.bundleData.sort(sortFrames);
             const fileName = filesArr[0].name;
-            this.props.simulariumController.changeFile(
-                fileName,
-                true,
-                spatialData
-            );
+            simulariumController.changeFile(fileName, true, simulariumFile);
         });
     };
 

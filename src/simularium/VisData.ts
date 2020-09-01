@@ -49,7 +49,7 @@ class VisData {
     private frameToWaitFor: number;
     private lockedForFrame: boolean;
     private cacheFrame: number;
-
+    private _dragAndDropFileInfo: TrajectoryFileInfo | null;
     /**
      *   Parses a stream of data sent from the backend
      *
@@ -175,7 +175,7 @@ class VisData {
         this.frameCache = [];
         this.frameDataCache = [];
         this.cacheFrame = -1;
-
+        this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
     }
@@ -327,7 +327,18 @@ class VisData {
         );
     }
 
-    public dragAndDropFileInfo(): TrajectoryFileInfo {
+    public set dragAndDropFileInfo(fileInfo: TrajectoryFileInfo) {
+        this._dragAndDropFileInfo = fileInfo;
+    }
+
+    public get dragAndDropFileInfo(): TrajectoryFileInfo {
+        if (!this._dragAndDropFileInfo) {
+            return this.calculateDragAndDropFileInfo();
+        }
+        return this._dragAndDropFileInfo;
+    }
+
+    public calculateDragAndDropFileInfo(): TrajectoryFileInfo {
         const max: number[] = [0, 0, 0];
         const min: number[] = [0, 0, 0];
         const idsSet = new Set();
@@ -372,10 +383,13 @@ class VisData {
         });
 
         return {
-            boxSizeX: max[0] - min[0],
-            boxSizeY: max[1] - min[0],
-            boxSizeZ: max[2] - min[2],
-            totalDuration: totalDuration,
+            version: 1,
+            size: {
+                x: max[0] - min[0],
+                y: max[1] - min[0],
+                z: max[2] - min[2],
+            },
+            totalSteps: this.frameCache.length,
             timeStepSize: timeStepSize,
             typeMapping: typeMapping,
         };

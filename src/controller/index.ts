@@ -6,6 +6,7 @@ import {
     VisDataMessage,
     TrajectoryFileInfo,
 } from "../simularium";
+import { SimulariumFileFormat } from "../simularium/TrajectoryFileInfo";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
@@ -154,7 +155,7 @@ export default class SimulariumController {
     public changeFile(
         newFileName: string,
         isLocalFile = false,
-        framesToCache?: VisDataMessage,
+        simulariumFile?: SimulariumFileFormat,
         geometryFile?: string,
         assetPrefix?: string
     ): void {
@@ -173,15 +174,17 @@ export default class SimulariumController {
             this.stop();
 
             if (isLocalFile) {
-                if (!framesToCache) {
-                    throw Error("local file needs to include frames");
+                if (!simulariumFile) {
+                    throw Error("local file needs to include file");
                 }
+                const { spatialData, trajectoryInfo } = simulariumFile;
+
                 this.pause();
                 this.disableNetworkCommands();
-                this.cacheJSON(framesToCache);
-                const trajectoryFileInfo = this.dragAndDropFileInfo();
+                this.cacheJSON(spatialData);
+                this.dragAndDropFileInfo = trajectoryInfo;
                 this.netConnection.onTrajectoryFileInfoArrive(
-                    trajectoryFileInfo
+                    this.dragAndDropFileInfo
                 );
                 return;
             }
@@ -224,8 +227,11 @@ export default class SimulariumController {
         this.visData.clearCache();
     }
 
-    public dragAndDropFileInfo(): TrajectoryFileInfo {
-        return this.visData.dragAndDropFileInfo();
+    public get dragAndDropFileInfo(): TrajectoryFileInfo {
+        return this.visData.dragAndDropFileInfo;
+    }
+    public set dragAndDropFileInfo(fileInfo: TrajectoryFileInfo) {
+        this.visData.dragAndDropFileInfo = fileInfo;
     }
 }
 

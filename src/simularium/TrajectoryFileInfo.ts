@@ -1,15 +1,23 @@
 import { VisDataMessage } from "./VisData";
 
+export interface AgentDisplayData {
+    name: string;
+    pdb?: string;
+    mesh?: string;
+}
 export interface EncodedTypeMapping {
-    [key: number]: string;
+    [key: number]: AgentDisplayData;
 }
 
 export interface TrajectoryFileInfo {
+    version: number;
     timeStepSize: number;
-    totalDuration: number;
-    boxSizeX: number;
-    boxSizeY: number;
-    boxSizeZ: number;
+    totalSteps: number;
+    size: {
+        x: number;
+        y: number;
+        z: number;
+    };
     typeMapping: EncodedTypeMapping;
 }
 
