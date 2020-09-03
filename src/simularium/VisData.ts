@@ -1,5 +1,9 @@
 import * as util from "./ThreadUtil";
-import { TrajectoryFileInfo, EncodedTypeMapping } from "./TrajectoryFileInfo";
+import {
+    TrajectoryFileInfo,
+    EncodedTypeMapping,
+    VisDataMessage,
+} from "./types";
 import { difference } from "lodash";
 
 /**
@@ -27,19 +31,6 @@ interface FrameData {
 interface ParsedBundle {
     frameDataArray: FrameData[];
     parsedAgentDataArray: AgentData[][];
-}
-
-export interface VisDataFrame {
-    data: number[];
-    frameNumber: number;
-    time: number;
-}
-
-export interface VisDataMessage {
-    msgType: number;
-    bundleStart: number;
-    bundleSize: number;
-    bundleData: VisDataFrame[];
 }
 
 class VisData {

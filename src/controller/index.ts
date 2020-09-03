@@ -6,7 +6,7 @@ import {
     VisDataMessage,
     TrajectoryFileInfo,
 } from "../simularium";
-import { SimulariumFileFormat } from "../simularium/TrajectoryFileInfo";
+import { SimulariumFileFormat } from "../simularium/types";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 

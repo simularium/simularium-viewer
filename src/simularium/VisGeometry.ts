@@ -36,7 +36,7 @@ import * as dat from "dat.gui";
 import jsLogger from "js-logger";
 import { ILogger, ILogLevel } from "js-logger/src/types";
 
-import { TrajectoryFileInfo } from "./TrajectoryFileInfo";
+import { TrajectoryFileInfo } from "./types";
 import { AgentData } from "./VisData";
 
 import MoleculeRenderer from "./rendering/MoleculeRenderer";

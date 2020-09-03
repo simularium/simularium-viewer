@@ -1,7 +1,7 @@
 import { NetConnection } from "../";
 import { NetConnectionParams, NetMessageEnum } from "../NetConnection";
 
-import { VisDataFrame, VisDataMessage } from "../VisData";
+import { VisDataFrame, VisDataMessage } from "../types";
 
 interface TestDataBundle {
     bundleSize: number;

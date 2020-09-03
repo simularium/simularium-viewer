@@ -14,10 +14,10 @@ import {
     SelectionStateInfo,
     UIDisplayData,
     NO_AGENT,
+    VisDataFrame,
 } from "../simularium";
-import { VisDataFrame } from "../simularium/VisData";
 import { RenderStyle } from "../simularium/VisGeometry";
-import { SimulariumFileFormat } from "../simularium/TrajectoryFileInfo";
+import { SimulariumFileFormat } from "../simularium/types";
 
 export type PropColor = string | number | [number, number, number];
 

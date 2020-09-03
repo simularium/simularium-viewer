@@ -1,4 +1,4 @@
-import { EncodedTypeMapping } from "./TrajectoryFileInfo";
+import { EncodedTypeMapping } from "./types";
 
 // An individual entry parsed from an encoded name
 interface DecodedTypeEntry {
