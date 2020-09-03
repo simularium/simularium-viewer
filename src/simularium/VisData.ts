@@ -414,7 +414,7 @@ class VisData {
             version: 1,
             size: {
                 x: max[0] - min[0],
-                y: max[1] - min[0],
+                y: max[1] - min[1],
                 z: max[2] - min[2],
             },
             totalSteps: this.frameCache.length,
