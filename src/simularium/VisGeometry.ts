@@ -36,7 +36,7 @@ import * as dat from "dat.gui";
 import jsLogger from "js-logger";
 import { ILogger, ILogLevel } from "js-logger/src/types";
 
-import { TrajectoryFileInfo } from "./TrajectoryFileInfo";
+import { TrajectoryFileInfo } from "./types";
 import { AgentData } from "./VisData";
 
 import MoleculeRenderer from "./rendering/MoleculeRenderer";
@@ -287,14 +287,10 @@ class VisGeometry {
 
     public handleTrajectoryData(trajectoryData: TrajectoryFileInfo): void {
         // get bounds.
-        if (
-            trajectoryData.hasOwnProperty("boxSizeX") &&
-            trajectoryData.hasOwnProperty("boxSizeY") &&
-            trajectoryData.hasOwnProperty("boxSizeZ")
-        ) {
-            const bx = trajectoryData.boxSizeX;
-            const by = trajectoryData.boxSizeY;
-            const bz = trajectoryData.boxSizeZ;
+        if (trajectoryData.hasOwnProperty("size")) {
+            const bx = trajectoryData.size.x;
+            const by = trajectoryData.size.y;
+            const bz = trajectoryData.size.z;
             const epsilon = 0.000001;
             if (
                 Math.abs(bx) < epsilon ||

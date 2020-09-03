@@ -14,10 +14,10 @@ import {
     SelectionStateInfo,
     UIDisplayData,
     NO_AGENT,
-    VisDataMessage,
+    VisDataFrame,
 } from "../simularium";
-import { VisDataFrame } from "../simularium/VisData";
 import { RenderStyle } from "../simularium/VisGeometry";
+import { SimulariumFileFormat } from "../simularium/types";
 
 export type PropColor = string | number | [number, number, number];
 
@@ -65,10 +65,10 @@ interface FileHTML extends File {
 
 // This function returns a promise that resolves after all of the objects in
 //  the 'files' parameter have been parsed into text and put in the `outParsedFiles` parameter
-function parseFilesToText(files: FileHTML[]): Promise<VisDataMessage[]> {
+function parseFilesToText(files: FileHTML[]): Promise<SimulariumFileFormat[]> {
     return Promise.all(
         files.map((file) =>
-            file.text().then((text) => JSON.parse(text) as VisDataMessage)
+            file.text().then((text) => JSON.parse(text) as SimulariumFileFormat)
         )
     );
 }
@@ -279,8 +279,8 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             const hiddenIds = this.selectionInterface.getHiddenIds(
                 selectionStateInfo
             );
-            this.visGeometry.setVisibleByIds(hiddenIds);
             this.visGeometry.setHighlightByIds(highlightedIds);
+            this.visGeometry.setVisibleByIds(hiddenIds);
         }
 
         // note that if the system does not support the molecular render style, then
@@ -314,6 +314,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
     public onDrop = (e: Event): void => {
         this.onDragOver(e);
+        const { simulariumController } = this.props;
         const event = e as DragEvent;
         const input = event.target as HTMLInputElement;
         const data: DataTransfer = event.dataTransfer as DataTransfer;
@@ -323,14 +324,10 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         const p = parseFilesToText(filesArr);
 
         p.then((parsedFiles) => {
-            const frameJSON = parsedFiles[0];
-            frameJSON.bundleData.sort(sortFrames);
+            const simulariumFile = parsedFiles[0];
+            simulariumFile.spatialData.bundleData.sort(sortFrames);
             const fileName = filesArr[0].name;
-            this.props.simulariumController.changeFile(
-                fileName,
-                true,
-                frameJSON
-            );
+            simulariumController.changeFile(fileName, true, simulariumFile);
         });
     };
 

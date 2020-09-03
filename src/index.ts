@@ -1,7 +1,11 @@
 import Viewport, { RenderStyle } from "./viewport";
 import Orchestrator from "./orchestrator";
 import SimulariumController from "./controller";
-export type { SelectionStateInfo, UIDisplayData } from "./simularium";
+export type {
+    SelectionStateInfo,
+    UIDisplayData,
+    SimulariumFileFormat,
+} from "./simularium";
 export { Orchestrator, RenderStyle, SimulariumController };
 export { NetConnection, DummyNetConnection } from "./simularium";
 

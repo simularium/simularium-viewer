@@ -1,5 +1,10 @@
 import * as util from "./ThreadUtil";
-import { TrajectoryFileInfo } from "./TrajectoryFileInfo";
+import {
+    TrajectoryFileInfo,
+    EncodedTypeMapping,
+    VisDataMessage,
+} from "./types";
+import { difference } from "lodash";
 
 /**
  * Parse Agents from Net Data
@@ -28,19 +33,6 @@ interface ParsedBundle {
     parsedAgentDataArray: AgentData[][];
 }
 
-export interface VisDataFrame {
-    data: number[];
-    frameNumber: number;
-    time: number;
-}
-
-export interface VisDataMessage {
-    msgType: number;
-    bundleStart: number;
-    bundleSize: number;
-    bundleData: VisDataFrame[];
-}
-
 class VisData {
     private frameCache: AgentData[][];
     private frameDataCache: FrameData[];
@@ -49,7 +41,8 @@ class VisData {
     private frameToWaitFor: number;
     private lockedForFrame: boolean;
     private cacheFrame: number;
-
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    private _dragAndDropFileInfo: TrajectoryFileInfo | null;
     /**
      *   Parses a stream of data sent from the backend
      *
@@ -175,7 +168,7 @@ class VisData {
         this.frameCache = [];
         this.frameDataCache = [];
         this.cacheFrame = -1;
-
+        this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
     }
@@ -327,7 +320,47 @@ class VisData {
         );
     }
 
-    public dragAndDropFileInfo(): TrajectoryFileInfo {
+    public set dragAndDropFileInfo(fileInfo: TrajectoryFileInfo) {
+        // NOTE: this may be a temporary check as we're troubleshooting new file formats
+        const missingIds = this.checkTypeMapping(fileInfo.typeMapping);
+
+        if (missingIds.length) {
+            const include = confirm(
+                `Your file typeMapping is missing names for the following type ids: ${missingIds}. Do you want to include them in the interactive interface?`
+            );
+            if (include) {
+                missingIds.forEach((id) => {
+                    fileInfo.typeMapping[id] = { name: id.toString() };
+                });
+            }
+        }
+        this._dragAndDropFileInfo = fileInfo;
+    }
+
+    public get dragAndDropFileInfo(): TrajectoryFileInfo {
+        if (!this._dragAndDropFileInfo) {
+            return this.calculateDragAndDropFileInfo();
+        }
+        return this._dragAndDropFileInfo;
+    }
+
+    public checkTypeMapping(typeMappingFromFile: EncodedTypeMapping): number[] {
+        const idsInFrameData = new Set();
+        const idsInTypeMapping = Object.keys(typeMappingFromFile).map(Number);
+
+        if (this.frameCache.length === 0) {
+            console.log("no data to check type mapping against");
+            return [];
+        }
+
+        this.frameCache.forEach((element) => {
+            element.map((agent) => idsInFrameData.add(agent.type));
+        });
+        const idsArr: number[] = [...idsInFrameData].sort() as number[];
+        return difference(idsArr, idsInTypeMapping).sort();
+    }
+
+    public calculateDragAndDropFileInfo(): TrajectoryFileInfo {
         const max: number[] = [0, 0, 0];
         const min: number[] = [0, 0, 0];
         const idsSet = new Set();
@@ -360,22 +393,22 @@ class VisData {
             this.frameDataCache.length > 1
                 ? this.frameDataCache[1].time - this.frameDataCache[0].time
                 : 1;
-        const totalDuration =
-            this.frameDataCache[this.frameCache.length - 1].frameNumber *
-            timeStepSize;
 
         const idsArr: number[] = [...idsSet].sort() as number[];
         const typeMapping = {};
 
         idsArr.forEach((id) => {
-            typeMapping[id] = id.toString();
+            typeMapping[id] = { name: id.toString() };
         });
 
         return {
-            boxSizeX: max[0] - min[0],
-            boxSizeY: max[1] - min[0],
-            boxSizeZ: max[2] - min[2],
-            totalDuration: totalDuration,
+            version: 1,
+            size: {
+                x: max[0] - min[0],
+                y: max[1] - min[1],
+                z: max[2] - min[2],
+            },
+            totalSteps: this.frameCache.length,
             timeStepSize: timeStepSize,
             typeMapping: typeMapping,
         };

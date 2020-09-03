@@ -1,14 +1,14 @@
 import { SelectionInterface } from "../simularium";
 
 const idMapping = {
-    1: "first#first",
-    2: "second",
-    3: "third#tagged",
-    4: "fourth#last_tagged",
-    5: "duplicate",
-    6: "duplicate#tagged",
-    7: "seventh#first",
-    8: "first",
+    1: { name: "first#first" },
+    2: { name: "second" },
+    3: { name: "third#tagged" },
+    4: { name: "fourth#last_tagged" },
+    5: { name: "duplicate" },
+    6: { name: "duplicate#tagged" },
+    7: { name: "seventh#first" },
+    8: { name: "first" },
 };
 
 const selectionState = {
