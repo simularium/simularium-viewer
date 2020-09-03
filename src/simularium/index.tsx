@@ -6,6 +6,7 @@ export type {
     VisDataFrame,
     TrajectoryFileInfo,
     EncodedTypeMapping,
+    SimulariumFileFormat,
 } from "./types";
 export type { 
     SelectionStateInfo, 
