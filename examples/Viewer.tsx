@@ -109,7 +109,6 @@ class Viewer extends React.Component<{}, ViewerState> {
         });
         const viewerContainer = document.querySelector(".viewer-container");
         if (viewerContainer) {
-            console.log("adding event listeners");
             viewerContainer.addEventListener("drop", this.onDrop);
             viewerContainer.addEventListener("dragover", this.onDragOver);
         }
