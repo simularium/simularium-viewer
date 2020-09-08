@@ -5,6 +5,7 @@ export type {
     SelectionStateInfo,
     UIDisplayData,
     SimulariumFileFormat,
+    VisDataFrame,
 } from "./simularium";
 export { Orchestrator, RenderStyle, SimulariumController };
 export { NetConnection, DummyNetConnection } from "./simularium";
