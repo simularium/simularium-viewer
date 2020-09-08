@@ -13,7 +13,6 @@ import {
     FILE_STATUS_ERROR,
     FILE_STATUS_SUCCESS,
     FILE_STATUS_NO_CHANGE,
-    FileStatus,
 } from "../simularium/types";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
