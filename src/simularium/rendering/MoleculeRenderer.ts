@@ -143,6 +143,10 @@ class MoleculeRenderer {
             bghueoffset: 1,
             bgchromaoffset: 0,
             bgluminanceoffset: 0.2,
+            outlineThickness: 4.0,
+            followThickness: 4.0,
+            outlineAlpha: 0.8,
+            followAlpha: 0.8,
         };
 
         /////////////////////////////////////////////////////////////////////
@@ -214,6 +218,18 @@ class MoleculeRenderer {
         gui.add(settings, "bgluminanceoffset", 0.0, 1.0).onChange((value) => {
             this.compositePass.pass.material.uniforms.bgHCLoffset.value.z = value;
         });
+        gui.add(settings, "outlineThickness", 1.0, 8.0).onChange((value) => {
+            this.contourPass.pass.material.uniforms.outlineThickness.value = value;
+        });
+        gui.add(settings, "outlineAlpha", 0.0, 1.0).onChange((value) => {
+            this.contourPass.pass.material.uniforms.outlineAlpha.value = value;
+        });
+        gui.add(settings, "followThickness", 1.0, 8.0).onChange((value) => {
+            this.contourPass.pass.material.uniforms.followThickness.value = value;
+        });
+        gui.add(settings, "followAlpha", 0.0, 1.0).onChange((value) => {
+            this.contourPass.pass.material.uniforms.followAlpha.value = value;
+        });
     }
 
     public setBackgroundColor(color: Color): void {
@@ -222,12 +238,6 @@ class MoleculeRenderer {
     public setHighlightInstance(instance: number): void {
         this.compositePass.pass.material.uniforms.highlightInstance.value = instance;
         this.contourPass.pass.material.uniforms.highlightInstance.value = instance;
-    }
-
-    public setTypeSelectMode(isTypeSelected: boolean): void {
-        this.compositePass.pass.material.uniforms.typeSelectMode.value = isTypeSelected
-            ? 1
-            : 0;
     }
 
     public hitTest(renderer: WebGLRenderer, x: number, y: number): number {

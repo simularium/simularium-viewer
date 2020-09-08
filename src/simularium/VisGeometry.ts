@@ -720,10 +720,6 @@ class VisGeometry {
                 this.agentFiberGroup
             );
             this.moleculeRenderer.setHighlightInstance(this.followObjectId);
-            this.moleculeRenderer.setTypeSelectMode(
-                this.highlightedIds !== undefined &&
-                    this.highlightedIds.length > 0
-            );
             this.boundingBoxMesh.visible = false;
             this.agentPathGroup.visible = false;
             this.moleculeRenderer.render(

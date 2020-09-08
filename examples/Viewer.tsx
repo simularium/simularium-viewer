@@ -31,7 +31,7 @@ interface ViewerState {
 }
 
 const simulariumController = new SimulariumController({
-    trajectoryPlaybackFile: "ATPsynthase_9.h5",
+    trajectoryPlaybackFile: "", //ATPsynthase_9.h5",
     netConnectionSettings: netConnectionSettings,
 });
 
@@ -121,7 +121,7 @@ class Viewer extends React.Component<{}, ViewerState> {
         } else {
             nextHiddenNames = [...currentHiddenNames, nameToToggle];
         }
-        console.log(nextHiddenNames)
+        console.log(nextHiddenNames);
         this.setState({
             ...this.state,
             selectionStateInfo: {
@@ -377,7 +377,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                         })
                     }
                 >
-                    {this.state.hideAllAgents ? "Show all": "Hide all"}
+                    {this.state.hideAllAgents ? "Show all" : "Hide all"}
                 </button>
                 <button
                     onClick={() =>

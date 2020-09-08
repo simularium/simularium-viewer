@@ -107,8 +107,7 @@ export default class VisAgent {
         this.colorIndex = 0;
         this.highlighted = false;
         this.hidden = false;
-        // all are selected by default.  deselecting will desaturate.
-        this.selected = true;
+        this.selected = false;
         this.baseMaterial = new MeshLambertMaterial({
             color: new Color(this.color),
         });
@@ -133,7 +132,7 @@ export default class VisAgent {
         this.mesh = new Mesh(VisAgent.sphereGeometry, this.baseMaterial);
         this.mesh.userData = { id: this.id };
         this.highlighted = false;
-        this.selected = true;
+        this.selected = false;
         this.setColor(new Color(VisAgent.UNASSIGNED_MESH_COLOR));
     }
 
@@ -261,7 +260,6 @@ export default class VisAgent {
         // colorIndex is not necessarily equal to typeId but is generally a 1-1 mapping.
         if (material.uniforms.typeId) {
             // negate the value if deselected.
-            // by default everything is selected.
             // see implementation in CompositePass.ts for how the value is interpreted
             material.uniforms.typeId.value =
                 this.colorIndex * (this.selected ? 1 : -1);

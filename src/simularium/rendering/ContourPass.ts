@@ -12,6 +12,10 @@ class ContourPass {
                 instanceIdTex: { value: null },
                 normalsTex: { value: null },
                 highlightInstance: { value: -1 },
+                outlineThickness: { value: 4.0 },
+                outlineAlpha: { value: 0.8 },
+                followThickness: { value: 4.0 },
+                followAlpha: { value: 0.8 },
             },
             fragmentShader: `
             in vec2 vUv;
@@ -20,6 +24,14 @@ class ContourPass {
             uniform sampler2D instanceIdTex;
             uniform sampler2D normalsTex;
             uniform float highlightInstance;
+            uniform float outlineThickness;
+            uniform float followThickness;
+            uniform float followAlpha;
+            uniform float outlineAlpha;
+
+            bool isSelected(float typevalue) {
+              return (sign(typevalue) > 0.0);
+            }
 
             void main(void)
             {
@@ -53,8 +65,29 @@ class ContourPass {
                 finalColor = mix(vec4(0,0,0,1), col, 0.8);
 
               }
+
+              bool selected = isSelected(instance.r);
+              if (selected) {
+//                int typeId = abs(int(instance.r));
+                  float thickness = outlineThickness;
+                  bool sR = isSelected(texture(instanceIdTex, vUv + vec2(wStep*thickness, 0)).r);
+                  bool sL = isSelected(texture(instanceIdTex, vUv + vec2(-wStep*thickness, 0)).r);
+                  bool sT = isSelected(texture(instanceIdTex, vUv + vec2(0, hStep*thickness)).r);
+                  bool sB = isSelected(texture(instanceIdTex, vUv + vec2(0, -hStep*thickness)).r);
+                  if ( (!sR) || (!sL) || (!sT) || (!sB) )
+                  {
+                    //~ current pixel lies on the edge
+                    // outline pixel color is a whitened version of the color
+                    finalColor = mix(vec4(1,1,1,1), col, 1.0-outlineAlpha);
+
+                  }
+
+              }
+
+
+
               if (X >= 0 && X == int(highlightInstance)) {
-                float thickness = 4.0;
+                float thickness = followThickness;
                 R = int(texture(instanceIdTex, vUv + vec2(wStep*thickness, 0)).g);
                 L = int(texture(instanceIdTex, vUv + vec2(-wStep*thickness, 0)).g);
                 T = int(texture(instanceIdTex, vUv + vec2(0, hStep*thickness)).g);
@@ -63,7 +96,7 @@ class ContourPass {
                 {
                   //~ current pixel lies on the edge
                   // outline pixel color is a whitened version of the color
-                  finalColor = mix(vec4(1,1,1,1), col, 0.2);
+                  finalColor = mix(vec4(1,1,1,1), col, 1.0-followAlpha);
   
                 }
     

@@ -30,7 +30,6 @@ class CompositePass {
                 atomicBeginDistance: { value: 150 },
                 chainBeginDistance: { value: 300 },
                 highlightInstance: { value: -1 },
-                typeSelectMode: { value: 0 },
             },
             fragmentShader: `
             in vec2 vUv;
@@ -47,9 +46,8 @@ class CompositePass {
             uniform vec3 backgroundColor;
             uniform vec3 bgHCLoffset;
 
+            // a single instance to get a special highlight
             uniform float highlightInstance;
-            // if any types are selected, this will be 1 else 0
-            uniform float typeSelectMode;
             
             uniform float atomicBeginDistance; // = 100.0;
             uniform float chainBeginDistance; // = 150.0;
@@ -228,22 +226,20 @@ class CompositePass {
                 }
             
 
-                if (typeSelectMode > 0.0) {
-                  if (selected > 0.0) {
-                    // chroma up, luminance up
-                    // or stay same?
-                    c *= 1.5;
-                    l *= 1.5;
-                  }
-                  else {
-                    // chroma down, lum down (toward bg?)
-                    h = bghcl.x;
-                    c = bghcl.y;
-                    l = bghcl.z;
-                    // push back for next color calculation
-                    eyeDepth = 1000000.0;
-                  }
-                }
+                //   if (selected > 0.0) {
+                //     // chroma up, luminance up
+                //     // or stay same?
+                //     c *= 1.5;
+                //     l *= 1.5;
+                //   }
+                //   else {
+                //     // chroma down, lum down (toward bg?)
+                //     h = bghcl.x;
+                //     c = bghcl.y;
+                //     l = bghcl.z;
+                //     // push back for next color calculation
+                //     eyeDepth = 1000000.0;
+                //   }
             
                 vec3 color;
                 color = hcl2rgb(vec3(h, c, l));
