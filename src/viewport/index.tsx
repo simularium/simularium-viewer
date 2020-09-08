@@ -14,10 +14,8 @@ import {
     SelectionStateInfo,
     UIDisplayData,
     NO_AGENT,
-    VisDataFrame,
 } from "../simularium";
 import { RenderStyle } from "../simularium/VisGeometry";
-import { SimulariumFileFormat } from "../simularium/types";
 
 export type PropColor = string | number | [number, number, number];
 
@@ -54,27 +52,6 @@ interface ViewportState {
 interface TimeData {
     time: number;
     frameNumber: number;
-}
-
-// Typescript's File definition is missing this function
-//  which is part of the HTML standard on all browsers
-//  and needed below
-interface FileHTML extends File {
-    text(): Promise<string>;
-}
-
-// This function returns a promise that resolves after all of the objects in
-//  the 'files' parameter have been parsed into text and put in the `outParsedFiles` parameter
-function parseFilesToText(files: FileHTML[]): Promise<SimulariumFileFormat[]> {
-    return Promise.all(
-        files.map((file) =>
-            file.text().then((text) => JSON.parse(text) as SimulariumFileFormat)
-        )
-    );
-}
-
-function sortFrames(a: VisDataFrame, b: VisDataFrame): number {
-    return a.frameNumber - b.frameNumber;
 }
 
 // max time in milliseconds for a mouse/touch interaction to be considered a click;
@@ -174,8 +151,6 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             touchend: this.handleTouchEnd,
             mousedown: this.handleClickStart,
             mouseup: this.handleMouseUp,
-            dragover: this.onDragOver,
-            drop: this.onDrop,
         };
         this.hit = false;
         this.animationRequestID = 0;
@@ -304,32 +279,6 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             this.visGeometry.resize(width, height);
         }
     }
-
-    public onDragOver = (e: Event): void => {
-        if (e.stopPropagation) {
-            e.stopPropagation();
-        }
-        e.preventDefault();
-    };
-
-    public onDrop = (e: Event): void => {
-        this.onDragOver(e);
-        const { simulariumController } = this.props;
-        const event = e as DragEvent;
-        const input = event.target as HTMLInputElement;
-        const data: DataTransfer = event.dataTransfer as DataTransfer;
-
-        const files: FileList = input.files || data.files;
-        const filesArr: FileHTML[] = Array.from(files) as FileHTML[];
-        const p = parseFilesToText(filesArr);
-
-        p.then((parsedFiles) => {
-            const simulariumFile = parsedFiles[0];
-            simulariumFile.spatialData.bundleData.sort(sortFrames);
-            const fileName = filesArr[0].name;
-            simulariumController.changeFile(fileName, true, simulariumFile);
-        });
-    };
 
     public isClick = (thisClick: Click): boolean => {
         const { lastClick } = this.state;

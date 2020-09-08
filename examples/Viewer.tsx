@@ -1,7 +1,15 @@
 import React from "react";
-import type { UIDisplayData, SelectionStateInfo } from "../type-declarations";
+import type {
+    UIDisplayData,
+    SelectionStateInfo,
+} from "../type-declarations";
 
-import SimulariumViewer, { SimulariumController, RenderStyle } from "../src";
+import SimulariumViewer, {
+    SimulariumController,
+    RenderStyle,
+    SimulariumFileFormat,
+    VisDataFrame,
+} from "../src";
 
 import "./style.css";
 import { isEqual } from "lodash";
@@ -10,6 +18,14 @@ const netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
     serverPort: 9002,
 };
+
+
+// Typescript's File definition is missing this function
+//  which is part of the HTML standard on all browsers
+//  and needed below
+interface FileHTML extends File {
+    text(): Promise<string>;
+}
 
 interface ViewerState {
     renderStyle: RenderStyle;
@@ -66,7 +82,7 @@ const initialState = {
 };
 
 class Viewer extends React.Component<{}, ViewerState> {
-    private viewerRef: React.RefObject<typeof SimulariumViewer>;
+    private viewerRef: React.RefObject<SimulariumViewer>;
 
     public constructor(props) {
         super(props);
@@ -91,7 +107,40 @@ class Viewer extends React.Component<{}, ViewerState> {
             const width = container.clientWidth;
             this.setState({ height, width });
         });
+        const viewerContainer = document.querySelector(".viewer-container");
+        if (viewerContainer) {
+            console.log("adding event listeners");
+            viewerContainer.addEventListener("drop", this.onDrop);
+            viewerContainer.addEventListener("dragover", this.onDragOver);
+        }
     }
+
+    public onDragOver = (e: Event): void => {
+        if (e.stopPropagation) {
+            e.stopPropagation();
+        }
+        e.preventDefault();
+    };
+
+    public onDrop = (e: Event): void => {
+        this.onDragOver(e);
+        const event = e as DragEvent;
+        const input = event.target as HTMLInputElement;
+        const data: DataTransfer = event.dataTransfer as DataTransfer;
+
+        const files: FileList = input.files || data.files;
+        const filesArr: FileHTML[] = Array.from(files) as FileHTML[];
+
+        Promise.all(
+            filesArr.map((file) =>
+            file.text().then((text) => JSON.parse(text) as SimulariumFileFormat)
+        )).then((parsedFiles) => {
+            const simulariumFile = parsedFiles[0];
+            simulariumFile.spatialData.bundleData.sort((a: VisDataFrame, b: VisDataFrame): number => a.frameNumber - b.frameNumber);
+            const fileName = filesArr[0].name;
+            simulariumController.changeFile(fileName, true, simulariumFile);
+        });
+    };
 
     private changeFile(file: string) {
         simulariumController.changeFile(file);
@@ -121,7 +170,7 @@ class Viewer extends React.Component<{}, ViewerState> {
         } else {
             nextHiddenNames = [...currentHiddenNames, nameToToggle];
         }
-        console.log(nextHiddenNames)
+        console.log(nextHiddenNames);
         this.setState({
             ...this.state,
             selectionStateInfo: {
@@ -356,18 +405,19 @@ class Viewer extends React.Component<{}, ViewerState> {
                 </select>
                 {this.state.particleTypeNames.map((id, i) => {
                     return (
-                        <>
-                            <label htmlFor={id}>{id}</label>
+                        <React.Fragment key={id}>
+                            <label
+                                htmlFor={id}>{id}
+                            </label>
                             <input
                                 type="checkbox"
                                 onClick={(event) =>
                                     this.turnAgentsOnOff(event.target.value)
                                 }
-                                key={id}
                                 value={id}
                                 defaultChecked={true}
                             />
-                        </>
+                        </React.Fragment>
                     );
                 })}
                 <button
@@ -377,7 +427,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                         })
                     }
                 >
-                    {this.state.hideAllAgents ? "Show all": "Hide all"}
+                    {this.state.hideAllAgents ? "Show all" : "Hide all"}
                 </button>
                 <button
                     onClick={() =>
@@ -398,26 +448,28 @@ class Viewer extends React.Component<{}, ViewerState> {
                 >
                     Switch Render
                 </button>
-
-                <SimulariumViewer
-                    ref={this.viewerRef}
-                    renderStyle={this.state.renderStyle}
-                    height={this.state.height}
-                    width={this.state.width}
-                    devgui={false}
-                    loggerLevel="debug"
-                    onTimeChange={this.handleTimeChange.bind(this)}
-                    simulariumController={simulariumController}
-                    onJsonDataArrived={this.handleJsonMeshData}
-                    onTrajectoryFileInfoChanged={this.handleTrajectoryInfo.bind(
-                        this
-                    )}
-                    selectionStateInfo={this.state.selectionStateInfo}
-                    onUIDisplayDataChanged={this.handleUIDisplayData.bind(this)}
-                    loadInitialData={true}
-                    hideAllAgents={this.state.hideAllAgents}
-                    showPaths={this.state.showPaths}
-                />
+                <div className="viewer-container">
+                    <SimulariumViewer
+                        ref={this.viewerRef}
+                        renderStyle={this.state.renderStyle}
+                        height={this.state.height}
+                        width={this.state.width}
+                        loggerLevel="debug"
+                        onTimeChange={this.handleTimeChange.bind(this)}
+                        simulariumController={simulariumController}
+                        onJsonDataArrived={this.handleJsonMeshData}
+                        onTrajectoryFileInfoChanged={this.handleTrajectoryInfo.bind(
+                            this
+                        )}
+                        selectionStateInfo={this.state.selectionStateInfo}
+                        onUIDisplayDataChanged={this.handleUIDisplayData.bind(
+                            this
+                        )}
+                        loadInitialData={true}
+                        hideAllAgents={this.state.hideAllAgents}
+                        showPaths={this.state.showPaths}
+                    />
+                </div>
             </div>
         );
     }
