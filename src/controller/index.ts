@@ -6,7 +6,15 @@ import {
     VisDataMessage,
     TrajectoryFileInfo,
 } from "../simularium";
-import { SimulariumFileFormat } from "../simularium/types";
+import {
+    SimulariumFileFormat,
+    VisDataFrame,
+    FileReturn,
+    FILE_STATUS_ERROR,
+    FILE_STATUS_SUCCESS,
+    FILE_STATUS_NO_CHANGE,
+    FileStatus,
+} from "../simularium/types";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
@@ -152,13 +160,45 @@ export default class SimulariumController {
         this.isPaused = false;
     }
 
+    private handleLocalFileChange(
+        simulariumFile: SimulariumFileFormat | undefined
+    ): Promise<FileReturn> {
+        if (!simulariumFile) {
+            return Promise.reject({
+                status: FILE_STATUS_ERROR,
+                message: "No file was detected",
+            });
+        }
+        const { spatialData, trajectoryInfo } = simulariumFile;
+
+        if (!simulariumFile.spatialData) {
+            return Promise.reject({
+                status: FILE_STATUS_ERROR,
+                message: "Simularium files need 'spatialData' array",
+            });
+        }
+        spatialData.bundleData.sort(
+            (a: VisDataFrame, b: VisDataFrame): number =>
+                a.frameNumber - b.frameNumber
+        );
+
+        this.pause();
+        this.disableNetworkCommands();
+        this.cacheJSON(spatialData);
+        this.dragAndDropFileInfo = trajectoryInfo;
+        this.netConnection.onTrajectoryFileInfoArrive(this.dragAndDropFileInfo);
+        return Promise.resolve({
+            status: FILE_STATUS_SUCCESS,
+        });
+    }
+
     public changeFile(
         newFileName: string,
         isLocalFile = false,
         simulariumFile?: SimulariumFileFormat,
         geometryFile?: string,
         assetPrefix?: string
-    ): void {
+    ): Promise<FileReturn> {
         if (newFileName !== this.playBackFile) {
             this.fileChanged = true;
             this.playBackFile = newFileName;
@@ -174,25 +214,22 @@ export default class SimulariumController {
             this.stop();
 
             if (isLocalFile) {
-                if (!simulariumFile) {
-                    throw Error("local file needs to include file");
-                }
-                const { spatialData, trajectoryInfo } = simulariumFile;
-
-                this.pause();
-                this.disableNetworkCommands();
-                this.cacheJSON(spatialData);
-                this.dragAndDropFileInfo = trajectoryInfo;
-                this.netConnection.onTrajectoryFileInfoArrive(
-                    this.dragAndDropFileInfo
-                );
-                return;
+                return this.handleLocalFileChange(simulariumFile);
             }
 
-            this.start().then(() => {
-                this.netConnection.requestSingleFrame(0);
-            });
+            // otherwise, start a network file
+            return this.start()
+                .then(() => {
+                    this.netConnection.requestSingleFrame(0);
+                })
+                .then(() => ({
+                    status: FILE_STATUS_SUCCESS,
+                }));
         }
+
+        return Promise.resolve({
+            status: FILE_STATUS_NO_CHANGE,
+        });
     }
 
     public markFileChangeAsHandled(): void {
