@@ -470,7 +470,7 @@ class VisGeometry {
         this.controls = new OrbitControls(this.camera, element);
         this.controls.maxDistance = 750;
         this.controls.minDistance = 5;
-        this.controls.zoomSpeed = 2;
+        this.controls.zoomSpeed = 1.0;
         this.controls.enablePan = false;
     }
 

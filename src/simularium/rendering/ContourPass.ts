@@ -46,6 +46,7 @@ class ContourPass {
               float hStep = 1.0 / float(resolution.y);
             
               vec4 instance = texture(instanceIdTex, vUv);
+              // instance.g is the agent id
               int X = int(instance.g);
               int R = int(texture(instanceIdTex, vUv + vec2(wStep, 0)).g);
               int L = int(texture(instanceIdTex, vUv + vec2(-wStep, 0)).g);
@@ -66,21 +67,58 @@ class ContourPass {
 
               }
 
+              // instance.r is the type id
               bool selected = isSelected(instance.r);
               if (selected) {
 //                int typeId = abs(int(instance.r));
                   float thickness = outlineThickness;
-                  bool sR = isSelected(texture(instanceIdTex, vUv + vec2(wStep*thickness, 0)).r);
-                  bool sL = isSelected(texture(instanceIdTex, vUv + vec2(-wStep*thickness, 0)).r);
-                  bool sT = isSelected(texture(instanceIdTex, vUv + vec2(0, hStep*thickness)).r);
-                  bool sB = isSelected(texture(instanceIdTex, vUv + vec2(0, -hStep*thickness)).r);
-                  if ( (!sR) || (!sL) || (!sT) || (!sB) )
-                  {
-                    //~ current pixel lies on the edge
-                    // outline pixel color is a whitened version of the color
-                    finalColor = mix(vec4(1,1,1,1), col, 1.0-outlineAlpha);
-
+                  mat3 sx = mat3( 
+                    1.0, 2.0, 1.0, 
+                    0.0, 0.0, 0.0, 
+                   -1.0, -2.0, -1.0 
+                );
+                mat3 sy = mat3( 
+                    1.0, 0.0, -1.0, 
+                    2.0, 0.0, -2.0, 
+                    1.0, 0.0, -1.0 
+                );
+                  mat3 I;
+                  for (int i=0; i<3; i++) {
+                      for (int j=0; j<3; j++) {
+                          bool v = isSelected(
+                            texelFetch(instanceIdTex, 
+                              ivec2(gl_FragCoord) + 
+                              ivec2(
+                                (i-1)*int(thickness),
+                                (j-1)*int(thickness)
+                              ), 
+                              0 ).r
+                          );
+                          I[i][j] = v ? 1.0 : 0.0; 
+                      }
                   }
+                  float gx = dot(sx[0], I[0]) + dot(sx[1], I[1]) + dot(sx[2], I[2]); 
+                  float gy = dot(sy[0], I[0]) + dot(sy[1], I[1]) + dot(sy[2], I[2]);
+
+                  float g = sqrt(pow(gx, 2.0)+pow(gy, 2.0));
+                  //g = smoothstep(0.4, 0.6, g);
+                  finalColor = mix(col, vec4(1,1,1,1), g*outlineAlpha);
+
+                  // bool sR = isSelected(texture(instanceIdTex, vUv + vec2(wStep*thickness, 0)).r);
+                  // bool sL = isSelected(texture(instanceIdTex, vUv + vec2(-wStep*thickness, 0)).r);
+                  // bool sT = isSelected(texture(instanceIdTex, vUv + vec2(0, hStep*thickness)).r);
+                  // bool sB = isSelected(texture(instanceIdTex, vUv + vec2(0, -hStep*thickness)).r);
+                  // bool sTL = isSelected(texture(instanceIdTex, vUv + vec2(wStep*thickness, hStep*thickness)).r);
+                  // bool sTR = isSelected(texture(instanceIdTex, vUv + vec2(-wStep*thickness, hStep*thickness)).r);
+                  // bool sBL = isSelected(texture(instanceIdTex, vUv + vec2(wStep*thickness, hStep*thickness)).r);
+                  // bool sBR = isSelected(texture(instanceIdTex, vUv + vec2(wStep*thickness, -hStep*thickness)).r);
+                  // if ( (!sR) || (!sL) || (!sT) || (!sB) || (!sTL) || (!sTR) || (!sBL) || (!sBR) )
+                  // {
+                  //   //~ current pixel lies on the edge
+                  //   // outline pixel color is a whitened version of the color
+                  //   finalColor = mix(vec4(1,0,0,1), col, 1.0-outlineAlpha);
+
+                  // }
 
               }
 

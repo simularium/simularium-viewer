@@ -218,15 +218,19 @@ class MoleculeRenderer {
         gui.add(settings, "bgluminanceoffset", 0.0, 1.0).onChange((value) => {
             this.compositePass.pass.material.uniforms.bgHCLoffset.value.z = value;
         });
-        gui.add(settings, "outlineThickness", 1.0, 8.0).onChange((value) => {
-            this.contourPass.pass.material.uniforms.outlineThickness.value = value;
-        });
+        gui.add(settings, "outlineThickness", 1.0, 8.0)
+            .step(1)
+            .onChange((value) => {
+                this.contourPass.pass.material.uniforms.outlineThickness.value = value;
+            });
         gui.add(settings, "outlineAlpha", 0.0, 1.0).onChange((value) => {
             this.contourPass.pass.material.uniforms.outlineAlpha.value = value;
         });
-        gui.add(settings, "followThickness", 1.0, 8.0).onChange((value) => {
-            this.contourPass.pass.material.uniforms.followThickness.value = value;
-        });
+        gui.add(settings, "followThickness", 1.0, 8.0)
+            .step(1)
+            .onChange((value) => {
+                this.contourPass.pass.material.uniforms.followThickness.value = value;
+            });
         gui.add(settings, "followAlpha", 0.0, 1.0).onChange((value) => {
             this.contourPass.pass.material.uniforms.followAlpha.value = value;
         });
