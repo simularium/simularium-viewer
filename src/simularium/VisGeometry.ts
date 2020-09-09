@@ -852,6 +852,8 @@ class VisGeometry {
     public resetMapping(): void {
         this.resetAllGeometry();
 
+        this.visAgentInstances.clear();
+
         this.visGeomMap.clear();
         this.meshRegistry.clear();
         this.pdbRegistry.clear();
@@ -1145,11 +1147,26 @@ class VisGeometry {
                     );
                 }
             } else if (visType === VisTypes.ID_VIS_TYPE_FIBER) {
+                if (visAgent.mesh) {
+                    visAgent.mesh.position.x = agentData.x;
+                    visAgent.mesh.position.y = agentData.y;
+                    visAgent.mesh.position.z = agentData.z;
+
+                    visAgent.mesh.rotation.x = agentData.xrot;
+                    visAgent.mesh.rotation.y = agentData.yrot;
+                    visAgent.mesh.rotation.z = agentData.zrot;
+
+                    visAgent.mesh.scale.x = 1.0;
+                    visAgent.mesh.scale.y = 1.0;
+                    visAgent.mesh.scale.z = 1.0;
+                }
+
                 // see if we need to initialize this agent as a fiber
                 if (visType !== visAgent.visType) {
                     const meshGeom = VisAgent.makeFiber();
                     if (meshGeom) {
-                        meshGeom.name = `Fiber_${i}`;
+                        meshGeom.userData = { id: visAgent.id };
+                        meshGeom.name = `Fiber_${instanceId}`;
                         this.resetAgentGeometry(visAgent, meshGeom);
                         visAgent.setColor(
                             this.getColorForTypeId(typeId),
@@ -1160,6 +1177,7 @@ class VisGeometry {
                 }
                 // did the agent type change since the last sim time?
                 if (typeId !== lastTypeId) {
+                    visAgent.mesh.userData = { id: visAgent.id };
                     // for fibers we currently only check the color
                     visAgent.setColor(
                         this.getColorForTypeId(typeId),
@@ -1168,6 +1186,7 @@ class VisGeometry {
                 }
 
                 visAgent.updateFiber(agentData.subpoints, agentData.cr, scale);
+
                 visAgent.mesh.visible = true;
             }
         });
@@ -1504,15 +1523,10 @@ class VisGeometry {
         }
 
         // set all runtime meshes back to spheres.
-        const nMeshes = this.visAgents.length;
-        for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
-            const visAgent = this.visAgents[i];
-            if (visAgent.active) {
-                visAgent.resetMesh();
-                // re-add as mesh by default
-                this.agentMeshGroup.add(visAgent.mesh);
-                visAgent.resetPDB();
-            }
+        for (const visAgentKey in this.visAgentInstances) {
+            const visAgent = this.visAgentInstances[visAgentKey];
+            visAgent.resetMesh();
+            visAgent.resetPDB();
         }
     }
 
