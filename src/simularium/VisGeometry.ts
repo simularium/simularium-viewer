@@ -1148,12 +1148,9 @@ class VisGeometry {
                 }
             } else if (visType === VisTypes.ID_VIS_TYPE_FIBER) {
                 if (visAgent.mesh) {
-                    visAgent.mesh.position.x =
-                        agentData.x * scale * agentData.cr;
-                    visAgent.mesh.position.y =
-                        agentData.y * scale * agentData.cr;
-                    visAgent.mesh.position.z =
-                        agentData.z * scale * agentData.cr;
+                    visAgent.mesh.position.x = agentData.x;
+                    visAgent.mesh.position.y = agentData.y;
+                    visAgent.mesh.position.z = agentData.z;
 
                     visAgent.mesh.rotation.x = agentData.xrot;
                     visAgent.mesh.rotation.y = agentData.yrot;
