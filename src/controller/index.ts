@@ -10,7 +10,6 @@ import {
     SimulariumFileFormat,
     VisDataFrame,
     FileReturn,
-    FILE_STATUS_ERROR,
     FILE_STATUS_SUCCESS,
     FILE_STATUS_NO_CHANGE,
 } from "../simularium/types";
@@ -163,18 +162,16 @@ export default class SimulariumController {
         simulariumFile: SimulariumFileFormat | undefined
     ): Promise<FileReturn> {
         if (!simulariumFile) {
-            return Promise.reject({
-                status: FILE_STATUS_ERROR,
-                message: "No file was detected",
-            });
+            const newError = new Error("No file was detected");
+            return Promise.reject(newError);
         }
         const { spatialData, trajectoryInfo } = simulariumFile;
 
         if (!simulariumFile.spatialData) {
-            return Promise.reject({
-                status: FILE_STATUS_ERROR,
-                message: "Simularium files need 'spatialData' array",
-            });
+            const newError = new Error(
+                "Simularium files need 'spatialData' array"
+            );
+            return Promise.reject(newError);
         }
         spatialData.bundleData.sort(
             (a: VisDataFrame, b: VisDataFrame): number =>

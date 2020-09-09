@@ -66,16 +66,11 @@ export interface SimulariumFileFormat {
 }
 
 export const FILE_STATUS_NO_CHANGE = "no-change";
-export const FILE_STATUS_ERROR = "error";
 export const FILE_STATUS_SUCCESS = "success";
 type FileStatusNoChange = typeof FILE_STATUS_NO_CHANGE;
-type FileStatusError = typeof FILE_STATUS_ERROR;
 type FileStatusSuccess = typeof FILE_STATUS_SUCCESS;
 
-export type FileStatus =
-    | FileStatusNoChange
-    | FileStatusError
-    | FileStatusSuccess;
+export type FileStatus = FileStatusNoChange | FileStatusSuccess;
 
 export interface FileReturn {
     status: FileStatus;
