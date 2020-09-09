@@ -64,3 +64,15 @@ export interface SimulariumFileFormat {
     spatialData: VisDataMessage;
     plotData: CachedObservables;
 }
+
+export const FILE_STATUS_NO_CHANGE = "no-change";
+export const FILE_STATUS_SUCCESS = "success";
+type FileStatusNoChange = typeof FILE_STATUS_NO_CHANGE;
+type FileStatusSuccess = typeof FILE_STATUS_SUCCESS;
+
+export type FileStatus = FileStatusNoChange | FileStatusSuccess;
+
+export interface FileReturn {
+    status: FileStatus;
+    message?: string;
+}

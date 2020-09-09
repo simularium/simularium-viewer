@@ -135,9 +135,9 @@ class Viewer extends React.Component<{}, ViewerState> {
             file.text().then((text) => JSON.parse(text) as SimulariumFileFormat)
         )).then((parsedFiles) => {
             const simulariumFile = parsedFiles[0];
-            simulariumFile.spatialData.bundleData.sort((a: VisDataFrame, b: VisDataFrame): number => a.frameNumber - b.frameNumber);
             const fileName = filesArr[0].name;
-            simulariumController.changeFile(fileName, true, simulariumFile);
+            simulariumController.changeFile(fileName, true, simulariumFile).catch((error) => {
+                window.alert(`Error loading file: ${error.message}`)})
         });
     };
 
