@@ -1531,8 +1531,6 @@ class VisGeometry {
             const visAgent = this.visAgents[i];
             if (visAgent.active) {
                 visAgent.resetMesh();
-                // re-add as mesh by default
-                //this.agentMeshGroup.add(visAgent.mesh);
                 visAgent.resetPDB();
             }
         }
