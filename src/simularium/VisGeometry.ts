@@ -1523,13 +1523,10 @@ class VisGeometry {
         }
 
         // set all runtime meshes back to spheres.
-        const nMeshes = this.visAgents.length;
-        for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
-            const visAgent = this.visAgents[i];
-            if (visAgent.active) {
-                visAgent.resetMesh();
-                visAgent.resetPDB();
-            }
+        for (const visAgentKey in this.visAgentInstances) {
+            const visAgent = this.visAgentInstances[visAgentKey];
+            visAgent.resetMesh();
+            visAgent.resetPDB();
         }
     }
 
