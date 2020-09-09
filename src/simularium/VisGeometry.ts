@@ -1145,7 +1145,8 @@ class VisGeometry {
                 if (visType !== visAgent.visType) {
                     const meshGeom = VisAgent.makeFiber();
                     if (meshGeom) {
-                        meshGeom.name = `Fiber_${i}`;
+                        meshGeom.userData.id = instanceId;
+                        meshGeom.name = `Fiber_${instanceId}`;
                         this.resetAgentGeometry(visAgent, meshGeom);
                         visAgent.setColor(
                             this.getColorForTypeId(typeId),
@@ -1164,6 +1165,14 @@ class VisGeometry {
                 }
 
                 visAgent.updateFiber(agentData.subpoints, agentData.cr, scale);
+                visAgent.mesh.position.x = agentData.x;
+                visAgent.mesh.position.y = agentData.y;
+                visAgent.mesh.position.z = agentData.z;
+
+                visAgent.mesh.rotation.x = agentData.xrot;
+                visAgent.mesh.rotation.y = agentData.yrot;
+                visAgent.mesh.rotation.z = agentData.zrot;
+
                 visAgent.mesh.visible = true;
             }
         });
