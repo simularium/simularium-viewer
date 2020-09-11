@@ -1056,7 +1056,7 @@ class VisGeometry {
 
             const visAgent = this.visAgents[i];
             visAgent.id = instanceId;
-            visAgent.mesh.userData.id = instanceId;
+            visAgent.mesh.userData = { id: instanceId };
             this.visAgentInstances[instanceId] = visAgent;
 
             const lastTypeId = visAgent.typeId;
@@ -1071,7 +1071,7 @@ class VisGeometry {
             // if not fiber...
             if (visType === VisTypes.ID_VIS_TYPE_DEFAULT) {
                 // did the agent type change since the last sim time?
-                if (typeId !== lastTypeId) {
+                if (typeId !== lastTypeId || visType !== visAgent.visType) {
                     const meshGeom = this.getGeomFromId(typeId);
                     if (meshGeom) {
                         this.resetAgentGeometry(visAgent, meshGeom);
