@@ -122,16 +122,11 @@ class SelectionInterface {
         });
         let indices: number[] = [];
 
-        // If no name is specified, search all entries for matching tags
-        if (names.length === 0) {
-            names = Object.keys(this.entries);
-        }
-
         // If there are tags but no name,
         //  search all names for matching tags
 
         Object.keys(this.entries).forEach((name) => {
-            if (!names || names.length === 0 || names.includes(name)) {
+            if (names && names.includes(name)) {
                 // If no tags are specified, this will return all register a
                 //  match for all entries
                 indices = [...indices, ...this.getIds(name, tags)];
