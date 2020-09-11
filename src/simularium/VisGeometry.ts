@@ -1093,6 +1093,7 @@ class VisGeometry {
                         this.getColorForTypeId(typeId),
                         this.getColorIndexForTypeId(typeId)
                     );
+                    visAgent.visType = visType;
                 }
 
                 const runtimeMesh = visAgent.mesh;
