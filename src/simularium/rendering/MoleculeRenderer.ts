@@ -143,10 +143,12 @@ class MoleculeRenderer {
             bghueoffset: 1,
             bgchromaoffset: 0,
             bgluminanceoffset: 0.2,
-            outlineThickness: 4.0,
-            followThickness: 4.0,
+            outlineThickness: 2.0,
+            followThickness: 3.0,
             outlineAlpha: 0.8,
             followAlpha: 0.8,
+            followColor: [255, 255, 0],
+            outlineColor: [255, 255, 255],
         };
 
         /////////////////////////////////////////////////////////////////////
@@ -223,6 +225,14 @@ class MoleculeRenderer {
             .onChange((value) => {
                 this.contourPass.pass.material.uniforms.outlineThickness.value = value;
             });
+        gui.addColor(settings, "outlineColor").onChange((value) => {
+            this.contourPass.pass.material.uniforms.outlineColor.value = new Color(
+                value[0] / 255.0,
+                value[1] / 255.0,
+                value[2] / 255.0
+            );
+        });
+
         gui.add(settings, "outlineAlpha", 0.0, 1.0).onChange((value) => {
             this.contourPass.pass.material.uniforms.outlineAlpha.value = value;
         });
@@ -231,6 +241,13 @@ class MoleculeRenderer {
             .onChange((value) => {
                 this.contourPass.pass.material.uniforms.followThickness.value = value;
             });
+        gui.addColor(settings, "followColor").onChange((value) => {
+            this.contourPass.pass.material.uniforms.followColor.value = new Color(
+                value[0] / 255.0,
+                value[1] / 255.0,
+                value[2] / 255.0
+            );
+        });
         gui.add(settings, "followAlpha", 0.0, 1.0).onChange((value) => {
             this.contourPass.pass.material.uniforms.followAlpha.value = value;
         });

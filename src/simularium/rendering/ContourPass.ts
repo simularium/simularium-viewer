@@ -1,4 +1,4 @@
-import { WebGLRenderer, WebGLRenderTarget } from "three";
+import { Color, WebGLRenderer, WebGLRenderTarget } from "three";
 
 import RenderToBuffer from "./RenderToBuffer";
 
@@ -12,10 +12,12 @@ class ContourPass {
                 instanceIdTex: { value: null },
                 normalsTex: { value: null },
                 highlightInstance: { value: -1 },
-                outlineThickness: { value: 4.0 },
+                outlineThickness: { value: 2.0 },
                 outlineAlpha: { value: 0.8 },
-                followThickness: { value: 4.0 },
+                outlineColor: { value: new Color(1, 1, 1) },
+                followThickness: { value: 3.0 },
                 followAlpha: { value: 0.8 },
+                followColor: { value: new Color(1, 1, 0) },
             },
             fragmentShader: `
             in vec2 vUv;
@@ -28,6 +30,8 @@ class ContourPass {
             uniform float followThickness;
             uniform float followAlpha;
             uniform float outlineAlpha;
+            uniform vec3 followColor;
+            uniform vec3 outlineColor;
 
             bool isSelected(float typevalue) {
               return (sign(typevalue) > 0.0);
@@ -102,7 +106,7 @@ class ContourPass {
 
                   float g = sqrt(pow(gx, 2.0)+pow(gy, 2.0));
                   //g = smoothstep(0.4, 0.6, g);
-                  finalColor = mix(col, vec4(1,1,1,1), g*outlineAlpha);
+                  finalColor = mix(col, vec4(outlineColor.rgb,1), g*outlineAlpha);
 
                   // bool sR = isSelected(texture(instanceIdTex, vUv + vec2(wStep*thickness, 0)).r);
                   // bool sL = isSelected(texture(instanceIdTex, vUv + vec2(-wStep*thickness, 0)).r);
@@ -134,9 +138,13 @@ class ContourPass {
                 {
                   //~ current pixel lies on the edge
                   // outline pixel color is a whitened version of the color
-                  finalColor = mix(vec4(1,1,1,1), col, 1.0-followAlpha);
+                  finalColor = mix(vec4(followColor.rgb,1), col, 1.0-followAlpha);
   
                 }
+
+                // float odd = float(abs(int(gl_FragCoord.x) + int(gl_FragCoord.y))%8) / 7.0;
+                // float even = float(abs(int(gl_FragCoord.x) - int(gl_FragCoord.y))%8) / 7.0;
+                // finalColor *= odd*even;
     
 
             }
