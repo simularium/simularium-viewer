@@ -143,7 +143,8 @@ class CompositePass {
             
                 vec4 instanceInfo = vec4(0.0,0.0,0.0,0.0);//ProteinInstanceInfo[instanceId];
                 int ingredientId = abs(int(col0.x));
-                float selected = (sign(col0.x) + 1.0) * 0.5;
+                // future: can use this value to do other rendering
+                //float highlighted = (sign(col0.x) + 1.0) * 0.5;
 
                 ivec2 ncols = textureSize(colorsBuffer, 0);
                 vec4 col = texelFetch(colorsBuffer, ivec2(ingredientId % ncols.x, 0), 0);

@@ -380,7 +380,7 @@ class VisGeometry {
                 const isHighlighted = this.highlightedIds.includes(
                     visAgent.typeId
                 );
-                visAgent.setSelected(isHighlighted);
+                visAgent.setHighlighted(isHighlighted);
             }
         }
     }

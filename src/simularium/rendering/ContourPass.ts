@@ -33,7 +33,7 @@ class ContourPass {
             uniform vec3 followColor;
             uniform vec3 outlineColor;
 
-            bool isSelected(float typevalue) {
+            bool isHighlighted(float typevalue) {
               return (sign(typevalue) > 0.0);
             }
 
@@ -72,8 +72,8 @@ class ContourPass {
               }
 
               // instance.r is the type id
-              bool selected = isSelected(instance.r);
-              if (selected) {
+              bool highlighted = isHighlighted(instance.r);
+              if (highlighted) {
                 float thickness = outlineThickness;
                 mat3 sx = mat3( 
                     1.0, 2.0, 1.0, 
@@ -88,7 +88,7 @@ class ContourPass {
                 mat3 I;
                 for (int i=0; i<3; i++) {
                   for (int j=0; j<3; j++) {
-                    bool v = isSelected(
+                    bool v = isHighlighted(
                       texelFetch(instanceIdTex, 
                         ivec2(gl_FragCoord) + 
                         ivec2(

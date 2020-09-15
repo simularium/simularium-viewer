@@ -92,7 +92,7 @@ export default class VisAgent {
     public color: Color;
     public name: string;
     public followed: boolean;
-    public selected: boolean;
+    public highlighted: boolean;
     public hidden: boolean;
     public visType: number;
     public id: number;
@@ -107,7 +107,7 @@ export default class VisAgent {
         this.colorIndex = 0;
         this.followed = false;
         this.hidden = false;
-        this.selected = false;
+        this.highlighted = false;
         this.baseMaterial = new MeshLambertMaterial({
             color: new Color(this.color),
         });
@@ -132,7 +132,7 @@ export default class VisAgent {
         this.mesh = new Mesh(VisAgent.sphereGeometry, this.baseMaterial);
         this.mesh.userData = { id: this.id };
         this.followed = false;
-        this.selected = false;
+        this.highlighted = false;
         this.setColor(new Color(VisAgent.UNASSIGNED_MESH_COLOR));
     }
 
@@ -167,8 +167,8 @@ export default class VisAgent {
         this.assignMaterial();
     }
 
-    public setSelected(selected: boolean): void {
-        this.selected = selected;
+    public setHighlighted(highlighted: boolean): void {
+        this.highlighted = highlighted;
         this.assignMaterial();
     }
 
@@ -180,7 +180,7 @@ export default class VisAgent {
         let material = this.desatMaterial;
         if (this.followed) {
             material = VisAgent.highlightMaterial;
-        } else if (this.selected) {
+        } else if (this.highlighted) {
             material = this.baseMaterial;
         }
 
@@ -206,7 +206,7 @@ export default class VisAgent {
     }
 
     public assignMembraneMaterial(): void {
-        if (this.selected) {
+        if (this.highlighted) {
             // at this time, assign separate material parameters to the faces and sides of the membrane
             const faceNames = VisAgent.membraneData.faces.map((el) => {
                 return el.name;
@@ -259,10 +259,10 @@ export default class VisAgent {
         }
         // colorIndex is not necessarily equal to typeId but is generally a 1-1 mapping.
         if (material.uniforms.typeId) {
-            // negate the value if deselected.
+            // negate the value if dehighlighted.
             // see implementation in CompositePass.ts for how the value is interpreted
             material.uniforms.typeId.value =
-                this.colorIndex * (this.selected ? 1 : -1);
+                this.colorIndex * (this.highlighted ? 1 : -1);
             material.uniformsNeedUpdate = true;
         }
         if (material.uniforms.instanceId) {
