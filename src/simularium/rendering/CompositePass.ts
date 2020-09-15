@@ -29,8 +29,7 @@ class CompositePass {
                 zFar: { value: 1000 },
                 atomicBeginDistance: { value: 150 },
                 chainBeginDistance: { value: 300 },
-                highlightInstance: { value: -1 },
-                typeSelectMode: { value: 0 },
+                followedInstance: { value: -1 },
             },
             fragmentShader: `
             in vec2 vUv;
@@ -47,9 +46,8 @@ class CompositePass {
             uniform vec3 backgroundColor;
             uniform vec3 bgHCLoffset;
 
-            uniform float highlightInstance;
-            // if any types are selected, this will be 1 else 0
-            uniform float typeSelectMode;
+            // a single instance to get a special highlight
+            uniform float followedInstance;
             
             uniform float atomicBeginDistance; // = 100.0;
             uniform float chainBeginDistance; // = 150.0;
@@ -145,7 +143,8 @@ class CompositePass {
             
                 vec4 instanceInfo = vec4(0.0,0.0,0.0,0.0);//ProteinInstanceInfo[instanceId];
                 int ingredientId = abs(int(col0.x));
-                float selected = (sign(col0.x) + 1.0) * 0.5;
+                // future: can use this value to do other rendering
+                //float highlighted = (sign(col0.x) + 1.0) * 0.5;
 
                 ivec2 ncols = textureSize(colorsBuffer, 0);
                 vec4 col = texelFetch(colorsBuffer, ivec2(ingredientId % ncols.x, 0), 0);
@@ -225,24 +224,6 @@ class CompositePass {
             
                     h -=  hueOffset;
                     h += (float(chainSymbolId) * hueShift);
-                }
-            
-
-                if (typeSelectMode > 0.0) {
-                  if (selected > 0.0) {
-                    // chroma up, luminance up
-                    // or stay same?
-                    c *= 1.5;
-                    l *= 1.5;
-                  }
-                  else {
-                    // chroma down, lum down (toward bg?)
-                    h = bghcl.x;
-                    c = bghcl.y;
-                    l = bghcl.z;
-                    // push back for next color calculation
-                    eyeDepth = 1000000.0;
-                  }
                 }
             
                 vec3 color;

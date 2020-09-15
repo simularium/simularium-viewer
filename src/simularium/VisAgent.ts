@@ -42,11 +42,10 @@ export default class VisAgent {
         32,
         32
     );
-    private static highlightMaterial: MeshBasicMaterial = new MeshBasicMaterial(
-        {
-            color: new Color(1, 0, 0),
-        }
-    );
+    // this material only used in webGL1 fallback rendering mode
+    private static followMaterial: MeshBasicMaterial = new MeshBasicMaterial({
+        color: new Color(1, 0, 0),
+    });
     private static membraneData: {
         faces: { name: string }[];
         sides: { name: string }[];
@@ -87,12 +86,14 @@ export default class VisAgent {
     public typeId: number;
     public colorIndex: number;
     public active: boolean;
+    // this material only used in webGL1 fallback rendering mode
     public baseMaterial: Material;
+    // this material only used in webGL1 fallback rendering mode
     public desatMaterial: Material;
     public color: Color;
     public name: string;
+    public followed: boolean;
     public highlighted: boolean;
-    public selected: boolean;
     public hidden: boolean;
     public visType: number;
     public id: number;
@@ -105,10 +106,9 @@ export default class VisAgent {
         this.active = false;
         this.typeId = -1;
         this.colorIndex = 0;
-        this.highlighted = false;
+        this.followed = false;
         this.hidden = false;
-        // all are selected by default.  deselecting will desaturate.
-        this.selected = true;
+        this.highlighted = false;
         this.baseMaterial = new MeshLambertMaterial({
             color: new Color(this.color),
         });
@@ -132,8 +132,8 @@ export default class VisAgent {
         this.typeId = -1;
         this.mesh = new Mesh(VisAgent.sphereGeometry, this.baseMaterial);
         this.mesh.userData = { id: this.id };
+        this.followed = false;
         this.highlighted = false;
-        this.selected = true;
         this.setColor(new Color(VisAgent.UNASSIGNED_MESH_COLOR));
     }
 
@@ -163,13 +163,13 @@ export default class VisAgent {
         this.hidden = hidden;
     }
 
-    public setHighlighted(highlighted: boolean): void {
-        this.highlighted = highlighted;
+    public setFollowed(followed: boolean): void {
+        this.followed = followed;
         this.assignMaterial();
     }
 
-    public setSelected(selected: boolean): void {
-        this.selected = selected;
+    public setHighlighted(highlighted: boolean): void {
+        this.highlighted = highlighted;
         this.assignMaterial();
     }
 
@@ -179,9 +179,9 @@ export default class VisAgent {
         }
 
         let material = this.desatMaterial;
-        if (this.highlighted) {
-            material = VisAgent.highlightMaterial;
-        } else if (this.selected) {
+        if (this.followed) {
+            material = VisAgent.followMaterial;
+        } else if (this.highlighted) {
             material = this.baseMaterial;
         }
 
@@ -207,7 +207,7 @@ export default class VisAgent {
     }
 
     public assignMembraneMaterial(): void {
-        if (this.selected) {
+        if (this.highlighted) {
             // at this time, assign separate material parameters to the faces and sides of the membrane
             const faceNames = VisAgent.membraneData.faces.map((el) => {
                 return el.name;
@@ -260,11 +260,10 @@ export default class VisAgent {
         }
         // colorIndex is not necessarily equal to typeId but is generally a 1-1 mapping.
         if (material.uniforms.typeId) {
-            // negate the value if deselected.
-            // by default everything is selected.
+            // negate the value if dehighlighted.
             // see implementation in CompositePass.ts for how the value is interpreted
             material.uniforms.typeId.value =
-                this.colorIndex * (this.selected ? 1 : -1);
+                this.colorIndex * (this.highlighted ? 1 : -1);
             material.uniformsNeedUpdate = true;
         }
         if (material.uniforms.instanceId) {

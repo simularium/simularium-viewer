@@ -337,7 +337,7 @@ class VisGeometry {
             if (!visAgent) {
                 console.error("NO AGENT FOR INSTANCE " + this.followObjectId);
             }
-            visAgent.setHighlighted(false);
+            visAgent.setFollowed(false);
         }
         this.followObjectId = obj;
 
@@ -346,7 +346,7 @@ class VisGeometry {
             if (!visAgent) {
                 console.error("NO AGENT FOR INSTANCE " + this.followObjectId);
             }
-            visAgent.setHighlighted(true);
+            visAgent.setFollowed(true);
         }
     }
 
@@ -380,7 +380,7 @@ class VisGeometry {
                 const isHighlighted = this.highlightedIds.includes(
                     visAgent.typeId
                 );
-                visAgent.setSelected(isHighlighted);
+                visAgent.setHighlighted(isHighlighted);
             }
         }
     }
@@ -470,7 +470,7 @@ class VisGeometry {
         this.controls = new OrbitControls(this.camera, element);
         this.controls.maxDistance = 750;
         this.controls.minDistance = 5;
-        this.controls.zoomSpeed = 2;
+        this.controls.zoomSpeed = 1.0;
         this.controls.enablePan = false;
     }
 
@@ -719,11 +719,7 @@ class VisGeometry {
                 this.agentPDBGroup,
                 this.agentFiberGroup
             );
-            this.moleculeRenderer.setHighlightInstance(this.followObjectId);
-            this.moleculeRenderer.setTypeSelectMode(
-                this.highlightedIds !== undefined &&
-                    this.highlightedIds.length > 0
-            );
+            this.moleculeRenderer.setFollowedInstance(this.followObjectId);
             this.boundingBoxMesh.visible = false;
             this.agentPathGroup.visible = false;
             this.moleculeRenderer.render(
@@ -1209,7 +1205,7 @@ class VisGeometry {
             direction.normalize();
 
             const newTarget = new Vector3();
-            const followedObject = this.visAgents[this.followObjectId];
+            const followedObject = this.visAgentInstances[this.followObjectId];
             newTarget.copy(followedObject.mesh.position);
 
             // update controls target for orbiting

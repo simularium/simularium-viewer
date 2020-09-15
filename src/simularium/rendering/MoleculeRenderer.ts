@@ -143,6 +143,12 @@ class MoleculeRenderer {
             bghueoffset: 1,
             bgchromaoffset: 0,
             bgluminanceoffset: 0.2,
+            outlineThickness: 2.0,
+            followThickness: 3.0,
+            outlineAlpha: 0.8,
+            followAlpha: 0.8,
+            followColor: [255, 255, 0],
+            outlineColor: [255, 255, 255],
         };
 
         /////////////////////////////////////////////////////////////////////
@@ -214,20 +220,45 @@ class MoleculeRenderer {
         gui.add(settings, "bgluminanceoffset", 0.0, 1.0).onChange((value) => {
             this.compositePass.pass.material.uniforms.bgHCLoffset.value.z = value;
         });
+        gui.add(settings, "outlineThickness", 1.0, 8.0)
+            .step(1)
+            .onChange((value) => {
+                this.contourPass.pass.material.uniforms.outlineThickness.value = value;
+            });
+        gui.addColor(settings, "outlineColor").onChange((value) => {
+            this.contourPass.pass.material.uniforms.outlineColor.value = new Color(
+                value[0] / 255.0,
+                value[1] / 255.0,
+                value[2] / 255.0
+            );
+        });
+
+        gui.add(settings, "outlineAlpha", 0.0, 1.0).onChange((value) => {
+            this.contourPass.pass.material.uniforms.outlineAlpha.value = value;
+        });
+        gui.add(settings, "followThickness", 1.0, 8.0)
+            .step(1)
+            .onChange((value) => {
+                this.contourPass.pass.material.uniforms.followThickness.value = value;
+            });
+        gui.addColor(settings, "followColor").onChange((value) => {
+            this.contourPass.pass.material.uniforms.followColor.value = new Color(
+                value[0] / 255.0,
+                value[1] / 255.0,
+                value[2] / 255.0
+            );
+        });
+        gui.add(settings, "followAlpha", 0.0, 1.0).onChange((value) => {
+            this.contourPass.pass.material.uniforms.followAlpha.value = value;
+        });
     }
 
     public setBackgroundColor(color: Color): void {
         this.compositePass.pass.material.uniforms.backgroundColor.value = color;
     }
-    public setHighlightInstance(instance: number): void {
-        this.compositePass.pass.material.uniforms.highlightInstance.value = instance;
-        this.contourPass.pass.material.uniforms.highlightInstance.value = instance;
-    }
-
-    public setTypeSelectMode(isTypeSelected: boolean): void {
-        this.compositePass.pass.material.uniforms.typeSelectMode.value = isTypeSelected
-            ? 1
-            : 0;
+    public setFollowedInstance(instance: number): void {
+        this.compositePass.pass.material.uniforms.followedInstance.value = instance;
+        this.contourPass.pass.material.uniforms.followedInstance.value = instance;
     }
 
     public hitTest(renderer: WebGLRenderer, x: number, y: number): number {

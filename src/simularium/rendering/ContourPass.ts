@@ -1,4 +1,4 @@
-import { WebGLRenderer, WebGLRenderTarget } from "three";
+import { Color, WebGLRenderer, WebGLRenderTarget } from "three";
 
 import RenderToBuffer from "./RenderToBuffer";
 
@@ -11,7 +11,13 @@ class ContourPass {
                 colorTex: { value: null },
                 instanceIdTex: { value: null },
                 normalsTex: { value: null },
-                highlightInstance: { value: -1 },
+                followedInstance: { value: -1 },
+                outlineThickness: { value: 2.0 },
+                outlineAlpha: { value: 0.8 },
+                outlineColor: { value: new Color(1, 1, 1) },
+                followThickness: { value: 3.0 },
+                followAlpha: { value: 0.8 },
+                followColor: { value: new Color(1, 1, 0) },
             },
             fragmentShader: `
             in vec2 vUv;
@@ -19,7 +25,17 @@ class ContourPass {
             uniform sampler2D colorTex;
             uniform sampler2D instanceIdTex;
             uniform sampler2D normalsTex;
-            uniform float highlightInstance;
+            uniform float followedInstance;
+            uniform float outlineThickness;
+            uniform float followThickness;
+            uniform float followAlpha;
+            uniform float outlineAlpha;
+            uniform vec3 followColor;
+            uniform vec3 outlineColor;
+
+            bool isHighlighted(float typevalue) {
+              return (sign(typevalue) > 0.0);
+            }
 
             void main(void)
             {
@@ -34,6 +50,7 @@ class ContourPass {
               float hStep = 1.0 / float(resolution.y);
             
               vec4 instance = texture(instanceIdTex, vUv);
+              // instance.g is the agent id
               int X = int(instance.g);
               int R = int(texture(instanceIdTex, vUv + vec2(wStep, 0)).g);
               int L = int(texture(instanceIdTex, vUv + vec2(-wStep, 0)).g);
@@ -53,8 +70,48 @@ class ContourPass {
                 finalColor = mix(vec4(0,0,0,1), col, 0.8);
 
               }
-              if (X >= 0 && X == int(highlightInstance)) {
-                float thickness = 4.0;
+
+              // instance.r is the type id
+              bool highlighted = isHighlighted(instance.r);
+              if (highlighted) {
+                float thickness = outlineThickness;
+                mat3 sx = mat3( 
+                    1.0, 2.0, 1.0, 
+                    0.0, 0.0, 0.0, 
+                   -1.0, -2.0, -1.0 
+                );
+                mat3 sy = mat3( 
+                    1.0, 0.0, -1.0, 
+                    2.0, 0.0, -2.0, 
+                    1.0, 0.0, -1.0 
+                );
+                mat3 I;
+                for (int i=0; i<3; i++) {
+                  for (int j=0; j<3; j++) {
+                    bool v = isHighlighted(
+                      texelFetch(instanceIdTex, 
+                        ivec2(gl_FragCoord) + 
+                        ivec2(
+                          (i-1)*int(thickness),
+                          (j-1)*int(thickness)
+                        ), 
+                        0 ).r
+                    );
+                    I[i][j] = v ? 1.0 : 0.0; 
+                  }
+                }
+                float gx = dot(sx[0], I[0]) + dot(sx[1], I[1]) + dot(sx[2], I[2]); 
+                float gy = dot(sy[0], I[0]) + dot(sy[1], I[1]) + dot(sy[2], I[2]);
+
+                float g = sqrt(pow(gx, 2.0)+pow(gy, 2.0));
+                finalColor = mix(col, vec4(outlineColor.rgb,1), g*outlineAlpha);
+
+              }
+
+
+
+              if (X >= 0 && X == int(followedInstance)) {
+                float thickness = followThickness;
                 R = int(texture(instanceIdTex, vUv + vec2(wStep*thickness, 0)).g);
                 L = int(texture(instanceIdTex, vUv + vec2(-wStep*thickness, 0)).g);
                 T = int(texture(instanceIdTex, vUv + vec2(0, hStep*thickness)).g);
@@ -63,12 +120,10 @@ class ContourPass {
                 {
                   //~ current pixel lies on the edge
                   // outline pixel color is a whitened version of the color
-                  finalColor = mix(vec4(1,1,1,1), col, 0.2);
+                  finalColor = mix(vec4(followColor.rgb,1), col, 1.0-followAlpha);
   
                 }
-    
-
-            }
+              }
         
               gl_FragDepth = instance.w >= 0.0 ? instance.w : 1.0;
               gl_FragColor = finalColor;

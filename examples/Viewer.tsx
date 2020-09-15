@@ -1,8 +1,5 @@
 import React from "react";
-import type {
-    UIDisplayData,
-    SelectionStateInfo,
-} from "../type-declarations";
+import type { UIDisplayData, SelectionStateInfo } from "../type-declarations";
 
 import SimulariumViewer, {
     SimulariumController,
@@ -18,7 +15,6 @@ const netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
     serverPort: 9002,
 };
-
 
 // Typescript's File definition is missing this function
 //  which is part of the HTML standard on all browsers
@@ -132,12 +128,18 @@ class Viewer extends React.Component<{}, ViewerState> {
 
         Promise.all(
             filesArr.map((file) =>
-            file.text().then((text) => JSON.parse(text) as SimulariumFileFormat)
-        )).then((parsedFiles) => {
+                file
+                    .text()
+                    .then((text) => JSON.parse(text) as SimulariumFileFormat)
+            )
+        ).then((parsedFiles) => {
             const simulariumFile = parsedFiles[0];
             const fileName = filesArr[0].name;
-            simulariumController.changeFile(fileName, true, simulariumFile).catch((error) => {
-                window.alert(`Error loading file: ${error.message}`)})
+            simulariumController
+                .changeFile(fileName, true, simulariumFile)
+                .catch((error) => {
+                    window.alert(`Error loading file: ${error.message}`);
+                });
         });
     };
 
@@ -405,9 +407,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                 {this.state.particleTypeNames.map((id, i) => {
                     return (
                         <React.Fragment key={id}>
-                            <label
-                                htmlFor={id}>{id}
-                            </label>
+                            <label htmlFor={id}>{id}</label>
                             <input
                                 type="checkbox"
                                 onClick={(event) =>
