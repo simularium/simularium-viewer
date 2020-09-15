@@ -114,7 +114,7 @@ class SelectionInterface {
      * selection state info, it will be considered hilighted
      */
     public getHighlightedIds(info: SelectionStateInfo): number[] {
-        let names: string[] = info.highlightedNames.filter((element) => {
+        const names: string[] = info.highlightedNames.filter((element) => {
             return element != undefined && element != "";
         });
         const tags: string[] = info.highlightedTags.filter((element) => {
