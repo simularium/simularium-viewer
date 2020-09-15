@@ -719,7 +719,7 @@ class VisGeometry {
                 this.agentPDBGroup,
                 this.agentFiberGroup
             );
-            this.moleculeRenderer.setHighlightInstance(this.followObjectId);
+            this.moleculeRenderer.setFollowedInstance(this.followObjectId);
             this.boundingBoxMesh.visible = false;
             this.agentPathGroup.visible = false;
             this.moleculeRenderer.render(
@@ -1205,7 +1205,7 @@ class VisGeometry {
             direction.normalize();
 
             const newTarget = new Vector3();
-            const followedObject = this.visAgents[this.followObjectId];
+            const followedObject = this.visAgentInstances[this.followObjectId];
             newTarget.copy(followedObject.mesh.position);
 
             // update controls target for orbiting

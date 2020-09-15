@@ -11,7 +11,7 @@ class ContourPass {
                 colorTex: { value: null },
                 instanceIdTex: { value: null },
                 normalsTex: { value: null },
-                highlightInstance: { value: -1 },
+                followedInstance: { value: -1 },
                 outlineThickness: { value: 2.0 },
                 outlineAlpha: { value: 0.8 },
                 outlineColor: { value: new Color(1, 1, 1) },
@@ -25,7 +25,7 @@ class ContourPass {
             uniform sampler2D colorTex;
             uniform sampler2D instanceIdTex;
             uniform sampler2D normalsTex;
-            uniform float highlightInstance;
+            uniform float followedInstance;
             uniform float outlineThickness;
             uniform float followThickness;
             uniform float followAlpha;
@@ -110,7 +110,7 @@ class ContourPass {
 
 
 
-              if (X >= 0 && X == int(highlightInstance)) {
+              if (X >= 0 && X == int(followedInstance)) {
                 float thickness = followThickness;
                 R = int(texture(instanceIdTex, vUv + vec2(wStep*thickness, 0)).g);
                 L = int(texture(instanceIdTex, vUv + vec2(-wStep*thickness, 0)).g);

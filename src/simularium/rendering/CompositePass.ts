@@ -29,7 +29,7 @@ class CompositePass {
                 zFar: { value: 1000 },
                 atomicBeginDistance: { value: 150 },
                 chainBeginDistance: { value: 300 },
-                highlightInstance: { value: -1 },
+                followedInstance: { value: -1 },
             },
             fragmentShader: `
             in vec2 vUv;
@@ -47,7 +47,7 @@ class CompositePass {
             uniform vec3 bgHCLoffset;
 
             // a single instance to get a special highlight
-            uniform float highlightInstance;
+            uniform float followedInstance;
             
             uniform float atomicBeginDistance; // = 100.0;
             uniform float chainBeginDistance; // = 150.0;

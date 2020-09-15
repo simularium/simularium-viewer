@@ -256,9 +256,9 @@ class MoleculeRenderer {
     public setBackgroundColor(color: Color): void {
         this.compositePass.pass.material.uniforms.backgroundColor.value = color;
     }
-    public setHighlightInstance(instance: number): void {
-        this.compositePass.pass.material.uniforms.highlightInstance.value = instance;
-        this.contourPass.pass.material.uniforms.highlightInstance.value = instance;
+    public setFollowedInstance(instance: number): void {
+        this.compositePass.pass.material.uniforms.followedInstance.value = instance;
+        this.contourPass.pass.material.uniforms.followedInstance.value = instance;
     }
 
     public hitTest(renderer: WebGLRenderer, x: number, y: number): number {
