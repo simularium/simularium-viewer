@@ -225,22 +225,6 @@ class CompositePass {
                     h += (float(chainSymbolId) * hueShift);
                 }
             
-
-                //   if (selected > 0.0) {
-                //     // chroma up, luminance up
-                //     // or stay same?
-                //     c *= 1.5;
-                //     l *= 1.5;
-                //   }
-                //   else {
-                //     // chroma down, lum down (toward bg?)
-                //     h = bghcl.x;
-                //     c = bghcl.y;
-                //     l = bghcl.z;
-                //     // push back for next color calculation
-                //     eyeDepth = 1000000.0;
-                //   }
-            
                 vec3 color;
                 color = hcl2rgb(vec3(h, c, l));
 

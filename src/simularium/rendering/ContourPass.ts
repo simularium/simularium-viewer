@@ -74,9 +74,8 @@ class ContourPass {
               // instance.r is the type id
               bool selected = isSelected(instance.r);
               if (selected) {
-//                int typeId = abs(int(instance.r));
-                  float thickness = outlineThickness;
-                  mat3 sx = mat3( 
+                float thickness = outlineThickness;
+                mat3 sx = mat3( 
                     1.0, 2.0, 1.0, 
                     0.0, 0.0, 0.0, 
                    -1.0, -2.0, -1.0 
@@ -86,43 +85,26 @@ class ContourPass {
                     2.0, 0.0, -2.0, 
                     1.0, 0.0, -1.0 
                 );
-                  mat3 I;
-                  for (int i=0; i<3; i++) {
-                      for (int j=0; j<3; j++) {
-                          bool v = isSelected(
-                            texelFetch(instanceIdTex, 
-                              ivec2(gl_FragCoord) + 
-                              ivec2(
-                                (i-1)*int(thickness),
-                                (j-1)*int(thickness)
-                              ), 
-                              0 ).r
-                          );
-                          I[i][j] = v ? 1.0 : 0.0; 
-                      }
+                mat3 I;
+                for (int i=0; i<3; i++) {
+                  for (int j=0; j<3; j++) {
+                    bool v = isSelected(
+                      texelFetch(instanceIdTex, 
+                        ivec2(gl_FragCoord) + 
+                        ivec2(
+                          (i-1)*int(thickness),
+                          (j-1)*int(thickness)
+                        ), 
+                        0 ).r
+                    );
+                    I[i][j] = v ? 1.0 : 0.0; 
                   }
-                  float gx = dot(sx[0], I[0]) + dot(sx[1], I[1]) + dot(sx[2], I[2]); 
-                  float gy = dot(sy[0], I[0]) + dot(sy[1], I[1]) + dot(sy[2], I[2]);
+                }
+                float gx = dot(sx[0], I[0]) + dot(sx[1], I[1]) + dot(sx[2], I[2]); 
+                float gy = dot(sy[0], I[0]) + dot(sy[1], I[1]) + dot(sy[2], I[2]);
 
-                  float g = sqrt(pow(gx, 2.0)+pow(gy, 2.0));
-                  //g = smoothstep(0.4, 0.6, g);
-                  finalColor = mix(col, vec4(outlineColor.rgb,1), g*outlineAlpha);
-
-                  // bool sR = isSelected(texture(instanceIdTex, vUv + vec2(wStep*thickness, 0)).r);
-                  // bool sL = isSelected(texture(instanceIdTex, vUv + vec2(-wStep*thickness, 0)).r);
-                  // bool sT = isSelected(texture(instanceIdTex, vUv + vec2(0, hStep*thickness)).r);
-                  // bool sB = isSelected(texture(instanceIdTex, vUv + vec2(0, -hStep*thickness)).r);
-                  // bool sTL = isSelected(texture(instanceIdTex, vUv + vec2(wStep*thickness, hStep*thickness)).r);
-                  // bool sTR = isSelected(texture(instanceIdTex, vUv + vec2(-wStep*thickness, hStep*thickness)).r);
-                  // bool sBL = isSelected(texture(instanceIdTex, vUv + vec2(wStep*thickness, hStep*thickness)).r);
-                  // bool sBR = isSelected(texture(instanceIdTex, vUv + vec2(wStep*thickness, -hStep*thickness)).r);
-                  // if ( (!sR) || (!sL) || (!sT) || (!sB) || (!sTL) || (!sTR) || (!sBL) || (!sBR) )
-                  // {
-                  //   //~ current pixel lies on the edge
-                  //   // outline pixel color is a whitened version of the color
-                  //   finalColor = mix(vec4(1,0,0,1), col, 1.0-outlineAlpha);
-
-                  // }
+                float g = sqrt(pow(gx, 2.0)+pow(gy, 2.0));
+                finalColor = mix(col, vec4(outlineColor.rgb,1), g*outlineAlpha);
 
               }
 
@@ -141,13 +123,7 @@ class ContourPass {
                   finalColor = mix(vec4(followColor.rgb,1), col, 1.0-followAlpha);
   
                 }
-
-                // float odd = float(abs(int(gl_FragCoord.x) + int(gl_FragCoord.y))%8) / 7.0;
-                // float even = float(abs(int(gl_FragCoord.x) - int(gl_FragCoord.y))%8) / 7.0;
-                // finalColor *= odd*even;
-    
-
-            }
+              }
         
               gl_FragDepth = instance.w >= 0.0 ? instance.w : 1.0;
               gl_FragColor = finalColor;
