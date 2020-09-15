@@ -42,11 +42,9 @@ export default class VisAgent {
         32,
         32
     );
-    private static highlightMaterial: MeshBasicMaterial = new MeshBasicMaterial(
-        {
-            color: new Color(1, 0, 0),
-        }
-    );
+    private static followMaterial: MeshBasicMaterial = new MeshBasicMaterial({
+        color: new Color(1, 0, 0),
+    });
     private static membraneData: {
         faces: { name: string }[];
         sides: { name: string }[];
@@ -179,7 +177,7 @@ export default class VisAgent {
 
         let material = this.desatMaterial;
         if (this.followed) {
-            material = VisAgent.highlightMaterial;
+            material = VisAgent.followMaterial;
         } else if (this.highlighted) {
             material = this.baseMaterial;
         }
