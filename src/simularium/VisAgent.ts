@@ -42,6 +42,7 @@ export default class VisAgent {
         32,
         32
     );
+    // this material only used in webGL1 fallback rendering mode
     private static followMaterial: MeshBasicMaterial = new MeshBasicMaterial({
         color: new Color(1, 0, 0),
     });
@@ -85,7 +86,9 @@ export default class VisAgent {
     public typeId: number;
     public colorIndex: number;
     public active: boolean;
+    // this material only used in webGL1 fallback rendering mode
     public baseMaterial: Material;
+    // this material only used in webGL1 fallback rendering mode
     public desatMaterial: Material;
     public color: Color;
     public name: string;
