@@ -91,7 +91,7 @@ export default class VisAgent {
     public desatMaterial: Material;
     public color: Color;
     public name: string;
-    public highlighted: boolean;
+    public followed: boolean;
     public selected: boolean;
     public hidden: boolean;
     public visType: number;
@@ -105,7 +105,7 @@ export default class VisAgent {
         this.active = false;
         this.typeId = -1;
         this.colorIndex = 0;
-        this.highlighted = false;
+        this.followed = false;
         this.hidden = false;
         this.selected = false;
         this.baseMaterial = new MeshLambertMaterial({
@@ -131,7 +131,7 @@ export default class VisAgent {
         this.typeId = -1;
         this.mesh = new Mesh(VisAgent.sphereGeometry, this.baseMaterial);
         this.mesh.userData = { id: this.id };
-        this.highlighted = false;
+        this.followed = false;
         this.selected = false;
         this.setColor(new Color(VisAgent.UNASSIGNED_MESH_COLOR));
     }
@@ -162,8 +162,8 @@ export default class VisAgent {
         this.hidden = hidden;
     }
 
-    public setHighlighted(highlighted: boolean): void {
-        this.highlighted = highlighted;
+    public setFollowed(followed: boolean): void {
+        this.followed = followed;
         this.assignMaterial();
     }
 
@@ -178,7 +178,7 @@ export default class VisAgent {
         }
 
         let material = this.desatMaterial;
-        if (this.highlighted) {
+        if (this.followed) {
             material = VisAgent.highlightMaterial;
         } else if (this.selected) {
             material = this.baseMaterial;

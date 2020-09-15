@@ -337,7 +337,7 @@ class VisGeometry {
             if (!visAgent) {
                 console.error("NO AGENT FOR INSTANCE " + this.followObjectId);
             }
-            visAgent.setHighlighted(false);
+            visAgent.setFollowed(false);
         }
         this.followObjectId = obj;
 
@@ -346,7 +346,7 @@ class VisGeometry {
             if (!visAgent) {
                 console.error("NO AGENT FOR INSTANCE " + this.followObjectId);
             }
-            visAgent.setHighlighted(true);
+            visAgent.setFollowed(true);
         }
     }
 
