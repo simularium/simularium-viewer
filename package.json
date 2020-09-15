@@ -1,6 +1,6 @@
 {
     "name": "@aics/simularium-viewer",
-    "version": "2.1.3",
+    "version": "2.2.0",
     "description": "An npm package to view simulations.",
     "main": "lib/index.js",
     "module": "es/index.js",
