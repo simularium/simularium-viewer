@@ -11,7 +11,6 @@ import {
     VisDataFrame,
     FileReturn,
     FILE_STATUS_SUCCESS,
-    FILE_STATUS_NO_CHANGE,
 } from "../simularium/types";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
@@ -195,37 +194,31 @@ export default class SimulariumController {
         geometryFile?: string,
         assetPrefix?: string
     ): Promise<FileReturn> {
-        if (newFileName !== this.playBackFile) {
-            this.fileChanged = true;
-            this.playBackFile = newFileName;
-            this.localFile = isLocalFile;
-            this.geometryFile = this.resolveGeometryFile(
-                geometryFile || "",
-                newFileName
-            );
-            this.assetPrefix = assetPrefix ? assetPrefix : DEFAULT_ASSET_PREFIX;
-            this.visData.WaitForFrame(0);
-            this.visData.clearCache();
+        this.fileChanged = true;
+        this.playBackFile = newFileName;
+        this.localFile = isLocalFile;
+        this.geometryFile = this.resolveGeometryFile(
+            geometryFile || "",
+            newFileName
+        );
+        this.assetPrefix = assetPrefix ? assetPrefix : DEFAULT_ASSET_PREFIX;
+        this.visData.WaitForFrame(0);
+        this.visData.clearCache();
 
-            this.stop();
+        this.stop();
 
-            if (isLocalFile) {
-                return this.handleLocalFileChange(simulariumFile);
-            }
-
-            // otherwise, start a network file
-            return this.start()
-                .then(() => {
-                    this.netConnection.requestSingleFrame(0);
-                })
-                .then(() => ({
-                    status: FILE_STATUS_SUCCESS,
-                }));
+        if (isLocalFile) {
+            return this.handleLocalFileChange(simulariumFile);
         }
 
-        return Promise.resolve({
-            status: FILE_STATUS_NO_CHANGE,
-        });
+        // otherwise, start a network file
+        return this.start()
+            .then(() => {
+                this.netConnection.requestSingleFrame(0);
+            })
+            .then(() => ({
+                status: FILE_STATUS_SUCCESS,
+            }));
     }
 
     public markFileChangeAsHandled(): void {
