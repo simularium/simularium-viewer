@@ -333,20 +333,22 @@ class VisGeometry {
         }
 
         if (this.followObjectId !== NO_AGENT) {
-            const visAgent = this.visAgentInstances[this.followObjectId];
+            const visAgent = this.visAgentInstances.get(this.followObjectId);
             if (!visAgent) {
                 console.error("NO AGENT FOR INSTANCE " + this.followObjectId);
+            } else {
+                visAgent.setFollowed(false);
             }
-            visAgent.setFollowed(false);
         }
         this.followObjectId = obj;
 
         if (obj !== NO_AGENT) {
-            const visAgent = this.visAgentInstances[obj];
+            const visAgent = this.visAgentInstances.get(obj);
             if (!visAgent) {
                 console.error("NO AGENT FOR INSTANCE " + this.followObjectId);
+            } else {
+                visAgent.setFollowed(true);
             }
-            visAgent.setFollowed(true);
         }
     }
 
@@ -1053,7 +1055,8 @@ class VisGeometry {
             const visAgent = this.visAgents[i];
             visAgent.id = instanceId;
             visAgent.mesh.userData = { id: instanceId };
-            this.visAgentInstances[instanceId] = visAgent;
+            // note there may still be another agent later in the list with the same id, until it gets reset
+            this.visAgentInstances.set(instanceId, visAgent);
 
             const lastTypeId = visAgent.typeId;
 
@@ -1069,6 +1072,7 @@ class VisGeometry {
                 // did the agent type change since the last sim time?
                 if (typeId !== lastTypeId || visType !== visAgent.visType) {
                     const meshGeom = this.getGeomFromId(typeId);
+                    visAgent.visType = visType;
                     if (meshGeom) {
                         this.resetAgentGeometry(visAgent, meshGeom);
                         if (meshGeom.name.includes("membrane")) {
@@ -1089,7 +1093,6 @@ class VisGeometry {
                         this.getColorForTypeId(typeId),
                         this.getColorIndexForTypeId(typeId)
                     );
-                    visAgent.visType = visType;
                 }
 
                 const runtimeMesh = visAgent.mesh;
@@ -1164,12 +1167,12 @@ class VisGeometry {
                     if (meshGeom) {
                         meshGeom.userData = { id: visAgent.id };
                         meshGeom.name = `Fiber_${instanceId}`;
+                        visAgent.visType = visType;
                         this.resetAgentGeometry(visAgent, meshGeom);
                         visAgent.setColor(
                             this.getColorForTypeId(typeId),
                             this.getColorIndexForTypeId(typeId)
                         );
-                        visAgent.visType = visType;
                     }
                 }
                 // did the agent type change since the last sim time?
@@ -1205,7 +1208,12 @@ class VisGeometry {
             direction.normalize();
 
             const newTarget = new Vector3();
-            const followedObject = this.visAgentInstances[this.followObjectId];
+            const followedObject = this.visAgentInstances.get(
+                this.followObjectId
+            );
+            if (!followedObject) {
+                return;
+            }
             newTarget.copy(followedObject.mesh.position);
 
             // update controls target for orbiting
@@ -1262,7 +1270,7 @@ class VisGeometry {
 
         if (!color) {
             // get the agent's color. is there a simpler way?
-            const agent = this.visAgentInstances[id];
+            const agent = this.visAgentInstances.get(id);
             if (agent) {
                 color = agent.color.clone();
             } else {
@@ -1470,10 +1478,9 @@ class VisGeometry {
         const nMeshes = this.visAgents.length;
         for (let i = numberOfAgents; i < MAX_MESHES && i < nMeshes; i += 1) {
             const visAgent = this.visAgents[i];
-            visAgent.hideAndDeactivate();
-
             // hide the path if we're hiding the agent. should we remove the path here?
             this.showPathForAgent(visAgent.id, false);
+            visAgent.hideAndDeactivate();
         }
     }
 
@@ -1520,8 +1527,7 @@ class VisGeometry {
         }
 
         // set all runtime meshes back to spheres.
-        for (const visAgentKey in this.visAgentInstances) {
-            const visAgent = this.visAgentInstances[visAgentKey];
+        for (const visAgent of this.visAgentInstances.values()) {
             visAgent.resetMesh();
             visAgent.resetPDB();
         }
