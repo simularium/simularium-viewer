@@ -347,6 +347,7 @@ export default class VisAgent {
     public hideAndDeactivate(): void {
         this.hide();
         this.active = false;
+        this.id = NO_AGENT;
     }
 
     public hasDrawablePDB(): boolean {

@@ -850,8 +850,6 @@ class VisGeometry {
     public resetMapping(): void {
         this.resetAllGeometry();
 
-        this.visAgentInstances.clear();
-
         this.visGeomMap.clear();
         this.meshRegistry.clear();
         this.pdbRegistry.clear();
@@ -1486,6 +1484,13 @@ class VisGeometry {
 
     public clear(): void {
         this.hideUnusedAgents(0);
+    }
+
+    public clearForNewTrajectory(): void {
+        this.resetMapping();
+        // remove current scene agents.
+        this.visAgentInstances.clear();
+        this.currentSceneAgents = [];
     }
 
     private cancelAllAsyncProcessing(): void {
