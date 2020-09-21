@@ -108,6 +108,11 @@ export default class SimulariumController {
 
     private configureNetwork(config: NetConnectionParams): void {
         this.netConnection = new NetConnection(config);
+
+        this.netConnection.onTrajectoryDataArrive = this.visData.parseAgentsFromNetData.bind(
+            this.visData
+        );
+
         this.netConnection.onTrajectoryFileInfoArrive = (
             trajFileInfo: TrajectoryFileInfo
         ) => {
