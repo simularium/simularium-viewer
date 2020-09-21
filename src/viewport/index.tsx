@@ -46,7 +46,7 @@ interface Click {
 }
 
 interface ViewportState {
-    lastClick: Click
+    lastClick: Click;
 }
 
 interface TimeData {
@@ -440,7 +440,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         const totalElapsedTime = now - this.startTime;
         if (elapsedTime > timePerFrame) {
             if (simulariumController.hasChangedFile) {
-                this.visGeometry.resetMapping();
+                this.visGeometry.clearForNewTrajectory();
                 // skip fetch if local file
                 const p = simulariumController.isLocalFile
                     ? Promise.resolve()
