@@ -30,7 +30,7 @@ const DEFAULT_ASSET_PREFIX =
 export default class SimulariumController {
     public netConnection: NetConnection | undefined;
     public visData: VisData;
-    public handleTrajectoryData: (TrajectoryFileInfo) => void;
+    public handleTrajectoryInfo: (TrajectoryFileInfo) => void;
     public postConnect: () => void;
 
     private networkEnabled: boolean;
@@ -51,7 +51,7 @@ export default class SimulariumController {
         };
 
         /* eslint-disable */
-        this.handleTrajectoryData = (msg: TrajectoryFileInfo) => {
+        this.handleTrajectoryInfo = (msg: TrajectoryFileInfo) => {
             /* Do Nothing */
         };
         /* eslint-enable */
@@ -104,6 +104,15 @@ export default class SimulariumController {
             return `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${playbackFileName}.json`;
         }
         return "";
+    }
+
+    private configureNetwork(config: NetConnectionParams): void {
+        this.netConnection = new NetConnection(config);
+        this.netConnection.onTrajectoryFileInfoArrive = (
+            trajFileInfo: TrajectoryFileInfo
+        ) => {
+            this.handleTrajectoryInfo(trajFileInfo);
+        };
     }
 
     public get hasChangedFile(): boolean {
@@ -222,7 +231,7 @@ export default class SimulariumController {
         this.disableNetworkCommands();
         this.cacheJSON(spatialData);
         this.dragAndDropFileInfo = trajectoryInfo;
-        this.handleTrajectoryData(this.dragAndDropFileInfo);
+        this.handleTrajectoryInfo(this.dragAndDropFileInfo);
         return Promise.resolve({
             status: FILE_STATUS_SUCCESS,
         });
@@ -317,7 +326,7 @@ export default class SimulariumController {
     public set trajFileInfoCallback(
         callback: (msg: TrajectoryFileInfo) => void
     ) {
-        this.handleTrajectoryData = callback;
+        this.handleTrajectoryInfo = callback;
 
         if (this.netConnection) {
             this.netConnection.onTrajectoryFileInfoArrive = callback;
