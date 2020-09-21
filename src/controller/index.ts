@@ -11,6 +11,7 @@ import {
     VisDataFrame,
     FileReturn,
     FILE_STATUS_SUCCESS,
+    FILE_STATUS_FAIL,
 } from "../simularium/types";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
@@ -279,14 +280,9 @@ export default class SimulariumController {
                 }));
         }
 
-        // otherwise, start a network file
-        return this.start()
-            .then(() => {
-                this.netConnection.requestSingleFrame(0);
-            })
-            .then(() => ({
-                status: FILE_STATUS_SUCCESS,
-            }));
+        return Promise.resolve({
+            status: FILE_STATUS_FAIL,
+        });
     }
 
     public markFileChangeAsHandled(): void {
