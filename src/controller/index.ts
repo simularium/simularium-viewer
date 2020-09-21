@@ -81,6 +81,7 @@ export default class SimulariumController {
 
             this.netConnection = undefined;
 
+            // @TODO: Pass this warning upwards (to installing app)
             if (params.trajectoryPlaybackFile) {
                 console.warn(
                     "trajectoryPlaybackFile param ignored, no network config provided"

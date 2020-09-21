@@ -42,10 +42,7 @@ interface ViewerState {
     uiDisplayData: UIDisplayData;
 }
 
-const simulariumController = new SimulariumController({
-    //trajectoryPlaybackFile: "ATPsynthase_9.h5",
-    //netConnectionSettings: netConnectionSettings,
-});
+const simulariumController = new SimulariumController({});
 
 let currentFrame = 0;
 let currentTime = 0;
