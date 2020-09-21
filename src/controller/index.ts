@@ -286,7 +286,7 @@ export default class SimulariumController {
                 }));
         }
 
-        return Promise.resolve({
+        return Promise.reject({
             status: FILE_STATUS_FAIL,
         });
     }
