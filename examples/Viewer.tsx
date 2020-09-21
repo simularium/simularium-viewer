@@ -43,8 +43,8 @@ interface ViewerState {
 }
 
 const simulariumController = new SimulariumController({
-    trajectoryPlaybackFile: "ATPsynthase_9.h5",
-    netConnectionSettings: netConnectionSettings,
+    //trajectoryPlaybackFile: "ATPsynthase_9.h5",
+    //netConnectionSettings: netConnectionSettings,
 });
 
 let currentFrame = 0;
@@ -301,10 +301,16 @@ class Viewer extends React.Component<{}, ViewerState> {
         });
     }
 
+    private configureAndStart() {
+        simulariumController.configureNetwork(netConnectionSettings);
+        simulariumController.changeFile("ATPsynthase_9.h5");
+        simulariumController.start();
+    }
+
     public render(): JSX.Element {
         return (
             <div className="container" style={{ height: "90%", width: "75%" }}>
-                <button onClick={() => simulariumController.start()}>
+                <button onClick={() => this.configureAndStart()}>
                     Start
                 </button>
                 <button onClick={() => simulariumController.pause()}>
