@@ -173,7 +173,6 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             loadInitialData,
             onJsonDataArrived,
         } = this.props;
-        const { netConnection } = simulariumController;
         this.visGeometry.reparent(this.vdomRef.current);
         if (this.props.loggerLevel === "debug") {
             if (this.vdomRef && this.vdomRef.current) {
@@ -182,7 +181,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             }
         }
 
-        netConnection.onTrajectoryFileInfoArrive = (
+        simulariumController.trajFileInfoCallback = (
             msg: TrajectoryFileInfo
         ) => {
             this.visGeometry.handleTrajectoryData(msg);
@@ -193,7 +192,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             onUIDisplayDataChanged(uiDisplayData);
         };
 
-        simulariumController.connect().then(() => {
+        simulariumController.postConnect = () => {
             if (loadInitialData) {
                 const fileName = simulariumController.getFile();
                 this.visGeometry
@@ -209,7 +208,11 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                     });
                 simulariumController.initializeTrajectoryFile();
             }
-        });
+        };
+
+        if(simulariumController.netConnection) {
+          simulariumController.connect();
+        }
 
         if (this.vdomRef.current) {
             this.vdomRef.current.addEventListener(
