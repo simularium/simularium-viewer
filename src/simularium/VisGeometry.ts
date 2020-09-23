@@ -1205,14 +1205,13 @@ class VisGeometry {
             const distance = direction.length();
             direction.normalize();
 
-            const newTarget = new Vector3();
             const followedObject = this.visAgentInstances.get(
                 this.followObjectId
             );
             if (!followedObject) {
                 return;
             }
-            newTarget.copy(followedObject.mesh.position);
+            const newTarget = followedObject.getFollowPosition();
 
             // update controls target for orbiting
             if (lerpTarget) {
@@ -1224,7 +1223,7 @@ class VisGeometry {
             // update new camera position
             const newPosition = new Vector3();
             newPosition.subVectors(
-                followedObject.mesh.position,
+                newTarget,
                 direction.multiplyScalar(-distance)
             );
             if (lerpPosition) {
