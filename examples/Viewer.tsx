@@ -146,23 +146,21 @@ class Viewer extends React.Component<{}, ViewerState> {
 
     public turnAgentsOnOff(nameToToggle: string) {
         let currentHiddenAgents = this.state.selectionStateInfo.hiddenAgents;
+        console.log(currentHiddenAgents);
         let nextHiddenAgents = [];
-        if (currentHiddenAgents.includes(nameToToggle)) {
+        if (currentHiddenAgents.some((a) => a.name === nameToToggle)) {
             nextHiddenAgents = currentHiddenAgents.filter(
                 (hiddenAgent) => hiddenAgent.name !== nameToToggle
             );
         } else {
-            nextHiddenAgents = [
-              ...currentHiddenAgents,
-              {"name": nameToToggle, "tags": [], },
-            ];
+            nextHiddenAgents = [...currentHiddenAgents, {"name": nameToToggle, "tags": [], },];
         }
         console.log(nextHiddenAgents);
         this.setState({
             ...this.state,
             selectionStateInfo: {
                 ...this.state.selectionStateInfo,
-                hiddenNames: nextHiddenAgents,
+                hiddenAgents: nextHiddenAgents,
             },
         });
     }
