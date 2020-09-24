@@ -90,10 +90,13 @@ class SelectionInterface {
     public getIds(name: string, tags?: string[]): number[] {
         const entryList = this.entries[name];
         const indices: number[] = [];
-        const noTags = !tags || tags.length === 0;
 
         entryList.forEach((entry) => {
-            if (noTags || tags.some((t) => entry.tags.includes(t))) {
+            if (
+                !tags ||
+                tags.length === 0 ||
+                tags.some((t) => entry.tags.includes(t))
+            ) {
                 if (entry.id >= 0) {
                     indices.push(entry.id);
                 }
@@ -110,7 +113,7 @@ class SelectionInterface {
         });
 
         indices.sort((a, b) => {
-            a < b;
+            return a - b;
         });
         return indices;
     }
