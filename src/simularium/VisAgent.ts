@@ -1,6 +1,7 @@
 import {
     CatmullRomCurve3,
     Color,
+    Curve,
     Group,
     LineCurve3,
     Material,
@@ -79,6 +80,7 @@ export default class VisAgent {
     }
 
     public mesh: Object3D;
+    public fiberCurve?: Curve<Vector3>;
     // TODO can this default to a trivial single-atom pdb model?
     public pdbModel?: PDBModel;
     public pdbObjects: Object3D[];
@@ -120,6 +122,8 @@ export default class VisAgent {
         this.mesh = new Mesh(VisAgent.sphereGeometry, this.baseMaterial);
         this.mesh.userData = { id: this.id };
         this.mesh.visible = false;
+
+        this.fiberCurve = undefined;
 
         this.pdbModel = undefined;
         this.pdbObjects = [];
@@ -390,9 +394,9 @@ export default class VisAgent {
         }
 
         // set up new fiber as curved tube
-        const fibercurve = new CatmullRomCurve3(curvePoints);
+        this.fiberCurve = new CatmullRomCurve3(curvePoints);
         const fibergeometry = new TubeBufferGeometry(
-            fibercurve,
+            this.fiberCurve,
             (4 * numSubPoints) / 3,
             collisionRadius * scale * 0.5,
             8,
@@ -446,5 +450,13 @@ export default class VisAgent {
         // downstream code will switch this flag
         fiberGroup.visible = false;
         return fiberGroup;
+    }
+
+    public getFollowPosition(): Vector3 {
+        if (this.visType === VisTypes.ID_VIS_TYPE_FIBER && this.fiberCurve) {
+            return this.fiberCurve.getPoint(0.5);
+        } else {
+            return new Vector3().copy(this.mesh.position);
+        }
     }
 }
