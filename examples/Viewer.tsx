@@ -43,6 +43,7 @@ interface ViewerState {
 }
 
 const simulariumController = new SimulariumController({});
+let playbackFile = "ATPsynthase_9.h5";
 
 let currentFrame = 0;
 let currentTime = 0;
@@ -215,7 +216,7 @@ class Viewer extends React.Component<{}, ViewerState> {
 
     private configureAndStart() {
         simulariumController.configureNetwork(netConnectionSettings);
-        simulariumController.changeFile("ATPsynthase_9.h5");
+        simulariumController.changeFile(playbackFile);
         simulariumController.start();
     }
 
@@ -234,6 +235,26 @@ class Viewer extends React.Component<{}, ViewerState> {
                 <button onClick={() => simulariumController.stop()}>
                     stop
                 </button>
+                <select
+                onChange={(event) => {playbackFile = event.target.value} }
+                defaultValue={playbackFile}
+                >
+                  <option value="test_traj1.h5">TEST</option>
+                  <option value="microtubules_v2_shrinking.h5">M Tub</option>
+                  <option value="aster.cmo">Aster</option>
+                  <option value="actin34_0.h5">Actin 34</option>
+                  <option value="microtubules30_1.h5">ATP 1</option>
+                  <option value="ATPsynthase_1.h5">ATP 1</option>
+                  <option value="ATPsynthase_2.h5">ATP 2</option>
+                  <option value="ATPsynthase_3.h5">ATP 3</option>
+                  <option value="ATPsynthase_4.h5">ATP 4</option>
+                  <option value="ATPsynthase_5.h5">ATP 5</option>
+                  <option value="ATPsynthase_6.h5">ATP 6</option>
+                  <option value="ATPsynthase_7.h5">ATP 7</option>
+                  <option value="ATPsynthase_8.h5">ATP 8</option>
+                  <option value="ATPsynthase_9.h5">ATP 9</option>
+                  <option value="ATPsynthase_10.h5">ATP 10</option>
+                </select>
                 <br />
                 <input
                     type="range"
