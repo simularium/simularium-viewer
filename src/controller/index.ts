@@ -115,6 +115,10 @@ export default class SimulariumController {
     }
 
     private configureNetwork(config: NetConnectionParams): void {
+        if (this.netConnection && this.netConnection.socketIsValid()) {
+            this.netConnection.disconnect();
+        }
+
         this.netConnection = new NetConnection(config);
 
         this.netConnection.onTrajectoryDataArrive = this.visData.parseAgentsFromNetData.bind(
