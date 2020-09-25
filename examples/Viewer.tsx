@@ -43,17 +43,13 @@ interface ViewerState {
 }
 
 const simulariumController = new SimulariumController({});
+let playbackFile = "ATPsynthase_9.h5";
 
 let currentFrame = 0;
 let currentTime = 0;
 
-const UI_VAR_ALL_TAGS = "UI_VAR_ALL_TAGS";
-const UI_VAR_ALL_NAMES = "UI_VAR_ALL_NAMES";
-
 const initialState = {
     renderStyle: RenderStyle.MOLECULAR,
-    selectedTag: UI_VAR_ALL_TAGS,
-    selectedName: UI_VAR_ALL_NAMES,
     pauseOn: -1,
     particleTypeNames: [],
     particleTypeTags: [],
@@ -67,10 +63,8 @@ const initialState = {
     totalDuration: 100,
     uiDisplayData: [],
     selectionStateInfo: {
-        highlightedTags: [],
-        highlightedNames: [],
-        hiddenNames: [],
-        hiddenTags: [],
+        highlightedAgents: [],
+        hiddenAgents: [],
     },
 };
 
@@ -82,13 +76,6 @@ class Viewer extends React.Component<{}, ViewerState> {
         this.viewerRef = React.createRef();
         this.handleJsonMeshData = this.handleJsonMeshData.bind(this);
         this.handleTimeChange = this.handleTimeChange.bind(this);
-        this.highlightParticleTypeByName = this.highlightParticleTypeByName.bind(
-            this
-        );
-        this.highlightParticleTypeByTag = this.highlightParticleTypeByTag.bind(
-            this
-        );
-        this.getTagOptions = this.getTagOptions.bind(this);
         this.state = initialState;
     }
 
@@ -159,67 +146,24 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public turnAgentsOnOff(nameToToggle: string) {
-        let currentHiddenNames = this.state.selectionStateInfo.hiddenNames;
-        let nextHiddenNames = [];
-        if (currentHiddenNames.includes(nameToToggle)) {
-            nextHiddenNames = currentHiddenNames.filter(
-                (hiddenName) => hiddenName !== nameToToggle
+        let currentHiddenAgents = this.state.selectionStateInfo.hiddenAgents;
+        console.log(currentHiddenAgents);
+        let nextHiddenAgents = [];
+        if (currentHiddenAgents.some((a) => a.name === nameToToggle)) {
+            nextHiddenAgents = currentHiddenAgents.filter(
+                (hiddenAgent) => hiddenAgent.name !== nameToToggle
             );
         } else {
-            nextHiddenNames = [...currentHiddenNames, nameToToggle];
+            nextHiddenAgents = [...currentHiddenAgents, {"name": nameToToggle, "tags": [], },];
         }
-        console.log(nextHiddenNames);
+        console.log(nextHiddenAgents);
         this.setState({
             ...this.state,
             selectionStateInfo: {
                 ...this.state.selectionStateInfo,
-                hiddenNames: nextHiddenNames,
+                hiddenAgents: nextHiddenAgents,
             },
         });
-    }
-
-    public highlightParticleTypeByName(name: string): void {
-        this.highlightParticleTypeByTag(UI_VAR_ALL_TAGS);
-
-        if (name === UI_VAR_ALL_NAMES) {
-            this.setState((prevState) => ({
-                ...this.state,
-                selectionStateInfo: {
-                    ...prevState.selectionStateInfo,
-                    highlightedNames: [], // specify none, show all that match tags
-                },
-                selectedName: name,
-            }));
-        } else {
-            this.setState((prevState) => ({
-                ...this.state,
-                selectionStateInfo: {
-                    ...prevState.selectionStateInfo,
-                    highlightedNames: [name],
-                },
-                selectedName: name,
-            }));
-        }
-    }
-
-    public highlightParticleTypeByTag(tag: string): void {
-        if (tag === UI_VAR_ALL_TAGS) {
-            this.setState((prevState) => ({
-                selectionStateInfo: {
-                    ...prevState.selectionStateInfo,
-                    highlightedTags: [], // specify none -> show all mathcing name
-                },
-                selectedTag: tag,
-            }));
-        } else {
-            this.setState((prevState) => ({
-                selectionStateInfo: {
-                    ...prevState.selectionStateInfo,
-                    highlightedTags: [tag],
-                },
-                selectedTag: tag,
-            }));
-        }
     }
 
     public handleTrajectoryInfo(data): void {
@@ -270,37 +214,9 @@ class Viewer extends React.Component<{}, ViewerState> {
         simulariumController.gotoTime(currentTime - this.state.timeStep - 1e-9);
     }
 
-    private getTagOptions(): string[] {
-        if (this.state.selectedName === UI_VAR_ALL_NAMES) {
-            return this.state.particleTypeTags;
-        } else {
-            const matches = this.state.uiDisplayData.filter((entry) => {
-                return entry.name === this.state.selectedName;
-            });
-
-            if (matches[0]) {
-                return matches[0].displayStates.map((state) => {
-                    return state.id;
-                });
-            } else {
-                return [];
-            }
-        }
-    }
-
-    private getOptionsDom(optionsArray) {
-        return optionsArray.map((id, i) => {
-            return (
-                <option key={id} value={id}>
-                    {id}
-                </option>
-            );
-        });
-    }
-
     private configureAndStart() {
         simulariumController.configureNetwork(netConnectionSettings);
-        simulariumController.changeFile("ATPsynthase_9.h5");
+        simulariumController.changeFile(playbackFile);
         simulariumController.start();
     }
 
@@ -319,55 +235,26 @@ class Viewer extends React.Component<{}, ViewerState> {
                 <button onClick={() => simulariumController.stop()}>
                     stop
                 </button>
-                {/* <button onClick={() => this.changeFile("test_traj1.h5")}>
-                    TEST
-                </button>
-                <button
-                    onClick={() =>
-                        this.changeFile("microtubules_v2_shrinking.h5")
-                    }
+                <select
+                onChange={(event) => {playbackFile = event.target.value} }
+                defaultValue={playbackFile}
                 >
-                    MTub
-                </button>
-                <button onClick={() => this.changeFile("aster.cmo")}>
-                    Aster
-                </button>
-                <button onClick={() => this.changeFile("actin34_0.h5")}>
-                    Actin 34
-                </button>
-                <button onClick={() => this.changeFile("microtubules30_1.h5")}>
-                    MT 30
-                </button>
-                <button onClick={() => this.changeFile("ATPsynthase_1.h5")}>
-                    ATP 1
-                </button>
-                <button onClick={() => this.changeFile("ATPsynthase_2.h5")}>
-                    ATP 2
-                </button>
-                <button onClick={() => this.changeFile("ATPsynthase_3.h5")}>
-                    ATP 3
-                </button>
-                <button onClick={() => this.changeFile("ATPsynthase_4.h5")}>
-                    ATP 4
-                </button>
-                <button onClick={() => this.changeFile("ATPsynthase_5.h5")}>
-                    ATP 5
-                </button>
-                <button onClick={() => this.changeFile("ATPsynthase_6.h5")}>
-                    ATP 6
-                </button>
-                <button onClick={() => this.changeFile("ATPsynthase_7.h5")}>
-                    ATP 7
-                </button>
-                <button onClick={() => this.changeFile("ATPsynthase_8.h5")}>
-                    ATP 8
-                </button>
-                <button onClick={() => this.changeFile("ATPsynthase_9.h5")}>
-                    ATP 9
-                </button>
-                <button onClick={() => this.changeFile("ATPsynthase_10.h5")}>
-                    ATP 10
-                </button> */}
+                  <option value="test_traj1.h5">TEST</option>
+                  <option value="microtubules_v2_shrinking.h5">M Tub</option>
+                  <option value="aster.cmo">Aster</option>
+                  <option value="actin34_0.h5">Actin 34</option>
+                  <option value="microtubules30_1.h5">ATP 1</option>
+                  <option value="ATPsynthase_1.h5">ATP 1</option>
+                  <option value="ATPsynthase_2.h5">ATP 2</option>
+                  <option value="ATPsynthase_3.h5">ATP 3</option>
+                  <option value="ATPsynthase_4.h5">ATP 4</option>
+                  <option value="ATPsynthase_5.h5">ATP 5</option>
+                  <option value="ATPsynthase_6.h5">ATP 6</option>
+                  <option value="ATPsynthase_7.h5">ATP 7</option>
+                  <option value="ATPsynthase_8.h5">ATP 8</option>
+                  <option value="ATPsynthase_9.h5">ATP 9</option>
+                  <option value="ATPsynthase_10.h5">ATP 10</option>
+                </select>
                 <br />
                 <input
                     type="range"
@@ -383,30 +270,6 @@ class Viewer extends React.Component<{}, ViewerState> {
                     Previous Frame
                 </button>
                 <br />
-                <select
-                    onChange={(event) =>
-                        this.highlightParticleTypeByName(event.target.value)
-                    }
-                    value={this.state.selectedName}
-                >
-                    <option value={UI_VAR_ALL_NAMES}>All Types</option>
-                    {this.state.particleTypeNames.map((id, i) => {
-                        return (
-                            <option key={id} value={id}>
-                                {id}
-                            </option>
-                        );
-                    })}
-                </select>
-                <select
-                    onChange={(event) =>
-                        this.highlightParticleTypeByTag(event.target.value)
-                    }
-                    value={this.state.selectedTag}
-                >
-                    <option value={UI_VAR_ALL_TAGS}>All Tags</option>
-                    {this.getOptionsDom(this.getTagOptions())}
-                </select>
                 {this.state.particleTypeNames.map((id, i) => {
                     return (
                         <React.Fragment key={id}>
