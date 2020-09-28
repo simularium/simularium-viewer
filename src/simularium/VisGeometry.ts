@@ -122,6 +122,10 @@ class VisGeometry {
     public dl: DirectionalLight;
     public boundingBox: Box3;
     public boundingBoxMesh: Box3Helper;
+    // front and back of transformed bounds in camera space
+    private boxNearZ: number;
+    private boxFarZ: number;
+
     public hemiLight: HemisphereLight;
     public moleculeRenderer: MoleculeRenderer;
     public atomSpread = 3.0;
@@ -202,6 +206,8 @@ class VisGeometry {
             this.boundingBox,
             BOUNDING_BOX_COLOR
         );
+        this.boxNearZ = 0;
+        this.boxFarZ = 100;
         this.currentSceneAgents = [];
         this.colorsData = new Float32Array(0);
         this.lodBias = 0;
@@ -675,6 +681,8 @@ class VisGeometry {
 
         this.animateCamera();
 
+        this.transformBoundingBox();
+
         // update light sources due to camera moves
         if (this.dl && this.fixLightsToCamera) {
             // position directional light at camera (facing scene, as headlight!)
@@ -722,6 +730,7 @@ class VisGeometry {
                 this.agentFiberGroup
             );
             this.moleculeRenderer.setFollowedInstance(this.followObjectId);
+            this.moleculeRenderer.setNearFar(this.boxNearZ, this.boxFarZ);
             this.boundingBoxMesh.visible = false;
             this.agentPathGroup.visible = false;
             this.moleculeRenderer.render(
@@ -748,6 +757,14 @@ class VisGeometry {
 
             this.scene.autoUpdate = true;
         }
+    }
+
+    private transformBoundingBox() {
+        const box = new Box3().copy(this.boundingBox);
+        // this seems all wrong.
+        box.applyMatrix4(this.camera.matrixWorldInverse);
+        this.boxNearZ = -box.max.z;
+        this.boxFarZ = -box.min.z;
     }
 
     public hitTest(offsetX: number, offsetY: number): number {
