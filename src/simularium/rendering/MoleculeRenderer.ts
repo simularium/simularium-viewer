@@ -185,20 +185,8 @@ class MoleculeRenderer {
         // init from settings object
         this.ssao1Pass.pass.material.uniforms.radius.value = settings.aoradius1;
         this.blur1Pass.setRadius(settings.blurradius1);
-        // this.ssao1Pass.pass.material.uniforms.ssaoThreshold.value =
-        //     settings.aothreshold1;
-        // this.ssao1Pass.pass.material.uniforms.ssaoFalloff.value =
-        //     settings.aofalloff1;
         this.ssao2Pass.pass.material.uniforms.radius.value = settings.aoradius2;
         this.blur2Pass.setRadius(settings.blurradius2);
-        // this.ssao2Pass.pass.material.uniforms.ssaoThreshold.value =
-        //     settings.aothreshold2;
-        // this.ssao2Pass.pass.material.uniforms.ssaoFalloff.value =
-        //     settings.aofalloff2;
-        // this.compositePass.pass.material.uniforms.atomicBeginDistance.value =
-        //     settings.atomBeginDistance;
-        // this.compositePass.pass.material.uniforms.chainBeginDistance.value =
-        //     settings.chainBeginDistance;
         this.compositePass.pass.material.uniforms.bgHCLoffset.value.x =
             settings.bghueoffset;
         this.compositePass.pass.material.uniforms.bgHCLoffset.value.y =
@@ -213,39 +201,19 @@ class MoleculeRenderer {
         gui.add(settings, "blurradius1", 0.01, 10.0).onChange((value) => {
             this.blur1Pass.setRadius(value);
         });
-        gui.add(settings, "aothreshold1", 0.01, 300.0).onChange((value) => {
-            // this.ssao1Pass.pass.material.uniforms.ssaoThreshold.value =
-            //     value + Math.max(this.boxNearZ, 0.0);
-        });
-        gui.add(settings, "aofalloff1", 0.01, 300.0).onChange((value) => {
-            // this.ssao1Pass.pass.material.uniforms.ssaoFalloff.value =
-            //     value + Math.max(this.boxNearZ, 0.0);
-        });
+        gui.add(settings, "aothreshold1", 0.01, 300.0);
+        gui.add(settings, "aofalloff1", 0.01, 300.0);
         gui.add(settings, "aoradius2", 0.01, 10.0).onChange((value) => {
             this.ssao2Pass.pass.material.uniforms.radius.value = value;
         });
         gui.add(settings, "blurradius2", 0.01, 10.0).onChange((value) => {
             this.blur2Pass.setRadius(value);
         });
-        gui.add(settings, "aothreshold2", 0.01, 300.0).onChange((value) => {
-            // this.ssao2Pass.pass.material.uniforms.ssaoThreshold.value =
-            //     value + Math.max(this.boxNearZ, 0.0);
-        });
-        gui.add(settings, "aofalloff2", 0.01, 300.0).onChange((value) => {
-            // this.ssao2Pass.pass.material.uniforms.ssaoFalloff.value =
-            //     value + Math.max(this.boxNearZ, 0.0);
-        });
+        gui.add(settings, "aothreshold2", 0.01, 300.0);
+        gui.add(settings, "aofalloff2", 0.01, 300.0);
 
-        gui.add(settings, "atomBeginDistance", 0.0, 300.0).onChange((value) => {
-            // this.compositePass.pass.material.uniforms.atomicBeginDistance.value =
-            //     value + Math.max(this.boxNearZ, 0.0);
-        });
-        gui.add(settings, "chainBeginDistance", 0.0, 300.0).onChange(
-            (value) => {
-                // this.compositePass.pass.material.uniforms.chainBeginDistance.value =
-                //     value + Math.max(this.boxNearZ, 0.0);
-            }
-        );
+        gui.add(settings, "atomBeginDistance", 0.0, 300.0);
+        gui.add(settings, "chainBeginDistance", 0.0, 300.0);
 
         gui.add(settings, "bghueoffset", 0.0, 1.0).onChange((value) => {
             this.compositePass.pass.material.uniforms.bgHCLoffset.value.x = value;
@@ -373,12 +341,6 @@ class MoleculeRenderer {
             this.parameters.atomBeginDistance + Math.max(this.boundsNear, 0.0);
         this.compositePass.pass.material.uniforms.chainBeginDistance.value =
             this.parameters.chainBeginDistance + Math.max(this.boundsNear, 0.0);
-        console.log(
-            `chainBeginDist ${this.compositePass.pass.material.uniforms.chainBeginDistance.value}`
-        );
-        console.log(
-            `atomBeginDist ${this.compositePass.pass.material.uniforms.atomicBeginDistance.value}`
-        );
 
         // currently rendering is a draw call per PDB POINTS objects and one draw call per mesh TRIANGLES object (reusing same geometry buffer)
 

@@ -760,11 +760,14 @@ class VisGeometry {
     }
 
     private transformBoundingBox() {
+        // bounds are in world space
         const box = new Box3().copy(this.boundingBox);
-        // this seems all wrong.
+        // world to camera space
         box.applyMatrix4(this.camera.matrixWorldInverse);
+        // camera is pointing along negative Z.  so invert for positive distances
         this.boxNearZ = -box.max.z;
         this.boxFarZ = -box.min.z;
+        // compare with CompositePass float eyeDepth = -col0.z; to use a positive distance value.
     }
 
     public hitTest(offsetX: number, offsetY: number): number {
