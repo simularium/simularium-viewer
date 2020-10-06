@@ -17,23 +17,6 @@ const idMapping = {
     13: { name: "E#t1000" },
 };
 
-const SELECTION_STATE_HIGHLIGHT = {
-    highlightedAgents: [
-        { name: "A", tags: [] },
-        { name: "B", tags: ["t1"] },
-        { name: "C", tags: ["t1", "t2"] },
-    ],
-    hiddenAgents: [],
-};
-const SELECTION_STATE_HIDE = {
-    highlightedAgents: [],
-    hiddenAgents: [
-        { name: "A", tags: [] },
-        { name: "B", tags: ["t1"] },
-        { name: "C", tags: ["t1", "t2"] },
-    ],
-};
-
 describe("SelectionInterface module", () => {
     describe("Handles Input", () => {
         test("Can decode valid encoded input", () => {
@@ -131,8 +114,12 @@ describe("SelectionInterface module", () => {
         test("Highlight: highlight multiple by name", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
+            const selectionStateHighlight = {
+                highlightedAgents: [{ name: "A", tags: [] }],
+                hiddenAgents: [],
+            };
 
-            const ids = si.getHighlightedIds(SELECTION_STATE_HIGHLIGHT);
+            const ids = si.getHighlightedIds(selectionStateHighlight);
 
             expect(ids).toEqual([0, 1, 2, 3]);
         });
@@ -140,8 +127,11 @@ describe("SelectionInterface module", () => {
         test("Highlight: highlight by name & single tag", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
-
-            const ids = si.getHighlightedIds(SELECTION_STATE_HIGHLIGHT);
+            const selectionStateHighlight = {
+                highlightedAgents: [{ name: "B", tags: ["t1"] }],
+                hiddenAgents: [],
+            };
+            const ids = si.getHighlightedIds(selectionStateHighlight);
 
             expect(ids).toEqual([5, 7]);
         });
@@ -149,10 +139,13 @@ describe("SelectionInterface module", () => {
         test("Highlight: highlight by name & multiple tags", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
+            const selectionStateHighlight = {
+                highlightedAgents: [{ name: "C", tags: ["t1", "t2"] }],
+                hiddenAgents: [],
+            };
+            const ids = si.getHighlightedIds(selectionStateHighlight);
 
-            const ids = si.getHighlightedIds(SELECTION_STATE_HIGHLIGHT);
-
-            expect(ids).toEqual([11]);
+            expect(ids).toEqual([9, 10, 11]);
         });
     });
 
@@ -160,8 +153,11 @@ describe("SelectionInterface module", () => {
         test("Hiding: hide multiple by name", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
-
-            const ids = si.getHiddenIds(SELECTION_STATE_HIDE);
+            const selectionStateHide = {
+                highlightedAgents: [],
+                hiddenAgents: [{ name: "A", tags: [] }],
+            };
+            const ids = si.getHiddenIds(selectionStateHide);
 
             expect(ids).toEqual([0, 1, 2, 3]);
         });
@@ -169,8 +165,11 @@ describe("SelectionInterface module", () => {
         test("Hiding: hide by name & single tag", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
-
-            const ids = si.getHiddenIds(SELECTION_STATE_HIDE);
+            const selectionStateHide = {
+                highlightedAgents: [],
+                hiddenAgents: [{ name: "B", tags: ["t1"] }],
+            };
+            const ids = si.getHiddenIds(selectionStateHide);
             expect(ids).toEqual([5, 7]);
         });
 
@@ -178,9 +177,13 @@ describe("SelectionInterface module", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
 
-            const ids = si.getHiddenIds(SELECTION_STATE_HIDE);
+            const selectionStateHide = {
+                highlightedAgents: [],
+                hiddenAgents: [{ name: "C", tags: ["t1", "t2"] }],
+            };
+            const ids = si.getHiddenIds(selectionStateHide);
 
-            expect(ids).toEqual([11]);
+            expect(ids).toEqual([9, 10, 11]);
         });
     });
 
