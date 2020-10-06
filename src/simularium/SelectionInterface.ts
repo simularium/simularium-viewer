@@ -101,6 +101,12 @@ class SelectionInterface {
                     indices.push(entry.id);
                 }
             }
+            // unmodified state, include entries without any state tags
+            if (tags && tags.includes("") && entry.tags.length === 0) {
+                if (entry.id >= 0) {
+                    indices.push(entry.id);
+                }
+            }
         });
 
         return indices;
