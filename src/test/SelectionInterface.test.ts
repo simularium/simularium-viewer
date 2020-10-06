@@ -147,6 +147,18 @@ describe("SelectionInterface module", () => {
 
             expect(ids).toEqual([9, 10, 11]);
         });
+
+        test("Highlight: highlight by name and empty tag", () => {
+            const si = new SelectionInterface();
+            si.parse(idMapping);
+            const selectionStateHighlight = {
+                highlightedAgents: [{ name: "C", tags: ["", "t1", "t2"] }],
+                hiddenAgents: [],
+            };
+            const ids = si.getHighlightedIds(selectionStateHighlight);
+
+            expect(ids).toEqual([8, 9, 10, 11]);
+        });
     });
 
     describe("getHiddenIds", () => {
@@ -184,6 +196,18 @@ describe("SelectionInterface module", () => {
             const ids = si.getHiddenIds(selectionStateHide);
 
             expect(ids).toEqual([9, 10, 11]);
+        });
+        test("Hiding: hide by name & null tag", () => {
+            const si = new SelectionInterface();
+            si.parse(idMapping);
+
+            const selectionStateHide = {
+                highlightedAgents: [],
+                hiddenAgents: [{ name: "C", tags: ["", "t1", "t2"] }],
+            };
+            const ids = si.getHiddenIds(selectionStateHide);
+
+            expect(ids).toEqual([8, 9, 10, 11]);
         });
     });
 
