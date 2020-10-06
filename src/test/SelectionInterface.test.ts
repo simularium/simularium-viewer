@@ -134,10 +134,7 @@ describe("SelectionInterface module", () => {
 
             const ids = si.getHighlightedIds(SELECTION_STATE_HIGHLIGHT);
 
-            expect(ids.includes(0)).toEqual(true);
-            expect(ids.includes(1)).toEqual(true);
-            expect(ids.includes(2)).toEqual(true);
-            expect(ids.includes(3)).toEqual(true);
+            expect(ids).toEqual([0, 1, 2, 3]);
         });
 
         test("Highlight: highlight by name & single tag", () => {
@@ -146,8 +143,7 @@ describe("SelectionInterface module", () => {
 
             const ids = si.getHighlightedIds(SELECTION_STATE_HIGHLIGHT);
 
-            expect(ids.includes(5)).toEqual(true);
-            expect(ids.includes(7)).toEqual(true);
+            expect(ids).toEqual([5, 7]);
         });
 
         test("Highlight: highlight by name & multiple tags", () => {
@@ -156,7 +152,7 @@ describe("SelectionInterface module", () => {
 
             const ids = si.getHighlightedIds(SELECTION_STATE_HIGHLIGHT);
 
-            expect(ids.includes(11)).toEqual(true);
+            expect(ids).toEqual([11]);
         });
     });
 
@@ -167,10 +163,7 @@ describe("SelectionInterface module", () => {
 
             const ids = si.getHiddenIds(SELECTION_STATE_HIDE);
 
-            expect(ids.includes(0)).toEqual(true);
-            expect(ids.includes(1)).toEqual(true);
-            expect(ids.includes(2)).toEqual(true);
-            expect(ids.includes(3)).toEqual(true);
+            expect(ids).toEqual([0, 1, 2, 3]);
         });
 
         test("Hiding: hide by name & single tag", () => {
@@ -178,9 +171,7 @@ describe("SelectionInterface module", () => {
             si.parse(idMapping);
 
             const ids = si.getHiddenIds(SELECTION_STATE_HIDE);
-
-            expect(ids.includes(5)).toEqual(true);
-            expect(ids.includes(7)).toEqual(true);
+            expect(ids).toEqual([5, 7]);
         });
 
         test("Hiding: hide by name & multiple tags", () => {
@@ -189,7 +180,7 @@ describe("SelectionInterface module", () => {
 
             const ids = si.getHiddenIds(SELECTION_STATE_HIDE);
 
-            expect(ids.includes(11)).toEqual(true);
+            expect(ids).toEqual([11]);
         });
     });
 
