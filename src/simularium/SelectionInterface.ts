@@ -7,7 +7,7 @@ interface DecodedTypeEntry {
     tags: string[];
 }
 
-interface SelectionEntry {
+export interface SelectionEntry {
     name: string;
     tags: string[];
 }
