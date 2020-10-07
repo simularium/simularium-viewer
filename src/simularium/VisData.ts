@@ -117,7 +117,11 @@ class VisData {
                 const nSubPoints = visData[nSubPointsIndex];
                 const chunckLength = agentObjectKeys.length + nSubPoints; // each array length is varible based on how many subpoints the agent has
                 if (visData.length < chunckLength) {
-                    throw Error("malformed data: too few entries");
+                    if (this.onError) {
+                        return this.onError("malformed data: too few entries");
+                    } else {
+                        throw Error("malformed data: too few entries");
+                    }
                 }
 
                 const agentSubSetArray = visData.splice(0, chunckLength); // cut off the array of 1 agent data from front of the array;

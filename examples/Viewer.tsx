@@ -333,6 +333,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                         loadInitialData={true}
                         hideAllAgents={this.state.hideAllAgents}
                         showPaths={this.state.showPaths}
+                        onError={(error) => window.alert(error)}
                     />
                 </div>
             </div>

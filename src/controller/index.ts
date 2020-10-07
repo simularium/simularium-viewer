@@ -33,6 +33,7 @@ export default class SimulariumController {
     public visData: VisData;
     public handleTrajectoryInfo: (TrajectoryFileInfo) => void;
     public postConnect: () => void;
+    public onError?: (errorMessage: string) => void;
 
     private networkEnabled: boolean;
     private isPaused: boolean;
@@ -56,7 +57,7 @@ export default class SimulariumController {
             /* Do Nothing */
         };
         /* eslint-enable */
-
+        this.visData.onError = this.onError;
         if (params.netConnection || params.netConnectionSettings) {
             this.netConnection = params.netConnection
                 ? params.netConnection

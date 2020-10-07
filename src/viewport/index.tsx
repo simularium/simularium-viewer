@@ -37,6 +37,7 @@ interface ViewportProps {
     showPaths: boolean;
     showBounds: boolean;
     selectionStateInfo: SelectionStateInfo;
+    onError?: (errorMessage: string) => void;
 }
 
 interface Click {
@@ -172,6 +173,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             onUIDisplayDataChanged,
             loadInitialData,
             onJsonDataArrived,
+            onError,
         } = this.props;
         this.visGeometry.reparent(this.vdomRef.current);
         if (this.props.loggerLevel === "debug") {
@@ -179,6 +181,9 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                 this.stats.dom.style.position = "absolute";
                 this.vdomRef.current.appendChild(this.stats.dom);
             }
+        }
+        if (onError) {
+            simulariumController.onError = onError;
         }
 
         simulariumController.trajFileInfoCallback = (
