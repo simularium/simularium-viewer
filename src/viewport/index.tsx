@@ -194,9 +194,9 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                 this.selectionInterface.parse(msg.typeMapping);
             } catch (e) {
                 if (onError) {
-                    onError(`error parsing selection data, ${e.message}`);
+                    onError(`error parsing 'typeMapping' data, ${e.message}`);
                 } else {
-                    console.log('error parsing selection data', e)
+                    console.log("error parsing 'typeMapping' data", e)
                 }
             }
             onTrajectoryFileInfoChanged(msg);
