@@ -121,6 +121,7 @@ class VisData {
                     const attemptedMapping = agentObjectKeys.map(
                         (name, index) => `${name}: ${visData[index]}<br />`
                     );
+                    // passed up in controller.handleLocalFileChange
                     throw new FrontEndError(
                         `Example attempt to parse your data: <pre>${attemptedMapping.join(
                             ""
@@ -135,6 +136,7 @@ class VisData {
                         (name, index) =>
                             `${name}: ${agentSubSetArray[index]}<br />`
                     );
+                    // passed up in controller.handleLocalFileChange
                     throw new FrontEndError(
                         `Example attempt to parse your data: <pre>${attemptedMapping.join(
                             ""
@@ -362,6 +364,11 @@ class VisData {
     }
 
     public checkTypeMapping(typeMappingFromFile: EncodedTypeMapping): number[] {
+        if (!typeMappingFromFile) {
+            throw Error(
+                "data needs 'typeMapping' object to display agent controls"
+            );
+        }
         const idsInFrameData = new Set();
         const idsInTypeMapping = Object.keys(typeMappingFromFile).map(Number);
 

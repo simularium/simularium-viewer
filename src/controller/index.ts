@@ -252,8 +252,13 @@ export default class SimulariumController {
         } catch (e) {
             return Promise.reject(e);
         }
-        this.dragAndDropFileInfo = trajectoryInfo;
-        this.handleTrajectoryInfo(this.dragAndDropFileInfo);
+        try {
+            this.dragAndDropFileInfo = trajectoryInfo;
+
+            this.handleTrajectoryInfo(this.dragAndDropFileInfo);
+        } catch (e) {
+            return Promise.reject(e);
+        }
         return Promise.resolve({
             status: FILE_STATUS_SUCCESS,
         });
