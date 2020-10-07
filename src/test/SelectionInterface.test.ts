@@ -17,23 +17,6 @@ const idMapping = {
     13: { name: "E#t1000" },
 };
 
-const SELECTION_STATE_HIGHLIGHT = {
-    highlightedAgents: [
-        { name: "A", tags: [] },
-        { name: "B", tags: ["t1"] },
-        { name: "C", tags: ["t1", "t2"] },
-    ],
-    hiddenAgents: [],
-};
-const SELECTION_STATE_HIDE = {
-    highlightedAgents: [],
-    hiddenAgents: [
-        { name: "A", tags: [] },
-        { name: "B", tags: ["t1"] },
-        { name: "C", tags: ["t1", "t2"] },
-    ],
-};
-
 describe("SelectionInterface module", () => {
     describe("Handles Input", () => {
         test("Can decode valid encoded input", () => {
@@ -77,8 +60,8 @@ describe("SelectionInterface module", () => {
         });
     });
 
-    describe("Selection", () => {
-        test("Selection: select by name", () => {
+    describe("getIds", () => {
+        test("it returns id matching name", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
             const ids = si.getIds("D");
@@ -86,23 +69,41 @@ describe("SelectionInterface module", () => {
             expect(ids).toEqual([12]);
         });
 
-        test("Selection: select multiple by name", () => {
+        test("it returns multiple ids that all have the same name", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
             const ids = si.getIds("A");
-
             expect(ids).toEqual([0, 1, 2, 3]);
         });
 
-        test("Selection: select by name & multiple tags (Union)", () => {
+        test("it returns ids that match both & multiple tags (Union)", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
             const ids = si.getIds("A", ["t1", "t2"]);
-
             expect(ids).toEqual([1, 2, 3]);
         });
+        test("it returns id for names with no tag if passed an empty string", () => {
+            const si = new SelectionInterface();
+            si.parse(idMapping);
+            const ids = si.getIds("A", [""]);
+            expect(ids).toEqual([0]);
+        });
+        test("it returns an empty array if there is no matching name", () => {
+            const si = new SelectionInterface();
+            si.parse(idMapping);
+            const ids = si.getIds("F");
+            expect(ids).toEqual([]);
+        });
+        test("it returns an empty array if matching name and tag combination", () => {
+            const si = new SelectionInterface();
+            si.parse(idMapping);
+            const ids = si.getIds("D", ["not a tag"]);
+            expect(ids).toEqual([]);
+        });
+    });
 
-        test("Selection: select by tag", () => {
+    describe("getIdsByTags", () => {
+        test("Selection: select ids by tag", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
             const ids = si.getIdsByTags(["t1000"]);
@@ -131,32 +132,65 @@ describe("SelectionInterface module", () => {
         test("Highlight: highlight multiple by name", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
-
-            const ids = si.getHighlightedIds(SELECTION_STATE_HIGHLIGHT);
-
-            expect(ids.includes(0)).toEqual(true);
-            expect(ids.includes(1)).toEqual(true);
-            expect(ids.includes(2)).toEqual(true);
-            expect(ids.includes(3)).toEqual(true);
+            const selectionStateHighlight = {
+                highlightedAgents: [
+                    { name: "A", tags: [] },
+                    { name: "B", tags: [] },
+                    { name: "C", tags: [] },
+                    { name: "D", tags: [] },
+                ],
+                hiddenAgents: [],
+            };
+            const ids = si.getHighlightedIds(selectionStateHighlight);
+            const allAs = [0, 1, 2, 3];
+            const allBs = [4, 5, 6, 7];
+            const allCs = [8, 9, 10, 11];
+            const allDs = [12];
+            expect(ids).toEqual([...allAs, ...allBs, ...allCs, ...allDs]);
         });
-
-        test("Highlight: highlight by name & single tag", () => {
+        test("Highlight: highlight only unmodified states", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
+            const selectionStateHighlight = {
+                highlightedAgents: [
+                    { name: "A", tags: [""] },
+                    { name: "B", tags: [""] },
+                    { name: "C", tags: [""] },
+                    { name: "D", tags: [""] },
+                ],
+                hiddenAgents: [],
+            };
+            const ids = si.getHighlightedIds(selectionStateHighlight);
 
-            const ids = si.getHighlightedIds(SELECTION_STATE_HIGHLIGHT);
-
-            expect(ids.includes(5)).toEqual(true);
-            expect(ids.includes(7)).toEqual(true);
+            expect(ids).toEqual([0, 4, 8, 12]);
         });
-
-        test("Highlight: highlight by name & multiple tags", () => {
+        test("Highlight: highlight combination of modified and unmodified states", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
+            const selectionStateHighlight = {
+                highlightedAgents: [
+                    { name: "A", tags: ["", "t2"] },
+                    { name: "B", tags: ["t1", "t2"] },
+                    { name: "C", tags: ["", "t1", "t2"] },
+                    { name: "E", tags: ["t1000"] },
+                ],
+                hiddenAgents: [],
+            };
+            const ids = si.getHighlightedIds(selectionStateHighlight);
 
-            const ids = si.getHighlightedIds(SELECTION_STATE_HIGHLIGHT);
+            expect(ids).toEqual([0, 2, 3, 5, 6, 7, 8, 9, 10, 11, 13]);
+        });
 
-            expect(ids.includes(11)).toEqual(true);
+        test("it returns an empty array if no name and tag matches", () => {
+            const si = new SelectionInterface();
+            si.parse(idMapping);
+            const selectionStateHighlight = {
+                highlightedAgents: [{ name: "E", tags: [""] }],
+                hiddenAgents: [],
+            };
+            const ids = si.getHighlightedIds(selectionStateHighlight);
+
+            expect(ids).toEqual([]);
         });
     });
 
@@ -164,32 +198,46 @@ describe("SelectionInterface module", () => {
         test("Hiding: hide multiple by name", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
+            const selectionStateHide = {
+                highlightedAgents: [],
+                hiddenAgents: [
+                    { name: "A", tags: [] },
+                    { name: "C", tags: [] },
+                ],
+            };
+            const ids = si.getHiddenIds(selectionStateHide);
 
-            const ids = si.getHiddenIds(SELECTION_STATE_HIDE);
-
-            expect(ids.includes(0)).toEqual(true);
-            expect(ids.includes(1)).toEqual(true);
-            expect(ids.includes(2)).toEqual(true);
-            expect(ids.includes(3)).toEqual(true);
+            expect(ids).toEqual([0, 1, 2, 3, 8, 9, 10, 11]);
         });
 
-        test("Hiding: hide by name & single tag", () => {
+        test("Hiding: hide by name & tags", () => {
+            const si = new SelectionInterface();
+            si.parse(idMapping);
+            const selectionStateHide = {
+                highlightedAgents: [],
+                hiddenAgents: [
+                    { name: "A", tags: ["t1", "t2"] },
+                    { name: "B", tags: ["t1"] },
+                ],
+            };
+            const ids = si.getHiddenIds(selectionStateHide);
+            expect(ids).toEqual([1, 2, 3, 5, 7]);
+        });
+
+        test("Hiding: hide by name & null tag", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
 
-            const ids = si.getHiddenIds(SELECTION_STATE_HIDE);
+            const selectionStateHide = {
+                highlightedAgents: [],
+                hiddenAgents: [
+                    { name: "A", tags: [""] },
+                    { name: "C", tags: ["", "t1", "t2"] },
+                ],
+            };
+            const ids = si.getHiddenIds(selectionStateHide);
 
-            expect(ids.includes(5)).toEqual(true);
-            expect(ids.includes(7)).toEqual(true);
-        });
-
-        test("Hiding: hide by name & multiple tags", () => {
-            const si = new SelectionInterface();
-            si.parse(idMapping);
-
-            const ids = si.getHiddenIds(SELECTION_STATE_HIDE);
-
-            expect(ids.includes(11)).toEqual(true);
+            expect(ids).toEqual([0, 8, 9, 10, 11]);
         });
     });
 

@@ -7,7 +7,7 @@ interface DecodedTypeEntry {
     tags: string[];
 }
 
-interface SelectionEntry {
+export interface SelectionEntry {
     name: string;
     tags: string[];
 }
@@ -90,13 +90,21 @@ class SelectionInterface {
     public getIds(name: string, tags?: string[]): number[] {
         const entryList = this.entries[name];
         const indices: number[] = [];
-
+        if (!entryList) {
+            return [];
+        }
         entryList.forEach((entry) => {
             if (
                 !tags ||
                 tags.length === 0 ||
                 tags.some((t) => entry.tags.includes(t))
             ) {
+                if (entry.id >= 0) {
+                    indices.push(entry.id);
+                }
+            }
+            // unmodified state, include entries without any state tags
+            if (tags && tags.includes("") && entry.tags.length === 0) {
                 if (entry.id >= 0) {
                     indices.push(entry.id);
                 }
