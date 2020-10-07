@@ -190,7 +190,15 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             msg: TrajectoryFileInfo
         ) => {
             this.visGeometry.handleTrajectoryData(msg);
-            this.selectionInterface.parse(msg.typeMapping);
+            try {
+                this.selectionInterface.parse(msg.typeMapping);
+            } catch (e) {
+                if (onError) {
+                    onError(`error parsing selection data, ${e.message}`);
+                } else {
+                    console.log('error parsing selection data', e)
+                }
+            }
             onTrajectoryFileInfoChanged(msg);
 
             const uiDisplayData = this.selectionInterface.getUIDisplayData();

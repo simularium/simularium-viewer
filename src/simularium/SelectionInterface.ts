@@ -74,7 +74,9 @@ class SelectionInterface {
         }
 
         if (!name) {
-            throw Error("invalid name: " + encodedName);
+            throw Error(
+                `invalid or missing name. Agent id:${id}, name: ${encodedName}`
+            );
         }
 
         const uniqueTags = [...new Set(tags)];
