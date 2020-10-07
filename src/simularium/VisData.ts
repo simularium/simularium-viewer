@@ -324,6 +324,7 @@ class VisData {
 
     // for use w/ a drag-and-drop trajectory file
     //  save a file for playback
+    // errors passed up in controller.handleLocalFileChange
     public cacheJSON(visDataMsg: VisDataMessage): void {
         if (this.frameCache.length > 0) {
             throw Error(
@@ -363,6 +364,7 @@ class VisData {
         return this._dragAndDropFileInfo;
     }
 
+    // error passed up in controller.handleLocalFileChange
     public checkTypeMapping(typeMappingFromFile: EncodedTypeMapping): number[] {
         if (!typeMappingFromFile) {
             throw Error(

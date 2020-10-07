@@ -1,4 +1,3 @@
-import FrontEndError from "./FrontEndError";
 import { EncodedTypeMapping } from "./types";
 
 // An individual entry parsed from an encoded name
@@ -49,6 +48,7 @@ class SelectionInterface {
         });
     }
 
+    // errors can be caught by onError prop to viewer
     public parse(idNameMapping: EncodedTypeMapping): void {
         this.clear();
         if (!idNameMapping) {
@@ -81,6 +81,7 @@ class SelectionInterface {
         }
 
         if (!name) {
+            // error can be caught by onError prop to viewer
             throw Error(`invalid name. Agent id: ${id}, name: ${encodedName}`);
         }
 
