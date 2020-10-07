@@ -1,10 +1,11 @@
+import { difference } from "lodash";
 import * as util from "./ThreadUtil";
 import {
     TrajectoryFileInfo,
     EncodedTypeMapping,
     VisDataMessage,
 } from "./types";
-import { difference } from "lodash";
+import FrontEndError from "./FrontEndError";
 
 /**
  * Parse Agents from Net Data
@@ -115,18 +116,31 @@ class VisData {
 
             while (visData.length) {
                 const nSubPoints = visData[nSubPointsIndex];
-                const chunckLength = agentObjectKeys.length + nSubPoints; // each array length is varible based on how many subpoints the agent has
-                if (visData.length < chunckLength) {
-                    if (this.onError) {
-                        return this.onError("malformed data: too few entries");
-                    } else {
-                        throw Error("malformed data: too few entries");
-                    }
+                const chunkLength = agentObjectKeys.length + nSubPoints; // each array length is variable based on how many subpoints the agent has
+                if (visData.length < chunkLength) {
+                    const attemptedMapping = agentObjectKeys.map(
+                        (name, index) => `${name}: ${visData[index]}<br />`
+                    );
+                    throw new FrontEndError(
+                        `Example attempt to parse your data: <pre>${attemptedMapping.join(
+                            ""
+                        )}</pre>`,
+                        "your data is malformed, there are too few entries."
+                    );
                 }
 
-                const agentSubSetArray = visData.splice(0, chunckLength); // cut off the array of 1 agent data from front of the array;
+                const agentSubSetArray = visData.splice(0, chunkLength); // cut off the array of 1 agent data from front of the array;
                 if (agentSubSetArray.length < agentObjectKeys.length) {
-                    throw Error("malformed data: indexing off");
+                    const attemptedMapping = agentObjectKeys.map(
+                        (name, index) =>
+                            `${name}: ${agentSubSetArray[index]}<br />`
+                    );
+                    throw new FrontEndError(
+                        `Example attempt to parse your data: <pre>${attemptedMapping.join(
+                            ""
+                        )}</pre>`,
+                        "your data is malformed, there are less entries than expected for this agent"
+                    );
                 }
 
                 const agent = parseOneAgent(agentSubSetArray);
@@ -168,7 +182,6 @@ class VisData {
         } else {
             this.webWorker = null;
         }
-
         this.frameCache = [];
         this.frameDataCache = [];
         this.cacheFrame = -1;
