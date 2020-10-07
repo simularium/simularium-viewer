@@ -96,7 +96,9 @@ class SelectionInterface {
     public getIds(name: string, tags?: string[]): number[] {
         const entryList = this.entries[name];
         const indices: number[] = [];
-
+        if (!entryList) {
+            return [];
+        }
         entryList.forEach((entry) => {
             if (
                 !tags ||
