@@ -1,3 +1,4 @@
+import FrontEndError from "./FrontEndError";
 import { EncodedTypeMapping } from "./types";
 
 // An individual entry parsed from an encoded name
@@ -56,6 +57,12 @@ class SelectionInterface {
             );
         }
         Object.keys(idNameMapping).forEach((id) => {
+            if (isNaN(parseInt(id))) {
+                throw new Error(`Agent ids should be integers, ${id} is not`);
+            }
+            if (!idNameMapping[id].name) {
+                throw Error(`Missing agent name for agent ${id}`);
+            }
             this.decode(idNameMapping[id].name, parseInt(id));
         });
     }
@@ -74,18 +81,15 @@ class SelectionInterface {
         }
 
         if (!name) {
-            throw Error(
-                `invalid or missing name. Agent id:${id}, name: ${encodedName}`
-            );
+            throw Error(`invalid name. Agent id: ${id}, name: ${encodedName}`);
         }
 
         const uniqueTags = [...new Set(tags)];
         const entry = { id: id, name: name, tags: uniqueTags };
 
-        if (!Object.keys(this.entries).includes(name)) {
+        if (!this.entries.has(name)) {
             this.entries[name] = [];
         }
-
         this.entries[name].push(entry);
     }
 
