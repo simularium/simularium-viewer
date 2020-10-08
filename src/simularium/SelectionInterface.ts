@@ -61,7 +61,7 @@ class SelectionInterface {
                 throw new Error(`Agent ids should be integers, ${id} is not`);
             }
             if (!idNameMapping[id].name) {
-                throw Error(`Missing agent name for agent ${id}`);
+                throw new Error(`Missing agent name for agent ${id}`);
             }
             this.decode(idNameMapping[id].name, parseInt(id));
         });
@@ -82,7 +82,9 @@ class SelectionInterface {
 
         if (!name) {
             // error can be caught by onError prop to viewer
-            throw Error(`invalid name. Agent id: ${id}, name: ${encodedName}`);
+            throw new Error(
+                `invalid name. Agent id: ${id}, name: ${encodedName}`
+            );
         }
 
         const uniqueTags = [...new Set(tags)];

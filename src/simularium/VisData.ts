@@ -327,7 +327,7 @@ class VisData {
     // errors passed up in controller.handleLocalFileChange
     public cacheJSON(visDataMsg: VisDataMessage): void {
         if (this.frameCache.length > 0) {
-            throw Error(
+            throw new Error(
                 "cache not cleared before cacheing a new drag-and-drop file"
             );
         }
@@ -367,7 +367,7 @@ class VisData {
     // error passed up in controller.handleLocalFileChange
     public checkTypeMapping(typeMappingFromFile: EncodedTypeMapping): number[] {
         if (!typeMappingFromFile) {
-            throw Error(
+            throw new Error(
                 "data needs 'typeMapping' object to display agent controls"
             );
         }
@@ -392,7 +392,7 @@ class VisData {
         const idsSet = new Set();
 
         if (this.frameCache.length === 0) {
-            throw Error("No data in cache for drag-and-drop file");
+            throw new Error("No data in cache for drag-and-drop file");
         }
 
         this.frameCache.forEach((element) => {
