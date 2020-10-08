@@ -139,6 +139,7 @@ class VisGeometry {
     private resetCameraOnNewScene: boolean;
     private lodBias: number;
     private lodDistanceStops: number[];
+    private needToCenterCamera: boolean;
 
     public constructor(loggerLevel: ILogLevel) {
         this.renderStyle = RenderStyle.MOLECULAR;
@@ -321,6 +322,11 @@ class VisGeometry {
 
     public resetCamera(): void {
         this.controls.reset();
+    }
+
+    public centerCamera(): void {
+        this.followObjectId = NO_AGENT;
+        this.needToCenterCamera = true;
     }
 
     public getFollowObject(): number {
@@ -1230,6 +1236,15 @@ class VisGeometry {
                 this.camera.position.lerp(newPosition, lerpRate);
             } else {
                 this.camera.position.copy(newPosition);
+            }
+        } else if (this.needToCenterCamera) {
+            this.controls.target.lerp(new Vector3(), lerpRate);
+            if (
+                this.controls.target.x === 0 &&
+                this.controls.target.y === 0 &&
+                this.controls.target.z === 0
+            ) {
+                this.needToCenterCamera = false;
             }
         }
     }

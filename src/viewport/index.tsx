@@ -134,6 +134,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         this.dispatchUpdatedTime = this.dispatchUpdatedTime.bind(this);
         this.handleTimeChange = this.handleTimeChange.bind(this);
         this.resetCamera = this.resetCamera.bind(this);
+        this.centerCamera = this.centerCamera.bind(this);
 
         this.visGeometry = new VisGeometry(loggerLevel);
         this.visGeometry.setupScene();
@@ -210,8 +211,8 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             }
         };
 
-        if(simulariumController.netConnection) {
-          simulariumController.connect();
+        if (simulariumController.netConnection) {
+            simulariumController.connect();
         }
 
         if (this.vdomRef.current) {
@@ -383,6 +384,10 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         this.visGeometry.resetCamera();
     }
 
+    public centerCamera(): void {
+        this.visGeometry.centerCamera();
+    }
+
     public onPickObject(posX: number, posY: number): void {
         // TODO: intersect with scene's children not including lights?
         // can we select a smaller number of things to hit test?
@@ -501,6 +506,13 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         return (
             <div className="view-controls">
                 <button onClick={this.resetCamera} className="btn">
+                    <FontAwesomeIcon
+                        icon={faSyncAlt}
+                        transform="flip-h"
+                        style={{ color: "#737373" }}
+                    />
+                </button>
+                <button onClick={this.centerCamera} className="btn">
                     <FontAwesomeIcon
                         icon={faSyncAlt}
                         transform="flip-h"
