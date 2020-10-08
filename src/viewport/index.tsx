@@ -37,6 +37,7 @@ interface ViewportProps {
     showPaths: boolean;
     showBounds: boolean;
     selectionStateInfo: SelectionStateInfo;
+    showCameraControls: boolean;
 }
 
 interface Click {
@@ -182,6 +183,10 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                 this.vdomRef.current.appendChild(this.stats.dom);
             }
         }
+
+        simulariumController.resetCamera = this.resetCamera;
+        simulariumController.reOrientCamera = this.reOrientCamera;
+        simulariumController.centerCamera = this.centerCamera;
 
         simulariumController.trajFileInfoCallback = (
             msg: TrajectoryFileInfo
@@ -528,7 +533,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
     }
 
     public render(): React.ReactElement<HTMLElement> {
-        const { width, height } = this.props;
+        const { width, height, showCameraControls } = this.props;
 
         // style is specified below so that the size
         // can be passed as a react property
@@ -543,7 +548,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                     }}
                     ref={this.vdomRef}
                 >
-                    {this.renderViewControls()}
+                    {showCameraControls && this.renderViewControls()}
                 </div>
             </>
         );

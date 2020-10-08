@@ -1,4 +1,5 @@
 import jsLogger from "js-logger";
+import { noop } from "lodash";
 import {
     NetConnection,
     NetConnectionParams,
@@ -33,6 +34,9 @@ export default class SimulariumController {
     public visData: VisData;
     public handleTrajectoryInfo: (TrajectoryFileInfo) => void;
     public postConnect: () => void;
+    public resetCamera: () => void;
+    public centerCamera: () => void;
+    public reOrientCamera: () => void;
 
     private networkEnabled: boolean;
     private isPaused: boolean;
@@ -55,6 +59,10 @@ export default class SimulariumController {
         this.handleTrajectoryInfo = (msg: TrajectoryFileInfo) => {
             /* Do Nothing */
         };
+
+        this.reOrientCamera = () => noop;
+        this.resetCamera = () => noop;
+        this.centerCamera = () => noop;
         /* eslint-enable */
 
         if (params.netConnection || params.netConnectionSettings) {

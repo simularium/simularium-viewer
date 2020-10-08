@@ -223,9 +223,7 @@ class Viewer extends React.Component<{}, ViewerState> {
     public render(): JSX.Element {
         return (
             <div className="container" style={{ height: "90%", width: "75%" }}>
-                <button onClick={() => this.configureAndStart()}>
-                    Start
-                </button>
+                <button onClick={() => this.configureAndStart()}>Start</button>
                 <button onClick={() => simulariumController.pause()}>
                     Pause
                 </button>
@@ -236,24 +234,26 @@ class Viewer extends React.Component<{}, ViewerState> {
                     stop
                 </button>
                 <select
-                onChange={(event) => {playbackFile = event.target.value} }
-                defaultValue={playbackFile}
+                    onChange={(event) => {
+                        playbackFile = event.target.value;
+                    }}
+                    defaultValue={playbackFile}
                 >
-                  <option value="test_traj1.h5">TEST</option>
-                  <option value="microtubules_v2_shrinking.h5">M Tub</option>
-                  <option value="aster.cmo">Aster</option>
-                  <option value="actin34_0.h5">Actin 34</option>
-                  <option value="microtubules30_1.h5">MT 30</option>
-                  <option value="ATPsynthase_1.h5">ATP 1</option>
-                  <option value="ATPsynthase_2.h5">ATP 2</option>
-                  <option value="ATPsynthase_3.h5">ATP 3</option>
-                  <option value="ATPsynthase_4.h5">ATP 4</option>
-                  <option value="ATPsynthase_5.h5">ATP 5</option>
-                  <option value="ATPsynthase_6.h5">ATP 6</option>
-                  <option value="ATPsynthase_7.h5">ATP 7</option>
-                  <option value="ATPsynthase_8.h5">ATP 8</option>
-                  <option value="ATPsynthase_9.h5">ATP 9</option>
-                  <option value="ATPsynthase_10.h5">ATP 10</option>
+                    <option value="test_traj1.h5">TEST</option>
+                    <option value="microtubules_v2_shrinking.h5">M Tub</option>
+                    <option value="aster.cmo">Aster</option>
+                    <option value="actin34_0.h5">Actin 34</option>
+                    <option value="microtubules30_1.h5">MT 30</option>
+                    <option value="ATPsynthase_1.h5">ATP 1</option>
+                    <option value="ATPsynthase_2.h5">ATP 2</option>
+                    <option value="ATPsynthase_3.h5">ATP 3</option>
+                    <option value="ATPsynthase_4.h5">ATP 4</option>
+                    <option value="ATPsynthase_5.h5">ATP 5</option>
+                    <option value="ATPsynthase_6.h5">ATP 6</option>
+                    <option value="ATPsynthase_7.h5">ATP 7</option>
+                    <option value="ATPsynthase_8.h5">ATP 8</option>
+                    <option value="ATPsynthase_9.h5">ATP 9</option>
+                    <option value="ATPsynthase_10.h5">ATP 10</option>
                 </select>
                 <br />
                 <input
@@ -312,6 +312,15 @@ class Viewer extends React.Component<{}, ViewerState> {
                     }
                 >
                     Switch Render
+                </button>
+                <button onClick={simulariumController.resetCamera}>
+                    Reset camera
+                </button>
+                <button onClick={simulariumController.centerCamera}>
+                    center camera
+                </button>
+                <button onClick={simulariumController.reOrientCamera}>
+                    staring orientation
                 </button>
                 <div className="viewer-container">
                     <SimulariumViewer
