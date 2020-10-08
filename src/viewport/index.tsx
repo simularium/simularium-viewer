@@ -135,6 +135,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         this.handleTimeChange = this.handleTimeChange.bind(this);
         this.resetCamera = this.resetCamera.bind(this);
         this.centerCamera = this.centerCamera.bind(this);
+        this.reOrientCamera = this.reOrientCamera.bind(this);
 
         this.visGeometry = new VisGeometry(loggerLevel);
         this.visGeometry.setupScene();
@@ -388,6 +389,10 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         this.visGeometry.centerCamera();
     }
 
+    public reOrientCamera(): void {
+        this.visGeometry.reOrientCamera();
+    }
+
     public onPickObject(posX: number, posY: number): void {
         // TODO: intersect with scene's children not including lights?
         // can we select a smaller number of things to hit test?
@@ -512,12 +517,11 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                         style={{ color: "#737373" }}
                     />
                 </button>
-                <button onClick={this.centerCamera} className="btn">
-                    <FontAwesomeIcon
-                        icon={faSyncAlt}
-                        transform="flip-h"
-                        style={{ color: "#737373" }}
-                    />
+                <button onClick={this.centerCamera} className="btn-work">
+                    Re-center
+                </button>
+                <button onClick={this.reOrientCamera} className="btn-word">
+                    Starting orientation
                 </button>
             </div>
         );

@@ -47,7 +47,7 @@ const DEFAULT_BACKGROUND_COLOR = new Color(0.121569, 0.13333, 0.17647);
 const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 const NO_AGENT = -1;
-
+const DEFAULT_CAMERA_Z_POSITION = 120;
 export enum RenderStyle {
     GENERIC,
     MOLECULAR,
@@ -55,6 +55,10 @@ export enum RenderStyle {
 
 function lerp(x0: number, x1: number, alpha: number): number {
     return x0 + (x1 - x0) * alpha;
+}
+
+interface OrbitControlsWithPosition0 extends OrbitControls {
+    position0: Vector3;
 }
 
 interface AgentTypeGeometry {
@@ -118,7 +122,7 @@ class VisGeometry {
     public renderer: WebGLRenderer;
     public scene: Scene;
     public camera: PerspectiveCamera;
-    public controls: OrbitControls;
+    public controls: OrbitControlsWithPosition0;
     public dl: DirectionalLight;
     public boundingBox: Box3;
     public boundingBoxMesh: Box3Helper;
@@ -140,6 +144,8 @@ class VisGeometry {
     private lodBias: number;
     private lodDistanceStops: number[];
     private needToCenterCamera: boolean;
+    private needToReOrientCamera: boolean;
+    private rotateDistance: number;
 
     public constructor(loggerLevel: ILogLevel) {
         this.renderStyle = RenderStyle.MOLECULAR;
@@ -162,7 +168,9 @@ class VisGeometry {
         this.fixLightsToCamera = true;
         this.highlightedIds = [];
         this.hiddenIds = [];
-
+        this.needToCenterCamera = false;
+        this.needToReOrientCamera = false;
+        this.rotateDistance = DEFAULT_CAMERA_Z_POSITION;
         // will store data for all agents that are drawing paths
         this.paths = [];
 
@@ -193,7 +201,7 @@ class VisGeometry {
         this.controls = new OrbitControls(
             this.camera,
             this.renderer.domElement
-        );
+        ) as OrbitControlsWithPosition0;
 
         this.boundingBox = new Box3(
             new Vector3(0, 0, 0),
@@ -321,12 +329,19 @@ class VisGeometry {
     }
 
     public resetCamera(): void {
+        this.followObjectId = NO_AGENT;
         this.controls.reset();
     }
 
     public centerCamera(): void {
         this.followObjectId = NO_AGENT;
         this.needToCenterCamera = true;
+    }
+
+    public reOrientCamera(): void {
+        this.followObjectId = NO_AGENT;
+        this.needToReOrientCamera = true;
+        this.rotateDistance = this.camera.position.distanceTo(new Vector3());
     }
 
     public getFollowObject(): number {
@@ -475,11 +490,15 @@ class VisGeometry {
     }
 
     public setUpControls(element: HTMLElement): void {
-        this.controls = new OrbitControls(this.camera, element);
+        this.controls = new OrbitControls(
+            this.camera,
+            element
+        ) as OrbitControlsWithPosition0;
         this.controls.maxDistance = 750;
         this.controls.minDistance = 5;
         this.controls.zoomSpeed = 1.0;
         this.controls.enablePan = false;
+        this.controls.saveState();
     }
 
     /**
@@ -547,7 +566,7 @@ class VisGeometry {
         this.renderer.setClearColor(this.backgroundColor, 1);
         this.renderer.clear();
 
-        this.camera.position.z = 120;
+        this.camera.position.z = DEFAULT_CAMERA_Z_POSITION;
     }
 
     public loadPdb(pdbName: string, assetPath: string): void {
@@ -1245,6 +1264,23 @@ class VisGeometry {
                 this.controls.target.z === 0
             ) {
                 this.needToCenterCamera = false;
+            }
+        } else if (this.needToReOrientCamera) {
+            this.controls.target.copy(new Vector3());
+            const { position } = this.camera;
+            const curDistanceFromCenter = this.rotateDistance;
+
+            const targetLocation = new Vector3()
+                .copy(this.controls.position0)
+                .setLength(curDistanceFromCenter);
+            const lerpPosition = new Vector3().copy(position);
+            lerpPosition.lerp(targetLocation, lerpRate);
+            lerpPosition.setLength(this.rotateDistance);
+            this.camera.position.copy(lerpPosition);
+
+            // it doesnt seem to be able to get to zero, but this was small enough to look good
+            if (position.angleTo(targetLocation) < 0.002) {
+                this.needToReOrientCamera = false;
             }
         }
     }
