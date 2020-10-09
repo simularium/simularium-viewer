@@ -837,10 +837,6 @@ class VisGeometry {
         );
     }
 
-    public getColorHexForTypeId(typeId) {
-        return this.getColorForTypeId(typeId).getHexString();
-    }
-
     public createMeshes(): void {
         this.geomCount = MAX_MESHES;
 
