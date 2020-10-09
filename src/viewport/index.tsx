@@ -37,6 +37,7 @@ interface ViewportProps {
     showPaths: boolean;
     showBounds: boolean;
     selectionStateInfo: SelectionStateInfo;
+    onError?: (errorMessage: string) => void;
 }
 
 interface Click {
@@ -172,6 +173,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             onUIDisplayDataChanged,
             loadInitialData,
             onJsonDataArrived,
+            onError,
         } = this.props;
         this.visGeometry.reparent(this.vdomRef.current);
         if (this.props.loggerLevel === "debug") {
@@ -180,12 +182,23 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                 this.vdomRef.current.appendChild(this.stats.dom);
             }
         }
+        if (onError) {
+            simulariumController.onError = onError;
+        }
 
         simulariumController.trajFileInfoCallback = (
             msg: TrajectoryFileInfo
         ) => {
             this.visGeometry.handleTrajectoryData(msg);
-            this.selectionInterface.parse(msg.typeMapping);
+            try {
+                this.selectionInterface.parse(msg.typeMapping);
+            } catch (e) {
+                if (onError) {
+                    onError(`error parsing 'typeMapping' data, ${e.message}`);
+                } else {
+                    console.log("error parsing 'typeMapping' data", e)
+                }
+            }
             onTrajectoryFileInfoChanged(msg);
 
             const uiDisplayData = this.selectionInterface.getUIDisplayData();
