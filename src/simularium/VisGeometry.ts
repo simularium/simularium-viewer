@@ -109,7 +109,6 @@ class VisGeometry {
     public visAgents: VisAgent[];
     public visAgentInstances: Map<number, VisAgent>;
     public lastNumberOfAgents: number;
-    public colorVariant: number;
     public fixLightsToCamera: boolean;
     public highlightedIds: number[];
     public hiddenIds: number[];
@@ -139,6 +138,7 @@ class VisGeometry {
     private resetCameraOnNewScene: boolean;
     private lodBias: number;
     private lodDistanceStops: number[];
+    private needsToRecolorAgents: boolean;
 
     public constructor(loggerLevel: ILogLevel) {
         this.renderStyle = RenderStyle.MOLECULAR;
@@ -157,7 +157,6 @@ class VisGeometry {
         this.visAgents = [];
         this.visAgentInstances = new Map<number, VisAgent>();
         this.lastNumberOfAgents = 0;
-        this.colorVariant = 50;
         this.fixLightsToCamera = true;
         this.highlightedIds = [];
         this.hiddenIds = [];
@@ -170,6 +169,7 @@ class VisGeometry {
         this.membraneAgent = undefined;
 
         this.moleculeRenderer = new MoleculeRenderer();
+        this.needsToRecolorAgents = true;
 
         this.backgroundColor = DEFAULT_BACKGROUND_COLOR;
         this.pathEndColor = this.backgroundColor.clone();
@@ -801,6 +801,12 @@ class VisGeometry {
      *   Run Time Mesh functions
      */
     public createMaterials(colors: number[]): void {
+        // convert any #FFFFFF -> 0xFFFFFF
+        colors.forEach(function (part, index, arr) {
+            const color = arr[index];
+            arr[index] = parseInt(color.toString().replace(/^#/, "0x"), 16);
+        });
+
         const numColors = colors.length;
         // fill buffer of colors:
         this.colorsData = new Float32Array(numColors * 4);
@@ -815,11 +821,11 @@ class VisGeometry {
             this.colorsData[i * 4 + 3] = 1.0;
         }
         this.moleculeRenderer.updateColors(numColors, this.colorsData);
+        this.needsToRecolorAgents = true;
     }
 
     private getColorIndexForTypeId(typeId): number {
-        const index = (typeId + 1) * this.colorVariant;
-        return index % (this.colorsData.length / 4);
+        return typeId % (this.colorsData.length / 4);
     }
 
     private getColorForTypeId(typeId): Color {
@@ -829,6 +835,10 @@ class VisGeometry {
             this.colorsData[index * 4 + 1],
             this.colorsData[index * 4 + 2]
         );
+    }
+
+    public getColorHexForTypeId(typeId) {
+        return this.getColorForTypeId(typeId).getHexString();
     }
 
     public createMeshes(): void {
@@ -1068,7 +1078,11 @@ class VisGeometry {
             // if not fiber...
             if (visType === VisTypes.ID_VIS_TYPE_DEFAULT) {
                 // did the agent type change since the last sim time?
-                if (typeId !== lastTypeId || visType !== visAgent.visType) {
+                if (
+                    this.needsToRecolorAgents || // have the colors changed?
+                    typeId !== lastTypeId ||
+                    visType !== visAgent.visType
+                ) {
                     const meshGeom = this.getGeomFromId(typeId);
                     visAgent.visType = visType;
                     if (meshGeom) {
@@ -1189,6 +1203,7 @@ class VisGeometry {
             }
         });
 
+        this.needsToRecolorAgents = false;
         this.hideUnusedAgents(agents.length);
     }
 

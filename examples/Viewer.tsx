@@ -23,6 +23,25 @@ interface FileHTML extends File {
     text(): Promise<string>;
 }
 
+const agentColors = [
+  "#9f516c",
+  "#81dbe6",
+  "#3452d8",
+  "#9267cb",
+  "#68a500",
+  "#d94e6f",
+  "#d49a01",
+  "#bf5736",
+  "#ffc55b",
+  "#ce8ec9",
+  "#00aabf",
+  "#abb652",
+  "#0ba345",
+  "#d14040",
+  "#d98d73",
+  "#418463",
+];
+
 interface ViewerState {
     renderStyle: RenderStyle;
     selectedName: string;
@@ -36,6 +55,7 @@ interface ViewerState {
     width: number;
     selectionStateInfo: SelectionStateInfo;
     hideAllAgents: boolean;
+    agentColors: number[];
     showPaths: boolean;
     timeStep: number;
     totalDuration: number;
@@ -43,7 +63,7 @@ interface ViewerState {
 }
 
 const simulariumController = new SimulariumController({});
-let playbackFile = "ATPsynthase_9.h5";
+let playbackFile = "actin012_3.h5";
 
 let currentFrame = 0;
 let currentTime = 0;
@@ -58,6 +78,7 @@ const initialState = {
     height: 700,
     width: 800,
     hideAllAgents: false,
+    agentColors: agentColors,
     showPaths: true,
     timeStep: 1,
     totalDuration: 100,
@@ -239,6 +260,10 @@ class Viewer extends React.Component<{}, ViewerState> {
                 onChange={(event) => {playbackFile = event.target.value} }
                 defaultValue={playbackFile}
                 >
+                  <option value="actin012_3.h5">Actin 12_3</option>
+                  <option value="listeria01.simularium">listeria 01</option>
+                  <option value="kinesin002_01.h5">kinesin 002</option>
+                  <option value="microtubules038_10.h5">MT 38</option>
                   <option value="test_traj1.h5">TEST</option>
                   <option value="microtubules_v2_shrinking.h5">M Tub</option>
                   <option value="aster.cmo">Aster</option>
@@ -331,6 +356,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                             this
                         )}
                         loadInitialData={true}
+                        agentColors={this.state.agentColors}
                         hideAllAgents={this.state.hideAllAgents}
                         showPaths={this.state.showPaths}
                     />
