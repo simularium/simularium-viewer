@@ -132,6 +132,7 @@ class VisGeometry {
     public agentFiberGroup: Group;
     public agentPDBGroup: Group;
     public agentPathGroup: Group;
+    public idColorMapping: Map<number, number>;
     private raycaster: Raycaster;
     private supportsMoleculeRendering: boolean;
     private membraneAgent?: VisAgent;
@@ -152,6 +153,7 @@ class VisGeometry {
         this.meshLoadAttempted = new Map<string, boolean>();
         this.pdbLoadAttempted = new Map<string, boolean>();
         this.scaleMapping = new Map<number, number>();
+        this.idColorMapping = new Map<number, number>();
         this.geomCount = MAX_MESHES;
         this.followObjectId = NO_AGENT;
         this.visAgents = [];
@@ -824,12 +826,23 @@ class VisGeometry {
         this.needsToRecolorAgents = true;
     }
 
-    private getColorIndexForTypeId(typeId): number {
-        return typeId % (this.colorsData.length / 4);
+    private getColorIndexForTypeId(typeId: number): number {
+        const index = this.idColorMapping[typeId];
+        return index % (this.colorsData.length / 4);
     }
 
-    private getColorForTypeId(typeId): Color {
+    private getColorForTypeId(typeId: number): Color {
         const index = this.getColorIndexForTypeId(typeId);
+        return this.getColorForIndex(index);
+    }
+
+    public setColorForIds(ids: number[], colorId: number): void {
+        ids.forEach((id) => {
+            this.idColorMapping[id] = colorId;
+        });
+    }
+
+    public getColorForIndex(index: number): Color {
         return new Color(
             this.colorsData[index * 4],
             this.colorsData[index * 4 + 1],

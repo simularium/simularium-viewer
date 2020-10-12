@@ -190,6 +190,15 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             onTrajectoryFileInfoChanged(msg);
 
             const uiDisplayData = this.selectionInterface.getUIDisplayData();
+            let colorIndex = 0;
+            uiDisplayData.forEach(entry => {
+              const ids = this.selectionInterface.getIds(entry.name);
+              this.visGeometry.setColorForIds(ids, colorIndex);
+
+              entry.color = this.visGeometry.getColorForIndex(colorIndex).getHexString();
+              colorIndex = colorIndex + 1;
+            });
+
             onUIDisplayDataChanged(uiDisplayData);
         };
 
