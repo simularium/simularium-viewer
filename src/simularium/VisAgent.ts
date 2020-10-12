@@ -43,6 +43,11 @@ export default class VisAgent {
         32,
         32
     );
+    public static fiberEndcapGeometry: SphereBufferGeometry = new SphereBufferGeometry(
+        1,
+        8,
+        8
+    );
     // this material only used in webGL1 fallback rendering mode
     private static followMaterial: MeshBasicMaterial = new MeshBasicMaterial({
         color: new Color(1, 0, 0),
@@ -372,17 +377,24 @@ export default class VisAgent {
         // first child is fiber
         // second and third children are endcaps
 
-        if (this.mesh.children.length !== 3) {
-            console.error("Bad mesh structure for fiber");
-            return;
-        }
+        //if (this.mesh.children.length !== 3) {
+        //    console.error("Bad mesh structure for fiber");
+        //    return;
+        // }
 
         // put all the subpoints into a Vector3[]
         const curvePoints: Vector3[] = [];
         const numSubPoints = subpoints.length;
+        const numPoints = numSubPoints / 3;
         if (numSubPoints % 3 !== 0) {
             console.warn(
                 "Warning, subpoints array does not contain a multiple of 3"
+            );
+            return;
+        }
+        if (numPoints < 2) {
+            console.warn(
+                "Warning, subpoints array does not have enough points for a curve"
             );
             return;
         }
@@ -397,34 +409,36 @@ export default class VisAgent {
         this.fiberCurve = new CatmullRomCurve3(curvePoints);
         const fibergeometry = new TubeBufferGeometry(
             this.fiberCurve,
-            (4 * numSubPoints) / 3,
+            4 * (numPoints - 1), // 4 segments per control point
             collisionRadius * scale * 0.5,
-            8,
+            8, // could reduce this with depth?
             false
         );
 
         (this.mesh.children[0] as Mesh).geometry = fibergeometry;
 
-        // update transform of endcap 0
-        const runtimeFiberEncapMesh0 = this.mesh.children[1] as Mesh;
-        runtimeFiberEncapMesh0.position.x = curvePoints[0].x;
-        runtimeFiberEncapMesh0.position.y = curvePoints[0].y;
-        runtimeFiberEncapMesh0.position.z = curvePoints[0].z;
-        runtimeFiberEncapMesh0.scale.x = collisionRadius * scale * 0.5;
-        runtimeFiberEncapMesh0.scale.y = collisionRadius * scale * 0.5;
-        runtimeFiberEncapMesh0.scale.z = collisionRadius * scale * 0.5;
+        if (this.mesh.children.length === 3) {
+            // update transform of endcap 0
+            const runtimeFiberEncapMesh0 = this.mesh.children[1] as Mesh;
+            runtimeFiberEncapMesh0.position.x = curvePoints[0].x;
+            runtimeFiberEncapMesh0.position.y = curvePoints[0].y;
+            runtimeFiberEncapMesh0.position.z = curvePoints[0].z;
+            runtimeFiberEncapMesh0.scale.x = collisionRadius * scale * 0.5;
+            runtimeFiberEncapMesh0.scale.y = collisionRadius * scale * 0.5;
+            runtimeFiberEncapMesh0.scale.z = collisionRadius * scale * 0.5;
 
-        // update transform of endcap 1
-        const runtimeFiberEncapMesh1 = this.mesh.children[2] as Mesh;
-        runtimeFiberEncapMesh1.position.x =
-            curvePoints[curvePoints.length - 1].x;
-        runtimeFiberEncapMesh1.position.y =
-            curvePoints[curvePoints.length - 1].y;
-        runtimeFiberEncapMesh1.position.z =
-            curvePoints[curvePoints.length - 1].z;
-        runtimeFiberEncapMesh1.scale.x = collisionRadius * scale * 0.5;
-        runtimeFiberEncapMesh1.scale.y = collisionRadius * scale * 0.5;
-        runtimeFiberEncapMesh1.scale.z = collisionRadius * scale * 0.5;
+            // update transform of endcap 1
+            const runtimeFiberEncapMesh1 = this.mesh.children[2] as Mesh;
+            runtimeFiberEncapMesh1.position.x =
+                curvePoints[curvePoints.length - 1].x;
+            runtimeFiberEncapMesh1.position.y =
+                curvePoints[curvePoints.length - 1].y;
+            runtimeFiberEncapMesh1.position.z =
+                curvePoints[curvePoints.length - 1].z;
+            runtimeFiberEncapMesh1.scale.x = collisionRadius * scale * 0.5;
+            runtimeFiberEncapMesh1.scale.y = collisionRadius * scale * 0.5;
+            runtimeFiberEncapMesh1.scale.z = collisionRadius * scale * 0.5;
+        }
     }
 
     // make a single generic fiber and return it
@@ -437,16 +451,16 @@ export default class VisAgent {
         const fiberMesh = new Mesh(geometry);
         fiberMesh.name = `Fiber`;
 
-        const fiberEndcapMesh0 = new Mesh(VisAgent.sphereGeometry);
+        const fiberEndcapMesh0 = new Mesh(VisAgent.fiberEndcapGeometry);
         fiberEndcapMesh0.name = `FiberEnd0`;
 
-        const fiberEndcapMesh1 = new Mesh(VisAgent.sphereGeometry);
+        const fiberEndcapMesh1 = new Mesh(VisAgent.fiberEndcapGeometry);
         fiberEndcapMesh1.name = `FiberEnd1`;
 
         const fiberGroup = new Group();
         fiberGroup.add(fiberMesh);
-        fiberGroup.add(fiberEndcapMesh0);
-        fiberGroup.add(fiberEndcapMesh1);
+        //        fiberGroup.add(fiberEndcapMesh0);
+        //        fiberGroup.add(fiberEndcapMesh1);
         // downstream code will switch this flag
         fiberGroup.visible = false;
         return fiberGroup;

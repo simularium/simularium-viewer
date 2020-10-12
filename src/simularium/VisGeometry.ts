@@ -1043,6 +1043,8 @@ class VisGeometry {
 
         let dx, dy, dz;
 
+        const fiberHistogram = new Map<number, number>();
+
         agents.forEach((agentData, i) => {
             const visType = agentData["vis-type"];
             const instanceId = agentData.instanceId;
@@ -1186,9 +1188,22 @@ class VisGeometry {
                 visAgent.updateFiber(agentData.subpoints, agentData.cr, scale);
 
                 visAgent.mesh.visible = true;
+
+                const count = fiberHistogram.get(
+                    agentData.subpoints.length / 3
+                );
+                if (count !== undefined) {
+                    fiberHistogram.set(
+                        agentData.subpoints.length / 3,
+                        count + 1
+                    );
+                } else {
+                    fiberHistogram.set(agentData.subpoints.length / 3, 1);
+                }
             }
         });
 
+        console.log(fiberHistogram);
         this.hideUnusedAgents(agents.length);
     }
 
