@@ -57,10 +57,6 @@ function lerp(x0: number, x1: number, alpha: number): number {
     return x0 + (x1 - x0) * alpha;
 }
 
-interface OrbitControlsWithPosition0 extends OrbitControls {
-    position0: Vector3;
-}
-
 interface AgentTypeGeometry {
     meshName: string;
     pdbName: string;
@@ -122,7 +118,7 @@ class VisGeometry {
     public renderer: WebGLRenderer;
     public scene: Scene;
     public camera: PerspectiveCamera;
-    public controls: OrbitControlsWithPosition0;
+    public controls: OrbitControls;
     public dl: DirectionalLight;
     public boundingBox: Box3;
     public boundingBoxMesh: Box3Helper;
@@ -146,6 +142,7 @@ class VisGeometry {
     private needToCenterCamera: boolean;
     private needToReOrientCamera: boolean;
     private rotateDistance: number;
+    private initCameraPosition: Vector3;
 
     public constructor(loggerLevel: ILogLevel) {
         this.renderStyle = RenderStyle.MOLECULAR;
@@ -195,13 +192,16 @@ class VisGeometry {
         this.agentPathGroup = new Group();
 
         this.camera = new PerspectiveCamera(75, 100 / 100, 0.1, 10000);
+
+        this.initCameraPosition = this.camera.position.clone();
+
         this.dl = new DirectionalLight(0xffffff, 0.6);
         this.hemiLight = new HemisphereLight(0xffffff, 0x000000, 0.5);
         this.renderer = new WebGLRenderer();
         this.controls = new OrbitControls(
             this.camera,
             this.renderer.domElement
-        ) as OrbitControlsWithPosition0;
+        );
 
         this.boundingBox = new Box3(
             new Vector3(0, 0, 0),
@@ -490,10 +490,7 @@ class VisGeometry {
     }
 
     public setUpControls(element: HTMLElement): void {
-        this.controls = new OrbitControls(
-            this.camera,
-            element
-        ) as OrbitControlsWithPosition0;
+        this.controls = new OrbitControls(this.camera, element);
         this.controls.maxDistance = 750;
         this.controls.minDistance = 5;
         this.controls.zoomSpeed = 1.0;
@@ -567,6 +564,7 @@ class VisGeometry {
         this.renderer.clear();
 
         this.camera.position.z = DEFAULT_CAMERA_Z_POSITION;
+        this.initCameraPosition = this.camera.position.clone();
     }
 
     public loadPdb(pdbName: string, assetPath: string): void {
@@ -1271,7 +1269,7 @@ class VisGeometry {
             const curDistanceFromCenter = this.rotateDistance;
 
             const targetLocation = new Vector3()
-                .copy(this.controls.position0)
+                .copy(this.initCameraPosition)
                 .setLength(curDistanceFromCenter);
             const lerpPosition = new Vector3().copy(position);
             lerpPosition.lerp(targetLocation, lerpRate);
