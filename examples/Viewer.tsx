@@ -122,6 +122,7 @@ class Viewer extends React.Component<{}, ViewerState> {
             simulariumController
                 .changeFile(fileName, true, simulariumFile)
                 .catch((error) => {
+                    console.log(error.htmlData)
                     window.alert(`Error loading file: ${error.message}`);
                 });
         });
@@ -342,6 +343,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                         loadInitialData={true}
                         hideAllAgents={this.state.hideAllAgents}
                         showPaths={this.state.showPaths}
+                        onError={(error) => window.alert(error)}
                     />
                 </div>
             </div>

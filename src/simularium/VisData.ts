@@ -1,10 +1,11 @@
+import { difference } from "lodash";
 import * as util from "./ThreadUtil";
 import {
     TrajectoryFileInfo,
     EncodedTypeMapping,
     VisDataMessage,
 } from "./types";
-import { difference } from "lodash";
+import FrontEndError from "./FrontEndError";
 
 /**
  * Parse Agents from Net Data
@@ -115,14 +116,33 @@ class VisData {
 
             while (visData.length) {
                 const nSubPoints = visData[nSubPointsIndex];
-                const chunckLength = agentObjectKeys.length + nSubPoints; // each array length is varible based on how many subpoints the agent has
-                if (visData.length < chunckLength) {
-                    throw Error("malformed data: too few entries");
+                const chunkLength = agentObjectKeys.length + nSubPoints; // each array length is variable based on how many subpoints the agent has
+                if (visData.length < chunkLength) {
+                    const attemptedMapping = agentObjectKeys.map(
+                        (name, index) => `${name}: ${visData[index]}<br />`
+                    );
+                    // passed up in controller.handleLocalFileChange
+                    throw new FrontEndError(
+                        `Example attempt to parse your data: <pre>${attemptedMapping.join(
+                            ""
+                        )}</pre>`,
+                        "your data is malformed, there are too few entries."
+                    );
                 }
 
-                const agentSubSetArray = visData.splice(0, chunckLength); // cut off the array of 1 agent data from front of the array;
+                const agentSubSetArray = visData.splice(0, chunkLength); // cut off the array of 1 agent data from front of the array;
                 if (agentSubSetArray.length < agentObjectKeys.length) {
-                    throw Error("malformed data: indexing off");
+                    const attemptedMapping = agentObjectKeys.map(
+                        (name, index) =>
+                            `${name}: ${agentSubSetArray[index]}<br />`
+                    );
+                    // passed up in controller.handleLocalFileChange
+                    throw new FrontEndError(
+                        `Example attempt to parse your data: <pre>${attemptedMapping.join(
+                            ""
+                        )}</pre>`,
+                        "your data is malformed, there are less entries than expected for this agent"
+                    );
                 }
 
                 const agent = parseOneAgent(agentSubSetArray);
@@ -164,7 +184,6 @@ class VisData {
         } else {
             this.webWorker = null;
         }
-
         this.frameCache = [];
         this.frameDataCache = [];
         this.cacheFrame = -1;
@@ -305,9 +324,10 @@ class VisData {
 
     // for use w/ a drag-and-drop trajectory file
     //  save a file for playback
+    // errors passed up in controller.handleLocalFileChange
     public cacheJSON(visDataMsg: VisDataMessage): void {
         if (this.frameCache.length > 0) {
-            throw Error(
+            throw new Error(
                 "cache not cleared before cacheing a new drag-and-drop file"
             );
         }
@@ -344,7 +364,13 @@ class VisData {
         return this._dragAndDropFileInfo;
     }
 
+    // error passed up in controller.handleLocalFileChange
     public checkTypeMapping(typeMappingFromFile: EncodedTypeMapping): number[] {
+        if (!typeMappingFromFile) {
+            throw new Error(
+                "data needs 'typeMapping' object to display agent controls"
+            );
+        }
         const idsInFrameData = new Set();
         const idsInTypeMapping = Object.keys(typeMappingFromFile).map(Number);
 
@@ -366,7 +392,7 @@ class VisData {
         const idsSet = new Set();
 
         if (this.frameCache.length === 0) {
-            throw Error("No data in cache for drag-and-drop file");
+            throw new Error("No data in cache for drag-and-drop file");
         }
 
         this.frameCache.forEach((element) => {

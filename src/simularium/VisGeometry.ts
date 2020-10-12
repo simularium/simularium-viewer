@@ -976,7 +976,8 @@ class VisGeometry {
         return fetch(jsonRequest)
             .then((response) => {
                 if (!response.ok) {
-                    throw new Error(`Failed to fetch ${filePath}`);
+                    const error = new Error(`Failed to fetch ${filePath}`);
+                    return Promise.reject(error);
                 }
                 return response.json();
             })
