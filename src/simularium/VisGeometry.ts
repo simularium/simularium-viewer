@@ -800,12 +800,11 @@ class VisGeometry {
     /**
      *   Run Time Mesh functions
      */
-    public createMaterials(colors: number[]): void {
+    public createMaterials(colors: (number | string)[]): void {
         // convert any #FFFFFF -> 0xFFFFFF
-        colors.forEach(function (part, index, arr) {
-            const color = arr[index];
-            arr[index] = parseInt(color.toString().replace(/^#/, "0x"), 16);
-        });
+        const colorNumbers = colors.map((color) =>
+            parseInt(color.toString().replace(/^#/, "0x"), 16)
+        );
 
         const numColors = colors.length;
         // fill buffer of colors:
@@ -813,11 +812,11 @@ class VisGeometry {
         for (let i = 0; i < numColors; i += 1) {
             // each color is currently a hex value:
             this.colorsData[i * 4 + 0] =
-                ((colors[i] & 0x00ff0000) >> 16) / 255.0;
+                ((colorNumbers[i] & 0x00ff0000) >> 16) / 255.0;
             this.colorsData[i * 4 + 1] =
-                ((colors[i] & 0x0000ff00) >> 8) / 255.0;
+                ((colorNumbers[i] & 0x0000ff00) >> 8) / 255.0;
             this.colorsData[i * 4 + 2] =
-                ((colors[i] & 0x000000ff) >> 0) / 255.0;
+                ((colorNumbers[i] & 0x000000ff) >> 0) / 255.0;
             this.colorsData[i * 4 + 3] = 1.0;
         }
         this.moleculeRenderer.updateColors(numColors, this.colorsData);

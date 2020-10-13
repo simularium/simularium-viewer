@@ -5,7 +5,6 @@ import SimulariumViewer, {
     SimulariumController,
     RenderStyle,
     SimulariumFileFormat,
-    VisDataFrame,
 } from "../src";
 
 import "./style.css";
@@ -55,7 +54,7 @@ interface ViewerState {
     width: number;
     selectionStateInfo: SelectionStateInfo;
     hideAllAgents: boolean;
-    agentColors: number[];
+    agentColors: (number | string)[];
     showPaths: boolean;
     timeStep: number;
     totalDuration: number;

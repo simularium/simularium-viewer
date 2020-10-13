@@ -22,7 +22,7 @@ export type PropColor = string | number | [number, number, number];
 interface ViewportProps {
     renderStyle: RenderStyle;
     backgroundColor: PropColor;
-    agentColors: number[];
+    agentColors: (number | string)[]; //TODO: accept all Color formats
     height: number;
     width: number;
     loggerLevel: string;
