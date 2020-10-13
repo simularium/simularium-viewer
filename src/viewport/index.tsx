@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSyncAlt } from "@fortawesome/free-solid-svg-icons";
 import SimulariumController from "../controller";
 
-import { forOwn } from "lodash";
+import { forOwn, isEqual } from "lodash";
 
 import {
     VisGeometry,
@@ -289,7 +289,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         if (backgroundColor !== prevProps.backgroundColor) {
             this.visGeometry.setBackgroundColor(backgroundColor);
         }
-        if (agentColors !== prevProps.agentColors) {
+        if (!isEqual(agentColors, prevProps.agentColors)) {
             this.visGeometry.createMaterials(agentColors);
         }
         if (prevProps.height !== height || prevProps.width !== width) {
