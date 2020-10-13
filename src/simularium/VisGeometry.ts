@@ -139,7 +139,6 @@ class VisGeometry {
     private resetCameraOnNewScene: boolean;
     private lodBias: number;
     private lodDistanceStops: number[];
-    private needsToRecolorAgents: boolean;
 
     public constructor(loggerLevel: ILogLevel) {
         this.renderStyle = RenderStyle.MOLECULAR;
@@ -171,7 +170,6 @@ class VisGeometry {
         this.membraneAgent = undefined;
 
         this.moleculeRenderer = new MoleculeRenderer();
-        this.needsToRecolorAgents = true;
 
         this.backgroundColor = DEFAULT_BACKGROUND_COLOR;
         this.pathEndColor = this.backgroundColor.clone();
@@ -823,7 +821,10 @@ class VisGeometry {
             this.colorsData[i * 4 + 3] = 1.0;
         }
         this.moleculeRenderer.updateColors(numColors, this.colorsData);
-        this.needsToRecolorAgents = true;
+
+        this.visAgents.forEach((agent) => {
+            agent.setColor(this.getColorForTypeId(agent.typeId));
+        });
     }
 
     private getColorIndexForTypeId(typeId: number): number {
@@ -1087,11 +1088,7 @@ class VisGeometry {
             // if not fiber...
             if (visType === VisTypes.ID_VIS_TYPE_DEFAULT) {
                 // did the agent type change since the last sim time?
-                if (
-                    this.needsToRecolorAgents || // have the colors changed?
-                    typeId !== lastTypeId ||
-                    visType !== visAgent.visType
-                ) {
+                if (typeId !== lastTypeId || visType !== visAgent.visType) {
                     const meshGeom = this.getGeomFromId(typeId);
                     visAgent.visType = visType;
                     if (meshGeom) {
@@ -1212,7 +1209,6 @@ class VisGeometry {
             }
         });
 
-        this.needsToRecolorAgents = false;
         this.hideUnusedAgents(agents.length);
     }
 
