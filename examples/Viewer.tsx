@@ -23,6 +23,25 @@ interface FileHTML extends File {
     text(): Promise<string>;
 }
 
+const agentColors = [
+  "#9f516c",
+  "#81dbe6",
+  "#3452d8",
+  "#9267cb",
+  "#68a500",
+  "#d94e6f",
+  "#d49a01",
+  "#bf5736",
+  "#ffc55b",
+  "#ce8ec9",
+  "#00aabf",
+  "#abb652",
+  "#0ba345",
+  "#d14040",
+  "#d98d73",
+  "#418463",
+];
+
 interface ViewerState {
     renderStyle: RenderStyle;
     selectedName: string;
@@ -36,6 +55,7 @@ interface ViewerState {
     width: number;
     selectionStateInfo: SelectionStateInfo;
     hideAllAgents: boolean;
+    agentColors: number[];
     showPaths: boolean;
     timeStep: number;
     totalDuration: number;
@@ -43,7 +63,7 @@ interface ViewerState {
 }
 
 const simulariumController = new SimulariumController({});
-let playbackFile = "ATPsynthase_9.h5";
+let playbackFile = "actin012_3.h5";
 
 let currentFrame = 0;
 let currentTime = 0;
@@ -58,6 +78,7 @@ const initialState = {
     height: 700,
     width: 800,
     hideAllAgents: false,
+    agentColors: agentColors,
     showPaths: true,
     timeStep: 1,
     totalDuration: 100,
@@ -240,21 +261,25 @@ class Viewer extends React.Component<{}, ViewerState> {
                     }}
                     defaultValue={playbackFile}
                 >
-                    <option value="test_traj1.h5">TEST</option>
-                    <option value="microtubules_v2_shrinking.h5">M Tub</option>
-                    <option value="aster.cmo">Aster</option>
-                    <option value="actin34_0.h5">Actin 34</option>
-                    <option value="microtubules30_1.h5">MT 30</option>
-                    <option value="ATPsynthase_1.h5">ATP 1</option>
-                    <option value="ATPsynthase_2.h5">ATP 2</option>
-                    <option value="ATPsynthase_3.h5">ATP 3</option>
-                    <option value="ATPsynthase_4.h5">ATP 4</option>
-                    <option value="ATPsynthase_5.h5">ATP 5</option>
-                    <option value="ATPsynthase_6.h5">ATP 6</option>
-                    <option value="ATPsynthase_7.h5">ATP 7</option>
-                    <option value="ATPsynthase_8.h5">ATP 8</option>
-                    <option value="ATPsynthase_9.h5">ATP 9</option>
-                    <option value="ATPsynthase_10.h5">ATP 10</option>
+                  <option value="actin012_3.h5">Actin 12_3</option>
+                  <option value="listeria01.simularium">listeria 01</option>
+                  <option value="kinesin002_01.h5">kinesin 002</option>
+                  <option value="microtubules038_10.h5">MT 38</option>
+                  <option value="test_traj1.h5">TEST</option>
+                  <option value="microtubules_v2_shrinking.h5">M Tub</option>
+                  <option value="aster.cmo">Aster</option>
+                  <option value="actin34_0.h5">Actin 34</option>
+                  <option value="microtubules30_1.h5">MT 30</option>
+                  <option value="ATPsynthase_1.h5">ATP 1</option>
+                  <option value="ATPsynthase_2.h5">ATP 2</option>
+                  <option value="ATPsynthase_3.h5">ATP 3</option>
+                  <option value="ATPsynthase_4.h5">ATP 4</option>
+                  <option value="ATPsynthase_5.h5">ATP 5</option>
+                  <option value="ATPsynthase_6.h5">ATP 6</option>
+                  <option value="ATPsynthase_7.h5">ATP 7</option>
+                  <option value="ATPsynthase_8.h5">ATP 8</option>
+                  <option value="ATPsynthase_9.h5">ATP 9</option>
+                  <option value="ATPsynthase_10.h5">ATP 10</option>
                 </select>
                 <br />
                 <input
@@ -341,6 +366,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                             this
                         )}
                         loadInitialData={true}
+                        agentColors={this.state.agentColors}
                         hideAllAgents={this.state.hideAllAgents}
                         showPaths={this.state.showPaths}
                         onError={(error) => window.alert(error)}

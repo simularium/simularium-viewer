@@ -109,7 +109,6 @@ class VisGeometry {
     public visAgents: VisAgent[];
     public visAgentInstances: Map<number, VisAgent>;
     public lastNumberOfAgents: number;
-    public colorVariant: number;
     public fixLightsToCamera: boolean;
     public highlightedIds: number[];
     public hiddenIds: number[];
@@ -133,6 +132,7 @@ class VisGeometry {
     public agentFiberGroup: Group;
     public agentPDBGroup: Group;
     public agentPathGroup: Group;
+    public idColorMapping: Map<number, number>;
     private raycaster: Raycaster;
     private supportsMoleculeRendering: boolean;
     private membraneAgent?: VisAgent;
@@ -156,12 +156,12 @@ class VisGeometry {
         this.meshLoadAttempted = new Map<string, boolean>();
         this.pdbLoadAttempted = new Map<string, boolean>();
         this.scaleMapping = new Map<number, number>();
+        this.idColorMapping = new Map<number, number>();
         this.geomCount = MAX_MESHES;
         this.followObjectId = NO_AGENT;
         this.visAgents = [];
         this.visAgentInstances = new Map<number, VisAgent>();
         this.lastNumberOfAgents = 0;
-        this.colorVariant = 50;
         this.fixLightsToCamera = true;
         this.highlightedIds = [];
         this.hiddenIds = [];
@@ -824,6 +824,12 @@ class VisGeometry {
      *   Run Time Mesh functions
      */
     public createMaterials(colors: number[]): void {
+        // convert any #FFFFFF -> 0xFFFFFF
+        colors.forEach(function (part, index, arr) {
+            const color = arr[index];
+            arr[index] = parseInt(color.toString().replace(/^#/, "0x"), 16);
+        });
+
         const numColors = colors.length;
         // fill buffer of colors:
         this.colorsData = new Float32Array(numColors * 4);
@@ -838,15 +844,29 @@ class VisGeometry {
             this.colorsData[i * 4 + 3] = 1.0;
         }
         this.moleculeRenderer.updateColors(numColors, this.colorsData);
+
+        this.visAgents.forEach((agent) => {
+            agent.setColor(this.getColorForTypeId(agent.typeId));
+        });
     }
 
-    private getColorIndexForTypeId(typeId): number {
-        const index = (typeId + 1) * this.colorVariant;
+    private getColorIndexForTypeId(typeId: number): number {
+        const index = this.idColorMapping[typeId];
         return index % (this.colorsData.length / 4);
     }
 
-    private getColorForTypeId(typeId): Color {
+    private getColorForTypeId(typeId: number): Color {
         const index = this.getColorIndexForTypeId(typeId);
+        return this.getColorForIndex(index);
+    }
+
+    public setColorForIds(ids: number[], colorId: number): void {
+        ids.forEach((id) => {
+            this.idColorMapping[id] = colorId;
+        });
+    }
+
+    public getColorForIndex(index: number): Color {
         return new Color(
             this.colorsData[index * 4],
             this.colorsData[index * 4 + 1],

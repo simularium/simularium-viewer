@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSyncAlt } from "@fortawesome/free-solid-svg-icons";
 import SimulariumController from "../controller";
 
-import { forOwn } from "lodash";
+import { forOwn, isEqual } from "lodash";
 
 import {
     VisGeometry,
@@ -22,6 +22,7 @@ export type PropColor = string | number | [number, number, number];
 interface ViewportProps {
     renderStyle: RenderStyle;
     backgroundColor: PropColor;
+    agentColors: number[];
     height: number;
     width: number;
     loggerLevel: string;
@@ -95,7 +96,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
         const loggerLevel =
             props.loggerLevel === "debug" ? jsLogger.DEBUG : jsLogger.OFF;
-        const colors = [
+        const colors = props.agentColors || [
             0x6ac1e5,
             0xff2200,
             0xee7967,
@@ -209,6 +210,15 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             onTrajectoryFileInfoChanged(msg);
 
             const uiDisplayData = this.selectionInterface.getUIDisplayData();
+            let colorIndex = 0;
+            uiDisplayData.forEach(entry => {
+              const ids = this.selectionInterface.getIds(entry.name);
+              this.visGeometry.setColorForIds(ids, colorIndex);
+
+              entry.color = '#' + this.visGeometry.getColorForIndex(colorIndex).getHexString();
+              colorIndex = colorIndex + 1;
+            });
+
             onUIDisplayDataChanged(uiDisplayData);
         };
 
@@ -261,6 +271,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
     public componentDidUpdate(prevProps: ViewportProps): void {
         const {
             backgroundColor,
+            agentColors,
             height,
             width,
             renderStyle,
@@ -297,6 +308,9 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         }
         if (backgroundColor !== prevProps.backgroundColor) {
             this.visGeometry.setBackgroundColor(backgroundColor);
+        }
+        if (!isEqual(agentColors, prevProps.agentColors)) {
+            this.visGeometry.createMaterials(agentColors);
         }
         if (prevProps.height !== height || prevProps.width !== width) {
             this.visGeometry.resize(width, height);

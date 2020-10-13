@@ -25,6 +25,7 @@ interface DisplayStateEntry {
 interface UIDisplayEntry {
     name: string;
     displayStates: DisplayStateEntry[];
+    color: string;
 }
 
 export type UIDisplayData = UIDisplayEntry[];
@@ -192,9 +193,11 @@ class SelectionInterface {
                 });
             });
 
+            const color = "";
             return {
                 name,
                 displayStates,
+                color,
             };
         });
     }
