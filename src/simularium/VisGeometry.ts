@@ -681,6 +681,7 @@ class VisGeometry {
 
         this.animateCamera();
 
+        this.camera.updateMatrixWorld();
         this.transformBoundingBox();
 
         // update light sources due to camera moves
