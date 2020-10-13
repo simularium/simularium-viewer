@@ -43,8 +43,6 @@ const agentColors = [
 
 interface ViewerState {
     renderStyle: RenderStyle;
-    selectedName: string;
-    selectedTag: string;
     pauseOn: number;
     particleTypeNames: string[];
     particleTypeTags: string[];
@@ -301,7 +299,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                             <label htmlFor={id}>{id}</label>
                             <input
                                 type="checkbox"
-                                onClick={(event) =>
+                                onClick={(event) => 
                                     this.turnAgentsOnOff(event.target.value)
                                 }
                                 value={id}
