@@ -22,7 +22,7 @@ export type PropColor = string | number | [number, number, number];
 interface ViewportProps {
     renderStyle: RenderStyle;
     backgroundColor: PropColor;
-    agentColors: number[];
+    agentColors?: (number | string)[]; //TODO: accept all Color formats
     height: number;
     width: number;
     loggerLevel: string;
@@ -302,7 +302,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         if (backgroundColor !== prevProps.backgroundColor) {
             this.visGeometry.setBackgroundColor(backgroundColor);
         }
-        if (!isEqual(agentColors, prevProps.agentColors)) {
+        if (agentColors && !isEqual(agentColors, prevProps.agentColors)) {
             this.visGeometry.createMaterials(agentColors);
         }
         if (prevProps.height !== height || prevProps.width !== width) {

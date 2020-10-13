@@ -5,7 +5,6 @@ import SimulariumViewer, {
     SimulariumController,
     RenderStyle,
     SimulariumFileFormat,
-    VisDataFrame,
 } from "../src";
 
 import "./style.css";
@@ -44,8 +43,6 @@ const agentColors = [
 
 interface ViewerState {
     renderStyle: RenderStyle;
-    selectedName: string;
-    selectedTag: string;
     pauseOn: number;
     particleTypeNames: string[];
     particleTypeTags: string[];
@@ -55,7 +52,7 @@ interface ViewerState {
     width: number;
     selectionStateInfo: SelectionStateInfo;
     hideAllAgents: boolean;
-    agentColors: number[];
+    agentColors: (number | string)[];
     showPaths: boolean;
     timeStep: number;
     totalDuration: number;
@@ -302,7 +299,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                             <label htmlFor={id}>{id}</label>
                             <input
                                 type="checkbox"
-                                onClick={(event) =>
+                                onClick={(event) => 
                                     this.turnAgentsOnOff(event.target.value)
                                 }
                                 value={id}

@@ -115,7 +115,7 @@ export default class SimulariumController {
         return "";
     }
 
-    private configureNetwork(config: NetConnectionParams): void {
+    public configureNetwork(config: NetConnectionParams): void {
         if (this.netConnection && this.netConnection.socketIsValid()) {
             this.netConnection.disconnect();
         }
