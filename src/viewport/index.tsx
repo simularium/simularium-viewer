@@ -195,7 +195,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
               const ids = this.selectionInterface.getIds(entry.name);
               this.visGeometry.setColorForIds(ids, colorIndex);
 
-              entry.color = this.visGeometry.getColorForIndex(colorIndex).getHexString();
+              entry.color = '#' + this.visGeometry.getColorForIndex(colorIndex).getHexString();
               colorIndex = colorIndex + 1;
             });
 
