@@ -29,12 +29,13 @@ class InstancedFiberEndcaps {
         return this.mesh;
     }
 
+    // send in new instance data
     updateInstanceBuffer(
         attributeName: string,
         data: Float32Array,
         nfloatsPerValue = 3
     ): void {
-        this.instancedGeometry.addAttribute(
+        this.instancedGeometry.setAttribute(
             attributeName,
             new InstancedBufferAttribute(data, nfloatsPerValue, false)
         );

@@ -76,8 +76,9 @@ void main()	{
 
 const colorMaterial = new ShaderMaterial({
     uniforms: {
-        typeId: { value: 0 },
-        instanceId: { value: 0 },
+        // TODO from instanced attribute!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        //        typeId: { value: 0 },
+        //        instanceId: { value: 0 },
         projectionMatrix: { value: new Matrix4() },
     },
     vertexShader: vertexShader,
