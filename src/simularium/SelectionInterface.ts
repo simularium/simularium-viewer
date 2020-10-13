@@ -185,7 +185,7 @@ class SelectionInterface {
                 });
             });
 
-            const color = "unasigned";
+            const color = "";
             return {
                 name,
                 displayStates,
