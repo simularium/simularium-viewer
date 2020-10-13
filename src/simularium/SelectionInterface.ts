@@ -7,7 +7,7 @@ interface DecodedTypeEntry {
     tags: string[];
 }
 
-interface SelectionEntry {
+export interface SelectionEntry {
     name: string;
     tags: string[];
 }
@@ -25,6 +25,7 @@ interface DisplayStateEntry {
 interface UIDisplayEntry {
     name: string;
     displayStates: DisplayStateEntry[];
+    color: string;
 }
 
 export type UIDisplayData = UIDisplayEntry[];
@@ -48,6 +49,7 @@ class SelectionInterface {
         });
     }
 
+    // errors can be caught by onError prop to viewer
     public parse(idNameMapping: EncodedTypeMapping): void {
         this.clear();
         if (!idNameMapping) {
@@ -56,6 +58,12 @@ class SelectionInterface {
             );
         }
         Object.keys(idNameMapping).forEach((id) => {
+            if (isNaN(parseInt(id))) {
+                throw new Error(`Agent ids should be integers, ${id} is not`);
+            }
+            if (!idNameMapping[id].name) {
+                throw new Error(`Missing agent name for agent ${id}`);
+            }
             this.decode(idNameMapping[id].name, parseInt(id));
         });
     }
@@ -74,29 +82,38 @@ class SelectionInterface {
         }
 
         if (!name) {
-            throw Error("invalid name: " + encodedName);
+            // error can be caught by onError prop to viewer
+            throw new Error(
+                `invalid name. Agent id: ${id}, name: ${encodedName}`
+            );
         }
 
         const uniqueTags = [...new Set(tags)];
         const entry = { id: id, name: name, tags: uniqueTags };
-
-        if (!Object.keys(this.entries).includes(name)) {
+        if (!this.containsName(name)) {
             this.entries[name] = [];
         }
-
         this.entries[name].push(entry);
     }
 
     public getIds(name: string, tags?: string[]): number[] {
         const entryList = this.entries[name];
         const indices: number[] = [];
-
+        if (!entryList) {
+            return [];
+        }
         entryList.forEach((entry) => {
             if (
                 !tags ||
                 tags.length === 0 ||
                 tags.some((t) => entry.tags.includes(t))
             ) {
+                if (entry.id >= 0) {
+                    indices.push(entry.id);
+                }
+            }
+            // unmodified state, include entries without any state tags
+            if (tags && tags.includes("") && entry.tags.length === 0) {
                 if (entry.id >= 0) {
                     indices.push(entry.id);
                 }
@@ -176,9 +193,11 @@ class SelectionInterface {
                 });
             });
 
+            const color = "";
             return {
                 name,
                 displayStates,
+                color,
             };
         });
     }

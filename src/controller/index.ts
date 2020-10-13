@@ -33,6 +33,7 @@ export default class SimulariumController {
     public visData: VisData;
     public handleTrajectoryInfo: (TrajectoryFileInfo) => void;
     public postConnect: () => void;
+    public onError?: (errorMessage: string) => void;
 
     private networkEnabled: boolean;
     private isPaused: boolean;
@@ -55,8 +56,8 @@ export default class SimulariumController {
         this.handleTrajectoryInfo = (msg: TrajectoryFileInfo) => {
             /* Do Nothing */
         };
+        this.onError = (errorMessage) => {};
         /* eslint-enable */
-
         if (params.netConnection || params.netConnectionSettings) {
             this.netConnection = params.netConnection
                 ? params.netConnection
@@ -246,9 +247,18 @@ export default class SimulariumController {
 
         this.pause();
         this.disableNetworkCommands();
-        this.cacheJSON(spatialData);
-        this.dragAndDropFileInfo = trajectoryInfo;
-        this.handleTrajectoryInfo(this.dragAndDropFileInfo);
+        try {
+            this.cacheJSON(spatialData);
+        } catch (e) {
+            return Promise.reject(e);
+        }
+        try {
+            this.dragAndDropFileInfo = trajectoryInfo;
+
+            this.handleTrajectoryInfo(this.dragAndDropFileInfo);
+        } catch (e) {
+            return Promise.reject(e);
+        }
         return Promise.resolve({
             status: FILE_STATUS_SUCCESS,
         });
