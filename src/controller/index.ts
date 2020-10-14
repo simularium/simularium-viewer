@@ -37,6 +37,7 @@ export default class SimulariumController {
     public resetCamera: () => void;
     public centerCamera: () => void;
     public reOrientCamera: () => void;
+    public onError?: (errorMessage: string) => void;
 
     private networkEnabled: boolean;
     private isPaused: boolean;
@@ -63,8 +64,8 @@ export default class SimulariumController {
         this.reOrientCamera = () => noop;
         this.resetCamera = () => noop;
         this.centerCamera = () => noop;
+        this.onError = (errorMessage) => {};
         /* eslint-enable */
-
         if (params.netConnection || params.netConnectionSettings) {
             this.netConnection = params.netConnection
                 ? params.netConnection
@@ -122,7 +123,7 @@ export default class SimulariumController {
         return "";
     }
 
-    private configureNetwork(config: NetConnectionParams): void {
+    public configureNetwork(config: NetConnectionParams): void {
         if (this.netConnection && this.netConnection.socketIsValid()) {
             this.netConnection.disconnect();
         }
@@ -254,9 +255,18 @@ export default class SimulariumController {
 
         this.pause();
         this.disableNetworkCommands();
-        this.cacheJSON(spatialData);
-        this.dragAndDropFileInfo = trajectoryInfo;
-        this.handleTrajectoryInfo(this.dragAndDropFileInfo);
+        try {
+            this.cacheJSON(spatialData);
+        } catch (e) {
+            return Promise.reject(e);
+        }
+        try {
+            this.dragAndDropFileInfo = trajectoryInfo;
+
+            this.handleTrajectoryInfo(this.dragAndDropFileInfo);
+        } catch (e) {
+            return Promise.reject(e);
+        }
         return Promise.resolve({
             status: FILE_STATUS_SUCCESS,
         });

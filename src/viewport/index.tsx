@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSyncAlt } from "@fortawesome/free-solid-svg-icons";
 import SimulariumController from "../controller";
 
-import { forOwn } from "lodash";
+import { forOwn, isEqual } from "lodash";
 
 import {
     VisGeometry,
@@ -22,6 +22,7 @@ export type PropColor = string | number | [number, number, number];
 interface ViewportProps {
     renderStyle: RenderStyle;
     backgroundColor: PropColor;
+    agentColors?: (number | string)[]; //TODO: accept all Color formats
     height: number;
     width: number;
     loggerLevel: string;
@@ -38,6 +39,7 @@ interface ViewportProps {
     showBounds: boolean;
     selectionStateInfo: SelectionStateInfo;
     showCameraControls: boolean;
+    onError?: (errorMessage: string) => void;
 }
 
 interface Click {
@@ -94,7 +96,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
         const loggerLevel =
             props.loggerLevel === "debug" ? jsLogger.DEBUG : jsLogger.OFF;
-        const colors = [
+        const colors = props.agentColors || [
             0x6ac1e5,
             0xff2200,
             0xee7967,
@@ -175,6 +177,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             onUIDisplayDataChanged,
             loadInitialData,
             onJsonDataArrived,
+            onError,
         } = this.props;
         this.visGeometry.reparent(this.vdomRef.current);
         if (this.props.loggerLevel === "debug") {
@@ -182,6 +185,9 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                 this.stats.dom.style.position = "absolute";
                 this.vdomRef.current.appendChild(this.stats.dom);
             }
+        }
+        if (onError) {
+            simulariumController.onError = onError;
         }
 
         simulariumController.resetCamera = this.resetCamera;
@@ -192,10 +198,27 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             msg: TrajectoryFileInfo
         ) => {
             this.visGeometry.handleTrajectoryData(msg);
-            this.selectionInterface.parse(msg.typeMapping);
+            try {
+                this.selectionInterface.parse(msg.typeMapping);
+            } catch (e) {
+                if (onError) {
+                    onError(`error parsing 'typeMapping' data, ${e.message}`);
+                } else {
+                    console.log("error parsing 'typeMapping' data", e)
+                }
+            }
             onTrajectoryFileInfoChanged(msg);
 
             const uiDisplayData = this.selectionInterface.getUIDisplayData();
+            let colorIndex = 0;
+            uiDisplayData.forEach(entry => {
+              const ids = this.selectionInterface.getIds(entry.name);
+              this.visGeometry.setColorForIds(ids, colorIndex);
+
+              entry.color = '#' + this.visGeometry.getColorForIndex(colorIndex).getHexString();
+              colorIndex = colorIndex + 1;
+            });
+
             onUIDisplayDataChanged(uiDisplayData);
         };
 
@@ -248,6 +271,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
     public componentDidUpdate(prevProps: ViewportProps): void {
         const {
             backgroundColor,
+            agentColors,
             height,
             width,
             renderStyle,
@@ -284,6 +308,9 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         }
         if (backgroundColor !== prevProps.backgroundColor) {
             this.visGeometry.setBackgroundColor(backgroundColor);
+        }
+        if (agentColors && !isEqual(agentColors, prevProps.agentColors)) {
+            this.visGeometry.createMaterials(agentColors);
         }
         if (prevProps.height !== height || prevProps.width !== width) {
             this.visGeometry.resize(width, height);

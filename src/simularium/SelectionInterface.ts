@@ -25,6 +25,7 @@ interface DisplayStateEntry {
 interface UIDisplayEntry {
     name: string;
     displayStates: DisplayStateEntry[];
+    color: string;
 }
 
 export type UIDisplayData = UIDisplayEntry[];
@@ -48,6 +49,7 @@ class SelectionInterface {
         });
     }
 
+    // errors can be caught by onError prop to viewer
     public parse(idNameMapping: EncodedTypeMapping): void {
         this.clear();
         if (!idNameMapping) {
@@ -56,6 +58,12 @@ class SelectionInterface {
             );
         }
         Object.keys(idNameMapping).forEach((id) => {
+            if (isNaN(parseInt(id))) {
+                throw new Error(`Agent ids should be integers, ${id} is not`);
+            }
+            if (!idNameMapping[id].name) {
+                throw new Error(`Missing agent name for agent ${id}`);
+            }
             this.decode(idNameMapping[id].name, parseInt(id));
         });
     }
@@ -74,16 +82,17 @@ class SelectionInterface {
         }
 
         if (!name) {
-            throw Error("invalid name: " + encodedName);
+            // error can be caught by onError prop to viewer
+            throw new Error(
+                `invalid name. Agent id: ${id}, name: ${encodedName}`
+            );
         }
 
         const uniqueTags = [...new Set(tags)];
         const entry = { id: id, name: name, tags: uniqueTags };
-
-        if (!Object.keys(this.entries).includes(name)) {
+        if (!this.containsName(name)) {
             this.entries[name] = [];
         }
-
         this.entries[name].push(entry);
     }
 
@@ -184,9 +193,11 @@ class SelectionInterface {
                 });
             });
 
+            const color = "";
             return {
                 name,
                 displayStates,
+                color,
             };
         });
     }
