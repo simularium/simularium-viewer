@@ -1260,6 +1260,7 @@ class VisGeometry {
         const lerpTarget = true;
         const lerpPosition = true;
         const lerpRate = 0.2;
+        const distanceBuffer = 0.002;
         if (this.followObjectId !== NO_AGENT) {
             // keep camera at same distance from target.
             const direction = new Vector3().subVectors(
@@ -1298,10 +1299,9 @@ class VisGeometry {
         } else if (this.needToCenterCamera) {
             this.controls.target.lerp(new Vector3(), lerpRate);
             if (
-                this.controls.target.x === 0 &&
-                this.controls.target.y === 0 &&
-                this.controls.target.z === 0
+                this.controls.target.distanceTo(new Vector3()) < distanceBuffer
             ) {
+                this.controls.target.copy(new Vector3());
                 this.needToCenterCamera = false;
             }
         } else if (this.needToReOrientCamera) {
@@ -1318,7 +1318,7 @@ class VisGeometry {
             this.camera.position.copy(lerpPosition);
 
             // it doesnt seem to be able to get to zero, but this was small enough to look good
-            if (position.angleTo(targetLocation) < 0.002) {
+            if (position.angleTo(targetLocation) < distanceBuffer) {
                 this.needToReOrientCamera = false;
             }
         }
