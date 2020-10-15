@@ -40,6 +40,7 @@ import { TrajectoryFileInfo } from "./types";
 import { AgentData } from "./VisData";
 
 import MoleculeRenderer from "./rendering/MoleculeRenderer";
+import InstancedFiberEndcaps from "./rendering/InstancedFiberEndcaps";
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 100000;
@@ -136,6 +137,7 @@ class VisGeometry {
     public agentFiberGroup: Group;
     public agentPDBGroup: Group;
     public agentPathGroup: Group;
+    public instancedMeshGroup: Group;
     public idColorMapping: Map<number, number>;
     private raycaster: Raycaster;
     private supportsMoleculeRendering: boolean;
@@ -143,6 +145,7 @@ class VisGeometry {
     private resetCameraOnNewScene: boolean;
     private lodBias: number;
     private lodDistanceStops: number[];
+    private fiberEndcaps: InstancedFiberEndcaps;
 
     public constructor(loggerLevel: ILogLevel) {
         this.renderStyle = RenderStyle.MOLECULAR;
@@ -188,6 +191,7 @@ class VisGeometry {
         this.agentFiberGroup = new Group();
         this.agentPDBGroup = new Group();
         this.agentPathGroup = new Group();
+        this.instancedMeshGroup = new Group();
 
         this.camera = new PerspectiveCamera(75, 100 / 100, 0.1, 10000);
         this.dl = new DirectionalLight(0xffffff, 0.6);
@@ -216,6 +220,8 @@ class VisGeometry {
             this.setupGui();
         }
         this.raycaster = new Raycaster();
+
+        this.fiberEndcaps = new InstancedFiberEndcaps();
     }
 
     public setBackgroundColor(
@@ -504,6 +510,9 @@ class VisGeometry {
         this.agentPathGroup = new Group();
         this.agentPathGroup.name = "agent paths";
         this.scene.add(this.agentPathGroup);
+        this.instancedMeshGroup = new Group();
+        this.instancedMeshGroup.name = "instanced meshes for agents";
+        this.scene.add(this.instancedMeshGroup);
 
         this.camera = new PerspectiveCamera(
             75,
@@ -728,7 +737,8 @@ class VisGeometry {
             this.moleculeRenderer.setMeshGroups(
                 this.agentMeshGroup,
                 this.agentPDBGroup,
-                this.agentFiberGroup
+                this.agentFiberGroup,
+                this.instancedMeshGroup
             );
             this.moleculeRenderer.setFollowedInstance(this.followObjectId);
             this.moleculeRenderer.setNearFar(this.boxNearZ, this.boxFarZ);
@@ -750,10 +760,12 @@ class VisGeometry {
             this.agentMeshGroup.visible = false;
             this.agentFiberGroup.visible = false;
             this.agentPDBGroup.visible = false;
+            this.instancedMeshGroup.visible = false;
             this.renderer.render(this.scene, this.camera);
             this.agentMeshGroup.visible = true;
             this.agentFiberGroup.visible = true;
             this.agentPDBGroup.visible = true;
+            this.instancedMeshGroup.visible = true;
             this.renderer.autoClear = true;
 
             this.scene.autoUpdate = true;

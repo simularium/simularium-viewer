@@ -1,5 +1,6 @@
 import MeshGBufferShaders from "./MeshGBufferShaders";
 import PDBGBufferShaders from "./PDBGBufferShaders";
+import InstanceMeshShaders from "./InstancedFiberEndcapShader";
 
 import {
     Color,
@@ -32,15 +33,20 @@ class GBufferPass {
     public colorMaterialPDB: ShaderMaterial;
     public normalMaterialPDB: ShaderMaterial;
     public positionMaterialPDB: ShaderMaterial;
+    public colorMaterialInstancedMesh: ShaderMaterial;
+    public normalMaterialInstancedMesh: ShaderMaterial;
+    public positionMaterialInstancedMesh: ShaderMaterial;
     public scene: Scene;
     public agentMeshGroup: Group;
     public agentPDBGroup: Group;
     public agentFiberGroup: Group;
+    public instancedMeshGroup: Group;
 
     public constructor() {
         this.agentMeshGroup = new Group();
         this.agentPDBGroup = new Group();
         this.agentFiberGroup = new Group();
+        this.instancedMeshGroup = new Group();
 
         this.colorMaterialMesh = MeshGBufferShaders.colorMaterial;
         this.normalMaterialMesh = MeshGBufferShaders.normalMaterial;
@@ -50,17 +56,24 @@ class GBufferPass {
         this.normalMaterialPDB = PDBGBufferShaders.normalMaterial;
         this.positionMaterialPDB = PDBGBufferShaders.positionMaterial;
 
+        this.colorMaterialInstancedMesh = InstanceMeshShaders.colorMaterial;
+        this.normalMaterialInstancedMesh = InstanceMeshShaders.normalMaterial;
+        this.positionMaterialInstancedMesh =
+            InstanceMeshShaders.positionMaterial;
+
         this.scene = new Scene();
     }
 
     public setMeshGroups(
         agentMeshGroup: Group,
         agentPDBGroup: Group,
-        agentFiberGroup: Group
+        agentFiberGroup: Group,
+        instancedMeshGroup: Group
     ): void {
         this.agentMeshGroup = agentMeshGroup;
         this.agentPDBGroup = agentPDBGroup;
         this.agentFiberGroup = agentFiberGroup;
+        this.instancedMeshGroup = instancedMeshGroup;
     }
 
     public resize(width: number, height: number): void {
@@ -105,25 +118,48 @@ class GBufferPass {
         this.positionMaterialPDB.uniforms.projectionMatrix.value =
             camera.projectionMatrix;
 
+        this.colorMaterialInstancedMesh.uniforms.projectionMatrix.value =
+            camera.projectionMatrix;
+        this.normalMaterialInstancedMesh.uniforms.projectionMatrix.value =
+            camera.projectionMatrix;
+        this.positionMaterialInstancedMesh.uniforms.projectionMatrix.value =
+            camera.projectionMatrix;
+
         // 1. fill colorbuffer
 
         renderer.setRenderTarget(colorBuffer);
 
+        // begin draw meshes
         this.agentMeshGroup.visible = true;
         this.agentFiberGroup.visible = true;
         this.agentPDBGroup.visible = false;
+        this.instancedMeshGroup.visible = false;
 
         scene.overrideMaterial = this.colorMaterialMesh;
         renderer.render(scene, camera);
+        // end draw meshes
 
         renderer.autoClear = false;
 
+        // draw instanced things
+        this.agentMeshGroup.visible = false;
+        this.agentFiberGroup.visible = false;
+        this.agentPDBGroup.visible = false;
+        this.instancedMeshGroup.visible = true;
+
+        scene.overrideMaterial = this.colorMaterialInstancedMesh;
+        renderer.render(scene, camera);
+        // end draw instanced things
+
+        // begin draw pdb
         this.agentMeshGroup.visible = false;
         this.agentFiberGroup.visible = false;
         this.agentPDBGroup.visible = true;
+        this.instancedMeshGroup.visible = false;
 
         scene.overrideMaterial = this.colorMaterialPDB;
         renderer.render(scene, camera);
+        //end draw pdb
 
         renderer.autoClear = true;
 
@@ -134,15 +170,27 @@ class GBufferPass {
         this.agentMeshGroup.visible = true;
         this.agentFiberGroup.visible = true;
         this.agentPDBGroup.visible = false;
+        this.instancedMeshGroup.visible = false;
 
         scene.overrideMaterial = this.normalMaterialMesh;
         renderer.render(scene, camera);
 
         renderer.autoClear = false;
 
+        // draw instanced things
+        this.agentMeshGroup.visible = false;
+        this.agentFiberGroup.visible = false;
+        this.agentPDBGroup.visible = false;
+        this.instancedMeshGroup.visible = true;
+
+        scene.overrideMaterial = this.normalMaterialInstancedMesh;
+        renderer.render(scene, camera);
+        // end draw instanced things
+
         this.agentMeshGroup.visible = false;
         this.agentFiberGroup.visible = false;
         this.agentPDBGroup.visible = true;
+        this.instancedMeshGroup.visible = false;
 
         scene.overrideMaterial = this.normalMaterialPDB;
         renderer.render(scene, camera);
@@ -156,15 +204,27 @@ class GBufferPass {
         this.agentMeshGroup.visible = true;
         this.agentFiberGroup.visible = true;
         this.agentPDBGroup.visible = false;
+        this.instancedMeshGroup.visible = false;
 
         scene.overrideMaterial = this.positionMaterialMesh;
         renderer.render(scene, camera);
 
         renderer.autoClear = false;
 
+        // draw instanced things
+        this.agentMeshGroup.visible = false;
+        this.agentFiberGroup.visible = false;
+        this.agentPDBGroup.visible = false;
+        this.instancedMeshGroup.visible = true;
+
+        scene.overrideMaterial = this.positionMaterialInstancedMesh;
+        renderer.render(scene, camera);
+        // end draw instanced things
+
         this.agentMeshGroup.visible = false;
         this.agentFiberGroup.visible = false;
         this.agentPDBGroup.visible = true;
+        this.instancedMeshGroup.visible = false;
 
         scene.overrideMaterial = this.positionMaterialPDB;
         renderer.render(scene, camera);
