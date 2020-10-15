@@ -339,6 +339,15 @@ class Viewer extends React.Component<{}, ViewerState> {
                 >
                     Switch Render
                 </button>
+                <button onClick={() => simulariumController.resetCamera()}>
+                    Reset camera
+                </button>
+                <button onClick={() => simulariumController.centerCamera()}>
+                    center camera
+                </button>
+                <button onClick={() => simulariumController.reOrientCamera()}>
+                    starting orientation
+                </button>
                 <div className="viewer-container">
                     <SimulariumViewer
                         ref={this.viewerRef}

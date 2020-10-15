@@ -29,6 +29,8 @@ import {
     WebGLRenderer,
     WebGLRendererParameters,
     Mesh,
+    Quaternion,
+    Matrix4,
 } from "three";
 
 import * as dat from "dat.gui";
@@ -47,7 +49,7 @@ const DEFAULT_BACKGROUND_COLOR = new Color(0, 0, 0);
 const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 const NO_AGENT = -1;
-
+const DEFAULT_CAMERA_Z_POSITION = 120;
 export enum RenderStyle {
     GENERIC,
     MOLECULAR,
@@ -143,6 +145,10 @@ class VisGeometry {
     private resetCameraOnNewScene: boolean;
     private lodBias: number;
     private lodDistanceStops: number[];
+    private needToCenterCamera: boolean;
+    private needToReOrientCamera: boolean;
+    private rotateDistance: number;
+    private initCameraPosition: Vector3;
 
     public constructor(loggerLevel: ILogLevel) {
         this.renderStyle = RenderStyle.MOLECULAR;
@@ -165,7 +171,9 @@ class VisGeometry {
         this.fixLightsToCamera = true;
         this.highlightedIds = [];
         this.hiddenIds = [];
-
+        this.needToCenterCamera = false;
+        this.needToReOrientCamera = false;
+        this.rotateDistance = DEFAULT_CAMERA_Z_POSITION;
         // will store data for all agents that are drawing paths
         this.paths = [];
 
@@ -190,6 +198,9 @@ class VisGeometry {
         this.agentPathGroup = new Group();
 
         this.camera = new PerspectiveCamera(75, 100 / 100, 0.1, 10000);
+
+        this.initCameraPosition = this.camera.position.clone();
+
         this.dl = new DirectionalLight(0xffffff, 0.6);
         this.hemiLight = new HemisphereLight(0xffffff, 0x000000, 0.5);
         this.renderer = new WebGLRenderer();
@@ -330,7 +341,19 @@ class VisGeometry {
     }
 
     public resetCamera(): void {
+        this.followObjectId = NO_AGENT;
         this.controls.reset();
+    }
+
+    public centerCamera(): void {
+        this.followObjectId = NO_AGENT;
+        this.needToCenterCamera = true;
+    }
+
+    public reOrientCamera(): void {
+        this.followObjectId = NO_AGENT;
+        this.needToReOrientCamera = true;
+        this.rotateDistance = this.camera.position.distanceTo(new Vector3());
     }
 
     public getFollowObject(): number {
@@ -484,6 +507,7 @@ class VisGeometry {
         this.controls.minDistance = 5;
         this.controls.zoomSpeed = 1.0;
         this.controls.enablePan = false;
+        this.controls.saveState();
     }
 
     /**
@@ -551,7 +575,8 @@ class VisGeometry {
         this.renderer.setClearColor(this.backgroundColor, 1);
         this.renderer.clear();
 
-        this.camera.position.z = 120;
+        this.camera.position.z = DEFAULT_CAMERA_Z_POSITION;
+        this.initCameraPosition = this.camera.position.clone();
     }
 
     public loadPdb(pdbName: string, assetPath: string): void {
@@ -1241,6 +1266,8 @@ class VisGeometry {
         const lerpTarget = true;
         const lerpPosition = true;
         const lerpRate = 0.2;
+        const distanceBuffer = 0.002;
+        const rotationBuffer = 0.01;
         if (this.followObjectId !== NO_AGENT) {
             // keep camera at same distance from target.
             const direction = new Vector3().subVectors(
@@ -1275,6 +1302,43 @@ class VisGeometry {
                 this.camera.position.lerp(newPosition, lerpRate);
             } else {
                 this.camera.position.copy(newPosition);
+            }
+        } else if (this.needToCenterCamera) {
+            this.controls.target.lerp(new Vector3(), lerpRate);
+            if (
+                this.controls.target.distanceTo(new Vector3()) < distanceBuffer
+            ) {
+                this.controls.target.copy(new Vector3());
+                this.needToCenterCamera = false;
+            }
+        } else if (this.needToReOrientCamera) {
+            this.controls.target.copy(new Vector3());
+            const { position } = this.camera;
+            const curDistanceFromCenter = this.rotateDistance;
+            const targetPosition = this.initCameraPosition
+                .clone()
+                .setLength(curDistanceFromCenter);
+            const currentPosition = position.clone();
+
+            const targetQuat = new Quaternion().setFromAxisAngle(
+                targetPosition,
+                0
+            );
+            const currentQuat = new Quaternion().copy(this.camera.quaternion);
+            const totalAngle = currentQuat.angleTo(targetQuat);
+
+            const newAngle = lerpRate * totalAngle; // gives same value as using quanternion.slerp
+            const normal = currentPosition
+                .clone()
+                .cross(targetPosition)
+                .normalize();
+
+            this.camera.position.applyAxisAngle(normal, newAngle);
+            this.camera.lookAt(new Vector3());
+
+            // it doesnt seem to be able to get to zero, but this was small enough to look good
+            if (this.camera.position.angleTo(targetPosition) < rotationBuffer) {
+                this.needToReOrientCamera = false;
             }
         }
     }
