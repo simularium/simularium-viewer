@@ -173,7 +173,15 @@ class VisGeometry {
         this.paths = [];
 
         this.fiberEndcaps = new InstancedFiberEndcaps();
-        this.fiberEndcaps.create(1);
+        this.fiberEndcaps.create(0);
+
+        this.scene = new Scene();
+        this.lightsGroup = new Group();
+        this.agentMeshGroup = new Group();
+        this.agentFiberGroup = new Group();
+        this.agentPDBGroup = new Group();
+        this.agentPathGroup = new Group();
+        this.instancedMeshGroup = new Group();
 
         this.setupScene();
 
@@ -187,14 +195,6 @@ class VisGeometry {
 
         this.mlogger = jsLogger.get("visgeometry");
         this.mlogger.setLevel(loggerLevel);
-
-        // this.scene = new Scene();
-        // this.lightsGroup = new Group();
-        // this.agentMeshGroup = new Group();
-        // this.agentFiberGroup = new Group();
-        // this.agentPDBGroup = new Group();
-        // this.agentPathGroup = new Group();
-        // this.instancedMeshGroup = new Group();
 
         this.camera = new PerspectiveCamera(75, 100 / 100, 0.1, 10000);
         this.dl = new DirectionalLight(0xffffff, 0.6);
@@ -1099,7 +1099,7 @@ class VisGeometry {
 
         let dx, dy, dz;
 
-        const fiberHistogram = new Map<number, number>();
+        //const fiberHistogram = new Map<number, number>();
         const positionArray: number[] = [];
         const instanceArray: number[] = [];
 
@@ -1250,7 +1250,7 @@ class VisGeometry {
                 positionArray.push(agentData.subpoints[0]);
                 positionArray.push(agentData.subpoints[1]);
                 positionArray.push(agentData.subpoints[2]);
-                positionArray.push(1);
+                positionArray.push(agentData.cr * scale * 0.5);
 
                 positionArray.push(
                     agentData.subpoints[agentData.subpoints.length - 3]
@@ -1261,28 +1261,28 @@ class VisGeometry {
                 positionArray.push(
                     agentData.subpoints[agentData.subpoints.length - 1]
                 );
-                positionArray.push(1);
+                positionArray.push(agentData.cr * scale * 0.5);
 
                 instanceArray.push(visAgent.id);
                 instanceArray.push(typeId);
                 instanceArray.push(visAgent.id);
                 instanceArray.push(typeId);
 
-                const count = fiberHistogram.get(
-                    agentData.subpoints.length / 3
-                );
-                if (count !== undefined) {
-                    fiberHistogram.set(
-                        agentData.subpoints.length / 3,
-                        count + 1
-                    );
-                } else {
-                    fiberHistogram.set(agentData.subpoints.length / 3, 1);
-                }
+                // const count = fiberHistogram.get(
+                //     agentData.subpoints.length / 3
+                // );
+                // if (count !== undefined) {
+                //     fiberHistogram.set(
+                //         agentData.subpoints.length / 3,
+                //         count + 1
+                //     );
+                // } else {
+                //     fiberHistogram.set(agentData.subpoints.length / 3, 1);
+                // }
             }
         });
 
-        console.log(fiberHistogram);
+        //console.log(fiberHistogram);
         this.hideUnusedAgents(agents.length);
 
         this.fiberEndcaps.updateInstanceBuffer(
