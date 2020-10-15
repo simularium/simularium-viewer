@@ -43,7 +43,7 @@ import MoleculeRenderer from "./rendering/MoleculeRenderer";
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 100000;
-const DEFAULT_BACKGROUND_COLOR = new Color(0.121569, 0.13333, 0.17647);
+const DEFAULT_BACKGROUND_COLOR = new Color(0, 0, 0);
 const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 const NO_AGENT = -1;
@@ -219,12 +219,16 @@ class VisGeometry {
     }
 
     public setBackgroundColor(
-        c: string | number | [number, number, number]
+        c: string | number | [number, number, number] | undefined
     ): void {
-        // convert from a PropColor to a THREE.Color
-        this.backgroundColor = Array.isArray(c)
-            ? new Color(c[0], c[1], c[2])
-            : new Color(c);
+        if (c === undefined) {
+            this.backgroundColor = DEFAULT_BACKGROUND_COLOR.clone();
+        } else {
+            // convert from a PropColor to a THREE.Color
+            this.backgroundColor = Array.isArray(c)
+                ? new Color(c[0], c[1], c[2])
+                : new Color(c);
+        }
         this.pathEndColor = this.backgroundColor.clone();
         this.moleculeRenderer.setBackgroundColor(this.backgroundColor);
         this.renderer.setClearColor(this.backgroundColor, 1);
