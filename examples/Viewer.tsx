@@ -1,5 +1,5 @@
 import React from "react";
-import type { UIDisplayData, SelectionStateInfo } from "../type-declarations";
+import type { UIDisplayData, SelectionStateInfo } from "../src/simularium/SelectionInterface";
 
 import SimulariumViewer, {
     SimulariumController,
