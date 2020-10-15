@@ -121,6 +121,10 @@ class VisGeometry {
     public dl: DirectionalLight;
     public boundingBox: Box3;
     public boundingBoxMesh: Box3Helper;
+    // front and back of transformed bounds in camera space
+    private boxNearZ: number;
+    private boxFarZ: number;
+
     public hemiLight: HemisphereLight;
     public moleculeRenderer: MoleculeRenderer;
     public atomSpread = 3.0;
@@ -202,6 +206,8 @@ class VisGeometry {
             this.boundingBox,
             BOUNDING_BOX_COLOR
         );
+        this.boxNearZ = 0;
+        this.boxFarZ = 100;
         this.currentSceneAgents = [];
         this.colorsData = new Float32Array(0);
         this.lodBias = 0;
@@ -675,6 +681,9 @@ class VisGeometry {
 
         this.animateCamera();
 
+        this.camera.updateMatrixWorld();
+        this.transformBoundingBox();
+
         // update light sources due to camera moves
         if (this.dl && this.fixLightsToCamera) {
             // position directional light at camera (facing scene, as headlight!)
@@ -722,6 +731,7 @@ class VisGeometry {
                 this.agentFiberGroup
             );
             this.moleculeRenderer.setFollowedInstance(this.followObjectId);
+            this.moleculeRenderer.setNearFar(this.boxNearZ, this.boxFarZ);
             this.boundingBoxMesh.visible = false;
             this.agentPathGroup.visible = false;
             this.moleculeRenderer.render(
@@ -748,6 +758,17 @@ class VisGeometry {
 
             this.scene.autoUpdate = true;
         }
+    }
+
+    private transformBoundingBox() {
+        // bounds are in world space
+        const box = new Box3().copy(this.boundingBox);
+        // world to camera space
+        box.applyMatrix4(this.camera.matrixWorldInverse);
+        // camera is pointing along negative Z.  so invert for positive distances
+        this.boxNearZ = -box.max.z;
+        this.boxFarZ = -box.min.z;
+        // compare with CompositePass float eyeDepth = -col0.z; to use a positive distance value.
     }
 
     public hitTest(offsetX: number, offsetY: number): number {
@@ -800,12 +821,11 @@ class VisGeometry {
     /**
      *   Run Time Mesh functions
      */
-    public createMaterials(colors: number[]): void {
+    public createMaterials(colors: (number | string)[]): void {
         // convert any #FFFFFF -> 0xFFFFFF
-        colors.forEach(function (part, index, arr) {
-            const color = arr[index];
-            arr[index] = parseInt(color.toString().replace(/^#/, "0x"), 16);
-        });
+        const colorNumbers = colors.map((color) =>
+            parseInt(color.toString().replace(/^#/, "0x"), 16)
+        );
 
         const numColors = colors.length;
         // fill buffer of colors:
@@ -813,11 +833,11 @@ class VisGeometry {
         for (let i = 0; i < numColors; i += 1) {
             // each color is currently a hex value:
             this.colorsData[i * 4 + 0] =
-                ((colors[i] & 0x00ff0000) >> 16) / 255.0;
+                ((colorNumbers[i] & 0x00ff0000) >> 16) / 255.0;
             this.colorsData[i * 4 + 1] =
-                ((colors[i] & 0x0000ff00) >> 8) / 255.0;
+                ((colorNumbers[i] & 0x0000ff00) >> 8) / 255.0;
             this.colorsData[i * 4 + 2] =
-                ((colors[i] & 0x000000ff) >> 0) / 255.0;
+                ((colorNumbers[i] & 0x000000ff) >> 0) / 255.0;
             this.colorsData[i * 4 + 3] = 1.0;
         }
         this.moleculeRenderer.updateColors(numColors, this.colorsData);
