@@ -219,12 +219,16 @@ class VisGeometry {
     }
 
     public setBackgroundColor(
-        c: string | number | [number, number, number]
+        c: string | number | [number, number, number] | undefined
     ): void {
-        // convert from a PropColor to a THREE.Color
-        this.backgroundColor = Array.isArray(c)
-            ? new Color(c[0], c[1], c[2])
-            : new Color(c);
+        if (c === undefined) {
+            this.backgroundColor = DEFAULT_BACKGROUND_COLOR.clone();
+        } else {
+            // convert from a PropColor to a THREE.Color
+            this.backgroundColor = Array.isArray(c)
+                ? new Color(c[0], c[1], c[2])
+                : new Color(c);
+        }
         this.pathEndColor = this.backgroundColor.clone();
         this.moleculeRenderer.setBackgroundColor(this.backgroundColor);
         this.renderer.setClearColor(this.backgroundColor, 1);

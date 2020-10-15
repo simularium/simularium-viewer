@@ -21,7 +21,7 @@ export type PropColor = string | number | [number, number, number];
 
 interface ViewportProps {
     renderStyle: RenderStyle;
-    backgroundColor: PropColor;
+    backgroundColor?: PropColor;
     agentColors?: (number | string)[]; //TODO: accept all Color formats
     height: number;
     width: number;
@@ -167,7 +167,9 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             onError,
         } = this.props;
         this.visGeometry.reparent(this.vdomRef.current);
-        this.visGeometry.setBackgroundColor(backgroundColor);
+        if (backgroundColor !== undefined) {
+            this.visGeometry.setBackgroundColor(backgroundColor);
+        }
         if (this.props.loggerLevel === "debug") {
             if (this.vdomRef && this.vdomRef.current) {
                 this.stats.dom.style.position = "absolute";
