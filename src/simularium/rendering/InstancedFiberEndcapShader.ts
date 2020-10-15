@@ -8,11 +8,11 @@ attribute vec2 instanceAndTypeId;
 
 varying vec3 IN_viewPos;
 varying vec3 IN_viewNormal;
-flat vec2 IN_instanceAndTypeId;
+varying vec2 IN_instanceAndTypeId;
           
 void main()	{
     vec3 p = position.xyz;
-    vec4 modelViewPosition = modelViewMatrix * vec4(p, 1.0);
+    vec4 modelViewPosition = modelViewMatrix * vec4(p*translateAndScale.w + translateAndScale.xyz, 1.0);
     IN_viewPos = modelViewPosition.xyz;
     IN_viewNormal = normalMatrix * normal.xyz;
 
@@ -27,7 +27,7 @@ precision highp float;
 
 varying vec3 IN_viewPos;
 varying vec3 IN_viewNormal;
-flat vec2 IN_instanceAndTypeId;
+varying vec2 IN_instanceAndTypeId;
 
 uniform int typeId;
 

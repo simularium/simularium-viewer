@@ -172,6 +172,9 @@ class VisGeometry {
         // will store data for all agents that are drawing paths
         this.paths = [];
 
+        this.fiberEndcaps = new InstancedFiberEndcaps();
+        this.fiberEndcaps.create(1);
+
         this.setupScene();
 
         this.membraneAgent = undefined;
@@ -185,13 +188,13 @@ class VisGeometry {
         this.mlogger = jsLogger.get("visgeometry");
         this.mlogger.setLevel(loggerLevel);
 
-        this.scene = new Scene();
-        this.lightsGroup = new Group();
-        this.agentMeshGroup = new Group();
-        this.agentFiberGroup = new Group();
-        this.agentPDBGroup = new Group();
-        this.agentPathGroup = new Group();
-        this.instancedMeshGroup = new Group();
+        // this.scene = new Scene();
+        // this.lightsGroup = new Group();
+        // this.agentMeshGroup = new Group();
+        // this.agentFiberGroup = new Group();
+        // this.agentPDBGroup = new Group();
+        // this.agentPathGroup = new Group();
+        // this.instancedMeshGroup = new Group();
 
         this.camera = new PerspectiveCamera(75, 100 / 100, 0.1, 10000);
         this.dl = new DirectionalLight(0xffffff, 0.6);
@@ -220,8 +223,6 @@ class VisGeometry {
             this.setupGui();
         }
         this.raycaster = new Raycaster();
-
-        this.fiberEndcaps = new InstancedFiberEndcaps();
     }
 
     public setBackgroundColor(
@@ -513,6 +514,8 @@ class VisGeometry {
         this.instancedMeshGroup = new Group();
         this.instancedMeshGroup.name = "instanced meshes for agents";
         this.scene.add(this.instancedMeshGroup);
+
+        this.instancedMeshGroup.add(this.fiberEndcaps.getMesh());
 
         this.camera = new PerspectiveCamera(
             75,
@@ -1097,6 +1100,8 @@ class VisGeometry {
         let dx, dy, dz;
 
         const fiberHistogram = new Map<number, number>();
+        const positionArray: number[] = [];
+        const instanceArray: number[] = [];
 
         agents.forEach((agentData, i) => {
             const visType = agentData["vis-type"];
@@ -1242,6 +1247,27 @@ class VisGeometry {
 
                 visAgent.mesh.visible = true;
 
+                positionArray.push(agentData.subpoints[0]);
+                positionArray.push(agentData.subpoints[1]);
+                positionArray.push(agentData.subpoints[2]);
+                positionArray.push(1);
+
+                positionArray.push(
+                    agentData.subpoints[agentData.subpoints.length - 3]
+                );
+                positionArray.push(
+                    agentData.subpoints[agentData.subpoints.length - 2]
+                );
+                positionArray.push(
+                    agentData.subpoints[agentData.subpoints.length - 1]
+                );
+                positionArray.push(1);
+
+                instanceArray.push(visAgent.id);
+                instanceArray.push(typeId);
+                instanceArray.push(visAgent.id);
+                instanceArray.push(typeId);
+
                 const count = fiberHistogram.get(
                     agentData.subpoints.length / 3
                 );
@@ -1258,6 +1284,18 @@ class VisGeometry {
 
         console.log(fiberHistogram);
         this.hideUnusedAgents(agents.length);
+
+        this.fiberEndcaps.updateInstanceBuffer(
+            "translateAndScale",
+            new Float32Array(positionArray),
+            4
+        );
+        this.fiberEndcaps.updateInstanceBuffer(
+            "instanceAndTypeId",
+            new Float32Array(instanceArray),
+            2
+        );
+        this.fiberEndcaps.updateInstanceCount(instanceArray.length / 2);
     }
 
     public animateCamera(): void {

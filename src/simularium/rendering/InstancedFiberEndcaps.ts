@@ -8,10 +8,14 @@ import {
 class InstancedFiberEndcaps {
     private mesh: Mesh;
     private instancedGeometry: InstancedBufferGeometry;
+    // private positionArray: number[];
+    // private instanceArray: number[];
 
     constructor() {
         this.mesh = new Mesh();
         this.instancedGeometry = new InstancedBufferGeometry();
+        // this.positionArray = [];
+        // this.instanceArray = [];
     }
 
     public create(n: number): void {
