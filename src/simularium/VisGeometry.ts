@@ -29,6 +29,8 @@ import {
     WebGLRenderer,
     WebGLRendererParameters,
     Mesh,
+    Quaternion,
+    Matrix4,
 } from "three";
 
 import * as dat from "dat.gui";
@@ -1261,6 +1263,7 @@ class VisGeometry {
         const lerpPosition = true;
         const lerpRate = 0.2;
         const distanceBuffer = 0.002;
+        const rotationBuffer = 0.01;
         if (this.followObjectId !== NO_AGENT) {
             // keep camera at same distance from target.
             const direction = new Vector3().subVectors(
@@ -1308,17 +1311,29 @@ class VisGeometry {
             this.controls.target.copy(new Vector3());
             const { position } = this.camera;
             const curDistanceFromCenter = this.rotateDistance;
-
-            const targetLocation = new Vector3()
-                .copy(this.initCameraPosition)
+            const targetPosition = this.initCameraPosition
+                .clone()
                 .setLength(curDistanceFromCenter);
-            const lerpPosition = new Vector3().copy(position);
-            lerpPosition.lerp(targetLocation, lerpRate);
-            lerpPosition.setLength(this.rotateDistance);
-            this.camera.position.copy(lerpPosition);
+            const currentPosition = position.clone();
+
+            const targetQuat = new Quaternion().setFromAxisAngle(
+                targetPosition,
+                0
+            );
+            const currentQuat = new Quaternion().copy(this.camera.quaternion);
+            const totalAngle = currentQuat.angleTo(targetQuat);
+
+            const newAngle = lerpRate * totalAngle; // gives same value as using quanternion.slerp
+            const normal = currentPosition
+                .clone()
+                .cross(targetPosition)
+                .normalize();
+
+            this.camera.position.applyAxisAngle(normal, newAngle);
+            this.camera.lookAt(new Vector3());
 
             // it doesnt seem to be able to get to zero, but this was small enough to look good
-            if (position.angleTo(targetLocation) < distanceBuffer) {
+            if (this.camera.position.angleTo(targetPosition) < rotationBuffer) {
                 this.needToReOrientCamera = false;
             }
         }
