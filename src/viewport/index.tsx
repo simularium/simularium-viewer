@@ -75,17 +75,6 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
     private stats: Stats;
 
-    public static defaultProps = {
-        renderStyle: RenderStyle.MOLECULAR,
-        backgroundColor: [0.121569, 0.13333, 0.17647],
-        height: 800,
-        width: 800,
-        loadInitialData: true,
-        hideAllAgents: false,
-        showPaths: true,
-        showBounds: true,
-    };
-
     private static isCustomEvent(event: Event): event is CustomEvent {
         return "detail" in event;
     }
@@ -169,6 +158,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
     public componentDidMount(): void {
         const {
+            backgroundColor,
             simulariumController,
             onTrajectoryFileInfoChanged,
             onUIDisplayDataChanged,
@@ -177,6 +167,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             onError,
         } = this.props;
         this.visGeometry.reparent(this.vdomRef.current);
+        this.visGeometry.setBackgroundColor(backgroundColor);
         if (this.props.loggerLevel === "debug") {
             if (this.vdomRef && this.vdomRef.current) {
                 this.stats.dom.style.position = "absolute";
@@ -197,19 +188,23 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                 if (onError) {
                     onError(`error parsing 'typeMapping' data, ${e.message}`);
                 } else {
-                    console.log("error parsing 'typeMapping' data", e)
+                    console.log("error parsing 'typeMapping' data", e);
                 }
             }
             onTrajectoryFileInfoChanged(msg);
 
             const uiDisplayData = this.selectionInterface.getUIDisplayData();
             let colorIndex = 0;
-            uiDisplayData.forEach(entry => {
-              const ids = this.selectionInterface.getIds(entry.name);
-              this.visGeometry.setColorForIds(ids, colorIndex);
+            uiDisplayData.forEach((entry) => {
+                const ids = this.selectionInterface.getIds(entry.name);
+                this.visGeometry.setColorForIds(ids, colorIndex);
 
-              entry.color = '#' + this.visGeometry.getColorForIndex(colorIndex).getHexString();
-              colorIndex = colorIndex + 1;
+                entry.color =
+                    "#" +
+                    this.visGeometry
+                        .getColorForIndex(colorIndex)
+                        .getHexString();
+                colorIndex = colorIndex + 1;
             });
 
             onUIDisplayDataChanged(uiDisplayData);
@@ -233,8 +228,8 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             }
         };
 
-        if(simulariumController.netConnection) {
-          simulariumController.connect();
+        if (simulariumController.netConnection) {
+            simulariumController.connect();
         }
 
         if (this.vdomRef.current) {

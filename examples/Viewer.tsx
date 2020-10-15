@@ -23,22 +23,22 @@ interface FileHTML extends File {
 }
 
 const agentColors = [
-  "#9f516c",
-  "#81dbe6",
-  "#3452d8",
-  "#9267cb",
-  "#68a500",
-  "#d94e6f",
-  "#d49a01",
-  "#bf5736",
-  "#ffc55b",
-  "#ce8ec9",
-  "#00aabf",
-  "#abb652",
-  "#0ba345",
-  "#d14040",
-  "#d98d73",
-  "#418463",
+    "#9f516c",
+    "#81dbe6",
+    "#3452d8",
+    "#9267cb",
+    "#68a500",
+    "#d94e6f",
+    "#d49a01",
+    "#bf5736",
+    "#ffc55b",
+    "#ce8ec9",
+    "#00aabf",
+    "#abb652",
+    "#0ba345",
+    "#d14040",
+    "#d98d73",
+    "#418463",
 ];
 
 interface ViewerState {
@@ -140,7 +140,7 @@ class Viewer extends React.Component<{}, ViewerState> {
             simulariumController
                 .changeFile(fileName, true, simulariumFile)
                 .catch((error) => {
-                    console.log(error.htmlData)
+                    console.log(error.htmlData);
                     window.alert(`Error loading file: ${error.message}`);
                 });
         });
@@ -173,7 +173,10 @@ class Viewer extends React.Component<{}, ViewerState> {
                 (hiddenAgent) => hiddenAgent.name !== nameToToggle
             );
         } else {
-            nextHiddenAgents = [...currentHiddenAgents, {"name": nameToToggle, "tags": [], },];
+            nextHiddenAgents = [
+                ...currentHiddenAgents,
+                { name: nameToToggle, tags: [] },
+            ];
         }
         console.log(nextHiddenAgents);
         this.setState({
@@ -242,9 +245,7 @@ class Viewer extends React.Component<{}, ViewerState> {
     public render(): JSX.Element {
         return (
             <div className="container" style={{ height: "90%", width: "75%" }}>
-                <button onClick={() => this.configureAndStart()}>
-                    Start
-                </button>
+                <button onClick={() => this.configureAndStart()}>Start</button>
                 <button onClick={() => simulariumController.pause()}>
                     Pause
                 </button>
@@ -255,28 +256,30 @@ class Viewer extends React.Component<{}, ViewerState> {
                     stop
                 </button>
                 <select
-                onChange={(event) => {playbackFile = event.target.value} }
-                defaultValue={playbackFile}
+                    onChange={(event) => {
+                        playbackFile = event.target.value;
+                    }}
+                    defaultValue={playbackFile}
                 >
-                  <option value="actin012_3.h5">Actin 12_3</option>
-                  <option value="listeria01.simularium">listeria 01</option>
-                  <option value="kinesin002_01.h5">kinesin 002</option>
-                  <option value="microtubules038_10.h5">MT 38</option>
-                  <option value="test_traj1.h5">TEST</option>
-                  <option value="microtubules_v2_shrinking.h5">M Tub</option>
-                  <option value="aster.cmo">Aster</option>
-                  <option value="actin34_0.h5">Actin 34</option>
-                  <option value="microtubules30_1.h5">MT 30</option>
-                  <option value="ATPsynthase_1.h5">ATP 1</option>
-                  <option value="ATPsynthase_2.h5">ATP 2</option>
-                  <option value="ATPsynthase_3.h5">ATP 3</option>
-                  <option value="ATPsynthase_4.h5">ATP 4</option>
-                  <option value="ATPsynthase_5.h5">ATP 5</option>
-                  <option value="ATPsynthase_6.h5">ATP 6</option>
-                  <option value="ATPsynthase_7.h5">ATP 7</option>
-                  <option value="ATPsynthase_8.h5">ATP 8</option>
-                  <option value="ATPsynthase_9.h5">ATP 9</option>
-                  <option value="ATPsynthase_10.h5">ATP 10</option>
+                    <option value="actin012_3.h5">Actin 12_3</option>
+                    <option value="listeria01.simularium">listeria 01</option>
+                    <option value="kinesin002_01.h5">kinesin 002</option>
+                    <option value="microtubules038_10.h5">MT 38</option>
+                    <option value="test_traj1.h5">TEST</option>
+                    <option value="microtubules_v2_shrinking.h5">M Tub</option>
+                    <option value="aster.cmo">Aster</option>
+                    <option value="actin34_0.h5">Actin 34</option>
+                    <option value="microtubules30_1.h5">MT 30</option>
+                    <option value="ATPsynthase_1.h5">ATP 1</option>
+                    <option value="ATPsynthase_2.h5">ATP 2</option>
+                    <option value="ATPsynthase_3.h5">ATP 3</option>
+                    <option value="ATPsynthase_4.h5">ATP 4</option>
+                    <option value="ATPsynthase_5.h5">ATP 5</option>
+                    <option value="ATPsynthase_6.h5">ATP 6</option>
+                    <option value="ATPsynthase_7.h5">ATP 7</option>
+                    <option value="ATPsynthase_8.h5">ATP 8</option>
+                    <option value="ATPsynthase_9.h5">ATP 9</option>
+                    <option value="ATPsynthase_10.h5">ATP 10</option>
                 </select>
                 <br />
                 <input
@@ -299,7 +302,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                             <label htmlFor={id}>{id}</label>
                             <input
                                 type="checkbox"
-                                onClick={(event) => 
+                                onClick={(event) =>
                                     this.turnAgentsOnOff(event.target.value)
                                 }
                                 value={id}
@@ -358,6 +361,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                         hideAllAgents={this.state.hideAllAgents}
                         showPaths={this.state.showPaths}
                         onError={(error) => window.alert(error)}
+                        backgroundColor={[0, 0, 0]}
                     />
                 </div>
             </div>
