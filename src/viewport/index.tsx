@@ -75,6 +75,17 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
     private stats: Stats;
 
+    public static defaultProps = {
+        renderStyle: RenderStyle.MOLECULAR,
+        backgroundColor: [0, 0, 0],
+        height: 800,
+        width: 800,
+        loadInitialData: true,
+        hideAllAgents: false,
+        showPaths: true,
+        showBounds: true,
+    };
+
     private static isCustomEvent(event: Event): event is CustomEvent {
         return "detail" in event;
     }
