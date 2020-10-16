@@ -188,6 +188,31 @@ class Viewer extends React.Component<{}, ViewerState> {
         });
     }
 
+    public turnAgentHighlightsOnOff(nameToToggle: string) {
+        let currentHighlightedAgents = this.state.selectionStateInfo
+            .highlightedAgents;
+        console.log(currentHighlightedAgents);
+        let nextHighlightedAgents = [];
+        if (currentHighlightedAgents.some((a) => a.name === nameToToggle)) {
+            nextHighlightedAgents = currentHighlightedAgents.filter(
+                (hiddenAgent) => hiddenAgent.name !== nameToToggle
+            );
+        } else {
+            nextHighlightedAgents = [
+                ...currentHighlightedAgents,
+                { name: nameToToggle, tags: [] },
+            ];
+        }
+        console.log(nextHighlightedAgents);
+        this.setState({
+            ...this.state,
+            selectionStateInfo: {
+                ...this.state.selectionStateInfo,
+                highlightedAgents: nextHighlightedAgents,
+            },
+        });
+    }
+
     public handleTrajectoryInfo(data): void {
         console.log("Trajectory info arrived", data);
         const totalDuration = data.totalSteps * data.timeStepSize;
@@ -307,6 +332,16 @@ class Viewer extends React.Component<{}, ViewerState> {
                                 }
                                 value={id}
                                 defaultChecked={true}
+                            />
+                            <input
+                                type="checkbox"
+                                onClick={(event) =>
+                                    this.turnAgentHighlightsOnOff(
+                                        event.target.value
+                                    )
+                                }
+                                value={id}
+                                defaultChecked={false}
                             />
                         </React.Fragment>
                     );
