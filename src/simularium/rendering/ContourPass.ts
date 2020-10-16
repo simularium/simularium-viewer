@@ -57,7 +57,7 @@ class ContourPass {
               int T = int(texture(instanceIdTex, vUv + vec2(0, hStep)).g);
               int B = int(texture(instanceIdTex, vUv + vec2(0, -hStep)).g);
             
-              vec4 finalColor;
+              vec4 finalColor = col;
               if ( (X == R) && (X == L) && (X == T) && (X == B) )
               {
                 //~ current pixel is NOT on the edge
@@ -104,7 +104,7 @@ class ContourPass {
                 float gy = dot(sy[0], I[0]) + dot(sy[1], I[1]) + dot(sy[2], I[2]);
 
                 float g = sqrt(pow(gx, 2.0)+pow(gy, 2.0));
-                finalColor = mix(col, vec4(outlineColor.rgb,1), g*outlineAlpha);
+                finalColor = mix(finalColor, vec4(outlineColor.rgb,1), g*outlineAlpha);
 
               }
 
@@ -121,7 +121,6 @@ class ContourPass {
                   //~ current pixel lies on the edge
                   // outline pixel color is a whitened version of the color
                   finalColor = mix(vec4(followColor.rgb,1), col, 1.0-followAlpha);
-  
                 }
               }
         
