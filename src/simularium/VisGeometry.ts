@@ -1021,18 +1021,21 @@ class VisGeometry {
         const jsonRequest = new Request(filePath);
         return fetch(jsonRequest)
             .then((response) => {
-                if (!response.ok) {
-                    const error = new Error(`Failed to fetch ${filePath}`);
-                    return Promise.reject(error);
-                }
+                // if (!response.ok) {
+                //     console.warn(`Failed to fetch ${filePath}`);
+                //     return Promise.resolve();
+                // }
                 return response.json();
             })
+            .catch((err) => console.warn("here's the error" + err))
             .then((data) => {
-                this.setGeometryData(
-                    data as AgentTypeVisDataMap,
-                    assetPath,
-                    callback
-                );
+                if (data) {
+                    this.setGeometryData(
+                        data as AgentTypeVisDataMap,
+                        assetPath,
+                        callback
+                    );
+                }
             });
     }
 
