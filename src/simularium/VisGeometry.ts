@@ -1264,9 +1264,13 @@ class VisGeometry {
                 positionArray.push(agentData.cr * scale * 0.5);
 
                 instanceArray.push(visAgent.id);
-                instanceArray.push(typeId);
+                instanceArray.push(
+                    visAgent.colorIndex * (visAgent.highlighted ? 1 : -1)
+                );
                 instanceArray.push(visAgent.id);
-                instanceArray.push(typeId);
+                instanceArray.push(
+                    visAgent.colorIndex * (visAgent.highlighted ? 1 : -1)
+                );
 
                 // const count = fiberHistogram.get(
                 //     agentData.subpoints.length / 3
