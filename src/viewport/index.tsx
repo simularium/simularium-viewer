@@ -21,7 +21,7 @@ export type PropColor = string | number | [number, number, number];
 
 interface ViewportProps {
     renderStyle: RenderStyle;
-    backgroundColor: PropColor;
+    backgroundColor?: PropColor;
     agentColors?: (number | string)[]; //TODO: accept all Color formats
     height: number;
     width: number;
@@ -38,6 +38,7 @@ interface ViewportProps {
     showPaths: boolean;
     showBounds: boolean;
     selectionStateInfo: SelectionStateInfo;
+    showCameraControls: boolean;
     onError?: (errorMessage: string) => void;
 }
 
@@ -77,7 +78,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
     public static defaultProps = {
         renderStyle: RenderStyle.MOLECULAR,
-        backgroundColor: [0.121569, 0.13333, 0.17647],
+        backgroundColor: [0, 0, 0],
         height: 800,
         width: 800,
         loadInitialData: true,
@@ -136,6 +137,8 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         this.dispatchUpdatedTime = this.dispatchUpdatedTime.bind(this);
         this.handleTimeChange = this.handleTimeChange.bind(this);
         this.resetCamera = this.resetCamera.bind(this);
+        this.centerCamera = this.centerCamera.bind(this);
+        this.reOrientCamera = this.reOrientCamera.bind(this);
 
         this.visGeometry = new VisGeometry(loggerLevel);
         this.visGeometry.setupScene();
@@ -169,6 +172,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
     public componentDidMount(): void {
         const {
+            backgroundColor,
             simulariumController,
             onTrajectoryFileInfoChanged,
             onUIDisplayDataChanged,
@@ -177,6 +181,9 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             onError,
         } = this.props;
         this.visGeometry.reparent(this.vdomRef.current);
+        if (backgroundColor !== undefined) {
+            this.visGeometry.setBackgroundColor(backgroundColor);
+        }
         if (this.props.loggerLevel === "debug") {
             if (this.vdomRef && this.vdomRef.current) {
                 this.stats.dom.style.position = "absolute";
@@ -186,6 +193,10 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         if (onError) {
             simulariumController.onError = onError;
         }
+
+        simulariumController.resetCamera = this.resetCamera;
+        simulariumController.reOrientCamera = this.reOrientCamera;
+        simulariumController.centerCamera = this.centerCamera;
 
         simulariumController.trajFileInfoCallback = (
             msg: TrajectoryFileInfo
@@ -197,19 +208,23 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                 if (onError) {
                     onError(`error parsing 'typeMapping' data, ${e.message}`);
                 } else {
-                    console.log("error parsing 'typeMapping' data", e)
+                    console.log("error parsing 'typeMapping' data", e);
                 }
             }
             onTrajectoryFileInfoChanged(msg);
 
             const uiDisplayData = this.selectionInterface.getUIDisplayData();
             let colorIndex = 0;
-            uiDisplayData.forEach(entry => {
-              const ids = this.selectionInterface.getIds(entry.name);
-              this.visGeometry.setColorForIds(ids, colorIndex);
+            uiDisplayData.forEach((entry) => {
+                const ids = this.selectionInterface.getIds(entry.name);
+                this.visGeometry.setColorForIds(ids, colorIndex);
 
-              entry.color = '#' + this.visGeometry.getColorForIndex(colorIndex).getHexString();
-              colorIndex = colorIndex + 1;
+                entry.color =
+                    "#" +
+                    this.visGeometry
+                        .getColorForIndex(colorIndex)
+                        .getHexString();
+                colorIndex = colorIndex + 1;
             });
 
             onUIDisplayDataChanged(uiDisplayData);
@@ -233,8 +248,8 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             }
         };
 
-        if(simulariumController.netConnection) {
-          simulariumController.connect();
+        if (simulariumController.netConnection) {
+            simulariumController.connect();
         }
 
         if (this.vdomRef.current) {
@@ -410,6 +425,14 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         this.visGeometry.resetCamera();
     }
 
+    public centerCamera(): void {
+        this.visGeometry.centerCamera();
+    }
+
+    public reOrientCamera(): void {
+        this.visGeometry.reOrientCamera();
+    }
+
     public onPickObject(posX: number, posY: number): void {
         // TODO: intersect with scene's children not including lights?
         // can we select a smaller number of things to hit test?
@@ -534,12 +557,18 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                         style={{ color: "#737373" }}
                     />
                 </button>
+                <button onClick={this.centerCamera} className="btn-work">
+                    Re-center
+                </button>
+                <button onClick={this.reOrientCamera} className="btn-word">
+                    Starting orientation
+                </button>
             </div>
         );
     }
 
     public render(): React.ReactElement<HTMLElement> {
-        const { width, height } = this.props;
+        const { width, height, showCameraControls } = this.props;
 
         // style is specified below so that the size
         // can be passed as a react property
@@ -554,7 +583,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                     }}
                     ref={this.vdomRef}
                 >
-                    {this.renderViewControls()}
+                    {showCameraControls && this.renderViewControls()}
                 </div>
             </>
         );

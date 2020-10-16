@@ -1,5 +1,5 @@
 import React from "react";
-import type { UIDisplayData, SelectionStateInfo } from "../type-declarations";
+import type { UIDisplayData, SelectionStateInfo } from "../src/simularium/SelectionInterface";
 
 import SimulariumViewer, {
     SimulariumController,
@@ -374,6 +374,15 @@ class Viewer extends React.Component<{}, ViewerState> {
                 >
                     Switch Render
                 </button>
+                <button onClick={() => simulariumController.resetCamera()}>
+                    Reset camera
+                </button>
+                <button onClick={() => simulariumController.centerCamera()}>
+                    center camera
+                </button>
+                <button onClick={() => simulariumController.reOrientCamera()}>
+                    starting orientation
+                </button>
                 <div className="viewer-container">
                     <SimulariumViewer
                         ref={this.viewerRef}
@@ -396,6 +405,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                         hideAllAgents={this.state.hideAllAgents}
                         showPaths={this.state.showPaths}
                         onError={(error) => window.alert(error)}
+                        backgroundColor={[0, 0, 0]}
                     />
                 </div>
             </div>
