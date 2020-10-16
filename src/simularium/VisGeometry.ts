@@ -30,7 +30,6 @@ import {
     WebGLRendererParameters,
     Mesh,
     Quaternion,
-    Matrix4,
 } from "three";
 
 import * as dat from "dat.gui";
