@@ -256,6 +256,11 @@ export default class VisAgent {
         }
     }
 
+    public signedTypeId(): number {
+        // Note, adding 1 to colorIndex because it can be 0 and the signed multiplier won't do anything.
+        // This means we have to subtract 1 in the downstream code (the shaders) if we need the true value.
+        return (this.colorIndex + 1) * (this.highlighted ? 1 : -1);
+    }
     private onAgentMeshBeforeRender(
         this: VisAgent,
         renderer,
@@ -272,8 +277,7 @@ export default class VisAgent {
         if (material.uniforms.typeId) {
             // negate the value if dehighlighted.
             // see implementation in CompositePass.ts for how the value is interpreted
-            material.uniforms.typeId.value =
-                this.colorIndex * (this.highlighted ? 1 : -1);
+            material.uniforms.typeId.value = this.signedTypeId();
             material.uniformsNeedUpdate = true;
         }
         if (material.uniforms.instanceId) {
