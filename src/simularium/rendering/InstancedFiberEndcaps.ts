@@ -33,6 +33,7 @@ class InstancedFiberEndcaps {
         this.instancedGeometry.maxInstancedCount = instanceCount;
         //let material = new THREE.ShaderMaterial();
         this.mesh = new Mesh(this.instancedGeometry); //, material);
+        this.mesh.frustumCulled = false;
     }
 
     public getMesh(): Mesh {
