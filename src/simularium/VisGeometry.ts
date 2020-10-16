@@ -1265,7 +1265,7 @@ class VisGeometry {
                         q.z,
                         q.w,
                         visAgent.id,
-                        visAgent.colorIndex * (visAgent.highlighted ? 1 : -1)
+                        visAgent.signedTypeId()
                     );
                     this.fiberEndcaps.addInstance(
                         agentData.subpoints[agentData.subpoints.length - 3] +
@@ -1280,7 +1280,7 @@ class VisGeometry {
                         q.z,
                         q.w,
                         visAgent.id,
-                        visAgent.colorIndex * (visAgent.highlighted ? 1 : -1)
+                        visAgent.signedTypeId()
                     );
                 }
 
