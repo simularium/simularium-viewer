@@ -4,6 +4,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 import VisAgent from "./VisAgent";
 import VisTypes from "./VisTypes";
+import { USE_INSTANCE_ENDCAPS } from "./VisTypes";
 import PDBModel from "./PDBModel";
 import TaskQueue from "./worker/TaskQueue";
 import { REASON_CANCELLED } from "./worker/TaskQueue";
@@ -29,6 +30,7 @@ import {
     WebGLRenderer,
     WebGLRendererParameters,
     Mesh,
+    Quaternion,
 } from "three";
 
 import * as dat from "dat.gui";
@@ -1100,8 +1102,7 @@ class VisGeometry {
         let dx, dy, dz;
 
         //const fiberHistogram = new Map<number, number>();
-        const positionArray: number[] = [];
-        const instanceArray: number[] = [];
+        this.fiberEndcaps.beginUpdate();
 
         agents.forEach((agentData, i) => {
             const visType = agentData["vis-type"];
@@ -1246,31 +1247,39 @@ class VisGeometry {
                 visAgent.updateFiber(agentData.subpoints, agentData.cr, scale);
 
                 visAgent.mesh.visible = true;
+                if (USE_INSTANCE_ENDCAPS) {
+                    const q = new Quaternion().setFromEuler(
+                        visAgent.mesh.rotation
+                    );
 
-                positionArray.push(agentData.subpoints[0]);
-                positionArray.push(agentData.subpoints[1]);
-                positionArray.push(agentData.subpoints[2]);
-                positionArray.push(agentData.cr * scale * 0.5);
-
-                positionArray.push(
-                    agentData.subpoints[agentData.subpoints.length - 3]
-                );
-                positionArray.push(
-                    agentData.subpoints[agentData.subpoints.length - 2]
-                );
-                positionArray.push(
-                    agentData.subpoints[agentData.subpoints.length - 1]
-                );
-                positionArray.push(agentData.cr * scale * 0.5);
-
-                instanceArray.push(visAgent.id);
-                instanceArray.push(
-                    visAgent.colorIndex * (visAgent.highlighted ? 1 : -1)
-                );
-                instanceArray.push(visAgent.id);
-                instanceArray.push(
-                    visAgent.colorIndex * (visAgent.highlighted ? 1 : -1)
-                );
+                    this.fiberEndcaps.addInstance(
+                        agentData.subpoints[0] + visAgent.mesh.position.x,
+                        agentData.subpoints[1] + visAgent.mesh.position.y,
+                        agentData.subpoints[2] + visAgent.mesh.position.z,
+                        agentData.cr * scale * 0.5,
+                        q.x,
+                        q.y,
+                        q.z,
+                        q.w,
+                        visAgent.id,
+                        visAgent.colorIndex * (visAgent.highlighted ? 1 : -1)
+                    );
+                    this.fiberEndcaps.addInstance(
+                        agentData.subpoints[agentData.subpoints.length - 3] +
+                            visAgent.mesh.position.x,
+                        agentData.subpoints[agentData.subpoints.length - 2] +
+                            visAgent.mesh.position.y,
+                        agentData.subpoints[agentData.subpoints.length - 1] +
+                            visAgent.mesh.position.z,
+                        agentData.cr * scale * 0.5,
+                        q.x,
+                        q.y,
+                        q.z,
+                        q.w,
+                        visAgent.id,
+                        visAgent.colorIndex * (visAgent.highlighted ? 1 : -1)
+                    );
+                }
 
                 // const count = fiberHistogram.get(
                 //     agentData.subpoints.length / 3
@@ -1289,17 +1298,7 @@ class VisGeometry {
         //console.log(fiberHistogram);
         this.hideUnusedAgents(agents.length);
 
-        this.fiberEndcaps.updateInstanceBuffer(
-            "translateAndScale",
-            new Float32Array(positionArray),
-            4
-        );
-        this.fiberEndcaps.updateInstanceBuffer(
-            "instanceAndTypeId",
-            new Float32Array(instanceArray),
-            2
-        );
-        this.fiberEndcaps.updateInstanceCount(instanceArray.length / 2);
+        this.fiberEndcaps.endUpdate();
     }
 
     public animateCamera(): void {

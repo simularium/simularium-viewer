@@ -20,6 +20,7 @@ import {
 import MembraneShader from "./rendering/MembraneShader";
 import PDBModel from "./PDBModel";
 import VisTypes from "./VisTypes";
+import { USE_INSTANCE_ENDCAPS } from "./VisTypes";
 
 function desaturate(color: Color): Color {
     const desatColor = new Color(color);
@@ -451,16 +452,17 @@ export default class VisAgent {
         const fiberMesh = new Mesh(geometry);
         fiberMesh.name = `Fiber`;
 
-        const fiberEndcapMesh0 = new Mesh(VisAgent.fiberEndcapGeometry);
-        fiberEndcapMesh0.name = `FiberEnd0`;
-
-        const fiberEndcapMesh1 = new Mesh(VisAgent.fiberEndcapGeometry);
-        fiberEndcapMesh1.name = `FiberEnd1`;
-
         const fiberGroup = new Group();
         fiberGroup.add(fiberMesh);
-        //        fiberGroup.add(fiberEndcapMesh0);
-        //        fiberGroup.add(fiberEndcapMesh1);
+        if (!USE_INSTANCE_ENDCAPS) {
+            const fiberEndcapMesh0 = new Mesh(VisAgent.fiberEndcapGeometry);
+            fiberEndcapMesh0.name = `FiberEnd0`;
+
+            const fiberEndcapMesh1 = new Mesh(VisAgent.fiberEndcapGeometry);
+            fiberEndcapMesh1.name = `FiberEnd1`;
+            fiberGroup.add(fiberEndcapMesh0);
+            fiberGroup.add(fiberEndcapMesh1);
+        }
         // downstream code will switch this flag
         fiberGroup.visible = false;
         return fiberGroup;

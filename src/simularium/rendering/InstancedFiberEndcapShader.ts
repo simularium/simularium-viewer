@@ -4,15 +4,23 @@ const vertexShader = `
 precision highp float;
 
 attribute vec4 translateAndScale; // xyz trans, w scale
+attribute vec4 rotationQ; // quaternion
 attribute vec2 instanceAndTypeId;
 
 varying vec3 IN_viewPos;
 varying vec3 IN_viewNormal;
 varying vec2 IN_instanceAndTypeId;
           
+vec3 applyTRS( vec3 position, vec3 translation, vec4 quaternion, float scale ) {
+	position *= scale;
+	position += 2.0 * cross( quaternion.xyz, cross( quaternion.xyz, position ) + quaternion.w * position );
+	return position + translation;
+}
+
 void main()	{
-    vec3 p = position.xyz;
-    vec4 modelViewPosition = modelViewMatrix * vec4(p*translateAndScale.w + translateAndScale.xyz, 1.0);
+    vec3 p = applyTRS(position.xyz, translateAndScale.xyz, rotationQ, translateAndScale.w);
+    //vec3 p = position.xyz*translateAndScale.w + translateAndScale.xyz;
+    vec4 modelViewPosition = modelViewMatrix * vec4(p, 1.0);
     IN_viewPos = modelViewPosition.xyz;
     IN_viewNormal = normalMatrix * normal.xyz;
 
@@ -32,7 +40,7 @@ varying vec2 IN_instanceAndTypeId;
 uniform int typeId;
 
 uniform mat4 projectionMatrix;
-          
+
 void main()	{
     vec3 fragViewPos = IN_viewPos;
   
