@@ -1021,13 +1021,18 @@ class VisGeometry {
         const jsonRequest = new Request(filePath);
         return fetch(jsonRequest)
             .then((response) => {
-                // if (!response.ok) {
-                //     console.warn(`Failed to fetch ${filePath}`);
-                //     return Promise.resolve();
-                // }
+                if (!response.ok) {
+                    return Promise.reject(response.status);
+                }
                 return response.json();
             })
-            .catch((err) => console.warn("here's the error" + err))
+            .catch((err) => {
+                if (err === 404) {
+                    console.warn(
+                        `Could not fetch geometry info for ${name} because ${filePath} does not exist.`
+                    );
+                }
+            })
             .then((data) => {
                 if (data) {
                     this.setGeometryData(
