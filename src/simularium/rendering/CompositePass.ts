@@ -142,7 +142,8 @@ class CompositePass {
                     discard;
             
                 vec4 instanceInfo = vec4(0.0,0.0,0.0,0.0);//ProteinInstanceInfo[instanceId];
-                int ingredientId = abs(int(col0.x));
+                // Subtracting 1 because we added 1 before setting this, to account for id 0 being highlighted.
+                int ingredientId = abs(int(col0.x))-1;
                 // future: can use this value to do other rendering
                 //float highlighted = (sign(col0.x) + 1.0) * 0.5;
 
