@@ -30,7 +30,6 @@ import {
     WebGLRendererParameters,
     Mesh,
     Quaternion,
-    Matrix4,
 } from "three";
 
 import * as dat from "dat.gui";
@@ -1026,8 +1025,8 @@ class VisGeometry {
                 }
                 return response.json();
             })
-            .catch((err) => {
-                if (err === 404) {
+            .catch((httpStatusCode: number) => {
+                if (httpStatusCode === 404) {
                     console.warn(
                         `Could not fetch geometry info for ${name} because ${filePath} does not exist.`
                     );
