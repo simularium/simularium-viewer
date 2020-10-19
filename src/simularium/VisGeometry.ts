@@ -871,7 +871,10 @@ class VisGeometry {
         this.moleculeRenderer.updateColors(numColors, this.colorsData);
 
         this.visAgents.forEach((agent) => {
-            agent.setColor(this.getColorForTypeId(agent.typeId));
+            agent.setColor(
+                this.getColorForTypeId(agent.typeId),
+                this.getColorIndexForTypeId(agent.typeId)
+            );
         });
     }
 
