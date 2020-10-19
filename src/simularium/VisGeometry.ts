@@ -30,7 +30,6 @@ import {
     WebGLRendererParameters,
     Mesh,
     Quaternion,
-    Matrix4,
 } from "three";
 
 import * as dat from "dat.gui";
@@ -1022,17 +1021,29 @@ class VisGeometry {
         return fetch(jsonRequest)
             .then((response) => {
                 if (!response.ok) {
-                    const error = new Error(`Failed to fetch ${filePath}`);
-                    return Promise.reject(error);
+                    return Promise.reject(response);
                 }
                 return response.json();
             })
+            .catch((response: Response) => {
+                if (response.status === 404) {
+                    console.warn(
+                        `Could not fetch geometry info for ${name} because ${filePath} does not exist.`
+                    );
+                } else {
+                    console.error(
+                        `Could not fetch geometry info for ${name}: ${response.statusText}`
+                    );
+                }
+            })
             .then((data) => {
-                this.setGeometryData(
-                    data as AgentTypeVisDataMap,
-                    assetPath,
-                    callback
-                );
+                if (data) {
+                    this.setGeometryData(
+                        data as AgentTypeVisDataMap,
+                        assetPath,
+                        callback
+                    );
+                }
             });
     }
 
