@@ -8,18 +8,18 @@ import {
 class InstancedFiberEndcaps {
     private mesh: Mesh;
     private instancedGeometry: InstancedBufferGeometry;
-    private positionArray: number[]; //Float32Array; // x,y,z,scale
-    private rotationArray: number[]; //Float32Array; // quaternion xyzw
-    private instanceArray: number[]; //Float32Array; // instance id, type id (color index)
+    private positionArray: Float32Array; // x,y,z,scale
+    private rotationArray: Float32Array; // quaternion xyzw
+    private instanceArray: Float32Array; // instance id, type id (color index)
     private currentInstance: number;
     private isUpdating: boolean;
 
     constructor() {
         this.mesh = new Mesh();
         this.instancedGeometry = new InstancedBufferGeometry();
-        this.positionArray = []; //new Float32Array();
-        this.instanceArray = []; //new Float32Array();
-        this.rotationArray = []; //new Float32Array();
+        this.positionArray = new Float32Array();
+        this.instanceArray = new Float32Array();
+        this.rotationArray = new Float32Array();
         this.currentInstance = 0;
         this.isUpdating = false;
     }
@@ -52,11 +52,32 @@ class InstancedFiberEndcaps {
         );
     }
 
-    updateInstanceCount(n: number): void {
+    private updateInstanceCount(n: number): void {
         this.instancedGeometry.maxInstancedCount = n;
     }
 
-    beginUpdate(): void {
+    beginUpdate(nAgents: number): void {
+        // do we need to increase storage?
+        const increment = 4096;
+        // two instances per agent.
+        if (nAgents * 2 > this.instanceArray.length / 2) {
+            // increase to next multiple of 4096 above nAgents
+            const newCount = (Math.trunc(nAgents / increment) + 1) * increment;
+            console.log("realloc to " + newCount + " agents");
+
+            const newPos = new Float32Array(4 * newCount);
+            newPos.set(this.positionArray);
+            this.positionArray = newPos;
+
+            const newInst = new Float32Array(2 * newCount);
+            newInst.set(this.positionArray);
+            this.instanceArray = newInst;
+
+            const newRot = new Float32Array(4 * newCount);
+            newRot.set(this.rotationArray);
+            this.rotationArray = newRot;
+        }
+
         this.isUpdating = true;
         this.currentInstance = 0;
     }
@@ -89,25 +110,24 @@ class InstancedFiberEndcaps {
     }
 
     endUpdate(): void {
-        const pos = new Float32Array(
-            this.positionArray.slice(0, this.currentInstance * 4)
-        );
-        this.updateInstanceBuffer("translateAndScale", pos, 4);
+        // const pos = new Float32Array(
+        //     this.positionArray.slice(0, this.currentInstance * 4)
+        // );
+        this.updateInstanceBuffer("translateAndScale", this.positionArray, 4);
 
-        const rot = new Float32Array(
-            this.rotationArray.slice(0, this.currentInstance * 4)
-        );
-        this.updateInstanceBuffer("rotationQ", rot, 4);
+        // const rot = new Float32Array(
+        //     this.rotationArray.slice(0, this.currentInstance * 4)
+        // );
+        this.updateInstanceBuffer("rotationQ", this.rotationArray, 4);
 
-        const inst = new Float32Array(
-            this.instanceArray.slice(0, this.currentInstance * 2)
-        );
-        this.updateInstanceBuffer("instanceAndTypeId", inst, 2);
+        // const inst = new Float32Array(
+        //     this.instanceArray.slice(0, this.currentInstance * 2)
+        // );
+        this.updateInstanceBuffer("instanceAndTypeId", this.instanceArray, 2);
 
         this.updateInstanceCount(this.currentInstance);
 
         this.isUpdating = false;
-        this.currentInstance = 0;
     }
 }
 
