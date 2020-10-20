@@ -88,8 +88,6 @@ class GBufferPass {
     ): void {
         const c = renderer.getClearColor().clone();
         const a = renderer.getClearAlpha();
-        // alpha == -1 is a marker to discard pixels later
-        renderer.setClearColor(new Color(0.0, 0.0, 0.0), -1.0);
 
         this.colorMaterialMesh.uniforms.projectionMatrix.value =
             camera.projectionMatrix;
@@ -107,6 +105,12 @@ class GBufferPass {
 
         // 1. fill colorbuffer
 
+        // clear color:
+        // x:0 agent type id (0 so that type ids can be positive or negative integers)
+        // y:-1 agent instance id (-1 so that 0 remains a distinct instance id from the background)
+        // z:0 view space depth
+        // alpha == -1 is a marker to discard pixels later, will be filled with frag depth
+        renderer.setClearColor(new Color(0.0, -1.0, 0.0), -1.0);
         renderer.setRenderTarget(colorBuffer);
 
         this.agentMeshGroup.visible = true;
@@ -129,6 +133,7 @@ class GBufferPass {
 
         // 2. fill normalbuffer
 
+        renderer.setClearColor(new Color(0.0, 0.0, 0.0), -1.0);
         renderer.setRenderTarget(normalBuffer);
 
         this.agentMeshGroup.visible = true;
@@ -151,6 +156,7 @@ class GBufferPass {
 
         // 3. fill positionbuffer
 
+        renderer.setClearColor(new Color(0.0, 0.0, 0.0), -1.0);
         renderer.setRenderTarget(positionBuffer);
 
         this.agentMeshGroup.visible = true;
@@ -174,6 +180,7 @@ class GBufferPass {
 
         renderer.autoClear = true;
 
+        // restore saved clear color
         renderer.setClearColor(c, a);
     }
 }
