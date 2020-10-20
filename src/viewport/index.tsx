@@ -341,8 +341,8 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
     public isClick = (thisClick: Click): boolean => {
         const { lastClick } = this.state;
-
-        if (Date.now() - lastClick.time > MAX_CLICK_TIME) {
+        const t = Date.now() - lastClick.time;
+        if (t > MAX_CLICK_TIME) {
             // long click
             return false;
         }
