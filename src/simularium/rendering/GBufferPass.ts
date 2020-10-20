@@ -126,7 +126,7 @@ class GBufferPass {
         // 1. fill colorbuffer
 
         // clear color:
-        // x:0 agent type id
+        // x:0 agent type id (0 so that type ids can be positive or negative integers)
         // y:-1 agent instance id (-1 so that 0 remains a distinct instance id from the background)
         // z:0 view space depth
         // alpha == -1 is a marker to discard pixels later, will be filled with frag depth
