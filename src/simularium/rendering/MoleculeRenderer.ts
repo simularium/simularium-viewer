@@ -17,7 +17,6 @@ import {
     PerspectiveCamera,
 } from "three";
 import * as dat from "dat.gui";
-import { max } from "lodash";
 
 interface MoleculeRenderParameters {
     aoradius1: number;
