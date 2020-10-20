@@ -23,13 +23,12 @@ interface FileHTML extends File {
 }
 
 const agentColors = [
-    "#9f516c",
     "#81dbe6",
     "#3452d8",
     "#9267cb",
     "#68a500",
-    "#d94e6f",
     "#d49a01",
+    "#9f516c",
     "#bf5736",
     "#ffc55b",
     "#ce8ec9",
@@ -37,8 +36,9 @@ const agentColors = [
     "#abb652",
     "#0ba345",
     "#d14040",
-    "#d98d73",
     "#418463",
+    "#7f7f7f",
+    "#333333",
 ];
 
 interface ViewerState {
@@ -295,7 +295,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                     <option value="aster.cmo">Aster</option>
                     <option value="actin34_0.h5">Actin 34</option>
                     <option value="microtubules30_1.h5">MT 30</option>
-                    <option value="ATPsynthase_1.h5">ATP 1</option>
+                    <option value="endocytosis.simularium">Endocytosis</option>
                     <option value="ATPsynthase_2.h5">ATP 2</option>
                     <option value="ATPsynthase_3.h5">ATP 3</option>
                     <option value="ATPsynthase_4.h5">ATP 4</option>
