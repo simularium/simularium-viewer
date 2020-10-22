@@ -1137,14 +1137,15 @@ class VisGeometry {
 
     /**
      *   Update Scene
-     * */
+     **/
     public updateScene(agents: AgentData[]): void {
         this.currentSceneAgents = agents;
 
         let dx, dy, dz;
 
-        //const fiberHistogram = new Map<number, number>();
-        this.fiberEndcaps.beginUpdate();
+        if (USE_INSTANCE_ENDCAPS) {
+            this.fiberEndcaps.beginUpdate(agents.length);
+        }
 
         agents.forEach((agentData, i) => {
             const visType = agentData["vis-type"];
@@ -1322,25 +1323,13 @@ class VisGeometry {
                         visAgent.signedTypeId()
                     );
                 }
-
-                // const count = fiberHistogram.get(
-                //     agentData.subpoints.length / 3
-                // );
-                // if (count !== undefined) {
-                //     fiberHistogram.set(
-                //         agentData.subpoints.length / 3,
-                //         count + 1
-                //     );
-                // } else {
-                //     fiberHistogram.set(agentData.subpoints.length / 3, 1);
-                // }
             }
         });
 
-        //console.log(fiberHistogram);
         this.hideUnusedAgents(agents.length);
-
-        this.fiberEndcaps.endUpdate();
+        if (USE_INSTANCE_ENDCAPS) {
+            this.fiberEndcaps.endUpdate();
+        }
     }
 
     public animateCamera(): void {

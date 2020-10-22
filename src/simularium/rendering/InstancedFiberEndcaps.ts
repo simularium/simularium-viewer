@@ -1,4 +1,5 @@
 import {
+    BufferAttribute,
     SphereBufferGeometry,
     InstancedBufferAttribute,
     InstancedBufferGeometry,
@@ -41,7 +42,7 @@ class InstancedFiberEndcaps {
     }
 
     // send in new instance data
-    updateInstanceBuffer(
+    private updateInstanceBuffer(
         attributeName: string,
         data: Float32Array,
         nfloatsPerValue = 3
@@ -56,26 +57,37 @@ class InstancedFiberEndcaps {
         this.instancedGeometry.maxInstancedCount = n;
     }
 
+    private reallocate(n: number): void {
+        const newPos = new Float32Array(4 * n);
+        newPos.set(this.positionArray);
+        this.positionArray = newPos;
+
+        const newInst = new Float32Array(2 * n);
+        newInst.set(this.instanceArray);
+        this.instanceArray = newInst;
+
+        const newRot = new Float32Array(4 * n);
+        newRot.set(this.rotationArray);
+        this.rotationArray = newRot;
+
+        this.updateInstanceBuffer("translateAndScale", this.positionArray, 4);
+        this.updateInstanceBuffer("rotationQ", this.rotationArray, 4);
+        this.updateInstanceBuffer("instanceAndTypeId", this.instanceArray, 2);
+    }
+
     beginUpdate(nAgents: number): void {
         // do we need to increase storage?
         const increment = 4096;
+        const currentNumInstances = this.instanceArray.length / 2;
+        const requestedNumInstances = nAgents * 2;
         // two instances per agent.
-        if (nAgents * 2 > this.instanceArray.length / 2) {
+        if (requestedNumInstances > currentNumInstances) {
             // increase to next multiple of 4096 above nAgents
-            const newCount = (Math.trunc(nAgents / increment) + 1) * increment;
-            console.log("realloc to " + newCount + " agents");
+            const newInstanceCount =
+                (Math.trunc(requestedNumInstances / increment) + 1) * increment;
+            console.log("realloc to " + newInstanceCount + " instances");
 
-            const newPos = new Float32Array(4 * newCount);
-            newPos.set(this.positionArray);
-            this.positionArray = newPos;
-
-            const newInst = new Float32Array(2 * newCount);
-            newInst.set(this.positionArray);
-            this.instanceArray = newInst;
-
-            const newRot = new Float32Array(4 * newCount);
-            newRot.set(this.rotationArray);
-            this.rotationArray = newRot;
+            this.reallocate(newInstanceCount);
         }
 
         this.isUpdating = true;
@@ -110,22 +122,18 @@ class InstancedFiberEndcaps {
     }
 
     endUpdate(): void {
-        // const pos = new Float32Array(
-        //     this.positionArray.slice(0, this.currentInstance * 4)
-        // );
-        this.updateInstanceBuffer("translateAndScale", this.positionArray, 4);
-
-        // const rot = new Float32Array(
-        //     this.rotationArray.slice(0, this.currentInstance * 4)
-        // );
-        this.updateInstanceBuffer("rotationQ", this.rotationArray, 4);
-
-        // const inst = new Float32Array(
-        //     this.instanceArray.slice(0, this.currentInstance * 2)
-        // );
-        this.updateInstanceBuffer("instanceAndTypeId", this.instanceArray, 2);
-
         this.updateInstanceCount(this.currentInstance);
+
+        // assumes the entire buffers are invalidated.
+        (this.instancedGeometry.getAttribute(
+            "translateAndScale"
+        ) as BufferAttribute).needsUpdate = true;
+        (this.instancedGeometry.getAttribute(
+            "rotationQ"
+        ) as BufferAttribute).needsUpdate = true;
+        (this.instancedGeometry.getAttribute(
+            "instanceAndTypeId"
+        ) as BufferAttribute).needsUpdate = true;
 
         this.isUpdating = false;
     }
