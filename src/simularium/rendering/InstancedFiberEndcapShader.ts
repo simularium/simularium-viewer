@@ -37,8 +37,6 @@ varying vec3 IN_viewPos;
 varying vec3 IN_viewNormal;
 varying vec2 IN_instanceAndTypeId;
 
-uniform int typeId;
-
 uniform mat4 projectionMatrix;
 
 void main()	{

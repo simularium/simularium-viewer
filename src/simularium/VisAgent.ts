@@ -22,16 +22,17 @@ import PDBModel from "./PDBModel";
 import VisTypes from "./VisTypes";
 import { USE_INSTANCE_ENDCAPS } from "./VisTypes";
 
-function desaturate(color: Color): Color {
-    const desatColor = new Color(color);
+function getHighlightColor(color: Color): Color {
+    const hiColor = new Color(color);
     let hsl: {
         h: number;
         s: number;
         l: number;
     } = { h: 0, s: 0, l: 0 };
-    hsl = desatColor.getHSL(hsl);
-    desatColor.setHSL(hsl.h, 0.25 * hsl.s, hsl.l);
-    return desatColor;
+    hsl = hiColor.getHSL(hsl);
+    // increase luminance 80% of the difference toward max
+    hiColor.setHSL(hsl.h, hsl.s, hsl.l + 0.8 * (1.0 - hsl.l));
+    return hiColor;
 }
 
 const NO_AGENT = -1;
@@ -51,7 +52,7 @@ export default class VisAgent {
     );
     // this material only used in webGL1 fallback rendering mode
     private static followMaterial: MeshBasicMaterial = new MeshBasicMaterial({
-        color: new Color(1, 0, 0),
+        color: new Color(1, 1, 0),
     });
     private static membraneData: {
         faces: { name: string }[];
@@ -97,7 +98,7 @@ export default class VisAgent {
     // this material only used in webGL1 fallback rendering mode
     public baseMaterial: Material;
     // this material only used in webGL1 fallback rendering mode
-    public desatMaterial: Material;
+    public highlightMaterial: Material;
     public color: Color;
     public name: string;
     public followed: boolean;
@@ -120,10 +121,10 @@ export default class VisAgent {
         this.baseMaterial = new MeshLambertMaterial({
             color: new Color(this.color),
         });
-        this.desatMaterial = new MeshBasicMaterial({
-            color: desaturate(this.color),
+        this.highlightMaterial = new MeshBasicMaterial({
+            color: getHighlightColor(this.color),
             transparent: true,
-            opacity: 0.4,
+            opacity: 1.0,
         });
         this.mesh = new Mesh(VisAgent.sphereGeometry, this.baseMaterial);
         this.mesh.userData = { id: this.id };
@@ -144,7 +145,7 @@ export default class VisAgent {
         this.mesh.userData = { id: this.id };
         this.followed = false;
         this.highlighted = false;
-        this.setColor(new Color(VisAgent.UNASSIGNED_MESH_COLOR));
+        this.setColor(new Color(VisAgent.UNASSIGNED_MESH_COLOR), 0);
     }
 
     public resetPDB(): void {
@@ -153,16 +154,16 @@ export default class VisAgent {
         this.lod = 0;
     }
 
-    public setColor(color: Color, colorIndex = 0): void {
+    public setColor(color: Color, colorIndex: number): void {
         this.color = color;
         this.colorIndex = colorIndex;
         this.baseMaterial = new MeshLambertMaterial({
             color: new Color(this.color),
         });
-        this.desatMaterial = new MeshBasicMaterial({
-            color: desaturate(this.color),
+        this.highlightMaterial = new MeshBasicMaterial({
+            color: getHighlightColor(this.color),
             transparent: true,
-            opacity: 0.4,
+            opacity: 1.0,
         });
         // because this is a new material, we need to re-install it on the geometry
         // TODO deal with highlight and selection state
@@ -188,11 +189,11 @@ export default class VisAgent {
             return this.assignMembraneMaterial();
         }
 
-        let material = this.desatMaterial;
+        let material = this.baseMaterial;
         if (this.followed) {
             material = VisAgent.followMaterial;
         } else if (this.highlighted) {
-            material = this.baseMaterial;
+            material = this.highlightMaterial;
         }
 
         for (let i = 0; i < this.pdbObjects.length; ++i) {
@@ -247,7 +248,7 @@ export default class VisAgent {
         } else {
             this.mesh.traverse((child) => {
                 if (child instanceof Mesh) {
-                    child.material = this.desatMaterial;
+                    child.material = this.baseMaterial;
                     child.onBeforeRender = this.onAgentMeshBeforeRender.bind(
                         this
                     );
