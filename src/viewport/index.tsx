@@ -1,6 +1,6 @@
 import * as React from "react";
 import jsLogger from "js-logger";
-import Stats from "three/examples/jsm/libs/stats.module.js";
+import Stats from "three/examples/jsm/libs/stats.module";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSyncAlt } from "@fortawesome/free-solid-svg-icons";
 import SimulariumController from "../controller";
@@ -148,7 +148,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         this.lastRenderTime = Date.now();
         this.startTime = Date.now();
         this.onPickObject = this.onPickObject.bind(this);
-        this.stats = new Stats();
+        this.stats = Stats();
         this.stats.showPanel(1);
 
         this.handlers = {
@@ -156,6 +156,8 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             touchend: this.handleTouchEnd,
             mousedown: this.handleClickStart,
             mouseup: this.handleMouseUp,
+            pointerdown: this.handlePointerDown,
+            pointerup: this.handlePointerUp,
         };
         this.hit = false;
         this.animationRequestID = 0;
@@ -401,9 +403,31 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             },
         });
     };
+    public handlePointerDown = (e: Event): void => {
+        const event = e as PointerEvent;
+        this.setState({
+            lastClick: {
+                x: event.x,
+                y: event.y,
+                time: Date.now(),
+            },
+        });
+    };
 
     public handleMouseUp = (e: Event): void => {
         const event = e as MouseEvent;
+        const thisClick = {
+            x: event.x,
+            y: event.y,
+            time: Date.now(),
+        };
+        if (this.isClick(thisClick)) {
+            // pass event to pick object because it was a true click and not a drag
+            this.onPickObject(event.offsetX, event.offsetY);
+        }
+    };
+    public handlePointerUp = (e: Event): void => {
+        const event = e as PointerEvent;
         const thisClick = {
             x: event.x,
             y: event.y,

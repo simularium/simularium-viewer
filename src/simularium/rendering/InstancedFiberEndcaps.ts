@@ -3,10 +3,18 @@ import {
     SphereBufferGeometry,
     InstancedBufferAttribute,
     InstancedBufferGeometry,
+    InstancedMesh,
     Mesh,
+    MeshLambertMaterial,
+    Matrix4,
+    Vector3,
+    Quaternion,
+    Color,
 } from "three";
 
 class InstancedFiberEndcaps {
+    private endcapGeometry: SphereBufferGeometry;
+    private fallbackMesh: InstancedMesh;
     private mesh: Mesh;
     private instancedGeometry: InstancedBufferGeometry;
     private positionArray: Float32Array; // x,y,z,scale
@@ -23,22 +31,33 @@ class InstancedFiberEndcaps {
         this.rotationArray = new Float32Array();
         this.currentInstance = 0;
         this.isUpdating = false;
+        this.endcapGeometry = new SphereBufferGeometry(1, 8, 8);
+        this.fallbackMesh = new InstancedMesh(
+            this.endcapGeometry,
+            new MeshLambertMaterial(),
+            0
+        );
     }
 
     public create(n: number): void {
-        const baseGeometry = new SphereBufferGeometry(1, 8, 8);
         this.instancedGeometry = new InstancedBufferGeometry().copy(
-            baseGeometry
+            this.endcapGeometry
         );
         const instanceCount = n;
-        this.instancedGeometry.maxInstancedCount = instanceCount;
+        this.instancedGeometry.instanceCount = instanceCount;
         //let material = new THREE.ShaderMaterial();
         this.mesh = new Mesh(this.instancedGeometry); //, material);
         this.mesh.frustumCulled = false;
+
+        this.fallbackMesh = new InstancedMesh(
+            this.endcapGeometry,
+            new MeshLambertMaterial(),
+            n
+        );
     }
 
-    public getMesh(): Mesh {
-        return this.mesh;
+    public getMesh(isFallback = false): Mesh {
+        return isFallback ? this.fallbackMesh : this.mesh;
     }
 
     // send in new instance data
@@ -54,10 +73,18 @@ class InstancedFiberEndcaps {
     }
 
     private updateInstanceCount(n: number): void {
-        this.instancedGeometry.maxInstancedCount = n;
+        this.instancedGeometry.instanceCount = n;
+
+        this.fallbackMesh.count = n;
     }
 
     private reallocate(n: number): void {
+        this.fallbackMesh = new InstancedMesh(
+            this.endcapGeometry,
+            new MeshLambertMaterial(),
+            n
+        );
+
         const newPos = new Float32Array(4 * n);
         newPos.set(this.positionArray);
         this.positionArray = newPos;
@@ -104,7 +131,8 @@ class InstancedFiberEndcaps {
         qz: number,
         qw: number,
         instanceId: number,
-        typeId: number
+        typeId: number,
+        c: Color
     ): void {
         const offset = this.currentInstance;
         this.positionArray[offset * 4 + 0] = x;
@@ -118,11 +146,23 @@ class InstancedFiberEndcaps {
         this.rotationArray[offset * 4 + 2] = qz;
         this.rotationArray[offset * 4 + 3] = qw;
 
+        this.fallbackMesh.setMatrixAt(
+            offset,
+            new Matrix4().compose(
+                new Vector3(x, y, z),
+                new Quaternion(qx, qy, qz, qw),
+                new Vector3(scale, scale, scale)
+            )
+        );
+        this.fallbackMesh.setColorAt(offset, c);
+
         this.currentInstance++;
     }
 
     endUpdate(): void {
         this.updateInstanceCount(this.currentInstance);
+
+        this.fallbackMesh.instanceMatrix.needsUpdate = true;
 
         // assumes the entire buffers are invalidated.
         (this.instancedGeometry.getAttribute(

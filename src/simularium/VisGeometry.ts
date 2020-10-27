@@ -26,7 +26,6 @@ import {
     Scene,
     Vector2,
     Vector3,
-    VertexColors,
     WebGLRenderer,
     WebGLRendererParameters,
     Mesh,
@@ -738,7 +737,12 @@ class VisGeometry {
             );
         }
 
-        if (this.renderStyle == RenderStyle.GENERIC) {
+        this.instancedMeshGroup.remove(this.instancedMeshGroup.children[0]);
+        this.instancedMeshGroup.add(
+            this.fiberEndcaps.getMesh(this.renderStyle === RenderStyle.GENERIC)
+        );
+
+        if (this.renderStyle === RenderStyle.GENERIC) {
             // meshes only.
             this.renderer.render(this.scene, this.camera);
         } else {
@@ -1294,7 +1298,7 @@ class VisGeometry {
                     const q = new Quaternion().setFromEuler(
                         visAgent.mesh.rotation
                     );
-
+                    const c = this.getColorForTypeId(typeId);
                     this.fiberEndcaps.addInstance(
                         agentData.subpoints[0] + visAgent.mesh.position.x,
                         agentData.subpoints[1] + visAgent.mesh.position.y,
@@ -1305,7 +1309,8 @@ class VisGeometry {
                         q.z,
                         q.w,
                         visAgent.id,
-                        visAgent.signedTypeId()
+                        visAgent.signedTypeId(),
+                        c
                     );
                     this.fiberEndcaps.addInstance(
                         agentData.subpoints[agentData.subpoints.length - 3] +
@@ -1320,7 +1325,8 @@ class VisGeometry {
                         q.z,
                         q.w,
                         visAgent.id,
-                        visAgent.signedTypeId()
+                        visAgent.signedTypeId(),
+                        c
                     );
                 }
             }
@@ -1467,7 +1473,7 @@ class VisGeometry {
 
         // the line will be colored per-vertex
         const lineMaterial = new LineBasicMaterial({
-            vertexColors: VertexColors,
+            vertexColors: true,
         });
 
         const lineObject = new LineSegments(lineGeometry, lineMaterial);
