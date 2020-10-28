@@ -324,7 +324,9 @@ class VisGeometry {
         if (this.instancedMeshGroup.children.length > 0) {
             this.instancedMeshGroup.remove(this.instancedMeshGroup.children[0]);
         }
-        this.instancedMeshGroup.add(this.fiberEndcaps.getMesh());
+        if (USE_INSTANCE_ENDCAPS) {
+            this.instancedMeshGroup.add(this.fiberEndcaps.getMesh());
+        }
     }
 
     public get logger(): ILogger {
