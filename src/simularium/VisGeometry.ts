@@ -41,7 +41,9 @@ import { TrajectoryFileInfo } from "./types";
 import { AgentData } from "./VisData";
 
 import MoleculeRenderer from "./rendering/MoleculeRenderer";
+import IInstancedFiberEndcaps from "./rendering/IInstancedFiberEndcaps";
 import InstancedFiberEndcaps from "./rendering/InstancedFiberEndcaps";
+import InstancedFiberEndcapsFallback from "./rendering/InstancedFiberEndcapsFallback";
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 100000;
@@ -150,7 +152,7 @@ class VisGeometry {
     private needToReOrientCamera: boolean;
     private rotateDistance: number;
     private initCameraPosition: Vector3;
-    private fiberEndcaps: InstancedFiberEndcaps;
+    private fiberEndcaps: IInstancedFiberEndcaps;
 
     public constructor(loggerLevel: ILogLevel) {
         this.renderStyle = RenderStyle.MOLECULAR;
@@ -300,8 +302,29 @@ class VisGeometry {
             return;
         }
 
+        const changed = this.renderStyle !== renderStyle;
         this.renderStyle = renderStyle;
+
+        if (changed) {
+            this.constructInstancedFiberEndcaps();
+        }
+
         this.updateScene(this.currentSceneAgents);
+    }
+
+    private constructInstancedFiberEndcaps() {
+        // tell instanced geometry what representation to use.
+        if (this.renderStyle === RenderStyle.GENERIC) {
+            this.fiberEndcaps = new InstancedFiberEndcapsFallback();
+        } else {
+            this.fiberEndcaps = new InstancedFiberEndcaps();
+        }
+        this.fiberEndcaps.create(0);
+
+        if (this.instancedMeshGroup.children.length > 0) {
+            this.instancedMeshGroup.remove(this.instancedMeshGroup.children[0]);
+        }
+        this.instancedMeshGroup.add(this.fiberEndcaps.getMesh());
     }
 
     public get logger(): ILogger {
@@ -542,8 +565,6 @@ class VisGeometry {
         this.instancedMeshGroup.name = "instanced meshes for agents";
         this.scene.add(this.instancedMeshGroup);
 
-        this.instancedMeshGroup.add(this.fiberEndcaps.getMesh());
-
         this.camera = new PerspectiveCamera(
             75,
             initWidth / initHeight,
@@ -581,6 +602,9 @@ class VisGeometry {
             };
             this.renderer = new WebGLRenderer(rendererParams);
         }
+
+        // set this up after the renderStyle has been set.
+        this.constructInstancedFiberEndcaps();
 
         this.renderer.setSize(initWidth, initHeight); // expected to change when reparented
         this.renderer.setClearColor(this.backgroundColor, 1);
@@ -737,10 +761,10 @@ class VisGeometry {
             );
         }
 
-        this.instancedMeshGroup.remove(this.instancedMeshGroup.children[0]);
-        this.instancedMeshGroup.add(
-            this.fiberEndcaps.getMesh(this.renderStyle === RenderStyle.GENERIC)
-        );
+        if (this.instancedMeshGroup.children.length > 0) {
+            this.instancedMeshGroup.remove(this.instancedMeshGroup.children[0]);
+        }
+        this.instancedMeshGroup.add(this.fiberEndcaps.getMesh());
 
         if (this.renderStyle === RenderStyle.GENERIC) {
             // meshes only.
