@@ -20,17 +20,19 @@ import {
 import MembraneShader from "./rendering/MembraneShader";
 import PDBModel from "./PDBModel";
 import VisTypes from "./VisTypes";
+import { USE_INSTANCE_ENDCAPS } from "./VisTypes";
 
-function desaturate(color: Color): Color {
-    const desatColor = new Color(color);
+function getHighlightColor(color: Color): Color {
+    const hiColor = new Color(color);
     let hsl: {
         h: number;
         s: number;
         l: number;
     } = { h: 0, s: 0, l: 0 };
-    hsl = desatColor.getHSL(hsl);
-    desatColor.setHSL(hsl.h, 0.25 * hsl.s, hsl.l);
-    return desatColor;
+    hsl = hiColor.getHSL(hsl);
+    // increase luminance 80% of the difference toward max
+    hiColor.setHSL(hsl.h, hsl.s, hsl.l + 0.8 * (1.0 - hsl.l));
+    return hiColor;
 }
 
 const NO_AGENT = -1;
@@ -43,9 +45,14 @@ export default class VisAgent {
         32,
         32
     );
+    public static fiberEndcapGeometry: SphereBufferGeometry = new SphereBufferGeometry(
+        1,
+        8,
+        8
+    );
     // this material only used in webGL1 fallback rendering mode
     private static followMaterial: MeshBasicMaterial = new MeshBasicMaterial({
-        color: new Color(1, 0, 0),
+        color: new Color(1, 1, 0),
     });
     private static membraneData: {
         faces: { name: string }[];
@@ -91,7 +98,7 @@ export default class VisAgent {
     // this material only used in webGL1 fallback rendering mode
     public baseMaterial: Material;
     // this material only used in webGL1 fallback rendering mode
-    public desatMaterial: Material;
+    public highlightMaterial: Material;
     public color: Color;
     public name: string;
     public followed: boolean;
@@ -114,10 +121,10 @@ export default class VisAgent {
         this.baseMaterial = new MeshLambertMaterial({
             color: new Color(this.color),
         });
-        this.desatMaterial = new MeshBasicMaterial({
-            color: desaturate(this.color),
+        this.highlightMaterial = new MeshBasicMaterial({
+            color: getHighlightColor(this.color),
             transparent: true,
-            opacity: 0.4,
+            opacity: 1.0,
         });
         this.mesh = new Mesh(VisAgent.sphereGeometry, this.baseMaterial);
         this.mesh.userData = { id: this.id };
@@ -138,7 +145,7 @@ export default class VisAgent {
         this.mesh.userData = { id: this.id };
         this.followed = false;
         this.highlighted = false;
-        this.setColor(new Color(VisAgent.UNASSIGNED_MESH_COLOR));
+        this.setColor(new Color(VisAgent.UNASSIGNED_MESH_COLOR), 0);
     }
 
     public resetPDB(): void {
@@ -147,16 +154,16 @@ export default class VisAgent {
         this.lod = 0;
     }
 
-    public setColor(color: Color, colorIndex = 0): void {
+    public setColor(color: Color, colorIndex: number): void {
         this.color = color;
         this.colorIndex = colorIndex;
         this.baseMaterial = new MeshLambertMaterial({
             color: new Color(this.color),
         });
-        this.desatMaterial = new MeshBasicMaterial({
-            color: desaturate(this.color),
+        this.highlightMaterial = new MeshBasicMaterial({
+            color: getHighlightColor(this.color),
             transparent: true,
-            opacity: 0.4,
+            opacity: 1.0,
         });
         // because this is a new material, we need to re-install it on the geometry
         // TODO deal with highlight and selection state
@@ -182,11 +189,11 @@ export default class VisAgent {
             return this.assignMembraneMaterial();
         }
 
-        let material = this.desatMaterial;
+        let material = this.baseMaterial;
         if (this.followed) {
             material = VisAgent.followMaterial;
         } else if (this.highlighted) {
-            material = this.baseMaterial;
+            material = this.highlightMaterial;
         }
 
         for (let i = 0; i < this.pdbObjects.length; ++i) {
@@ -241,7 +248,7 @@ export default class VisAgent {
         } else {
             this.mesh.traverse((child) => {
                 if (child instanceof Mesh) {
-                    child.material = this.desatMaterial;
+                    child.material = this.baseMaterial;
                     child.onBeforeRender = this.onAgentMeshBeforeRender.bind(
                         this
                     );
@@ -376,17 +383,24 @@ export default class VisAgent {
         // first child is fiber
         // second and third children are endcaps
 
-        if (this.mesh.children.length !== 3) {
-            console.error("Bad mesh structure for fiber");
-            return;
-        }
+        //if (this.mesh.children.length !== 3) {
+        //    console.error("Bad mesh structure for fiber");
+        //    return;
+        // }
 
         // put all the subpoints into a Vector3[]
         const curvePoints: Vector3[] = [];
         const numSubPoints = subpoints.length;
+        const numPoints = numSubPoints / 3;
         if (numSubPoints % 3 !== 0) {
             console.warn(
                 "Warning, subpoints array does not contain a multiple of 3"
+            );
+            return;
+        }
+        if (numPoints < 2) {
+            console.warn(
+                "Warning, subpoints array does not have enough points for a curve"
             );
             return;
         }
@@ -401,34 +415,36 @@ export default class VisAgent {
         this.fiberCurve = new CatmullRomCurve3(curvePoints);
         const fibergeometry = new TubeBufferGeometry(
             this.fiberCurve,
-            (4 * numSubPoints) / 3,
+            4 * (numPoints - 1), // 4 segments per control point
             collisionRadius * scale * 0.5,
-            8,
+            8, // could reduce this with depth?
             false
         );
 
         (this.mesh.children[0] as Mesh).geometry = fibergeometry;
 
-        // update transform of endcap 0
-        const runtimeFiberEncapMesh0 = this.mesh.children[1] as Mesh;
-        runtimeFiberEncapMesh0.position.x = curvePoints[0].x;
-        runtimeFiberEncapMesh0.position.y = curvePoints[0].y;
-        runtimeFiberEncapMesh0.position.z = curvePoints[0].z;
-        runtimeFiberEncapMesh0.scale.x = collisionRadius * scale * 0.5;
-        runtimeFiberEncapMesh0.scale.y = collisionRadius * scale * 0.5;
-        runtimeFiberEncapMesh0.scale.z = collisionRadius * scale * 0.5;
+        if (this.mesh.children.length === 3) {
+            // update transform of endcap 0
+            const runtimeFiberEncapMesh0 = this.mesh.children[1] as Mesh;
+            runtimeFiberEncapMesh0.position.x = curvePoints[0].x;
+            runtimeFiberEncapMesh0.position.y = curvePoints[0].y;
+            runtimeFiberEncapMesh0.position.z = curvePoints[0].z;
+            runtimeFiberEncapMesh0.scale.x = collisionRadius * scale * 0.5;
+            runtimeFiberEncapMesh0.scale.y = collisionRadius * scale * 0.5;
+            runtimeFiberEncapMesh0.scale.z = collisionRadius * scale * 0.5;
 
-        // update transform of endcap 1
-        const runtimeFiberEncapMesh1 = this.mesh.children[2] as Mesh;
-        runtimeFiberEncapMesh1.position.x =
-            curvePoints[curvePoints.length - 1].x;
-        runtimeFiberEncapMesh1.position.y =
-            curvePoints[curvePoints.length - 1].y;
-        runtimeFiberEncapMesh1.position.z =
-            curvePoints[curvePoints.length - 1].z;
-        runtimeFiberEncapMesh1.scale.x = collisionRadius * scale * 0.5;
-        runtimeFiberEncapMesh1.scale.y = collisionRadius * scale * 0.5;
-        runtimeFiberEncapMesh1.scale.z = collisionRadius * scale * 0.5;
+            // update transform of endcap 1
+            const runtimeFiberEncapMesh1 = this.mesh.children[2] as Mesh;
+            runtimeFiberEncapMesh1.position.x =
+                curvePoints[curvePoints.length - 1].x;
+            runtimeFiberEncapMesh1.position.y =
+                curvePoints[curvePoints.length - 1].y;
+            runtimeFiberEncapMesh1.position.z =
+                curvePoints[curvePoints.length - 1].z;
+            runtimeFiberEncapMesh1.scale.x = collisionRadius * scale * 0.5;
+            runtimeFiberEncapMesh1.scale.y = collisionRadius * scale * 0.5;
+            runtimeFiberEncapMesh1.scale.z = collisionRadius * scale * 0.5;
+        }
     }
 
     // make a single generic fiber and return it
@@ -441,16 +457,17 @@ export default class VisAgent {
         const fiberMesh = new Mesh(geometry);
         fiberMesh.name = `Fiber`;
 
-        const fiberEndcapMesh0 = new Mesh(VisAgent.sphereGeometry);
-        fiberEndcapMesh0.name = `FiberEnd0`;
-
-        const fiberEndcapMesh1 = new Mesh(VisAgent.sphereGeometry);
-        fiberEndcapMesh1.name = `FiberEnd1`;
-
         const fiberGroup = new Group();
         fiberGroup.add(fiberMesh);
-        fiberGroup.add(fiberEndcapMesh0);
-        fiberGroup.add(fiberEndcapMesh1);
+        if (!USE_INSTANCE_ENDCAPS) {
+            const fiberEndcapMesh0 = new Mesh(VisAgent.fiberEndcapGeometry);
+            fiberEndcapMesh0.name = `FiberEnd0`;
+
+            const fiberEndcapMesh1 = new Mesh(VisAgent.fiberEndcapGeometry);
+            fiberEndcapMesh1.name = `FiberEnd1`;
+            fiberGroup.add(fiberEndcapMesh0);
+            fiberGroup.add(fiberEndcapMesh1);
+        }
         // downstream code will switch this flag
         fiberGroup.visible = false;
         return fiberGroup;

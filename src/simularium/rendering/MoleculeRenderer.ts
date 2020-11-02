@@ -17,7 +17,6 @@ import {
     PerspectiveCamera,
 } from "three";
 import * as dat from "dat.gui";
-import { max } from "lodash";
 
 interface MoleculeRenderParameters {
     aoradius1: number;
@@ -286,12 +285,14 @@ class MoleculeRenderer {
     public setMeshGroups(
         agentMeshGroup: Group,
         agentPDBGroup: Group,
-        agentFiberGroup: Group
+        agentFiberGroup: Group,
+        instancedMeshGroup: Group
     ): void {
         this.gbufferPass.setMeshGroups(
             agentMeshGroup,
             agentPDBGroup,
-            agentFiberGroup
+            agentFiberGroup,
+            instancedMeshGroup
         );
     }
 
