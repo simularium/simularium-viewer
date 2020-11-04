@@ -20,7 +20,6 @@ class CompositePass {
                 colorTex: { value: null },
                 ssaoTex1: { value: null },
                 ssaoTex2: { value: null },
-                atomIdTex: { value: null },
                 // colors indexed by particle type id
                 colorsBuffer: { value: null },
                 backgroundColor: { value: new Color(1, 1, 1) },
@@ -37,7 +36,6 @@ class CompositePass {
             uniform sampler2D colorTex;
             uniform sampler2D ssaoTex1;
             uniform sampler2D ssaoTex2;
-            uniform sampler2D atomIdTex;
 
             uniform sampler2D colorsBuffer;
             
@@ -135,32 +133,20 @@ class CompositePass {
                 }
                 float occ1 = texture(ssaoTex1, texCoords).r;
                 float occ2 = texture(ssaoTex2, texCoords).r;
-                int atomId = int(texture(atomIdTex, texCoords).r);
                 int instanceId = int(col0.y);
             
                 if(instanceId < 0)
                     discard;
             
-                vec4 instanceInfo = vec4(0.0,0.0,0.0,0.0);//ProteinInstanceInfo[instanceId];
                 // Subtracting 1 because we added 1 before setting this, to account for id 0 being highlighted.
-                int ingredientId = abs(int(col0.x))-1;
+                int agentColorIndex = abs(int(col0.x))-1;
                 // future: can use this value to do other rendering
                 //float highlighted = (sign(col0.x) + 1.0) * 0.5;
 
                 ivec2 ncols = textureSize(colorsBuffer, 0);
-                vec4 col = texelFetch(colorsBuffer, ivec2(ingredientId % ncols.x, 0), 0);
+                vec4 col = texelFetch(colorsBuffer, ivec2(agentColorIndex % ncols.x, 0), 0);
 
                 float eyeDepth = -col0.z;
-
-                // TODO know some structural info about pdb
-                vec4 atomInfo = vec4(0.0,1.0,0.0,0.0);//AtomInfos[atomId];
-                int secondaryStructure = int(atomInfo.x);
-                int atomSymbolId = int(atomInfo.y);
-                int residueSymbolId = int(atomInfo.z);
-                int chainSymbolId = int(atomInfo.w);
-
-                //int numChains = int(IngredientInfo[ingredientId].y);
-                int numChains = 1;
 
                 vec3 atomColor = col.xyz;
             
@@ -189,44 +175,11 @@ class CompositePass {
                     float dd = chainBeginDistance - atomicBeginDistance;
                     float ddd = min(1.0, max(cc/dd, 0.0));
                     ddd = (1.0-(ddd));
-                    if(atomSymbolId > 0) {
-                        l = mix(bghcl.z, hcl.z, ddd);
-                        c = mix(bghcl.y, hcl.y, ddd);
-                        h = mix(bghcl.x, hcl.x, ddd);
-                    }
+                    l = mix(bghcl.z, hcl.z, ddd);
+                    c = mix(bghcl.y, hcl.y, ddd);
+                    h = mix(bghcl.x, hcl.x, ddd);
                 }
-            
-                // different colors for chains
-                if(eyeDepth < chainBeginDistance && numChains > 1)
-                {
-                    float cc = max(eyeDepth - atomicBeginDistance, 0.0);
-                    float dd = chainBeginDistance - atomicBeginDistance;
-                    float ddd = min(1.0, max(cc/dd, 0.0));
-                    ddd = (1.0-(ddd));
-            
-                    float wedge = min(50.0 * float(numChains), 180.0);
-                    // float hueShift = wedge / numChains;
-                    // hueShift *= ddd;
-                    float hueShift = 50.0/360.0;
-                    hueShift = numChains >= 3 ? 50.0/360.0 : hueShift;
-                    hueShift = numChains >= 4 ? 50.0/360.0 : hueShift;
-                    hueShift = numChains >= 5 ? 50.0/360.0 : hueShift;
-                    hueShift = numChains >= 6 ? 50.0/360.0 : hueShift;
-                    hueShift = numChains >= 7 ? 40.0/360.0 : hueShift;
-                    hueShift = numChains >= 8 ? 30.0/360.0 : hueShift;
-                    hueShift = numChains >= 9 ? 30.0/360.0 : hueShift;
-                    hueShift = numChains >= 10 ? 15.0/360.0 : hueShift;
-                    hueShift = numChains >= 11 ? 10.0/360.0 : hueShift;
-                    hueShift = numChains >= 12 ? 10.0/360.0 : hueShift;
-                    hueShift *= ddd;
-            
-                    float hueLength = hueShift * float(numChains - 1);
-                    float hueOffset = hueLength * 0.5;
-            
-                    h -=  hueOffset;
-                    h += (float(chainSymbolId) * hueShift);
-                }
-            
+                        
                 vec3 color;
                 color = hcl2rgb(vec3(h, c, l));
 
