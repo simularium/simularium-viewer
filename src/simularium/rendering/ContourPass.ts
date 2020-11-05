@@ -136,6 +136,42 @@ class ContourPass {
         /* do nothing */
     }
 
+    public changeOutlineColor(value: number[]): void {
+        this.pass.material.uniforms.outlineColor.value = new Color(
+            value[0] / 255.0,
+            value[1] / 255.0,
+            value[2] / 255.0
+        );
+    }
+
+    public changeOutlineAlpha(value: number): void {
+        this.pass.material.uniforms.outlineAlpha.value = value;
+    }
+
+    public changeOutlineThickness(value: number): void {
+        this.pass.material.uniforms.outlineThickness.value = value;
+    }
+
+    public changeFollowColor(value: number[]): void {
+        this.pass.material.uniforms.followColor.value = new Color(
+            value[0] / 255.0,
+            value[1] / 255.0,
+            value[2] / 255.0
+        );
+    }
+
+    public changeFollowAlpha(value: number): void {
+        this.pass.material.uniforms.followAlpha.value = value;
+    }
+
+    public changeFollowOutlineThickness(value: number): void {
+        this.pass.material.uniforms.followThickness.value = value;
+    }
+
+    public setFollowedInstance(instance: number): void {
+        this.pass.material.uniforms.followedInstance.value = instance;
+    }
+
     public render(
         renderer: WebGLRenderer,
         target: WebGLRenderTarget | null,

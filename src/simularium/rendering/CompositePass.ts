@@ -280,6 +280,14 @@ class CompositePass {
         this.pass.material.uniforms.bgHCLoffset.value.z = value;
     }
 
+    public setBackgroundColor(color: Color): void {
+        this.pass.material.uniforms.backgroundColor.value = color;
+    }
+
+    public setFollowedInstance(instance: number): void {
+        this.pass.material.uniforms.followedInstance.value = instance;
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public resize(x: number, y: number): void {
         /* do nothing */

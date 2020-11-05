@@ -63,14 +63,14 @@ class MoleculeRenderer {
 
     public constructor() {
         this.parameters = {
-            aoradius1: 2.2,
-            aoradius2: 5,
+            aoradius1: 1.2,
+            aoradius2: 1.6,
+            aothreshold1: 75,
+            aothreshold2: 75,
+            aofalloff1: 29,
+            aofalloff2: 58,
             blurradius1: 1.5,
             blurradius2: 0.7,
-            aothreshold1: 75,
-            aofalloff1: 100,
-            aothreshold2: 75,
-            aofalloff2: 75,
             atomBeginDistance: 50.0,
             chainBeginDistance: 100.0,
             bghueoffset: 1,
@@ -222,43 +222,37 @@ class MoleculeRenderer {
         });
         gui.add(settings, "outlineThickness", 1.0, 8.0)
             .step(1)
-            .onChange((value) => {
-                this.contourPass.pass.material.uniforms.outlineThickness.value = value;
+            .onChange((value: number) => {
+                this.contourPass.changeOutlineThickness(value);
             });
-        gui.addColor(settings, "outlineColor").onChange((value) => {
-            this.contourPass.pass.material.uniforms.outlineColor.value = new Color(
-                value[0] / 255.0,
-                value[1] / 255.0,
-                value[2] / 255.0
-            );
+        gui.addColor(settings, "outlineColor").onChange((value: number[]) => {
+            this.contourPass.changeOutlineColor(value);
         });
 
-        gui.add(settings, "outlineAlpha", 0.0, 1.0).onChange((value) => {
-            this.contourPass.pass.material.uniforms.outlineAlpha.value = value;
-        });
+        gui.add(settings, "outlineAlpha", 0.0, 1.0).onChange(
+            (value: number) => {
+                this.contourPass.changeOutlineAlpha(value);
+            }
+        );
         gui.add(settings, "followThickness", 1.0, 8.0)
             .step(1)
-            .onChange((value) => {
-                this.contourPass.pass.material.uniforms.followThickness.value = value;
+            .onChange((value: number) => {
+                this.contourPass.changeFollowOutlineThickness(value);
             });
-        gui.addColor(settings, "followColor").onChange((value) => {
-            this.contourPass.pass.material.uniforms.followColor.value = new Color(
-                value[0] / 255.0,
-                value[1] / 255.0,
-                value[2] / 255.0
-            );
+        gui.addColor(settings, "followColor").onChange((value: number[]) => {
+            this.contourPass.changeFollowColor(value);
         });
-        gui.add(settings, "followAlpha", 0.0, 1.0).onChange((value) => {
-            this.contourPass.pass.material.uniforms.followAlpha.value = value;
+        gui.add(settings, "followAlpha", 0.0, 1.0).onChange((value: number) => {
+            this.contourPass.changeFollowAlpha(value);
         });
     }
 
     public setBackgroundColor(color: Color): void {
-        this.compositePass.pass.material.uniforms.backgroundColor.value = color;
+        this.compositePass.setBackgroundColor(color);
     }
     public setFollowedInstance(instance: number): void {
-        this.compositePass.pass.material.uniforms.followedInstance.value = instance;
-        this.contourPass.pass.material.uniforms.followedInstance.value = instance;
+        this.compositePass.setFollowedInstance(instance);
+        this.contourPass.setFollowedInstance(instance);
     }
 
     public hitTest(renderer: WebGLRenderer, x: number, y: number): number {
