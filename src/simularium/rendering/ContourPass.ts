@@ -136,7 +136,7 @@ class ContourPass {
         /* do nothing */
     }
 
-    public changeOutlineColor(value: number[]): void {
+    public setOutlineColor(value: number[]): void {
         this.pass.material.uniforms.outlineColor.value = new Color(
             value[0] / 255.0,
             value[1] / 255.0,
@@ -144,15 +144,15 @@ class ContourPass {
         );
     }
 
-    public changeOutlineAlpha(value: number): void {
+    public setOutlineAlpha(value: number): void {
         this.pass.material.uniforms.outlineAlpha.value = value;
     }
 
-    public changeOutlineThickness(value: number): void {
+    public setOutlineThickness(value: number): void {
         this.pass.material.uniforms.outlineThickness.value = value;
     }
 
-    public changeFollowColor(value: number[]): void {
+    public setFollowColor(value: number[]): void {
         this.pass.material.uniforms.followColor.value = new Color(
             value[0] / 255.0,
             value[1] / 255.0,
@@ -160,11 +160,11 @@ class ContourPass {
         );
     }
 
-    public changeFollowAlpha(value: number): void {
+    public setFollowAlpha(value: number): void {
         this.pass.material.uniforms.followAlpha.value = value;
     }
 
-    public changeFollowOutlineThickness(value: number): void {
+    public setFollowOutlineThickness(value: number): void {
         this.pass.material.uniforms.followThickness.value = value;
     }
 
