@@ -63,14 +63,14 @@ class MoleculeRenderer {
 
     public constructor() {
         this.parameters = {
-            aoradius1: 2.2,
-            aoradius2: 5,
+            aoradius1: 1.2,
+            aoradius2: 1.6,
+            aothreshold1: 75,
+            aothreshold2: 75,
+            aofalloff1: 29,
+            aofalloff2: 58,
             blurradius1: 1.5,
             blurradius2: 0.7,
-            aothreshold1: 75,
-            aofalloff1: 100,
-            aothreshold2: 75,
-            aofalloff2: 75,
             atomBeginDistance: 50.0,
             chainBeginDistance: 100.0,
             bghueoffset: 1,
@@ -88,13 +88,24 @@ class MoleculeRenderer {
 
         this.gbufferPass = new GBufferPass();
         // radius, threshold, falloff in view space coordinates.
-        this.ssao1Pass = new SSAO1Pass(4.5, 150, 150);
-        this.ssao2Pass = new SSAO1Pass(4.5, 150, 150);
-        //        this.ssao1Pass = new SSAO1Pass(0.00005, 0.38505, 0.08333);
-        //        this.ssao2Pass = new SSAO1Pass(0.00125, 1.05714, 0.15188);
-        this.blur1Pass = new BlurPass(10);
-        this.blur2Pass = new BlurPass(10);
-        this.compositePass = new CompositePass();
+        this.ssao1Pass = new SSAO1Pass(
+            this.parameters.aoradius1,
+            this.parameters.aothreshold1,
+            this.parameters.aofalloff1
+        );
+        this.ssao2Pass = new SSAO1Pass(
+            this.parameters.aoradius2,
+            this.parameters.aothreshold2,
+            this.parameters.aofalloff2
+        );
+
+        this.blur1Pass = new BlurPass(this.parameters.blurradius1);
+        this.blur2Pass = new BlurPass(this.parameters.blurradius2);
+        this.compositePass = new CompositePass({
+            x: this.parameters.bghueoffset,
+            y: this.parameters.bgchromaoffset,
+            z: this.parameters.bgluminanceoffset,
+        });
         this.contourPass = new ContourPass();
         this.drawBufferPass = new DrawBufferPass();
 
@@ -180,22 +191,8 @@ class MoleculeRenderer {
     public setupGui(gui: dat.GUI): void {
         const settings = this.parameters;
 
-        /////////////////////////////////////////////////////////////////////
-        // init from settings object
-        this.ssao1Pass.pass.material.uniforms.radius.value = settings.aoradius1;
-        this.blur1Pass.setRadius(settings.blurradius1);
-        this.ssao2Pass.pass.material.uniforms.radius.value = settings.aoradius2;
-        this.blur2Pass.setRadius(settings.blurradius2);
-        this.compositePass.pass.material.uniforms.bgHCLoffset.value.x =
-            settings.bghueoffset;
-        this.compositePass.pass.material.uniforms.bgHCLoffset.value.y =
-            settings.bgchromaoffset;
-        this.compositePass.pass.material.uniforms.bgHCLoffset.value.z =
-            settings.bgluminanceoffset;
-        /////////////////////////////////////////////////////////////////////
-
         gui.add(settings, "aoradius1", 0.01, 10.0).onChange((value) => {
-            this.ssao1Pass.pass.material.uniforms.radius.value = value;
+            this.ssao1Pass.setRadius(value);
         });
         gui.add(settings, "blurradius1", 0.01, 10.0).onChange((value) => {
             this.blur1Pass.setRadius(value);
@@ -203,7 +200,7 @@ class MoleculeRenderer {
         gui.add(settings, "aothreshold1", 0.01, 300.0);
         gui.add(settings, "aofalloff1", 0.01, 300.0);
         gui.add(settings, "aoradius2", 0.01, 10.0).onChange((value) => {
-            this.ssao2Pass.pass.material.uniforms.radius.value = value;
+            this.ssao2Pass.setRadius(value);
         });
         gui.add(settings, "blurradius2", 0.01, 10.0).onChange((value) => {
             this.blur2Pass.setRadius(value);
@@ -215,53 +212,47 @@ class MoleculeRenderer {
         gui.add(settings, "chainBeginDistance", 0.0, 300.0);
 
         gui.add(settings, "bghueoffset", 0.0, 1.0).onChange((value) => {
-            this.compositePass.pass.material.uniforms.bgHCLoffset.value.x = value;
+            this.compositePass.setBgHueOffset(value);
         });
         gui.add(settings, "bgchromaoffset", 0.0, 1.0).onChange((value) => {
-            this.compositePass.pass.material.uniforms.bgHCLoffset.value.y = value;
+            this.compositePass.setBgChromaOffset(value);
         });
         gui.add(settings, "bgluminanceoffset", 0.0, 1.0).onChange((value) => {
-            this.compositePass.pass.material.uniforms.bgHCLoffset.value.z = value;
+            this.compositePass.setBgLuminanceOffset(value);
         });
         gui.add(settings, "outlineThickness", 1.0, 8.0)
             .step(1)
-            .onChange((value) => {
-                this.contourPass.pass.material.uniforms.outlineThickness.value = value;
+            .onChange((value: number) => {
+                this.contourPass.setOutlineThickness(value);
             });
-        gui.addColor(settings, "outlineColor").onChange((value) => {
-            this.contourPass.pass.material.uniforms.outlineColor.value = new Color(
-                value[0] / 255.0,
-                value[1] / 255.0,
-                value[2] / 255.0
-            );
+        gui.addColor(settings, "outlineColor").onChange((value: number[]) => {
+            this.contourPass.setOutlineColor(value);
         });
 
-        gui.add(settings, "outlineAlpha", 0.0, 1.0).onChange((value) => {
-            this.contourPass.pass.material.uniforms.outlineAlpha.value = value;
-        });
+        gui.add(settings, "outlineAlpha", 0.0, 1.0).onChange(
+            (value: number) => {
+                this.contourPass.setOutlineAlpha(value);
+            }
+        );
         gui.add(settings, "followThickness", 1.0, 8.0)
             .step(1)
-            .onChange((value) => {
-                this.contourPass.pass.material.uniforms.followThickness.value = value;
+            .onChange((value: number) => {
+                this.contourPass.setFollowOutlineThickness(value);
             });
-        gui.addColor(settings, "followColor").onChange((value) => {
-            this.contourPass.pass.material.uniforms.followColor.value = new Color(
-                value[0] / 255.0,
-                value[1] / 255.0,
-                value[2] / 255.0
-            );
+        gui.addColor(settings, "followColor").onChange((value: number[]) => {
+            this.contourPass.setFollowColor(value);
         });
-        gui.add(settings, "followAlpha", 0.0, 1.0).onChange((value) => {
-            this.contourPass.pass.material.uniforms.followAlpha.value = value;
+        gui.add(settings, "followAlpha", 0.0, 1.0).onChange((value: number) => {
+            this.contourPass.setFollowAlpha(value);
         });
     }
 
     public setBackgroundColor(color: Color): void {
-        this.compositePass.pass.material.uniforms.backgroundColor.value = color;
+        this.compositePass.setBackgroundColor(color);
     }
     public setFollowedInstance(instance: number): void {
-        this.compositePass.pass.material.uniforms.followedInstance.value = instance;
-        this.contourPass.pass.material.uniforms.followedInstance.value = instance;
+        this.compositePass.setFollowedInstance(instance);
+        this.contourPass.setFollowedInstance(instance);
     }
 
     public hitTest(renderer: WebGLRenderer, x: number, y: number): number {
