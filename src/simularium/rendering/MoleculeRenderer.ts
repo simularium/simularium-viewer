@@ -223,27 +223,27 @@ class MoleculeRenderer {
         gui.add(settings, "outlineThickness", 1.0, 8.0)
             .step(1)
             .onChange((value: number) => {
-                this.contourPass.changeOutlineThickness(value);
+                this.contourPass.setOutlineThickness(value);
             });
         gui.addColor(settings, "outlineColor").onChange((value: number[]) => {
-            this.contourPass.changeOutlineColor(value);
+            this.contourPass.setOutlineColor(value);
         });
 
         gui.add(settings, "outlineAlpha", 0.0, 1.0).onChange(
             (value: number) => {
-                this.contourPass.changeOutlineAlpha(value);
+                this.contourPass.setOutlineAlpha(value);
             }
         );
         gui.add(settings, "followThickness", 1.0, 8.0)
             .step(1)
             .onChange((value: number) => {
-                this.contourPass.changeFollowOutlineThickness(value);
+                this.contourPass.setFollowOutlineThickness(value);
             });
         gui.addColor(settings, "followColor").onChange((value: number[]) => {
-            this.contourPass.changeFollowColor(value);
+            this.contourPass.setFollowColor(value);
         });
         gui.add(settings, "followAlpha", 0.0, 1.0).onChange((value: number) => {
-            this.contourPass.changeFollowAlpha(value);
+            this.contourPass.setFollowAlpha(value);
         });
     }
 
