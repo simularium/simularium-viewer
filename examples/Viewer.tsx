@@ -383,6 +383,12 @@ class Viewer extends React.Component<{}, ViewerState> {
                 <button onClick={() => simulariumController.reOrientCamera()}>
                     starting orientation
                 </button>
+                <button onClick={() => simulariumController.zoomIn()}>
+                    +
+                </button>
+                <button onClick={() => simulariumController.zoomOut()}>
+                    -
+                </button>
                 <div className="viewer-container">
                     <SimulariumViewer
                         ref={this.viewerRef}
