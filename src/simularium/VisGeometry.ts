@@ -1218,13 +1218,21 @@ class VisGeometry {
             const scale = this.getScaleForId(typeId);
             const radius = agentData.cr ? agentData.cr : 1;
 
-            // look up last agent with this instanceId.
-            const lastInstance = this.visAgentInstances.get(instanceId);
-            if (lastInstance && lastInstance.mesh) {
-                lastx = lastInstance.mesh.position.x;
-                lasty = lastInstance.mesh.position.y;
-                lastz = lastInstance.mesh.position.z;
+            lastx = agentData.x;
+            lasty = agentData.y;
+            lastz = agentData.z;
+
+            const path = this.findPathForAgent(instanceId);
+            if (path) {
+                // look up last agent with this instanceId.
+                const lastInstance = this.visAgentInstances.get(instanceId);
+                if (lastInstance && lastInstance.mesh) {
+                    lastx = lastInstance.mesh.position.x;
+                    lasty = lastInstance.mesh.position.y;
+                    lastz = lastInstance.mesh.position.z;
+                }
             }
+
             const visAgent = this.visAgents[i];
             visAgent.id = instanceId;
             visAgent.mesh.userData = { id: instanceId };
@@ -1270,15 +1278,10 @@ class VisGeometry {
 
                 const runtimeMesh = visAgent.mesh;
 
-                if (lastInstance && lastInstance.mesh) {
-                    dx = agentData.x - lastx;
-                    dy = agentData.y - lasty;
-                    dz = agentData.z - lastz;
-                } else {
-                    dx = 0; //agentData.x - runtimeMesh.position.x;
-                    dy = 0; //agentData.y - runtimeMesh.position.y;
-                    dz = 0; //agentData.z - runtimeMesh.position.z;
-                }
+                dx = agentData.x - lastx;
+                dy = agentData.y - lasty;
+                dz = agentData.z - lastz;
+
                 runtimeMesh.position.x = agentData.x;
                 runtimeMesh.position.y = agentData.y;
                 runtimeMesh.position.z = agentData.z;
@@ -1313,7 +1316,6 @@ class VisGeometry {
                     }
                 }
 
-                const path = this.findPathForAgent(instanceId);
                 if (path && path.line) {
                     this.addPointToPath(
                         path,
