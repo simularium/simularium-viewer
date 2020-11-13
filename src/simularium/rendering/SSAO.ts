@@ -114,6 +114,10 @@ class SSAO1Pass {
         this.pass.material.uniforms.height.value = y;
     }
 
+    public setRadius(value: number): void {
+        this.pass.material.uniforms.radius.value = value;
+    }
+
     public render(
         renderer: WebGLRenderer,
         camera: PerspectiveCamera,

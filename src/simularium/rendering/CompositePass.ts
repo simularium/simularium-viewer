@@ -14,7 +14,7 @@ import RenderToBuffer from "./RenderToBuffer";
 class CompositePass {
     public pass: RenderToBuffer;
 
-    public constructor() {
+    public constructor(bgHCLoffset?: { x: number; y: number; z: number }) {
         this.pass = new RenderToBuffer({
             uniforms: {
                 colorTex: { value: null },
@@ -23,7 +23,15 @@ class CompositePass {
                 // colors indexed by particle type id
                 colorsBuffer: { value: null },
                 backgroundColor: { value: new Color(1, 1, 1) },
-                bgHCLoffset: { value: new Vector3(1.0, 0.0, 0.2) },
+                bgHCLoffset: bgHCLoffset
+                    ? {
+                          value: new Vector3(
+                              bgHCLoffset.x,
+                              bgHCLoffset.y,
+                              bgHCLoffset.z
+                          ),
+                      }
+                    : { value: new Vector3(1.0, 0.0, 0.2) },
                 zNear: { value: 0.1 },
                 zFar: { value: 1000 },
                 atomicBeginDistance: { value: 150 },
@@ -213,6 +221,24 @@ class CompositePass {
             RGBAFormat,
             FloatType
         );
+    }
+
+    public setBgHueOffset(value: number): void {
+        this.pass.material.uniforms.bgHCLoffset.value.x = value;
+    }
+    public setBgChromaOffset(value: number): void {
+        this.pass.material.uniforms.bgHCLoffset.value.y = value;
+    }
+    public setBgLuminanceOffset(value: number): void {
+        this.pass.material.uniforms.bgHCLoffset.value.z = value;
+    }
+
+    public setBackgroundColor(color: Color): void {
+        this.pass.material.uniforms.backgroundColor.value = color;
+    }
+
+    public setFollowedInstance(instance: number): void {
+        this.pass.material.uniforms.followedInstance.value = instance;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

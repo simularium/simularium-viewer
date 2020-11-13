@@ -52,6 +52,7 @@ const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 const NO_AGENT = -1;
 const DEFAULT_CAMERA_Z_POSITION = 120;
+const CAMERA_DOLLY_STEP_SIZE = 10;
 export enum RenderStyle {
     GENERIC,
     MOLECULAR,
@@ -385,6 +386,34 @@ class VisGeometry {
         this.followObjectId = NO_AGENT;
         this.needToReOrientCamera = true;
         this.rotateDistance = this.camera.position.distanceTo(new Vector3());
+    }
+
+    public zoomIn(): void {
+        const position = this.camera.position.clone();
+        const target = this.controls.target.clone();
+        const distance = position.distanceTo(target);
+        const newDistance = distance - CAMERA_DOLLY_STEP_SIZE;
+        const newPosition = new Vector3()
+            .subVectors(position, target)
+            .setLength(newDistance);
+        if (newDistance <= this.controls.minDistance) {
+            return;
+        }
+        this.camera.position.copy(newPosition);
+    }
+
+    public zoomOut(): void {
+        const position = this.camera.position.clone();
+        const target = this.controls.target.clone();
+        const distance = position.distanceTo(target);
+        const newDistance = distance + CAMERA_DOLLY_STEP_SIZE;
+        const newPosition = new Vector3()
+            .subVectors(position, target)
+            .setLength(newDistance);
+        if (newDistance >= this.controls.maxDistance) {
+            return;
+        }
+        this.camera.position.copy(newPosition);
     }
 
     public getFollowObject(): number {

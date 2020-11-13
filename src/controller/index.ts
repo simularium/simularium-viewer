@@ -37,6 +37,9 @@ export default class SimulariumController {
     public resetCamera: () => void;
     public centerCamera: () => void;
     public reOrientCamera: () => void;
+    public zoomIn: () => void;
+    public zoomOut: () => void;
+
     public onError?: (errorMessage: string) => void;
 
     private networkEnabled: boolean;
@@ -64,6 +67,8 @@ export default class SimulariumController {
         this.reOrientCamera = () => noop;
         this.resetCamera = () => noop;
         this.centerCamera = () => noop;
+        this.zoomIn = () => noop;
+        this.zoomOut = () => noop;
         this.onError = (errorMessage) => {};
         /* eslint-enable */
         if (params.netConnection || params.netConnectionSettings) {

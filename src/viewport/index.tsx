@@ -139,6 +139,8 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         this.resetCamera = this.resetCamera.bind(this);
         this.centerCamera = this.centerCamera.bind(this);
         this.reOrientCamera = this.reOrientCamera.bind(this);
+        this.zoomIn = this.zoomIn.bind(this);
+        this.zoomOut = this.zoomOut.bind(this);
 
         this.visGeometry = new VisGeometry(loggerLevel);
         this.visGeometry.setupScene();
@@ -199,6 +201,8 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         simulariumController.resetCamera = this.resetCamera;
         simulariumController.reOrientCamera = this.reOrientCamera;
         simulariumController.centerCamera = this.centerCamera;
+        simulariumController.zoomIn = this.zoomIn;
+        simulariumController.zoomOut = this.zoomOut;
 
         simulariumController.trajFileInfoCallback = (
             msg: TrajectoryFileInfo
@@ -469,6 +473,14 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
     public reOrientCamera(): void {
         this.visGeometry.reOrientCamera();
+    }
+
+    public zoomIn(): void {
+        this.visGeometry.zoomIn();
+    }
+
+    public zoomOut(): void {
+        this.visGeometry.zoomOut();
     }
 
     public onPickObject(posX: number, posY: number): void {
