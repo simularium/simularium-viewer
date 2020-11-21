@@ -52,7 +52,7 @@ interface ViewportState {
     lastClick: Click;
 }
 
-interface TimeData {
+export interface TimeData {
     time: number;
     frameNumber: number;
 }
