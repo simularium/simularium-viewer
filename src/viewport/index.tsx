@@ -160,6 +160,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             mouseup: this.handleMouseUp,
             pointerdown: this.handlePointerDown,
             pointerup: this.handlePointerUp,
+            mousemove: this.handleMouseMove,
         };
         this.hit = false;
         this.animationRequestID = 0;
@@ -442,6 +443,19 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             this.onPickObject(event.offsetX, event.offsetY);
         }
     };
+
+    public handleMouseMove = (e: Event):void => {
+        const event = e as MouseEvent;
+        const intersectedObject = this.visGeometry.hitTest(
+            event.offsetX,
+            event.offsetY
+        );
+        if (intersectedObject !== NO_AGENT && this.vdomRef.current) {
+            this.vdomRef.current.style.cursor = "pointer";
+        } else if (this.vdomRef.current) {
+            this.vdomRef.current.style.cursor = "default";
+        }
+    }
 
     public addEventHandlersToCanvas(): void {
         forOwn(this.handlers, (handler, eventName) =>
