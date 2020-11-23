@@ -446,13 +446,16 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
     public handleMouseMove = (e: Event):void => {
         const event = e as MouseEvent;
+        if (!this.vdomRef.current) {
+            return;
+        }
         const intersectedObject = this.visGeometry.hitTest(
             event.offsetX,
             event.offsetY
         );
-        if (intersectedObject !== NO_AGENT && this.vdomRef.current) {
+        if (intersectedObject !== NO_AGENT) {
             this.vdomRef.current.style.cursor = "pointer";
-        } else if (this.vdomRef.current) {
+        } else {
             this.vdomRef.current.style.cursor = "default";
         }
     }
