@@ -79,7 +79,7 @@ interface HSL {
 }
 
 interface PathData {
-    agent: number;
+    agentId: number;
     numSegments: number;
     maxSegments: number;
     color: Color;
@@ -87,7 +87,7 @@ interface PathData {
     colors: Float32Array;
     geometry: BufferGeometry;
     material: LineBasicMaterial;
-    line: LineSegments;
+    line: LineSegments<BufferGeometry>;
 }
 
 // per agent type Visdata format
@@ -1200,7 +1200,12 @@ class VisGeometry {
     public updateScene(agents: AgentData[]): void {
         this.currentSceneAgents = agents;
 
-        let dx, dy, dz;
+        let dx = 0,
+            dy = 0,
+            dz = 0;
+        let lastx = 0,
+            lasty = 0,
+            lastz = 0;
 
         if (USE_INSTANCE_ENDCAPS) {
             this.fiberEndcaps.beginUpdate(agents.length);
@@ -1212,6 +1217,21 @@ class VisGeometry {
             const typeId = agentData.type;
             const scale = this.getScaleForId(typeId);
             const radius = agentData.cr ? agentData.cr : 1;
+
+            lastx = agentData.x;
+            lasty = agentData.y;
+            lastz = agentData.z;
+
+            const path = this.findPathForAgent(instanceId);
+            if (path) {
+                // look up last agent with this instanceId.
+                const lastInstance = this.visAgentInstances.get(instanceId);
+                if (lastInstance && lastInstance.mesh) {
+                    lastx = lastInstance.mesh.position.x;
+                    lasty = lastInstance.mesh.position.y;
+                    lastz = lastInstance.mesh.position.z;
+                }
+            }
 
             const visAgent = this.visAgents[i];
             visAgent.id = instanceId;
@@ -1258,9 +1278,10 @@ class VisGeometry {
 
                 const runtimeMesh = visAgent.mesh;
 
-                dx = agentData.x - runtimeMesh.position.x;
-                dy = agentData.y - runtimeMesh.position.y;
-                dz = agentData.z - runtimeMesh.position.z;
+                dx = agentData.x - lastx;
+                dy = agentData.y - lasty;
+                dz = agentData.z - lastz;
+
                 runtimeMesh.position.x = agentData.x;
                 runtimeMesh.position.y = agentData.y;
                 runtimeMesh.position.z = agentData.z;
@@ -1295,7 +1316,6 @@ class VisGeometry {
                     }
                 }
 
-                const path = this.findPathForAgent(instanceId);
                 if (path && path.line) {
                     this.addPointToPath(
                         path,
@@ -1476,7 +1496,7 @@ class VisGeometry {
 
     public findPathForAgent(id: number): PathData | null {
         const path = this.paths.find((path) => {
-            return path.agent === id;
+            return path.agentId === id;
         });
 
         if (path) {
@@ -1535,7 +1555,7 @@ class VisGeometry {
         lineObject.frustumCulled = false;
 
         const pathdata: PathData = {
-            agent: id,
+            agentId: id,
             numSegments: 0,
             maxSegments: maxSegments,
             color: color || new Color(0xffffff),
@@ -1554,7 +1574,7 @@ class VisGeometry {
 
     public removePathForAgent(id: number): void {
         const pathindex = this.paths.findIndex((path) => {
-            return path.agent === id;
+            return path.agentId === id;
         });
         if (pathindex === -1) {
             console.log(
@@ -1569,7 +1589,7 @@ class VisGeometry {
 
     private removeOnePath(pathindex) {
         const path = this.paths[pathindex];
-        this.agentPathGroup.remove(path.line as Object3D);
+        this.agentPathGroup.remove(path.line);
 
         this.paths.splice(pathindex, 1);
     }
@@ -1657,8 +1677,7 @@ class VisGeometry {
                     b
                 );
             }
-            ((path.line.geometry as BufferGeometry).attributes
-                .color as BufferAttribute).needsUpdate = true;
+            path.line.geometry.attributes.color.needsUpdate = true;
         }
         // add a segment to this line
         path.points[path.numSegments * 2 * 3 + 0] = x - dx;
@@ -1670,12 +1689,8 @@ class VisGeometry {
 
         path.numSegments++;
 
-        (path.line.geometry as BufferGeometry).setDrawRange(
-            0,
-            path.numSegments * 2
-        );
-        ((path.line.geometry as BufferGeometry).attributes
-            .position as BufferAttribute).needsUpdate = true; // required after the first render
+        path.line.geometry.setDrawRange(0, path.numSegments * 2);
+        path.line.geometry.attributes.position.needsUpdate = true; // required after the first render
     }
 
     public setShowPaths(showPaths: boolean): void {
