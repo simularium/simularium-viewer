@@ -1180,7 +1180,9 @@ class VisGeometry {
         const lineGeometry = new Geometry();
         lineGeometry.vertices.push(
             new Vector3(minX + TICK_INTERVAL, minY, minZ + TICK_LENGTH / 2),
-            new Vector3(minX + TICK_INTERVAL, minY, minZ - TICK_LENGTH / 2)
+            new Vector3(minX + TICK_INTERVAL, minY, minZ - TICK_LENGTH / 2),
+            new Vector3(minX + 2 * TICK_INTERVAL, minY, minZ + TICK_LENGTH / 2),
+            new Vector3(minX + 2 * TICK_INTERVAL, minY, minZ - TICK_LENGTH / 2)
         );
 
         const lineMaterial = new LineBasicMaterial({
