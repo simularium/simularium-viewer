@@ -23,23 +23,34 @@ interface FileHTML extends File {
 }
 
 const agentColors = [
-    "#81dbe6",
-    "#3452d8",
-    "#9267cb",
-    "#68a500",
-    "#d49a01",
-    "#9f516c",
+    "#fee34d",
+    "#f7b232",
     "#bf5736",
-    "#ffc55b",
+    "#94a7fc",
     "#ce8ec9",
-    "#00aabf",
-    "#abb652",
+    "#58606c",
     "#0ba345",
-    "#d14040",
+    "#9267cb",
+    "#81dbe6",
+    "#bd7800",
+    "#bbbb99",
+    "#5b79f0",
+    "#89a500",
+    "#da8692",
     "#418463",
-    "#7f7f7f",
-    "#333333",
+    "#9f516c",
+    "#00aabf",
 ];
+
+// const agentColors = [
+//     #839afe -> #94a7fc
+//     #68a500 -> #89a500 
+//     #d49a01 -> #bd7800 
+//     #ffc55b -> #f7b232
+//     #abb652 -> #fee34d
+//     #7f7f7f -> #bbbb99
+//     + #5b79f0
+// ];
 
 interface ViewerState {
     renderStyle: RenderStyle;
