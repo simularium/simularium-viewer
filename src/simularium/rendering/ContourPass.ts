@@ -17,7 +17,7 @@ class ContourPass {
                 outlineColor: { value: new Color(1, 1, 1) },
                 followThickness: { value: 3.0 },
                 followAlpha: { value: 0.8 },
-                followColor: { value: new Color(1, 1, 0) },
+                followColor: { value: new Color(0.14, 1, 0) },
             },
             fragmentShader: `
             in vec2 vUv;
