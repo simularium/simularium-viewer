@@ -1610,7 +1610,6 @@ class VisGeometry {
         dz: number
     ): void {
         if (x === dx && y === dy && z === dz) {
-            console.log("skipping this point");
             return;
         }
         // Check for periodic boundary condition:
