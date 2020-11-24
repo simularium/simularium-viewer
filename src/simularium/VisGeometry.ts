@@ -1151,7 +1151,7 @@ class VisGeometry {
         }
     }
 
-    public resetBounds(boundsAsArray?: number[]): void {
+    public createBoundingBox(boundsAsArray?: number[]): void {
         if (!boundsAsArray) {
             console.log("invalid bounds received");
             return;
@@ -1159,7 +1159,6 @@ class VisGeometry {
         const visible = this.boundingBoxMesh
             ? this.boundingBoxMesh.visible
             : true;
-        this.scene.remove(this.boundingBoxMesh);
         // array is minx,miny,minz, maxx,maxy,maxz
         this.boundingBox = new Box3(
             new Vector3(boundsAsArray[0], boundsAsArray[1], boundsAsArray[2]),
@@ -1170,6 +1169,11 @@ class VisGeometry {
             BOUNDING_BOX_COLOR
         );
         this.boundingBoxMesh.visible = visible;
+    }
+
+    public resetBounds(boundsAsArray?: number[]): void {
+        this.scene.remove(this.boundingBoxMesh);
+        this.createBoundingBox(boundsAsArray);
         this.scene.add(this.boundingBoxMesh);
 
         if (this.controls) {
