@@ -42,16 +42,6 @@ const agentColors = [
     "#00aabf",
 ];
 
-// const agentColors = [
-//     #839afe -> #94a7fc
-//     #68a500 -> #89a500 
-//     #d49a01 -> #bd7800 
-//     #ffc55b -> #f7b232
-//     #abb652 -> #fee34d
-//     #7f7f7f -> #bbbb99
-//     + #5b79f0
-// ];
-
 interface ViewerState {
     renderStyle: RenderStyle;
     pauseOn: number;
