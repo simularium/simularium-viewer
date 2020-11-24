@@ -1156,13 +1156,14 @@ class VisGeometry {
             console.log("invalid bounds received");
             return;
         }
+        console.log(boundsAsArray);
         const visible = this.boundingBoxMesh
             ? this.boundingBoxMesh.visible
             : true;
-        // array is minx,miny,minz, maxx,maxy,maxz
+        const [minX, minY, minZ, maxX, maxY, maxZ] = boundsAsArray;
         this.boundingBox = new Box3(
-            new Vector3(boundsAsArray[0], boundsAsArray[1], boundsAsArray[2]),
-            new Vector3(boundsAsArray[3], boundsAsArray[4], boundsAsArray[5])
+            new Vector3(minX, minY, minZ),
+            new Vector3(maxX, maxY, maxZ)
         );
         this.boundingBoxMesh = new Box3Helper(
             this.boundingBox,
