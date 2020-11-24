@@ -16,6 +16,7 @@ import {
     BufferGeometry,
     Color,
     DirectionalLight,
+    Geometry,
     Group,
     HemisphereLight,
     LineBasicMaterial,
@@ -126,6 +127,7 @@ class VisGeometry {
     public dl: DirectionalLight;
     public boundingBox: Box3;
     public boundingBoxMesh: Box3Helper;
+    public tickMarksMesh: LineSegments;
     // front and back of transformed bounds in camera space
     private boxNearZ: number;
     private boxFarZ: number;
@@ -226,6 +228,7 @@ class VisGeometry {
             this.boundingBox,
             BOUNDING_BOX_COLOR
         );
+        this.tickMarksMesh = new LineSegments();
         this.boxNearZ = 0;
         this.boxFarZ = 100;
         this.currentSceneAgents = [];
@@ -1170,12 +1173,26 @@ class VisGeometry {
             BOUNDING_BOX_COLOR
         );
         this.boundingBoxMesh.visible = visible;
+
+        const TICK_INTERVAL = 10;
+        const TICK_LENGTH = (maxX - minX) / 10;
+
+        const lineGeometry = new Geometry();
+        lineGeometry.vertices.push(
+            new Vector3(minX + TICK_INTERVAL, minY, minZ + TICK_LENGTH / 2),
+            new Vector3(minX + TICK_INTERVAL, minY, minZ - TICK_LENGTH / 2)
+        );
+
+        const lineMaterial = new LineBasicMaterial({
+            color: BOUNDING_BOX_COLOR,
+        });
+        this.tickMarksMesh = new LineSegments(lineGeometry, lineMaterial);
     }
 
     public resetBounds(boundsAsArray?: number[]): void {
-        this.scene.remove(this.boundingBoxMesh);
+        this.scene.remove(this.boundingBoxMesh, this.tickMarksMesh);
         this.createBoundingBox(boundsAsArray);
-        this.scene.add(this.boundingBoxMesh);
+        this.scene.add(this.boundingBoxMesh, this.tickMarksMesh);
 
         if (this.controls) {
             this.controls.maxDistance =
