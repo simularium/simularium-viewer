@@ -1174,22 +1174,25 @@ class VisGeometry {
         this.boundingBoxMesh.visible = visible;
 
         const TICK_INTERVAL = 10;
-        const TICK_LENGTH = (maxX - minX) / 10;
+        const TICK_HALF_LENGTH = (maxX - minX) / 50;
 
         const lineGeometry = new BufferGeometry();
         const vertices = new Float32Array([
             minX + TICK_INTERVAL,
             minY,
-            minZ + TICK_LENGTH / 2,
+            minZ + TICK_HALF_LENGTH,
+
             minX + TICK_INTERVAL,
             minY,
-            minZ - TICK_LENGTH / 2,
+            minZ - TICK_HALF_LENGTH,
+
             minX + 2 * TICK_INTERVAL,
             minY,
-            minZ + TICK_LENGTH / 2,
+            minZ + TICK_HALF_LENGTH,
+
             minX + 2 * TICK_INTERVAL,
             minY,
-            minZ - TICK_LENGTH / 2,
+            minZ - TICK_HALF_LENGTH,
         ]);
         lineGeometry.setAttribute("position", new BufferAttribute(vertices, 3));
 
