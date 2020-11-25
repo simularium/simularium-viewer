@@ -80,7 +80,7 @@ class MoleculeRenderer {
             followThickness: 3.0,
             outlineAlpha: 0.8,
             followAlpha: 0.8,
-            followColor: [255, 255, 0],
+            followColor: [35, 255, 0],
             outlineColor: [255, 255, 255],
         };
         this.boundsNear = 0.0;

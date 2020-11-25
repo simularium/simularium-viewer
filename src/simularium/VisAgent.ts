@@ -52,7 +52,7 @@ export default class VisAgent {
     );
     // this material only used in webGL1 fallback rendering mode
     private static followMaterial: MeshBasicMaterial = new MeshBasicMaterial({
-        color: new Color(1, 1, 0),
+        color: new Color(0.14, 1, 0),
     });
     private static membraneData: {
         faces: { name: string }[];
