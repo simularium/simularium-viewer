@@ -16,7 +16,6 @@ import {
     BufferGeometry,
     Color,
     DirectionalLight,
-    Geometry,
     Group,
     HemisphereLight,
     LineBasicMaterial,
@@ -1177,13 +1176,22 @@ class VisGeometry {
         const TICK_INTERVAL = 10;
         const TICK_LENGTH = (maxX - minX) / 10;
 
-        const lineGeometry = new Geometry();
-        lineGeometry.vertices.push(
-            new Vector3(minX + TICK_INTERVAL, minY, minZ + TICK_LENGTH / 2),
-            new Vector3(minX + TICK_INTERVAL, minY, minZ - TICK_LENGTH / 2),
-            new Vector3(minX + 2 * TICK_INTERVAL, minY, minZ + TICK_LENGTH / 2),
-            new Vector3(minX + 2 * TICK_INTERVAL, minY, minZ - TICK_LENGTH / 2)
-        );
+        const lineGeometry = new BufferGeometry();
+        const vertices = new Float32Array([
+            minX + TICK_INTERVAL,
+            minY,
+            minZ + TICK_LENGTH / 2,
+            minX + TICK_INTERVAL,
+            minY,
+            minZ - TICK_LENGTH / 2,
+            minX + 2 * TICK_INTERVAL,
+            minY,
+            minZ + TICK_LENGTH / 2,
+            minX + 2 * TICK_INTERVAL,
+            minY,
+            minZ - TICK_LENGTH / 2,
+        ]);
+        lineGeometry.setAttribute("position", new BufferAttribute(vertices, 3));
 
         const lineMaterial = new LineBasicMaterial({
             color: BOUNDING_BOX_COLOR,
