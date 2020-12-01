@@ -50,6 +50,7 @@ const MAX_MESHES = 100000;
 const DEFAULT_BACKGROUND_COLOR = new Color(0, 0, 0);
 const DEFAULT_VOLUME_DIMENSIONS = [300, 300, 300];
 const NUM_TICK_INTERVALS = 10;
+const TICK_LENGTH_FACTOR = 75;
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 const NO_AGENT = -1;
 const DEFAULT_CAMERA_Z_POSITION = 120;
@@ -1168,7 +1169,7 @@ class VisGeometry {
         const tickIntervalLength = this.getTickIntervalLength(
             longestAxisLength
         );
-        const tickHalfLength = longestAxisLength / 50;
+        const tickHalfLength = longestAxisLength / TICK_LENGTH_FACTOR;
 
         const lineGeometry = new BufferGeometry();
         const verticesArray: number[] = [];
@@ -1182,18 +1183,21 @@ class VisGeometry {
                 x,
                 minY,
                 minZ - tickHalfLength,
+
                 x,
                 minY,
                 maxZ + tickHalfLength,
                 x,
                 minY,
                 maxZ - tickHalfLength,
+
                 x,
                 maxY,
                 minZ + tickHalfLength,
                 x,
                 maxY,
                 minZ - tickHalfLength,
+
                 x,
                 maxY,
                 maxZ + tickHalfLength,
@@ -1212,18 +1216,21 @@ class VisGeometry {
                 minX - tickHalfLength,
                 y,
                 minZ,
+
                 minX + tickHalfLength,
                 y,
                 maxZ,
                 minX - tickHalfLength,
                 y,
                 maxZ,
+
                 maxX + tickHalfLength,
                 y,
                 minZ,
                 maxX - tickHalfLength,
                 y,
                 minZ,
+
                 maxX + tickHalfLength,
                 y,
                 maxZ,
@@ -1242,18 +1249,21 @@ class VisGeometry {
                 minX,
                 minY - tickHalfLength,
                 z,
+
                 minX,
                 maxY + tickHalfLength,
                 z,
                 minX,
                 maxY - tickHalfLength,
                 z,
+
                 maxX,
                 minY + tickHalfLength,
                 z,
                 maxX,
                 minY - tickHalfLength,
                 z,
+
                 maxX,
                 maxY + tickHalfLength,
                 z,
