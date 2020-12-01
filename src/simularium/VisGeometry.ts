@@ -48,7 +48,8 @@ import InstancedFiberEndcapsFallback from "./rendering/InstancedFiberEndcapsFall
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 100000;
 const DEFAULT_BACKGROUND_COLOR = new Color(0, 0, 0);
-const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
+const DEFAULT_VOLUME_DIMENSIONS = [300, 300, 300];
+const NUM_TICK_INTERVALS = 10;
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 const NO_AGENT = -1;
 const DEFAULT_CAMERA_Z_POSITION = 120;
@@ -355,19 +356,12 @@ class VisGeometry {
                 console.log(
                     "WARNING: Bounding box: at least one bound is zero; using default bounds"
                 );
-                this.resetBounds(DEFAULT_VOLUME_BOUNDS);
+                this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
             } else {
-                this.resetBounds([
-                    -bx / 2,
-                    -by / 2,
-                    -bz / 2,
-                    bx / 2,
-                    by / 2,
-                    bz / 2,
-                ]);
+                this.resetBounds([bx, by, bz]);
             }
         } else {
-            this.resetBounds(DEFAULT_VOLUME_BOUNDS);
+            this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
         }
         if (this.resetCameraOnNewScene) {
             this.resetCamera();
@@ -605,7 +599,7 @@ class VisGeometry {
             1000
         );
 
-        this.resetBounds(DEFAULT_VOLUME_BOUNDS);
+        this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
 
         this.dl = new DirectionalLight(0xffffff, 0.6);
         this.dl.position.set(0, 0, 1);
@@ -1153,46 +1147,46 @@ class VisGeometry {
         }
     }
 
-    public createBoundingBox(boundsAsArray?: number[]): void {
-        if (!boundsAsArray) {
-            console.log("invalid bounds received");
-            return;
-        }
-        console.log(boundsAsArray);
-        const visible = this.boundingBoxMesh
-            ? this.boundingBoxMesh.visible
-            : true;
-        const [minX, minY, minZ, maxX, maxY, maxZ] = boundsAsArray;
-        this.boundingBox = new Box3(
-            new Vector3(minX, minY, minZ),
-            new Vector3(maxX, maxY, maxZ)
-        );
-        this.boundingBoxMesh = new Box3Helper(
-            this.boundingBox,
-            BOUNDING_BOX_COLOR
-        );
-        this.boundingBoxMesh.visible = visible;
+    public getTickIntervalLength(axisLength: number): number {
+        const tickIntervalLength = axisLength / NUM_TICK_INTERVALS;
+        // TODO: round and make output pretty
+        console.log(tickIntervalLength);
+        return tickIntervalLength;
+    }
 
-        const TICK_INTERVAL = 10;
-        const TICK_HALF_LENGTH = (maxX - minX) / 50;
+    public createTickMarks(volumeDimensions: number[]): void {
+        const [bx, by, bz] = volumeDimensions;
+        const [minX, minY, minZ, maxX, maxY, maxZ] = [
+            -bx / 2,
+            -by / 2,
+            -bz / 2,
+            bx / 2,
+            by / 2,
+            bz / 2,
+        ];
+        const longestAxisLength = Math.max(bx, by, bz);
+        const tickIntervalLength = this.getTickIntervalLength(
+            longestAxisLength
+        );
+        const tickHalfLength = longestAxisLength / 50;
 
         const lineGeometry = new BufferGeometry();
         const vertices = new Float32Array([
-            minX + TICK_INTERVAL,
+            minX + tickIntervalLength,
             minY,
-            minZ + TICK_HALF_LENGTH,
+            minZ + tickHalfLength,
 
-            minX + TICK_INTERVAL,
+            minX + tickIntervalLength,
             minY,
-            minZ - TICK_HALF_LENGTH,
+            minZ - tickHalfLength,
 
-            minX + 2 * TICK_INTERVAL,
+            minX + 2 * tickIntervalLength,
             minY,
-            minZ + TICK_HALF_LENGTH,
+            minZ + tickHalfLength,
 
-            minX + 2 * TICK_INTERVAL,
+            minX + 2 * tickIntervalLength,
             minY,
-            minZ - TICK_HALF_LENGTH,
+            minZ - tickHalfLength,
         ]);
         lineGeometry.setAttribute("position", new BufferAttribute(vertices, 3));
 
@@ -1202,9 +1196,39 @@ class VisGeometry {
         this.tickMarksMesh = new LineSegments(lineGeometry, lineMaterial);
     }
 
-    public resetBounds(boundsAsArray?: number[]): void {
+    public createBoundingBox(volumeDimensions: number[]): void {
+        const [bx, by, bz] = volumeDimensions;
+        const [minX, minY, minZ, maxX, maxY, maxZ] = [
+            -bx / 2,
+            -by / 2,
+            -bz / 2,
+            bx / 2,
+            by / 2,
+            bz / 2,
+        ];
+        const visible = this.boundingBoxMesh
+            ? this.boundingBoxMesh.visible
+            : true;
+        this.boundingBox = new Box3(
+            new Vector3(minX, minY, minZ),
+            new Vector3(maxX, maxY, maxZ)
+        );
+        this.boundingBoxMesh = new Box3Helper(
+            this.boundingBox,
+            BOUNDING_BOX_COLOR
+        );
+        this.boundingBoxMesh.visible = visible;
+    }
+
+    public resetBounds(volumeDimensions?: number[]): void {
         this.scene.remove(this.boundingBoxMesh, this.tickMarksMesh);
-        this.createBoundingBox(boundsAsArray);
+        if (!volumeDimensions) {
+            console.log("invalid volume dimensions received");
+            return;
+        }
+        console.log(volumeDimensions);
+        this.createBoundingBox(volumeDimensions);
+        this.createTickMarks(volumeDimensions);
         this.scene.add(this.boundingBoxMesh, this.tickMarksMesh);
 
         if (this.controls) {
