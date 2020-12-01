@@ -1171,23 +1171,100 @@ class VisGeometry {
         const tickHalfLength = longestAxisLength / 50;
 
         const lineGeometry = new BufferGeometry();
-        const vertices = new Float32Array([
-            minX + tickIntervalLength,
-            minY,
-            minZ + tickHalfLength,
+        const verticesArray: number[] = [];
 
-            minX + tickIntervalLength,
-            minY,
-            minZ - tickHalfLength,
+        let x: number = minX;
+        while (x <= maxX) {
+            verticesArray.push(
+                x,
+                minY,
+                minZ + tickHalfLength,
+                x,
+                minY,
+                minZ - tickHalfLength,
+                x,
+                minY,
+                maxZ + tickHalfLength,
+                x,
+                minY,
+                maxZ - tickHalfLength,
+                x,
+                maxY,
+                minZ + tickHalfLength,
+                x,
+                maxY,
+                minZ - tickHalfLength,
+                x,
+                maxY,
+                maxZ + tickHalfLength,
+                x,
+                maxY,
+                maxZ - tickHalfLength
+            );
+            x += tickIntervalLength;
+        }
+        let y: number = minY;
+        while (y <= maxY) {
+            verticesArray.push(
+                minX + tickHalfLength,
+                y,
+                minZ,
+                minX - tickHalfLength,
+                y,
+                minZ,
+                minX + tickHalfLength,
+                y,
+                maxZ,
+                minX - tickHalfLength,
+                y,
+                maxZ,
+                maxX + tickHalfLength,
+                y,
+                minZ,
+                maxX - tickHalfLength,
+                y,
+                minZ,
+                maxX + tickHalfLength,
+                y,
+                maxZ,
+                maxX - tickHalfLength,
+                y,
+                maxZ
+            );
+            y += tickIntervalLength;
+        }
+        let z: number = minZ;
+        while (z <= maxZ) {
+            verticesArray.push(
+                minX,
+                minY + tickHalfLength,
+                z,
+                minX,
+                minY - tickHalfLength,
+                z,
+                minX,
+                maxY + tickHalfLength,
+                z,
+                minX,
+                maxY - tickHalfLength,
+                z,
+                maxX,
+                minY + tickHalfLength,
+                z,
+                maxX,
+                minY - tickHalfLength,
+                z,
+                maxX,
+                maxY + tickHalfLength,
+                z,
+                maxX,
+                maxY - tickHalfLength,
+                z
+            );
+            z += tickIntervalLength;
+        }
 
-            minX + 2 * tickIntervalLength,
-            minY,
-            minZ + tickHalfLength,
-
-            minX + 2 * tickIntervalLength,
-            minY,
-            minZ - tickHalfLength,
-        ]);
+        const vertices = new Float32Array(verticesArray);
         lineGeometry.setAttribute("position", new BufferAttribute(vertices, 3));
 
         const lineMaterial = new LineBasicMaterial({
