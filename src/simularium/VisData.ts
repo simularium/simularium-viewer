@@ -190,6 +190,7 @@ class VisData {
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
+        this.netBuffer = new ArrayBuffer();
     }
 
     //get time() { return this.cacheFrame < this.frameDataCache.length ? this.frameDataCache[this.cacheFrame] : -1 }
@@ -284,7 +285,12 @@ class VisData {
         this.cacheFrame = 0;
     }
 
-    public parseAgentsFromNetData(visDataMsg: VisDataMessage): void {
+    public parseAgentsFromNetData(msg: VisDataMessage | ArrayBuffer): void {
+        if (msg instanceof ArrayBuffer) {
+            this.parseBinaryNetData(msg as ArrayBuffer);
+            return;
+        }
+
         /**
          *   visDataMsg = {
          *       ...
@@ -297,6 +303,7 @@ class VisData {
          *   }
          */
 
+        const visDataMsg = msg as VisDataMessage;
         if (this.lockedForFrame === true) {
             if (visDataMsg.bundleData[0].frameNumber !== this.frameToWaitFor) {
                 // This object is waiting for a frame with a specified frame number
@@ -323,6 +330,51 @@ class VisData {
                 this.frameCache,
                 frames.parsedAgentDataArray
             );
+        }
+    }
+
+    private parseBinaryNetData(data: ArrayBuffer) {
+        let eof = -1;
+
+        // find last '/eof' signal in new data
+        const byteView = new Uint8Array(data);
+
+        let index = byteView.length - 4;
+        for (; index > 0; index = index - 4) {
+            if (
+                byteView[index] === 92 && // '/'
+                byteView[index + 1] === 69 && // 'E'
+                byteView[index + 2] === 79 && // 'O'
+                byteView[index + 3] === 70 // 'F'
+            ) {
+                eof = index / 4;
+                break;
+            }
+        }
+
+        if (eof > 0) {
+            const frame = data.slice(0, eof);
+
+            let tmp = new Uint8Array(
+                this.netBuffer.byteLength + frame.byteLength
+            );
+            tmp.set(new Uint8Array(this.netBuffer), 0);
+            tmp.set(new Uint8Array(frame), this.netBuffer.byteLength);
+
+            // @TODO: process tmp
+
+            let remaining = frame.slice(eof + 1);
+            this.netBuffer = new Uint8Array(remaining.byteLength);
+            this.netBuffer.set(new Uint8Array(remaining), 0);
+        } else {
+            // Append the new data, and wait until eof
+            let tmp = new Uint8Array(
+                this.netBuffer.byteLength + data.byteLength
+            );
+            tmp.set(new Uint8Array(this.netBuffer), 0);
+            tmp.set(new Uint8Array(data), this.netBuffer.byteLength);
+
+            this.netBuffer = tmp;
         }
     }
 
