@@ -404,16 +404,6 @@ class VisData {
 
     public parseAgentsFromNetData(msg: VisDataMessage | ArrayBuffer): void {
         if (msg instanceof ArrayBuffer) {
-            const frameNumber = new Float32Array(msg.slice(0, 4));
-            if (this.lockedForFrame === true) {
-                if (frameNumber[0] !== this.frameToWaitFor) {
-                    return;
-                } else {
-                    this.lockedForFrame = false;
-                    this.frameToWaitFor = 0;
-                }
-            }
-
             this.parseBinaryNetData(msg as ArrayBuffer);
             return;
         }
@@ -466,14 +456,15 @@ class VisData {
         // find last '/eof' signal in new data
         const byteView = new Uint8Array(data);
 
-        var enc = new TextEncoder(); // always utf-8
-        var eofPhrase = enc.encode("\\EOFTHEFRAMEENDSHERE");
-
-        let index = byteView.length - eofPhrase.length;
+        let index = byteView.length - 4;
         for (; index > 0; index = index - 4) {
-            const curr = byteView.subarray(index, index + eofPhrase.length);
-            if (curr.every((val, i) => val === eofPhrase[i])) {
-                eof = index;
+            if (
+                byteView[index] === 92 && // '/'
+                byteView[index + 1] === 69 && // 'E'
+                byteView[index + 2] === 79 && // 'O'
+                byteView[index + 3] === 70 // 'F'
+            ) {
+                eof = index / 4;
                 break;
             }
         }
@@ -481,44 +472,26 @@ class VisData {
         if (eof > 0) {
             const frame = data.slice(0, eof);
 
-            let tmp = new ArrayBuffer(
+            let tmp = new Uint8Array(
                 this.netBuffer.byteLength + frame.byteLength
             );
-            new Uint8Array(tmp).set(new Uint8Array(this.netBuffer));
-            new Uint8Array(tmp).set(
-                new Uint8Array(frame),
-                this.netBuffer.byteLength
-            );
+            tmp.set(new Uint8Array(this.netBuffer), 0);
+            tmp.set(new Uint8Array(frame), this.netBuffer.byteLength);
 
-            // Losing WebGL context, memory greatly increases,
-            //  long hang-up in VisAgent.ts updateFiber
-            //  many fibers in crashing frame
-            //  is the 'crash frame' the same?
-            const frames = VisData.parseBinary(tmp);
-            if (
-                frames.frameDataArray.length > 0 &&
-                frames.frameDataArray[0].frameNumber === 0
-            ) {
-                this.clearCache(); // new data has arrived
-            }
+            // @TODO: process tmp
 
-            Array.prototype.push.apply(
-                this.frameDataCache,
-                frames.frameDataArray
-            );
-            Array.prototype.push.apply(
-                this.frameCache,
-                frames.parsedAgentDataArray
-            );
-
-            // Save remaining data for later processing
-            const remainder = data.slice(eof + eofPhrase.length);
-            this.netBuffer = new ArrayBuffer(remainder.byteLength);
-            new Uint8Array(this.netBuffer).set(new Uint8Array(remainder));
+            let remaining = frame.slice(eof + 1);
+            this.netBuffer = new Uint8Array(remaining.byteLength);
+            this.netBuffer.set(new Uint8Array(remaining), 0);
         } else {
             // Append the new data, and wait until eof
-            this.netBuffer = new ArrayBuffer(data.byteLength);
-            new Uint8Array(this.netBuffer).set(new Uint8Array(data));
+            let tmp = new Uint8Array(
+                this.netBuffer.byteLength + data.byteLength
+            );
+            tmp.set(new Uint8Array(this.netBuffer), 0);
+            tmp.set(new Uint8Array(data), this.netBuffer.byteLength);
+
+            this.netBuffer = tmp;
         }
     }
 
