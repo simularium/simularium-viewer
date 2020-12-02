@@ -49,8 +49,9 @@ const MAX_PATH_LEN = 32;
 const MAX_MESHES = 100000;
 const DEFAULT_BACKGROUND_COLOR = new Color(0, 0, 0);
 const DEFAULT_VOLUME_DIMENSIONS = [300, 300, 300];
-const NUM_TICK_INTERVALS = 10; // per bounding box edge
-// tick mark length = length of the longest bounding box edge / TICK_LENGTH_FACTOR
+// tick interval length = length of the longest bounding box edge / NUM_TICK_INTERVALS
+const NUM_TICK_INTERVALS = 10;
+// tick mark length = 2 * (length of the longest bounding box edge / TICK_LENGTH_FACTOR)
 const TICK_LENGTH_FACTOR = 100;
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 const NO_AGENT = -1;
@@ -1166,16 +1167,20 @@ class VisGeometry {
         const [minX, minY, minZ, maxX, maxY, maxZ] = boundsAsArray;
         const visible = this.tickMarksMesh ? this.tickMarksMesh.visible : true;
 
-        const longestAxisLength = Math.max(...volumeDimensions);
-        this.setTickIntervalLength(longestAxisLength);
-        const tickHalfLength = longestAxisLength / TICK_LENGTH_FACTOR;
+        const longestEdgeLength = Math.max(...volumeDimensions);
+        // Use the length of the longest bounding box edge to determine the tick interval (scale bar) length
+        this.setTickIntervalLength(longestEdgeLength);
+        // The size of tick marks also depends on the length of the longest bounding box edge
+        const tickHalfLength = longestEdgeLength / TICK_LENGTH_FACTOR;
 
         const lineGeometry = new BufferGeometry();
         const verticesArray: number[] = [];
 
+        // Add tick mark vertices for the 4 bounding box edges parallel to the x-axis
         let x: number = minX;
         while (x <= maxX) {
             verticesArray.push(
+                // The 6 coordinates below make up 1 tick mark (2 vertices for 1 line segment)
                 x,
                 minY,
                 minZ + tickHalfLength,
@@ -1183,6 +1188,7 @@ class VisGeometry {
                 minY,
                 minZ - tickHalfLength,
 
+                // This tick mark is on a different bounding box edge also parallel to the x-axis
                 x,
                 minY,
                 maxZ + tickHalfLength,
@@ -1190,6 +1196,7 @@ class VisGeometry {
                 minY,
                 maxZ - tickHalfLength,
 
+                // This Tick mark is on yet another edge parallel to the x-axis
                 x,
                 maxY,
                 minZ + tickHalfLength,
@@ -1197,6 +1204,7 @@ class VisGeometry {
                 maxY,
                 minZ - tickHalfLength,
 
+                // For the last edge parallel to the x-axis
                 x,
                 maxY,
                 maxZ + tickHalfLength,
@@ -1206,6 +1214,8 @@ class VisGeometry {
             );
             x += this.tickIntervalLength;
         }
+
+        // Add tick mark vertices for the 4 bounding box edges parallel to the y-axis
         let y: number = minY;
         while (y <= maxY) {
             verticesArray.push(
@@ -1239,6 +1249,8 @@ class VisGeometry {
             );
             y += this.tickIntervalLength;
         }
+
+        // Add tick mark vertices for the 4 bounding box edges parallel to the z-axis
         let z: number = minZ;
         while (z <= maxZ) {
             verticesArray.push(
@@ -1273,6 +1285,7 @@ class VisGeometry {
             z += this.tickIntervalLength;
         }
 
+        // Convert verticesArray into a TypedArray to use with lineGeometry.setAttribute()
         const vertices = new Float32Array(verticesArray);
         lineGeometry.setAttribute("position", new BufferAttribute(vertices, 3));
 
