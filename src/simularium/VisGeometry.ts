@@ -1156,7 +1156,7 @@ class VisGeometry {
 
     public setTickIntervalLength(axisLength: number): void {
         const tickIntervalLength = axisLength / NUM_TICK_INTERVALS;
-        // TODO: round to a nice number
+        // TODO: round tickIntervalLength to a nice number
         this.tickIntervalLength = tickIntervalLength;
     }
 
@@ -1196,7 +1196,7 @@ class VisGeometry {
                 minY,
                 maxZ - tickHalfLength,
 
-                // This Tick mark is on yet another edge parallel to the x-axis
+                // This tick mark is on yet another edge parallel to the x-axis
                 x,
                 maxY,
                 minZ + tickHalfLength,
