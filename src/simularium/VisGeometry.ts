@@ -1159,18 +1159,14 @@ class VisGeometry {
         this.tickIntervalLength = tickIntervalLength;
     }
 
-    public createTickMarks(volumeDimensions: number[]): void {
+    public createTickMarks(
+        volumeDimensions: number[],
+        boundsAsArray: number[]
+    ): void {
+        const [minX, minY, minZ, maxX, maxY, maxZ] = boundsAsArray;
         const visible = this.tickMarksMesh ? this.tickMarksMesh.visible : true;
-        const [bx, by, bz] = volumeDimensions;
-        const [minX, minY, minZ, maxX, maxY, maxZ] = [
-            -bx / 2,
-            -by / 2,
-            -bz / 2,
-            bx / 2,
-            by / 2,
-            bz / 2,
-        ];
-        const longestAxisLength = Math.max(bx, by, bz);
+
+        const longestAxisLength = Math.max(...volumeDimensions);
         this.setTickIntervalLength(longestAxisLength);
         const tickHalfLength = longestAxisLength / TICK_LENGTH_FACTOR;
 
@@ -1287,16 +1283,8 @@ class VisGeometry {
         this.tickMarksMesh.visible = visible;
     }
 
-    public createBoundingBox(volumeDimensions: number[]): void {
-        const [bx, by, bz] = volumeDimensions;
-        const [minX, minY, minZ, maxX, maxY, maxZ] = [
-            -bx / 2,
-            -by / 2,
-            -bz / 2,
-            bx / 2,
-            by / 2,
-            bz / 2,
-        ];
+    public createBoundingBox(boundsAsArray: number[]): void {
+        const [minX, minY, minZ, maxX, maxY, maxZ] = boundsAsArray;
         const visible = this.boundingBoxMesh
             ? this.boundingBoxMesh.visible
             : true;
@@ -1317,8 +1305,17 @@ class VisGeometry {
             console.log("invalid volume dimensions received");
             return;
         }
-        this.createBoundingBox(volumeDimensions);
-        this.createTickMarks(volumeDimensions);
+        const [bx, by, bz] = volumeDimensions;
+        const boundsAsArray = [
+            -bx / 2,
+            -by / 2,
+            -bz / 2,
+            bx / 2,
+            by / 2,
+            bz / 2,
+        ];
+        this.createBoundingBox(boundsAsArray);
+        this.createTickMarks(volumeDimensions, boundsAsArray);
         this.scene.add(this.boundingBoxMesh, this.tickMarksMesh);
 
         if (this.controls) {
