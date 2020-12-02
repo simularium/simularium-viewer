@@ -224,7 +224,6 @@ class Viewer extends React.Component<{}, ViewerState> {
 
         currentTime = 0;
         currentFrame = 0;
-        console.log("scale bar: ", simulariumController.tickIntervalLength)
     }
 
     public handleScrubTime(event): void {
@@ -391,6 +390,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                 <button onClick={() => simulariumController.zoomOut()}>
                     -
                 </button>
+                <span>Tick interval length: {simulariumController.tickIntervalLength}</span>
                 <div className="viewer-container">
                     <SimulariumViewer
                         ref={this.viewerRef}
