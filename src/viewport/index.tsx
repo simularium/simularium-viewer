@@ -218,6 +218,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                     console.log("error parsing 'typeMapping' data", e);
                 }
             }
+            simulariumController.tickIntervalLength = this.visGeometry.tickIntervalLength;
             onTrajectoryFileInfoChanged(msg);
 
             const uiDisplayData = this.selectionInterface.getUIDisplayData();

@@ -49,7 +49,7 @@ const MAX_PATH_LEN = 32;
 const MAX_MESHES = 100000;
 const DEFAULT_BACKGROUND_COLOR = new Color(0, 0, 0);
 const DEFAULT_VOLUME_DIMENSIONS = [300, 300, 300];
-const NUM_TICK_INTERVALS = 10;
+const NUM_TICK_INTERVALS = 10; // per bounding box edge
 const TICK_LENGTH_FACTOR = 100; // Higher number means shorter tick mark
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 const NO_AGENT = -1;
@@ -128,6 +128,7 @@ class VisGeometry {
     public dl: DirectionalLight;
     public boundingBox: Box3;
     public boundingBoxMesh: Box3Helper;
+    public tickIntervalLength: number;
     public tickMarksMesh: LineSegments;
     // front and back of transformed bounds in camera space
     private boxNearZ: number;
@@ -229,6 +230,7 @@ class VisGeometry {
             this.boundingBox,
             BOUNDING_BOX_COLOR
         );
+        this.tickIntervalLength = 10;
         this.tickMarksMesh = new LineSegments();
         this.boxNearZ = 0;
         this.boxFarZ = 100;
@@ -1148,11 +1150,11 @@ class VisGeometry {
         }
     }
 
-    public getTickIntervalLength(axisLength: number): number {
+    public setTickIntervalLength(axisLength: number): void {
         const tickIntervalLength = axisLength / NUM_TICK_INTERVALS;
-        // TODO: round and make output pretty
+        // TODO: round to a nice number
         console.log(tickIntervalLength);
-        return tickIntervalLength;
+        this.tickIntervalLength = tickIntervalLength;
     }
 
     public createTickMarks(volumeDimensions: number[]): void {
@@ -1166,9 +1168,7 @@ class VisGeometry {
             bz / 2,
         ];
         const longestAxisLength = Math.max(bx, by, bz);
-        const tickIntervalLength = this.getTickIntervalLength(
-            longestAxisLength
-        );
+        this.setTickIntervalLength(longestAxisLength);
         const tickHalfLength = longestAxisLength / TICK_LENGTH_FACTOR;
 
         const lineGeometry = new BufferGeometry();
@@ -1205,7 +1205,7 @@ class VisGeometry {
                 maxY,
                 maxZ - tickHalfLength
             );
-            x += tickIntervalLength;
+            x += this.tickIntervalLength;
         }
         let y: number = minY;
         while (y <= maxY) {
@@ -1238,7 +1238,7 @@ class VisGeometry {
                 y,
                 maxZ
             );
-            y += tickIntervalLength;
+            y += this.tickIntervalLength;
         }
         let z: number = minZ;
         while (z <= maxZ) {
@@ -1271,7 +1271,7 @@ class VisGeometry {
                 maxY - tickHalfLength,
                 z
             );
-            z += tickIntervalLength;
+            z += this.tickIntervalLength;
         }
 
         const vertices = new Float32Array(verticesArray);

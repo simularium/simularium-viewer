@@ -224,6 +224,7 @@ class Viewer extends React.Component<{}, ViewerState> {
 
         currentTime = 0;
         currentFrame = 0;
+        console.log("scale bar: ", simulariumController.tickIntervalLength)
     }
 
     public handleScrubTime(event): void {
