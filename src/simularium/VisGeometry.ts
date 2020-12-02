@@ -1156,7 +1156,6 @@ class VisGeometry {
     public setTickIntervalLength(axisLength: number): void {
         const tickIntervalLength = axisLength / NUM_TICK_INTERVALS;
         // TODO: round to a nice number
-        console.log(tickIntervalLength);
         this.tickIntervalLength = tickIntervalLength;
     }
 
@@ -1318,7 +1317,6 @@ class VisGeometry {
             console.log("invalid volume dimensions received");
             return;
         }
-        console.log(volumeDimensions);
         this.createBoundingBox(volumeDimensions);
         this.createTickMarks(volumeDimensions);
         this.scene.add(this.boundingBoxMesh, this.tickMarksMesh);
