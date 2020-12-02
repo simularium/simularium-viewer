@@ -156,7 +156,7 @@ class VisGeometry {
     private fiberEndcaps: IInstancedFiberEndcaps;
 
     public constructor(loggerLevel: ILogLevel) {
-        this.renderStyle = RenderStyle.MOLECULAR;
+        this.renderStyle = RenderStyle.GENERIC;
         this.supportsMoleculeRendering = false;
         // TODO: pass this flag in from the outside
         this.resetCameraOnNewScene = true;
@@ -616,11 +616,11 @@ class VisGeometry {
         this.lightsGroup.add(this.hemiLight);
 
         if (WEBGL.isWebGL2Available() === false) {
-            this.renderStyle == RenderStyle.GENERIC;
+            this.renderStyle = RenderStyle.GENERIC;
+            this.supportsMoleculeRendering = false;
             this.renderer = new WebGLRenderer();
         } else {
-            // TODO: consider switching to molecule rendering by default here??
-
+            this.renderStyle = RenderStyle.MOLECULAR;
             this.supportsMoleculeRendering = true;
             const canvas = document.createElement("canvas");
             const context: WebGLRenderingContext = canvas.getContext("webgl2", {
