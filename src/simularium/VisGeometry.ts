@@ -50,7 +50,8 @@ const MAX_MESHES = 100000;
 const DEFAULT_BACKGROUND_COLOR = new Color(0, 0, 0);
 const DEFAULT_VOLUME_DIMENSIONS = [300, 300, 300];
 const NUM_TICK_INTERVALS = 10; // per bounding box edge
-const TICK_LENGTH_FACTOR = 100; // Higher number means shorter tick mark
+// tick mark length = length of the longest bounding box edge / TICK_LENGTH_FACTOR
+const TICK_LENGTH_FACTOR = 100;
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 const NO_AGENT = -1;
 const DEFAULT_CAMERA_Z_POSITION = 120;
@@ -833,6 +834,7 @@ class VisGeometry {
             this.moleculeRenderer.setFollowedInstance(this.followObjectId);
             this.moleculeRenderer.setNearFar(this.boxNearZ, this.boxFarZ);
             this.boundingBoxMesh.visible = false;
+            this.tickMarksMesh.visible = false;
             this.agentPathGroup.visible = false;
             this.moleculeRenderer.render(
                 this.renderer,
@@ -843,6 +845,7 @@ class VisGeometry {
 
             // final pass, add extra stuff on top: bounding box and line paths
             this.boundingBoxMesh.visible = true;
+            this.tickMarksMesh.visible = true;
             this.agentPathGroup.visible = true;
 
             this.renderer.autoClear = false;
@@ -1158,6 +1161,7 @@ class VisGeometry {
     }
 
     public createTickMarks(volumeDimensions: number[]): void {
+        const visible = this.tickMarksMesh ? this.tickMarksMesh.visible : true;
         const [bx, by, bz] = volumeDimensions;
         const [minX, minY, minZ, maxX, maxY, maxZ] = [
             -bx / 2,
@@ -1281,6 +1285,7 @@ class VisGeometry {
             color: BOUNDING_BOX_COLOR,
         });
         this.tickMarksMesh = new LineSegments(lineGeometry, lineMaterial);
+        this.tickMarksMesh.visible = visible;
     }
 
     public createBoundingBox(volumeDimensions: number[]): void {
@@ -1861,6 +1866,7 @@ class VisGeometry {
 
     public setShowBounds(showBounds: boolean): void {
         this.boundingBoxMesh.visible = showBounds;
+        this.tickMarksMesh.visible = showBounds;
     }
 
     public showPathForAgent(id: number, visible: boolean): void {
