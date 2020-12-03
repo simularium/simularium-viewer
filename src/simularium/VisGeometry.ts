@@ -1178,6 +1178,8 @@ class VisGeometry {
         const verticesArray: number[] = [];
 
         // Add tick mark vertices for the 4 bounding box edges parallel to the x-axis
+        // TODO: May be good to refactor to make less redundant, see Megan's suggestion:
+        // https://github.com/allen-cell-animated/simularium-viewer/pull/75#discussion_r535519106
         let x: number = minX;
         while (x <= maxX) {
             verticesArray.push(
