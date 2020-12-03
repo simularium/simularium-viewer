@@ -55,7 +55,7 @@ export default class SimulariumController {
 
     public constructor(params: SimulariumControllerParams) {
         this.visData = new VisData();
-        this.tickIntervalLength = 10;
+        this.tickIntervalLength = 0; // Will be overwritten when a trajectory is loaded
 
         this.postConnect = () => {
             /* Do Nothing */
