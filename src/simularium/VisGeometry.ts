@@ -102,6 +102,7 @@ interface AgentTypeVisData {
 }
 
 type AgentTypeVisDataMap = Map<string, AgentTypeVisData>;
+type Bounds = readonly [number, number, number, number, number, number];
 
 class VisGeometry {
     public renderStyle: RenderStyle;
@@ -1162,9 +1163,9 @@ class VisGeometry {
 
     public createTickMarks(
         volumeDimensions: number[],
-        boundsAsArray: number[]
+        boundsAsTuple: Bounds
     ): void {
-        const [minX, minY, minZ, maxX, maxY, maxZ] = boundsAsArray;
+        const [minX, minY, minZ, maxX, maxY, maxZ] = boundsAsTuple;
         const visible = this.tickMarksMesh ? this.tickMarksMesh.visible : true;
 
         const longestEdgeLength = Math.max(...volumeDimensions);
@@ -1296,8 +1297,8 @@ class VisGeometry {
         this.tickMarksMesh.visible = visible;
     }
 
-    public createBoundingBox(boundsAsArray: number[]): void {
-        const [minX, minY, minZ, maxX, maxY, maxZ] = boundsAsArray;
+    public createBoundingBox(boundsAsTuple: Bounds): void {
+        const [minX, minY, minZ, maxX, maxY, maxZ] = boundsAsTuple;
         const visible = this.boundingBoxMesh
             ? this.boundingBoxMesh.visible
             : true;
@@ -1319,7 +1320,7 @@ class VisGeometry {
             return;
         }
         const [bx, by, bz] = volumeDimensions;
-        const boundsAsArray = [
+        const boundsAsTuple: Bounds = [
             -bx / 2,
             -by / 2,
             -bz / 2,
@@ -1327,8 +1328,8 @@ class VisGeometry {
             by / 2,
             bz / 2,
         ];
-        this.createBoundingBox(boundsAsArray);
-        this.createTickMarks(volumeDimensions, boundsAsArray);
+        this.createBoundingBox(boundsAsTuple);
+        this.createTickMarks(volumeDimensions, boundsAsTuple);
         this.scene.add(this.boundingBoxMesh, this.tickMarksMesh);
 
         if (this.controls) {
