@@ -233,7 +233,7 @@ class VisGeometry {
             this.boundingBox,
             BOUNDING_BOX_COLOR
         );
-        this.tickIntervalLength = 10;
+        this.tickIntervalLength = 0;
         this.tickMarksMesh = new LineSegments();
         this.boxNearZ = 0;
         this.boxFarZ = 100;
