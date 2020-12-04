@@ -32,6 +32,7 @@ const DEFAULT_ASSET_PREFIX =
 export default class SimulariumController {
     public netConnection: NetConnection | undefined;
     public visData: VisData;
+    public tickIntervalLength: number;
     public handleTrajectoryInfo: (TrajectoryFileInfo) => void;
     public postConnect: () => void;
     public resetCamera: () => void;
@@ -54,6 +55,7 @@ export default class SimulariumController {
 
     public constructor(params: SimulariumControllerParams) {
         this.visData = new VisData();
+        this.tickIntervalLength = 0; // Will be overwritten when a trajectory is loaded
 
         this.postConnect = () => {
             /* Do Nothing */
