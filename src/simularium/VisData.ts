@@ -173,23 +173,26 @@ class VisData {
 
         const byteView = new Uint8Array(data);
         const length = byteView.length;
-        let end = length - eofPhrase.length;
+        const lastEOF = length - eofPhrase.length;
+        let end = 0;
         let start = 0;
 
-        while (start < end) {
+        while (end < lastEOF) {
             // contains Frame # | Time Stamp | # of Agents
             const frameDataView = new Float32Array(
                 data.slice(start, start + 12)
             );
             console.log(frameDataView);
 
-            for (; start < length; start = start + 4) {
-                const curr = byteView.subarray(start, start + eofPhrase.length);
+            for (; end < length; end = end + 4) {
+                const curr = byteView.subarray(end, end + eofPhrase.length);
                 if (curr.every((val, i) => val === eofPhrase[i])) {
-                    start = start + eofPhrase.length;
                     break;
                 }
             }
+
+            start = end + eofPhrase.length;
+            end = start;
         }
 
         return {
