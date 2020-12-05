@@ -404,6 +404,16 @@ class VisData {
 
     public parseAgentsFromNetData(msg: VisDataMessage | ArrayBuffer): void {
         if (msg instanceof ArrayBuffer) {
+            const frameNumber = new Float32Array(msg.slice(0, 4));
+            if (this.lockedForFrame === true) {
+                if (frameNumber[0] !== this.frameToWaitFor) {
+                    return;
+                } else {
+                    this.lockedForFrame = false;
+                    this.frameToWaitFor = 0;
+                }
+            }
+
             this.parseBinaryNetData(msg as ArrayBuffer);
             return;
         }
@@ -470,7 +480,6 @@ class VisData {
 
         if (eof > 0) {
             const frame = data.slice(0, eof);
-            const remainder = data.slice(eof + eofPhrase.length);
 
             let tmp = new ArrayBuffer(
                 this.netBuffer.byteLength + frame.byteLength
