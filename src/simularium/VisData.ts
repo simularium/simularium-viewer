@@ -481,13 +481,16 @@ class VisData {
         if (eof > 0) {
             const frame = data.slice(0, eof);
 
-            let tmp = new Uint8Array(
+            let tmp = new ArrayBuffer(
                 this.netBuffer.byteLength + frame.byteLength
             );
-            tmp.set(new Uint8Array(this.netBuffer), 0);
-            tmp.set(new Uint8Array(frame), this.netBuffer.byteLength);
+            new Uint8Array(tmp).set(new Uint8Array(this.netBuffer));
+            new Uint8Array(tmp).set(
+                new Uint8Array(frame),
+                this.netBuffer.byteLength
+            );
 
-            const frames = VisData.parseBinary(tmp.buffer);
+            const frames = VisData.parseBinary(tmp);
             if (
                 frames.frameDataArray.length > 0 &&
                 frames.frameDataArray[0].frameNumber === 0
