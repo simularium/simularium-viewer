@@ -505,6 +505,7 @@ class VisData {
 
         if (eof > 0) {
             const frame = data.slice(0, eof);
+            const remainder = data.slice(eof + eofPhrase.length);
 
             const tmp = new ArrayBuffer(
                 this.netBuffer.byteLength + frame.byteLength
