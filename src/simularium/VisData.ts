@@ -173,106 +173,23 @@ class VisData {
 
         const byteView = new Uint8Array(data);
         const length = byteView.length;
-        const lastEOF = length - eofPhrase.length;
-        let end = 0;
+        let end = length - eofPhrase.length;
         let start = 0;
 
-        while (end < lastEOF) {
+        while (start < end) {
             // contains Frame # | Time Stamp | # of Agents
             const frameDataView = new Float32Array(
                 data.slice(start, start + 12)
             );
+            console.log(frameDataView);
 
-            // Find the next End of Frame signal
-            for (; end < length; end = end + 4) {
-                const curr = byteView.subarray(end, end + eofPhrase.length);
+            for (; start < length; start = start + 4) {
+                const curr = byteView.subarray(start, start + eofPhrase.length);
                 if (curr.every((val, i) => val === eofPhrase[i])) {
+                    start = start + eofPhrase.length;
                     break;
                 }
             }
-
-            const agentDataView = new Float32Array(data.slice(start + 12, end));
-
-            const parsedFrameData = {
-                time: frameDataView[1],
-                frameNumber: frameDataView[0],
-            };
-            frameDataArray.push(parsedFrameData);
-
-            // Parse the frameData
-            // IMPORTANT: Order of this array needs to perfectly match the incoming data.
-            const agentObjectKeys = [
-                "vis-type",
-                "instanceId",
-                "type",
-                "x",
-                "y",
-                "z",
-                "xrot",
-                "yrot",
-                "zrot",
-                "cr",
-                "nSubPoints",
-            ];
-            const parsedAgentData: AgentData[] = [];
-            const nSubPointsIndex = agentObjectKeys.findIndex(
-                (ele) => ele === "nSubPoints"
-            );
-
-            const parseOneAgent = (agentArray): AgentData => {
-                return agentArray.reduce(
-                    (agentData, cur, i) => {
-                        let key;
-                        if (agentObjectKeys[i]) {
-                            key = agentObjectKeys[i];
-                            agentData[key] = cur;
-                        } else if (
-                            i <
-                            agentArray.length + agentData.nSubPoints
-                        ) {
-                            agentData.subpoints.push(cur);
-                        }
-                        return agentData;
-                    },
-                    { subpoints: [] }
-                );
-            };
-
-            let dataIter = 0;
-            while (dataIter < agentDataView.length) {
-                const nSubPoints = agentDataView[dataIter + nSubPointsIndex];
-                if (
-                    !Number.isInteger(nSubPoints) ||
-                    !Number.isInteger(dataIter)
-                ) {
-                    console.log("Frames inproperly concactenated");
-                    //@TODO ERROR
-                    break;
-                }
-
-                // each array length is variable based on how many subpoints the agent has
-                const chunkLength = agentObjectKeys.length + nSubPoints;
-                const remaining = agentDataView.length - dataIter;
-                if (remaining < chunkLength - 1) {
-                    // passed up in controller.handleLocalFileChange
-                }
-
-                const agentSubSetArray = agentDataView.subarray(
-                    dataIter,
-                    dataIter + chunkLength
-                );
-                if (agentSubSetArray.length < agentObjectKeys.length) {
-                }
-
-                const agent = parseOneAgent(agentSubSetArray);
-                parsedAgentData.push(agent);
-                dataIter = dataIter + chunkLength;
-            }
-
-            parsedAgentDataArray.push(parsedAgentData);
-
-            start = end + eofPhrase.length;
-            end = start;
         }
 
         return {
@@ -456,33 +373,42 @@ class VisData {
         // find last '/eof' signal in new data
         const byteView = new Uint8Array(data);
 
-        let index = byteView.length - 4;
+        var enc = new TextEncoder(); // always utf-8
+        var eofPhrase = enc.encode("\\EOFTHEFRAMEENDSHERE");
+
+        let index = byteView.length - eofPhrase.length;
         for (; index > 0; index = index - 4) {
-            if (
-                byteView[index] === 92 && // '/'
-                byteView[index + 1] === 69 && // 'E'
-                byteView[index + 2] === 79 && // 'O'
-                byteView[index + 3] === 70 // 'F'
-            ) {
-                eof = index / 4;
+            const curr = byteView.subarray(index, index + eofPhrase.length);
+            if (curr.every((val, i) => val === eofPhrase[i])) {
+                eof = index;
                 break;
             }
         }
 
         if (eof > 0) {
             const frame = data.slice(0, eof);
+            const remainder = data.slice(eof + eofPhrase.length);
 
             let tmp = new Uint8Array(
                 this.netBuffer.byteLength + frame.byteLength
             );
-            tmp.set(new Uint8Array(this.netBuffer), 0);
+            tmp.set(new Uint8Array(this.netBuffer.buffer), 0);
             tmp.set(new Uint8Array(frame), this.netBuffer.byteLength);
 
-            // @TODO: process tmp
+            const frames = VisData.parseBinary(tmp.buffer);
+            Array.prototype.push.apply(
+                this.frameDataCache,
+                frames.frameDataArray
+            );
+            Array.prototype.push.apply(
+                this.frameCache,
+                frames.parsedAgentDataArray
+            );
 
-            let remaining = frame.slice(eof + 1);
-            this.netBuffer = new Uint8Array(remaining.byteLength);
-            this.netBuffer.set(new Uint8Array(remaining), 0);
+            // Save remaining data for later processing
+            let toSave = new Uint8Array(remainder.byteLength);
+            toSave.set(new Uint8Array(remainder), 0);
+            this.netBuffer = toSave;
         } else {
             // Append the new data, and wait until eof
             let tmp = new Uint8Array(
