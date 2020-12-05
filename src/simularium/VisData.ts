@@ -182,7 +182,6 @@ class VisData {
             const frameDataView = new Float32Array(
                 data.slice(start, start + 12)
             );
-            console.log(frameDataView);
 
             // Find the next End of Frame signal
             for (; end < length; end = end + 4) {
@@ -242,19 +241,20 @@ class VisData {
             let dataIter = 0;
             while (dataIter < agentDataView.length) {
                 const nSubPoints = agentDataView[dataIter + nSubPointsIndex];
+                if (
+                    !Number.isInteger(nSubPoints) ||
+                    !Number.isInteger(dataIter)
+                ) {
+                    console.log("Frames inproperly concactenated");
+                    //@TODO ERROR
+                    break;
+                }
 
                 // each array length is variable based on how many subpoints the agent has
                 const chunkLength = agentObjectKeys.length + nSubPoints;
                 const remaining = agentDataView.length - dataIter;
                 if (remaining < chunkLength - 1) {
                     // passed up in controller.handleLocalFileChange
-                    console.log(
-                        "1: ",
-                        chunkLength,
-                        " entires expected, ",
-                        remaining,
-                        " entries remaining"
-                    );
                 }
 
                 const agentSubSetArray = agentDataView.subarray(
@@ -262,14 +262,6 @@ class VisData {
                     dataIter + chunkLength
                 );
                 if (agentSubSetArray.length < agentObjectKeys.length) {
-                    console.log("Fewer entries than expected");
-                    console.log(
-                        "2: ",
-                        chunkLength,
-                        "+ entires expected, ",
-                        agentSubSetArray.length,
-                        " entries remaining"
-                    );
                 }
 
                 const agent = parseOneAgent(agentSubSetArray);
@@ -412,6 +404,16 @@ class VisData {
 
     public parseAgentsFromNetData(msg: VisDataMessage | ArrayBuffer): void {
         if (msg instanceof ArrayBuffer) {
+            const frameNumber = new Float32Array(msg.slice(0, 4));
+            if (this.lockedForFrame === true) {
+                if (frameNumber[0] !== this.frameToWaitFor) {
+                    return;
+                } else {
+                    this.lockedForFrame = false;
+                    this.frameToWaitFor = 0;
+                }
+            }
+
             this.parseBinaryNetData(msg as ArrayBuffer);
             return;
         }
@@ -478,15 +480,21 @@ class VisData {
 
         if (eof > 0) {
             const frame = data.slice(0, eof);
-            const remainder = data.slice(eof + eofPhrase.length);
 
             let tmp = new Uint8Array(
                 this.netBuffer.byteLength + frame.byteLength
             );
-            tmp.set(new Uint8Array(this.netBuffer.buffer), 0);
+            tmp.set(new Uint8Array(this.netBuffer), 0);
             tmp.set(new Uint8Array(frame), this.netBuffer.byteLength);
 
             const frames = VisData.parseBinary(tmp.buffer);
+            if (
+                frames.frameDataArray.length > 0 &&
+                frames.frameDataArray[0].frameNumber === 0
+            ) {
+                this.clearCache(); // new data has arrived
+            }
+
             Array.prototype.push.apply(
                 this.frameDataCache,
                 frames.frameDataArray
@@ -497,18 +505,13 @@ class VisData {
             );
 
             // Save remaining data for later processing
-            let toSave = new Uint8Array(remainder.byteLength);
-            toSave.set(new Uint8Array(remainder), 0);
-            this.netBuffer = toSave;
+            const remainder = data.slice(eof + eofPhrase.length);
+            this.netBuffer = new ArrayBuffer(remainder.byteLength);
+            new Uint8Array(this.netBuffer).set(new Uint8Array(remainder));
         } else {
             // Append the new data, and wait until eof
-            let tmp = new Uint8Array(
-                this.netBuffer.byteLength + data.byteLength
-            );
-            tmp.set(new Uint8Array(this.netBuffer), 0);
-            tmp.set(new Uint8Array(data), this.netBuffer.byteLength);
-
-            this.netBuffer = tmp;
+            this.netBuffer = new ArrayBuffer(data.byteLength);
+            new Uint8Array(this.netBuffer).set(new Uint8Array(data));
         }
     }
 
