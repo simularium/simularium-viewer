@@ -164,6 +164,40 @@ class VisData {
         };
     }
 
+    public static parseBinary(data: ArrayBuffer) {
+        const parsedAgentDataArray: AgentData[][] = [];
+        const frameDataArray: FrameData[] = [];
+
+        var enc = new TextEncoder(); // always utf-8
+        var eofPhrase = enc.encode("\\EOFTHEFRAMEENDSHERE");
+
+        const byteView = new Uint8Array(data);
+        const length = byteView.length;
+        let end = length - eofPhrase.length;
+        let start = 0;
+
+        while (start < end) {
+            // contains Frame # | Time Stamp | # of Agents
+            const frameDataView = new Float32Array(
+                data.slice(start, start + 12)
+            );
+            console.log(frameDataView);
+
+            for (; start < length; start = start + 4) {
+                const curr = byteView.subarray(start, start + eofPhrase.length);
+                if (curr.every((val, i) => val === eofPhrase[i])) {
+                    start = start + eofPhrase.length;
+                    break;
+                }
+            }
+        }
+
+        return {
+            parsedAgentDataArray,
+            frameDataArray,
+        };
+    }
+
     public constructor() {
         if (util.ThreadUtil.browserSupportsWebWorkers()) {
             this.webWorker = util.ThreadUtil.createWebWorkerFromFunction(
@@ -339,33 +373,42 @@ class VisData {
         // find last '/eof' signal in new data
         const byteView = new Uint8Array(data);
 
-        let index = byteView.length - 4;
+        var enc = new TextEncoder(); // always utf-8
+        var eofPhrase = enc.encode("\\EOFTHEFRAMEENDSHERE");
+
+        let index = byteView.length - eofPhrase.length;
         for (; index > 0; index = index - 4) {
-            if (
-                byteView[index] === 92 && // '/'
-                byteView[index + 1] === 69 && // 'E'
-                byteView[index + 2] === 79 && // 'O'
-                byteView[index + 3] === 70 // 'F'
-            ) {
-                eof = index / 4;
+            const curr = byteView.subarray(index, index + eofPhrase.length);
+            if (curr.every((val, i) => val === eofPhrase[i])) {
+                eof = index;
                 break;
             }
         }
 
         if (eof > 0) {
             const frame = data.slice(0, eof);
+            const remainder = data.slice(eof + eofPhrase.length);
 
             let tmp = new Uint8Array(
                 this.netBuffer.byteLength + frame.byteLength
             );
-            tmp.set(new Uint8Array(this.netBuffer), 0);
+            tmp.set(new Uint8Array(this.netBuffer.buffer), 0);
             tmp.set(new Uint8Array(frame), this.netBuffer.byteLength);
 
-            // @TODO: process tmp
+            const frames = VisData.parseBinary(tmp.buffer);
+            Array.prototype.push.apply(
+                this.frameDataCache,
+                frames.frameDataArray
+            );
+            Array.prototype.push.apply(
+                this.frameCache,
+                frames.parsedAgentDataArray
+            );
 
-            let remaining = frame.slice(eof + 1);
-            this.netBuffer = new Uint8Array(remaining.byteLength);
-            this.netBuffer.set(new Uint8Array(remaining), 0);
+            // Save remaining data for later processing
+            let toSave = new Uint8Array(remainder.byteLength);
+            toSave.set(new Uint8Array(remainder), 0);
+            this.netBuffer = toSave;
         } else {
             // Append the new data, and wait until eof
             let tmp = new Uint8Array(
