@@ -490,10 +490,6 @@ class VisData {
                 this.netBuffer.byteLength
             );
 
-            // Losing WebGL context, memory greatly increases,
-            //  long hang-up in VisAgent.ts updateFiber
-            //  many fibers in crashing frame
-            //  is the 'crash frame' the same?
             const frames = VisData.parseBinary(tmp);
             if (
                 frames.frameDataArray.length > 0 &&
