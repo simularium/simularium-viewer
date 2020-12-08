@@ -453,33 +453,12 @@ class VisGeometry {
 
     public setVisibleByIds(hiddenIds: number[]): void {
         this.hiddenIds = hiddenIds;
-
-        // go over all objects and update material
-        const nMeshes = this.visAgents.length;
-        for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
-            const visAgent = this.visAgents[i];
-            if (visAgent.active) {
-                const isHidden = this.hiddenIds.includes(visAgent.typeId);
-                visAgent.setHidden(isHidden);
-            }
-        }
         this.updateScene(this.currentSceneAgents);
     }
 
     public setHighlightByIds(ids: number[]): void {
         this.highlightedIds = ids;
-
-        // go over all objects and update material
-        const nMeshes = this.visAgents.length;
-        for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
-            const visAgent = this.visAgents[i];
-            if (visAgent.active) {
-                const isHighlighted = this.highlightedIds.includes(
-                    visAgent.typeId
-                );
-                visAgent.setHighlighted(isHighlighted);
-            }
-        }
+        this.updateScene(this.currentSceneAgents);
     }
 
     public dehighlight(): void {
@@ -1405,6 +1384,10 @@ class VisGeometry {
 
             visAgent.typeId = typeId;
             visAgent.active = true;
+
+            const wasHidden = visAgent.hidden;
+            const isHidden = this.hiddenIds.includes(visAgent.typeId);
+            visAgent.setHidden(isHidden);
             if (visAgent.hidden) {
                 visAgent.hide();
                 return;
@@ -1413,7 +1396,11 @@ class VisGeometry {
             // if not fiber...
             if (visType === VisTypes.ID_VIS_TYPE_DEFAULT) {
                 // did the agent type change since the last sim time?
-                if (typeId !== lastTypeId || visType !== visAgent.visType) {
+                if (
+                    wasHidden ||
+                    typeId !== lastTypeId ||
+                    visType !== visAgent.visType
+                ) {
                     const meshGeom = this.getGeomFromId(typeId);
                     visAgent.visType = visType;
                     if (meshGeom) {
@@ -1519,7 +1506,7 @@ class VisGeometry {
                     }
                 }
                 // did the agent type change since the last sim time?
-                if (typeId !== lastTypeId) {
+                if (wasHidden || typeId !== lastTypeId) {
                     visAgent.mesh.userData = { id: visAgent.id };
                     // for fibers we currently only check the color
                     visAgent.setColor(
@@ -1567,6 +1554,8 @@ class VisGeometry {
                     );
                 }
             }
+            const isHighlighted = this.highlightedIds.includes(visAgent.typeId);
+            visAgent.setHighlighted(isHighlighted);
         });
 
         this.hideUnusedAgents(agents.length);
