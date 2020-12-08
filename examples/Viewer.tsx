@@ -277,7 +277,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                     defaultValue={playbackFile}
                 >
                     <option value="actin012_3.h5">Actin 12_3</option>
-                    <option value="listeria01.simularium">listeria 01</option>
+                    <option value="listeria_normal.simularium">listeria 01</option>
                     <option value="kinesin002_01.h5">kinesin 002</option>
                     <option value="microtubules038_10.h5">MT 38</option>
                     <option value="test_traj1.h5">TEST</option>
