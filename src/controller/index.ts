@@ -6,6 +6,7 @@ import {
     VisData,
     VisDataMessage,
     TrajectoryFileInfo,
+    VisGeometry,
 } from "../simularium";
 import {
     SimulariumFileFormat,
@@ -32,6 +33,7 @@ const DEFAULT_ASSET_PREFIX =
 export default class SimulariumController {
     public netConnection: NetConnection | undefined;
     public visData: VisData;
+    public visGeometry: VisGeometry | undefined;
     public tickIntervalLength: number;
     public handleTrajectoryInfo: (TrajectoryFileInfo) => void;
     public postConnect: () => void;
@@ -56,7 +58,6 @@ export default class SimulariumController {
     public constructor(params: SimulariumControllerParams) {
         this.visData = new VisData();
         this.tickIntervalLength = 0; // Will be overwritten when a trajectory is loaded
-
         this.postConnect = () => {
             /* Do Nothing */
         };
@@ -277,6 +278,21 @@ export default class SimulariumController {
         return Promise.resolve({
             status: FILE_STATUS_SUCCESS,
         });
+    }
+
+    public clearFile(): void {
+        this.fileChanged = false;
+        this.playBackFile = "";
+        this.localFile = true; // default
+        this.geometryFile = "";
+        this.assetPrefix = DEFAULT_ASSET_PREFIX;
+        this.visData.clearCache();
+        this.disableNetworkCommands();
+        this.pause();
+        if (this.visGeometry) {
+            this.visGeometry.clearForNewTrajectory();
+            this.visGeometry.resetCamera();
+        }
     }
 
     public changeFile(
