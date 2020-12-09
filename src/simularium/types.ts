@@ -51,6 +51,7 @@ export interface TrajectoryFileInfo {
     version: number;
     timeStepSize: number;
     totalSteps: number;
+    spatialUnitFactorMeters: number;
     size: {
         x: number;
         y: number;

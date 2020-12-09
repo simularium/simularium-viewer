@@ -340,7 +340,8 @@ class VisData {
         );
     }
 
-    public set dragAndDropFileInfo(fileInfo: TrajectoryFileInfo) {
+    public set dragAndDropFileInfo(fileInfo: TrajectoryFileInfo | null) {
+        if (!fileInfo) return;
         // NOTE: this may be a temporary check as we're troubleshooting new file formats
         const missingIds = this.checkTypeMapping(fileInfo.typeMapping);
 
@@ -357,9 +358,9 @@ class VisData {
         this._dragAndDropFileInfo = fileInfo;
     }
 
-    public get dragAndDropFileInfo(): TrajectoryFileInfo {
+    public get dragAndDropFileInfo(): TrajectoryFileInfo | null {
         if (!this._dragAndDropFileInfo) {
-            return this.calculateDragAndDropFileInfo();
+            return null;
         }
         return this._dragAndDropFileInfo;
     }
@@ -384,60 +385,6 @@ class VisData {
         });
         const idsArr: number[] = [...idsInFrameData].sort() as number[];
         return difference(idsArr, idsInTypeMapping).sort();
-    }
-
-    public calculateDragAndDropFileInfo(): TrajectoryFileInfo {
-        const max: number[] = [0, 0, 0];
-        const min: number[] = [0, 0, 0];
-        const idsSet = new Set();
-
-        if (this.frameCache.length === 0) {
-            throw new Error("No data in cache for drag-and-drop file");
-        }
-
-        this.frameCache.forEach((element) => {
-            const radius: number =
-                Math.max(...element.map((agent) => agent.cr)) * 1.1;
-            const maxx: number = Math.max(...element.map((agent) => agent.x));
-            const maxy: number = Math.max(...element.map((agent) => agent.y));
-            const maxz: number = Math.max(...element.map((agent) => agent.z));
-            const minx: number = Math.min(...element.map((agent) => agent.x));
-            const miny: number = Math.min(...element.map((agent) => agent.y));
-            const minz: number = Math.min(...element.map((agent) => agent.z));
-            element.map((agent) => idsSet.add(agent.type));
-
-            max[0] = Math.max(max[0], 2 * maxx + radius);
-            max[1] = Math.max(max[1], 2 * maxy + radius);
-            max[2] = Math.max(max[2], 2 * maxz + radius);
-
-            min[0] = Math.min(max[0], 2 * minx - radius);
-            min[1] = Math.min(max[1], 2 * miny - radius);
-            min[2] = Math.min(max[2], 2 * minz - radius);
-        });
-
-        const timeStepSize =
-            this.frameDataCache.length > 1
-                ? this.frameDataCache[1].time - this.frameDataCache[0].time
-                : 1;
-
-        const idsArr: number[] = [...idsSet].sort() as number[];
-        const typeMapping = {};
-
-        idsArr.forEach((id) => {
-            typeMapping[id] = { name: id.toString() };
-        });
-
-        return {
-            version: 1,
-            size: {
-                x: max[0] - min[0],
-                y: max[1] - min[1],
-                z: max[2] - min[2],
-            },
-            totalSteps: this.frameCache.length,
-            timeStepSize: timeStepSize,
-            typeMapping: typeMapping,
-        };
     }
 
     public convertVisDataWorkFunctionToString(): string {
