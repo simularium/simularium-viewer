@@ -218,11 +218,13 @@ export class NetConnection {
             const handleReturn = async () => {
                 const isConnected = await waitForIsConnected();
                 secondsWaited++;
-                console.log("isConnected?", isConnected);
                 if (isConnected) {
                     resolve("Remote sim successfully started");
-                } else if (secondsWaited <= TOTAL_WAIT_SECONDS) {
+                } else if (secondsWaited < TOTAL_WAIT_SECONDS) {
                     return await handleReturn();
+                } else if (connectionTries <= MAX_CONNECTION_TRIES) {
+                    connectionTries++;
+                    return startPromise.then(handleReturn);
                 } else {
                     reject(
                         new Error(
@@ -233,6 +235,8 @@ export class NetConnection {
             };
             const TOTAL_WAIT_SECONDS = 2;
             let secondsWaited = 0;
+            const MAX_CONNECTION_TRIES = 2;
+            let connectionTries = 1;
             return startPromise.then(handleReturn);
         });
 
