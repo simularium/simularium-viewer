@@ -704,6 +704,9 @@ class VisGeometry {
     }
 
     public resize(width: number, height: number): void {
+        // at least 2x2 in size when resizing, to prevent bad buffer sizes
+        width = Math.max(width, 2);
+        height = Math.max(height, 2);
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(width, height);
@@ -715,15 +718,10 @@ class VisGeometry {
             return;
         }
 
-        const height = parent.scrollHeight;
-        const width = parent.scrollWidth;
         parent.appendChild(this.renderer.domElement);
         this.setUpControls(this.renderer.domElement);
-        this.camera.aspect = width / height;
-        this.camera.updateProjectionMatrix();
-        this.renderer.setSize(width, height);
 
-        this.moleculeRenderer.resize(width, height);
+        this.resize(parent.scrollWidth, parent.scrollHeight);
 
         this.renderer.setClearColor(this.backgroundColor, 1.0);
         this.renderer.clear();
