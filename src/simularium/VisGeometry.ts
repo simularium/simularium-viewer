@@ -48,7 +48,11 @@ import InstancedFiberEndcapsFallback from "./rendering/InstancedFiberEndcapsFall
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 100000;
 const DEFAULT_BACKGROUND_COLOR = new Color(0, 0, 0);
-const DEFAULT_VOLUME_BOUNDS = [-150, -150, -150, 150, 150, 150];
+const DEFAULT_VOLUME_DIMENSIONS = [300, 300, 300];
+// tick interval length = length of the longest bounding box edge / NUM_TICK_INTERVALS
+const NUM_TICK_INTERVALS = 10;
+// tick mark length = 2 * (length of the longest bounding box edge / TICK_LENGTH_FACTOR)
+const TICK_LENGTH_FACTOR = 100;
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 const NO_AGENT = -1;
 const DEFAULT_CAMERA_Z_POSITION = 120;
@@ -98,6 +102,7 @@ interface AgentTypeVisData {
 }
 
 type AgentTypeVisDataMap = Map<string, AgentTypeVisData>;
+type Bounds = readonly [number, number, number, number, number, number];
 
 class VisGeometry {
     public renderStyle: RenderStyle;
@@ -126,6 +131,8 @@ class VisGeometry {
     public dl: DirectionalLight;
     public boundingBox: Box3;
     public boundingBoxMesh: Box3Helper;
+    public tickIntervalLength: number;
+    public tickMarksMesh: LineSegments;
     // front and back of transformed bounds in camera space
     private boxNearZ: number;
     private boxFarZ: number;
@@ -156,7 +163,7 @@ class VisGeometry {
     private fiberEndcaps: IInstancedFiberEndcaps;
 
     public constructor(loggerLevel: ILogLevel) {
-        this.renderStyle = RenderStyle.MOLECULAR;
+        this.renderStyle = RenderStyle.GENERIC;
         this.supportsMoleculeRendering = false;
         // TODO: pass this flag in from the outside
         this.resetCameraOnNewScene = true;
@@ -226,6 +233,8 @@ class VisGeometry {
             this.boundingBox,
             BOUNDING_BOX_COLOR
         );
+        this.tickIntervalLength = 0;
+        this.tickMarksMesh = new LineSegments();
         this.boxNearZ = 0;
         this.boxFarZ = 100;
         this.currentSceneAgents = [];
@@ -353,19 +362,12 @@ class VisGeometry {
                 console.log(
                     "WARNING: Bounding box: at least one bound is zero; using default bounds"
                 );
-                this.resetBounds(DEFAULT_VOLUME_BOUNDS);
+                this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
             } else {
-                this.resetBounds([
-                    -bx / 2,
-                    -by / 2,
-                    -bz / 2,
-                    bx / 2,
-                    by / 2,
-                    bz / 2,
-                ]);
+                this.resetBounds([bx, by, bz]);
             }
         } else {
-            this.resetBounds(DEFAULT_VOLUME_BOUNDS);
+            this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
         }
         if (this.resetCameraOnNewScene) {
             this.resetCamera();
@@ -451,33 +453,12 @@ class VisGeometry {
 
     public setVisibleByIds(hiddenIds: number[]): void {
         this.hiddenIds = hiddenIds;
-
-        // go over all objects and update material
-        const nMeshes = this.visAgents.length;
-        for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
-            const visAgent = this.visAgents[i];
-            if (visAgent.active) {
-                const isHidden = this.hiddenIds.includes(visAgent.typeId);
-                visAgent.setHidden(isHidden);
-            }
-        }
         this.updateScene(this.currentSceneAgents);
     }
 
     public setHighlightByIds(ids: number[]): void {
         this.highlightedIds = ids;
-
-        // go over all objects and update material
-        const nMeshes = this.visAgents.length;
-        for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
-            const visAgent = this.visAgents[i];
-            if (visAgent.active) {
-                const isHighlighted = this.highlightedIds.includes(
-                    visAgent.typeId
-                );
-                visAgent.setHighlighted(isHighlighted);
-            }
-        }
+        this.updateScene(this.currentSceneAgents);
     }
 
     public dehighlight(): void {
@@ -603,7 +584,7 @@ class VisGeometry {
             1000
         );
 
-        this.resetBounds(DEFAULT_VOLUME_BOUNDS);
+        this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
 
         this.dl = new DirectionalLight(0xffffff, 0.6);
         this.dl.position.set(0, 0, 1);
@@ -616,11 +597,11 @@ class VisGeometry {
         this.lightsGroup.add(this.hemiLight);
 
         if (WEBGL.isWebGL2Available() === false) {
-            this.renderStyle == RenderStyle.GENERIC;
+            this.renderStyle = RenderStyle.GENERIC;
+            this.supportsMoleculeRendering = false;
             this.renderer = new WebGLRenderer();
         } else {
-            // TODO: consider switching to molecule rendering by default here??
-
+            this.renderStyle = RenderStyle.MOLECULAR;
             this.supportsMoleculeRendering = true;
             const canvas = document.createElement("canvas");
             const context: WebGLRenderingContext = canvas.getContext("webgl2", {
@@ -723,6 +704,9 @@ class VisGeometry {
     }
 
     public resize(width: number, height: number): void {
+        // at least 2x2 in size when resizing, to prevent bad buffer sizes
+        width = Math.max(width, 2);
+        height = Math.max(height, 2);
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(width, height);
@@ -734,15 +718,10 @@ class VisGeometry {
             return;
         }
 
-        const height = parent.scrollHeight;
-        const width = parent.scrollWidth;
         parent.appendChild(this.renderer.domElement);
         this.setUpControls(this.renderer.domElement);
-        this.camera.aspect = width / height;
-        this.camera.updateProjectionMatrix();
-        this.renderer.setSize(width, height);
 
-        this.moleculeRenderer.resize(width, height);
+        this.resize(parent.scrollWidth, parent.scrollHeight);
 
         this.renderer.setClearColor(this.backgroundColor, 1.0);
         this.renderer.clear();
@@ -834,6 +813,7 @@ class VisGeometry {
             this.moleculeRenderer.setFollowedInstance(this.followObjectId);
             this.moleculeRenderer.setNearFar(this.boxNearZ, this.boxFarZ);
             this.boundingBoxMesh.visible = false;
+            this.tickMarksMesh.visible = false;
             this.agentPathGroup.visible = false;
             this.moleculeRenderer.render(
                 this.renderer,
@@ -844,6 +824,7 @@ class VisGeometry {
 
             // final pass, add extra stuff on top: bounding box and line paths
             this.boundingBoxMesh.visible = true;
+            this.tickMarksMesh.visible = true;
             this.agentPathGroup.visible = true;
 
             this.renderer.autoClear = false;
@@ -1151,26 +1132,184 @@ class VisGeometry {
         }
     }
 
-    public resetBounds(boundsAsArray?: number[]): void {
-        if (!boundsAsArray) {
-            console.log("invalid bounds received");
-            return;
+    public setTickIntervalLength(axisLength: number): void {
+        const tickIntervalLength = axisLength / NUM_TICK_INTERVALS;
+        // TODO: round tickIntervalLength to a nice number
+        this.tickIntervalLength = tickIntervalLength;
+    }
+
+    public createTickMarks(
+        volumeDimensions: number[],
+        boundsAsTuple: Bounds
+    ): void {
+        const [minX, minY, minZ, maxX, maxY, maxZ] = boundsAsTuple;
+        const visible = this.tickMarksMesh ? this.tickMarksMesh.visible : true;
+
+        const longestEdgeLength = Math.max(...volumeDimensions);
+        // Use the length of the longest bounding box edge to determine the tick interval (scale bar) length
+        this.setTickIntervalLength(longestEdgeLength);
+        // The size of tick marks also depends on the length of the longest bounding box edge
+        const tickHalfLength = longestEdgeLength / TICK_LENGTH_FACTOR;
+
+        const lineGeometry = new BufferGeometry();
+        const verticesArray: number[] = [];
+
+        // Add tick mark vertices for the 4 bounding box edges parallel to the x-axis
+        // TODO: May be good to refactor to make less redundant, see Megan's suggestion:
+        // https://github.com/allen-cell-animated/simularium-viewer/pull/75#discussion_r535519106
+        let x: number = minX;
+        while (x <= maxX) {
+            verticesArray.push(
+                // The 6 coordinates below make up 1 tick mark (2 vertices for 1 line segment)
+                x,
+                minY,
+                minZ + tickHalfLength,
+                x,
+                minY,
+                minZ - tickHalfLength,
+
+                // This tick mark is on a different bounding box edge also parallel to the x-axis
+                x,
+                minY,
+                maxZ + tickHalfLength,
+                x,
+                minY,
+                maxZ - tickHalfLength,
+
+                // This tick mark is on yet another edge parallel to the x-axis
+                x,
+                maxY,
+                minZ + tickHalfLength,
+                x,
+                maxY,
+                minZ - tickHalfLength,
+
+                // For the last edge parallel to the x-axis
+                x,
+                maxY,
+                maxZ + tickHalfLength,
+                x,
+                maxY,
+                maxZ - tickHalfLength
+            );
+            x += this.tickIntervalLength;
         }
+
+        // Add tick mark vertices for the 4 bounding box edges parallel to the y-axis
+        let y: number = minY;
+        while (y <= maxY) {
+            verticesArray.push(
+                minX + tickHalfLength,
+                y,
+                minZ,
+                minX - tickHalfLength,
+                y,
+                minZ,
+
+                minX + tickHalfLength,
+                y,
+                maxZ,
+                minX - tickHalfLength,
+                y,
+                maxZ,
+
+                maxX + tickHalfLength,
+                y,
+                minZ,
+                maxX - tickHalfLength,
+                y,
+                minZ,
+
+                maxX + tickHalfLength,
+                y,
+                maxZ,
+                maxX - tickHalfLength,
+                y,
+                maxZ
+            );
+            y += this.tickIntervalLength;
+        }
+
+        // Add tick mark vertices for the 4 bounding box edges parallel to the z-axis
+        let z: number = minZ;
+        while (z <= maxZ) {
+            verticesArray.push(
+                minX,
+                minY + tickHalfLength,
+                z,
+                minX,
+                minY - tickHalfLength,
+                z,
+
+                minX,
+                maxY + tickHalfLength,
+                z,
+                minX,
+                maxY - tickHalfLength,
+                z,
+
+                maxX,
+                minY + tickHalfLength,
+                z,
+                maxX,
+                minY - tickHalfLength,
+                z,
+
+                maxX,
+                maxY + tickHalfLength,
+                z,
+                maxX,
+                maxY - tickHalfLength,
+                z
+            );
+            z += this.tickIntervalLength;
+        }
+
+        // Convert verticesArray into a TypedArray to use with lineGeometry.setAttribute()
+        const vertices = new Float32Array(verticesArray);
+        lineGeometry.setAttribute("position", new BufferAttribute(vertices, 3));
+
+        const lineMaterial = new LineBasicMaterial({
+            color: BOUNDING_BOX_COLOR,
+        });
+        this.tickMarksMesh = new LineSegments(lineGeometry, lineMaterial);
+        this.tickMarksMesh.visible = visible;
+    }
+
+    public createBoundingBox(boundsAsTuple: Bounds): void {
+        const [minX, minY, minZ, maxX, maxY, maxZ] = boundsAsTuple;
         const visible = this.boundingBoxMesh
             ? this.boundingBoxMesh.visible
             : true;
-        this.scene.remove(this.boundingBoxMesh);
-        // array is minx,miny,minz, maxx,maxy,maxz
         this.boundingBox = new Box3(
-            new Vector3(boundsAsArray[0], boundsAsArray[1], boundsAsArray[2]),
-            new Vector3(boundsAsArray[3], boundsAsArray[4], boundsAsArray[5])
+            new Vector3(minX, minY, minZ),
+            new Vector3(maxX, maxY, maxZ)
         );
         this.boundingBoxMesh = new Box3Helper(
             this.boundingBox,
             BOUNDING_BOX_COLOR
         );
         this.boundingBoxMesh.visible = visible;
-        this.scene.add(this.boundingBoxMesh);
+    }
+
+    public resetBounds(volumeDimensions?: number[]): void {
+        this.scene.remove(this.boundingBoxMesh, this.tickMarksMesh);
+        if (!volumeDimensions) {
+            console.log("invalid volume dimensions received");
+            return;
+        }
+        const [bx, by, bz] = volumeDimensions;
+        const boundsAsTuple: Bounds = [
+            -bx / 2,
+            -by / 2,
+            -bz / 2,
+            bx / 2,
+            by / 2,
+            bz / 2,
+        ];
+        this.createBoundingBox(boundsAsTuple);
+        this.createTickMarks(volumeDimensions, boundsAsTuple);
+        this.scene.add(this.boundingBoxMesh, this.tickMarksMesh);
 
         if (this.controls) {
             this.controls.maxDistance =
@@ -1243,6 +1382,10 @@ class VisGeometry {
 
             visAgent.typeId = typeId;
             visAgent.active = true;
+
+            const wasHidden = visAgent.hidden;
+            const isHidden = this.hiddenIds.includes(visAgent.typeId);
+            visAgent.setHidden(isHidden);
             if (visAgent.hidden) {
                 visAgent.hide();
                 return;
@@ -1251,7 +1394,11 @@ class VisGeometry {
             // if not fiber...
             if (visType === VisTypes.ID_VIS_TYPE_DEFAULT) {
                 // did the agent type change since the last sim time?
-                if (typeId !== lastTypeId || visType !== visAgent.visType) {
+                if (
+                    wasHidden ||
+                    typeId !== lastTypeId ||
+                    visType !== visAgent.visType
+                ) {
                     const meshGeom = this.getGeomFromId(typeId);
                     visAgent.visType = visType;
                     if (meshGeom) {
@@ -1357,7 +1504,7 @@ class VisGeometry {
                     }
                 }
                 // did the agent type change since the last sim time?
-                if (typeId !== lastTypeId) {
+                if (wasHidden || typeId !== lastTypeId) {
                     visAgent.mesh.userData = { id: visAgent.id };
                     // for fibers we currently only check the color
                     visAgent.setColor(
@@ -1405,6 +1552,8 @@ class VisGeometry {
                     );
                 }
             }
+            const isHighlighted = this.highlightedIds.includes(visAgent.typeId);
+            visAgent.setHighlighted(isHighlighted);
         });
 
         this.hideUnusedAgents(agents.length);
@@ -1715,6 +1864,7 @@ class VisGeometry {
 
     public setShowBounds(showBounds: boolean): void {
         this.boundingBoxMesh.visible = showBounds;
+        this.tickMarksMesh.visible = showBounds;
     }
 
     public showPathForAgent(id: number, visible: boolean): void {

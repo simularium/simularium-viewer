@@ -209,6 +209,10 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             msg: TrajectoryFileInfo
         ) => {
             this.visGeometry.handleTrajectoryData(msg);
+            // handleTrajectoryData() above creates a new bounding box and tick marks
+            // (via resetBounds()) and sets VisGeometry.tickIntervalLength, which is now
+            // available for use as the length of the scale bar in the UI.
+            simulariumController.tickIntervalLength = this.visGeometry.tickIntervalLength;
             try {
                 this.selectionInterface.parse(msg.typeMapping);
             } catch (e) {

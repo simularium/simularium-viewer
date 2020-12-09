@@ -180,8 +180,10 @@ export default class VisAgent {
     }
 
     public setHighlighted(highlighted: boolean): void {
-        this.highlighted = highlighted;
-        this.assignMaterial();
+        if (highlighted !== this.highlighted) {
+            this.highlighted = highlighted;
+            this.assignMaterial();
+        }
     }
 
     private assignMaterial(): void {
