@@ -194,7 +194,7 @@ export class NetConnection {
     private connectToUriAsync(address): Promise<string> {
         const connectPromise = new Promise<string>((resolve) => {
             this.connectToUri(address);
-            resolve("Succesfully connected to uri!");
+            resolve("Successfully connected to uri!");
         });
 
         return connectPromise;
@@ -203,7 +203,7 @@ export class NetConnection {
     public connectToRemoteServer(address: string): Promise<string> {
         const remoteStartPromise = new Promise<string>((resolve, reject) => {
             if (this.socketIsConnected()) {
-                return resolve("Remote sim sucessfully started");
+                return resolve("Remote sim successfully started");
             }
 
             const startPromise = this.connectToUriAsync(address);
@@ -212,9 +212,13 @@ export class NetConnection {
                 setTimeout(
                     () => {
                         if (this.socketIsConnected()) {
-                            resolve("Remote sim sucessfully started");
+                            resolve("Remote sim successfully started");
                         } else {
-                            reject("Failed to connected to requested server");
+                            reject(
+                                new Error(
+                                    "Failed to connected to requested server, try reloading. If problem keeps occurring check your connection speed"
+                                )
+                            );
                         }
                     },
                     1000 // wait 1 second for websocket to open

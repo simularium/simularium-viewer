@@ -262,25 +262,14 @@ class Viewer extends React.Component<{}, ViewerState> {
         simulariumController.gotoTime(currentTime - this.state.timeStep - 1e-9);
     }
 
-    private configureAndStart() {
+    private configureAndLoad() {
         simulariumController.configureNetwork(netConnectionSettings);
         simulariumController.changeFile(playbackFile);
-        simulariumController.start();
     }
 
     public render(): JSX.Element {
         return (
             <div className="container" style={{ height: "90%", width: "75%" }}>
-                <button onClick={() => this.configureAndStart()}>Start</button>
-                <button onClick={() => simulariumController.pause()}>
-                    Pause
-                </button>
-                <button onClick={() => simulariumController.resume()}>
-                    Resume
-                </button>
-                <button onClick={() => simulariumController.stop()}>
-                    stop
-                </button>
                 <select
                     onChange={(event) => {
                         playbackFile = event.target.value;
@@ -307,6 +296,19 @@ class Viewer extends React.Component<{}, ViewerState> {
                     <option value="ATPsynthase_9.h5">ATP 9</option>
                     <option value="ATPsynthase_10.h5">ATP 10</option>
                 </select>
+                <button onClick={() => this.configureAndLoad()}>
+                    Load model
+                </button>
+                <button onClick={() => simulariumController.resume()}>
+                    Play
+                </button>
+                <button onClick={() => simulariumController.pause()}>
+                    Pause
+                </button>
+                <button onClick={() => simulariumController.stop()}>
+                    stop
+                </button>
+
                 <br />
                 <input
                     type="range"
@@ -384,9 +386,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                 <button onClick={() => simulariumController.reOrientCamera()}>
                     starting orientation
                 </button>
-                <button onClick={() => simulariumController.zoomIn()}>
-                    +
-                </button>
+                <button onClick={() => simulariumController.zoomIn()}>+</button>
                 <button onClick={() => simulariumController.zoomOut()}>
                     -
                 </button>
