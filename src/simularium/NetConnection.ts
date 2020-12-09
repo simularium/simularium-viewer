@@ -215,11 +215,14 @@ export class NetConnection {
                     }, 1000)
                 );
 
-            return startPromise.then(async () => {
+            const handleReturn = async () => {
                 const isConnected = await waitForIsConnected();
-                console.log("isConnected", isConnected);
+                secondsWaited++;
+                console.log("isConnected?", isConnected);
                 if (isConnected) {
                     resolve("Remote sim successfully started");
+                } else if (secondsWaited <= TOTAL_WAIT_SECONDS) {
+                    return await handleReturn();
                 } else {
                     reject(
                         new Error(
@@ -227,7 +230,10 @@ export class NetConnection {
                         )
                     );
                 }
-            });
+            };
+            const TOTAL_WAIT_SECONDS = 2;
+            let secondsWaited = 0;
+            return startPromise.then(handleReturn);
         });
 
         return remoteStartPromise;
