@@ -207,22 +207,26 @@ export class NetConnection {
             }
 
             const startPromise = this.connectToUriAsync(address);
-
-            return startPromise.then(() => {
-                setTimeout(
-                    () => {
-                        if (this.socketIsConnected()) {
-                            resolve("Remote sim successfully started");
-                        } else {
-                            reject(
-                                new Error(
-                                    "Failed to connected to requested server, try reloading. If problem keeps occurring check your connection speed"
-                                )
-                            );
-                        }
-                    },
-                    1000 // wait 1 second for websocket to open
+            // wait 1 second for websocket to open
+            const waitForIsConnected = () =>
+                new Promise((resolve) =>
+                    setTimeout(() => {
+                        resolve(this.socketIsConnected());
+                    }, 1000)
                 );
+
+            return startPromise.then(async () => {
+                const isConnected = await waitForIsConnected();
+                console.log("isConnected", isConnected);
+                if (isConnected) {
+                    resolve("Remote sim successfully started");
+                } else {
+                    reject(
+                        new Error(
+                            "Failed to connected to requested server, try reloading. If problem keeps occurring check your connection speed"
+                        )
+                    );
+                }
             });
         });
 
