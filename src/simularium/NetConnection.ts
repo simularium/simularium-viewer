@@ -216,7 +216,7 @@ export class NetConnection {
                         } else {
                             reject(
                                 new Error(
-                                    "Failed to connected to requested server"
+                                    "Failed to connected to requested server, try reloading. If problem keeps occurring check your connection speed"
                                 )
                             );
                         }
