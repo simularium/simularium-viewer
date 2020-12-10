@@ -1339,6 +1339,8 @@ class VisGeometry {
     public updateScene(agents: AgentData[]): void {
         this.currentSceneAgents = agents;
 
+        let numUpdatesToFiber = 0;
+        let numUpdatesToMesh = 0;
         let dx = 0,
             dy = 0,
             dz = 0;
@@ -1399,6 +1401,7 @@ class VisGeometry {
                     typeId !== lastTypeId ||
                     visType !== visAgent.visType
                 ) {
+                    numUpdatesToMesh += 1;
                     const meshGeom = this.getGeomFromId(typeId);
                     visAgent.visType = visType;
                     if (meshGeom) {
@@ -1505,6 +1508,7 @@ class VisGeometry {
                 }
                 // did the agent type change since the last sim time?
                 if (wasHidden || typeId !== lastTypeId) {
+                    numUpdatesToFiber += 1;
                     visAgent.mesh.userData = { id: visAgent.id };
                     // for fibers we currently only check the color
                     visAgent.setColor(
@@ -1560,6 +1564,7 @@ class VisGeometry {
         if (USE_INSTANCE_ENDCAPS) {
             this.fiberEndcaps.endUpdate();
         }
+        console.log(numUpdatesToMesh, numUpdatesToFiber);
     }
 
     public animateCamera(): void {
