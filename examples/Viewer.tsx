@@ -308,6 +308,9 @@ class Viewer extends React.Component<{}, ViewerState> {
                 <button onClick={() => simulariumController.stop()}>
                     stop
                 </button>
+                <button onClick={() => simulariumController.clearFile()}>
+                    Clear
+                </button>
 
                 <br />
                 <input
@@ -390,7 +393,10 @@ class Viewer extends React.Component<{}, ViewerState> {
                 <button onClick={() => simulariumController.zoomOut()}>
                     -
                 </button>
-                <span>Tick interval length: {simulariumController.tickIntervalLength}</span>
+                <span>
+                    Tick interval length:{" "}
+                    {simulariumController.tickIntervalLength}
+                </span>
                 <div className="viewer-container">
                     <SimulariumViewer
                         ref={this.viewerRef}

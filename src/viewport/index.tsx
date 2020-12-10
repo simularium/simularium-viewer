@@ -204,7 +204,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         simulariumController.centerCamera = this.centerCamera;
         simulariumController.zoomIn = this.zoomIn;
         simulariumController.zoomOut = this.zoomOut;
-
+        simulariumController.visGeometry = this.visGeometry;
         simulariumController.trajFileInfoCallback = (
             msg: TrajectoryFileInfo
         ) => {
