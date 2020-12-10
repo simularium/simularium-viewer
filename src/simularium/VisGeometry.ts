@@ -114,7 +114,7 @@ class VisGeometry {
     public meshLoadAttempted: Map<string, boolean>;
     public pdbLoadAttempted: Map<string, boolean>;
     public scaleMapping: Map<number, number>;
-    public geomCount: number;
+    //public geomCount: number;
     public followObjectId: number;
     public visAgents: VisAgent[];
     public visAgentInstances: Map<number, VisAgent>;
@@ -175,7 +175,7 @@ class VisGeometry {
         this.pdbLoadAttempted = new Map<string, boolean>();
         this.scaleMapping = new Map<number, number>();
         this.idColorMapping = new Map<number, number>();
-        this.geomCount = MAX_MESHES;
+        //this.geomCount = MAX_MESHES;
         this.followObjectId = NO_AGENT;
         this.visAgents = [];
         this.visAgentInstances = new Map<number, VisAgent>();
@@ -959,16 +959,14 @@ class VisGeometry {
     }
 
     public createMeshes(): void {
-        this.geomCount = MAX_MESHES;
-
+        //this.geomCount = MAX_MESHES;
         // multipass render:
         // draw moleculebuffer into several render targets to store depth, normals, colors
         // draw quad to composite the buffers into final frame
-
         // create placeholder agents
-        for (let i = 0; i < this.geomCount; i += 1) {
-            this.visAgents[i] = new VisAgent(`Agent_${i}`);
-        }
+        // for (let i = 0; i < this.geomCount; i += 1) {
+        //     this.visAgents[i] = new VisAgent(`Agent_${i}`);
+        // }
     }
 
     /**
@@ -1333,6 +1331,14 @@ class VisGeometry {
         return 1;
     }
 
+    private createAgent(): VisAgent {
+        // TODO limit the number
+        const i = this.visAgents.length;
+        const agent = new VisAgent(`Agent_${i}`);
+        this.visAgents.push(agent);
+        return agent;
+    }
+
     /**
      *   Update Scene
      **/
@@ -1363,22 +1369,25 @@ class VisGeometry {
             lasty = agentData.y;
             lastz = agentData.z;
 
+            let visAgent = this.visAgentInstances.get(instanceId);
+
             const path = this.findPathForAgent(instanceId);
             if (path) {
                 // look up last agent with this instanceId.
-                const lastInstance = this.visAgentInstances.get(instanceId);
-                if (lastInstance && lastInstance.mesh) {
-                    lastx = lastInstance.mesh.position.x;
-                    lasty = lastInstance.mesh.position.y;
-                    lastz = lastInstance.mesh.position.z;
+                if (visAgent && visAgent.mesh) {
+                    lastx = visAgent.mesh.position.x;
+                    lasty = visAgent.mesh.position.y;
+                    lastz = visAgent.mesh.position.z;
                 }
             }
 
-            const visAgent = this.visAgents[i];
+            if (!visAgent) {
+                visAgent = this.createAgent();
+                this.visAgentInstances.set(instanceId, visAgent);
+            }
+
             visAgent.id = instanceId;
             visAgent.mesh.userData = { id: instanceId };
-            // note there may still be another agent later in the list with the same id, until it gets reset
-            this.visAgentInstances.set(instanceId, visAgent);
 
             const lastTypeId = visAgent.typeId;
 
@@ -1390,6 +1399,7 @@ class VisGeometry {
             visAgent.setHidden(isHidden);
             if (visAgent.hidden) {
                 visAgent.hide();
+                console.log("HIDING");
                 return;
             }
 
@@ -1900,6 +1910,7 @@ class VisGeometry {
         this.resetMapping();
         // remove current scene agents.
         this.visAgentInstances.clear();
+        this.visAgents = [];
         this.currentSceneAgents = [];
     }
 
