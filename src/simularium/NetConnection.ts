@@ -207,23 +207,37 @@ export class NetConnection {
             }
 
             const startPromise = this.connectToUriAsync(address);
-
-            return startPromise.then(() => {
-                setTimeout(
-                    () => {
-                        if (this.socketIsConnected()) {
-                            resolve("Remote sim successfully started");
-                        } else {
-                            reject(
-                                new Error(
-                                    "Failed to connected to requested server, try reloading. If problem keeps occurring check your connection speed"
-                                )
-                            );
-                        }
-                    },
-                    1000 // wait 1 second for websocket to open
+            // wait 1 second for websocket to open
+            const waitForIsConnected = () =>
+                new Promise((resolve) =>
+                    setTimeout(() => {
+                        resolve(this.socketIsConnected());
+                    }, 1000)
                 );
-            });
+
+            const handleReturn = async () => {
+                const isConnected = await waitForIsConnected();
+                secondsWaited++;
+                if (isConnected) {
+                    resolve("Remote sim successfully started");
+                } else if (secondsWaited < TOTAL_WAIT_SECONDS) {
+                    return await handleReturn();
+                } else if (connectionTries <= MAX_CONNECTION_TRIES) {
+                    connectionTries++;
+                    return this.connectToUriAsync(address).then(handleReturn);
+                } else {
+                    reject(
+                        new Error(
+                            "Failed to connected to requested server, try reloading. If problem keeps occurring check your connection speed"
+                        )
+                    );
+                }
+            };
+            const TOTAL_WAIT_SECONDS = 2;
+            let secondsWaited = 0;
+            const MAX_CONNECTION_TRIES = 2;
+            let connectionTries = 1;
+            return startPromise.then(handleReturn);
         });
 
         return remoteStartPromise;
