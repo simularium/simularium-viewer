@@ -224,7 +224,7 @@ export class NetConnection {
                     return await handleReturn();
                 } else if (connectionTries <= MAX_CONNECTION_TRIES) {
                     connectionTries++;
-                    return startPromise.then(handleReturn);
+                    return this.connectToUriAsync(address).then(handleReturn);
                 } else {
                     reject(
                         new Error(
