@@ -1393,6 +1393,9 @@ class VisGeometry {
                 return;
             }
 
+            const isHighlighted = this.highlightedIds.includes(visAgent.typeId);
+            visAgent.setHighlighted(isHighlighted);
+
             // if not fiber...
             if (visType === VisTypes.ID_VIS_TYPE_DEFAULT) {
                 // did the agent type change since the last sim time?
@@ -1556,8 +1559,6 @@ class VisGeometry {
                     );
                 }
             }
-            const isHighlighted = this.highlightedIds.includes(visAgent.typeId);
-            visAgent.setHighlighted(isHighlighted);
         });
 
         this.hideUnusedAgents(agents.length);
