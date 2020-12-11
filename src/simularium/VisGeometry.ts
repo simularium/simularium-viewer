@@ -935,7 +935,11 @@ class VisGeometry {
     }
 
     private getColorIndexForTypeId(typeId: number): number {
-        const index = this.idColorMapping[typeId];
+        const index = this.idColorMapping.get(typeId);
+        if (index === undefined) {
+            console.log("getColorIndexForTypeId could not find " + typeId);
+            return 0;
+        }
         return index % (this.colorsData.length / 4);
     }
 
@@ -946,7 +950,8 @@ class VisGeometry {
 
     public setColorForIds(ids: number[], colorId: number): void {
         ids.forEach((id) => {
-            this.idColorMapping[id] = colorId;
+            this.idColorMapping.set(id, colorId);
+            //console.log("Set Color for ID: " + id);
         });
     }
 
