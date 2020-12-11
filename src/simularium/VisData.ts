@@ -247,8 +247,10 @@ class VisData {
                     !Number.isInteger(nSubPoints) ||
                     !Number.isInteger(dataIter)
                 ) {
-                    console.log("Frames inproperly concactenated");
-                    //@TODO ERROR
+                    throw new FrontEndError(
+                        `Number of Subpoints: <pre>${nSubPoints}</pre>`,
+                        "Your data is malformed, non-integer value found for num-subpoints "
+                    );
                     break;
                 }
 
@@ -256,7 +258,17 @@ class VisData {
                 const chunkLength = agentObjectKeys.length + nSubPoints;
                 const remaining = agentDataView.length - dataIter;
                 if (remaining < chunkLength - 1) {
+                    const attemptedMapping = agentObjectKeys.map(
+                        (name, index) =>
+                            `${name}: ${agentDataView[dataIter + index]}<br />`
+                    );
                     // passed up in controller.handleLocalFileChange
+                    throw new FrontEndError(
+                        `Example attempt to parse your data: <pre>${attemptedMapping.join(
+                            ""
+                        )}</pre>`,
+                        "your data is malformed, there are too few entries."
+                    );
                 }
 
                 const agentSubSetArray = agentDataView.subarray(
@@ -264,6 +276,17 @@ class VisData {
                     dataIter + chunkLength
                 );
                 if (agentSubSetArray.length < agentObjectKeys.length) {
+                    const attemptedMapping = agentObjectKeys.map(
+                        (name, index) =>
+                            `${name}: ${agentSubSetArray[index]}<br />`
+                    );
+                    // passed up in controller.handleLocalFileChange
+                    throw new FrontEndError(
+                        `Example attempt to parse your data: <pre>${attemptedMapping.join(
+                            ""
+                        )}</pre>`,
+                        "your data is malformed, there are less entries than expected for this agent"
+                    );
                 }
 
                 const agent = parseOneAgent(agentSubSetArray);
