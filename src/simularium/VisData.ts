@@ -42,6 +42,8 @@ class VisData {
     private frameToWaitFor: number;
     private lockedForFrame: boolean;
     private cacheFrame: number;
+    private netBuffer: ArrayBuffer;
+
     // eslint-disable-next-line @typescript-eslint/naming-convention
     private _dragAndDropFileInfo: TrajectoryFileInfo | null;
     /**
@@ -164,12 +166,12 @@ class VisData {
         };
     }
 
-    public static parseBinary(data: ArrayBuffer) {
+    public static parseBinary(data: ArrayBuffer): ParsedBundle {
         const parsedAgentDataArray: AgentData[][] = [];
         const frameDataArray: FrameData[] = [];
 
-        var enc = new TextEncoder(); // always utf-8
-        var eofPhrase = enc.encode("\\EOFTHEFRAMEENDSHERE");
+        const enc = new TextEncoder(); // always utf-8
+        const eofPhrase = enc.encode("\\EOFTHEFRAMEENDSHERE");
 
         const byteView = new Uint8Array(data);
         const length = byteView.length;
@@ -307,7 +309,7 @@ class VisData {
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
-        this.netBuffer = new ArrayBuffer();
+        this.netBuffer = new ArrayBuffer(0);
     }
 
     //get time() { return this.cacheFrame < this.frameDataCache.length ? this.frameDataCache[this.cacheFrame] : -1 }
@@ -466,8 +468,8 @@ class VisData {
         // find last '/eof' signal in new data
         const byteView = new Uint8Array(data);
 
-        var enc = new TextEncoder(); // always utf-8
-        var eofPhrase = enc.encode("\\EOFTHEFRAMEENDSHERE");
+        const enc = new TextEncoder(); // always utf-8
+        const eofPhrase = enc.encode("\\EOFTHEFRAMEENDSHERE");
 
         let index = byteView.length - eofPhrase.length;
         for (; index > 0; index = index - 4) {
@@ -481,7 +483,7 @@ class VisData {
         if (eof > 0) {
             const frame = data.slice(0, eof);
 
-            let tmp = new ArrayBuffer(
+            const tmp = new ArrayBuffer(
                 this.netBuffer.byteLength + frame.byteLength
             );
             new Uint8Array(tmp).set(new Uint8Array(this.netBuffer));
