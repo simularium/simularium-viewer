@@ -11,7 +11,7 @@ import "./style.css";
 import { isEqual } from "lodash";
 
 const netConnectionSettings = {
-    serverIp: "localhost",
+    serverIp: "dev-node1-agentviz-backend.cellexplore.net",
     serverPort: 9002,
 };
 
