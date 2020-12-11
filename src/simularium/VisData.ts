@@ -211,7 +211,11 @@ class VisData {
      *   Functions to check update
      * */
     public hasLocalCacheForTime(timeNs: number): boolean {
-        if (this.frameDataCache.length > 0 && timeNs === 0) {
+        if (
+            this.frameDataCache.length > 0 &&
+            timeNs === 0 &&
+            this.frameDataCache[0].time <= Number.EPSILON // allow for floating point errors
+        ) {
             return true;
         } else if (this.frameDataCache.length < 2) {
             return false;
