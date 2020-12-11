@@ -4,6 +4,7 @@ import { ILogger } from "js-logger/src/types";
 interface NetMessage {
     connId: string;
     msgType: number;
+    fileName: string;
 }
 
 interface MessageEventLike {
@@ -53,7 +54,7 @@ export class NetConnection {
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (NetMessage) => void;
     public onTrajectoryDataArrive: (NetMessage) => void;
-    private lastRequestedFile: string;
+    protected lastRequestedFile: string;
 
     public constructor(opts?: NetConnectionParams) {
         this.webSocket = null;
