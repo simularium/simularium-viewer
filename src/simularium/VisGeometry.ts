@@ -114,7 +114,6 @@ class VisGeometry {
     public meshLoadAttempted: Map<string, boolean>;
     public pdbLoadAttempted: Map<string, boolean>;
     public scaleMapping: Map<number, number>;
-    //public geomCount: number;
     public followObjectId: number;
     public visAgents: VisAgent[];
     public visAgentInstances: Map<number, VisAgent>;
@@ -175,7 +174,6 @@ class VisGeometry {
         this.pdbLoadAttempted = new Map<string, boolean>();
         this.scaleMapping = new Map<number, number>();
         this.idColorMapping = new Map<number, number>();
-        //this.geomCount = MAX_MESHES;
         this.followObjectId = NO_AGENT;
         this.visAgents = [];
         this.visAgentInstances = new Map<number, VisAgent>();
@@ -1342,8 +1340,6 @@ class VisGeometry {
     public updateScene(agents: AgentData[]): void {
         this.currentSceneAgents = agents;
 
-        let numUpdatesToFiber = 0;
-        let numUpdatesToMesh = 0;
         let dx = 0,
             dy = 0,
             dz = 0;
@@ -1355,7 +1351,7 @@ class VisGeometry {
             this.fiberEndcaps.beginUpdate(agents.length);
         }
 
-        agents.forEach((agentData, i) => {
+        agents.forEach((agentData) => {
             const visType = agentData["vis-type"];
             const instanceId = agentData.instanceId;
             const typeId = agentData.type;
