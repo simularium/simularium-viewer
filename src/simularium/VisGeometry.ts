@@ -966,17 +966,6 @@ class VisGeometry {
         );
     }
 
-    public createMeshes(): void {
-        //this.geomCount = MAX_MESHES;
-        // multipass render:
-        // draw moleculebuffer into several render targets to store depth, normals, colors
-        // draw quad to composite the buffers into final frame
-        // create placeholder agents
-        // for (let i = 0; i < this.geomCount; i += 1) {
-        //     this.visAgents[i] = new VisAgent(`Agent_${i}`);
-        // }
-    }
-
     /**
      *   Data Management
      */

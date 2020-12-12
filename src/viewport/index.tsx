@@ -145,7 +145,6 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         this.visGeometry = new VisGeometry(loggerLevel);
         this.visGeometry.setupScene();
         this.visGeometry.createMaterials(colors);
-        this.visGeometry.createMeshes();
         this.vdomRef = React.createRef();
         this.lastRenderTime = Date.now();
         this.startTime = Date.now();
