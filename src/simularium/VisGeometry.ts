@@ -934,6 +934,10 @@ class VisGeometry {
         });
     }
 
+    public clearColorMapping(): void {
+        this.idColorMapping.clear();
+    }
+
     private getColorIndexForTypeId(typeId: number): number {
         const index = this.idColorMapping.get(typeId);
         if (index === undefined) {
