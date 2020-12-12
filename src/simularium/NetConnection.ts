@@ -4,6 +4,7 @@ import { ILogger } from "js-logger/src/types";
 interface NetMessage {
     connId: string;
     msgType: number;
+    fileName: string;
 }
 
 interface MessageEventLike {
@@ -53,11 +54,13 @@ export class NetConnection {
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (NetMessage) => void;
     public onTrajectoryDataArrive: (NetMessage) => void;
+    protected lastRequestedFile: string;
 
     public constructor(opts?: NetConnectionParams) {
         this.webSocket = null;
         this.serverIp = opts && opts.serverIp ? opts.serverIp : "localhost";
         this.serverPort = opts && opts.serverPort ? opts.serverPort : 9002;
+        this.lastRequestedFile = "";
 
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
@@ -122,7 +125,9 @@ export class NetConnection {
 
         switch (msgType) {
             case NetMessageEnum.ID_VIS_DATA_ARRIVE:
-                this.onTrajectoryDataArrive(msg);
+                if (msg.fileName === this.lastRequestedFile) {
+                    this.onTrajectoryDataArrive(msg);
+                }
                 break;
             case NetMessageEnum.ID_UPDATE_TIME_STEP:
                 // TODO: callback to handle time step update
@@ -331,6 +336,7 @@ export class NetConnection {
     }
 
     public startRemoteTrajectoryPlayback(fileName: string): Promise<void> {
+        this.lastRequestedFile = fileName;
         const jsonData = {
             msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
             mode: PlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
