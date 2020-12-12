@@ -1913,10 +1913,14 @@ class VisGeometry {
 
     public clearForNewTrajectory(): void {
         this.resetMapping();
+        this.idColorMapping.clear();
+
         // remove current scene agents.
         this.visAgentInstances.clear();
         this.visAgents = [];
         this.currentSceneAgents = [];
+
+        this.dehighlight();
     }
 
     private cancelAllAsyncProcessing(): void {
