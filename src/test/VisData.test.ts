@@ -5,6 +5,7 @@ import { VisData, VisDataMessage, NetMessageEnum } from "../simularium";
 //  and rotating 0-90 degrees around the x axis
 //  over 5 frames from time 0-20
 const testData = {
+    fileName: "",
     msgType: 1,
     bundleSize: 5,
     bundleStart: 0,
@@ -150,6 +151,7 @@ describe("VisData module", () => {
                 ],
                 bundleSize: 1,
                 bundleStart: 0,
+                fileName: "",
             };
             const parsedData = VisData.parse(visDataMsg);
             expect(parsedData.frameDataArray).toEqual([
@@ -203,6 +205,7 @@ describe("VisData module", () => {
                 ],
                 bundleSize: 1,
                 bundleStart: 0,
+                fileName: "",
             };
             const tooLong = [
                 10, //"vis-type",
@@ -231,6 +234,7 @@ describe("VisData module", () => {
                 ],
                 bundleSize: 1,
                 bundleStart: 0,
+                fileName: "",
             };
             expect(() => {
                 VisData.parse(visDataMsgTooLong);
@@ -257,6 +261,7 @@ describe("VisData module", () => {
                         data: [1000, 0, 7, 1, 1, 1, 0, 0, 0, 1, 0],
                     },
                 ],
+                fileName: "",
             };
 
             const parsedSingleFrame = [

@@ -9,6 +9,7 @@ export interface VisDataMessage {
     bundleStart: number;
     bundleSize: number;
     bundleData: VisDataFrame[];
+    fileName: string;
 }
 
 interface ScatterTrace {

@@ -45,6 +45,7 @@ export class DummyNetConnection extends NetConnection {
             bundleStart: frameNumber,
             bundleSize: bundleSize,
             bundleData: [],
+            fileName: this.lastRequestedFile,
         };
 
         const bundleData: VisDataFrame[] = [];
@@ -128,6 +129,7 @@ export class DummyNetConnection extends NetConnection {
         return this.connectToRemoteServer(this.getIp()).then(() => {
             this.fileName = fileName;
             this.isStreamingData = true;
+            this.lastRequestedFile = fileName;
         });
     }
 
