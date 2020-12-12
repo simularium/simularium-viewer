@@ -955,7 +955,6 @@ class VisGeometry {
     public setColorForIds(ids: number[], colorId: number): void {
         ids.forEach((id) => {
             this.idColorMapping.set(id, colorId);
-            //console.log("Set Color for ID: " + id);
         });
     }
 
@@ -1408,7 +1407,6 @@ class VisGeometry {
             visAgent.setHidden(isHidden);
             if (visAgent.hidden) {
                 visAgent.hide();
-                console.log("HIDING");
                 return;
             }
 
@@ -1423,7 +1421,6 @@ class VisGeometry {
                     typeId !== lastTypeId ||
                     visType !== visAgent.visType
                 ) {
-                    numUpdatesToMesh += 1;
                     const meshGeom = this.getGeomFromId(typeId);
                     visAgent.visType = visType;
                     if (meshGeom) {
@@ -1530,7 +1527,6 @@ class VisGeometry {
                 }
                 // did the agent type change since the last sim time?
                 if (wasHidden || typeId !== lastTypeId) {
-                    numUpdatesToFiber += 1;
                     visAgent.mesh.userData = { id: visAgent.id };
                     // for fibers we currently only check the color
                     visAgent.setColor(
@@ -1584,7 +1580,6 @@ class VisGeometry {
         if (USE_INSTANCE_ENDCAPS) {
             this.fiberEndcaps.endUpdate();
         }
-        console.log(numUpdatesToMesh, numUpdatesToFiber);
     }
 
     public animateCamera(): void {
@@ -1917,7 +1912,6 @@ class VisGeometry {
 
     public clearForNewTrajectory(): void {
         this.resetMapping();
-        this.idColorMapping.clear();
 
         // remove current scene agents.
         this.visAgentInstances.clear();
