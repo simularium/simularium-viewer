@@ -117,7 +117,6 @@ class VisGeometry {
     public followObjectId: number;
     public visAgents: VisAgent[];
     public visAgentInstances: Map<number, VisAgent>;
-    public lastNumberOfAgents: number;
     public fixLightsToCamera: boolean;
     public highlightedIds: number[];
     public hiddenIds: number[];
@@ -177,7 +176,6 @@ class VisGeometry {
         this.followObjectId = NO_AGENT;
         this.visAgents = [];
         this.visAgentInstances = new Map<number, VisAgent>();
-        this.lastNumberOfAgents = 0;
         this.fixLightsToCamera = true;
         this.highlightedIds = [];
         this.hiddenIds = [];
@@ -1351,6 +1349,12 @@ class VisGeometry {
             this.fiberEndcaps.beginUpdate(agents.length);
         }
 
+        // mark ALL inactive and invisible
+        for (let i = 0; i < MAX_MESHES && i < this.visAgents.length; i += 1) {
+            const visAgent = this.visAgents[i];
+            visAgent.hideAndDeactivate();
+        }
+
         agents.forEach((agentData) => {
             const visType = agentData["vis-type"];
             const instanceId = agentData.instanceId;
@@ -1561,7 +1565,6 @@ class VisGeometry {
             }
         });
 
-        this.hideUnusedAgents(agents.length);
         if (USE_INSTANCE_ENDCAPS) {
             this.fiberEndcaps.endUpdate();
         }
@@ -1881,18 +1884,16 @@ class VisGeometry {
         }
     }
 
-    public hideUnusedAgents(numberOfAgents: number): void {
+    public clear(): void {
+        // just hide and deactivate all agents and paths
         const nMeshes = this.visAgents.length;
-        for (let i = numberOfAgents; i < MAX_MESHES && i < nMeshes; i += 1) {
+        for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
             const visAgent = this.visAgents[i];
             // hide the path if we're hiding the agent. should we remove the path here?
             this.showPathForAgent(visAgent.id, false);
             visAgent.hideAndDeactivate();
+            visAgent.id = NO_AGENT;
         }
-    }
-
-    public clear(): void {
-        this.hideUnusedAgents(0);
     }
 
     public clearForNewTrajectory(): void {
@@ -1953,15 +1954,6 @@ class VisGeometry {
 
     public update(agents: AgentData[]): void {
         this.updateScene(agents);
-
-        const numberOfAgents = agents.length;
-        if (
-            this.lastNumberOfAgents > numberOfAgents ||
-            this.lastNumberOfAgents === 0
-        ) {
-            this.hideUnusedAgents(numberOfAgents);
-        }
-        this.lastNumberOfAgents = numberOfAgents;
     }
 }
 
