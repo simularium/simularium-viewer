@@ -1,20 +1,32 @@
+## Simularium repositories
+This repository is part of the Simularium project ([simularium.allencell.org](https://simularium.allencell.org)), which includes repositories:
+- [simulariumIO](https://github.com/allen-cell-animated/simulariumio) - Python package that converts simulation outputs to the format consumed by the Simularium viewer website
+- [simularium-engine](https://github.com/allen-cell-animated/simularium-engine) - C++ backend application that interfaces with biological simulation engines and serves simulation data to the front end website
+- [simularium-viewer](https://github.com/allen-cell-animated/simularium-viewer) - NPM package to view Simularium trajectories in 3D
+- [simularium-website](https://github.com/allen-cell-animated/simularium-website) - Front end website for the Simularium project, includes the Simularium viewer
+
+---
+
 ![Node.js CI](https://github.com/allen-cell-animated/simularium-viewer/workflows/Node.js%20CI/badge.svg)
 ![NPM Package Publish](https://github.com/allen-cell-animated/simularium-viewer/workflows/NPM%20Package/badge.svg)
+
 # Simularium Viewer
 
-npm package to view simularium trajectories
+simularium-viewer is an NPM package to view simularium trajectories in 3D
 https://www.npmjs.com/package/@aics/simularium-viewer
 
 ---
 
 ## Description
-This viewer can visualize trajectories that are in the Simularium Visualization-Data-Format. The viewer can operate in the following modes:
+This viewer can visualize trajectories that are in Simularium format (see the file format documentation [here](https://github.com/allen-cell-animated/simulariumio/blob/master/file_format.md)). The viewer can operate in the following modes:
 
 **drag-and-drop**  
-Drag a Simularium Visualization-Data-Format file into the window (WebGL) area of the viewer.
+Drag a Simularium file into the window (WebGL) area of the viewer.
 
 **remote-streaming**  
 Connect to a [simularium-engine](https://github.com/allen-cell-animated/simularium-engine) instance, and stream data through a web-socket connection.
+
+___
 
 ## Installation in your project
 1. `npm i @aics/simularium-viewer`
@@ -88,11 +100,7 @@ class Viewer extends React.Component {
 
 This will run the example in `/examples/Viewer.tsx`, demonstrating the viewer's functionality.
 
-## Documentation
-
-If you have more extensive technical documentation (whether generated or not), ensure they are published to the following address:
-For full package documentation please visit
-[organization.github.io/projectname](https://organization.github.io/projectname/index.html).
+---
 
 ## Quick Start
 
@@ -110,16 +118,9 @@ For full package documentation please visit
 | typeCheck | run `tsc` in type-check only mode |
 | start  | runs an example app from `examples` for testing. Runs at `localhost:8080/public/`. Run ./gradlew build to see new changes from `src` |
 
-## Development
+___
 
-Before pushing a branch run the following checks locally:
-1. `npm run lint`
-2. `npm run typeCheck`
-3. `npm run test`
+## Development
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for information related to developing the code.
 
-## Publishing
-1. Make a new version: `npm version [patch/minor/major]`
-2. Push the new package.json version: `git push origin master`
-3. Push the new tag: `git push origin [NEW_TAG]`
