@@ -1884,18 +1884,6 @@ class VisGeometry {
         }
     }
 
-    public clear(): void {
-        // just hide and deactivate all agents and paths
-        const nMeshes = this.visAgents.length;
-        for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
-            const visAgent = this.visAgents[i];
-            // hide the path if we're hiding the agent. should we remove the path here?
-            this.showPathForAgent(visAgent.id, false);
-            visAgent.hideAndDeactivate();
-            visAgent.id = NO_AGENT;
-        }
-    }
-
     public clearForNewTrajectory(): void {
         this.resetMapping();
 
