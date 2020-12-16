@@ -1939,6 +1939,8 @@ class VisGeometry {
             this.instancedMeshGroup.remove(this.instancedMeshGroup.children[i]);
         }
 
+        this.fiberEndcaps.create(0);
+
         // set all runtime meshes back to spheres.
         for (const visAgent of this.visAgentInstances.values()) {
             visAgent.resetMesh();
