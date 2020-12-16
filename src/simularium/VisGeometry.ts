@@ -1935,6 +1935,11 @@ class VisGeometry {
         for (let i = this.agentPDBGroup.children.length - 1; i >= 0; i--) {
             this.agentPDBGroup.remove(this.agentPDBGroup.children[i]);
         }
+        for (let i = this.instancedMeshGroup.children.length - 1; i >= 0; i--) {
+            this.instancedMeshGroup.remove(this.instancedMeshGroup.children[i]);
+        }
+
+        this.fiberEndcaps.create(0);
 
         // set all runtime meshes back to spheres.
         for (const visAgent of this.visAgentInstances.values()) {
