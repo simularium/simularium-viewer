@@ -114,11 +114,9 @@ class VisGeometry {
     public meshLoadAttempted: Map<string, boolean>;
     public pdbLoadAttempted: Map<string, boolean>;
     public scaleMapping: Map<number, number>;
-    public geomCount: number;
     public followObjectId: number;
     public visAgents: VisAgent[];
     public visAgentInstances: Map<number, VisAgent>;
-    public lastNumberOfAgents: number;
     public fixLightsToCamera: boolean;
     public highlightedIds: number[];
     public hiddenIds: number[];
@@ -175,11 +173,9 @@ class VisGeometry {
         this.pdbLoadAttempted = new Map<string, boolean>();
         this.scaleMapping = new Map<number, number>();
         this.idColorMapping = new Map<number, number>();
-        this.geomCount = MAX_MESHES;
         this.followObjectId = NO_AGENT;
         this.visAgents = [];
         this.visAgentInstances = new Map<number, VisAgent>();
-        this.lastNumberOfAgents = 0;
         this.fixLightsToCamera = true;
         this.highlightedIds = [];
         this.hiddenIds = [];
@@ -934,8 +930,16 @@ class VisGeometry {
         });
     }
 
+    public clearColorMapping(): void {
+        this.idColorMapping.clear();
+    }
+
     private getColorIndexForTypeId(typeId: number): number {
-        const index = this.idColorMapping[typeId];
+        const index = this.idColorMapping.get(typeId);
+        if (index === undefined) {
+            console.log("getColorIndexForTypeId could not find " + typeId);
+            return 0;
+        }
         return index % (this.colorsData.length / 4);
     }
 
@@ -946,7 +950,7 @@ class VisGeometry {
 
     public setColorForIds(ids: number[], colorId: number): void {
         ids.forEach((id) => {
-            this.idColorMapping[id] = colorId;
+            this.idColorMapping.set(id, colorId);
         });
     }
 
@@ -956,19 +960,6 @@ class VisGeometry {
             this.colorsData[index * 4 + 1],
             this.colorsData[index * 4 + 2]
         );
-    }
-
-    public createMeshes(): void {
-        this.geomCount = MAX_MESHES;
-
-        // multipass render:
-        // draw moleculebuffer into several render targets to store depth, normals, colors
-        // draw quad to composite the buffers into final frame
-
-        // create placeholder agents
-        for (let i = 0; i < this.geomCount; i += 1) {
-            this.visAgents[i] = new VisAgent(`Agent_${i}`);
-        }
     }
 
     /**
@@ -1333,6 +1324,14 @@ class VisGeometry {
         return 1;
     }
 
+    private createAgent(): VisAgent {
+        // TODO limit the number
+        const i = this.visAgents.length;
+        const agent = new VisAgent(`Agent_${i}`);
+        this.visAgents.push(agent);
+        return agent;
+    }
+
     /**
      *   Update Scene
      **/
@@ -1350,7 +1349,13 @@ class VisGeometry {
             this.fiberEndcaps.beginUpdate(agents.length);
         }
 
-        agents.forEach((agentData, i) => {
+        // mark ALL inactive and invisible
+        for (let i = 0; i < MAX_MESHES && i < this.visAgents.length; i += 1) {
+            const visAgent = this.visAgents[i];
+            visAgent.hideAndDeactivate();
+        }
+
+        agents.forEach((agentData) => {
             const visType = agentData["vis-type"];
             const instanceId = agentData.instanceId;
             const typeId = agentData.type;
@@ -1361,22 +1366,25 @@ class VisGeometry {
             lasty = agentData.y;
             lastz = agentData.z;
 
+            let visAgent = this.visAgentInstances.get(instanceId);
+
             const path = this.findPathForAgent(instanceId);
             if (path) {
                 // look up last agent with this instanceId.
-                const lastInstance = this.visAgentInstances.get(instanceId);
-                if (lastInstance && lastInstance.mesh) {
-                    lastx = lastInstance.mesh.position.x;
-                    lasty = lastInstance.mesh.position.y;
-                    lastz = lastInstance.mesh.position.z;
+                if (visAgent && visAgent.mesh) {
+                    lastx = visAgent.mesh.position.x;
+                    lasty = visAgent.mesh.position.y;
+                    lastz = visAgent.mesh.position.z;
                 }
             }
 
-            const visAgent = this.visAgents[i];
+            if (!visAgent) {
+                visAgent = this.createAgent();
+                this.visAgentInstances.set(instanceId, visAgent);
+            }
+
             visAgent.id = instanceId;
             visAgent.mesh.userData = { id: instanceId };
-            // note there may still be another agent later in the list with the same id, until it gets reset
-            this.visAgentInstances.set(instanceId, visAgent);
 
             const lastTypeId = visAgent.typeId;
 
@@ -1557,7 +1565,6 @@ class VisGeometry {
             }
         });
 
-        this.hideUnusedAgents(agents.length);
         if (USE_INSTANCE_ENDCAPS) {
             this.fiberEndcaps.endUpdate();
         }
@@ -1877,25 +1884,15 @@ class VisGeometry {
         }
     }
 
-    public hideUnusedAgents(numberOfAgents: number): void {
-        const nMeshes = this.visAgents.length;
-        for (let i = numberOfAgents; i < MAX_MESHES && i < nMeshes; i += 1) {
-            const visAgent = this.visAgents[i];
-            // hide the path if we're hiding the agent. should we remove the path here?
-            this.showPathForAgent(visAgent.id, false);
-            visAgent.hideAndDeactivate();
-        }
-    }
-
-    public clear(): void {
-        this.hideUnusedAgents(0);
-    }
-
     public clearForNewTrajectory(): void {
         this.resetMapping();
+
         // remove current scene agents.
         this.visAgentInstances.clear();
+        this.visAgents = [];
         this.currentSceneAgents = [];
+
+        this.dehighlight();
     }
 
     private cancelAllAsyncProcessing(): void {
@@ -1950,15 +1947,6 @@ class VisGeometry {
 
     public update(agents: AgentData[]): void {
         this.updateScene(agents);
-
-        const numberOfAgents = agents.length;
-        if (
-            this.lastNumberOfAgents > numberOfAgents ||
-            this.lastNumberOfAgents === 0
-        ) {
-            this.hideUnusedAgents(numberOfAgents);
-        }
-        this.lastNumberOfAgents = numberOfAgents;
     }
 }
 

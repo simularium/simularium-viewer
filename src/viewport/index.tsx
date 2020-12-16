@@ -145,7 +145,6 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         this.visGeometry = new VisGeometry(loggerLevel);
         this.visGeometry.setupScene();
         this.visGeometry.createMaterials(colors);
-        this.visGeometry.createMeshes();
         this.vdomRef = React.createRef();
         this.lastRenderTime = Date.now();
         this.startTime = Date.now();
@@ -224,6 +223,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             }
             onTrajectoryFileInfoChanged(msg);
 
+            this.visGeometry.clearColorMapping();
             const uiDisplayData = this.selectionInterface.getUIDisplayData();
             let colorIndex = 0;
             uiDisplayData.forEach((entry) => {
@@ -448,7 +448,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         }
     };
 
-    public handleMouseMove = (e: Event):void => {
+    public handleMouseMove = (e: Event): void => {
         const event = e as MouseEvent;
         if (!this.vdomRef.current) {
             return;
@@ -462,7 +462,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         } else {
             this.vdomRef.current.style.cursor = "default";
         }
-    }
+    };
 
     public addEventHandlersToCanvas(): void {
         forOwn(this.handlers, (handler, eventName) =>
