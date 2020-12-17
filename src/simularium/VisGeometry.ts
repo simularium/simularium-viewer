@@ -1936,7 +1936,8 @@ class VisGeometry {
             this.instancedMeshGroup.remove(this.instancedMeshGroup.children[i]);
         }
 
-        this.fiberEndcaps.create(0);
+        // recreate an empty set of fiber endcaps to clear out the old ones.
+        this.constructInstancedFiberEndcaps();
 
         // set all runtime meshes back to spheres.
         for (const visAgent of this.visAgentInstances.values()) {
