@@ -738,6 +738,7 @@ class VisGeometry {
 
     public render(time: number): void {
         if (this.visAgents.length === 0) {
+            this.renderer.clear();
             return;
         }
 
