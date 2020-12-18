@@ -143,6 +143,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         this.zoomOut = this.zoomOut.bind(this);
 
         this.visGeometry = new VisGeometry(loggerLevel);
+        this.props.simulariumController.visData.clearCache();
         this.visGeometry.setupScene();
         this.visGeometry.createMaterials(colors);
         this.vdomRef = React.createRef();
