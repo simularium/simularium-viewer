@@ -429,7 +429,13 @@ class VisData {
 
     public parseAgentsFromNetData(msg: VisDataMessage | ArrayBuffer): void {
         if (msg instanceof ArrayBuffer) {
-            const frameNumber = new Float32Array(msg.slice(0, 4));
+            const floatView = new Float32Array(msg);
+            const fileNameSize = (floatView[1] + 3) / 4;
+            const dataStart = 20 + fileNameSize * 2;
+
+            const frameNumber = new Float32Array(
+                msg.slice(dataStart, dataStart + 4)
+            );
             if (this.lockedForFrame === true) {
                 if (frameNumber[0] !== this.frameToWaitFor) {
                     return;
@@ -439,7 +445,7 @@ class VisData {
                 }
             }
 
-            this.parseBinaryNetData(msg as ArrayBuffer);
+            this.parseBinaryNetData(msg as ArrayBuffer, dataStart);
             return;
         }
 
@@ -485,7 +491,7 @@ class VisData {
         }
     }
 
-    private parseBinaryNetData(data: ArrayBuffer) {
+    private parseBinaryNetData(data: ArrayBuffer, dataStart: number) {
         let eof = -1;
 
         // find last '/eof' signal in new data
@@ -503,8 +509,8 @@ class VisData {
             }
         }
 
-        if (eof > 0) {
-            const frame = data.slice(0, eof);
+        if (eof > dataStart) {
+            const frame = data.slice(dataStart, eof);
 
             const tmp = new ArrayBuffer(
                 this.netBuffer.byteLength + frame.byteLength

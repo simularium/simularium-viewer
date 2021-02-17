@@ -108,7 +108,31 @@ export class NetConnection {
         }
 
         if (event.data instanceof ArrayBuffer) {
-            this.onTrajectoryDataArrive(event.data);
+            const floatView = new Float32Array(event.data);
+            const binaryMsgType = floatView[0];
+
+            if (binaryMsgType === NetMessageEnum.ID_VIS_DATA_ARRIVE) {
+                const nameLength = floatView[1];
+                const byteView = new Uint8Array(event.data);
+                const fileBytes = byteView.subarray(8, 8 + nameLength);
+                const fileName = new TextDecoder("utf-8").decode(fileBytes);
+
+                if (fileName == this.lastRequestedFile) {
+                    this.onTrajectoryDataArrive(event.data);
+                } else {
+                    this.logger.error(
+                        "File arrived ",
+                        fileName,
+                        " is not file ",
+                        this.lastRequestedFile
+                    );
+                }
+            } else {
+                this.logger.error(
+                    "Unexpected binary message arrived of type ",
+                    binaryMsgType
+                );
+            }
             return;
         }
 
