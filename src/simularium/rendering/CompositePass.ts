@@ -139,8 +139,8 @@ class CompositePass {
                 if (col0.w < 0.0) {
                     discard;
                 }
-//                float occ1 = texture(ssaoTex1, texCoords).r;
-//                float occ2 = texture(ssaoTex2, texCoords).r;
+                float occ1 = texture(ssaoTex1, texCoords).r;
+                float occ2 = texture(ssaoTex2, texCoords).r;
                 int instanceId = int(col0.y);
             
                 if(instanceId < 0)
@@ -207,7 +207,7 @@ class CompositePass {
                     //color.xyz = vec3(0.0, 1.0, 0.0);
                 }
             
-                gl_FragColor = vec4(/* occ1 * occ2 * */ color.xyz, 1.0);
+                gl_FragColor = vec4( occ1 * occ2 * color.xyz, 1.0);
             }
             `,
         });
