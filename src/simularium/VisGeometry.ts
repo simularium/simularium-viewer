@@ -1542,7 +1542,7 @@ class VisGeometry {
                         q.y,
                         q.z,
                         q.w,
-                        visAgent.id,
+                        Number(visAgent.id),
                         visAgent.signedTypeId(),
                         c
                     );
@@ -1558,7 +1558,7 @@ class VisGeometry {
                         q.y,
                         q.z,
                         q.w,
-                        visAgent.id,
+                        Number(visAgent.id),
                         visAgent.signedTypeId(),
                         c
                     );

@@ -139,8 +139,8 @@ class CompositePass {
                 if (col0.w < 0.0) {
                     discard;
                 }
-                float occ1 = texture(ssaoTex1, texCoords).r;
-                float occ2 = texture(ssaoTex2, texCoords).r;
+//                float occ1 = texture(ssaoTex1, texCoords).r;
+//                float occ2 = texture(ssaoTex2, texCoords).r;
                 int instanceId = int(col0.y);
             
                 if(instanceId < 0)
@@ -152,7 +152,8 @@ class CompositePass {
                 //float highlighted = (sign(col0.x) + 1.0) * 0.5;
 
                 ivec2 ncols = textureSize(colorsBuffer, 0);
-                vec4 col = texelFetch(colorsBuffer, ivec2(agentColorIndex % ncols.x, 0), 0);
+                vec4 col = texture(colorsBuffer, vec2(float(agentColorIndex % ncols.x)+0.5, 0.5));
+                //vec4 col = texelFetch(colorsBuffer, ivec2(agentColorIndex % ncols.x, 0), 0);
 
                 float eyeDepth = -col0.z;
 
@@ -206,7 +207,7 @@ class CompositePass {
                     //color.xyz = vec3(0.0, 1.0, 0.0);
                 }
             
-                gl_FragColor = vec4(occ1 * occ2 * color.xyz, 1.0);
+                gl_FragColor = vec4(/* occ1 * occ2 * */ color.xyz, 1.0);
             }
             `,
         });
