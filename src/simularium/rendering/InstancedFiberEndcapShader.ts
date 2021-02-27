@@ -50,7 +50,7 @@ void main()	{
     float fragPosDepth = (((f - n) * fragPosNDC.z) + n + f) / 2.0;
 
     // type id, instance id, zEye, zFragDepth
-    gl_FragColor = vec4(IN_instanceAndTypeId.x, IN_instanceAndTypeId.y, fragViewPos.z, fragPosDepth);
+    gl_FragColor = vec4(IN_instanceAndTypeId.y, IN_instanceAndTypeId.x, fragViewPos.z, fragPosDepth);
 }
 `;
 

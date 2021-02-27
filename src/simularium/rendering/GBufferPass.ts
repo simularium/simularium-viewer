@@ -136,9 +136,9 @@ class GBufferPass {
         renderer.setRenderTarget(colorBuffer);
         renderer.autoClear = true;
 
-        const DO_MESHES = false; //true;
+        const DO_MESHES = true;
         const DO_INSTANCED = true;
-        const DO_PDB = false; //true;
+        const DO_PDB = true;
 
         if (DO_MESHES) {
             // begin draw meshes
