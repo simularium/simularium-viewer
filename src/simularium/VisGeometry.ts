@@ -35,7 +35,7 @@ import {
 import * as dat from "dat.gui";
 
 import jsLogger from "js-logger";
-import { ILogger, ILogLevel } from "js-logger/src/types";
+import { ILogger, ILogLevel } from "js-logger";
 
 import { TrajectoryFileInfo } from "./types";
 import { AgentData } from "./VisData";
@@ -91,7 +91,7 @@ interface PathData {
     colors: Float32Array;
     geometry: BufferGeometry;
     material: LineBasicMaterial;
-    line: LineSegments<BufferGeometry>;
+    line: LineSegments;
 }
 
 // per agent type Visdata format
