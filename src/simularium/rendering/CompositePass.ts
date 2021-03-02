@@ -136,18 +136,19 @@ class CompositePass {
                 // contains IDs.  index into data buffer.
                 // typeId, instanceId, viewZ
                 vec4 col0 = texture(colorTex, texCoords);
+                // check for unitialized (set to clear value which was negative to indicate nothing drawn here to colorize)
                 if (col0.w < 0.0) {
                     discard;
                 }
                 float occ1 = texture(ssaoTex1, texCoords).r;
                 float occ2 = texture(ssaoTex2, texCoords).r;
-                int instanceId = int(col0.y);
+                float instanceId = (col0.y);
             
-                if(instanceId < 0)
+                if(instanceId < 0.0)
                     discard;
             
                 // Subtracting 1 because we added 1 before setting this, to account for id 0 being highlighted.
-                int agentColorIndex = abs(int(col0.x))-1;
+                int agentColorIndex = int(abs(col0.x)-1.0);
                 // future: can use this value to do other rendering
                 //float highlighted = (sign(col0.x) + 1.0) * 0.5;
 

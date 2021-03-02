@@ -263,7 +263,8 @@ class MoleculeRenderer {
             return -1;
         } else {
             // look up the object from its instance.
-            const instance = pixel[1];
+            // and round it off to nearest integer
+            const instance = Math.round(pixel[1]);
             return instance;
         }
     }

@@ -37,12 +37,19 @@ class ContourPass {
               return (sign(typevalue) > 0.0);
             }
 
+            bool isSameInstance(float x, float y) {
+              // fudge factor to work around strange float bug on nvidia/Windows hardware.
+              // straight equality works on MacOS and Intel/Windows gpu 
+              return abs(x-y) < 0.1; // x == y
+            }
+            bool isAdjacentToSame(float x, float l, float r, float b, float t) {
+              return isSameInstance(x, l) && isSameInstance(x, r) && isSameInstance(x, b) && isSameInstance(x, t);
+            }
+
             void main(void)
             {
               vec4 col = texture(colorTex, vUv);
-              //output_col = col;
-              //return;
-            
+           
               ivec2 resolution = textureSize(colorTex, 0);
             
               vec2 pixelPos = vUv * vec2(float(resolution.x), float(resolution.y));
@@ -51,23 +58,23 @@ class ContourPass {
             
               vec4 instance = texture(instanceIdTex, vUv);
               // instance.g is the agent id
-              int X = int(instance.g);
-              int R = int(texture(instanceIdTex, vUv + vec2(wStep, 0)).g);
-              int L = int(texture(instanceIdTex, vUv + vec2(-wStep, 0)).g);
-              int T = int(texture(instanceIdTex, vUv + vec2(0, hStep)).g);
-              int B = int(texture(instanceIdTex, vUv + vec2(0, -hStep)).g);
+              float X = (instance.g);
+              float R = (texture(instanceIdTex, vUv + vec2(wStep, 0)).g);
+              float L = (texture(instanceIdTex, vUv + vec2(-wStep, 0)).g);
+              float T = (texture(instanceIdTex, vUv + vec2(0, hStep)).g);
+              float B = (texture(instanceIdTex, vUv + vec2(0, -hStep)).g);
             
               vec4 finalColor = col;
-              if ( (X == R) && (X == L) && (X == T) && (X == B) )
+              if (isAdjacentToSame(X, R, L, T, B) )
               {
-                //~ current pixel is NOT on the edge
+                // current pixel is NOT on the edge
                 finalColor = col;
               }
               else
               {
-                //~ current pixel lies on the edge
+                // current pixel lies on the edge
                 // outline pixel color is a blackened version of the color
-                finalColor = mix(vec4(0,0,0,1), col, 0.8);
+                finalColor = mix(vec4(0.0,0.0,0.0,1.0), col, 0.8);
 
               }
 
@@ -108,15 +115,14 @@ class ContourPass {
 
               }
 
-
-
-              if (X >= 0 && X == int(followedInstance)) {
+              if (X >= 0.0 && isSameInstance(X, followedInstance)) {
                 float thickness = followThickness;
-                R = int(texture(instanceIdTex, vUv + vec2(wStep*thickness, 0)).g);
-                L = int(texture(instanceIdTex, vUv + vec2(-wStep*thickness, 0)).g);
-                T = int(texture(instanceIdTex, vUv + vec2(0, hStep*thickness)).g);
-                B = int(texture(instanceIdTex, vUv + vec2(0, -hStep*thickness)).g);
-                if ( (X != R) || (X != L) || (X != T) || (X != B) )
+                R = (texture(instanceIdTex, vUv + vec2(wStep*thickness, 0)).g);
+                L = (texture(instanceIdTex, vUv + vec2(-wStep*thickness, 0)).g);
+                T = (texture(instanceIdTex, vUv + vec2(0, hStep*thickness)).g);
+                B = (texture(instanceIdTex, vUv + vec2(0, -hStep*thickness)).g);
+                //if ( (X != R) || (X != L) || (X != T) || (X != B) )
+                if ( !isAdjacentToSame(X, R, L, T, B) )
                 {
                   //~ current pixel lies on the edge
                   // outline pixel color is a whitened version of the color
