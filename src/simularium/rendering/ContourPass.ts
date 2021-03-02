@@ -38,9 +38,15 @@ class ContourPass {
             }
 
             bool isSameInstance(float x, float y) {
-              // fudge factor to work around strange float bug on nvidia/Windows hardware.
-              // straight equality works on MacOS and Intel/Windows gpu 
-              return abs(x-y) < 0.1; // x == y
+              // typeIds and instanceIds are integers written to float gpu buffers.
+              // This fudge factor is working around a strange float bug on nvidia/Windows hardware.
+              // The numbers read are noisy and not uniform across faces.
+              // I can't tell if the bug occurs on read or on write, but the workaround is
+              // needed here at read time when we need to do comparisons.
+              // (TODO: dump buffer after read to inspec?)
+              // Straight equality works on MacOS and Intel/Windows gpu 
+              // This should be tested periodically with new nvidia drivers on windows
+              return abs(x-y) < 0.1;
             }
             bool isAdjacentToSame(float x, float l, float r, float b, float t) {
               return isSameInstance(x, l) && isSameInstance(x, r) && isSameInstance(x, b) && isSameInstance(x, t);
