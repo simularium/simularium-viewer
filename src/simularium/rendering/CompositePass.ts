@@ -153,7 +153,6 @@ class CompositePass {
                 //float highlighted = (sign(col0.x) + 1.0) * 0.5;
 
                 ivec2 ncols = textureSize(colorsBuffer, 0);
-                //vec4 col = texture(colorsBuffer, vec2(float(agentColorIndex % ncols.x)+0.5, 0.5));
                 vec4 col = texelFetch(colorsBuffer, ivec2(agentColorIndex % ncols.x, 0), 0);
 
                 float eyeDepth = -col0.z;
