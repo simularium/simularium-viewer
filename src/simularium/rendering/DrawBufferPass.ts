@@ -44,12 +44,12 @@ class DrawBufferPass {
 
     public render(
         renderer: WebGLRenderer,
-        target: WebGLRenderTarget,
+        target: WebGLRenderTarget | null,
         bufferToDraw: WebGLRenderTarget
     ): void {
         this.pass.material.uniforms.colorTex.value = bufferToDraw.texture;
 
-        const c = renderer.getClearColor().clone();
+        const c = renderer.getClearColor(new Color()).clone();
         const a = renderer.getClearAlpha();
         renderer.setClearColor(new Color(1, 0, 0), 1.0);
 

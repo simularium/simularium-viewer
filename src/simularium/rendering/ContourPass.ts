@@ -37,12 +37,25 @@ class ContourPass {
               return (sign(typevalue) > 0.0);
             }
 
+            bool isSameInstance(float x, float y) {
+              // typeIds and instanceIds are integers written to float gpu buffers.
+              // This fudge factor is working around a strange float bug on nvidia/Windows hardware.
+              // The numbers read are noisy and not uniform across faces.
+              // I can't tell if the bug occurs on read or on write, but the workaround is
+              // needed here at read time when we need to do comparisons.
+              // (TODO: dump buffer after read to inspec?)
+              // Straight equality works on MacOS and Intel/Windows gpu 
+              // This should be tested periodically with new nvidia drivers on windows
+              return abs(x-y) < 0.1;
+            }
+            bool isAdjacentToSame(float x, float l, float r, float b, float t) {
+              return isSameInstance(x, l) && isSameInstance(x, r) && isSameInstance(x, b) && isSameInstance(x, t);
+            }
+
             void main(void)
             {
               vec4 col = texture(colorTex, vUv);
-              //output_col = col;
-              //return;
-            
+           
               ivec2 resolution = textureSize(colorTex, 0);
             
               vec2 pixelPos = vUv * vec2(float(resolution.x), float(resolution.y));
@@ -51,23 +64,23 @@ class ContourPass {
             
               vec4 instance = texture(instanceIdTex, vUv);
               // instance.g is the agent id
-              int X = int(instance.g);
-              int R = int(texture(instanceIdTex, vUv + vec2(wStep, 0)).g);
-              int L = int(texture(instanceIdTex, vUv + vec2(-wStep, 0)).g);
-              int T = int(texture(instanceIdTex, vUv + vec2(0, hStep)).g);
-              int B = int(texture(instanceIdTex, vUv + vec2(0, -hStep)).g);
+              float X = instance.g);
+              float R = texture(instanceIdTex, vUv + vec2(wStep, 0)).g;
+              float L = texture(instanceIdTex, vUv + vec2(-wStep, 0)).g;
+              float T = texture(instanceIdTex, vUv + vec2(0, hStep)).g;
+              float B = texture(instanceIdTex, vUv + vec2(0, -hStep)).g;
             
               vec4 finalColor = col;
-              if ( (X == R) && (X == L) && (X == T) && (X == B) )
+              if (isAdjacentToSame(X, R, L, T, B) )
               {
-                //~ current pixel is NOT on the edge
+                // current pixel is NOT on the edge
                 finalColor = col;
               }
               else
               {
-                //~ current pixel lies on the edge
-                // outline pixel color is a blackened version of the color
-                finalColor = mix(vec4(0,0,0,1), col, 0.8);
+                // current pixel lies on the edge of an agent
+                // outline pixel color is a darkened version of the color
+                finalColor = mix(vec4(0.0,0.0,0.0,1.0), col, 0.8);
 
               }
 
@@ -108,18 +121,16 @@ class ContourPass {
 
               }
 
-
-
-              if (X >= 0 && X == int(followedInstance)) {
+              if (X >= 0.0 && isSameInstance(X, followedInstance)) {
                 float thickness = followThickness;
-                R = int(texture(instanceIdTex, vUv + vec2(wStep*thickness, 0)).g);
-                L = int(texture(instanceIdTex, vUv + vec2(-wStep*thickness, 0)).g);
-                T = int(texture(instanceIdTex, vUv + vec2(0, hStep*thickness)).g);
-                B = int(texture(instanceIdTex, vUv + vec2(0, -hStep*thickness)).g);
-                if ( (X != R) || (X != L) || (X != T) || (X != B) )
+                R = (texture(instanceIdTex, vUv + vec2(wStep*thickness, 0)).g);
+                L = (texture(instanceIdTex, vUv + vec2(-wStep*thickness, 0)).g);
+                T = (texture(instanceIdTex, vUv + vec2(0, hStep*thickness)).g);
+                B = (texture(instanceIdTex, vUv + vec2(0, -hStep*thickness)).g);
+                if ( !isAdjacentToSame(X, R, L, T, B) )
                 {
-                  //~ current pixel lies on the edge
-                  // outline pixel color is a whitened version of the color
+                  // current pixel lies on the edge of the followed agent
+                  // outline pixel color is blended toward the followColor
                   finalColor = mix(vec4(followColor.rgb,1), col, 1.0-followAlpha);
                 }
               }

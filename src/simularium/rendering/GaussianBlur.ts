@@ -172,7 +172,7 @@ class BlurPass {
         positions: WebGLRenderTarget,
         intermediateBuffer: WebGLRenderTarget
     ): void {
-        const c = renderer.getClearColor().clone();
+        const c = renderer.getClearColor(new Color()).clone();
         const a = renderer.getClearAlpha();
         renderer.setClearColor(new Color(1.0, 1.0, 1.0), 1.0);
 

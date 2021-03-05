@@ -69,8 +69,8 @@ export default class VisAgent {
             { name: "curved_5nm_Back" },
             { name: "curved_5nm_Front" },
         ],
-        facesMaterial: MembraneShader.membraneShader.clone(),
-        sidesMaterial: MembraneShader.membraneShader.clone(),
+        facesMaterial: MembraneShader.membraneShader.clone() as ShaderMaterial,
+        sidesMaterial: MembraneShader.membraneShader.clone() as ShaderMaterial,
         facesUVScale: new Vector2(40.0, 40.0),
         sidesUVScale: new Vector2(2.0, 40.0),
     };

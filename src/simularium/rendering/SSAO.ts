@@ -130,7 +130,7 @@ class SSAO1Pass {
         this.pass.material.uniforms.viewPosTex.value = positions.texture;
         this.pass.material.uniforms.normalTex.value = normals.texture;
 
-        const c = renderer.getClearColor().clone();
+        const c = renderer.getClearColor(new Color()).clone();
         const a = renderer.getClearAlpha();
         renderer.setClearColor(new Color(1.0, 0.0, 0.0), 1.0);
         this.pass.render(renderer, target);

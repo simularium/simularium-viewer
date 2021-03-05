@@ -99,7 +99,7 @@ class GBufferPass {
         normalBuffer: WebGLRenderTarget,
         positionBuffer: WebGLRenderTarget
     ): void {
-        const c = renderer.getClearColor().clone();
+        const c = renderer.getClearColor(new Color()).clone();
         const a = renderer.getClearAlpha();
 
         this.colorMaterialMesh.uniforms.projectionMatrix.value =
@@ -130,110 +130,144 @@ class GBufferPass {
         // y:-1 agent instance id (-1 so that 0 remains a distinct instance id from the background)
         // z:0 view space depth
         // alpha == -1 is a marker to discard pixels later, will be filled with frag depth
-        renderer.setClearColor(new Color(0.0, -1.0, 0.0), -1.0);
+        const COLOR_CLEAR = new Color(0.0, -1.0, 0.0);
+        const COLOR_ALPHA = -1.0;
+        renderer.setClearColor(COLOR_CLEAR, COLOR_ALPHA);
         renderer.setRenderTarget(colorBuffer);
+        renderer.autoClear = true;
 
-        // begin draw meshes
-        this.agentMeshGroup.visible = true;
-        this.agentFiberGroup.visible = true;
-        this.agentPDBGroup.visible = false;
-        this.instancedMeshGroup.visible = false;
+        const DO_MESHES = true;
+        const DO_INSTANCED = true;
+        const DO_PDB = true;
 
-        scene.overrideMaterial = this.colorMaterialMesh;
-        renderer.render(scene, camera);
-        // end draw meshes
+        if (DO_MESHES) {
+            // begin draw meshes
+            this.agentMeshGroup.visible = true;
+            this.agentFiberGroup.visible = true;
+            this.agentPDBGroup.visible = false;
+            this.instancedMeshGroup.visible = false;
 
-        renderer.autoClear = false;
+            scene.overrideMaterial = this.colorMaterialMesh;
+            renderer.render(scene, camera);
+            // end draw meshes
+            renderer.autoClear = false;
+        }
 
-        // draw instanced things
-        this.agentMeshGroup.visible = false;
-        this.agentFiberGroup.visible = false;
-        this.agentPDBGroup.visible = false;
-        this.instancedMeshGroup.visible = true;
+        if (DO_INSTANCED) {
+            // draw instanced things
+            this.agentMeshGroup.visible = false;
+            this.agentFiberGroup.visible = false;
+            this.agentPDBGroup.visible = false;
+            this.instancedMeshGroup.visible = true;
 
-        scene.overrideMaterial = this.colorMaterialInstancedMesh;
-        renderer.render(scene, camera);
-        // end draw instanced things
+            scene.overrideMaterial = this.colorMaterialInstancedMesh;
+            renderer.render(scene, camera);
+            // end draw instanced things
+            renderer.autoClear = false;
+        }
 
-        // begin draw pdb
-        this.agentMeshGroup.visible = false;
-        this.agentFiberGroup.visible = false;
-        this.agentPDBGroup.visible = true;
-        this.instancedMeshGroup.visible = false;
+        if (DO_PDB) {
+            // begin draw pdb
+            this.agentMeshGroup.visible = false;
+            this.agentFiberGroup.visible = false;
+            this.agentPDBGroup.visible = true;
+            this.instancedMeshGroup.visible = false;
 
-        scene.overrideMaterial = this.colorMaterialPDB;
-        renderer.render(scene, camera);
-        //end draw pdb
+            scene.overrideMaterial = this.colorMaterialPDB;
+            renderer.render(scene, camera);
+            //end draw pdb
+            renderer.autoClear = false;
+        }
 
         renderer.autoClear = true;
 
         // 2. fill normalbuffer
+        const NORMAL_CLEAR = new Color(0.0, 0.0, 0.0);
+        const NORMAL_ALPHA = -1.0;
 
-        renderer.setClearColor(new Color(0.0, 0.0, 0.0), -1.0);
+        renderer.setClearColor(NORMAL_CLEAR, NORMAL_ALPHA);
         renderer.setRenderTarget(normalBuffer);
 
-        this.agentMeshGroup.visible = true;
-        this.agentFiberGroup.visible = true;
-        this.agentPDBGroup.visible = false;
-        this.instancedMeshGroup.visible = false;
+        if (DO_MESHES) {
+            this.agentMeshGroup.visible = true;
+            this.agentFiberGroup.visible = true;
+            this.agentPDBGroup.visible = false;
+            this.instancedMeshGroup.visible = false;
 
-        scene.overrideMaterial = this.normalMaterialMesh;
-        renderer.render(scene, camera);
+            scene.overrideMaterial = this.normalMaterialMesh;
+            renderer.render(scene, camera);
 
-        renderer.autoClear = false;
+            renderer.autoClear = false;
+        }
 
-        // draw instanced things
-        this.agentMeshGroup.visible = false;
-        this.agentFiberGroup.visible = false;
-        this.agentPDBGroup.visible = false;
-        this.instancedMeshGroup.visible = true;
+        if (DO_INSTANCED) {
+            // draw instanced things
+            this.agentMeshGroup.visible = false;
+            this.agentFiberGroup.visible = false;
+            this.agentPDBGroup.visible = false;
+            this.instancedMeshGroup.visible = true;
 
-        scene.overrideMaterial = this.normalMaterialInstancedMesh;
-        renderer.render(scene, camera);
-        // end draw instanced things
+            scene.overrideMaterial = this.normalMaterialInstancedMesh;
+            renderer.render(scene, camera);
+            // end draw instanced things
+            renderer.autoClear = false;
+        }
 
-        this.agentMeshGroup.visible = false;
-        this.agentFiberGroup.visible = false;
-        this.agentPDBGroup.visible = true;
-        this.instancedMeshGroup.visible = false;
+        if (DO_PDB) {
+            this.agentMeshGroup.visible = false;
+            this.agentFiberGroup.visible = false;
+            this.agentPDBGroup.visible = true;
+            this.instancedMeshGroup.visible = false;
 
-        scene.overrideMaterial = this.normalMaterialPDB;
-        renderer.render(scene, camera);
+            scene.overrideMaterial = this.normalMaterialPDB;
+            renderer.render(scene, camera);
+            renderer.autoClear = false;
+        }
 
         renderer.autoClear = true;
 
         // 3. fill positionbuffer
+        const POSITION_CLEAR = new Color(0.0, 0.0, 0.0);
+        const POSITION_ALPHA = -1.0;
 
-        renderer.setClearColor(new Color(0.0, 0.0, 0.0), -1.0);
+        renderer.setClearColor(POSITION_CLEAR, POSITION_ALPHA);
         renderer.setRenderTarget(positionBuffer);
 
-        this.agentMeshGroup.visible = true;
-        this.agentFiberGroup.visible = true;
-        this.agentPDBGroup.visible = false;
-        this.instancedMeshGroup.visible = false;
+        if (DO_MESHES) {
+            this.agentMeshGroup.visible = true;
+            this.agentFiberGroup.visible = true;
+            this.agentPDBGroup.visible = false;
+            this.instancedMeshGroup.visible = false;
 
-        scene.overrideMaterial = this.positionMaterialMesh;
-        renderer.render(scene, camera);
+            scene.overrideMaterial = this.positionMaterialMesh;
+            renderer.render(scene, camera);
 
-        renderer.autoClear = false;
+            renderer.autoClear = false;
+        }
 
-        // draw instanced things
-        this.agentMeshGroup.visible = false;
-        this.agentFiberGroup.visible = false;
-        this.agentPDBGroup.visible = false;
-        this.instancedMeshGroup.visible = true;
+        if (DO_INSTANCED) {
+            // draw instanced things
+            this.agentMeshGroup.visible = false;
+            this.agentFiberGroup.visible = false;
+            this.agentPDBGroup.visible = false;
+            this.instancedMeshGroup.visible = true;
 
-        scene.overrideMaterial = this.positionMaterialInstancedMesh;
-        renderer.render(scene, camera);
-        // end draw instanced things
+            scene.overrideMaterial = this.positionMaterialInstancedMesh;
+            renderer.render(scene, camera);
+            // end draw instanced things
+            renderer.autoClear = false;
+        }
 
-        this.agentMeshGroup.visible = false;
-        this.agentFiberGroup.visible = false;
-        this.agentPDBGroup.visible = true;
-        this.instancedMeshGroup.visible = false;
+        if (DO_PDB) {
+            this.agentMeshGroup.visible = false;
+            this.agentFiberGroup.visible = false;
+            this.agentPDBGroup.visible = true;
+            this.instancedMeshGroup.visible = false;
 
-        scene.overrideMaterial = this.positionMaterialPDB;
-        renderer.render(scene, camera);
+            scene.overrideMaterial = this.positionMaterialPDB;
+            renderer.render(scene, camera);
+            renderer.autoClear = false;
+        }
 
         // restore state before returning
         scene.overrideMaterial = null;

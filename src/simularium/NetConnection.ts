@@ -1,5 +1,5 @@
 import jsLogger from "js-logger";
-import { ILogger } from "js-logger/src/types";
+import { ILogger } from "js-logger";
 
 interface NetMessage {
     connId: string;

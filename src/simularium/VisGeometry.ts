@@ -35,7 +35,7 @@ import {
 import * as dat from "dat.gui";
 
 import jsLogger from "js-logger";
-import { ILogger, ILogLevel } from "js-logger/src/types";
+import { ILogger, ILogLevel } from "js-logger";
 
 import { TrajectoryFileInfo } from "./types";
 import { AgentData } from "./VisData";
@@ -91,7 +91,7 @@ interface PathData {
     colors: Float32Array;
     geometry: BufferGeometry;
     material: LineBasicMaterial;
-    line: LineSegments<BufferGeometry>;
+    line: LineSegments;
 }
 
 // per agent type Visdata format
@@ -215,7 +215,7 @@ class VisGeometry {
 
         this.dl = new DirectionalLight(0xffffff, 0.6);
         this.hemiLight = new HemisphereLight(0xffffff, 0x000000, 0.5);
-        this.renderer = new WebGLRenderer();
+        this.renderer = new WebGLRenderer({ premultipliedAlpha: false });
         this.controls = new OrbitControls(
             this.camera,
             this.renderer.domElement
@@ -595,7 +595,7 @@ class VisGeometry {
         if (WEBGL.isWebGL2Available() === false) {
             this.renderStyle = RenderStyle.GENERIC;
             this.supportsMoleculeRendering = false;
-            this.renderer = new WebGLRenderer();
+            this.renderer = new WebGLRenderer({ premultipliedAlpha: false });
         } else {
             this.renderStyle = RenderStyle.MOLECULAR;
             this.supportsMoleculeRendering = true;
@@ -607,6 +607,7 @@ class VisGeometry {
             const rendererParams: WebGLRendererParameters = {
                 canvas: canvas,
                 context: context,
+                premultipliedAlpha: false,
             };
             this.renderer = new WebGLRenderer(rendererParams);
         }
