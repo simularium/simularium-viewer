@@ -64,11 +64,11 @@ class ContourPass {
             
               vec4 instance = texture(instanceIdTex, vUv);
               // instance.g is the agent id
-              float X = (instance.g);
-              float R = (texture(instanceIdTex, vUv + vec2(wStep, 0)).g);
-              float L = (texture(instanceIdTex, vUv + vec2(-wStep, 0)).g);
-              float T = (texture(instanceIdTex, vUv + vec2(0, hStep)).g);
-              float B = (texture(instanceIdTex, vUv + vec2(0, -hStep)).g);
+              float X = instance.g);
+              float R = texture(instanceIdTex, vUv + vec2(wStep, 0)).g;
+              float L = texture(instanceIdTex, vUv + vec2(-wStep, 0)).g;
+              float T = texture(instanceIdTex, vUv + vec2(0, hStep)).g;
+              float B = texture(instanceIdTex, vUv + vec2(0, -hStep)).g;
             
               vec4 finalColor = col;
               if (isAdjacentToSame(X, R, L, T, B) )
@@ -78,8 +78,8 @@ class ContourPass {
               }
               else
               {
-                // current pixel lies on the edge
-                // outline pixel color is a blackened version of the color
+                // current pixel lies on the edge of an agent
+                // outline pixel color is a darkened version of the color
                 finalColor = mix(vec4(0.0,0.0,0.0,1.0), col, 0.8);
 
               }
@@ -127,11 +127,10 @@ class ContourPass {
                 L = (texture(instanceIdTex, vUv + vec2(-wStep*thickness, 0)).g);
                 T = (texture(instanceIdTex, vUv + vec2(0, hStep*thickness)).g);
                 B = (texture(instanceIdTex, vUv + vec2(0, -hStep*thickness)).g);
-                //if ( (X != R) || (X != L) || (X != T) || (X != B) )
                 if ( !isAdjacentToSame(X, R, L, T, B) )
                 {
-                  //~ current pixel lies on the edge
-                  // outline pixel color is a whitened version of the color
+                  // current pixel lies on the edge of the followed agent
+                  // outline pixel color is blended toward the followColor
                   finalColor = mix(vec4(followColor.rgb,1), col, 1.0-followAlpha);
                 }
               }

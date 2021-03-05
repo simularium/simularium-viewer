@@ -136,7 +136,7 @@ class CompositePass {
                 // contains IDs.  index into data buffer.
                 // typeId, instanceId, viewZ
                 vec4 col0 = texture(colorTex, texCoords);
-                // check for unitialized (set to clear value which was negative to indicate nothing drawn here to colorize)
+                // check for uninitialized (set to clear value which was negative to indicate nothing drawn here to colorize)
                 if (col0.w < 0.0) {
                     discard;
                 }
