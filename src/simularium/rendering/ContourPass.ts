@@ -64,7 +64,7 @@ class ContourPass {
             
               vec4 instance = texture(instanceIdTex, vUv);
               // instance.g is the agent id
-              float X = instance.g);
+              float X = instance.g;
               float R = texture(instanceIdTex, vUv + vec2(wStep, 0)).g;
               float L = texture(instanceIdTex, vUv + vec2(-wStep, 0)).g;
               float T = texture(instanceIdTex, vUv + vec2(0, hStep)).g;
