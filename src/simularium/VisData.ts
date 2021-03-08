@@ -181,9 +181,7 @@ class VisData {
 
         while (end < lastEOF) {
             // contains Frame # | Time Stamp | # of Agents
-            const frameDataView = new Float32Array(
-                data.slice(start, start + 12)
-            );
+            const frameDataView = new Float32Array(data);
 
             // Find the next End of Frame signal
             for (; end < length; end = end + 4) {
@@ -430,20 +428,9 @@ class VisData {
     public parseAgentsFromNetData(msg: VisDataMessage | ArrayBuffer): void {
         if (msg instanceof ArrayBuffer) {
             const floatView = new Float32Array(msg);
-            const fileNameSize = (floatView[1] + 3) / 4;
-            const dataStart = 20 + fileNameSize * 2;
 
-            const frameNumber = new Float32Array(
-                msg.slice(dataStart, dataStart + 4)
-            );
-            if (this.lockedForFrame === true) {
-                if (frameNumber[0] !== this.frameToWaitFor) {
-                    return;
-                } else {
-                    this.lockedForFrame = false;
-                    this.frameToWaitFor = 0;
-                }
-            }
+            const fileNameSize = Math.ceil(floatView[1] / 4);
+            const dataStart = (2 + fileNameSize) * 4;
 
             this.parseBinaryNetData(msg as ArrayBuffer, dataStart);
             return;
