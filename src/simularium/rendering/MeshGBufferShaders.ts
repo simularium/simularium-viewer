@@ -3,14 +3,22 @@ import { FrontSide, Matrix4, ShaderMaterial } from "three";
 const vertexShader = `
 precision highp float;
 
+#ifdef WRITE_POS
 varying vec3 IN_viewPos;
+#endif
+#ifdef WRITE_NORMAL
 varying vec3 IN_viewNormal;
-          
-void main()	{
+#endif
+
+void main() {
     vec3 p = position.xyz;
     vec4 modelViewPosition = modelViewMatrix * vec4(p, 1.0);
+    #ifdef WRITE_POS
     IN_viewPos = modelViewPosition.xyz;
+    #endif
+    #ifdef WRITE_NORMAL
     IN_viewNormal = normalMatrix * normal.xyz;
+    #endif
 
     gl_Position = projectionMatrix * modelViewPosition;
 
@@ -21,16 +29,15 @@ const fragmentShader = `
 precision highp float;
 
 varying vec3 IN_viewPos;
-varying vec3 IN_viewNormal;
 
 uniform int typeId;
 uniform int instanceId;
 
 uniform mat4 projectionMatrix;
           
-void main()	{
+void main() {
     vec3 fragViewPos = IN_viewPos;
-  
+
     vec4 fragPosClip = projectionMatrix * vec4(fragViewPos, 1.0);
     vec3 fragPosNDC = fragPosClip.xyz / fragPosClip.w;
     float n = gl_DepthRange.near;
@@ -45,10 +52,9 @@ void main()	{
 const normalShader = `
 precision highp float;
 
-varying vec3 IN_viewPos;
 varying vec3 IN_viewNormal;
 
-void main()	{
+void main() {
     vec3 normal = IN_viewNormal;
     normal = normalize(normal);
     vec3 normalOut = normal * 0.5 + 0.5;
@@ -78,6 +84,10 @@ const colorMaterial = new ShaderMaterial({
     fragmentShader: fragmentShader,
     side: FrontSide,
     transparent: false,
+    defines: {
+        WRITE_POS: true,
+        WRITE_NORMAL: false,
+    },
 });
 const normalMaterial = new ShaderMaterial({
     uniforms: {
@@ -87,6 +97,10 @@ const normalMaterial = new ShaderMaterial({
     fragmentShader: normalShader,
     side: FrontSide,
     transparent: false,
+    defines: {
+        WRITE_POS: false,
+        WRITE_NORMAL: true,
+    },
 });
 const positionMaterial = new ShaderMaterial({
     uniforms: {
@@ -96,6 +110,10 @@ const positionMaterial = new ShaderMaterial({
     fragmentShader: positionShader,
     side: FrontSide,
     transparent: false,
+    defines: {
+        WRITE_POS: true,
+        WRITE_NORMAL: false,
+    },
 });
 
 export default {
