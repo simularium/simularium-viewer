@@ -48,7 +48,7 @@ export interface EncodedTypeMapping {
     [key: number]: AgentDisplayData;
 }
 
-export interface TrajectoryFileInfo {
+interface TrajectoryFileInfoGeneric {
     version: number;
     timeStepSize: number;
     totalSteps: number;
@@ -60,11 +60,11 @@ export interface TrajectoryFileInfo {
     typeMapping: EncodedTypeMapping;
 }
 
-export interface TrajectoryFileInfoV1 extends TrajectoryFileInfo {
+export interface TrajectoryFileInfoV1 extends TrajectoryFileInfoGeneric {
     spatialUnitFactorMeters: number;
 }
 
-export interface TrajectoryFileInfoV2 extends TrajectoryFileInfo {
+export interface TrajectoryFileInfoV2 extends TrajectoryFileInfoGeneric {
     spatialUnits: {
         magnitude: number;
         name: string;
@@ -75,8 +75,10 @@ export interface TrajectoryFileInfoV2 extends TrajectoryFileInfo {
     };
 }
 
+export type TrajectoryFileInfo = TrajectoryFileInfoV1 | TrajectoryFileInfoV2;
+
 export interface SimulariumFileFormat {
-    trajectoryInfo: TrajectoryFileInfoV1 | TrajectoryFileInfoV2;
+    trajectoryInfo: TrajectoryFileInfo;
     spatialData: VisDataMessage;
     plotData: CachedObservables;
 }

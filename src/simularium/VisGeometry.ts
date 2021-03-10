@@ -37,7 +37,7 @@ import * as dat from "dat.gui";
 import jsLogger from "js-logger";
 import { ILogger, ILogLevel } from "js-logger";
 
-import { TrajectoryFileInfoV1, TrajectoryFileInfoV2 } from "./types";
+import { TrajectoryFileInfo } from "./types";
 import { AgentData } from "./VisData";
 
 import MoleculeRenderer from "./rendering/MoleculeRenderer";
@@ -343,9 +343,7 @@ class VisGeometry {
         return this.renderer.domElement;
     }
 
-    public handleTrajectoryData(
-        trajectoryData: TrajectoryFileInfoV1 | TrajectoryFileInfoV2
-    ): void {
+    public handleTrajectoryData(trajectoryData: TrajectoryFileInfo): void {
         // get bounds.
         if (trajectoryData.hasOwnProperty("size")) {
             const bx = trajectoryData.size.x;
