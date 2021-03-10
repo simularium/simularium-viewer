@@ -4,7 +4,8 @@ export type {
 export type {
     VisDataMessage,
     VisDataFrame,
-    TrajectoryFileInfo,
+    TrajectoryFileInfoV1,
+    TrajectoryFileInfoV2,
     EncodedTypeMapping,
     SimulariumFileFormat,
 } from "./types";

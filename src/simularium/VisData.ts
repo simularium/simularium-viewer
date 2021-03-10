@@ -1,7 +1,8 @@
 import { difference } from "lodash";
 import * as util from "./ThreadUtil";
 import {
-    TrajectoryFileInfo,
+    TrajectoryFileInfoV1,
+    TrajectoryFileInfoV2,
     EncodedTypeMapping,
     VisDataMessage,
 } from "./types";
@@ -43,7 +44,10 @@ class VisData {
     private lockedForFrame: boolean;
     private cacheFrame: number;
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    private _dragAndDropFileInfo: TrajectoryFileInfo | null;
+    private _dragAndDropFileInfo:
+        | TrajectoryFileInfoV1
+        | TrajectoryFileInfoV2
+        | null;
     /**
      *   Parses a stream of data sent from the backend
      *
@@ -344,7 +348,9 @@ class VisData {
         );
     }
 
-    public set dragAndDropFileInfo(fileInfo: TrajectoryFileInfo | null) {
+    public set dragAndDropFileInfo(
+        fileInfo: TrajectoryFileInfoV1 | TrajectoryFileInfoV2 | null
+    ) {
         if (!fileInfo) return;
         // NOTE: this may be a temporary check as we're troubleshooting new file formats
         const missingIds = this.checkTypeMapping(fileInfo.typeMapping);
@@ -362,7 +368,10 @@ class VisData {
         this._dragAndDropFileInfo = fileInfo;
     }
 
-    public get dragAndDropFileInfo(): TrajectoryFileInfo | null {
+    public get dragAndDropFileInfo():
+        | TrajectoryFileInfoV1
+        | TrajectoryFileInfoV2
+        | null {
         if (!this._dragAndDropFileInfo) {
             return null;
         }

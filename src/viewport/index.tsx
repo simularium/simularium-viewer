@@ -9,7 +9,8 @@ import { forOwn, isEqual } from "lodash";
 
 import {
     VisGeometry,
-    TrajectoryFileInfo,
+    TrajectoryFileInfoV1,
+    TrajectoryFileInfoV2,
     SelectionInterface,
     SelectionStateInfo,
     UIDisplayData,
@@ -30,7 +31,7 @@ interface ViewportProps {
     simulariumController: SimulariumController;
     onJsonDataArrived(any): void;
     onTrajectoryFileInfoChanged: (
-        cachedData: TrajectoryFileInfo
+        cachedData: TrajectoryFileInfoV1 | TrajectoryFileInfoV2
     ) => void | undefined;
     onUIDisplayDataChanged: (data: UIDisplayData) => void | undefined;
     loadInitialData: boolean;
@@ -206,7 +207,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         simulariumController.zoomOut = this.zoomOut;
         simulariumController.visGeometry = this.visGeometry;
         simulariumController.trajFileInfoCallback = (
-            msg: TrajectoryFileInfo
+            msg: TrajectoryFileInfoV1 | TrajectoryFileInfoV2
         ) => {
             this.visGeometry.handleTrajectoryData(msg);
             // handleTrajectoryData() above creates a new bounding box and tick marks

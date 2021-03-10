@@ -5,7 +5,8 @@ import {
     NetConnectionParams,
     VisData,
     VisDataMessage,
-    TrajectoryFileInfo,
+    TrajectoryFileInfoV1,
+    TrajectoryFileInfoV2,
     VisGeometry,
 } from "../simularium";
 import {
@@ -35,7 +36,9 @@ export default class SimulariumController {
     public visData: VisData;
     public visGeometry: VisGeometry | undefined;
     public tickIntervalLength: number;
-    public handleTrajectoryInfo: (TrajectoryFileInfo) => void;
+    public handleTrajectoryInfo: (
+        msg: TrajectoryFileInfoV1 | TrajectoryFileInfoV2
+    ) => void;
     public postConnect: () => void;
     public resetCamera: () => void;
     public centerCamera: () => void;
@@ -63,7 +66,9 @@ export default class SimulariumController {
         };
 
         /* eslint-disable */
-        this.handleTrajectoryInfo = (msg: TrajectoryFileInfo) => {
+        this.handleTrajectoryInfo = (
+            msg: TrajectoryFileInfoV1 | TrajectoryFileInfoV2
+        ) => {
             /* Do Nothing */
         };
 
@@ -143,7 +148,7 @@ export default class SimulariumController {
         );
 
         this.netConnection.onTrajectoryFileInfoArrive = (
-            trajFileInfo: TrajectoryFileInfo
+            trajFileInfo: TrajectoryFileInfoV1 | TrajectoryFileInfoV2
         ) => {
             this.handleTrajectoryInfo(trajFileInfo);
         };
@@ -369,15 +374,20 @@ export default class SimulariumController {
         this.visData.clearCache();
     }
 
-    public get dragAndDropFileInfo(): TrajectoryFileInfo | null {
+    public get dragAndDropFileInfo():
+        | TrajectoryFileInfoV1
+        | TrajectoryFileInfoV2
+        | null {
         return this.visData.dragAndDropFileInfo;
     }
-    public set dragAndDropFileInfo(fileInfo: TrajectoryFileInfo | null) {
+    public set dragAndDropFileInfo(
+        fileInfo: TrajectoryFileInfoV1 | TrajectoryFileInfoV2 | null
+    ) {
         this.visData.dragAndDropFileInfo = fileInfo;
     }
 
     public set trajFileInfoCallback(
-        callback: (msg: TrajectoryFileInfo) => void
+        callback: (msg: TrajectoryFileInfoV1 | TrajectoryFileInfoV2) => void
     ) {
         this.handleTrajectoryInfo = callback;
 
