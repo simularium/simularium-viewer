@@ -52,7 +52,6 @@ export interface TrajectoryFileInfo {
     version: number;
     timeStepSize: number;
     totalSteps: number;
-    spatialUnitFactorMeters: number;
     size: {
         x: number;
         y: number;
@@ -61,8 +60,23 @@ export interface TrajectoryFileInfo {
     typeMapping: EncodedTypeMapping;
 }
 
+export interface TrajectoryFileInfoV1 extends TrajectoryFileInfo {
+    spatialUnitFactorMeters: number;
+}
+
+export interface TrajectoryFileInfoV2 extends TrajectoryFileInfo {
+    spatialUnits: {
+        magnitude: number;
+        name: string;
+    };
+    timeUnits: {
+        magnitude: number;
+        name: string;
+    };
+}
+
 export interface SimulariumFileFormat {
-    trajectoryInfo: TrajectoryFileInfo;
+    trajectoryInfo: TrajectoryFileInfoV1 | TrajectoryFileInfoV2;
     spatialData: VisDataMessage;
     plotData: CachedObservables;
 }
