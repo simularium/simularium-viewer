@@ -35,7 +35,7 @@ export default class SimulariumController {
     public visData: VisData;
     public visGeometry: VisGeometry | undefined;
     public tickIntervalLength: number;
-    public handleTrajectoryInfo: (msg: TrajectoryFileInfo) => void;
+    public handleTrajectoryInfo: (TrajectoryFileInfo) => void;
     public postConnect: () => void;
     public resetCamera: () => void;
     public centerCamera: () => void;
