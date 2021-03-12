@@ -11,12 +11,12 @@ import {
     Object3D,
     ShaderMaterial,
     SphereBufferGeometry,
-    TubeBufferGeometry,
     Vector2,
     Vector3,
     WebGLRenderer,
 } from "three";
 
+import FiberGeometry from "./rendering/FiberGeometry";
 import MembraneShader from "./rendering/MembraneShader";
 import PDBModel from "./PDBModel";
 import VisTypes from "./VisTypes";
@@ -384,11 +384,6 @@ export default class VisAgent {
         // first child is fiber
         // second and third children are endcaps
 
-        //if (this.mesh.children.length !== 3) {
-        //    console.error("Bad mesh structure for fiber");
-        //    return;
-        // }
-
         // put all the subpoints into a Vector3[]
         const curvePoints: Vector3[] = [];
         const numSubPoints = subpoints.length;
@@ -414,7 +409,7 @@ export default class VisAgent {
 
         // set up new fiber as curved tube
         this.fiberCurve = new CatmullRomCurve3(curvePoints);
-        const fibergeometry = new TubeBufferGeometry(
+        const fibergeometry = new FiberGeometry(
             this.fiberCurve,
             4 * (numPoints - 1), // 4 segments per control point
             collisionRadius * scale * 0.5,
@@ -454,7 +449,7 @@ export default class VisAgent {
             new Vector3(0, 0, 0),
             new Vector3(1, 1, 1)
         );
-        const geometry = new TubeBufferGeometry(fibercurve, 1, 1, 1, false);
+        const geometry = new FiberGeometry(fibercurve, 1, 1, 1, false);
         const fiberMesh = new Mesh(geometry);
         fiberMesh.name = `Fiber`;
 
