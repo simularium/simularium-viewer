@@ -191,7 +191,10 @@ class VisData {
                 }
             }
 
-            const agentDataView = new Float32Array(data.slice(start + 12, end));
+            const agentDataView = frameDataView.subarray(
+                (start + 12) / 4,
+                end / 4
+            );
 
             const parsedFrameData = {
                 time: frameDataView[1],
