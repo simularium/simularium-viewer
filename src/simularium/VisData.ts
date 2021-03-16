@@ -327,7 +327,13 @@ class VisData {
         } else {
             this.webWorker = null;
         }
-        this.clearCache();
+        this.frameCache = [];
+        this.frameDataCache = [];
+        this.cacheFrame = -1;
+        this._dragAndDropFileInfo = null;
+        this.frameToWaitFor = 0;
+        this.lockedForFrame = false;
+        this.netBuffer = new ArrayBuffer(0);
     }
 
     //get time() { return this.cacheFrame < this.frameDataCache.length ? this.frameDataCache[this.cacheFrame] : -1 }
