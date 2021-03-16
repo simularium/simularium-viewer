@@ -327,13 +327,7 @@ class VisData {
         } else {
             this.webWorker = null;
         }
-        this.frameCache = [];
-        this.frameDataCache = [];
-        this.cacheFrame = -1;
-        this._dragAndDropFileInfo = null;
-        this.frameToWaitFor = 0;
-        this.lockedForFrame = false;
-        this.netBuffer = new ArrayBuffer(0);
+        this.clearCache();
     }
 
     //get time() { return this.cacheFrame < this.frameDataCache.length ? this.frameDataCache[this.cacheFrame] : -1 }
@@ -425,7 +419,11 @@ class VisData {
     public clearCache(): void {
         this.frameCache = [];
         this.frameDataCache = [];
-        this.cacheFrame = 0;
+        this.cacheFrame = -1;
+        this._dragAndDropFileInfo = null;
+        this.frameToWaitFor = 0;
+        this.lockedForFrame = false;
+        this.netBuffer = new ArrayBuffer(0);
     }
 
     public parseAgentsFromNetData(msg: VisDataMessage | ArrayBuffer): void {

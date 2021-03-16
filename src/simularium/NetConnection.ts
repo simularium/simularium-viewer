@@ -112,9 +112,13 @@ export class NetConnection {
             const binaryMsgType = floatView[0];
 
             if (binaryMsgType === NetMessageEnum.ID_VIS_DATA_ARRIVE) {
+                const OFFSET_TO_NAME_LENGTH = 8;
                 const nameLength = floatView[1];
                 const byteView = new Uint8Array(event.data);
-                const fileBytes = byteView.subarray(8, 8 + nameLength);
+                const fileBytes = byteView.subarray(
+                    OFFSET_TO_NAME_LENGTH,
+                    OFFSET_TO_NAME_LENGTH + nameLength
+                );
                 const fileName = new TextDecoder("utf-8").decode(fileBytes);
 
                 if (fileName == this.lastRequestedFile) {
