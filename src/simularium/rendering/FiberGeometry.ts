@@ -14,11 +14,22 @@ interface FiberGeometryParameters {
     closed: boolean;
 }
 
+// helper variables
+
+const vertex = new Vector3();
+const normal = new Vector3();
+const uv = new Vector2();
+let P = new Vector3();
+
 class FiberGeometry extends BufferGeometry {
     private parameters: FiberGeometryParameters;
-    private tangents: Vector3[];
-    private normals: Vector3[];
-    private binormals: Vector3[];
+    private curvetangents: Vector3[];
+    private curvenormals: Vector3[];
+    private curvebinormals: Vector3[];
+    private vertices: Float32Array;
+    private normals: Float32Array;
+    private uvs: Float32Array;
+    private indices: number[] = [];
 
     constructor(
         path: Curve<Vector3>,
@@ -42,122 +53,35 @@ class FiberGeometry extends BufferGeometry {
 
         // expose internals
 
-        this.tangents = frames.tangents;
-        this.normals = frames.normals;
-        this.binormals = frames.binormals;
-
-        // helper variables
-
-        const vertex = new Vector3();
-        const normal = new Vector3();
-        const uv = new Vector2();
-        let P = new Vector3();
+        this.curvetangents = frames.tangents;
+        this.curvenormals = frames.normals;
+        this.curvebinormals = frames.binormals;
 
         // buffer
 
-        const vertices: number[] = [];
-        const normals: number[] = [];
-        const uvs: number[] = [];
-        const indices: number[] = [];
+        this.vertices = [];
+        this.normals = [];
+        this.uvs = [];
+        this.indices = [];
 
         // create buffer data
 
-        generateBufferData();
+        this.generateBufferData();
 
         // build geometry
 
-        this.setIndex(indices);
-        this.setAttribute("position", new Float32BufferAttribute(vertices, 3));
-        this.setAttribute("normal", new Float32BufferAttribute(normals, 3));
-        this.setAttribute("uv", new Float32BufferAttribute(uvs, 2));
+        this.setIndex(this.indices);
+        this.setAttribute(
+            "position",
+            new Float32BufferAttribute(this.vertices, 3)
+        );
+        this.setAttribute(
+            "normal",
+            new Float32BufferAttribute(this.normals, 3)
+        );
+        this.setAttribute("uv", new Float32BufferAttribute(this.uvs, 2));
 
         // functions
-
-        function generateBufferData() {
-            for (let i = 0; i < tubularSegments; i++) {
-                generateSegment(i);
-            }
-
-            // if the geometry is not closed, generate the last row of vertices and normals
-            // at the regular position on the given path
-            //
-            // if the geometry is closed, duplicate the first row of vertices and normals (uvs will differ)
-
-            generateSegment(closed === false ? tubularSegments : 0);
-
-            // uvs are generated in a separate function.
-            // this makes it easy compute correct values for closed geometries
-
-            generateUVs();
-
-            // finally create faces
-
-            generateIndices();
-        }
-
-        function generateSegment(i) {
-            // we use getPointAt to sample evenly distributed points from the given path
-
-            P = path.getPointAt(i / tubularSegments, P);
-
-            // retrieve corresponding normal and binormal
-
-            const N = frames.normals[i];
-            const B = frames.binormals[i];
-
-            // generate normals and vertices for the current segment
-
-            for (let j = 0; j <= radialSegments; j++) {
-                const v = (j / radialSegments) * Math.PI * 2;
-
-                const sin = Math.sin(v);
-                const cos = -Math.cos(v);
-
-                // normal
-
-                normal.x = cos * N.x + sin * B.x;
-                normal.y = cos * N.y + sin * B.y;
-                normal.z = cos * N.z + sin * B.z;
-                normal.normalize();
-
-                normals.push(normal.x, normal.y, normal.z);
-
-                // vertex
-
-                vertex.x = P.x + radius * normal.x;
-                vertex.y = P.y + radius * normal.y;
-                vertex.z = P.z + radius * normal.z;
-
-                vertices.push(vertex.x, vertex.y, vertex.z);
-            }
-        }
-
-        function generateIndices() {
-            for (let j = 1; j <= tubularSegments; j++) {
-                for (let i = 1; i <= radialSegments; i++) {
-                    const a = (radialSegments + 1) * (j - 1) + (i - 1);
-                    const b = (radialSegments + 1) * j + (i - 1);
-                    const c = (radialSegments + 1) * j + i;
-                    const d = (radialSegments + 1) * (j - 1) + i;
-
-                    // faces
-
-                    indices.push(a, b, d);
-                    indices.push(b, c, d);
-                }
-            }
-        }
-
-        function generateUVs() {
-            for (let i = 0; i <= tubularSegments; i++) {
-                for (let j = 0; j <= radialSegments; j++) {
-                    uv.x = i / tubularSegments;
-                    uv.y = j / radialSegments;
-
-                    uvs.push(uv.x, uv.y);
-                }
-            }
-        }
     }
     toJSON(): string {
         const data = BufferGeometry.prototype.toJSON.call(this);
@@ -165,6 +89,102 @@ class FiberGeometry extends BufferGeometry {
         data.path = this.parameters.path.toJSON();
 
         return data;
+    }
+
+    updateFromCurve(curve: Curve<Vector3>): void {
+        this.parameters.path = curve;
+    }
+
+    generateBufferData(): void {
+        for (let i = 0; i < this.parameters.tubularSegments; i++) {
+            this.generateSegment(i);
+        }
+
+        // if the geometry is not closed, generate the last row of vertices and normals
+        // at the regular position on the given path
+        //
+        // if the geometry is closed, duplicate the first row of vertices and normals (uvs will differ)
+
+        this.generateSegment(
+            closed === false ? this.parameters.tubularSegments : 0
+        );
+
+        // uvs are generated in a separate function.
+        // this makes it easy compute correct values for closed geometries
+
+        this.generateUVs();
+
+        // finally create faces
+
+        this.generateIndices();
+    }
+
+    generateSegment(i: number): void {
+        // we use getPointAt to sample evenly distributed points from the given path
+
+        P = this.parameters.path.getPointAt(
+            i / this.parameters.tubularSegments,
+            P
+        );
+
+        // retrieve corresponding normal and binormal
+
+        const N = this.curvenormals[i];
+        const B = this.curvebinormals[i];
+
+        // generate normals and vertices for the current segment
+
+        for (let j = 0; j <= this.parameters.radialSegments; j++) {
+            const v = (j / this.parameters.radialSegments) * Math.PI * 2;
+
+            const sin = Math.sin(v);
+            const cos = -Math.cos(v);
+
+            // normal
+
+            normal.x = cos * N.x + sin * B.x;
+            normal.y = cos * N.y + sin * B.y;
+            normal.z = cos * N.z + sin * B.z;
+            normal.normalize();
+
+            this.normals.push(normal.x, normal.y, normal.z);
+
+            // vertex
+
+            vertex.x = P.x + this.parameters.radius * normal.x;
+            vertex.y = P.y + this.parameters.radius * normal.y;
+            vertex.z = P.z + this.parameters.radius * normal.z;
+
+            this.vertices.push(vertex.x, vertex.y, vertex.z);
+        }
+    }
+
+    generateIndices(): void {
+        for (let j = 1; j <= this.parameters.tubularSegments; j++) {
+            for (let i = 1; i <= this.parameters.radialSegments; i++) {
+                const a =
+                    (this.parameters.radialSegments + 1) * (j - 1) + (i - 1);
+                const b = (this.parameters.radialSegments + 1) * j + (i - 1);
+                const c = (this.parameters.radialSegments + 1) * j + i;
+                const d = (this.parameters.radialSegments + 1) * (j - 1) + i;
+
+                // faces
+
+                this.indices.push(a, b, d);
+                this.indices.push(b, c, d);
+            }
+        }
+    }
+
+    generateUVs(): void {
+        for (let i = 0; i <= this.parameters.tubularSegments; i++) {
+            for (let j = 0; j <= this.parameters.radialSegments; j++) {
+                uv.x = i / this.parameters.tubularSegments;
+                uv.y = j / this.parameters.radialSegments;
+
+                this.uvs.push(uv.x, uv.y);
+            }
+        }
     }
 }
 

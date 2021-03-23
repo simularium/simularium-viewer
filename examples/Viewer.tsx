@@ -1,5 +1,8 @@
 import React from "react";
-import type { UIDisplayData, SelectionStateInfo } from "../src/simularium/SelectionInterface";
+import type {
+    UIDisplayData,
+    SelectionStateInfo,
+} from "../src/simularium/SelectionInterface";
 
 import SimulariumViewer, {
     SimulariumController,
@@ -61,7 +64,7 @@ interface ViewerState {
 }
 
 const simulariumController = new SimulariumController({});
-let playbackFile = "actin012_3.h5";
+let playbackFile = "medyan_paper_M:A_0.675.simularium";
 
 let currentFrame = 0;
 let currentTime = 0;
@@ -276,8 +279,13 @@ class Viewer extends React.Component<{}, ViewerState> {
                     }}
                     defaultValue={playbackFile}
                 >
+                    <option value="medyan_paper_M:A_0.675.simularium">
+                        TEST
+                    </option>
                     <option value="actin012_3.h5">Actin 12_3</option>
-                    <option value="listeria01.simularium">listeria 01</option>
+                    <option value="listeria_rocketbugs_normal_fine_2_filtered.simularium">
+                        listeria 01
+                    </option>
                     <option value="kinesin002_01.h5">kinesin 002</option>
                     <option value="microtubules038_10.h5">MT 38</option>
                     <option value="test_traj1.h5">TEST</option>

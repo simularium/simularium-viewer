@@ -1,7 +1,6 @@
 import {
     CatmullRomCurve3,
     Color,
-    Curve,
     Group,
     LineCurve3,
     Material,
@@ -87,7 +86,7 @@ export default class VisAgent {
     }
 
     public mesh: Object3D;
-    public fiberCurve?: Curve<Vector3>;
+    public fiberCurve?: CatmullRomCurve3;
     // TODO can this default to a trivial single-atom pdb model?
     public pdbModel?: PDBModel;
     public pdbObjects: Object3D[];
@@ -380,6 +379,11 @@ export default class VisAgent {
         collisionRadius: number,
         scale: number
     ): void {
+        // examine current curve and compare with new curve
+        const oldNumPoints = this.fiberCurve
+            ? this.fiberCurve.points.length
+            : 0;
+
         // assume a known structure.
         // first child is fiber
         // second and third children are endcaps
@@ -407,8 +411,13 @@ export default class VisAgent {
             curvePoints.push(new Vector3(x, y, z));
         }
 
+        if (oldNumPoints === numPoints) {
+            console.log("fiber stayed same length");
+        }
         // set up new fiber as curved tube
         this.fiberCurve = new CatmullRomCurve3(curvePoints);
+
+        //        if (oldNumPoints !== numPoints) {
         const fibergeometry = new FiberGeometry(
             this.fiberCurve,
             4 * (numPoints - 1), // 4 segments per control point
@@ -416,8 +425,12 @@ export default class VisAgent {
             8, // could reduce this with depth?
             false
         );
-
         (this.mesh.children[0] as Mesh).geometry = fibergeometry;
+        // } else {
+        //     const fibergeometry = (this.mesh.children[0] as Mesh)
+        //         .geometry as FiberGeometry;
+        //     fibergeometry.updateFromCurve(this.fiberCurve);
+        // }
 
         if (this.mesh.children.length === 3) {
             // update transform of endcap 0
