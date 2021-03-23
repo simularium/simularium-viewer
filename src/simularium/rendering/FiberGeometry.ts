@@ -20,6 +20,9 @@ const vertex = new Vector3();
 const normal = new Vector3();
 const uv = new Vector2();
 let P = new Vector3();
+let vbufferIndex = 0;
+let nbufferIndex = 0;
+let uvbufferIndex = 0;
 
 class FiberGeometry extends BufferGeometry {
     private parameters: FiberGeometryParameters;
@@ -59,27 +62,31 @@ class FiberGeometry extends BufferGeometry {
 
         // buffer
 
-        this.vertices = [];
-        this.normals = [];
-        this.uvs = [];
+        this.vertices = new Float32Array();
+        this.normals = new Float32Array();
+        this.uvs = new Float32Array();
         this.indices = [];
 
         // create buffer data
 
-        this.generateBufferData();
+        this.generateBufferData(false);
+
+        this.attributes.position.needsUpdate = true;
+        this.attributes.normal.needsUpdate = true;
+        this.attributes.uv.needsUpdate = true;
 
         // build geometry
 
-        this.setIndex(this.indices);
-        this.setAttribute(
-            "position",
-            new Float32BufferAttribute(this.vertices, 3)
-        );
-        this.setAttribute(
-            "normal",
-            new Float32BufferAttribute(this.normals, 3)
-        );
-        this.setAttribute("uv", new Float32BufferAttribute(this.uvs, 2));
+        // this.setIndex(this.indices);
+        // this.setAttribute(
+        //     "position",
+        //     new Float32BufferAttribute(this.vertices, 3)
+        // );
+        // this.setAttribute(
+        //     "normal",
+        //     new Float32BufferAttribute(this.normals, 3)
+        // );
+        // this.setAttribute("uv", new Float32BufferAttribute(this.uvs, 2));
 
         // functions
     }
@@ -91,11 +98,55 @@ class FiberGeometry extends BufferGeometry {
         return data;
     }
 
-    updateFromCurve(curve: Curve<Vector3>): void {
+    updateFromCurve(curve: Curve<Vector3>, radius: number): void {
+        this.parameters.radius = radius;
         this.parameters.path = curve;
+        const frames = curve.computeFrenetFrames(
+            this.parameters.tubularSegments,
+            this.parameters.closed
+        );
+
+        this.curvetangents = frames.tangents;
+        this.curvenormals = frames.normals;
+        this.curvebinormals = frames.binormals;
+
+        this.generateBufferData(true);
+
+        this.attributes.position.needsUpdate = true;
+        this.attributes.normal.needsUpdate = true;
+        this.attributes.uv.needsUpdate = true;
     }
 
-    generateBufferData(): void {
+    generateBufferData(fromUpdate: boolean): void {
+        const nverts =
+            (this.parameters.tubularSegments + 1) *
+            (this.parameters.radialSegments + 1);
+
+        if (nverts * 3 !== this.vertices.length) {
+            if (fromUpdate) {
+                console.log("update but num verts changed");
+            }
+            this.vertices = new Float32Array(nverts * 3);
+            this.setAttribute(
+                "position",
+                new Float32BufferAttribute(this.vertices, 3)
+            );
+        }
+        if (nverts * 3 !== this.normals.length) {
+            this.normals = new Float32Array(nverts * 3);
+            this.setAttribute(
+                "normal",
+                new Float32BufferAttribute(this.normals, 3)
+            );
+        }
+        if (nverts * 2 !== this.uvs.length) {
+            this.uvs = new Float32Array(nverts * 2);
+            this.setAttribute("uv", new Float32BufferAttribute(this.uvs, 2));
+        }
+
+        nbufferIndex = 0;
+        vbufferIndex = 0;
+
         for (let i = 0; i < this.parameters.tubularSegments; i++) {
             this.generateSegment(i);
         }
@@ -115,7 +166,6 @@ class FiberGeometry extends BufferGeometry {
         this.generateUVs();
 
         // finally create faces
-
         this.generateIndices();
     }
 
@@ -147,7 +197,12 @@ class FiberGeometry extends BufferGeometry {
             normal.z = cos * N.z + sin * B.z;
             normal.normalize();
 
-            this.normals.push(normal.x, normal.y, normal.z);
+            this.attributes.normal.setXYZ(
+                nbufferIndex++,
+                normal.x,
+                normal.y,
+                normal.z
+            );
 
             // vertex
 
@@ -155,11 +210,18 @@ class FiberGeometry extends BufferGeometry {
             vertex.y = P.y + this.parameters.radius * normal.y;
             vertex.z = P.z + this.parameters.radius * normal.z;
 
-            this.vertices.push(vertex.x, vertex.y, vertex.z);
+            this.attributes.position.setXYZ(
+                vbufferIndex++,
+                vertex.x,
+                vertex.y,
+                vertex.z
+            );
         }
     }
 
     generateIndices(): void {
+        this.indices = [];
+
         for (let j = 1; j <= this.parameters.tubularSegments; j++) {
             for (let i = 1; i <= this.parameters.radialSegments; i++) {
                 const a =
@@ -174,15 +236,17 @@ class FiberGeometry extends BufferGeometry {
                 this.indices.push(b, c, d);
             }
         }
+        this.setIndex(this.indices);
     }
 
     generateUVs(): void {
+        uvbufferIndex = 0;
         for (let i = 0; i <= this.parameters.tubularSegments; i++) {
             for (let j = 0; j <= this.parameters.radialSegments; j++) {
                 uv.x = i / this.parameters.tubularSegments;
                 uv.y = j / this.parameters.radialSegments;
 
-                this.uvs.push(uv.x, uv.y);
+                this.attributes.uv.setXY(uvbufferIndex++, uv.x, uv.y);
             }
         }
     }

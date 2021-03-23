@@ -411,26 +411,26 @@ export default class VisAgent {
             curvePoints.push(new Vector3(x, y, z));
         }
 
-        if (oldNumPoints === numPoints) {
-            console.log("fiber stayed same length");
-        }
         // set up new fiber as curved tube
         this.fiberCurve = new CatmullRomCurve3(curvePoints);
 
-        //        if (oldNumPoints !== numPoints) {
-        const fibergeometry = new FiberGeometry(
-            this.fiberCurve,
-            4 * (numPoints - 1), // 4 segments per control point
-            collisionRadius * scale * 0.5,
-            8, // could reduce this with depth?
-            false
-        );
-        (this.mesh.children[0] as Mesh).geometry = fibergeometry;
-        // } else {
-        //     const fibergeometry = (this.mesh.children[0] as Mesh)
-        //         .geometry as FiberGeometry;
-        //     fibergeometry.updateFromCurve(this.fiberCurve);
-        // }
+        if (oldNumPoints !== numPoints) {
+            const fibergeometry = new FiberGeometry(
+                this.fiberCurve,
+                4 * (numPoints - 1), // 4 segments per control point
+                collisionRadius * scale * 0.5,
+                8, // could reduce this with depth?
+                false
+            );
+            (this.mesh.children[0] as Mesh).geometry = fibergeometry;
+        } else {
+            const fibergeometry = (this.mesh.children[0] as Mesh)
+                .geometry as FiberGeometry;
+            fibergeometry.updateFromCurve(
+                this.fiberCurve,
+                collisionRadius * scale * 0.5
+            );
+        }
 
         if (this.mesh.children.length === 3) {
             // update transform of endcap 0
