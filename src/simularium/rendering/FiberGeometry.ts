@@ -1,7 +1,10 @@
 import {
+    BufferAttribute,
     BufferGeometry,
     Curve,
     Float32BufferAttribute,
+    Uint16BufferAttribute,
+    Uint32BufferAttribute,
     Vector2,
     Vector3,
 } from "three";
@@ -32,7 +35,7 @@ class FiberGeometry extends BufferGeometry {
     private vertices: Float32Array;
     private normals: Float32Array;
     private uvs: Float32Array;
-    private indices: number[] = [];
+    private indices: BufferAttribute;
 
     constructor(
         path: Curve<Vector3>,
@@ -54,42 +57,27 @@ class FiberGeometry extends BufferGeometry {
 
         const frames = path.computeFrenetFrames(tubularSegments, closed);
 
-        // expose internals
+        // curve data
 
         this.curvetangents = frames.tangents;
         this.curvenormals = frames.normals;
         this.curvebinormals = frames.binormals;
 
-        // buffer
+        // buffer init
 
         this.vertices = new Float32Array();
         this.normals = new Float32Array();
         this.uvs = new Float32Array();
-        this.indices = [];
+        this.indices = new Uint16BufferAttribute(0, 1);
 
-        // create buffer data
-
+        // create buffer data / build geometry
         this.generateBufferData(false);
 
         this.attributes.position.needsUpdate = true;
         this.attributes.normal.needsUpdate = true;
         this.attributes.uv.needsUpdate = true;
-
-        // build geometry
-
-        // this.setIndex(this.indices);
-        // this.setAttribute(
-        //     "position",
-        //     new Float32BufferAttribute(this.vertices, 3)
-        // );
-        // this.setAttribute(
-        //     "normal",
-        //     new Float32BufferAttribute(this.normals, 3)
-        // );
-        // this.setAttribute("uv", new Float32BufferAttribute(this.uvs, 2));
-
-        // functions
     }
+
     toJSON(): string {
         const data = BufferGeometry.prototype.toJSON.call(this);
 
@@ -101,6 +89,7 @@ class FiberGeometry extends BufferGeometry {
     updateFromCurve(curve: Curve<Vector3>, radius: number): void {
         this.parameters.radius = radius;
         this.parameters.path = curve;
+
         const frames = curve.computeFrenetFrames(
             this.parameters.tubularSegments,
             this.parameters.closed
@@ -220,8 +209,30 @@ class FiberGeometry extends BufferGeometry {
     }
 
     generateIndices(): void {
-        this.indices = [];
+        // TODO optimize for reusing same buffer rather than always reallocating
+        if (
+            (this.parameters.tubularSegments + 1) *
+                (this.parameters.radialSegments + 1) >
+            65535
+        ) {
+            this.indices = new Uint32BufferAttribute(
+                this.parameters.tubularSegments *
+                    this.parameters.radialSegments *
+                    6,
+                1
+            );
+            this.setIndex(this.indices);
+        } else {
+            this.indices = new Uint16BufferAttribute(
+                this.parameters.tubularSegments *
+                    this.parameters.radialSegments *
+                    6,
+                1
+            );
+            this.setIndex(this.indices);
+        }
 
+        let indexBufferIndex = 0;
         for (let j = 1; j <= this.parameters.tubularSegments; j++) {
             for (let i = 1; i <= this.parameters.radialSegments; i++) {
                 const a =
@@ -230,13 +241,16 @@ class FiberGeometry extends BufferGeometry {
                 const c = (this.parameters.radialSegments + 1) * j + i;
                 const d = (this.parameters.radialSegments + 1) * (j - 1) + i;
 
-                // faces
-
-                this.indices.push(a, b, d);
-                this.indices.push(b, c, d);
+                // 2 triangle faces
+                this.indices.setX(indexBufferIndex++, a);
+                this.indices.setX(indexBufferIndex++, b);
+                this.indices.setX(indexBufferIndex++, d);
+                this.indices.setX(indexBufferIndex++, b);
+                this.indices.setX(indexBufferIndex++, c);
+                this.indices.setX(indexBufferIndex++, d);
             }
         }
-        this.setIndex(this.indices);
+        this.indices.needsUpdate = true;
     }
 
     generateUVs(): void {
