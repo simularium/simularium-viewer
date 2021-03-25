@@ -1,5 +1,8 @@
 import React from "react";
-import type { UIDisplayData, SelectionStateInfo } from "../src/simularium/SelectionInterface";
+import type {
+    UIDisplayData,
+    SelectionStateInfo,
+} from "../src/simularium/SelectionInterface";
 
 import SimulariumViewer, {
     SimulariumController,
@@ -14,6 +17,14 @@ const netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
     serverPort: 9002,
 };
+
+let playbackFile = "actin012_3.h5";
+let queryStringFile = "";
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.has("file")) {
+    queryStringFile = urlParams.get("file");
+    playbackFile = queryStringFile;
+}
 
 // Typescript's File definition is missing this function
 //  which is part of the HTML standard on all browsers
@@ -61,7 +72,6 @@ interface ViewerState {
 }
 
 const simulariumController = new SimulariumController({});
-let playbackFile = "actin012_3.h5";
 
 let currentFrame = 0;
 let currentTime = 0;
@@ -276,6 +286,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                     }}
                     defaultValue={playbackFile}
                 >
+                    <option value={queryStringFile}>{queryStringFile}</option>
                     <option value="actin012_3.h5">Actin 12_3</option>
                     <option value="listeria01.simularium">listeria 01</option>
                     <option value="kinesin002_01.h5">kinesin 002</option>
