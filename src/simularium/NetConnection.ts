@@ -1,5 +1,7 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
+import { TrajectoryFileInfo } from "./types";
+import { updateTrajectoryFileInfoFormat } from "./versionHandlers";
 
 export interface NetMessage {
     connId: string;
@@ -108,7 +110,24 @@ export class NetConnection {
             return;
         }
 
-        const msg: NetMessage = JSON.parse(event.data);
+        const msg: NetMessage | TrajectoryFileInfo = JSON.parse(event.data);
+        const isMsgTrajectoryFileInfo = (
+            msg: NetMessage | TrajectoryFileInfo
+        ): msg is TrajectoryFileInfo => {
+            if (Object.keys(msg).includes("version")) {
+                return true;
+            } else {
+                return false;
+            }
+        };
+
+        if (isMsgTrajectoryFileInfo(msg)) {
+            this.logger.error(
+                "Web message is of type TrajectoryFileInfo instead of NetMessage"
+            );
+            return;
+        }
+
         const msgType = msg.msgType;
         const numMsgTypes = NetMessageEnum.LENGTH;
 
@@ -150,11 +169,17 @@ export class NetConnection {
                 break;
             case NetMessageEnum.ID_TRAJECTORY_FILE_INFO:
                 this.logger.debug("Trajectory file info Arrived");
-                // const updatedMsg = updatedTrajectoryFileInfoFormat(msg)
-                this.onTrajectoryFileInfoArrive(msg);
+                if (isMsgTrajectoryFileInfo(msg)) {
+                    const updatedMsg = updateTrajectoryFileInfoFormat(msg);
+                    this.onTrajectoryFileInfoArrive(updatedMsg);
+                } else {
+                    this.logger.error(
+                        "Web message is of type NetMessage instead of TrajectoryFileInfo"
+                    );
+                }
                 break;
             default:
-                this.logger.debug("Web request recieved", msg.msgType);
+                this.logger.debug("Web request received", msg.msgType);
                 break;
         }
     }
