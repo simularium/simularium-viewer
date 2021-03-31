@@ -1,7 +1,7 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
 
-interface NetMessage {
+export interface NetMessage {
     connId: string;
     msgType: number;
     fileName: string;
@@ -150,6 +150,7 @@ export class NetConnection {
                 break;
             case NetMessageEnum.ID_TRAJECTORY_FILE_INFO:
                 this.logger.debug("Trajectory file info Arrived");
+                // const updatedMsg = updatedTrajectoryFileInfoFormat(msg)
                 this.onTrajectoryFileInfoArrive(msg);
                 break;
             default:
