@@ -132,6 +132,36 @@ class FiberGeometry extends BufferGeometry {
             this.uvs = new Float32Array(nverts * 2);
             this.setAttribute("uv", new Float32BufferAttribute(this.uvs, 2));
         }
+        let needNewIndices = false;
+        if (
+            this.parameters.tubularSegments *
+                this.parameters.radialSegments *
+                6 !==
+            this.indices.array.length
+        ) {
+            needNewIndices = true;
+            if (
+                (this.parameters.tubularSegments + 1) *
+                    (this.parameters.radialSegments + 1) >
+                65535
+            ) {
+                this.indices = new Uint32BufferAttribute(
+                    this.parameters.tubularSegments *
+                        this.parameters.radialSegments *
+                        6,
+                    1
+                );
+                this.setIndex(this.indices);
+            } else {
+                this.indices = new Uint16BufferAttribute(
+                    this.parameters.tubularSegments *
+                        this.parameters.radialSegments *
+                        6,
+                    1
+                );
+                this.setIndex(this.indices);
+            }
+        }
 
         nbufferIndex = 0;
         vbufferIndex = 0;
@@ -155,7 +185,9 @@ class FiberGeometry extends BufferGeometry {
         this.generateUVs();
 
         // finally create faces
-        this.generateIndices();
+        if (needNewIndices) {
+            this.generateIndices();
+        }
     }
 
     generateSegment(i: number): void {
@@ -209,29 +241,6 @@ class FiberGeometry extends BufferGeometry {
     }
 
     generateIndices(): void {
-        // TODO optimize for reusing same buffer rather than always reallocating
-        if (
-            (this.parameters.tubularSegments + 1) *
-                (this.parameters.radialSegments + 1) >
-            65535
-        ) {
-            this.indices = new Uint32BufferAttribute(
-                this.parameters.tubularSegments *
-                    this.parameters.radialSegments *
-                    6,
-                1
-            );
-            this.setIndex(this.indices);
-        } else {
-            this.indices = new Uint16BufferAttribute(
-                this.parameters.tubularSegments *
-                    this.parameters.radialSegments *
-                    6,
-                1
-            );
-            this.setIndex(this.indices);
-        }
-
         let indexBufferIndex = 0;
         for (let j = 1; j <= this.parameters.tubularSegments; j++) {
             for (let i = 1; i <= this.parameters.radialSegments; i++) {
