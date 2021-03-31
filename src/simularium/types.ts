@@ -49,6 +49,8 @@ export interface EncodedTypeMapping {
 }
 
 interface TrajectoryFileInfoGeneric {
+    connId: string;
+    msgType: number;
     version: number;
     timeStepSize: number;
     totalSteps: number;
