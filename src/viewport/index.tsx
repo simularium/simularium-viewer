@@ -16,6 +16,7 @@ import {
     NO_AGENT,
 } from "../simularium";
 import { RenderStyle } from "../simularium/VisGeometry";
+import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
 
 export type PropColor = string | number | [number, number, number];
 
@@ -222,7 +223,8 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                     console.log("error parsing 'typeMapping' data", e);
                 }
             }
-            onTrajectoryFileInfoChanged(msg);
+            const newMsg = updateTrajectoryFileInfoFormat(msg)
+            onTrajectoryFileInfoChanged(newMsg);
 
             this.visGeometry.clearColorMapping();
             const uiDisplayData = this.selectionInterface.getUIDisplayData();
