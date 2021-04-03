@@ -1,3 +1,4 @@
+import { CatmullRomCurve3 } from "three";
 import { WEBGL } from "three/examples/jsm/WebGL.js";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
@@ -1574,6 +1575,15 @@ class VisGeometry {
                         this.getColorIndexForTypeId(typeId)
                     );
                 }
+
+                const curvePoints: Vector3[] = [];
+                for (let j = 0; j < agentData.subpoints.length; j += 3) {
+                    const x = agentData.subpoints[j];
+                    const y = agentData.subpoints[j + 1];
+                    const z = agentData.subpoints[j + 2];
+                    curvePoints.push(new Vector3(x, y, z));
+                }
+                visAgent.fiberCurve = new CatmullRomCurve3(curvePoints);
 
                 //visAgent.updateFiber(agentData.subpoints, agentData.cr, scale);
                 this.fibers.addInstance(
