@@ -3,10 +3,16 @@ import PDBGBufferShaders from "./PDBGBufferShaders";
 import InstanceMeshShaders from "./InstancedFiberEndcapShader";
 
 import {
+    GbufferRenderPass,
+    MultipassShaders,
+    setSceneRenderPass,
+    updateProjectionMatrix,
+    updateResolution,
+} from "./MultipassMaterials";
+
+import {
     Color,
     Group,
-    ShaderMaterial,
-    Vector2,
     Scene,
     WebGLRenderer,
     PerspectiveCamera,
@@ -27,20 +33,17 @@ import {
 
 // draw positions, normals, and instance and type ids of objects
 class GBufferPass {
-    public colorMaterialMesh: ShaderMaterial;
-    public normalMaterialMesh: ShaderMaterial;
-    public positionMaterialMesh: ShaderMaterial;
-    public colorMaterialPDB: ShaderMaterial;
-    public normalMaterialPDB: ShaderMaterial;
-    public positionMaterialPDB: ShaderMaterial;
-    public colorMaterialInstancedMesh: ShaderMaterial;
-    public normalMaterialInstancedMesh: ShaderMaterial;
-    public positionMaterialInstancedMesh: ShaderMaterial;
+    public meshGbufferMaterials: MultipassShaders;
+    public pdbGbufferMaterials: MultipassShaders;
+    public instancedFiberEndcapMaterials: MultipassShaders;
+
     public scene: Scene;
     public agentMeshGroup: Group;
     public agentPDBGroup: Group;
     public agentFiberGroup: Group;
     public instancedMeshGroup: Group;
+
+    private fiberMaterials?: MultipassShaders;
 
     public constructor() {
         this.agentMeshGroup = new Group();
@@ -48,18 +51,11 @@ class GBufferPass {
         this.agentFiberGroup = new Group();
         this.instancedMeshGroup = new Group();
 
-        this.colorMaterialMesh = MeshGBufferShaders.colorMaterial;
-        this.normalMaterialMesh = MeshGBufferShaders.normalMaterial;
-        this.positionMaterialMesh = MeshGBufferShaders.positionMaterial;
+        this.meshGbufferMaterials = MeshGBufferShaders.shaderSet;
 
-        this.colorMaterialPDB = PDBGBufferShaders.colorMaterial;
-        this.normalMaterialPDB = PDBGBufferShaders.normalMaterial;
-        this.positionMaterialPDB = PDBGBufferShaders.positionMaterial;
+        this.pdbGbufferMaterials = PDBGBufferShaders.shaderSet;
 
-        this.colorMaterialInstancedMesh = InstanceMeshShaders.colorMaterial;
-        this.normalMaterialInstancedMesh = InstanceMeshShaders.normalMaterial;
-        this.positionMaterialInstancedMesh =
-            InstanceMeshShaders.positionMaterial;
+        this.instancedFiberEndcapMaterials = InstanceMeshShaders.shaderSet;
 
         this.scene = new Scene();
     }
@@ -68,27 +64,18 @@ class GBufferPass {
         agentMeshGroup: Group,
         agentPDBGroup: Group,
         agentFiberGroup: Group,
-        instancedMeshGroup: Group
+        instancedMeshGroup: Group,
+        fiberMaterials: MultipassShaders
     ): void {
         this.agentMeshGroup = agentMeshGroup;
         this.agentPDBGroup = agentPDBGroup;
         this.agentFiberGroup = agentFiberGroup;
         this.instancedMeshGroup = instancedMeshGroup;
+        this.fiberMaterials = fiberMaterials;
     }
 
     public resize(width: number, height: number): void {
-        this.colorMaterialPDB.uniforms.iResolution.value = new Vector2(
-            width,
-            height
-        );
-        this.normalMaterialPDB.uniforms.iResolution.value = new Vector2(
-            width,
-            height
-        );
-        this.positionMaterialPDB.uniforms.iResolution.value = new Vector2(
-            width,
-            height
-        );
+        updateResolution(this.pdbGbufferMaterials, width, height);
     }
 
     public render(
@@ -102,28 +89,23 @@ class GBufferPass {
         const c = renderer.getClearColor(new Color()).clone();
         const a = renderer.getClearAlpha();
 
-        this.colorMaterialMesh.uniforms.projectionMatrix.value =
-            camera.projectionMatrix;
-        this.normalMaterialMesh.uniforms.projectionMatrix.value =
-            camera.projectionMatrix;
-        this.positionMaterialMesh.uniforms.projectionMatrix.value =
-            camera.projectionMatrix;
-
-        this.colorMaterialPDB.uniforms.projectionMatrix.value =
-            camera.projectionMatrix;
-        this.normalMaterialPDB.uniforms.projectionMatrix.value =
-            camera.projectionMatrix;
-        this.positionMaterialPDB.uniforms.projectionMatrix.value =
-            camera.projectionMatrix;
-
-        this.colorMaterialInstancedMesh.uniforms.projectionMatrix.value =
-            camera.projectionMatrix;
-        this.normalMaterialInstancedMesh.uniforms.projectionMatrix.value =
-            camera.projectionMatrix;
-        this.positionMaterialInstancedMesh.uniforms.projectionMatrix.value =
-            camera.projectionMatrix;
+        updateProjectionMatrix(
+            this.meshGbufferMaterials,
+            camera.projectionMatrix
+        );
+        updateProjectionMatrix(
+            this.pdbGbufferMaterials,
+            camera.projectionMatrix
+        );
+        if (this.fiberMaterials) {
+            updateProjectionMatrix(
+                this.fiberMaterials,
+                camera.projectionMatrix
+            );
+        }
 
         // 1. fill colorbuffer
+        let renderPass: GbufferRenderPass = GbufferRenderPass.COLOR;
 
         // clear color:
         // x:0 agent type id (0 so that type ids can be positive or negative integers)
@@ -147,20 +129,20 @@ class GBufferPass {
             this.agentPDBGroup.visible = false;
             this.instancedMeshGroup.visible = false;
 
-            scene.overrideMaterial = this.colorMaterialMesh;
+            setSceneRenderPass(scene, this.meshGbufferMaterials, renderPass);
             renderer.render(scene, camera);
             // end draw meshes
             renderer.autoClear = false;
         }
 
-        if (DO_INSTANCED) {
+        if (DO_INSTANCED && this.fiberMaterials) {
             // draw instanced things
             this.agentMeshGroup.visible = false;
             this.agentFiberGroup.visible = false;
             this.agentPDBGroup.visible = false;
             this.instancedMeshGroup.visible = true;
 
-            scene.overrideMaterial = this.colorMaterialInstancedMesh;
+            setSceneRenderPass(scene, this.fiberMaterials, renderPass);
             renderer.render(scene, camera);
             // end draw instanced things
             renderer.autoClear = false;
@@ -173,7 +155,7 @@ class GBufferPass {
             this.agentPDBGroup.visible = true;
             this.instancedMeshGroup.visible = false;
 
-            scene.overrideMaterial = this.colorMaterialPDB;
+            setSceneRenderPass(scene, this.pdbGbufferMaterials, renderPass);
             renderer.render(scene, camera);
             //end draw pdb
             renderer.autoClear = false;
@@ -182,6 +164,8 @@ class GBufferPass {
         renderer.autoClear = true;
 
         // 2. fill normalbuffer
+        renderPass = GbufferRenderPass.NORMAL;
+
         const NORMAL_CLEAR = new Color(0.0, 0.0, 0.0);
         const NORMAL_ALPHA = -1.0;
 
@@ -194,20 +178,20 @@ class GBufferPass {
             this.agentPDBGroup.visible = false;
             this.instancedMeshGroup.visible = false;
 
-            scene.overrideMaterial = this.normalMaterialMesh;
+            setSceneRenderPass(scene, this.meshGbufferMaterials, renderPass);
             renderer.render(scene, camera);
 
             renderer.autoClear = false;
         }
 
-        if (DO_INSTANCED) {
+        if (DO_INSTANCED && this.fiberMaterials) {
             // draw instanced things
             this.agentMeshGroup.visible = false;
             this.agentFiberGroup.visible = false;
             this.agentPDBGroup.visible = false;
             this.instancedMeshGroup.visible = true;
 
-            scene.overrideMaterial = this.normalMaterialInstancedMesh;
+            setSceneRenderPass(scene, this.fiberMaterials, renderPass);
             renderer.render(scene, camera);
             // end draw instanced things
             renderer.autoClear = false;
@@ -219,7 +203,7 @@ class GBufferPass {
             this.agentPDBGroup.visible = true;
             this.instancedMeshGroup.visible = false;
 
-            scene.overrideMaterial = this.normalMaterialPDB;
+            setSceneRenderPass(scene, this.pdbGbufferMaterials, renderPass);
             renderer.render(scene, camera);
             renderer.autoClear = false;
         }
@@ -227,6 +211,8 @@ class GBufferPass {
         renderer.autoClear = true;
 
         // 3. fill positionbuffer
+        renderPass = GbufferRenderPass.POSITION;
+
         const POSITION_CLEAR = new Color(0.0, 0.0, 0.0);
         const POSITION_ALPHA = -1.0;
 
@@ -239,20 +225,20 @@ class GBufferPass {
             this.agentPDBGroup.visible = false;
             this.instancedMeshGroup.visible = false;
 
-            scene.overrideMaterial = this.positionMaterialMesh;
+            setSceneRenderPass(scene, this.meshGbufferMaterials, renderPass);
             renderer.render(scene, camera);
 
             renderer.autoClear = false;
         }
 
-        if (DO_INSTANCED) {
+        if (DO_INSTANCED && this.fiberMaterials) {
             // draw instanced things
             this.agentMeshGroup.visible = false;
             this.agentFiberGroup.visible = false;
             this.agentPDBGroup.visible = false;
             this.instancedMeshGroup.visible = true;
 
-            scene.overrideMaterial = this.positionMaterialInstancedMesh;
+            setSceneRenderPass(scene, this.fiberMaterials, renderPass);
             renderer.render(scene, camera);
             // end draw instanced things
             renderer.autoClear = false;
@@ -264,7 +250,7 @@ class GBufferPass {
             this.agentPDBGroup.visible = true;
             this.instancedMeshGroup.visible = false;
 
-            scene.overrideMaterial = this.positionMaterialPDB;
+            setSceneRenderPass(scene, this.pdbGbufferMaterials, renderPass);
             renderer.render(scene, camera);
             renderer.autoClear = false;
         }

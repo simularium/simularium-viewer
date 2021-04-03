@@ -17,6 +17,7 @@ import {
     PerspectiveCamera,
 } from "three";
 import * as dat from "dat.gui";
+import { MultipassShaders } from "./MultipassMaterials";
 
 interface MoleculeRenderParameters {
     aoradius1: number;
@@ -278,13 +279,15 @@ class MoleculeRenderer {
         agentMeshGroup: Group,
         agentPDBGroup: Group,
         agentFiberGroup: Group,
-        instancedMeshGroup: Group
+        instancedMeshGroup: Group,
+        fiberShaders: MultipassShaders
     ): void {
         this.gbufferPass.setMeshGroups(
             agentMeshGroup,
             agentPDBGroup,
             agentFiberGroup,
-            instancedMeshGroup
+            instancedMeshGroup,
+            fiberShaders
         );
     }
 

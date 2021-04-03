@@ -5,13 +5,15 @@ import {
     InstancedBufferAttribute,
     InstancedBufferGeometry,
     Mesh,
-    Color,
     DataTexture,
     RGBFormat,
     FloatType,
     Vector2,
     Vector3,
 } from "three";
+
+import { createShaders } from "./InstancedFiberShader";
+import { MultipassShaders } from "./MultipassMaterials";
 
 function createTubeGeometry(
     numSides = 8,
@@ -112,8 +114,11 @@ function createTubeGeometry(
 class InstancedFiber {
     // number of control points per curve instance
     private nCurvePoints: number;
+    private nRadialSections: number;
+    private nSegments: number;
     private curveGeometry: BufferGeometry;
     private mesh: Mesh;
+    private shaderSet: MultipassShaders;
     private instancedGeometry: InstancedBufferGeometry;
 
     private positionAttribute: InstancedBufferAttribute; // x,y,z,scale
@@ -128,7 +133,12 @@ class InstancedFiber {
 
     constructor() {
         this.nCurvePoints = 0;
+        this.nRadialSections = 0;
+        this.nSegments = 0;
+
+        this.shaderSet = createShaders(0, 0);
         this.mesh = new Mesh();
+        this.mesh.name = "fibers";
         this.instancedGeometry = new InstancedBufferGeometry();
         this.positionAttribute = new InstancedBufferAttribute(
             new Float32Array(),
@@ -137,7 +147,7 @@ class InstancedFiber {
         );
         this.instanceAttribute = new InstancedBufferAttribute(
             new Float32Array(),
-            2,
+            3,
             false
         );
 
@@ -158,15 +168,23 @@ class InstancedFiber {
         nRadialSections: number
     ): void {
         this.nCurvePoints = nPoints;
+        this.nRadialSections = nRadialSections;
+        this.nSegments = nSegments;
 
+        this.shaderSet = createShaders(nSegments, nPoints);
         this.reallocate(n);
         this.instancedGeometry.instanceCount = n;
         this.mesh = new Mesh(this.instancedGeometry);
+        this.mesh.name = "fibers";
         this.mesh.frustumCulled = false;
     }
 
     public getMesh(): Mesh {
         return this.mesh;
+    }
+
+    public getShaders(): MultipassShaders {
+        return this.shaderSet;
     }
 
     private updateInstanceCount(n: number): void {
@@ -180,6 +198,8 @@ class InstancedFiber {
         this.curveData.dispose();
 
         // build new data texture
+        // one row per curve, number of colums = num of curve control pts
+        // TODO: consolidate space better.
         this.curveData = new DataTexture(
             new Float32Array(n * this.nCurvePoints * 3),
             this.nCurvePoints,
@@ -188,12 +208,22 @@ class InstancedFiber {
             FloatType
         );
 
+        this.curveGeometry = createTubeGeometry(
+            this.nRadialSections,
+            this.nSegments,
+            false
+        );
+
         // we must create a new Geometry to have things update correctly
         this.instancedGeometry = new InstancedBufferGeometry().copy(
             this.curveGeometry
         );
         // install the new geometry into our Mesh object
         this.mesh.geometry = this.instancedGeometry;
+
+        this.shaderSet.color.uniforms.curveData.value = this.curveData;
+        this.shaderSet.normal.uniforms.curveData.value = this.curveData;
+        this.shaderSet.position.uniforms.curveData.value = this.curveData;
 
         // make new array,
         // copy old array into it,
@@ -207,11 +237,11 @@ class InstancedFiber {
             this.positionAttribute
         );
 
-        const newInst = new Float32Array(2 * n);
+        const newInst = new Float32Array(3 * n);
         newInst.set(this.instanceAttribute.array);
         this.instanceAttribute = new InstancedBufferAttribute(
             newInst,
-            2,
+            3,
             false
         );
         this.instancedGeometry.setAttribute(
@@ -222,11 +252,11 @@ class InstancedFiber {
 
     beginUpdate(nAgents: number): void {
         // do we need to increase storage?
-        const increment = 4096;
+        const increment = 1024;
         // total num instances possible in buffer
         const currentNumInstances = this.instanceAttribute.count;
         // num of instances needed
-        const requestedNumInstances = nAgents * 2;
+        const requestedNumInstances = nAgents;
 
         if (requestedNumInstances > currentNumInstances) {
             // increase to next multiple of increment
@@ -241,6 +271,7 @@ class InstancedFiber {
     }
 
     addInstance(
+        curvePts: number[],
         x: number,
         y: number,
         z: number,
@@ -250,12 +281,31 @@ class InstancedFiber {
         qz: number,
         qw: number,
         instanceId: number,
-        typeId: number,
-        c: Color // eslint-disable-line @typescript-eslint/no-unused-vars
+        typeId: number
     ): void {
         const offset = this.currentInstance;
         this.positionAttribute.setXYZW(offset, x, y, z, scale);
-        this.instanceAttribute.setXY(offset, instanceId, typeId);
+        this.instanceAttribute.setXYZ(
+            offset,
+            instanceId,
+            typeId,
+            this.currentInstance
+        );
+        // if (curvePts.length !== this.nCurvePoints) {
+        //     throw new Error(
+        //         `Adding instance of ${curvePts.length} to wrong length of Instanced fiber ${this.nCurvePoints}`
+        //     );
+        // }
+        for (
+            let i = 0;
+            i < Math.min(curvePts.length / 3, this.nCurvePoints);
+            ++i
+        ) {
+            const offset = this.currentInstance * this.nCurvePoints * 3 + i * 3;
+            this.curveData.image.data[offset + 0] = curvePts[i * 3 + 0];
+            this.curveData.image.data[offset + 1] = curvePts[i * 3 + 1];
+            this.curveData.image.data[offset + 2] = curvePts[i * 3 + 2];
+        }
 
         this.currentInstance++;
     }
@@ -266,6 +316,7 @@ class InstancedFiber {
         // assumes the entire buffers are invalidated.
         this.instanceAttribute.needsUpdate = true;
         this.positionAttribute.needsUpdate = true;
+        this.curveData.needsUpdate = true;
         this.isUpdating = false;
     }
 }

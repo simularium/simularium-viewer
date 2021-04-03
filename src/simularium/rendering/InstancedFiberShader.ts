@@ -1,4 +1,12 @@
-import { FrontSide, Matrix4, ShaderMaterial } from "three";
+import {
+    FrontSide,
+    Matrix4,
+    ShaderMaterial,
+    RawShaderMaterial,
+    GLSL3,
+} from "three";
+
+import { MultipassShaders } from "./MultipassMaterials";
 
 const vertexShader = `
 precision highp float;
@@ -9,8 +17,9 @@ in float angle;
 in vec2 uv;
 
 // per instance attributes
-attribute vec4 translateAndScale; // xyz trans, w scale
-attribute vec2 instanceAndTypeId;
+in vec4 translateAndScale; // xyz trans, w scale
+// instanceID, typeId, and which row of texture contains this curve
+in vec3 instanceAndTypeId;
 
 out vec3 IN_viewPos;
 out vec3 IN_viewNormal;
@@ -20,12 +29,6 @@ out vec2 IN_instanceAndTypeId;
 uniform mat4 projectionMatrix;
 uniform mat4 modelViewMatrix;
 uniform mat3 normalMatrix;
-
-// custom uniforms to build up our tubes
-uniform float thickness;  // TODO thickness is gonna be scale from 
-uniform float time;
-uniform float index;  // instance id
-uniform float radialSegments; // known constant?
 
 uniform sampler2D curveData;
 
@@ -71,7 +74,8 @@ vec4 initNonuniformCatmullRom( float x0, float x1, float x2, float x3, float dt0
 		}
 
 vec3 getCurvePoint(int i) {
-  return texelFetch(curveData,ivec2(i, index), 0).rgb * 0.25;
+  // instanceAndTypeId.z is which curve in this set of curves
+  return texelFetch(curveData,ivec2(i, int(instanceAndTypeId.z)), 0).rgb;
 }
 
 vec3 sampleCurve(float t) {
@@ -285,7 +289,7 @@ void main() {
   float t = (position * 2.0) * 0.5 + 0.5;
 
   // build our tube geometry
-  vec2 volume = vec2(thickness);
+  vec2 volume = vec2(translateAndScale.w);
 
   // build our geometry
   vec3 transformed;
@@ -294,20 +298,17 @@ void main() {
 
   // pass the normal and UV along
   vec3 transformedNormal = normalMatrix * objectNormal;
-  vNormal = normalize(transformedNormal);
-  vUv = uv.yx; // swizzle this to match expectations
+  //vNormal = normalize(transformedNormal);
+  // vUv = uv.yx; // swizzle this to match expectations
 
   // project our vertex position
   vec4 mvPosition = modelViewMatrix * vec4(transformed, 1.0);
-  vViewPosition = -mvPosition.xyz;
 
   IN_viewPos = mvPosition.xyz;
-  IN_viewNormal = transformedNormal;
-  IN_instanceAndTypeId = instanceAndTypeId;
+  IN_viewNormal = normalize(transformedNormal);
+  IN_instanceAndTypeId = instanceAndTypeId.xy;
 
   gl_Position = projectionMatrix * mvPosition;
-
-
 }
 
 `;
@@ -315,9 +316,10 @@ void main() {
 const fragmentShader = `
 precision highp float;
 
-varying vec3 IN_viewPos;
-varying vec3 IN_viewNormal;
-varying vec2 IN_instanceAndTypeId;
+in vec3 IN_viewPos;
+in vec3 IN_viewNormal;
+in vec2 IN_instanceAndTypeId;
+out vec4 fragColor;
 
 uniform mat4 projectionMatrix;
 
@@ -332,66 +334,90 @@ void main()	{
     float fragPosDepth = (((f - n) * fragPosNDC.z) + n + f) / 2.0;
 
     // type id, instance id, zEye, zFragDepth
-    gl_FragColor = vec4(IN_instanceAndTypeId.y, IN_instanceAndTypeId.x, fragViewPos.z, fragPosDepth);
+    fragColor = vec4(IN_instanceAndTypeId.y, IN_instanceAndTypeId.x, fragViewPos.z, fragPosDepth);
 }
 `;
 
 const normalShader = `
 precision highp float;
 
-varying vec3 IN_viewPos;
-varying vec3 IN_viewNormal;
-
+in vec3 IN_viewPos;
+in vec3 IN_viewNormal;
+out vec4 fragColor;
 void main()	{
     vec3 normal = IN_viewNormal;
     normal = normalize(normal);
     vec3 normalOut = normal * 0.5 + 0.5;
-    gl_FragColor = vec4(normalOut, 1.0);
+    fragColor = vec4(normalOut, 1.0);
 }
 `;
 
 const positionShader = `
 precision highp float;
 
-varying vec3 IN_viewPos;
-
+in vec3 IN_viewPos;
+out vec4 fragColor;
 void main()	{
     
     vec3 fragViewPos = IN_viewPos;
-    gl_FragColor = vec4(fragViewPos.x, fragViewPos.y, fragViewPos.z, 1.0);
+    fragColor = vec4(fragViewPos.x, fragViewPos.y, fragViewPos.z, 1.0);
 }
 `;
 
-const colorMaterial = new ShaderMaterial({
-    uniforms: {
-        projectionMatrix: { value: new Matrix4() },
-    },
-    vertexShader: vertexShader,
-    fragmentShader: fragmentShader,
-    side: FrontSide,
-    transparent: false,
-});
-const normalMaterial = new ShaderMaterial({
-    uniforms: {
-        projectionMatrix: { value: new Matrix4() },
-    },
-    vertexShader: vertexShader,
-    fragmentShader: normalShader,
-    side: FrontSide,
-    transparent: false,
-});
-const positionMaterial = new ShaderMaterial({
-    uniforms: {
-        projectionMatrix: { value: new Matrix4() },
-    },
-    vertexShader: vertexShader,
-    fragmentShader: positionShader,
-    side: FrontSide,
-    transparent: false,
-});
+function createShaders(
+    lengthSegments: number,
+    nPointsPerCurve: number
+): MultipassShaders {
+    const shaderDefines = {
+        lengthSegments: lengthSegments,
+        ROBUST: false,
+        ROBUST_NORMALS: true, // can be disabled for a slight optimization
+        FLAT_SHADED: false,
+        NUM_POINTS: nPointsPerCurve,
+    };
 
-export default {
-    positionMaterial,
-    normalMaterial,
-    colorMaterial,
-};
+    const colorMaterial = new RawShaderMaterial({
+        glslVersion: GLSL3,
+        vertexShader: vertexShader,
+        fragmentShader: fragmentShader,
+        side: FrontSide,
+        transparent: false,
+        defines: shaderDefines,
+        uniforms: {
+            curveData: { value: null },
+            projectionMatrix: { value: new Matrix4() },
+        },
+    });
+
+    const normalMaterial = new RawShaderMaterial({
+        glslVersion: GLSL3,
+        vertexShader: vertexShader,
+        fragmentShader: normalShader,
+        side: FrontSide,
+        transparent: false,
+        defines: shaderDefines,
+        uniforms: {
+            curveData: { value: null },
+            projectionMatrix: { value: new Matrix4() },
+        },
+    });
+    const positionMaterial = new RawShaderMaterial({
+        glslVersion: GLSL3,
+        vertexShader: vertexShader,
+        fragmentShader: positionShader,
+        side: FrontSide,
+        transparent: false,
+        defines: shaderDefines,
+        uniforms: {
+            curveData: { value: null },
+            projectionMatrix: { value: new Matrix4() },
+        },
+    });
+    return {
+        color: colorMaterial,
+        normal: normalMaterial,
+        position: positionMaterial,
+    };
+}
+
+export { createShaders };
