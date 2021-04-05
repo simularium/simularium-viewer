@@ -48,7 +48,7 @@ export interface EncodedTypeMapping {
     [key: number]: AgentDisplayData;
 }
 
-interface TrajectoryFileInfoGeneric {
+interface TrajectoryFileInfoBase {
     connId: string;
     msgType: number;
     version: number;
@@ -62,11 +62,11 @@ interface TrajectoryFileInfoGeneric {
     typeMapping: EncodedTypeMapping;
 }
 
-export interface TrajectoryFileInfoV1 extends TrajectoryFileInfoGeneric {
+export interface TrajectoryFileInfoV1 extends TrajectoryFileInfoBase {
     spatialUnitFactorMeters: number;
 }
 
-export interface TrajectoryFileInfoV2 extends TrajectoryFileInfoGeneric {
+export interface TrajectoryFileInfoV2 extends TrajectoryFileInfoBase {
     spatialUnits: {
         magnitude: number;
         name: string;
