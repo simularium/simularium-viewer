@@ -15,9 +15,15 @@ in vec4 translateAndScale; // xyz trans, w scale
 // instanceID, typeId, and which row of texture contains this curve
 in vec3 instanceAndTypeId;
 
+#ifdef WRITE_POS
 out vec3 IN_viewPos;
+#endif
+#ifdef WRITE_NORMAL
 out vec3 IN_viewNormal;
+#endif
+#ifdef WRITE_INSTANCE
 out vec2 IN_instanceAndTypeId;
+#endif
 
 // built-in uniforms from ThreeJS camera and Object3D
 uniform mat4 projectionMatrix;
@@ -297,10 +303,15 @@ void main() {
 
   // project our vertex position
   vec4 mvPosition = modelViewMatrix * vec4(transformed, 1.0);
-
+  #ifdef WRITE_POS
   IN_viewPos = mvPosition.xyz;
+  #endif
+  #ifdef WRITE_NORMAL
   IN_viewNormal = normalize(transformedNormal);
+  #endif
+  #ifdef WRITE_INSTANCE
   IN_instanceAndTypeId = instanceAndTypeId.xy;
+  #endif
 
   gl_Position = projectionMatrix * mvPosition;
 }
@@ -311,7 +322,6 @@ const fragmentShader = `
 precision highp float;
 
 in vec3 IN_viewPos;
-in vec3 IN_viewNormal;
 in vec2 IN_instanceAndTypeId;
 out vec4 fragColor;
 
@@ -335,7 +345,6 @@ void main()	{
 const normalShader = `
 precision highp float;
 
-in vec3 IN_viewPos;
 in vec3 IN_viewNormal;
 out vec4 fragColor;
 void main()	{
@@ -376,7 +385,12 @@ function createShaders(
         fragmentShader: fragmentShader,
         side: FrontSide,
         transparent: false,
-        defines: shaderDefines,
+        defines: {
+            ...shaderDefines,
+            WRITE_NORMAL: false,
+            WRITE_INSTANCE: true,
+            WRITE_POS: true,
+        },
         uniforms: {
             curveData: { value: null },
             projectionMatrix: { value: new Matrix4() },
@@ -389,7 +403,12 @@ function createShaders(
         fragmentShader: normalShader,
         side: FrontSide,
         transparent: false,
-        defines: shaderDefines,
+        defines: {
+            ...shaderDefines,
+            WRITE_NORMAL: true,
+            WRITE_INSTANCE: false,
+            WRITE_POS: false,
+        },
         uniforms: {
             curveData: { value: null },
             projectionMatrix: { value: new Matrix4() },
@@ -401,7 +420,12 @@ function createShaders(
         fragmentShader: positionShader,
         side: FrontSide,
         transparent: false,
-        defines: shaderDefines,
+        defines: {
+            ...shaderDefines,
+            WRITE_NORMAL: false,
+            WRITE_INSTANCE: false,
+            WRITE_POS: true,
+        },
         uniforms: {
             curveData: { value: null },
             projectionMatrix: { value: new Matrix4() },
