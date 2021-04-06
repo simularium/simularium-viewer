@@ -16,6 +16,7 @@ import {
     NO_AGENT,
 } from "../simularium";
 import { RenderStyle } from "../simularium/VisGeometry";
+import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
 
 export type PropColor = string | number | [number, number, number];
 
@@ -212,6 +213,11 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             // handleTrajectoryData() above creates a new bounding box and tick marks
             // (via resetBounds()) and sets VisGeometry.tickIntervalLength, which is now
             // available for use as the length of the scale bar in the UI.
+
+            // TODO: Determine and save scale bar info as simulariumController.scaleBarLabel here
+            // instead of as simulariumController.tickIntervalLength
+            // (This would involve multiplying visGeometry.tickIntervalLength by spatial unit
+            // magnitude and, if we want, determining the appropriate display unit for v1 data)
             simulariumController.tickIntervalLength = this.visGeometry.tickIntervalLength;
             try {
                 this.selectionInterface.parse(msg.typeMapping);
@@ -222,7 +228,8 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                     console.log("error parsing 'typeMapping' data", e);
                 }
             }
-            onTrajectoryFileInfoChanged(msg);
+            const newMsg = updateTrajectoryFileInfoFormat(msg)
+            onTrajectoryFileInfoChanged(newMsg);
 
             this.visGeometry.clearColorMapping();
             const uiDisplayData = this.selectionInterface.getUIDisplayData();

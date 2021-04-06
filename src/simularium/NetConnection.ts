@@ -25,10 +25,9 @@ export const enum NetMessageEnum {
     ID_MODEL_DEFINITION = 9,
     ID_HEARTBEAT_PING = 10,
     ID_HEARTBEAT_PONG = 11,
-    ID_PLAY_CACHE = 12,
-    ID_TRAJECTORY_FILE_INFO = 13,
-    ID_GOTO_SIMULATION_TIME = 14,
-    ID_INIT_TRAJECTORY_FILE = 15,
+    ID_TRAJECTORY_FILE_INFO = 12,
+    ID_GOTO_SIMULATION_TIME = 13,
+    ID_INIT_TRAJECTORY_FILE = 14,
     // insert new values here before LENGTH
     LENGTH,
 }
@@ -108,6 +107,39 @@ export class NetConnection {
             return;
         }
 
+        if (event.data instanceof ArrayBuffer) {
+            const floatView = new Float32Array(event.data);
+            const binaryMsgType = floatView[0];
+
+            if (binaryMsgType === NetMessageEnum.ID_VIS_DATA_ARRIVE) {
+                const OFFSET_TO_NAME_LENGTH = 8;
+                const nameLength = floatView[1];
+                const byteView = new Uint8Array(event.data);
+                const fileBytes = byteView.subarray(
+                    OFFSET_TO_NAME_LENGTH,
+                    OFFSET_TO_NAME_LENGTH + nameLength
+                );
+                const fileName = new TextDecoder("utf-8").decode(fileBytes);
+
+                if (fileName == this.lastRequestedFile) {
+                    this.onTrajectoryDataArrive(event.data);
+                } else {
+                    this.logger.error(
+                        "File arrived ",
+                        fileName,
+                        " is not file ",
+                        this.lastRequestedFile
+                    );
+                }
+            } else {
+                this.logger.error(
+                    "Unexpected binary message arrived of type ",
+                    binaryMsgType
+                );
+            }
+            return;
+        }
+
         const msg: NetMessage = JSON.parse(event.data);
         const msgType = msg.msgType;
         const numMsgTypes = NetMessageEnum.LENGTH;
@@ -173,6 +205,7 @@ export class NetConnection {
             this.disconnect();
         }
         this.webSocket = new WebSocket(uri);
+        this.webSocket.binaryType = "arraybuffer";
         this.logger.debug("WS Connection Request Sent: ", uri);
 
         // message handler
@@ -351,18 +384,6 @@ export class NetConnection {
         });
     }
 
-    public playRemoteSimCacheFromFrame(cacheFrame: number): void {
-        if (!this.socketIsValid()) {
-            return;
-        }
-
-        const jsonData = {
-            msgType: NetMessageEnum.ID_PLAY_CACHE,
-            "frame-num": cacheFrame,
-        };
-        this.sendWebSocketRequest(jsonData, "Play Simulation Cache from Frame");
-    }
-
     public pauseRemoteSim(): void {
         if (!this.socketIsValid()) {
             return;
@@ -401,16 +422,6 @@ export class NetConnection {
                 frameNumber: startFrameNumber,
             },
             "Request Single Frame"
-        );
-    }
-
-    public playRemoteSimCacheFromTime(timeNanoSeconds: number): void {
-        this.sendWebSocketRequest(
-            {
-                msgType: NetMessageEnum.ID_PLAY_CACHE,
-                time: timeNanoSeconds,
-            },
-            "Play Simulation Cache from Time"
         );
     }
 

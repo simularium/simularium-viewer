@@ -18,6 +18,14 @@ const netConnectionSettings = {
     serverPort: 9002,
 };
 
+let playbackFile = "actin012_3.h5";
+let queryStringFile = "";
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.has("file")) {
+    queryStringFile = urlParams.get("file");
+    playbackFile = queryStringFile;
+}
+
 // Typescript's File definition is missing this function
 //  which is part of the HTML standard on all browsers
 //  and needed below

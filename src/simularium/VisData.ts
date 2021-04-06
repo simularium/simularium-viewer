@@ -42,6 +42,8 @@ class VisData {
     private frameToWaitFor: number;
     private lockedForFrame: boolean;
     private cacheFrame: number;
+    private netBuffer: ArrayBuffer;
+
     // eslint-disable-next-line @typescript-eslint/naming-convention
     private _dragAndDropFileInfo: TrajectoryFileInfo | null;
     /**
@@ -164,6 +166,147 @@ class VisData {
         };
     }
 
+    public static parseBinary(data: ArrayBuffer): ParsedBundle {
+        const parsedAgentDataArray: AgentData[][] = [];
+        const frameDataArray: FrameData[] = [];
+
+        const enc = new TextEncoder(); // always utf-8
+        const eofPhrase = enc.encode("\\EOFTHEFRAMEENDSHERE");
+
+        const byteView = new Uint8Array(data);
+        const length = byteView.length;
+        const lastEOF = length - eofPhrase.length;
+        let end = 0;
+        let start = 0;
+
+        while (end < lastEOF) {
+            // contains Frame # | Time Stamp | # of Agents
+            const frameDataView = new Float32Array(data);
+
+            // Find the next End of Frame signal
+            for (; end < length; end = end + 4) {
+                const curr = byteView.subarray(end, end + eofPhrase.length);
+                if (curr.every((val, i) => val === eofPhrase[i])) {
+                    break;
+                }
+            }
+
+            const agentDataView = frameDataView.subarray(
+                (start + 12) / 4,
+                end / 4
+            );
+
+            const parsedFrameData = {
+                time: frameDataView[1],
+                frameNumber: frameDataView[0],
+            };
+            frameDataArray.push(parsedFrameData);
+
+            // Parse the frameData
+            // IMPORTANT: Order of this array needs to perfectly match the incoming data.
+            const agentObjectKeys = [
+                "vis-type",
+                "instanceId",
+                "type",
+                "x",
+                "y",
+                "z",
+                "xrot",
+                "yrot",
+                "zrot",
+                "cr",
+                "nSubPoints",
+            ];
+            const parsedAgentData: AgentData[] = [];
+            const nSubPointsIndex = agentObjectKeys.findIndex(
+                (ele) => ele === "nSubPoints"
+            );
+
+            const parseOneAgent = (agentArray): AgentData => {
+                return agentArray.reduce(
+                    (agentData, cur, i) => {
+                        let key;
+                        if (agentObjectKeys[i]) {
+                            key = agentObjectKeys[i];
+                            agentData[key] = cur;
+                        } else if (
+                            i <
+                            agentArray.length + agentData.nSubPoints
+                        ) {
+                            agentData.subpoints.push(cur);
+                        }
+                        return agentData;
+                    },
+                    { subpoints: [] }
+                );
+            };
+
+            let dataIter = 0;
+            while (dataIter < agentDataView.length) {
+                const nSubPoints = agentDataView[dataIter + nSubPointsIndex];
+                if (
+                    !Number.isInteger(nSubPoints) ||
+                    !Number.isInteger(dataIter)
+                ) {
+                    throw new FrontEndError(
+                        `Number of Subpoints: <pre>${nSubPoints}</pre>`,
+                        "Your data is malformed, non-integer value found for num-subpoints "
+                    );
+                    break;
+                }
+
+                // each array length is variable based on how many subpoints the agent has
+                const chunkLength = agentObjectKeys.length + nSubPoints;
+                const remaining = agentDataView.length - dataIter;
+                if (remaining < chunkLength - 1) {
+                    const attemptedMapping = agentObjectKeys.map(
+                        (name, index) =>
+                            `${name}: ${agentDataView[dataIter + index]}<br />`
+                    );
+                    // passed up in controller.handleLocalFileChange
+                    throw new FrontEndError(
+                        `Example attempt to parse your data: <pre>${attemptedMapping.join(
+                            ""
+                        )}</pre>`,
+                        "your data is malformed, there are too few entries."
+                    );
+                }
+
+                const agentSubSetArray = agentDataView.subarray(
+                    dataIter,
+                    dataIter + chunkLength
+                );
+                if (agentSubSetArray.length < agentObjectKeys.length) {
+                    const attemptedMapping = agentObjectKeys.map(
+                        (name, index) =>
+                            `${name}: ${agentSubSetArray[index]}<br />`
+                    );
+                    // passed up in controller.handleLocalFileChange
+                    throw new FrontEndError(
+                        `Example attempt to parse your data: <pre>${attemptedMapping.join(
+                            ""
+                        )}</pre>`,
+                        "your data is malformed, there are less entries than expected for this agent"
+                    );
+                }
+
+                const agent = parseOneAgent(agentSubSetArray);
+                parsedAgentData.push(agent);
+                dataIter = dataIter + chunkLength;
+            }
+
+            parsedAgentDataArray.push(parsedAgentData);
+
+            start = end + eofPhrase.length;
+            end = start;
+        }
+
+        return {
+            parsedAgentDataArray,
+            frameDataArray,
+        };
+    }
+
     public constructor() {
         if (util.ThreadUtil.browserSupportsWebWorkers()) {
             this.webWorker = util.ThreadUtil.createWebWorkerFromFunction(
@@ -190,6 +333,7 @@ class VisData {
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
+        this.netBuffer = new ArrayBuffer(0);
     }
 
     //get time() { return this.cacheFrame < this.frameDataCache.length ? this.frameDataCache[this.cacheFrame] : -1 }
@@ -281,10 +425,24 @@ class VisData {
     public clearCache(): void {
         this.frameCache = [];
         this.frameDataCache = [];
-        this.cacheFrame = 0;
+        this.cacheFrame = -1;
+        this._dragAndDropFileInfo = null;
+        this.frameToWaitFor = 0;
+        this.lockedForFrame = false;
+        this.netBuffer = new ArrayBuffer(0);
     }
 
-    public parseAgentsFromNetData(visDataMsg: VisDataMessage): void {
+    public parseAgentsFromNetData(msg: VisDataMessage | ArrayBuffer): void {
+        if (msg instanceof ArrayBuffer) {
+            const floatView = new Float32Array(msg);
+
+            const fileNameSize = Math.ceil(floatView[1] / 4);
+            const dataStart = (2 + fileNameSize) * 4;
+
+            this.parseBinaryNetData(msg as ArrayBuffer, dataStart);
+            return;
+        }
+
         /**
          *   visDataMsg = {
          *       ...
@@ -297,6 +455,7 @@ class VisData {
          *   }
          */
 
+        const visDataMsg = msg as VisDataMessage;
         if (this.lockedForFrame === true) {
             if (visDataMsg.bundleData[0].frameNumber !== this.frameToWaitFor) {
                 // This object is waiting for a frame with a specified frame number
@@ -323,6 +482,64 @@ class VisData {
                 this.frameCache,
                 frames.parsedAgentDataArray
             );
+        }
+    }
+
+    private parseBinaryNetData(data: ArrayBuffer, dataStart: number) {
+        let eof = -1;
+
+        // find last '/eof' signal in new data
+        const byteView = new Uint8Array(data);
+
+        const enc = new TextEncoder(); // always utf-8
+        const eofPhrase = enc.encode("\\EOFTHEFRAMEENDSHERE");
+
+        let index = byteView.length - eofPhrase.length;
+        for (; index > 0; index = index - 4) {
+            const curr = byteView.subarray(index, index + eofPhrase.length);
+            if (curr.every((val, i) => val === eofPhrase[i])) {
+                eof = index;
+                break;
+            }
+        }
+
+        if (eof > dataStart) {
+            const frame = data.slice(dataStart, eof);
+
+            const tmp = new ArrayBuffer(
+                this.netBuffer.byteLength + frame.byteLength
+            );
+            new Uint8Array(tmp).set(new Uint8Array(this.netBuffer));
+            new Uint8Array(tmp).set(
+                new Uint8Array(frame),
+                this.netBuffer.byteLength
+            );
+
+            const frames = VisData.parseBinary(tmp);
+            if (
+                frames.frameDataArray.length > 0 &&
+                frames.frameDataArray[0].frameNumber === 0
+            ) {
+                this.clearCache(); // new data has arrived
+            }
+
+            Array.prototype.push.apply(
+                this.frameDataCache,
+                frames.frameDataArray
+            );
+            Array.prototype.push.apply(
+                this.frameCache,
+                frames.parsedAgentDataArray
+            );
+
+            // Save remaining data for later processing
+            const remainder = data.slice(eof + eofPhrase.length);
+            this.netBuffer = new ArrayBuffer(remainder.byteLength);
+            new Uint8Array(this.netBuffer).set(new Uint8Array(remainder));
+        } else {
+            // Append the new data, and wait until eof
+            this.netBuffer = new ArrayBuffer(data.byteLength);
+            new Uint8Array(this.netBuffer).set(new Uint8Array(data));
         }
     }
 
