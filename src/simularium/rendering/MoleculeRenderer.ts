@@ -4,6 +4,7 @@ import BlurPass from "./GaussianBlur";
 import CompositePass from "./CompositePass";
 import ContourPass from "./ContourPass";
 import DrawBufferPass from "./DrawBufferPass";
+import { InstancedFiberGroup } from "./InstancedFiber";
 
 import {
     Color,
@@ -17,7 +18,6 @@ import {
     PerspectiveCamera,
 } from "three";
 import * as dat from "dat.gui";
-import { MultipassShaders } from "./MultipassMaterials";
 
 interface MoleculeRenderParameters {
     aoradius1: number;
