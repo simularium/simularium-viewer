@@ -19,7 +19,6 @@ import {
 import MembraneShader from "./rendering/MembraneShader";
 import PDBModel from "./PDBModel";
 import VisTypes from "./VisTypes";
-import { USE_INSTANCE_ENDCAPS } from "./VisTypes";
 
 function getHighlightColor(color: Color): Color {
     const hiColor = new Color(color);
@@ -413,7 +412,7 @@ export default class VisAgent {
             4 * (numPoints - 1), // 4 segments per control point
             collisionRadius * scale * 0.5,
             8, // could reduce this with depth?
-            false
+            true // closed ends!
         );
         (this.mesh.children[0] as Mesh).geometry = fibergeometry;
 
@@ -442,29 +441,18 @@ export default class VisAgent {
     }
 
     // make a single generic fiber and return it
-    public static makeFiber(): Group {
+    public static makeFiber(): Mesh {
         const fibercurve = new LineCurve3(
             new Vector3(0, 0, 0),
             new Vector3(1, 1, 1)
         );
-        const geometry = new TubeBufferGeometry(fibercurve, 1, 1, 1, false);
+        const geometry = new TubeBufferGeometry(fibercurve, 1, 1, 1, true);
         const fiberMesh = new Mesh(geometry);
         fiberMesh.name = `Fiber`;
 
-        const fiberGroup = new Group();
-        fiberGroup.add(fiberMesh);
-        if (!USE_INSTANCE_ENDCAPS) {
-            const fiberEndcapMesh0 = new Mesh(VisAgent.fiberEndcapGeometry);
-            fiberEndcapMesh0.name = `FiberEnd0`;
-
-            const fiberEndcapMesh1 = new Mesh(VisAgent.fiberEndcapGeometry);
-            fiberEndcapMesh1.name = `FiberEnd1`;
-            fiberGroup.add(fiberEndcapMesh0);
-            fiberGroup.add(fiberEndcapMesh1);
-        }
         // downstream code will switch this flag
-        fiberGroup.visible = false;
-        return fiberGroup;
+        fiberMesh.visible = false;
+        return fiberMesh;
     }
 
     public getFollowPosition(): Vector3 {

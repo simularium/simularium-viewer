@@ -5,7 +5,6 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 import VisAgent from "./VisAgent";
 import VisTypes from "./VisTypes";
-import { USE_INSTANCE_ENDCAPS } from "./VisTypes";
 import PDBModel from "./PDBModel";
 import TaskQueue from "./worker/TaskQueue";
 import { REASON_CANCELLED } from "./worker/TaskQueue";
@@ -330,27 +329,10 @@ class VisGeometry {
         this.renderStyle = renderStyle;
 
         if (changed) {
-            this.constructInstancedFiberEndcaps();
             this.constructInstancedFibers();
         }
 
         this.updateScene(this.currentSceneAgents);
-    }
-
-    private constructInstancedFiberEndcaps() {
-        // // tell instanced geometry what representation to use.
-        // if (this.renderStyle === RenderStyle.GENERIC) {
-        //     this.fiberEndcaps = new InstancedFiberEndcapsFallback();
-        // } else {
-        //     this.fiberEndcaps = new InstancedFiberEndcaps();
-        // }
-        // this.fiberEndcaps.create(0);
-        // if (this.instancedMeshGroup.children.length > 0) {
-        //     this.instancedMeshGroup.remove(this.instancedMeshGroup.children[0]);
-        // }
-        // if (USE_INSTANCE_ENDCAPS) {
-        //     this.instancedMeshGroup.add(this.fiberEndcaps.getMesh());
-        // }
     }
 
     private constructInstancedFibers() {
@@ -646,7 +628,6 @@ class VisGeometry {
         }
 
         // set this up after the renderStyle has been set.
-        this.constructInstancedFiberEndcaps();
         this.constructInstancedFibers();
 
         this.renderer.setSize(initWidth, initHeight); // expected to change when reparented
@@ -1384,9 +1365,6 @@ class VisGeometry {
             lasty = 0,
             lastz = 0;
 
-        if (USE_INSTANCE_ENDCAPS) {
-            //this.fiberEndcaps.beginUpdate(agents.length);
-        }
         this.fibers.beginUpdate();
 
         // mark ALL inactive and invisible
@@ -1542,7 +1520,7 @@ class VisGeometry {
 
                 // see if we need to initialize this agent as a fiber
                 if (visType !== visAgent.visType) {
-                    if (USE_INSTANCE_ENDCAPS) {
+                    if (false) {
                         visAgent.visType = visType;
                         visAgent.setColor(
                             this.getColorForTypeId(typeId),
@@ -1572,6 +1550,9 @@ class VisGeometry {
                     );
                 }
 
+                // if webgl1 fallback:
+                //visAgent.updateFiber(agentData.subpoints, agentData.cr, scale);
+                // else:
                 const curvePoints: Vector3[] = [];
                 for (let j = 0; j < agentData.subpoints.length; j += 3) {
                     const x = agentData.subpoints[j];
@@ -1580,8 +1561,6 @@ class VisGeometry {
                     curvePoints.push(new Vector3(x, y, z));
                 }
                 visAgent.fiberCurve = new CatmullRomCurve3(curvePoints);
-
-                //visAgent.updateFiber(agentData.subpoints, agentData.cr, scale);
                 this.fibers.addInstance(
                     agentData.subpoints.length / 3,
                     agentData.subpoints,
@@ -1597,47 +1576,9 @@ class VisGeometry {
                     visAgent.signedTypeId()
                 );
                 visAgent.mesh.visible = true;
-                if (USE_INSTANCE_ENDCAPS) {
-                    // const q = new Quaternion().setFromEuler(
-                    //     visAgent.mesh.rotation
-                    // );
-                    // const c = this.getColorForTypeId(typeId);
-                    // this.fiberEndcaps.addInstance(
-                    //     agentData.subpoints[0] + visAgent.mesh.position.x,
-                    //     agentData.subpoints[1] + visAgent.mesh.position.y,
-                    //     agentData.subpoints[2] + visAgent.mesh.position.z,
-                    //     agentData.cr * scale * 0.5,
-                    //     q.x,
-                    //     q.y,
-                    //     q.z,
-                    //     q.w,
-                    //     visAgent.id,
-                    //     visAgent.signedTypeId(),
-                    //     c
-                    // );
-                    // this.fiberEndcaps.addInstance(
-                    //     agentData.subpoints[agentData.subpoints.length - 3] +
-                    //         visAgent.mesh.position.x,
-                    //     agentData.subpoints[agentData.subpoints.length - 2] +
-                    //         visAgent.mesh.position.y,
-                    //     agentData.subpoints[agentData.subpoints.length - 1] +
-                    //         visAgent.mesh.position.z,
-                    //     agentData.cr * scale * 0.5,
-                    //     q.x,
-                    //     q.y,
-                    //     q.z,
-                    //     q.w,
-                    //     visAgent.id,
-                    //     visAgent.signedTypeId(),
-                    //     c
-                    // );
-                }
             }
         });
 
-        if (USE_INSTANCE_ENDCAPS) {
-            //this.fiberEndcaps.endUpdate();
-        }
         this.fibers.endUpdate();
     }
 
@@ -2008,7 +1949,6 @@ class VisGeometry {
         }
 
         // recreate an empty set of fiber endcaps to clear out the old ones.
-        this.constructInstancedFiberEndcaps();
         this.constructInstancedFibers();
 
         // set all runtime meshes back to spheres.
