@@ -1,10 +1,4 @@
-import {
-    FrontSide,
-    Matrix4,
-    ShaderMaterial,
-    RawShaderMaterial,
-    GLSL3,
-} from "three";
+import { FrontSide, Matrix4, RawShaderMaterial, GLSL3 } from "three";
 
 import { MultipassShaders } from "./MultipassMaterials";
 

@@ -1,6 +1,7 @@
 import MeshGBufferShaders from "./MeshGBufferShaders";
 import PDBGBufferShaders from "./PDBGBufferShaders";
 import InstanceMeshShaders from "./InstancedFiberEndcapShader";
+import { InstancedFiberGroup } from "./InstancedFiber";
 
 import {
     GbufferRenderPass,
@@ -42,14 +43,14 @@ class GBufferPass {
     public agentPDBGroup: Group;
     public agentFiberGroup: Group;
     public instancedMeshGroup: Group;
-
-    private fiberMaterials?: MultipassShaders;
+    public fibers: InstancedFiberGroup;
 
     public constructor() {
         this.agentMeshGroup = new Group();
         this.agentPDBGroup = new Group();
         this.agentFiberGroup = new Group();
         this.instancedMeshGroup = new Group();
+        this.fibers = new InstancedFiberGroup();
 
         this.meshGbufferMaterials = MeshGBufferShaders.shaderSet;
 
@@ -65,13 +66,13 @@ class GBufferPass {
         agentPDBGroup: Group,
         agentFiberGroup: Group,
         instancedMeshGroup: Group,
-        fiberMaterials: MultipassShaders
+        fibers: InstancedFiberGroup
     ): void {
         this.agentMeshGroup = agentMeshGroup;
         this.agentPDBGroup = agentPDBGroup;
         this.agentFiberGroup = agentFiberGroup;
         this.instancedMeshGroup = instancedMeshGroup;
-        this.fiberMaterials = fiberMaterials;
+        this.fibers = fibers;
     }
 
     public resize(width: number, height: number): void {
@@ -97,12 +98,7 @@ class GBufferPass {
             this.pdbGbufferMaterials,
             camera.projectionMatrix
         );
-        if (this.fiberMaterials) {
-            updateProjectionMatrix(
-                this.fiberMaterials,
-                camera.projectionMatrix
-            );
-        }
+        this.fibers.updateProjectionMatrix(camera.projectionMatrix);
 
         // 1. fill colorbuffer
         let renderPass: GbufferRenderPass = GbufferRenderPass.COLOR;
@@ -133,19 +129,21 @@ class GBufferPass {
             renderer.render(scene, camera);
             // end draw meshes
             renderer.autoClear = false;
+            scene.overrideMaterial = null;
         }
 
-        if (DO_INSTANCED && this.fiberMaterials) {
+        if (DO_INSTANCED) {
             // draw instanced things
             this.agentMeshGroup.visible = false;
             this.agentFiberGroup.visible = false;
             this.agentPDBGroup.visible = false;
             this.instancedMeshGroup.visible = true;
 
-            setSceneRenderPass(scene, this.fiberMaterials, renderPass);
+            this.fibers.setRenderPass(renderPass);
             renderer.render(scene, camera);
             // end draw instanced things
             renderer.autoClear = false;
+            scene.overrideMaterial = null;
         }
 
         if (DO_PDB) {
@@ -159,6 +157,7 @@ class GBufferPass {
             renderer.render(scene, camera);
             //end draw pdb
             renderer.autoClear = false;
+            scene.overrideMaterial = null;
         }
 
         renderer.autoClear = true;
@@ -182,19 +181,21 @@ class GBufferPass {
             renderer.render(scene, camera);
 
             renderer.autoClear = false;
+            scene.overrideMaterial = null;
         }
 
-        if (DO_INSTANCED && this.fiberMaterials) {
+        if (DO_INSTANCED) {
             // draw instanced things
             this.agentMeshGroup.visible = false;
             this.agentFiberGroup.visible = false;
             this.agentPDBGroup.visible = false;
             this.instancedMeshGroup.visible = true;
 
-            setSceneRenderPass(scene, this.fiberMaterials, renderPass);
+            this.fibers.setRenderPass(renderPass);
             renderer.render(scene, camera);
             // end draw instanced things
             renderer.autoClear = false;
+            scene.overrideMaterial = null;
         }
 
         if (DO_PDB) {
@@ -206,6 +207,7 @@ class GBufferPass {
             setSceneRenderPass(scene, this.pdbGbufferMaterials, renderPass);
             renderer.render(scene, camera);
             renderer.autoClear = false;
+            scene.overrideMaterial = null;
         }
 
         renderer.autoClear = true;
@@ -229,19 +231,21 @@ class GBufferPass {
             renderer.render(scene, camera);
 
             renderer.autoClear = false;
+            scene.overrideMaterial = null;
         }
 
-        if (DO_INSTANCED && this.fiberMaterials) {
+        if (DO_INSTANCED) {
             // draw instanced things
             this.agentMeshGroup.visible = false;
             this.agentFiberGroup.visible = false;
             this.agentPDBGroup.visible = false;
             this.instancedMeshGroup.visible = true;
 
-            setSceneRenderPass(scene, this.fiberMaterials, renderPass);
+            this.fibers.setRenderPass(renderPass);
             renderer.render(scene, camera);
             // end draw instanced things
             renderer.autoClear = false;
+            scene.overrideMaterial = null;
         }
 
         if (DO_PDB) {
@@ -253,6 +257,7 @@ class GBufferPass {
             setSceneRenderPass(scene, this.pdbGbufferMaterials, renderPass);
             renderer.render(scene, camera);
             renderer.autoClear = false;
+            scene.overrideMaterial = null;
         }
 
         // restore state before returning

@@ -46,7 +46,7 @@ import MoleculeRenderer from "./rendering/MoleculeRenderer";
 // import InstancedFiberEndcaps from "./rendering/InstancedFiberEndcaps";
 // import InstancedFiberEndcapsFallback from "./rendering/InstancedFiberEndcapsFallback";
 
-import InstancedFiber from "./rendering/InstancedFiber";
+import { InstancedFiberGroup } from "./rendering/InstancedFiber";
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 100000;
@@ -174,7 +174,7 @@ class VisGeometry {
     private rotateDistance: number;
     private initCameraPosition: Vector3;
     //private fiberEndcaps: IInstancedFiberEndcaps;
-    private fibers: InstancedFiber;
+    private fibers: InstancedFiberGroup;
 
     public constructor(loggerLevel: ILogLevel) {
         this.renderStyle = RenderStyle.GENERIC;
@@ -204,9 +204,7 @@ class VisGeometry {
         // this.fiberEndcaps = new InstancedFiberEndcaps();
         // this.fiberEndcaps.create(0);
 
-        this.fibers = new InstancedFiber();
-        const N = 3;
-        this.fibers.create(512, N, (N - 1) * 4, 8);
+        this.fibers = new InstancedFiberGroup();
 
         this.scene = new Scene();
         this.lightsGroup = new Group();
@@ -356,6 +354,7 @@ class VisGeometry {
     }
 
     private constructInstancedFibers() {
+        this.fibers.clear();
         removeByName(this.instancedMeshGroup, "fibers");
 
         // tell instanced geometry what representation to use.
@@ -363,12 +362,10 @@ class VisGeometry {
             console.log("NO FALLBACK RENDER PATH FOR FIBERS");
             //            this.fibers = new InstancedFiberEndcapsFallback();
         } else {
-            this.fibers = new InstancedFiber();
-            const N = 3;
-            this.fibers.create(512, N, (N - 1) * 4, 8);
+            this.fibers = new InstancedFiberGroup();
         }
 
-        this.instancedMeshGroup.add(this.fibers.getMesh());
+        this.instancedMeshGroup.add(this.fibers.getGroup());
     }
 
     public get logger(): ILogger {
@@ -809,10 +806,9 @@ class VisGeometry {
         if (this.instancedMeshGroup.children.length > 0) {
             // group has 2 children now???
             this.instancedMeshGroup.remove(this.instancedMeshGroup.children[0]);
-            this.instancedMeshGroup.remove(this.instancedMeshGroup.children[0]);
         }
         //this.instancedMeshGroup.add(this.fiberEndcaps.getMesh());
-        this.instancedMeshGroup.add(this.fibers.getMesh());
+        this.instancedMeshGroup.add(this.fibers.getGroup());
 
         if (this.renderStyle === RenderStyle.GENERIC) {
             // meshes only.
@@ -847,7 +843,7 @@ class VisGeometry {
                 this.agentPDBGroup,
                 this.agentFiberGroup,
                 this.instancedMeshGroup,
-                this.fibers.getShaders()
+                this.fibers
             );
             this.moleculeRenderer.setFollowedInstance(this.followObjectId);
             this.moleculeRenderer.setNearFar(this.boxNearZ, this.boxFarZ);
@@ -1391,7 +1387,7 @@ class VisGeometry {
         if (USE_INSTANCE_ENDCAPS) {
             //this.fiberEndcaps.beginUpdate(agents.length);
         }
-        this.fibers.beginUpdate(agents.length);
+        this.fibers.beginUpdate();
 
         // mark ALL inactive and invisible
         for (let i = 0; i < MAX_MESHES && i < this.visAgents.length; i += 1) {
@@ -1587,6 +1583,7 @@ class VisGeometry {
 
                 //visAgent.updateFiber(agentData.subpoints, agentData.cr, scale);
                 this.fibers.addInstance(
+                    agentData.subpoints.length / 3,
                     agentData.subpoints,
                     agentData.x,
                     agentData.y,

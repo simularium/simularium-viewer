@@ -10,10 +10,17 @@ import {
     FloatType,
     Vector2,
     Vector3,
+    Group,
+    Matrix4,
 } from "three";
 
 import { createShaders } from "./InstancedFiberShader";
-import { MultipassShaders } from "./MultipassMaterials";
+import {
+    GbufferRenderPass,
+    MultipassShaders,
+    setRenderPass,
+    updateProjectionMatrix,
+} from "./MultipassMaterials";
 
 function createTubeGeometry(
     numSides = 8,
@@ -131,52 +138,36 @@ class InstancedFiber {
     private currentInstance: number;
     private isUpdating: boolean;
 
-    constructor() {
-        this.nCurvePoints = 0;
-        this.nRadialSections = 0;
-        this.nSegments = 0;
-
-        this.shaderSet = createShaders(0, 0);
-        this.mesh = new Mesh();
-        this.mesh.name = "fibers";
-        this.instancedGeometry = new InstancedBufferGeometry();
-        this.positionAttribute = new InstancedBufferAttribute(
-            new Float32Array(),
-            4,
-            false
-        );
-        this.instanceAttribute = new InstancedBufferAttribute(
-            new Float32Array(),
-            3,
-            false
-        );
+    constructor(nCurvePoints: number, count: number) {
+        this.nRadialSections = 8;
+        this.nSegments = (nCurvePoints - 1) * 4;
+        this.nCurvePoints = nCurvePoints;
 
         this.currentInstance = 0;
         this.isUpdating = false;
+
+        this.instancedGeometry = new InstancedBufferGeometry();
+        this.instancedGeometry.instanceCount = 0;
+
+        this.shaderSet = createShaders(this.nSegments, this.nCurvePoints);
+
+        // make typescript happy. these will be reallocated in reallocate()
         this.curveGeometry = new BufferGeometry();
+        this.positionAttribute = new InstancedBufferAttribute(
+            Uint8Array.from([]),
+            1
+        );
+        this.instanceAttribute = new InstancedBufferAttribute(
+            Uint8Array.from([]),
+            1
+        );
         this.curveData = new DataTexture(Uint8Array.from([]), 0, 0);
-    }
 
-    // n is number of instances
-    // nPoints is number of curve control points
-    // nSegments is number of curve segments
-    // nRadialSections is number of radial sections (how many points in the polygonal cross section)
-    public create(
-        n: number,
-        nPoints: number,
-        nSegments: number,
-        nRadialSections: number
-    ): void {
-        this.nCurvePoints = nPoints;
-        this.nRadialSections = nRadialSections;
-        this.nSegments = nSegments;
-
-        this.shaderSet = createShaders(nSegments, nPoints);
-        this.reallocate(n);
-        this.instancedGeometry.instanceCount = n;
         this.mesh = new Mesh(this.instancedGeometry);
-        this.mesh.name = "fibers";
+        this.mesh.name = `fibers_${nCurvePoints}`;
         this.mesh.frustumCulled = false;
+
+        this.reallocate(count);
     }
 
     public getMesh(): Mesh {
@@ -187,15 +178,19 @@ class InstancedFiber {
         return this.shaderSet;
     }
 
+    public getCapacity(): number {
+        // number of rows in texture is number of curves this can hold
+        return this.curveData.image.height;
+    }
+
     private updateInstanceCount(n: number): void {
         //console.log("total draws = " + n);
         this.instancedGeometry.instanceCount = n;
     }
 
-    private reallocate(n: number): void {
+    public reallocate(n: number): void {
         // tell threejs/webgl that we can discard the old buffers
-        this.instancedGeometry.dispose();
-        this.curveData.dispose();
+        this.dispose();
 
         // build new data texture
         // one row per curve, number of colums = num of curve control pts
@@ -207,6 +202,7 @@ class InstancedFiber {
             RGBFormat,
             FloatType
         );
+        // we don't copy the old data texture in here because on every update, we are re-filling it
 
         this.curveGeometry = createTubeGeometry(
             this.nRadialSections,
@@ -220,6 +216,10 @@ class InstancedFiber {
         );
         // install the new geometry into our Mesh object
         this.mesh.geometry = this.instancedGeometry;
+        this.instancedGeometry.setDrawRange(
+            0,
+            this.curveGeometry.getAttribute("position").count
+        );
 
         this.shaderSet.color.uniforms.curveData.value = this.curveData;
         this.shaderSet.normal.uniforms.curveData.value = this.curveData;
@@ -250,13 +250,25 @@ class InstancedFiber {
         );
     }
 
-    beginUpdate(nAgents: number): void {
+    dispose(): void {
+        this.instancedGeometry.dispose();
+        this.curveData.dispose();
+        this.curveGeometry.dispose();
+    }
+
+    beginUpdate(): void {
+        this.isUpdating = true;
+        this.currentInstance = 0;
+    }
+
+    private checkRealloc(count: number) {
         // do we need to increase storage?
-        const increment = 1024;
+        const increment = 256;
         // total num instances possible in buffer
+        // (could also check number of rows in datatexture)
         const currentNumInstances = this.instanceAttribute.count;
         // num of instances needed
-        const requestedNumInstances = nAgents;
+        const requestedNumInstances = count;
 
         if (requestedNumInstances > currentNumInstances) {
             // increase to next multiple of increment
@@ -265,9 +277,6 @@ class InstancedFiber {
 
             this.reallocate(newInstanceCount);
         }
-
-        this.isUpdating = true;
-        this.currentInstance = 0;
     }
 
     addInstance(
@@ -284,6 +293,7 @@ class InstancedFiber {
         typeId: number
     ): void {
         const offset = this.currentInstance;
+        this.checkRealloc(this.currentInstance + 1);
         this.positionAttribute.setXYZW(offset, x, y, z, scale);
         this.instanceAttribute.setXYZ(
             offset,
@@ -321,4 +331,96 @@ class InstancedFiber {
     }
 }
 
-export default InstancedFiber;
+class InstancedFiberGroup {
+    private fibers: InstancedFiber[];
+    private fibersGroup: Group;
+    private isUpdating: boolean;
+
+    constructor() {
+        this.fibersGroup = new Group();
+        this.fibers = [];
+        this.isUpdating = false;
+    }
+
+    getGroup(): Group {
+        for (let i = this.fibersGroup.children.length - 1; i >= 0; i--) {
+            this.fibersGroup.remove(this.fibersGroup.children[i]);
+        }
+
+        this.fibers.forEach((fiber) => {
+            this.fibersGroup.add(fiber.getMesh());
+        });
+
+        this.fibersGroup.name = "fibers";
+        return this.fibersGroup;
+    }
+
+    clear(): void {
+        this.fibers.forEach((fiber) => {
+            fiber.dispose();
+        });
+        this.fibers = [];
+    }
+
+    beginUpdate(): void {
+        this.fibers.forEach((fiber) => {
+            fiber.beginUpdate();
+        });
+
+        this.isUpdating = true;
+    }
+
+    addInstance(
+        nCurvePts: number,
+        curvePts: number[],
+        x: number,
+        y: number,
+        z: number,
+        scale: number,
+        qx: number,
+        qy: number,
+        qz: number,
+        qw: number,
+        instanceId: number,
+        typeId: number
+    ): void {
+        if (!this.fibers[nCurvePts]) {
+            // create new
+            this.fibers[nCurvePts] = new InstancedFiber(nCurvePts, 256);
+        }
+        this.fibers[nCurvePts].addInstance(
+            curvePts,
+            x,
+            y,
+            z,
+            scale,
+            qx,
+            qy,
+            qz,
+            qw,
+            instanceId,
+            typeId
+        );
+    }
+
+    endUpdate(): void {
+        this.fibers.forEach((fiber) => {
+            fiber.endUpdate();
+        });
+
+        this.isUpdating = false;
+    }
+
+    setRenderPass(pass: GbufferRenderPass): void {
+        this.fibers.forEach((fiber) => {
+            setRenderPass(fiber.getMesh(), fiber.getShaders(), pass);
+        });
+    }
+    updateProjectionMatrix(cam: Matrix4): void {
+        this.fibers.forEach((fiber) => {
+            updateProjectionMatrix(fiber.getShaders(), cam);
+        });
+    }
+}
+
+export { InstancedFiber, InstancedFiberGroup };

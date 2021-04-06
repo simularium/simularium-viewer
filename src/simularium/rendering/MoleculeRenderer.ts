@@ -280,14 +280,14 @@ class MoleculeRenderer {
         agentPDBGroup: Group,
         agentFiberGroup: Group,
         instancedMeshGroup: Group,
-        fiberShaders: MultipassShaders
+        fibers: InstancedFiberGroup
     ): void {
         this.gbufferPass.setMeshGroups(
             agentMeshGroup,
             agentPDBGroup,
             agentFiberGroup,
             instancedMeshGroup,
-            fiberShaders
+            fibers
         );
     }
 
