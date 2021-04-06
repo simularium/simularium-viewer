@@ -18,7 +18,7 @@ const netConnectionSettings = {
     serverPort: 9002,
 };
 
-let playbackFile = "actin012_3.h5";
+let playbackFile = "medyan_paper_M:A_0.675.simularium";
 let queryStringFile = "";
 const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.has("file")) {
@@ -72,7 +72,6 @@ interface ViewerState {
 }
 
 const simulariumController = new SimulariumController({});
-let playbackFile = "medyan_paper_M:A_0.675.simularium";
 
 let currentFrame = 0;
 let currentTime = 0;
