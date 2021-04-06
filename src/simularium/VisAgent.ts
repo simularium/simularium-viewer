@@ -10,12 +10,12 @@ import {
     Object3D,
     ShaderMaterial,
     SphereBufferGeometry,
+    TubeBufferGeometry,
     Vector2,
     Vector3,
     WebGLRenderer,
 } from "three";
 
-import FiberGeometry from "./rendering/FiberGeometry";
 import MembraneShader from "./rendering/MembraneShader";
 import PDBModel from "./PDBModel";
 import VisTypes from "./VisTypes";
@@ -379,11 +379,6 @@ export default class VisAgent {
         collisionRadius: number,
         scale: number
     ): void {
-        // examine current curve and compare with new curve
-        const oldNumPoints = this.fiberCurve
-            ? this.fiberCurve.points.length
-            : 0;
-
         // assume a known structure.
         // first child is fiber
         // second and third children are endcaps
@@ -413,24 +408,14 @@ export default class VisAgent {
 
         // set up new fiber as curved tube
         this.fiberCurve = new CatmullRomCurve3(curvePoints);
-
-        if (oldNumPoints !== numPoints) {
-            const fibergeometry = new FiberGeometry(
-                this.fiberCurve,
-                4 * (numPoints - 1), // 4 segments per control point
-                collisionRadius * scale * 0.5,
-                8, // could reduce this with depth?
-                false
-            );
-            (this.mesh.children[0] as Mesh).geometry = fibergeometry;
-        } else {
-            const fibergeometry = (this.mesh.children[0] as Mesh)
-                .geometry as FiberGeometry;
-            fibergeometry.updateFromCurve(
-                this.fiberCurve,
-                collisionRadius * scale * 0.5
-            );
-        }
+        const fibergeometry = new TubeBufferGeometry(
+            this.fiberCurve,
+            4 * (numPoints - 1), // 4 segments per control point
+            collisionRadius * scale * 0.5,
+            8, // could reduce this with depth?
+            false
+        );
+        (this.mesh.children[0] as Mesh).geometry = fibergeometry;
 
         if (this.mesh.children.length === 3) {
             // update transform of endcap 0
@@ -462,7 +447,7 @@ export default class VisAgent {
             new Vector3(0, 0, 0),
             new Vector3(1, 1, 1)
         );
-        const geometry = new FiberGeometry(fibercurve, 1, 1, 1, false);
+        const geometry = new TubeBufferGeometry(fibercurve, 1, 1, 1, false);
         const fiberMesh = new Mesh(geometry);
         fiberMesh.name = `Fiber`;
 
