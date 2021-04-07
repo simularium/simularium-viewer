@@ -412,32 +412,9 @@ export default class VisAgent {
             4 * (numPoints - 1), // 4 segments per control point
             collisionRadius * scale * 0.5,
             8, // could reduce this with depth?
-            true // closed ends!
+            false
         );
-        (this.mesh.children[0] as Mesh).geometry = fibergeometry;
-
-        if (this.mesh.children.length === 3) {
-            // update transform of endcap 0
-            const runtimeFiberEncapMesh0 = this.mesh.children[1] as Mesh;
-            runtimeFiberEncapMesh0.position.x = curvePoints[0].x;
-            runtimeFiberEncapMesh0.position.y = curvePoints[0].y;
-            runtimeFiberEncapMesh0.position.z = curvePoints[0].z;
-            runtimeFiberEncapMesh0.scale.x = collisionRadius * scale * 0.5;
-            runtimeFiberEncapMesh0.scale.y = collisionRadius * scale * 0.5;
-            runtimeFiberEncapMesh0.scale.z = collisionRadius * scale * 0.5;
-
-            // update transform of endcap 1
-            const runtimeFiberEncapMesh1 = this.mesh.children[2] as Mesh;
-            runtimeFiberEncapMesh1.position.x =
-                curvePoints[curvePoints.length - 1].x;
-            runtimeFiberEncapMesh1.position.y =
-                curvePoints[curvePoints.length - 1].y;
-            runtimeFiberEncapMesh1.position.z =
-                curvePoints[curvePoints.length - 1].z;
-            runtimeFiberEncapMesh1.scale.x = collisionRadius * scale * 0.5;
-            runtimeFiberEncapMesh1.scale.y = collisionRadius * scale * 0.5;
-            runtimeFiberEncapMesh1.scale.z = collisionRadius * scale * 0.5;
-        }
+        (this.mesh as Mesh).geometry = fibergeometry;
     }
 
     // make a single generic fiber and return it
@@ -446,7 +423,7 @@ export default class VisAgent {
             new Vector3(0, 0, 0),
             new Vector3(1, 1, 1)
         );
-        const geometry = new TubeBufferGeometry(fibercurve, 1, 1, 1, true);
+        const geometry = new TubeBufferGeometry(fibercurve, 1, 1, 1, false);
         const fiberMesh = new Mesh(geometry);
         fiberMesh.name = `Fiber`;
 

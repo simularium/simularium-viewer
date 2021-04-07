@@ -329,6 +329,11 @@ class VisGeometry {
         this.renderStyle = renderStyle;
 
         if (changed) {
+            // reset all agents of fiber type so their geometry is re-created.
+            for (const visAgent of this.visAgentInstances.values()) {
+                visAgent.visType = VisTypes.ID_VIS_TYPE_DEFAULT;
+            }
+
             this.constructInstancedFibers();
         }
 
@@ -341,8 +346,6 @@ class VisGeometry {
 
         // tell instanced geometry what representation to use.
         if (this.renderStyle === RenderStyle.GENERIC) {
-            console.log("NO FALLBACK RENDER PATH FOR FIBERS");
-            //            this.fibers = new InstancedFiberEndcapsFallback();
         } else {
             this.fibers = new InstancedFiberGroup();
         }
@@ -1520,7 +1523,7 @@ class VisGeometry {
 
                 // see if we need to initialize this agent as a fiber
                 if (visType !== visAgent.visType) {
-                    if (false) {
+                    if (this.renderStyle !== RenderStyle.GENERIC) {
                         visAgent.visType = visType;
                         visAgent.setColor(
                             this.getColorForTypeId(typeId),
@@ -1542,7 +1545,9 @@ class VisGeometry {
                 }
                 // did the agent type change since the last sim time?
                 if (wasHidden || typeId !== lastTypeId) {
-                    //                    visAgent.mesh.userData = { id: visAgent.id };
+                    if (this.renderStyle === RenderStyle.GENERIC) {
+                        visAgent.mesh.userData = { id: visAgent.id };
+                    }
                     // for fibers we currently only check the color
                     visAgent.setColor(
                         this.getColorForTypeId(typeId),
@@ -1551,31 +1556,38 @@ class VisGeometry {
                 }
 
                 // if webgl1 fallback:
-                //visAgent.updateFiber(agentData.subpoints, agentData.cr, scale);
-                // else:
-                const curvePoints: Vector3[] = [];
-                for (let j = 0; j < agentData.subpoints.length; j += 3) {
-                    const x = agentData.subpoints[j];
-                    const y = agentData.subpoints[j + 1];
-                    const z = agentData.subpoints[j + 2];
-                    curvePoints.push(new Vector3(x, y, z));
+                if (this.renderStyle === RenderStyle.GENERIC) {
+                    visAgent.updateFiber(
+                        agentData.subpoints,
+                        agentData.cr,
+                        scale
+                    );
+                    visAgent.mesh.visible = true;
+                } else {
+                    const curvePoints: Vector3[] = [];
+                    for (let j = 0; j < agentData.subpoints.length; j += 3) {
+                        const x = agentData.subpoints[j];
+                        const y = agentData.subpoints[j + 1];
+                        const z = agentData.subpoints[j + 2];
+                        curvePoints.push(new Vector3(x, y, z));
+                    }
+                    visAgent.fiberCurve = new CatmullRomCurve3(curvePoints);
+                    this.fibers.addInstance(
+                        agentData.subpoints.length / 3,
+                        agentData.subpoints,
+                        agentData.x,
+                        agentData.y,
+                        agentData.z,
+                        agentData.cr * scale * 0.5,
+                        0,
+                        0,
+                        0,
+                        0,
+                        visAgent.id,
+                        visAgent.signedTypeId()
+                    );
+                    visAgent.mesh.visible = false;
                 }
-                visAgent.fiberCurve = new CatmullRomCurve3(curvePoints);
-                this.fibers.addInstance(
-                    agentData.subpoints.length / 3,
-                    agentData.subpoints,
-                    agentData.x,
-                    agentData.y,
-                    agentData.z,
-                    agentData.cr * scale * 0.5,
-                    0,
-                    0,
-                    0,
-                    0,
-                    visAgent.id,
-                    visAgent.signedTypeId()
-                );
-                visAgent.mesh.visible = true;
             }
         });
 
