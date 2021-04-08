@@ -890,6 +890,13 @@ class VisGeometry {
                 true
             );
             // try fibers next
+            const fiberIntersects = this.raycaster.intersectObjects(
+                this.agentFiberGroup.children,
+                true
+            );
+            intersects = intersects.concat(fiberIntersects);
+            intersects.sort((a, b) => a.distance - b.distance);
+
             if (!intersects.length) {
                 intersects = this.raycaster.intersectObjects(
                     this.agentFiberGroup.children,
