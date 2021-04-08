@@ -1,7 +1,6 @@
 import {
     CatmullRomCurve3,
     Color,
-    Group,
     LineCurve3,
     Material,
     Mesh,

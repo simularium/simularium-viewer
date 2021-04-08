@@ -1,6 +1,5 @@
 import MeshGBufferShaders from "./MeshGBufferShaders";
 import PDBGBufferShaders from "./PDBGBufferShaders";
-import InstanceMeshShaders from "./InstancedFiberEndcapShader";
 import { InstancedFiberGroup } from "./InstancedFiber";
 
 import {
@@ -36,7 +35,6 @@ import {
 class GBufferPass {
     public meshGbufferMaterials: MultipassShaders;
     public pdbGbufferMaterials: MultipassShaders;
-    public instancedFiberEndcapMaterials: MultipassShaders;
 
     public scene: Scene;
     public agentMeshGroup: Group;
@@ -55,8 +53,6 @@ class GBufferPass {
         this.meshGbufferMaterials = MeshGBufferShaders.shaderSet;
 
         this.pdbGbufferMaterials = PDBGBufferShaders.shaderSet;
-
-        this.instancedFiberEndcapMaterials = InstanceMeshShaders.shaderSet;
 
         this.scene = new Scene();
     }
