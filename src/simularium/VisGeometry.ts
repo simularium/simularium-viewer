@@ -41,10 +41,6 @@ import { TrajectoryFileInfo } from "./types";
 import { AgentData } from "./VisData";
 
 import MoleculeRenderer from "./rendering/MoleculeRenderer";
-// import IInstancedFiberEndcaps from "./rendering/IInstancedFiberEndcaps";
-// import InstancedFiberEndcaps from "./rendering/InstancedFiberEndcaps";
-// import InstancedFiberEndcapsFallback from "./rendering/InstancedFiberEndcapsFallback";
-
 import { InstancedFiberGroup } from "./rendering/InstancedFiber";
 
 const MAX_PATH_LEN = 32;
@@ -172,7 +168,6 @@ class VisGeometry {
     private needToReOrientCamera: boolean;
     private rotateDistance: number;
     private initCameraPosition: Vector3;
-    //private fiberEndcaps: IInstancedFiberEndcaps;
     private fibers: InstancedFiberGroup;
 
     public constructor(loggerLevel: ILogLevel) {
@@ -199,9 +194,6 @@ class VisGeometry {
         this.rotateDistance = DEFAULT_CAMERA_Z_POSITION;
         // will store data for all agents that are drawing paths
         this.paths = [];
-
-        // this.fiberEndcaps = new InstancedFiberEndcaps();
-        // this.fiberEndcaps.create(0);
 
         this.fibers = new InstancedFiberGroup();
 
@@ -788,10 +780,9 @@ class VisGeometry {
         }
 
         if (this.instancedMeshGroup.children.length > 0) {
-            // group has 2 children now???
+            // instancedMeshGroup expected to have only one child, the fibers group
             this.instancedMeshGroup.remove(this.instancedMeshGroup.children[0]);
         }
-        //this.instancedMeshGroup.add(this.fiberEndcaps.getMesh());
         this.instancedMeshGroup.add(this.fibers.getGroup());
 
         if (this.renderStyle === RenderStyle.GENERIC) {
@@ -896,13 +887,6 @@ class VisGeometry {
             );
             intersects = intersects.concat(fiberIntersects);
             intersects.sort((a, b) => a.distance - b.distance);
-
-            if (!intersects.length) {
-                intersects = this.raycaster.intersectObjects(
-                    this.agentFiberGroup.children,
-                    true
-                );
-            }
 
             if (intersects && intersects.length) {
                 let obj = intersects[0].object;
@@ -1578,7 +1562,9 @@ class VisGeometry {
                         const z = agentData.subpoints[j + 2];
                         curvePoints.push(new Vector3(x, y, z));
                     }
+                    // this is just to get a center point for the "follow" mode
                     visAgent.fiberCurve = new CatmullRomCurve3(curvePoints);
+                    // update/add to render list
                     this.fibers.addInstance(
                         agentData.subpoints.length / 3,
                         agentData.subpoints,
@@ -1967,7 +1953,7 @@ class VisGeometry {
             this.instancedMeshGroup.remove(this.instancedMeshGroup.children[i]);
         }
 
-        // recreate an empty set of fiber endcaps to clear out the old ones.
+        // recreate an empty set of fibers to clear out the old ones.
         this.constructInstancedFibers();
 
         // set all runtime meshes back to spheres.
