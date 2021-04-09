@@ -285,10 +285,6 @@ class InstancedFiber {
         y: number,
         z: number,
         scale: number,
-        qx: number,
-        qy: number,
-        qz: number,
-        qw: number,
         instanceId: number,
         typeId: number
     ): void {
@@ -377,10 +373,6 @@ class InstancedFiberGroup {
         y: number,
         z: number,
         scale: number,
-        qx: number,
-        qy: number,
-        qz: number,
-        qw: number,
         instanceId: number,
         typeId: number
     ): void {
@@ -394,10 +386,6 @@ class InstancedFiberGroup {
             y,
             z,
             scale,
-            qx,
-            qy,
-            qz,
-            qw,
             instanceId,
             typeId
         );

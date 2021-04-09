@@ -375,14 +375,9 @@ export default class VisAgent {
     public updateFiber(
         subpoints: number[],
         collisionRadius: number,
-        scale: number
+        scale: number,
+        regenerateMesh: boolean
     ): void {
-        // assume a known structure.
-        // first child is fiber
-        // second and third children are endcaps
-
-        // put all the subpoints into a Vector3[]
-        const curvePoints: Vector3[] = [];
         const numSubPoints = subpoints.length;
         const numPoints = numSubPoints / 3;
         if (numSubPoints % 3 !== 0) {
@@ -397,6 +392,8 @@ export default class VisAgent {
             );
             return;
         }
+        // put all the subpoints into a Vector3[]
+        const curvePoints: Vector3[] = [];
         for (let j = 0; j < numSubPoints; j += 3) {
             const x = subpoints[j];
             const y = subpoints[j + 1];
@@ -406,14 +403,18 @@ export default class VisAgent {
 
         // set up new fiber as curved tube
         this.fiberCurve = new CatmullRomCurve3(curvePoints);
-        const fibergeometry = new TubeBufferGeometry(
-            this.fiberCurve,
-            4 * (numPoints - 1), // 4 segments per control point
-            collisionRadius * scale * 0.5,
-            8, // could reduce this with depth?
-            false
-        );
-        (this.mesh as Mesh).geometry = fibergeometry;
+
+        if (regenerateMesh) {
+            // expensive
+            const fibergeometry = new TubeBufferGeometry(
+                this.fiberCurve,
+                4 * (numPoints - 1), // 4 segments per control point
+                collisionRadius * scale * 0.5,
+                8, // could reduce this with depth?
+                false
+            );
+            (this.mesh as Mesh).geometry = fibergeometry;
+        }
     }
 
     // make a single generic fiber and return it

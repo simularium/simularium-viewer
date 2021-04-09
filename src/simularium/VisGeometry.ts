@@ -1546,24 +1546,16 @@ class VisGeometry {
                     );
                 }
 
-                // if webgl1 fallback:
-                if (this.renderStyle === RenderStyle.GENERIC) {
-                    visAgent.updateFiber(
-                        agentData.subpoints,
-                        agentData.cr,
-                        scale
-                    );
-                    visAgent.mesh.visible = true;
-                } else {
-                    const curvePoints: Vector3[] = [];
-                    for (let j = 0; j < agentData.subpoints.length; j += 3) {
-                        const x = agentData.subpoints[j];
-                        const y = agentData.subpoints[j + 1];
-                        const z = agentData.subpoints[j + 2];
-                        curvePoints.push(new Vector3(x, y, z));
-                    }
-                    // this is just to get a center point for the "follow" mode
-                    visAgent.fiberCurve = new CatmullRomCurve3(curvePoints);
+                visAgent.updateFiber(
+                    agentData.subpoints,
+                    agentData.cr,
+                    scale,
+                    this.renderStyle === RenderStyle.GENERIC // whether to generate a fiber mesh
+                );
+                visAgent.mesh.visible =
+                    this.renderStyle === RenderStyle.GENERIC;
+
+                if (this.renderStyle === RenderStyle.MOLECULAR) {
                     // update/add to render list
                     this.fibers.addInstance(
                         agentData.subpoints.length / 3,
@@ -1572,14 +1564,9 @@ class VisGeometry {
                         agentData.y,
                         agentData.z,
                         agentData.cr * scale * 0.5,
-                        0,
-                        0,
-                        0,
-                        0,
                         visAgent.id,
                         visAgent.signedTypeId()
                     );
-                    visAgent.mesh.visible = false;
                 }
             }
         });
