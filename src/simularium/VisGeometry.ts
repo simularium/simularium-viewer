@@ -1,4 +1,3 @@
-import { CatmullRomCurve3 } from "three";
 import { WEBGL } from "three/examples/jsm/WebGL.js";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
