@@ -332,6 +332,8 @@ class InstancedFiberGroup {
     private fibersGroup: Group;
     private isUpdating: boolean;
 
+    static GROUP_NAME = "fibers";
+
     constructor() {
         this.fibersGroup = new Group();
         this.fibers = [];
@@ -347,7 +349,7 @@ class InstancedFiberGroup {
             this.fibersGroup.add(fiber.getMesh());
         });
 
-        this.fibersGroup.name = "fibers";
+        this.fibersGroup.name = InstancedFiberGroup.GROUP_NAME;
         return this.fibersGroup;
     }
 

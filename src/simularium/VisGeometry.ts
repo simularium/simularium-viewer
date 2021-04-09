@@ -334,7 +334,7 @@ class VisGeometry {
 
     private constructInstancedFibers() {
         this.fibers.clear();
-        removeByName(this.instancedMeshGroup, "fibers");
+        removeByName(this.instancedMeshGroup, InstancedFiberGroup.GROUP_NAME);
 
         // tell instanced geometry what representation to use.
         if (this.renderStyle === RenderStyle.GENERIC) {
