@@ -3,6 +3,108 @@ import { ILogger } from "js-logger";
 
 import { VisDataMessage, TrajectoryFileInfoV2 } from "../simularium/types";
 
+class CurveSim {
+    nCurves: number;
+    curveData: number[];
+    nPointsPerCurve: number;
+
+    constructor(nCurves: number) {
+        this.nCurves = nCurves;
+        this.nPointsPerCurve = 5;
+        this.curveData = this.makeCurveBundle(nCurves, this.nPointsPerCurve);
+    }
+
+    private randomFloat(min, max) {
+        if (max === undefined) {
+            max = min;
+            min = 0;
+        }
+        return Math.random() * (max - min) + min;
+    }
+
+    private randomSpherePoint(x0, y0, z0, radius): number[] {
+        const u = Math.random();
+        const v = Math.random();
+        const theta = 2 * Math.PI * u;
+        const phi = Math.acos(2 * v - 1);
+        const x = x0 + radius * Math.sin(phi) * Math.cos(theta);
+        const y = y0 + radius * Math.sin(phi) * Math.sin(theta);
+        const z = z0 + radius * Math.cos(phi);
+        return [x, y, z];
+    }
+    private randomPtInBox(xmin, xmax, ymin, ymax, zmin, zmax) {
+        return [
+            this.randomFloat(xmin, xmax),
+            this.randomFloat(ymin, ymax),
+            this.randomFloat(zmin, zmax),
+        ];
+    }
+
+    private makeCurveBundle(nCurves, nPts) {
+        const curves: number[] = [];
+        let p: number[];
+        if (nPts === 3) {
+            for (let i = 0; i < nCurves; ++i) {
+                p = this.randomSpherePoint(0, 0, 0, 4.0);
+                curves.push(p[0]);
+                curves.push(p[1]);
+                curves.push(p[2]);
+                p = this.randomSpherePoint(0, 0, 0, 0.25);
+                curves.push(p[0]);
+                curves.push(p[1]);
+                curves.push(p[2]);
+                p = this.randomSpherePoint(0, 0, 0, 2.0);
+                curves.push(p[0]);
+                curves.push(p[1]);
+                curves.push(p[2]);
+            }
+        } else if (nPts === 5) {
+            for (let i = 0; i < nCurves; ++i) {
+                p = this.randomPtInBox(-4, -3, -2, 2, -2, 2);
+                curves.push(p[0]);
+                curves.push(p[1]);
+                curves.push(p[2]);
+                p = this.randomPtInBox(-2.5, -2, -1, 1, -1, 1);
+                curves.push(p[0]);
+                curves.push(p[1]);
+                curves.push(p[2]);
+                p = this.randomPtInBox(-1, 1, -0.5, 0.5, -0.5, 0.5);
+                curves.push(p[0]);
+                curves.push(p[1]);
+                curves.push(p[2]);
+                p = this.randomPtInBox(2, 2.5, -1, 1, -1, 1);
+                curves.push(p[0]);
+                curves.push(p[1]);
+                curves.push(p[2]);
+                p = this.randomPtInBox(3, 4, -2, 2, -2, 2);
+                curves.push(p[0]);
+                curves.push(p[1]);
+                curves.push(p[2]);
+            }
+        }
+        return curves;
+    }
+
+    public update(dt) {
+        const nFloatsPerCurve = this.nPointsPerCurve * 3;
+        //const dt_adjusted = dt / 1000;
+        const amplitude = 0.05;
+        for (let ii = 0; ii < this.nCurves; ++ii) {
+            for (let jj = 0; jj < this.nPointsPerCurve; ++jj) {
+                this.curveData[
+                    ii * nFloatsPerCurve + jj * 3 + 0
+                ] += this.randomFloat(-amplitude, amplitude);
+                this.curveData[
+                    ii * nFloatsPerCurve + jj * 3 + 1
+                ] += this.randomFloat(-amplitude, amplitude);
+                this.curveData[
+                    ii * nFloatsPerCurve + jj * 3 + 2
+                ] += this.randomFloat(-amplitude, amplitude);
+            }
+        }
+    }
+}
+
 // these have been set to correspond to backend values
 export const enum NetMessageEnum {
     ID_UNDEFINED_WEB_REQUEST = 0,
