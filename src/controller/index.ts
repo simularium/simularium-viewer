@@ -17,6 +17,7 @@ import {
 } from "../simularium/types";
 
 import { SimulatorConnection } from "../simularium/ClientSimulatorConnection";
+import { ClientSimulatorParams } from "../simularium/localSimulators/ClientSimulatorFactory";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
@@ -27,6 +28,7 @@ interface SimulariumControllerParams {
     trajectoryGeometryFile?: string;
     // a URL prefix to locate the assets in the trajectoryGeometryFile
     assetLocation?: string;
+    clientSimulatorParams?: ClientSimulatorParams;
 }
 
 const DEFAULT_ASSET_PREFIX =
@@ -34,6 +36,7 @@ const DEFAULT_ASSET_PREFIX =
 
 export default class SimulariumController {
     public netConnection: NetConnection | undefined;
+    public clientSimulatorParams?: ClientSimulatorParams;
     public visData: VisData;
     public visGeometry: VisGeometry | undefined;
     public tickIntervalLength: number;
@@ -76,8 +79,11 @@ export default class SimulariumController {
         this.zoomOut = () => noop;
         this.onError = (errorMessage) => {};
         /* eslint-enable */
-        if (params.assetLocation === "CURVESIM") {
-            this.netConnection = new SimulatorConnection();
+        if (params.clientSimulatorParams) {
+            this.clientSimulatorParams = params.clientSimulatorParams;
+            this.netConnection = new SimulatorConnection(
+                params.clientSimulatorParams
+            );
             this.playBackFile = "";
             this.netConnection.onTrajectoryDataArrive = this.visData.parseAgentsFromNetData.bind(
                 this.visData
@@ -149,8 +155,10 @@ export default class SimulariumController {
             this.netConnection.disconnect();
         }
 
-        if (this.assetPrefix === "CURVESIM") {
-            this.netConnection = new SimulatorConnection();
+        if (this.clientSimulatorParams) {
+            this.netConnection = new SimulatorConnection(
+                this.clientSimulatorParams
+            );
         } else {
             this.netConnection = new NetConnection(config);
         }

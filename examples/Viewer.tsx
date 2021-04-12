@@ -9,7 +9,6 @@ import SimulariumViewer, {
     RenderStyle,
     SimulariumFileFormat,
 } from "../src";
-
 import "./style.css";
 import { isEqual } from "lodash";
 
@@ -72,7 +71,12 @@ interface ViewerState {
 }
 
 const simulariumController = new SimulariumController({
-    assetLocation: "CURVESIM"
+    clientSimulatorParams: {
+        name: "my curve sim",
+        type: "CURVESIM",
+        nCurves: 1000,
+        nTypes: 4,
+    }
 });
 
 let currentFrame = 0;

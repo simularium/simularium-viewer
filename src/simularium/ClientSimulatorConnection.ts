@@ -6,25 +6,23 @@ import { NetConnection } from "./NetConnection";
 import {
     ClientMessageEnum,
     ClientPlayBackType,
+    IClientSimulator,
 } from "./localSimulators/IClientSimulator";
-import { createSimulator } from "./localSimulators/ClientSimulatorFactory";
-
-const localSimulator = createSimulator({
-    name: "my curve sim",
-    type: "CURVESIM",
-    nCurves: 1000,
-    nTypes: 4,
-});
+import {
+    createSimulator,
+    ClientSimulatorParams,
+} from "./localSimulators/ClientSimulatorFactory";
 
 // setInterval is the playback engine for now
 let simulatorIntervalId = 0;
 
 export class SimulatorConnection extends NetConnection {
+    private localSimulator: IClientSimulator;
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfoV2) => void;
     public onTrajectoryDataArrive: (msg: VisDataMessage) => void;
 
-    public constructor() {
+    public constructor(params: ClientSimulatorParams) {
         super({});
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
@@ -36,6 +34,7 @@ export class SimulatorConnection extends NetConnection {
             /* do nothing */
         };
         console.log("NEW SIMULATORCONNECTION");
+        this.localSimulator = createSimulator(params);
     }
 
     public socketIsValid(): boolean {
@@ -84,12 +83,12 @@ export class SimulatorConnection extends NetConnection {
             case ClientMessageEnum.ID_VIS_DATA_REQUEST:
                 {
                     if (jsonData["frameNumber"]) {
-                        const frame = localSimulator.update(
+                        const frame = this.localSimulator.update(
                             jsonData["frameNumber"] as number
                         );
                         this.onTrajectoryDataArrive(frame);
                     } else {
-                        const a: TrajectoryFileInfoV2 = localSimulator.getInfo();
+                        const a: TrajectoryFileInfoV2 = this.localSimulator.getInfo();
                         this.onTrajectoryFileInfoArrive(a);
                     }
                 }
@@ -103,7 +102,7 @@ export class SimulatorConnection extends NetConnection {
             case ClientMessageEnum.ID_VIS_DATA_RESUME:
                 {
                     simulatorIntervalId = window.setInterval(() => {
-                        const frame = localSimulator.update(0);
+                        const frame = this.localSimulator.update(0);
                         this.onTrajectoryDataArrive(frame);
                     }, 1);
                 }
@@ -116,14 +115,14 @@ export class SimulatorConnection extends NetConnection {
                 break;
             case ClientMessageEnum.ID_GOTO_SIMULATION_TIME:
                 {
-                    const frame = localSimulator.update(
+                    const frame = this.localSimulator.update(
                         jsonData["time"] as number
                     );
                     this.onTrajectoryDataArrive(frame);
                 }
                 break;
             case ClientMessageEnum.ID_INIT_TRAJECTORY_FILE:
-                const a: TrajectoryFileInfoV2 = localSimulator.getInfo();
+                const a: TrajectoryFileInfoV2 = this.localSimulator.getInfo();
                 console.log("receive trajectory file info");
                 this.onTrajectoryFileInfoArrive(a);
                 break;
