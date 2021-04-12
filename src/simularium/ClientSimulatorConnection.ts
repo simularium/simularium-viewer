@@ -42,13 +42,13 @@ export class SimulatorConnection extends NetConnection {
     }
 
     /**
-     * WebSocket Connect
+     * Connect
      * */
     public connectToUri(uri: string): void {
         if (this.socketIsValid()) {
             this.disconnect();
         }
-        this.logger.debug("WS Connection Request Sent: ", uri);
+        this.logger.debug("Connection Request Sent: ", uri);
     }
 
     public disconnect(): void {
@@ -63,7 +63,7 @@ export class SimulatorConnection extends NetConnection {
     }
 
     public connectToRemoteServer(address: string): Promise<string> {
-        return Promise.resolve("Remote sim successfully started");
+        return Promise.resolve("Local client sim successfully started");
     }
 
     private sendSimulationRequest(
@@ -127,13 +127,8 @@ export class SimulatorConnection extends NetConnection {
                 this.onTrajectoryFileInfoArrive(a);
                 break;
         }
-        // for frames:
-        //        this.onTrajectoryDataArrive({});
     }
 
-    /**
-     * Websocket Update Parameters
-     */
     public sendTimeStepUpdate(newTimeStep: number): void {
         if (!this.socketIsValid()) {
             return;
@@ -172,7 +167,7 @@ export class SimulatorConnection extends NetConnection {
     }
 
     /**
-     * WebSocket Simulation Control
+     * Simulation Control
      *
      * Simulation Run Modes:
      *  Live : Results are sent as they are calculated

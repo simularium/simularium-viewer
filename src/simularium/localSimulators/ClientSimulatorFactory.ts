@@ -1,7 +1,7 @@
 import { IClientSimulator } from "./IClientSimulator";
 import CurveSimulator from "./CurveSimulator";
 
-interface ClientSimulatorParams {
+export interface ClientSimulatorParams {
     type: string;
     name: string;
     [x: string]: unknown;
