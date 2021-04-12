@@ -16,6 +16,8 @@ import {
     FILE_STATUS_FAIL,
 } from "../simularium/types";
 
+import { SimulatorConnection } from "../simularium/ClientSimulatorConnection";
+
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
 interface SimulariumControllerParams {
@@ -74,7 +76,18 @@ export default class SimulariumController {
         this.zoomOut = () => noop;
         this.onError = (errorMessage) => {};
         /* eslint-enable */
-        if (params.netConnection || params.netConnectionSettings) {
+        if (params.assetLocation === "CURVESIM") {
+            this.netConnection = new SimulatorConnection();
+            this.playBackFile = "";
+            this.netConnection.onTrajectoryDataArrive = this.visData.parseAgentsFromNetData.bind(
+                this.visData
+            );
+            this.networkEnabled = false;
+            this.isPaused = false;
+            this.fileChanged = false;
+            this.localFile = false;
+            this.geometryFile = "";
+        } else if (params.netConnection || params.netConnectionSettings) {
             this.netConnection = params.netConnection
                 ? params.netConnection
                 : new NetConnection(params.netConnectionSettings);
@@ -136,7 +149,11 @@ export default class SimulariumController {
             this.netConnection.disconnect();
         }
 
-        this.netConnection = new NetConnection(config);
+        if (this.assetPrefix === "CURVESIM") {
+            this.netConnection = new SimulatorConnection();
+        } else {
+            this.netConnection = new NetConnection(config);
+        }
 
         this.netConnection.onTrajectoryDataArrive = this.visData.parseAgentsFromNetData.bind(
             this.visData

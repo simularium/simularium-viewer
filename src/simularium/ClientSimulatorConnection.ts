@@ -1,17 +1,27 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
 
-import { VisDataMessage, TrajectoryFileInfoV2 } from "../simularium/types";
+import VisTypes from "./VisTypes";
+import {
+    VisDataMessage,
+    TrajectoryFileInfoV2,
+    EncodedTypeMapping,
+} from "./types";
+import { NetConnection } from "./NetConnection";
 
 class CurveSim {
     nCurves: number;
     curveData: number[];
     nPointsPerCurve: number;
+    currentFrame: number;
+    nTypes: number;
 
-    constructor(nCurves: number) {
+    constructor(nCurves: number, nTypes: number) {
         this.nCurves = nCurves;
+        this.nTypes = nTypes;
         this.nPointsPerCurve = 5;
         this.curveData = this.makeCurveBundle(nCurves, this.nPointsPerCurve);
+        this.currentFrame = 0;
     }
 
     private randomFloat(min, max) {
@@ -85,7 +95,7 @@ class CurveSim {
         return curves;
     }
 
-    public update(dt) {
+    public update(dt: number): VisDataMessage {
         const nFloatsPerCurve = this.nPointsPerCurve * 3;
         //const dt_adjusted = dt / 1000;
         const amplitude = 0.05;
@@ -102,8 +112,73 @@ class CurveSim {
                 ] += this.randomFloat(-amplitude, amplitude);
             }
         }
+        // fill agent data.
+        const agentData: number[] = [];
+        for (let ii = 0; ii < this.nCurves; ++ii) {
+            agentData.push(VisTypes.ID_VIS_TYPE_FIBER); // vis type
+            agentData.push(ii); // instance id
+            agentData.push(ii % this.nTypes); // type
+            agentData.push(0); // x
+            agentData.push(0); // y
+            agentData.push(0); // z
+            agentData.push(0); // rx
+            agentData.push(0); // ry
+            agentData.push(0); // rz
+            agentData.push(0.1); // collision radius
+            agentData.push(nFloatsPerCurve);
+            for (let jj = 0; jj < nFloatsPerCurve; ++jj) {
+                agentData.push(this.curveData[ii * nFloatsPerCurve + jj]);
+            }
+        }
+        const frameData: VisDataMessage = {
+            msgType: NetMessageEnum.ID_VIS_DATA_ARRIVE,
+            bundleStart: this.currentFrame,
+            bundleSize: 1, // frames
+            bundleData: [
+                {
+                    data: agentData,
+                    frameNumber: this.currentFrame,
+                    time: this.currentFrame,
+                },
+            ],
+            fileName: "hello world",
+        };
+        this.currentFrame++;
+        return frameData;
+    }
+
+    public getInfo(): TrajectoryFileInfoV2 {
+        const typeMapping: EncodedTypeMapping = {};
+        for (let i = 0; i < this.nTypes; ++i) {
+            typeMapping[i] = { name: `fiber${i}` };
+        }
+        return {
+            connId: "hello world",
+            msgType: NetMessageEnum.ID_TRAJECTORY_FILE_INFO,
+            version: 2,
+            timeStepSize: 1,
+            totalSteps: 1000,
+            // bounding volume dimensions
+            size: {
+                x: 12,
+                y: 12,
+                z: 12,
+            },
+            typeMapping: typeMapping,
+            spatialUnits: {
+                magnitude: 1,
+                name: "m",
+            },
+            timeUnits: {
+                magnitude: 1,
+                name: "s",
+            },
+        };
     }
 }
+
+const curveSim = new CurveSim(1000, 4);
+let curveSimIntervalId = 0;
 
 // these have been set to correspond to backend values
 export const enum NetMessageEnum {
@@ -134,12 +209,13 @@ const enum PlayBackType {
     LENGTH,
 }
 
-export class SimulatorConnection {
+export class SimulatorConnection extends NetConnection {
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfoV2) => void;
     public onTrajectoryDataArrive: (msg: VisDataMessage) => void;
 
     public constructor() {
+        super({});
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
 
@@ -149,6 +225,7 @@ export class SimulatorConnection {
         this.onTrajectoryDataArrive = () => {
             /* do nothing */
         };
+        console.log("NEW SIMULATORCONNECTION");
     }
 
     public socketIsValid(): boolean {
@@ -180,19 +257,12 @@ export class SimulatorConnection {
         return Promise.resolve("Remote sim successfully started");
     }
 
-    /**
-     * Websocket Send Helper Functions
-     */
-    private logWebSocketRequest(whatRequest, jsonData): void {
-        this.logger.debug("Web Socket Request Sent: ", whatRequest, jsonData);
-    }
-
-    private sendWebSocketRequest(
+    private sendSimulationRequest(
         jsonData: Record<string, unknown>,
         requestDescription: string
     ): void {
         // do processing, then return!
-        this.logWebSocketRequest(requestDescription, jsonData);
+        //this.logWebSocketRequest(requestDescription, jsonData);
 
         switch (jsonData.msgType) {
             case NetMessageEnum.ID_UPDATE_TIME_STEP:
@@ -202,47 +272,45 @@ export class SimulatorConnection {
             case NetMessageEnum.ID_MODEL_DEFINITION:
                 break;
             case NetMessageEnum.ID_VIS_DATA_REQUEST:
+                {
+                    if (jsonData["frameNumber"]) {
+                        const frame = curveSim.update(jsonData["frameNumber"]);
+                        this.onTrajectoryDataArrive(frame);
+                    } else {
+                        const a: TrajectoryFileInfoV2 = curveSim.getInfo();
+                        this.onTrajectoryFileInfoArrive(a);
+                    }
+                }
                 break;
             case NetMessageEnum.ID_VIS_DATA_PAUSE:
+                {
+                    window.clearInterval(curveSimIntervalId);
+                    curveSimIntervalId = 0;
+                }
                 break;
             case NetMessageEnum.ID_VIS_DATA_RESUME:
+                {
+                    curveSimIntervalId = window.setInterval(() => {
+                        const frame = curveSim.update(0);
+                        this.onTrajectoryDataArrive(frame);
+                    }, 1);
+                }
                 break;
             case NetMessageEnum.ID_VIS_DATA_ABORT:
+                {
+                    window.clearInterval(curveSimIntervalId);
+                    curveSimIntervalId = 0;
+                }
                 break;
             case NetMessageEnum.ID_GOTO_SIMULATION_TIME:
+                {
+                    const frame = curveSim.update(jsonData["time"]);
+                    this.onTrajectoryDataArrive(frame);
+                }
                 break;
             case NetMessageEnum.ID_INIT_TRAJECTORY_FILE:
-                const a: TrajectoryFileInfoV2 = {
-                    connId: "hello world",
-                    msgType: NetMessageEnum.ID_TRAJECTORY_FILE_INFO,
-                    version: 2,
-                    timeStepSize: 1,
-                    totalSteps: 1000,
-                    // bounding volume dimensions
-                    size: {
-                        x: 100,
-                        y: 100,
-                        z: 100,
-                    },
-                    typeMapping: {
-                        // type id
-                        0: {
-                            // info about this type
-                            name: "fiber0",
-                        },
-                        1: {
-                            name: "fiber1",
-                        },
-                    },
-                    spatialUnits: {
-                        magnitude: 1,
-                        name: "m",
-                    },
-                    timeUnits: {
-                        magnitude: 1,
-                        name: "s",
-                    },
-                };
+                const a: TrajectoryFileInfoV2 = curveSim.getInfo();
+                console.log("receive trajectory file info");
                 this.onTrajectoryFileInfoArrive(a);
                 break;
         }
@@ -262,7 +330,7 @@ export class SimulatorConnection {
             msgType: NetMessageEnum.ID_UPDATE_TIME_STEP,
             timeStep: newTimeStep,
         };
-        this.sendWebSocketRequest(jsonData, "Update Time-Step");
+        this.sendSimulationRequest(jsonData, "Update Time-Step");
     }
 
     public sendParameterUpdate(paramName: string, paramValue: number): void {
@@ -275,7 +343,7 @@ export class SimulatorConnection {
             paramName: paramName,
             paramValue: paramValue,
         };
-        this.sendWebSocketRequest(jsonData, "Rate Parameter Update");
+        this.sendSimulationRequest(jsonData, "Rate Parameter Update");
     }
 
     public sendModelDefinition(model: string): void {
@@ -287,7 +355,7 @@ export class SimulatorConnection {
             model: model,
             msgType: NetMessageEnum.ID_MODEL_DEFINITION,
         };
-        this.sendWebSocketRequest(dataToSend, "Model Definition");
+        this.sendSimulationRequest(dataToSend, "Model Definition");
     }
 
     /**
@@ -308,7 +376,7 @@ export class SimulatorConnection {
         };
 
         this.connectToRemoteServer(this.getIp()).then(() => {
-            this.sendWebSocketRequest(jsonData, "Start Simulation Pre-Run");
+            this.sendSimulationRequest(jsonData, "Start Simulation Pre-Run");
         });
     }
 
@@ -319,7 +387,7 @@ export class SimulatorConnection {
         };
 
         this.connectToRemoteServer(this.getIp()).then(() => {
-            this.sendWebSocketRequest(jsonData, "Start Simulation Live");
+            this.sendSimulationRequest(jsonData, "Start Simulation Live");
         });
     }
 
@@ -331,7 +399,7 @@ export class SimulatorConnection {
         };
 
         return this.connectToRemoteServer(this.getIp()).then(() => {
-            this.sendWebSocketRequest(
+            this.sendSimulationRequest(
                 jsonData,
                 "Start Trajectory File Playback"
             );
@@ -342,7 +410,7 @@ export class SimulatorConnection {
         if (!this.socketIsValid()) {
             return;
         }
-        this.sendWebSocketRequest(
+        this.sendSimulationRequest(
             { msgType: NetMessageEnum.ID_VIS_DATA_PAUSE },
             "Pause Simulation"
         );
@@ -352,7 +420,7 @@ export class SimulatorConnection {
         if (!this.socketIsValid()) {
             return;
         }
-        this.sendWebSocketRequest(
+        this.sendSimulationRequest(
             { msgType: NetMessageEnum.ID_VIS_DATA_RESUME },
             "Resume Simulation"
         );
@@ -362,14 +430,14 @@ export class SimulatorConnection {
         if (!this.socketIsValid()) {
             return;
         }
-        this.sendWebSocketRequest(
+        this.sendSimulationRequest(
             { msgType: NetMessageEnum.ID_VIS_DATA_ABORT },
             "Abort Simulation"
         );
     }
 
     public requestSingleFrame(startFrameNumber: number): void {
-        this.sendWebSocketRequest(
+        this.sendSimulationRequest(
             {
                 msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
                 mode: PlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
@@ -380,7 +448,7 @@ export class SimulatorConnection {
     }
 
     public gotoRemoteSimulationTime(timeNanoSeconds: number): void {
-        this.sendWebSocketRequest(
+        this.sendSimulationRequest(
             {
                 msgType: NetMessageEnum.ID_GOTO_SIMULATION_TIME,
                 time: timeNanoSeconds,
@@ -390,7 +458,7 @@ export class SimulatorConnection {
     }
 
     public requestTrajectoryFileInfo(fileName: string): void {
-        this.sendWebSocketRequest(
+        this.sendSimulationRequest(
             {
                 msgType: NetMessageEnum.ID_INIT_TRAJECTORY_FILE,
                 fileName: fileName,

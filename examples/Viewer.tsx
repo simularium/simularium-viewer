@@ -71,7 +71,9 @@ interface ViewerState {
     uiDisplayData: UIDisplayData;
 }
 
-const simulariumController = new SimulariumController({});
+const simulariumController = new SimulariumController({
+    assetLocation: "CURVESIM"
+});
 
 let currentFrame = 0;
 let currentTime = 0;
