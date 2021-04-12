@@ -72,10 +72,15 @@ interface ViewerState {
 
 const simulariumController = new SimulariumController({
     clientSimulatorParams: {
-        name: "my curve sim",
+        name: "my test sim",
+
         type: "CURVESIM",
         nCurves: 1000,
         nTypes: 4,
+
+        // type: "POINTSIM",
+        // nPoints: 1000,
+        // nTypes: 4,
     }
 });
 
