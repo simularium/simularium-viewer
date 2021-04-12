@@ -1,5 +1,6 @@
 import { IClientSimulator } from "./IClientSimulator";
 import CurveSimulator from "./CurveSimulator";
+import PointSimulator from "./PointSimulator";
 
 export interface ClientSimulatorParams {
     type: string;
@@ -12,6 +13,11 @@ export function createSimulator(
     if (params.type === "CURVESIM") {
         return new CurveSimulator(
             params["nCurves"] as number,
+            params["nTypes"] as number
+        );
+    } else if (params.type === "POINTSIM") {
+        return new PointSimulator(
+            params["nPoints"] as number,
             params["nTypes"] as number
         );
     }
