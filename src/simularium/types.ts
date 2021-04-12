@@ -77,10 +77,13 @@ export interface TrajectoryFileInfoV2 extends TrajectoryFileInfoBase {
     };
 }
 
-export type TrajectoryFileInfo = TrajectoryFileInfoV1 | TrajectoryFileInfoV2;
+export type TrajectoryFileInfoAny = TrajectoryFileInfoV1 | TrajectoryFileInfoV2;
+
+// This should always point to the latest version
+export type TrajectoryFileInfo = TrajectoryFileInfoV2;
 
 export interface SimulariumFileFormat {
-    trajectoryInfo: TrajectoryFileInfo;
+    trajectoryInfo: TrajectoryFileInfoAny;
     spatialData: VisDataMessage;
     plotData: CachedObservables;
 }

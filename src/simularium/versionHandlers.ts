@@ -1,4 +1,8 @@
-import { TrajectoryFileInfo, TrajectoryFileInfoV1 } from "./types";
+import {
+    TrajectoryFileInfo,
+    TrajectoryFileInfoAny,
+    TrajectoryFileInfoV1,
+} from "./types";
 
 /*
 Handles different trajectory file format versions.
@@ -6,7 +10,7 @@ Currently supported versions: 1, 2
 */
 
 export const updateTrajectoryFileInfoFormat = (
-    msg: TrajectoryFileInfo
+    msg: TrajectoryFileInfoAny
 ): TrajectoryFileInfo => {
     const latestVersion = 2;
     let output = msg;
@@ -43,5 +47,5 @@ export const updateTrajectoryFileInfoFormat = (
             );
     }
 
-    return output;
+    return output as TrajectoryFileInfo;
 };
