@@ -10,7 +10,10 @@ export function createSimulator(
     params: ClientSimulatorParams
 ): IClientSimulator {
     if (params.type === "CURVESIM") {
-        return new CurveSimulator(params["nCurves"], params["nTypes"]);
+        return new CurveSimulator(
+            params["nCurves"] as number,
+            params["nTypes"] as number
+        );
     }
     throw new Error("unknown simulator type");
 }

@@ -85,7 +85,7 @@ export class SimulatorConnection extends NetConnection {
                 {
                     if (jsonData["frameNumber"]) {
                         const frame = localSimulator.update(
-                            jsonData["frameNumber"]
+                            jsonData["frameNumber"] as number
                         );
                         this.onTrajectoryDataArrive(frame);
                     } else {
@@ -116,7 +116,9 @@ export class SimulatorConnection extends NetConnection {
                 break;
             case ClientMessageEnum.ID_GOTO_SIMULATION_TIME:
                 {
-                    const frame = localSimulator.update(jsonData["time"]);
+                    const frame = localSimulator.update(
+                        jsonData["time"] as number
+                    );
                     this.onTrajectoryDataArrive(frame);
                 }
                 break;
