@@ -82,7 +82,7 @@ export class SimulatorConnection extends NetConnection {
                 break;
             case ClientMessageEnum.ID_VIS_DATA_REQUEST:
                 {
-                    if (jsonData["frameNumber"]) {
+                    if (jsonData["frameNumber"] !== undefined) {
                         const frame = this.localSimulator.update(
                             jsonData["frameNumber"] as number
                         );
