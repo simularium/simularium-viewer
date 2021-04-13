@@ -83,7 +83,7 @@ export type TrajectoryFileInfoAny = TrajectoryFileInfoV1 | TrajectoryFileInfoV2;
 export type TrajectoryFileInfo = TrajectoryFileInfoV2;
 
 export interface SimulariumFileFormat {
-    trajectoryInfo: TrajectoryFileInfoAny;
+    trajectoryInfo: TrajectoryFileInfo;
     spatialData: VisDataMessage;
     plotData: CachedObservables;
 }
