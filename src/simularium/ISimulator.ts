@@ -7,8 +7,14 @@ export interface ISimulator {
     // common to all ISimulators?
     //protected logger: ILogger;
 
-    onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfoV2) => void;
-    onTrajectoryDataArrive: (msg: VisDataMessage) => void;
+    // what to do about these? they tend to be injected from the outside
+    //onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfoV2) => void;
+    //onTrajectoryDataArrive: (msg: VisDataMessage) => void;
+    setTrajectoryFileInfoHandler(
+        handler: (msg: TrajectoryFileInfoV2) => void
+    ): void;
+    setTrajectoryDataHandler(handler: (msg: VisDataMessage) => void): void;
+    // others?
 
     socketIsValid(): boolean;
 
