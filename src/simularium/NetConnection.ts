@@ -1,6 +1,9 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
 
+import { ISimulator } from "./ISimulator";
+import { TrajectoryFileInfoV2, VisDataMessage } from "./types";
+
 interface NetMessage {
     connId: string;
     msgType: number;
@@ -46,7 +49,7 @@ export interface NetConnectionParams {
     serverPort?: number;
 }
 
-export class NetConnection {
+export class NetConnection implements ISimulator {
     private webSocket: WebSocket | null;
     private serverIp: string;
     private serverPort: number;
@@ -73,6 +76,17 @@ export class NetConnection {
 
         // Frees the reserved backend in the event that the window closes w/o disconnecting
         window.addEventListener("beforeunload", this.onClose.bind(this));
+    }
+
+    public setTrajectoryFileInfoHandler(
+        handler: (msg: TrajectoryFileInfoV2) => void
+    ): void {
+        this.onTrajectoryFileInfoArrive = handler;
+    }
+    public setTrajectoryDataHandler(
+        handler: (msg: VisDataMessage) => void
+    ): void {
+        this.onTrajectoryDataArrive = handler;
     }
 
     /**

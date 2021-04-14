@@ -18,6 +18,7 @@ import {
 
 import { SimulatorConnection } from "../simularium/ClientSimulatorConnection";
 import { ClientSimulatorParams } from "../simularium/localSimulators/ClientSimulatorFactory";
+import { ISimulator } from "../simularium/ISimulator";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
@@ -35,7 +36,7 @@ const DEFAULT_ASSET_PREFIX =
     "https://aics-agentviz-data.s3.us-east-2.amazonaws.com/meshes/obj";
 
 export default class SimulariumController {
-    public netConnection: NetConnection | undefined;
+    public netConnection?: ISimulator;
     public clientSimulatorParams?: ClientSimulatorParams;
     public visData: VisData;
     public visGeometry: VisGeometry | undefined;
@@ -85,8 +86,8 @@ export default class SimulariumController {
                 params.clientSimulatorParams
             );
             this.playBackFile = "";
-            this.netConnection.onTrajectoryDataArrive = this.visData.parseAgentsFromNetData.bind(
-                this.visData
+            this.netConnection.setTrajectoryDataHandler(
+                this.visData.parseAgentsFromNetData.bind(this.visData)
             );
             this.networkEnabled = false;
             this.isPaused = false;
@@ -99,8 +100,8 @@ export default class SimulariumController {
                 : new NetConnection(params.netConnectionSettings);
 
             this.playBackFile = params.trajectoryPlaybackFile || "";
-            this.netConnection.onTrajectoryDataArrive = this.visData.parseAgentsFromNetData.bind(
-                this.visData
+            this.netConnection.setTrajectoryDataHandler(
+                this.visData.parseAgentsFromNetData.bind(this.visData)
             );
 
             this.networkEnabled = true;
@@ -163,15 +164,15 @@ export default class SimulariumController {
             this.netConnection = new NetConnection(config);
         }
 
-        this.netConnection.onTrajectoryDataArrive = this.visData.parseAgentsFromNetData.bind(
-            this.visData
+        this.netConnection.setTrajectoryDataHandler(
+            this.visData.parseAgentsFromNetData.bind(this.visData)
         );
 
-        this.netConnection.onTrajectoryFileInfoArrive = (
-            trajFileInfo: TrajectoryFileInfo
-        ) => {
-            this.handleTrajectoryInfo(trajFileInfo);
-        };
+        this.netConnection.setTrajectoryFileInfoHandler(
+            (trajFileInfo: TrajectoryFileInfo) => {
+                this.handleTrajectoryInfo(trajFileInfo);
+            }
+        );
     }
 
     public get hasChangedFile(): boolean {
@@ -407,7 +408,7 @@ export default class SimulariumController {
         this.handleTrajectoryInfo = callback;
 
         if (this.netConnection) {
-            this.netConnection.onTrajectoryFileInfoArrive = callback;
+            this.netConnection.setTrajectoryFileInfoHandler(callback);
         }
     }
 }

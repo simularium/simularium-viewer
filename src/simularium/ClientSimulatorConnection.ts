@@ -2,7 +2,6 @@ import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
 
 import { VisDataMessage, TrajectoryFileInfoV2 } from "./types";
-import { NetConnection } from "./NetConnection";
 import {
     ClientMessageEnum,
     ClientPlayBackType,
@@ -12,18 +11,18 @@ import {
     createSimulator,
     ClientSimulatorParams,
 } from "./localSimulators/ClientSimulatorFactory";
+import { ISimulator } from "./ISimulator";
 
 // setInterval is the playback engine for now
 let simulatorIntervalId = 0;
 
-export class SimulatorConnection extends NetConnection {
+export class SimulatorConnection implements ISimulator {
     private localSimulator: IClientSimulator;
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfoV2) => void;
     public onTrajectoryDataArrive: (msg: VisDataMessage) => void;
 
     public constructor(params: ClientSimulatorParams) {
-        super({});
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
 
@@ -35,6 +34,17 @@ export class SimulatorConnection extends NetConnection {
         };
         console.log("NEW SIMULATORCONNECTION");
         this.localSimulator = createSimulator(params);
+    }
+
+    public setTrajectoryFileInfoHandler(
+        handler: (msg: TrajectoryFileInfoV2) => void
+    ): void {
+        this.onTrajectoryFileInfoArrive = handler;
+    }
+    public setTrajectoryDataHandler(
+        handler: (msg: VisDataMessage) => void
+    ): void {
+        this.onTrajectoryDataArrive = handler;
     }
 
     public socketIsValid(): boolean {
