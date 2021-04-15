@@ -32,6 +32,11 @@ interface SimulariumControllerParams {
     clientSimulatorParams?: ClientSimulatorParams;
 }
 
+interface SimulatorConnectionParams {
+    netConnectionSettings?: NetConnectionParams;
+    clientSimulatorParams?: ClientSimulatorParams;
+}
+
 const DEFAULT_ASSET_PREFIX =
     "https://aics-agentviz-data.s3.us-east-2.amazonaws.com/meshes/obj";
 
@@ -326,7 +331,8 @@ export default class SimulariumController {
         isLocalFile = false,
         simulariumFile?: SimulariumFileFormat,
         geometryFile?: string,
-        assetPrefix?: string
+        assetPrefix?: string,
+        connectionParams?: SimulatorConnectionParams
     ): Promise<FileReturn> {
         this.fileChanged = true;
         this.playBackFile = newFileName;
