@@ -15,6 +15,7 @@ import {
     UIDisplayData,
     NO_AGENT,
 } from "../simularium";
+import { TrajectoryFileInfoAny } from "../simularium/types";
 import { RenderStyle } from "../simularium/VisGeometry";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
 
@@ -207,20 +208,24 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         simulariumController.zoomOut = this.zoomOut;
         simulariumController.visGeometry = this.visGeometry;
         simulariumController.trajFileInfoCallback = (
-            msg: TrajectoryFileInfo
+            msg: TrajectoryFileInfoAny
         ) => {
-            this.visGeometry.handleTrajectoryData(msg);
-            // handleTrajectoryData() above creates a new bounding box and tick marks
-            // (via resetBounds()) and sets VisGeometry.tickIntervalLength, which is now
-            // available for use as the length of the scale bar in the UI.
+            // Update TrajectoryFileInfo format to latest version
+            const newMsg: TrajectoryFileInfo = updateTrajectoryFileInfoFormat(msg)
+            
+            // Create a new bounding box and tick marks (via resetBounds()) and set
+            // VisGeometry.tickIntervalLength, to make it available for use as the length of the
+            // scale bar in the UI
+            this.visGeometry.handleTrajectoryData(newMsg);
 
             // TODO: Determine and save scale bar info as simulariumController.scaleBarLabel here
             // instead of as simulariumController.tickIntervalLength
             // (This would involve multiplying visGeometry.tickIntervalLength by spatial unit
-            // magnitude and, if we want, determining the appropriate display unit for v1 data)
+            // magnitude and, if we want, determining the appropriate display unit for v1 data
+            // in updateTrajectoryFileInfoFormat)
             simulariumController.tickIntervalLength = this.visGeometry.tickIntervalLength;
             try {
-                this.selectionInterface.parse(msg.typeMapping);
+                this.selectionInterface.parse(newMsg.typeMapping);
             } catch (e) {
                 if (onError) {
                     onError(`error parsing 'typeMapping' data, ${e.message}`);
@@ -228,7 +233,6 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                     console.log("error parsing 'typeMapping' data", e);
                 }
             }
-            const newMsg = updateTrajectoryFileInfoFormat(msg)
             onTrajectoryFileInfoChanged(newMsg);
 
             this.visGeometry.clearColorMapping();
