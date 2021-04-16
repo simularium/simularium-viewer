@@ -211,8 +211,10 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             msg: TrajectoryFileInfoAny
         ) => {
             // Update TrajectoryFileInfo format to latest version
-            const newMsg: TrajectoryFileInfo = updateTrajectoryFileInfoFormat(msg)
-            
+            const newMsg: TrajectoryFileInfo = updateTrajectoryFileInfoFormat(
+                msg
+            );
+
             // Create a new bounding box and tick marks (via resetBounds()) and set
             // VisGeometry.tickIntervalLength, to make it available for use as the length of the
             // scale bar in the UI
@@ -578,13 +580,11 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             if (simulariumController.hasChangedFile) {
                 this.visGeometry.clearForNewTrajectory();
                 // skip fetch if local file
-                const p = simulariumController.isLocalFile
-                    ? Promise.resolve()
-                    : this.visGeometry.mapFromJSON(
-                          simulariumController.getFile(),
-                          simulariumController.getGeometryFile(),
-                          simulariumController.getAssetPrefix()
-                      );
+                const p = this.visGeometry.mapFromJSON(
+                    simulariumController.getFile(),
+                    simulariumController.getGeometryFile(),
+                    simulariumController.getAssetPrefix()
+                );
 
                 p.then(() => {
                     this.visGeometry.render(totalElapsedTime);

@@ -72,19 +72,19 @@ interface ViewerState {
 
 const simulariumController = new SimulariumController(
     {}
-//     {
-//     clientSimulatorParams: {
-//         name: "my test sim",
+    //     {
+    //     clientSimulatorParams: {
+    //         name: "my test sim",
 
-//         type: "CURVESIM",
-//         nCurves: 1000,
-//         nTypes: 4,
+    //         type: "CURVESIM",
+    //         nCurves: 1000,
+    //         nTypes: 4,
 
-//         // type: "POINTSIM",
-//         // nPoints: 1000,
-//         // nTypes: 4,
-//     }
-// }
+    //         // type: "POINTSIM",
+    //         // nPoints: 1000,
+    //         // nTypes: 4,
+    //     }
+    // }
 );
 
 let currentFrame = 0;
@@ -163,7 +163,7 @@ class Viewer extends React.Component<{}, ViewerState> {
             const simulariumFile = parsedFiles[0];
             const fileName = filesArr[0].name;
             simulariumController
-                .changeFile(fileName, true, simulariumFile)
+                .changeFile(fileName, "", "", { simulariumFile })
                 .catch((error) => {
                     console.log(error.htmlData);
                     window.alert(`Error loading file: ${error.message}`);
@@ -284,7 +284,9 @@ class Viewer extends React.Component<{}, ViewerState> {
 
     private configureAndLoad() {
         simulariumController.configureNetwork(netConnectionSettings);
-        simulariumController.changeFile(playbackFile, false, null, "", "", {netConnectionSettings});
+        simulariumController.changeFile(playbackFile, "", "", {
+            netConnectionSettings,
+        });
     }
 
     public render(): JSX.Element {
