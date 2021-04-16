@@ -347,12 +347,46 @@ export default class SimulariumController {
 
         this.stop();
 
+        if (this.netConnection) {
+            this.netConnection.disconnect();
+        }
+
         if (isLocalFile) {
             return this.handleLocalFileChange(simulariumFile);
+        } else if (connectionParams && connectionParams.clientSimulatorParams) {
+            this.clientSimulatorParams = connectionParams.clientSimulatorParams;
+            this.netConnection = new SimulatorConnection(
+                connectionParams.clientSimulatorParams
+            );
+            this.networkEnabled = false;
+            this.isPaused = false;
+        } else if (connectionParams && connectionParams.netConnectionSettings) {
+            this.netConnection = new NetConnection(
+                connectionParams.netConnectionSettings
+            );
+
+            this.networkEnabled = true;
+            this.isPaused = false;
+        } else {
+            // No network information was passed in
+            //  the viewer will be initialized blank
+
+            this.netConnection = undefined;
+
+            console.warn("incomplete simulator config provided");
+
+            this.networkEnabled = false;
+            this.isPaused = false;
         }
 
         // otherwise, start a network file
         if (this.netConnection) {
+            this.netConnection.setTrajectoryFileInfoHandler(
+                this.handleTrajectoryInfo
+            );
+            this.netConnection.setTrajectoryDataHandler(
+                this.visData.parseAgentsFromNetData.bind(this.visData)
+            );
             return this.start()
                 .then(() => {
                     if (this.netConnection) {

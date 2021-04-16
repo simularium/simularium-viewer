@@ -70,19 +70,22 @@ interface ViewerState {
     uiDisplayData: UIDisplayData;
 }
 
-const simulariumController = new SimulariumController({
-    clientSimulatorParams: {
-        name: "my test sim",
+const simulariumController = new SimulariumController(
+    {}
+//     {
+//     clientSimulatorParams: {
+//         name: "my test sim",
 
-        type: "CURVESIM",
-        nCurves: 1000,
-        nTypes: 4,
+//         type: "CURVESIM",
+//         nCurves: 1000,
+//         nTypes: 4,
 
-        // type: "POINTSIM",
-        // nPoints: 1000,
-        // nTypes: 4,
-    }
-});
+//         // type: "POINTSIM",
+//         // nPoints: 1000,
+//         // nTypes: 4,
+//     }
+// }
+);
 
 let currentFrame = 0;
 let currentTime = 0;
@@ -167,10 +170,6 @@ class Viewer extends React.Component<{}, ViewerState> {
                 });
         });
     };
-
-    private changeFile(file: string) {
-        simulariumController.changeFile(file);
-    }
 
     public handleJsonMeshData(jsonData): void {
         console.log("Mesh JSON Data: ", jsonData);
@@ -285,7 +284,7 @@ class Viewer extends React.Component<{}, ViewerState> {
 
     private configureAndLoad() {
         simulariumController.configureNetwork(netConnectionSettings);
-        simulariumController.changeFile(playbackFile);
+        simulariumController.changeFile(playbackFile, false, null, "", "", {netConnectionSettings});
     }
 
     public render(): JSX.Element {
