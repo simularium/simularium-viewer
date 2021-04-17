@@ -72,7 +72,6 @@ export default class SimulariumController {
             /* Do Nothing */
         };
 
-        /* eslint-disable */
         this.handleTrajectoryInfo = (msg: TrajectoryFileInfo) => {
             /* Do Nothing */
         };
@@ -83,35 +82,16 @@ export default class SimulariumController {
         this.zoomIn = () => noop;
         this.zoomOut = () => noop;
         this.onError = (errorMessage) => {};
-        /* eslint-enable */
-        if (params.clientSimulatorParams) {
-            this.netConnection = new SimulatorConnection(
-                params.clientSimulatorParams
-            );
-            this.playBackFile = "";
-            this.netConnection.setTrajectoryDataHandler(
-                this.visData.parseAgentsFromNetData.bind(this.visData)
-            );
-            this.networkEnabled = false;
-            this.isPaused = false;
-            this.fileChanged = false;
-            this.geometryFile = "";
-        } else if (params.netConnection || params.netConnectionSettings) {
-            this.netConnection = params.netConnection
-                ? params.netConnection
-                : new NetConnection(params.netConnectionSettings);
-
-            this.playBackFile = params.trajectoryPlaybackFile || "";
-            this.netConnection.setTrajectoryDataHandler(
-                this.visData.parseAgentsFromNetData.bind(this.visData)
-            );
-
-            this.networkEnabled = true;
-            this.isPaused = false;
-            this.fileChanged = false;
-            this.geometryFile = this.resolveGeometryFile(
-                params.trajectoryGeometryFile || "",
-                this.playBackFile
+        if (params.netConnection) {
+            this.netConnection = params.netConnection;
+        } else if (
+            params.netConnectionSettings ||
+            params.clientSimulatorParams
+        ) {
+            this.createSimulatorConnection(
+                params.netConnectionSettings,
+                params.clientSimulatorParams,
+                undefined
             );
         } else {
             // No network information was passed in
@@ -125,14 +105,16 @@ export default class SimulariumController {
                     "trajectoryPlaybackFile param ignored, no network config provided"
                 );
             }
-
-            this.playBackFile = "";
-            this.networkEnabled = false;
-            this.isPaused = false;
-            this.fileChanged = false;
-            this.geometryFile = "";
         }
 
+        this.networkEnabled = true;
+        this.isPaused = false;
+        this.fileChanged = false;
+        this.playBackFile = params.trajectoryPlaybackFile || "";
+        this.geometryFile = this.resolveGeometryFile(
+            params.trajectoryGeometryFile || "",
+            this.playBackFile
+        );
         this.assetPrefix = params.assetLocation || DEFAULT_ASSET_PREFIX;
     }
 
