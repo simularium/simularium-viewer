@@ -160,6 +160,7 @@ export default class SimulariumController {
             this.netConnection = new SimulatorConnection(clientSimulatorParams);
         } else if (localFile) {
             this.netConnection = new LocalFileConnection(
+                this.playBackFile,
                 localFile,
                 this.visData
             );
