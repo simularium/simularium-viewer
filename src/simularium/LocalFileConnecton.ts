@@ -12,7 +12,6 @@ import VisData from "./VisData";
 
 export class LocalFileConnection implements ISimulator {
     protected fileName: string;
-    protected visData: VisData; // for cacheJSON
     protected simulariumFile: SimulariumFileFormat;
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfoV2) => void;
@@ -21,13 +20,8 @@ export class LocalFileConnection implements ISimulator {
     private playbackIntervalId = 0;
     private currentPlaybackFrameIndex = 0;
 
-    public constructor(
-        fileName: string,
-        simulariumFile: SimulariumFileFormat,
-        visData: VisData
-    ) {
+    public constructor(fileName: string, simulariumFile: SimulariumFileFormat) {
         this.fileName = fileName;
-        this.visData = visData;
         this.simulariumFile = simulariumFile;
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
@@ -106,7 +100,6 @@ export class LocalFileConnection implements ISimulator {
                 a.frameNumber - b.frameNumber
         );
         try {
-            //this.visData.cacheJSON(spatialData);
             this.onTrajectoryFileInfoArrive(trajectoryInfo);
         } catch (e) {
             return Promise.reject(e);
@@ -121,17 +114,18 @@ export class LocalFileConnection implements ISimulator {
 
     public resumeRemoteSim(): void {
         this.playbackIntervalId = window.setInterval(() => {
-            this.onTrajectoryDataArrive({
-                msgType: 0,
-                bundleStart: this.currentPlaybackFrameIndex,
-                bundleSize: 1,
-                bundleData: [
-                    this.simulariumFile.spatialData.bundleData[
-                        this.currentPlaybackFrameIndex
-                    ],
-                ],
-                fileName: this.fileName,
-            });
+            if (
+                this.currentPlaybackFrameIndex >=
+                this.simulariumFile.spatialData.bundleSize
+            ) {
+                this.currentPlaybackFrameIndex =
+                    this.simulariumFile.spatialData.bundleSize - 1;
+                this.pauseRemoteSim();
+                return;
+            }
+            this.onTrajectoryDataArrive(
+                this.getFrame(this.currentPlaybackFrameIndex)
+            );
             this.currentPlaybackFrameIndex++;
         }, 1);
     }
@@ -143,15 +137,7 @@ export class LocalFileConnection implements ISimulator {
     }
 
     public requestSingleFrame(startFrameNumber: number): void {
-        this.onTrajectoryDataArrive({
-            msgType: 0,
-            bundleStart: startFrameNumber,
-            bundleSize: 1,
-            bundleData: [
-                this.simulariumFile.spatialData.bundleData[startFrameNumber],
-            ],
-            fileName: this.fileName,
-        });
+        this.onTrajectoryDataArrive(this.getFrame(startFrameNumber));
     }
 
     public gotoRemoteSimulationTime(timeNanoSeconds: number): void {
@@ -165,22 +151,30 @@ export class LocalFileConnection implements ISimulator {
                 .time;
             if (timeNanoSeconds < frameTime) {
                 const theFrameNumber = Math.max(frame - 1, 0);
-                this.onTrajectoryDataArrive({
-                    msgType: 0,
-                    bundleStart: theFrameNumber,
-                    bundleSize: 1,
-                    bundleData: [
-                        this.simulariumFile.spatialData.bundleData[
-                            theFrameNumber
-                        ],
-                    ],
-                    fileName: this.fileName,
-                });
+
+                this.onTrajectoryDataArrive(this.getFrame(theFrameNumber));
             }
         }
     }
 
     public requestTrajectoryFileInfo(fileName: string): void {
         this.onTrajectoryFileInfoArrive(this.simulariumFile.trajectoryInfo);
+    }
+
+    private getFrame(theFrameNumber: number): VisDataMessage {
+        //        return this.getAllFrames();
+        return {
+            msgType: 0,
+            bundleStart: theFrameNumber,
+            bundleSize: 1,
+            bundleData: [
+                this.simulariumFile.spatialData.bundleData[theFrameNumber],
+            ],
+            fileName: this.fileName,
+        };
+    }
+
+    private getAllFrames(): VisDataMessage {
+        return this.simulariumFile.spatialData;
     }
 }
