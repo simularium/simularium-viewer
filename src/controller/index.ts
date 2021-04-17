@@ -161,8 +161,7 @@ export default class SimulariumController {
         } else if (localFile) {
             this.netConnection = new LocalFileConnection(
                 this.playBackFile,
-                localFile,
-                this.visData
+                localFile
             );
         } else if (netConnectionConfig) {
             this.netConnection = new NetConnection(netConnectionConfig);
