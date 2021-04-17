@@ -77,7 +77,7 @@ let currentFrame = 0;
 let currentTime = 0;
 
 const initialState = {
-    renderStyle: RenderStyle.MOLECULAR,
+    renderStyle: RenderStyle.WEBGL2_PREFERRED,
     pauseOn: -1,
     particleTypeNames: [],
     particleTypeTags: [],
@@ -388,9 +388,9 @@ class Viewer extends React.Component<{}, ViewerState> {
                     onClick={() =>
                         this.setState({
                             renderStyle:
-                                this.state.renderStyle === RenderStyle.GENERIC
-                                    ? RenderStyle.MOLECULAR
-                                    : RenderStyle.GENERIC,
+                                this.state.renderStyle === RenderStyle.WEBGL1_FALLBACK
+                                    ? RenderStyle.WEBGL2_PREFERRED
+                                    : RenderStyle.WEBGL1_FALLBACK,
                         })
                     }
                 >

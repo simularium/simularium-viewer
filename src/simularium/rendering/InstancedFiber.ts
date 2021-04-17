@@ -297,11 +297,6 @@ class InstancedFiber {
             typeId,
             this.currentInstance
         );
-        // if (curvePts.length !== this.nCurvePoints) {
-        //     throw new Error(
-        //         `Adding instance of ${curvePts.length} to wrong length of Instanced fiber ${this.nCurvePoints}`
-        //     );
-        // }
         for (
             let i = 0;
             i < Math.min(curvePts.length / 3, this.nCurvePoints);

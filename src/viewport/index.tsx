@@ -78,7 +78,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
     private stats: Stats;
 
     public static defaultProps = {
-        renderStyle: RenderStyle.MOLECULAR,
+        renderStyle: RenderStyle.WEBGL2_PREFERRED,
         backgroundColor: [0, 0, 0],
         height: 800,
         width: 800,
