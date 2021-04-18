@@ -8,7 +8,6 @@ import {
     SimulariumFileFormat,
 } from "./types";
 import { ISimulator } from "./ISimulator";
-import VisData from "./VisData";
 
 export class LocalFileConnection implements ISimulator {
     protected fileName: string;

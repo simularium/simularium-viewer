@@ -132,9 +132,11 @@ export class SimulatorConnection implements ISimulator {
                 }
                 break;
             case ClientMessageEnum.ID_INIT_TRAJECTORY_FILE:
-                const a: TrajectoryFileInfoV2 = this.localSimulator.getInfo();
-                console.log("receive trajectory file info");
-                this.onTrajectoryFileInfoArrive(a);
+                {
+                    const a: TrajectoryFileInfoV2 = this.localSimulator.getInfo();
+                    console.log("receive trajectory file info");
+                    this.onTrajectoryFileInfoArrive(a);
+                }
                 break;
         }
     }

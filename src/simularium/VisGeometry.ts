@@ -85,12 +85,6 @@ interface MeshLoadRequest {
     cancelled: boolean;
 }
 
-interface HSL {
-    h: number;
-    s: number;
-    l: number;
-}
-
 interface PathData {
     agentId: number;
     numSegments: number;
@@ -336,8 +330,7 @@ class VisGeometry {
         removeByName(this.instancedMeshGroup, InstancedFiberGroup.GROUP_NAME);
 
         // tell instanced geometry what representation to use.
-        if (this.renderStyle === RenderStyle.GENERIC) {
-        } else {
+        if (this.renderStyle === RenderStyle.MOLECULAR) {
             this.fibers = new InstancedFiberGroup();
         }
 

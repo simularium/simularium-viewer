@@ -68,20 +68,16 @@ export default class SimulariumController {
     public constructor(params: SimulariumControllerParams) {
         this.visData = new VisData();
         this.tickIntervalLength = 0; // Will be overwritten when a trajectory is loaded
-        this.postConnect = () => {
-            /* Do Nothing */
-        };
+        this.postConnect = () => noop;
 
-        this.handleTrajectoryInfo = (msg: TrajectoryFileInfo) => {
-            /* Do Nothing */
-        };
+        this.handleTrajectoryInfo = (/*msg: TrajectoryFileInfo*/) => noop;
 
         this.reOrientCamera = () => noop;
         this.resetCamera = () => noop;
         this.centerCamera = () => noop;
         this.zoomIn = () => noop;
         this.zoomOut = () => noop;
-        this.onError = (errorMessage) => {};
+        this.onError = (/*errorMessage*/) => noop;
         if (params.netConnection) {
             this.netConnection = params.netConnection;
         } else if (
