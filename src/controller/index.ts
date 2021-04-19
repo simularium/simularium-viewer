@@ -349,7 +349,7 @@ export default class SimulariumController {
             this.isPaused = false;
         }
 
-        // otherwise, start a network file
+        // start the simulation paused and get first frame
         if (this.netConnection) {
             return this.start()
                 .then(() => {

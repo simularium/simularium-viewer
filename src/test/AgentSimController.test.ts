@@ -3,7 +3,7 @@ import { DummyNetConnection } from "../simularium";
 
 describe("SimulariumController module", () => {
     describe("SimulariumController Time", () => {
-        test("Go to time in cache", done => {
+        test("Go to time in cache", (done) => {
             const netConn = new DummyNetConnection({});
             netConn.timeStep = 1;
             netConn.totalDuration = 100;

@@ -256,6 +256,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         };
 
         simulariumController.postConnect = () => {
+            console.log("POST CONNECT CALLBACK");
             if (loadInitialData) {
                 const fileName = simulariumController.getFile();
                 this.visGeometry
