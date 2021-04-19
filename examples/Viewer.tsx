@@ -148,7 +148,7 @@ class Viewer extends React.Component<{}, ViewerState> {
             const simulariumFile = parsedFiles[0];
             const fileName = filesArr[0].name;
             simulariumController
-                .changeFile(fileName, "", "", { simulariumFile })
+                .changeFile(fileName, undefined, undefined, { simulariumFile })
                 .catch((error) => {
                     console.log(error.htmlData);
                     window.alert(`Error loading file: ${error.message}`);
@@ -270,27 +270,42 @@ class Viewer extends React.Component<{}, ViewerState> {
     private configureAndLoad() {
         simulariumController.configureNetwork(netConnectionSettings);
         if (playbackFile === "TEST_POINTS") {
-            simulariumController.changeFile(playbackFile, "", "", {
-                clientSimulatorParams: {
-                    name: "my test sim",
-                    type: "POINTSIM",
-                    nPoints: 1000,
-                    nTypes: 4,
-                },
-            });
+            simulariumController.changeFile(
+                playbackFile,
+                undefined,
+                undefined,
+                {
+                    clientSimulatorParams: {
+                        name: "my test sim",
+                        type: "POINTSIM",
+                        nPoints: 1000,
+                        nTypes: 4,
+                    },
+                }
+            );
         } else if (playbackFile === "TEST_FIBERS") {
-            simulariumController.changeFile(playbackFile, "", "", {
-                clientSimulatorParams: {
-                    name: "my test sim",
-                    type: "CURVESIM",
-                    nCurves: 1000,
-                    nTypes: 4,
-                },
-            });
+            simulariumController.changeFile(
+                playbackFile,
+                undefined,
+                undefined,
+                {
+                    clientSimulatorParams: {
+                        name: "my test sim",
+                        type: "CURVESIM",
+                        nCurves: 1000,
+                        nTypes: 4,
+                    },
+                }
+            );
         } else {
-            simulariumController.changeFile(playbackFile, "", "", {
-                netConnectionSettings,
-            });
+            simulariumController.changeFile(
+                playbackFile,
+                undefined,
+                undefined,
+                {
+                    netConnectionSettings,
+                }
+            );
         }
     }
 

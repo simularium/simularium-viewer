@@ -29,7 +29,6 @@ interface SimulariumControllerParams {
     trajectoryGeometryFile?: string;
     // a URL prefix to locate the assets in the trajectoryGeometryFile
     assetLocation?: string;
-    clientSimulatorParams?: ClientSimulatorParams;
 }
 
 interface SimulatorConnectionParams {
@@ -80,13 +79,10 @@ export default class SimulariumController {
         this.onError = (/*errorMessage*/) => noop;
         if (params.netConnection) {
             this.netConnection = params.netConnection;
-        } else if (
-            params.netConnectionSettings ||
-            params.clientSimulatorParams
-        ) {
+        } else if (params.netConnectionSettings) {
             this.createSimulatorConnection(
                 params.netConnectionSettings,
-                params.clientSimulatorParams,
+                undefined,
                 undefined
             );
         } else {
@@ -309,7 +305,9 @@ export default class SimulariumController {
     }
 
     public changeFile(
+        // TODO: push newFileName into connectionParams below
         newFileName: string,
+        // TODO: can geometryFile and assetPrefix come from the TrajectoryFileInfo data?
         geometryFile?: string,
         assetPrefix?: string,
         connectionParams?: SimulatorConnectionParams
@@ -326,9 +324,9 @@ export default class SimulariumController {
 
         this.stop();
 
-        if (this.netConnection) {
-            this.netConnection.disconnect();
-        }
+        // if (this.netConnection) {
+        //     this.netConnection.disconnect();
+        // }
 
         try {
             if (connectionParams) {
@@ -339,7 +337,9 @@ export default class SimulariumController {
                 );
                 this.networkEnabled = true;
                 this.isPaused = true;
-            } else throw new Error("incomplete simulator config provided");
+            } else {
+                throw new Error("incomplete simulator config provided");
+            }
         } catch (e) {
             this.netConnection = undefined;
 
