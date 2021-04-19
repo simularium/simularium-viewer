@@ -72,13 +72,13 @@ export class SimulatorConnection implements ISimulator {
         return "";
     }
 
-    public connectToRemoteServer(address: string): Promise<string> {
+    public connectToRemoteServer(_address: string): Promise<string> {
         return Promise.resolve("Local client sim successfully started");
     }
 
     private sendSimulationRequest(
         jsonData: Record<string, unknown>,
-        requestDescription: string
+        _requestDescription: string
     ): void {
         // do processing, then return!
         //this.logWebSocketRequest(requestDescription, jsonData);

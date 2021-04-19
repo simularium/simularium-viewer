@@ -37,6 +37,11 @@ module.exports = {
                 selector: "enumMember",
                 format: ["UPPER_CASE"],
             },
+            {
+                selector: "parameter",
+                format: ["camelCase"],
+                leadingUnderscore: "allow",
+            },
         ],
         "@typescript-eslint/indent": ["off"],
         "@typescript-eslint/no-empty-function": ["warn"],
@@ -45,6 +50,12 @@ module.exports = {
         "prefer-const": ["warn"],
         "prefer-spread": ["warn"],
         "no-var": ["warn"],
+        // note you must disable the base rule as it can report incorrect errors
+        "no-unused-vars": "off",
+        "@typescript-eslint/no-unused-vars": [
+            "warn",
+            { argsIgnorePattern: "^_" },
+        ],
     },
     settings: {
         react: {

@@ -52,7 +52,9 @@ export class LocalFileConnection implements ISimulator {
     /**
      * Connect
      * */
-    public connectToUri(uri: string): void {}
+    public connectToUri(_uri: string): void {
+        // not implemented
+    }
 
     public disconnect(): void {
         this.abortRemoteSim();
@@ -62,15 +64,21 @@ export class LocalFileConnection implements ISimulator {
         return "";
     }
 
-    public connectToRemoteServer(address: string): Promise<string> {
+    public connectToRemoteServer(_address: string): Promise<string> {
         return Promise.resolve("Local file successfully started");
     }
 
-    public sendTimeStepUpdate(newTimeStep: number): void {}
+    public sendTimeStepUpdate(_newTimeStep: number): void {
+        // not implemented
+    }
 
-    public sendParameterUpdate(paramName: string, paramValue: number): void {}
+    public sendParameterUpdate(_paramName: string, _paramValue: number): void {
+        // not implemented
+    }
 
-    public sendModelDefinition(model: string): void {}
+    public sendModelDefinition(_model: string): void {
+        // not implemented
+    }
 
     /**
      * Simulation Control
@@ -81,11 +89,18 @@ export class LocalFileConnection implements ISimulator {
      *  Trajectory File: No simulation run, stream a result file piecemeal
      *
      */
-    public startRemoteSimPreRun(timeStep: number, numTimeSteps: number): void {}
+    public startRemoteSimPreRun(
+        _timeStep: number,
+        _numTimeSteps: number
+    ): void {
+        // not implemented
+    }
 
-    public startRemoteSimLive(): void {}
+    public startRemoteSimLive(): void {
+        // not implemented
+    }
 
-    public startRemoteTrajectoryPlayback(fileName: string): Promise<void> {
+    public startRemoteTrajectoryPlayback(_fileName: string): Promise<void> {
         const { spatialData, trajectoryInfo } = this.simulariumFile;
 
         if (!spatialData) {
@@ -156,7 +171,7 @@ export class LocalFileConnection implements ISimulator {
         }
     }
 
-    public requestTrajectoryFileInfo(fileName: string): void {
+    public requestTrajectoryFileInfo(_fileName: string): void {
         this.onTrajectoryFileInfoArrive(this.simulariumFile.trajectoryInfo);
     }
 
