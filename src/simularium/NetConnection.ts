@@ -9,6 +9,16 @@ interface NetMessage {
     msgType: number;
     fileName: string;
 }
+// TODO: proposed new NetMessage data type:
+// This factors the raw data structure away from the networking and transmission info.
+// This allows the data structure to make a bit more sense with respect to typescript typing,
+// and also for raw file drag n drop it doesn't need conection info or msgtype.
+// interface NetMessage {
+//     connId: string; // unique connection to server
+//     msgType: number; // identifies the data structure of the message
+//     fileName: string; // identifies the trajectory this connection is dealing with
+//     payload: Object; // the JS object with the message data itself
+// }
 
 interface MessageEventLike {
     data: string;

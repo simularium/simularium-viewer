@@ -4,6 +4,9 @@ export interface VisDataFrame {
     time: number;
 }
 
+// TODO: see proposed new NetMessage data type
+//       Remove msgType and fileName from this data structure
+//       Then this data structure appears as a payload of the NetMessage
 export interface VisDataMessage {
     msgType: number;
     bundleStart: number;
@@ -48,6 +51,9 @@ export interface EncodedTypeMapping {
     [key: number]: AgentDisplayData;
 }
 
+// TODO: see proposed new NetMessage data type
+//       Remove msgType and connId from this data structure.
+//       Then this data structure appears as a payload of the NetMessage
 interface TrajectoryFileInfoBase {
     connId: string;
     msgType: number;
