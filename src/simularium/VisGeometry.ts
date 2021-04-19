@@ -55,8 +55,8 @@ const NO_AGENT = -1;
 const DEFAULT_CAMERA_Z_POSITION = 120;
 const CAMERA_DOLLY_STEP_SIZE = 10;
 export enum RenderStyle {
-    GENERIC,
-    MOLECULAR,
+    WEBGL1_FALLBACK,
+    WEBGL2_PREFERRED,
 }
 
 function lerp(x0: number, x1: number, alpha: number): number {
@@ -164,7 +164,7 @@ class VisGeometry {
     private fibers: InstancedFiberGroup;
 
     public constructor(loggerLevel: ILogLevel) {
-        this.renderStyle = RenderStyle.GENERIC;
+        this.renderStyle = RenderStyle.WEBGL1_FALLBACK;
         this.supportsMoleculeRendering = false;
         // TODO: pass this flag in from the outside
         this.resetCameraOnNewScene = true;
@@ -303,7 +303,7 @@ class VisGeometry {
     public setRenderStyle(renderStyle: RenderStyle): void {
         // if target render style is supported, then change, otherwise don't.
         if (
-            renderStyle === RenderStyle.MOLECULAR &&
+            renderStyle === RenderStyle.WEBGL2_PREFERRED &&
             !this.supportsMoleculeRendering
         ) {
             console.log("Warning: molecule rendering not supported");
@@ -330,7 +330,7 @@ class VisGeometry {
         removeByName(this.instancedMeshGroup, InstancedFiberGroup.GROUP_NAME);
 
         // tell instanced geometry what representation to use.
-        if (this.renderStyle === RenderStyle.MOLECULAR) {
+        if (this.renderStyle === RenderStyle.WEBGL2_PREFERRED) {
             this.fibers = new InstancedFiberGroup();
         }
 
@@ -595,11 +595,11 @@ class VisGeometry {
         this.lightsGroup.add(this.hemiLight);
 
         if (WEBGL.isWebGL2Available() === false) {
-            this.renderStyle = RenderStyle.GENERIC;
+            this.renderStyle = RenderStyle.WEBGL1_FALLBACK;
             this.supportsMoleculeRendering = false;
             this.renderer = new WebGLRenderer({ premultipliedAlpha: false });
         } else {
-            this.renderStyle = RenderStyle.MOLECULAR;
+            this.renderStyle = RenderStyle.WEBGL2_PREFERRED;
             this.supportsMoleculeRendering = true;
             const canvas = document.createElement("canvas");
             const context: WebGLRenderingContext = canvas.getContext("webgl2", {
@@ -777,7 +777,7 @@ class VisGeometry {
         }
         this.instancedMeshGroup.add(this.fibers.getGroup());
 
-        if (this.renderStyle === RenderStyle.GENERIC) {
+        if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
             // meshes only.
             this.renderer.render(this.scene, this.camera);
         } else {
@@ -860,7 +860,7 @@ class VisGeometry {
     public hitTest(offsetX: number, offsetY: number): number {
         const size = new Vector2();
         this.renderer.getSize(size);
-        if (this.renderStyle === RenderStyle.GENERIC) {
+        if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
             const mouse = {
                 x: (offsetX / size.x) * 2 - 1,
                 y: -(offsetY / size.y) * 2 + 1,
@@ -1506,7 +1506,7 @@ class VisGeometry {
 
                 // see if we need to initialize this agent as a fiber
                 if (visType !== visAgent.visType) {
-                    if (this.renderStyle !== RenderStyle.GENERIC) {
+                    if (this.renderStyle !== RenderStyle.WEBGL1_FALLBACK) {
                         visAgent.visType = visType;
                         visAgent.setColor(
                             this.getColorForTypeId(typeId),
@@ -1528,7 +1528,7 @@ class VisGeometry {
                 }
                 // did the agent type change since the last sim time?
                 if (wasHidden || typeId !== lastTypeId) {
-                    if (this.renderStyle === RenderStyle.GENERIC) {
+                    if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
                         visAgent.mesh.userData = { id: visAgent.id };
                     }
                     // for fibers we currently only check the color
@@ -1542,12 +1542,12 @@ class VisGeometry {
                     agentData.subpoints,
                     agentData.cr,
                     scale,
-                    this.renderStyle === RenderStyle.GENERIC // whether to generate a fiber mesh
+                    this.renderStyle === RenderStyle.WEBGL1_FALLBACK // whether to generate a fiber mesh
                 );
                 visAgent.mesh.visible =
-                    this.renderStyle === RenderStyle.GENERIC;
+                    this.renderStyle === RenderStyle.WEBGL1_FALLBACK;
 
-                if (this.renderStyle === RenderStyle.MOLECULAR) {
+                if (this.renderStyle === RenderStyle.WEBGL2_PREFERRED) {
                     // update/add to render list
                     this.fibers.addInstance(
                         agentData.subpoints.length / 3,
