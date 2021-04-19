@@ -70,22 +70,7 @@ interface ViewerState {
     uiDisplayData: UIDisplayData;
 }
 
-const simulariumController = new SimulariumController(
-    {}
-    //     {
-    //     clientSimulatorParams: {
-    //         name: "my test sim",
-
-    //         type: "CURVESIM",
-    //         nCurves: 1000,
-    //         nTypes: 4,
-
-    //         // type: "POINTSIM",
-    //         // nPoints: 1000,
-    //         // nTypes: 4,
-    //     }
-    // }
-);
+const simulariumController = new SimulariumController({});
 
 let currentFrame = 0;
 let currentTime = 0;
@@ -284,9 +269,29 @@ class Viewer extends React.Component<{}, ViewerState> {
 
     private configureAndLoad() {
         simulariumController.configureNetwork(netConnectionSettings);
-        simulariumController.changeFile(playbackFile, "", "", {
-            netConnectionSettings,
-        });
+        if (playbackFile === "TEST_POINTS") {
+            simulariumController.changeFile(playbackFile, "", "", {
+                clientSimulatorParams: {
+                    name: "my test sim",
+                    type: "POINTSIM",
+                    nPoints: 1000,
+                    nTypes: 4,
+                },
+            });
+        } else if (playbackFile === "TEST_FIBERS") {
+            simulariumController.changeFile(playbackFile, "", "", {
+                clientSimulatorParams: {
+                    name: "my test sim",
+                    type: "CURVESIM",
+                    nCurves: 1000,
+                    nTypes: 4,
+                },
+            });
+        } else {
+            simulariumController.changeFile(playbackFile, "", "", {
+                netConnectionSettings,
+            });
+        }
     }
 
     public render(): JSX.Element {
@@ -323,6 +328,8 @@ class Viewer extends React.Component<{}, ViewerState> {
                     <option value="ATPsynthase_8.h5">ATP 8</option>
                     <option value="ATPsynthase_9.h5">ATP 9</option>
                     <option value="ATPsynthase_10.h5">ATP 10</option>
+                    <option value="TEST_FIBERS">TEST FIBERS</option>
+                    <option value="TEST_POINTS">TEST POINTS</option>
                 </select>
                 <button onClick={() => this.configureAndLoad()}>
                     Load model
