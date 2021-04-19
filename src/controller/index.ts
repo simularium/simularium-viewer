@@ -79,6 +79,14 @@ export default class SimulariumController {
         this.onError = (/*errorMessage*/) => noop;
         if (params.netConnection) {
             this.netConnection = params.netConnection;
+            this.netConnection.setTrajectoryFileInfoHandler(
+                (trajFileInfo: TrajectoryFileInfo) => {
+                    this.handleTrajectoryInfo(trajFileInfo);
+                }
+            );
+            this.netConnection.setTrajectoryDataHandler(
+                this.visData.parseAgentsFromNetData.bind(this.visData)
+            );
         } else if (params.netConnectionSettings) {
             this.createSimulatorConnection(
                 params.netConnectionSettings,
