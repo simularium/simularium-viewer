@@ -1,5 +1,7 @@
 import { FrontSide, Matrix4, ShaderMaterial, Vector2 } from "three";
 
+import { MultipassShaders } from "./MultipassMaterials";
+
 const vertexShader = `
 precision highp float;
 
@@ -172,8 +174,12 @@ const positionMaterial = new ShaderMaterial({
     transparent: false,
 });
 
+const shaderSet: MultipassShaders = {
+    color: colorMaterial,
+    position: positionMaterial,
+    normal: normalMaterial,
+};
+
 export default {
-    positionMaterial,
-    normalMaterial,
-    colorMaterial,
+    shaderSet,
 };

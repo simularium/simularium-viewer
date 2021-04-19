@@ -18,7 +18,7 @@ const netConnectionSettings = {
     serverPort: 9002,
 };
 
-let playbackFile = "actin012_3.h5";
+let playbackFile = "medyan_paper_M:A_0.675.simularium";
 let queryStringFile = "";
 const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.has("file")) {
@@ -77,7 +77,7 @@ let currentFrame = 0;
 let currentTime = 0;
 
 const initialState = {
-    renderStyle: RenderStyle.MOLECULAR,
+    renderStyle: RenderStyle.WEBGL2_PREFERRED,
     pauseOn: -1,
     particleTypeNames: [],
     particleTypeTags: [],
@@ -287,8 +287,13 @@ class Viewer extends React.Component<{}, ViewerState> {
                     defaultValue={playbackFile}
                 >
                     <option value={queryStringFile}>{queryStringFile}</option>
+                    <option value="medyan_paper_M:A_0.675.simularium">
+                        medyan test
+                    </option>
                     <option value="actin012_3.h5">Actin 12_3</option>
-                    <option value="listeria_normal.simularium">listeria 01</option>
+                    <option value="listeria_rocketbugs_normal_fine_2_filtered.simularium">
+                        listeria 01
+                    </option>
                     <option value="kinesin002_01.h5">kinesin 002</option>
                     <option value="microtubules038_10.h5">MT 38</option>
                     <option value="test_traj1.h5">TEST</option>
@@ -383,9 +388,9 @@ class Viewer extends React.Component<{}, ViewerState> {
                     onClick={() =>
                         this.setState({
                             renderStyle:
-                                this.state.renderStyle === RenderStyle.GENERIC
-                                    ? RenderStyle.MOLECULAR
-                                    : RenderStyle.GENERIC,
+                                this.state.renderStyle === RenderStyle.WEBGL1_FALLBACK
+                                    ? RenderStyle.WEBGL2_PREFERRED
+                                    : RenderStyle.WEBGL1_FALLBACK,
                         })
                     }
                 >

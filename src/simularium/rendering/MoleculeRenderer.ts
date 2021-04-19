@@ -4,6 +4,7 @@ import BlurPass from "./GaussianBlur";
 import CompositePass from "./CompositePass";
 import ContourPass from "./ContourPass";
 import DrawBufferPass from "./DrawBufferPass";
+import { InstancedFiberGroup } from "./InstancedFiber";
 
 import {
     Color,
@@ -278,13 +279,15 @@ class MoleculeRenderer {
         agentMeshGroup: Group,
         agentPDBGroup: Group,
         agentFiberGroup: Group,
-        instancedMeshGroup: Group
+        instancedMeshGroup: Group,
+        fibers: InstancedFiberGroup
     ): void {
         this.gbufferPass.setMeshGroups(
             agentMeshGroup,
             agentPDBGroup,
             agentFiberGroup,
-            instancedMeshGroup
+            instancedMeshGroup,
+            fibers
         );
     }
 

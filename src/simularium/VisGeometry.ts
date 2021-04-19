@@ -4,7 +4,6 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 import VisAgent from "./VisAgent";
 import VisTypes from "./VisTypes";
-import { USE_INSTANCE_ENDCAPS } from "./VisTypes";
 import PDBModel from "./PDBModel";
 import TaskQueue from "./worker/TaskQueue";
 import { REASON_CANCELLED } from "./worker/TaskQueue";
@@ -41,9 +40,7 @@ import { TrajectoryFileInfo } from "./types";
 import { AgentData } from "./VisData";
 
 import MoleculeRenderer from "./rendering/MoleculeRenderer";
-import IInstancedFiberEndcaps from "./rendering/IInstancedFiberEndcaps";
-import InstancedFiberEndcaps from "./rendering/InstancedFiberEndcaps";
-import InstancedFiberEndcapsFallback from "./rendering/InstancedFiberEndcapsFallback";
+import { InstancedFiberGroup } from "./rendering/InstancedFiber";
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 100000;
@@ -58,12 +55,24 @@ const NO_AGENT = -1;
 const DEFAULT_CAMERA_Z_POSITION = 120;
 const CAMERA_DOLLY_STEP_SIZE = 10;
 export enum RenderStyle {
-    GENERIC,
-    MOLECULAR,
+    WEBGL1_FALLBACK,
+    WEBGL2_PREFERRED,
 }
 
 function lerp(x0: number, x1: number, alpha: number): number {
     return x0 + (x1 - x0) * alpha;
+}
+
+function removeByName(group: Group, name: string): void {
+    const childrenToRemove: Object3D[] = [];
+    group.traverse((child) => {
+        if (child.name == name) {
+            childrenToRemove.push(child);
+        }
+    });
+    childrenToRemove.forEach(function (child) {
+        group.remove(child);
+    });
 }
 
 interface AgentTypeGeometry {
@@ -158,10 +167,10 @@ class VisGeometry {
     private needToReOrientCamera: boolean;
     private rotateDistance: number;
     private initCameraPosition: Vector3;
-    private fiberEndcaps: IInstancedFiberEndcaps;
+    private fibers: InstancedFiberGroup;
 
     public constructor(loggerLevel: ILogLevel) {
-        this.renderStyle = RenderStyle.GENERIC;
+        this.renderStyle = RenderStyle.WEBGL1_FALLBACK;
         this.supportsMoleculeRendering = false;
         // TODO: pass this flag in from the outside
         this.resetCameraOnNewScene = true;
@@ -185,8 +194,7 @@ class VisGeometry {
         // will store data for all agents that are drawing paths
         this.paths = [];
 
-        this.fiberEndcaps = new InstancedFiberEndcaps();
-        this.fiberEndcaps.create(0);
+        this.fibers = new InstancedFiberGroup();
 
         this.scene = new Scene();
         this.lightsGroup = new Group();
@@ -301,7 +309,7 @@ class VisGeometry {
     public setRenderStyle(renderStyle: RenderStyle): void {
         // if target render style is supported, then change, otherwise don't.
         if (
-            renderStyle === RenderStyle.MOLECULAR &&
+            renderStyle === RenderStyle.WEBGL2_PREFERRED &&
             !this.supportsMoleculeRendering
         ) {
             console.log("Warning: molecule rendering not supported");
@@ -312,27 +320,27 @@ class VisGeometry {
         this.renderStyle = renderStyle;
 
         if (changed) {
-            this.constructInstancedFiberEndcaps();
+            // reset all agents of fiber type so their geometry is re-created.
+            for (const visAgent of this.visAgentInstances.values()) {
+                visAgent.visType = VisTypes.ID_VIS_TYPE_DEFAULT;
+            }
+
+            this.constructInstancedFibers();
         }
 
         this.updateScene(this.currentSceneAgents);
     }
 
-    private constructInstancedFiberEndcaps() {
-        // tell instanced geometry what representation to use.
-        if (this.renderStyle === RenderStyle.GENERIC) {
-            this.fiberEndcaps = new InstancedFiberEndcapsFallback();
-        } else {
-            this.fiberEndcaps = new InstancedFiberEndcaps();
-        }
-        this.fiberEndcaps.create(0);
+    private constructInstancedFibers() {
+        this.fibers.clear();
+        removeByName(this.instancedMeshGroup, InstancedFiberGroup.GROUP_NAME);
 
-        if (this.instancedMeshGroup.children.length > 0) {
-            this.instancedMeshGroup.remove(this.instancedMeshGroup.children[0]);
+        // tell instanced geometry what representation to use.
+        if (this.renderStyle === RenderStyle.WEBGL2_PREFERRED) {
+            this.fibers = new InstancedFiberGroup();
         }
-        if (USE_INSTANCE_ENDCAPS) {
-            this.instancedMeshGroup.add(this.fiberEndcaps.getMesh());
-        }
+
+        this.instancedMeshGroup.add(this.fibers.getGroup());
     }
 
     public get logger(): ILogger {
@@ -593,11 +601,11 @@ class VisGeometry {
         this.lightsGroup.add(this.hemiLight);
 
         if (WEBGL.isWebGL2Available() === false) {
-            this.renderStyle = RenderStyle.GENERIC;
+            this.renderStyle = RenderStyle.WEBGL1_FALLBACK;
             this.supportsMoleculeRendering = false;
             this.renderer = new WebGLRenderer({ premultipliedAlpha: false });
         } else {
-            this.renderStyle = RenderStyle.MOLECULAR;
+            this.renderStyle = RenderStyle.WEBGL2_PREFERRED;
             this.supportsMoleculeRendering = true;
             const canvas = document.createElement("canvas");
             const context: WebGLRenderingContext = canvas.getContext("webgl2", {
@@ -613,7 +621,7 @@ class VisGeometry {
         }
 
         // set this up after the renderStyle has been set.
-        this.constructInstancedFiberEndcaps();
+        this.constructInstancedFibers();
 
         this.renderer.setSize(initWidth, initHeight); // expected to change when reparented
         this.renderer.setClearColor(this.backgroundColor, 1);
@@ -770,11 +778,12 @@ class VisGeometry {
         }
 
         if (this.instancedMeshGroup.children.length > 0) {
+            // instancedMeshGroup expected to have only one child, the fibers group
             this.instancedMeshGroup.remove(this.instancedMeshGroup.children[0]);
         }
-        this.instancedMeshGroup.add(this.fiberEndcaps.getMesh());
+        this.instancedMeshGroup.add(this.fibers.getGroup());
 
-        if (this.renderStyle === RenderStyle.GENERIC) {
+        if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
             // meshes only.
             this.renderer.render(this.scene, this.camera);
         } else {
@@ -806,7 +815,8 @@ class VisGeometry {
                 this.agentMeshGroup,
                 this.agentPDBGroup,
                 this.agentFiberGroup,
-                this.instancedMeshGroup
+                this.instancedMeshGroup,
+                this.fibers
             );
             this.moleculeRenderer.setFollowedInstance(this.followObjectId);
             this.moleculeRenderer.setNearFar(this.boxNearZ, this.boxFarZ);
@@ -856,7 +866,7 @@ class VisGeometry {
     public hitTest(offsetX: number, offsetY: number): number {
         const size = new Vector2();
         this.renderer.getSize(size);
-        if (this.renderStyle === RenderStyle.GENERIC) {
+        if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
             const mouse = {
                 x: (offsetX / size.x) * 2 - 1,
                 y: -(offsetY / size.y) * 2 + 1,
@@ -869,12 +879,12 @@ class VisGeometry {
                 true
             );
             // try fibers next
-            if (!intersects.length) {
-                intersects = this.raycaster.intersectObjects(
-                    this.agentFiberGroup.children,
-                    true
-                );
-            }
+            const fiberIntersects = this.raycaster.intersectObjects(
+                this.agentFiberGroup.children,
+                true
+            );
+            intersects = intersects.concat(fiberIntersects);
+            intersects.sort((a, b) => a.distance - b.distance);
 
             if (intersects && intersects.length) {
                 let obj = intersects[0].object;
@@ -1347,9 +1357,7 @@ class VisGeometry {
             lasty = 0,
             lastz = 0;
 
-        if (USE_INSTANCE_ENDCAPS) {
-            this.fiberEndcaps.beginUpdate(agents.length);
-        }
+        this.fibers.beginUpdate();
 
         // mark ALL inactive and invisible
         for (let i = 0; i < MAX_MESHES && i < this.visAgents.length; i += 1) {
@@ -1504,21 +1512,31 @@ class VisGeometry {
 
                 // see if we need to initialize this agent as a fiber
                 if (visType !== visAgent.visType) {
-                    const meshGeom = VisAgent.makeFiber();
-                    if (meshGeom) {
-                        meshGeom.userData = { id: visAgent.id };
-                        meshGeom.name = `Fiber_${instanceId}`;
+                    if (this.renderStyle !== RenderStyle.WEBGL1_FALLBACK) {
                         visAgent.visType = visType;
-                        this.resetAgentGeometry(visAgent, meshGeom);
                         visAgent.setColor(
                             this.getColorForTypeId(typeId),
                             this.getColorIndexForTypeId(typeId)
                         );
+                    } else {
+                        const meshGeom = VisAgent.makeFiber();
+                        if (meshGeom) {
+                            meshGeom.userData = { id: visAgent.id };
+                            meshGeom.name = `Fiber_${instanceId}`;
+                            visAgent.visType = visType;
+                            this.resetAgentGeometry(visAgent, meshGeom);
+                            visAgent.setColor(
+                                this.getColorForTypeId(typeId),
+                                this.getColorIndexForTypeId(typeId)
+                            );
+                        }
                     }
                 }
                 // did the agent type change since the last sim time?
                 if (wasHidden || typeId !== lastTypeId) {
-                    visAgent.mesh.userData = { id: visAgent.id };
+                    if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
+                        visAgent.mesh.userData = { id: visAgent.id };
+                    }
                     // for fibers we currently only check the color
                     visAgent.setColor(
                         this.getColorForTypeId(typeId),
@@ -1526,50 +1544,32 @@ class VisGeometry {
                     );
                 }
 
-                visAgent.updateFiber(agentData.subpoints, agentData.cr, scale);
+                visAgent.updateFiber(
+                    agentData.subpoints,
+                    agentData.cr,
+                    scale,
+                    this.renderStyle === RenderStyle.WEBGL1_FALLBACK // whether to generate a fiber mesh
+                );
+                visAgent.mesh.visible =
+                    this.renderStyle === RenderStyle.WEBGL1_FALLBACK;
 
-                visAgent.mesh.visible = true;
-                if (USE_INSTANCE_ENDCAPS) {
-                    const q = new Quaternion().setFromEuler(
-                        visAgent.mesh.rotation
-                    );
-                    const c = this.getColorForTypeId(typeId);
-                    this.fiberEndcaps.addInstance(
-                        agentData.subpoints[0] + visAgent.mesh.position.x,
-                        agentData.subpoints[1] + visAgent.mesh.position.y,
-                        agentData.subpoints[2] + visAgent.mesh.position.z,
+                if (this.renderStyle === RenderStyle.WEBGL2_PREFERRED) {
+                    // update/add to render list
+                    this.fibers.addInstance(
+                        agentData.subpoints.length / 3,
+                        agentData.subpoints,
+                        agentData.x,
+                        agentData.y,
+                        agentData.z,
                         agentData.cr * scale * 0.5,
-                        q.x,
-                        q.y,
-                        q.z,
-                        q.w,
                         visAgent.id,
-                        visAgent.signedTypeId(),
-                        c
-                    );
-                    this.fiberEndcaps.addInstance(
-                        agentData.subpoints[agentData.subpoints.length - 3] +
-                            visAgent.mesh.position.x,
-                        agentData.subpoints[agentData.subpoints.length - 2] +
-                            visAgent.mesh.position.y,
-                        agentData.subpoints[agentData.subpoints.length - 1] +
-                            visAgent.mesh.position.z,
-                        agentData.cr * scale * 0.5,
-                        q.x,
-                        q.y,
-                        q.z,
-                        q.w,
-                        visAgent.id,
-                        visAgent.signedTypeId(),
-                        c
+                        visAgent.signedTypeId()
                     );
                 }
             }
         });
 
-        if (USE_INSTANCE_ENDCAPS) {
-            this.fiberEndcaps.endUpdate();
-        }
+        this.fibers.endUpdate();
     }
 
     public animateCamera(): void {
@@ -1938,8 +1938,8 @@ class VisGeometry {
             this.instancedMeshGroup.remove(this.instancedMeshGroup.children[i]);
         }
 
-        // recreate an empty set of fiber endcaps to clear out the old ones.
-        this.constructInstancedFiberEndcaps();
+        // recreate an empty set of fibers to clear out the old ones.
+        this.constructInstancedFibers();
 
         // set all runtime meshes back to spheres.
         for (const visAgent of this.visAgentInstances.values()) {
