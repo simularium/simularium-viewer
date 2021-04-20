@@ -251,6 +251,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                         .getHexString();
                 colorIndex = colorIndex + 1;
             });
+	    this.visGeometry.finalizeIdColorMapping();
 
             onUIDisplayDataChanged(uiDisplayData);
         };
