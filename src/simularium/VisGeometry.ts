@@ -7,6 +7,7 @@ import VisTypes from "./VisTypes";
 import PDBModel from "./PDBModel";
 import TaskQueue from "./worker/TaskQueue";
 import { REASON_CANCELLED } from "./worker/TaskQueue";
+import FrontEndError from "./FrontEndError";
 
 import {
     Box3,
@@ -157,6 +158,7 @@ class VisGeometry {
     public agentPathGroup: Group;
     public instancedMeshGroup: Group;
     public idColorMapping: Map<number, number>;
+    private isIdColorMappingSet: boolean;
     private raycaster: Raycaster;
     private supportsMoleculeRendering: boolean;
     private membraneAgent?: VisAgent;
@@ -182,6 +184,7 @@ class VisGeometry {
         this.pdbLoadAttempted = new Map<string, boolean>();
         this.scaleMapping = new Map<number, number>();
         this.idColorMapping = new Map<number, number>();
+        this.isIdColorMappingSet = false;
         this.followObjectId = NO_AGENT;
         this.visAgents = [];
         this.visAgentInstances = new Map<number, VisAgent>();
@@ -944,6 +947,7 @@ class VisGeometry {
 
     public clearColorMapping(): void {
         this.idColorMapping.clear();
+        this.isIdColorMappingSet = false;
     }
 
     private getColorIndexForTypeId(typeId: number): number {
@@ -961,6 +965,12 @@ class VisGeometry {
     }
 
     public setColorForIds(ids: number[], colorId: number): void {
+        if (this.isIdColorMappingSet) {
+            throw new FrontEndError(
+                "Attempted to set agent-color after color mapping was finalized"
+            );
+        }
+
         ids.forEach((id) => {
             this.idColorMapping.set(id, colorId);
         });
@@ -972,6 +982,10 @@ class VisGeometry {
             this.colorsData[index * 4 + 1],
             this.colorsData[index * 4 + 2]
         );
+    }
+
+    public finalizeIdColorMapping(): void {
+        this.isIdColorMappingSet = true;
     }
 
     /**
@@ -1348,6 +1362,10 @@ class VisGeometry {
      *   Update Scene
      **/
     public updateScene(agents: AgentData[]): void {
+        if (!this.isIdColorMappingSet) {
+            return;
+        }
+
         this.currentSceneAgents = agents;
 
         let dx = 0,
