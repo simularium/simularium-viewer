@@ -538,8 +538,18 @@ class VisData {
             new Uint8Array(this.netBuffer).set(new Uint8Array(remainder));
         } else {
             // Append the new data, and wait until eof
-            this.netBuffer = new ArrayBuffer(data.byteLength);
-            new Uint8Array(this.netBuffer).set(new Uint8Array(data));
+            const frame = data.slice(dataStart, data.byteLength);
+            const tmp = new ArrayBuffer(
+                this.netBuffer.byteLength + frame.byteLength
+            );
+            new Uint8Array(tmp).set(new Uint8Array(this.netBuffer));
+            new Uint8Array(tmp).set(
+                new Uint8Array(frame),
+                this.netBuffer.byteLength
+            );
+
+            this.netBuffer = new ArrayBuffer(tmp.byteLength);
+            new Uint8Array(this.netBuffer).set(new Uint8Array(tmp));
         }
     }
 
