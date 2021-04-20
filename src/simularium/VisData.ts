@@ -548,8 +548,7 @@ class VisData {
                 this.netBuffer.byteLength
             );
 
-            this.netBuffer = new ArrayBuffer(tmp.byteLength);
-            new Uint8Array(this.netBuffer).set(new Uint8Array(tmp));
+            this.netBuffer = tmp;
         }
     }
 
