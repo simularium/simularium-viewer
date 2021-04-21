@@ -57,7 +57,7 @@ export default class PointSim implements IClientSimulator {
         return pts;
     }
 
-    public update(dt: number): VisDataMessage {
+    public update(_dt: number): VisDataMessage {
         //const dt_adjusted = dt / 1000;
         const amplitude = 0.05;
         for (let ii = 0; ii < this.nPoints; ++ii) {
