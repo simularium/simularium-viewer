@@ -3,6 +3,10 @@
 
 import { VisDataMessage, TrajectoryFileInfoV2 } from "./types";
 
+// TODO we need to examine this whole interface and document it with comments here
+// what is each function expected to do, from the caller's perspective?
+// are they named appropriately?
+// and are some of them completely specific to websockets only?
 export interface ISimulator {
     // common to all ISimulators?
     //protected logger: ILogger;
