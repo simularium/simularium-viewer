@@ -72,10 +72,8 @@ export const createScaleBarLabel = (
             const scaleBarLabelArray = si.meter.convert(
                 tickIntervalLength * spatialUnits.magnitude
             );
-            scaleBarLabelNumber = parseFloat(
-                scaleBarLabelArray[0].toPrecision(2)
-            );
 
+            scaleBarLabelNumber = scaleBarLabelArray[0];
             // The si-prefix library abbreviates "micro" as "mc", so swap it out with "µ"
             scaleBarLabelUnit = scaleBarLabelArray[1].replace("mc", "µ");
             break;
@@ -83,5 +81,6 @@ export const createScaleBarLabel = (
             throw new RangeError(VERSION_NUM_ERROR + originalVersion);
     }
 
+    scaleBarLabelNumber = parseFloat(scaleBarLabelNumber.toPrecision(2));
     return scaleBarLabelNumber + " " + scaleBarLabelUnit;
 };
