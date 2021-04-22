@@ -22,6 +22,8 @@ import { LocalFileConnection } from "../simularium/LocalFileConnecton";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
+// TODO: refine this as part of the public API for initializing the
+// controller (also see SimulatorConnectionParams below)
 interface SimulariumControllerParams {
     netConnection?: NetConnection;
     netConnectionSettings?: NetConnectionParams;
@@ -31,6 +33,8 @@ interface SimulariumControllerParams {
     assetLocation?: string;
 }
 
+// TODO: refine this as part of the public API for initializing the
+// controller with a simulator connection
 interface SimulatorConnectionParams {
     netConnectionSettings?: NetConnectionParams;
     clientSimulatorParams?: ClientSimulatorParams;
