@@ -297,6 +297,7 @@ export default class SimulariumController {
 
         this.stop();
 
+        // Do I still need this? test...
         // if (this.netConnection) {
         //     this.netConnection.disconnect();
         // }

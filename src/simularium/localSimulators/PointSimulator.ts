@@ -90,6 +90,7 @@ export default class PointSim implements IClientSimulator {
             agentData.push(0); // subpoints
         }
         const frameData: VisDataMessage = {
+            // TODO get msgType out of here
             msgType: ClientMessageEnum.ID_VIS_DATA_ARRIVE,
             bundleStart: this.currentFrame,
             bundleSize: 1, // frames
@@ -112,6 +113,7 @@ export default class PointSim implements IClientSimulator {
             typeMapping[i] = { name: `point${i}` };
         }
         return {
+            // TODO get msgType and connId out of here
             connId: "hello world",
             msgType: ClientMessageEnum.ID_TRAJECTORY_FILE_INFO,
             version: 2,

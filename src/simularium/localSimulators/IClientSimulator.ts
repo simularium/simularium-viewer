@@ -5,7 +5,7 @@ export interface IClientSimulator {
     getInfo(): TrajectoryFileInfoV2;
 }
 
-// these have been set to correspond to backend values
+// TODO these should not be needed anywhere except ClientSimulatorConnection
 export const enum ClientMessageEnum {
     ID_UNDEFINED_WEB_REQUEST = 0,
     ID_VIS_DATA_ARRIVE = 1,
@@ -26,7 +26,7 @@ export const enum ClientMessageEnum {
     LENGTH,
 }
 
-// these have been set to correspond to backend values
+// TODO these should not be needed anywhere except ClientSimulatorConnection
 export const enum ClientPlayBackType {
     ID_LIVE_SIMULATION = 0,
     ID_PRE_RUN_SIMULATION = 1,
