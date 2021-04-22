@@ -1,3 +1,6 @@
+/* eslint-disable-next-line @typescript-eslint/no-var-requires */
+const si = require("si-prefix");
+
 import {
     TrajectoryFileInfo,
     TrajectoryFileInfoAny,
@@ -8,15 +11,16 @@ import {
 Handles different trajectory file format versions.
 Currently supported versions: 1, 2
 */
+const LATEST_VERSION = 2;
+const VERSION_NUM_ERROR = "Invalid version number in TrajectoryFileInfo:";
 
 export const updateTrajectoryFileInfoFormat = (
     msg: TrajectoryFileInfoAny
 ): TrajectoryFileInfo => {
-    const latestVersion = 2;
     let output = msg;
 
     switch (msg.version) {
-        case latestVersion:
+        case LATEST_VERSION:
             break;
         case 1:
             const v1Data = msg as TrajectoryFileInfoV1;
@@ -42,10 +46,42 @@ export const updateTrajectoryFileInfoFormat = (
             };
             break;
         default:
-            throw new RangeError(
-                `Invalid version number in TrajectoryFileInfo: ${msg.version}`
-            );
+            throw new RangeError(VERSION_NUM_ERROR + msg.version);
     }
 
     return output as TrajectoryFileInfo;
+};
+
+export const createScaleBarLabel = (
+    originalVersion: number,
+    tickIntervalLength: number,
+    spatialUnits: { magnitude: number; name: string }
+): string => {
+    let scaleBarLabelNumber: number;
+    let scaleBarLabelUnit: string;
+
+    switch (originalVersion) {
+        case LATEST_VERSION:
+            // Honor the user's unit specifications
+            scaleBarLabelNumber = tickIntervalLength * spatialUnits.magnitude;
+            scaleBarLabelUnit = spatialUnits.name;
+            break;
+        case 1:
+            // Determine the best unit for the scale bar label, e.g.:
+            // 0.000000015 -> [15, "nm"]
+            const scaleBarLabelArray = si.meter.convert(
+                tickIntervalLength * spatialUnits.magnitude
+            );
+            scaleBarLabelNumber = parseFloat(
+                scaleBarLabelArray[0].toPrecision(2)
+            );
+
+            // The si-prefix library abbreviates "micro" as "mc", so swap it out with "µ"
+            scaleBarLabelUnit = scaleBarLabelArray[1].replace("mc", "µ");
+            break;
+        default:
+            throw new RangeError(VERSION_NUM_ERROR + originalVersion);
+    }
+
+    return scaleBarLabelNumber + " " + scaleBarLabelUnit;
 };
