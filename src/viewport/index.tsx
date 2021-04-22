@@ -218,7 +218,9 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             // scale bar in the UI
             this.visGeometry.handleTrajectoryData(newMsg);
             
-            simulariumController.scaleBarLabel = createScaleBarLabel(msg.version, this.visGeometry.tickIntervalLength, newMsg.spatialUnits)
+            simulariumController.scaleBarLabel = createScaleBarLabel(
+                msg.version, this.visGeometry.tickIntervalLength, newMsg.spatialUnits
+            )
 
             try {
                 this.selectionInterface.parse(newMsg.typeMapping);
