@@ -263,45 +263,6 @@ export default class SimulariumController {
         this.isPaused = false;
     }
 
-    // private handleLocalFileChange(
-    //     simulariumFile: SimulariumFileFormat | undefined
-    // ): Promise<FileReturn> {
-    //     if (!simulariumFile) {
-    //         const newError = new Error("No file was detected");
-    //         return Promise.reject(newError);
-    //     }
-    //     const { spatialData, trajectoryInfo } = simulariumFile;
-
-    //     if (!simulariumFile.spatialData) {
-    //         const newError = new Error(
-    //             "Simularium files need 'spatialData' array"
-    //         );
-    //         return Promise.reject(newError);
-    //     }
-    //     spatialData.bundleData.sort(
-    //         (a: VisDataFrame, b: VisDataFrame): number =>
-    //             a.frameNumber - b.frameNumber
-    //     );
-
-    //     this.pause();
-    //     this.disableNetworkCommands();
-    //     try {
-    //         this.cacheJSON(spatialData);
-    //     } catch (e) {
-    //         return Promise.reject(e);
-    //     }
-    //     try {
-    //         this.dragAndDropFileInfo = trajectoryInfo;
-
-    //         this.handleTrajectoryInfo(this.dragAndDropFileInfo);
-    //     } catch (e) {
-    //         return Promise.reject(e);
-    //     }
-    //     return Promise.resolve({
-    //         status: FILE_STATUS_SUCCESS,
-    //     });
-    // }
-
     public clearFile(): void {
         this.fileChanged = false;
         this.playBackFile = "";
