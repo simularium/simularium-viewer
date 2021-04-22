@@ -411,7 +411,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                 </button>
                 <span>
                     Tick interval length:{" "}
-                    {simulariumController.tickIntervalLength}
+                    {simulariumController.scaleBarLabel}
                 </span>
                 <div className="viewer-container">
                     <SimulariumViewer
