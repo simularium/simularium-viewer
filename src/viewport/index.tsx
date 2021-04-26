@@ -210,20 +210,22 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         simulariumController.trajFileInfoCallback = (
             msg: TrajectoryFileInfoAny
         ) => {
+            const originalVersion = msg.version;
+
             // Update TrajectoryFileInfo format to latest version
-            const newMsg: TrajectoryFileInfo = updateTrajectoryFileInfoFormat(msg)
+            const trajectoryFileInfo: TrajectoryFileInfo = updateTrajectoryFileInfoFormat(msg);
             
             // Create a new bounding box and tick marks (via resetBounds()) and set
             // VisGeometry.tickIntervalLength, to make it available for use as the length of the
             // scale bar in the UI
-            this.visGeometry.handleTrajectoryData(newMsg);
+            this.visGeometry.handleTrajectoryData(trajectoryFileInfo);
             
             simulariumController.scaleBarLabel = createScaleBarLabel(
-                msg.version, this.visGeometry.tickIntervalLength, newMsg.spatialUnits
-            )
+                originalVersion, this.visGeometry.tickIntervalLength, trajectoryFileInfo.spatialUnits
+            );
 
             try {
-                this.selectionInterface.parse(newMsg.typeMapping);
+                this.selectionInterface.parse(trajectoryFileInfo.typeMapping);
             } catch (e) {
                 if (onError) {
                     onError(`error parsing 'typeMapping' data, ${e.message}`);
@@ -231,7 +233,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                     console.log("error parsing 'typeMapping' data", e);
                 }
             }
-            onTrajectoryFileInfoChanged(newMsg);
+            onTrajectoryFileInfoChanged(trajectoryFileInfo);
 
             this.visGeometry.clearColorMapping();
             const uiDisplayData = this.selectionInterface.getUIDisplayData();

@@ -61,7 +61,7 @@ export const createScaleBarLabel = (
     let scaleBarLabelUnit: string;
 
     switch (originalVersion) {
-        case LATEST_VERSION:
+        case 2:
             // Honor the user's unit specifications
             scaleBarLabelNumber = tickIntervalLength * spatialUnits.magnitude;
             scaleBarLabelUnit = spatialUnits.name;
