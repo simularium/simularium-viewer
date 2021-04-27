@@ -89,26 +89,35 @@ describe("Version handlers", () => {
         });
         test("it returns v2 (latest) data as is", () => {
             const msg = v2Data;
-            const output = versionHandler.updateTrajectoryFileInfoFormat(msg);
-            expect(output).toEqual(v2Data);
+            const trajectoryFileInfo = versionHandler.updateTrajectoryFileInfoFormat(
+                msg
+            );
+            expect(trajectoryFileInfo).toEqual(v2Data);
         });
         test("it converts v1 data to v2 format", () => {
             const msg = v1Data;
-            const output = versionHandler.updateTrajectoryFileInfoFormat(msg);
-            expect(output).toEqual(v2Data);
+            const trajectoryFileInfo = versionHandler.updateTrajectoryFileInfoFormat(
+                msg
+            );
+            expect(trajectoryFileInfo).toEqual(v2Data);
         });
     });
 
     describe("createScaleBarLabel", () => {
+        test("it throws error if data has not been converted to latest version yet", () => {
+            const tickIntervalLength = 50;
+            const functionCall = () => {
+                versionHandler.createScaleBarLabel(tickIntervalLength);
+            };
+            expect(functionCall).toThrowError(Error);
+        });
         test("it uses the user-specified unit for the scale bar for v2 data", () => {
             const msg = v2Data;
-            const newMsg = versionHandler.updateTrajectoryFileInfoFormat(msg);
+            versionHandler.updateTrajectoryFileInfoFormat(msg);
             const tickIntervalLength = 50;
 
             const scaleBarLabel = versionHandler.createScaleBarLabel(
-                msg.version,
-                tickIntervalLength,
-                newMsg.spatialUnits
+                tickIntervalLength
             );
 
             // tickIntervalLength * spatialUnits.magnitude = 50 * 1e-6 = 0.00005
@@ -116,13 +125,11 @@ describe("Version handlers", () => {
         });
         test("it determines best unit for the scale bar for v1 data", () => {
             const msg = v1Data;
-            const newMsg = versionHandler.updateTrajectoryFileInfoFormat(msg);
+            versionHandler.updateTrajectoryFileInfoFormat(msg);
             const tickIntervalLength = 50;
 
             const scaleBarLabel = versionHandler.createScaleBarLabel(
-                msg.version,
-                tickIntervalLength,
-                newMsg.spatialUnits
+                tickIntervalLength
             );
 
             expect(scaleBarLabel).toEqual("50 µm");
