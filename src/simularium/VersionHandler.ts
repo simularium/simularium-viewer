@@ -7,12 +7,14 @@ import {
     TrajectoryFileInfoV1,
 } from "./types";
 
-/*
-Handles different trajectory file format versions.
-Currently supported versions: 1, 2
-*/
-
 export default class VersionHandler {
+    /*
+    Converts a TrajectoryFileInfo object to the latest format and handles any operations 
+    that require knowing the original version number.
+    
+    Currently supported versions: 1, 2
+    */
+
     private static readonly LATEST_VERSION = 2;
     private static readonly VERSION_NUM_ERROR =
         "Invalid version number in TrajectoryFileInfo:";

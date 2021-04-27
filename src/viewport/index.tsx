@@ -17,7 +17,7 @@ import {
 } from "../simularium";
 import { TrajectoryFileInfoAny } from "../simularium/types";
 import { RenderStyle } from "../simularium/VisGeometry";
-import { updateTrajectoryFileInfoFormat, createScaleBarLabel } from "../simularium/versionHandlers";
+import VersionHandler from "../simularium/VersionHandler";
 
 export type PropColor = string | number | [number, number, number];
 
@@ -210,19 +210,16 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         simulariumController.trajFileInfoCallback = (
             msg: TrajectoryFileInfoAny
         ) => {
-            const originalVersion = msg.version;
-
             // Update TrajectoryFileInfo format to latest version
-            const trajectoryFileInfo: TrajectoryFileInfo = updateTrajectoryFileInfoFormat(msg);
+            const versionHandler = new VersionHandler();
+            const trajectoryFileInfo: TrajectoryFileInfo = versionHandler.updateTrajectoryFileInfoFormat(msg);
             
             // Create a new bounding box and tick marks (via resetBounds()) and set
             // VisGeometry.tickIntervalLength, to make it available for use as the length of the
             // scale bar in the UI
             this.visGeometry.handleTrajectoryData(trajectoryFileInfo);
             
-            simulariumController.scaleBarLabel = createScaleBarLabel(
-                originalVersion, this.visGeometry.tickIntervalLength, trajectoryFileInfo.spatialUnits
-            );
+            simulariumController.scaleBarLabel = versionHandler.createScaleBarLabel(this.visGeometry.tickIntervalLength);
 
             try {
                 this.selectionInterface.parse(trajectoryFileInfo.typeMapping);
