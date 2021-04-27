@@ -1,7 +1,4 @@
-import {
-    updateTrajectoryFileInfoFormat,
-    createScaleBarLabel,
-} from "../simularium/versionHandlers";
+import VersionHandler from "../simularium/VersionHandler";
 
 const invalidVersionData = {
     connId: "7496831076a233f0-2c337fed-4493-ad92-79f194744174ba05635426fd",
@@ -77,22 +74,27 @@ const v2Data = {
 };
 
 describe("Version handlers", () => {
+    let versionHandler: VersionHandler;
+    beforeEach(() => {
+        versionHandler = new VersionHandler();
+    });
+
     describe("updateTrajectoryFileInfoFormat", () => {
         test("it throws error if data has invalid version", () => {
             const msg = invalidVersionData;
             const conversion = () => {
-                updateTrajectoryFileInfoFormat(msg);
+                versionHandler.updateTrajectoryFileInfoFormat(msg);
             };
             expect(conversion).toThrowError(RangeError);
         });
         test("it returns v2 (latest) data as is", () => {
             const msg = v2Data;
-            const output = updateTrajectoryFileInfoFormat(msg);
+            const output = versionHandler.updateTrajectoryFileInfoFormat(msg);
             expect(output).toEqual(v2Data);
         });
         test("it converts v1 data to v2 format", () => {
             const msg = v1Data;
-            const output = updateTrajectoryFileInfoFormat(msg);
+            const output = versionHandler.updateTrajectoryFileInfoFormat(msg);
             expect(output).toEqual(v2Data);
         });
     });
@@ -100,10 +102,10 @@ describe("Version handlers", () => {
     describe("createScaleBarLabel", () => {
         test("it uses the user-specified unit for the scale bar for v2 data", () => {
             const msg = v2Data;
-            const newMsg = updateTrajectoryFileInfoFormat(msg);
+            const newMsg = versionHandler.updateTrajectoryFileInfoFormat(msg);
             const tickIntervalLength = 50;
 
-            const scaleBarLabel = createScaleBarLabel(
+            const scaleBarLabel = versionHandler.createScaleBarLabel(
                 msg.version,
                 tickIntervalLength,
                 newMsg.spatialUnits
@@ -114,10 +116,10 @@ describe("Version handlers", () => {
         });
         test("it determines best unit for the scale bar for v1 data", () => {
             const msg = v1Data;
-            const newMsg = updateTrajectoryFileInfoFormat(msg);
+            const newMsg = versionHandler.updateTrajectoryFileInfoFormat(msg);
             const tickIntervalLength = 50;
 
-            const scaleBarLabel = createScaleBarLabel(
+            const scaleBarLabel = versionHandler.createScaleBarLabel(
                 msg.version,
                 tickIntervalLength,
                 newMsg.spatialUnits
