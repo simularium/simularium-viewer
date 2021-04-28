@@ -1,5 +1,4 @@
-/* eslint-disable-next-line @typescript-eslint/no-var-requires */
-const si = require("si-prefix");
+import * as si from "si-prefix";
 
 import {
     TrajectoryFileInfo,
