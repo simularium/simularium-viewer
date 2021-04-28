@@ -1,7 +1,4 @@
-import {
-    updateTrajectoryFileInfoFormat,
-    createScaleBarLabel,
-} from "../simularium/versionHandlers";
+import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
 
 const invalidVersionData = {
     connId: "7496831076a233f0-2c337fed-4493-ad92-79f194744174ba05635426fd",
@@ -33,7 +30,7 @@ const v1Data = {
         y: 100,
         z: 100,
     },
-    spatialUnitFactorMeters: 1e-6,
+    spatialUnitFactorMeters: 1.5e-9,
     timeStepSize: 0.1,
     totalSteps: 150,
     typeMapping: {
@@ -56,8 +53,8 @@ const v2Data = {
         z: 100,
     },
     spatialUnits: {
-        magnitude: 1e-6,
-        name: "m",
+        magnitude: 1.5,
+        name: "nm",
     },
     timeUnits: {
         magnitude: 1,
@@ -94,36 +91,6 @@ describe("Version handlers", () => {
             const msg = v1Data;
             const output = updateTrajectoryFileInfoFormat(msg);
             expect(output).toEqual(v2Data);
-        });
-    });
-
-    describe("createScaleBarLabel", () => {
-        test("it uses the user-specified unit for the scale bar for v2 data", () => {
-            const msg = v2Data;
-            const newMsg = updateTrajectoryFileInfoFormat(msg);
-            const tickIntervalLength = 50;
-
-            const scaleBarLabel = createScaleBarLabel(
-                msg.version,
-                tickIntervalLength,
-                newMsg.spatialUnits
-            );
-
-            // tickIntervalLength * spatialUnits.magnitude = 50 * 1e-6 = 0.00005
-            expect(scaleBarLabel).toEqual("0.00005 m");
-        });
-        test("it determines best unit for the scale bar for v1 data", () => {
-            const msg = v1Data;
-            const newMsg = updateTrajectoryFileInfoFormat(msg);
-            const tickIntervalLength = 50;
-
-            const scaleBarLabel = createScaleBarLabel(
-                msg.version,
-                tickIntervalLength,
-                newMsg.spatialUnits
-            );
-
-            expect(scaleBarLabel).toEqual("50 µm");
         });
     });
 });

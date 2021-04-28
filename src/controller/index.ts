@@ -34,7 +34,7 @@ export default class SimulariumController {
     public netConnection: NetConnection | undefined;
     public visData: VisData;
     public visGeometry: VisGeometry | undefined;
-    public scaleBarLabel: string;
+    public tickIntervalLength: number;
     public handleTrajectoryInfo: (TrajectoryFileInfo) => void;
     public postConnect: () => void;
     public resetCamera: () => void;
@@ -57,7 +57,7 @@ export default class SimulariumController {
 
     public constructor(params: SimulariumControllerParams) {
         this.visData = new VisData();
-        this.scaleBarLabel = ""; // Will be overwritten when a trajectory is loaded
+        this.tickIntervalLength = 0; // Will be overwritten when a trajectory is loaded
         this.postConnect = () => {
             /* Do Nothing */
         };

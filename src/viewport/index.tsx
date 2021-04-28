@@ -210,8 +210,6 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         simulariumController.trajFileInfoCallback = (
             msg: TrajectoryFileInfoAny
         ) => {
-            const originalVersion = msg.version;
-
             // Update TrajectoryFileInfo format to latest version
             const trajectoryFileInfo: TrajectoryFileInfo = updateTrajectoryFileInfoFormat(msg);
             
@@ -220,9 +218,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             // scale bar in the UI
             this.visGeometry.handleTrajectoryData(trajectoryFileInfo);
             
-            simulariumController.scaleBarLabel = createScaleBarLabel(
-                originalVersion, this.visGeometry.tickIntervalLength, trajectoryFileInfo.spatialUnits
-            );
+            simulariumController.tickIntervalLength = this.visGeometry.tickIntervalLength;
 
             try {
                 this.selectionInterface.parse(trajectoryFileInfo.typeMapping);
