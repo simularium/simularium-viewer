@@ -25,8 +25,7 @@ export const updateTrajectoryFileInfoFormat = (
         case 1:
             const v1Data = msg as TrajectoryFileInfoV1;
 
-            // Determine the best unit for the scale bar label, e.g.:
-            // 1.5e-9 -> [1.5, "nm"]
+            // Ex: 1.5e-9 -> [1.5, "nm"]
             const spatialUnitsArray = si.meter.convert(
                 v1Data.spatialUnitFactorMeters
             );

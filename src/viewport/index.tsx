@@ -17,7 +17,7 @@ import {
 } from "../simularium";
 import { TrajectoryFileInfoAny } from "../simularium/types";
 import { RenderStyle } from "../simularium/VisGeometry";
-import { updateTrajectoryFileInfoFormat, createScaleBarLabel } from "../simularium/versionHandlers";
+import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
 
 export type PropColor = string | number | [number, number, number];
 
