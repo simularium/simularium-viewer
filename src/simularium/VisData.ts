@@ -380,8 +380,8 @@ class VisData {
             frame++
         ) {
             const frameTime = this.frameDataCache[frame].time;
-            if (timeNs < frameTime) {
-                this.cacheFrame = Math.max(frame - 1, 0);
+            if (timeNs <= frameTime) {
+                this.cacheFrame = Math.max(frame, 0);
                 break;
             }
         }
