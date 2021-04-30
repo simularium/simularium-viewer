@@ -251,7 +251,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                         .getHexString();
                 colorIndex = colorIndex + 1;
             });
-	    this.visGeometry.finalizeIdColorMapping();
+            this.visGeometry.finalizeIdColorMapping();
 
             onUIDisplayDataChanged(uiDisplayData);
         };
@@ -275,9 +275,10 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             }
         };
 
-        if (simulariumController.netConnection) {
-            simulariumController.connect();
-        }
+        simulariumController
+            .connect()
+            .then((result) => console.log(result))
+            .catch((error) => console.log(error.message));
 
         if (this.vdomRef.current) {
             this.vdomRef.current.addEventListener(
