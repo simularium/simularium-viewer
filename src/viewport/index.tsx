@@ -211,23 +211,17 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             msg: TrajectoryFileInfoAny
         ) => {
             // Update TrajectoryFileInfo format to latest version
-            const newMsg: TrajectoryFileInfo = updateTrajectoryFileInfoFormat(
-                msg
-            );
-
+            const trajectoryFileInfo: TrajectoryFileInfo = updateTrajectoryFileInfoFormat(msg);
+            
             // Create a new bounding box and tick marks (via resetBounds()) and set
             // VisGeometry.tickIntervalLength, to make it available for use as the length of the
             // scale bar in the UI
-            this.visGeometry.handleTrajectoryData(newMsg);
-
-            // TODO: Determine and save scale bar info as simulariumController.scaleBarLabel here
-            // instead of as simulariumController.tickIntervalLength
-            // (This would involve multiplying visGeometry.tickIntervalLength by spatial unit
-            // magnitude and, if we want, determining the appropriate display unit for v1 data
-            // in updateTrajectoryFileInfoFormat)
+            this.visGeometry.handleTrajectoryData(trajectoryFileInfo);
+            
             simulariumController.tickIntervalLength = this.visGeometry.tickIntervalLength;
+
             try {
-                this.selectionInterface.parse(newMsg.typeMapping);
+                this.selectionInterface.parse(trajectoryFileInfo.typeMapping);
             } catch (e) {
                 if (onError) {
                     onError(`error parsing 'typeMapping' data, ${e.message}`);
@@ -235,7 +229,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                     console.log("error parsing 'typeMapping' data", e);
                 }
             }
-            onTrajectoryFileInfoChanged(newMsg);
+            onTrajectoryFileInfoChanged(trajectoryFileInfo);
 
             this.visGeometry.clearColorMapping();
             const uiDisplayData = this.selectionInterface.getUIDisplayData();

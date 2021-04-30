@@ -1,3 +1,5 @@
+import * as si from "si-prefix";
+
 import {
     TrajectoryFileInfo,
     TrajectoryFileInfoAny,
@@ -8,18 +10,27 @@ import {
 Handles different trajectory file format versions.
 Currently supported versions: 1, 2
 */
+const LATEST_VERSION = 2;
+const VERSION_NUM_ERROR = "Invalid version number in TrajectoryFileInfo:";
 
 export const updateTrajectoryFileInfoFormat = (
     msg: TrajectoryFileInfoAny
 ): TrajectoryFileInfo => {
-    const latestVersion = 2;
     let output = msg;
 
     switch (msg.version) {
-        case latestVersion:
+        case LATEST_VERSION:
             break;
         case 1:
             const v1Data = msg as TrajectoryFileInfoV1;
+
+            // Ex: 1.5e-9 -> [1.5, "nm"]
+            const spatialUnitsArray = si.meter.convert(
+                v1Data.spatialUnitFactorMeters
+            );
+            const spatialUnitsMagnitude = spatialUnitsArray[0];
+            // The si-prefix library abbreviates "micro" as "mc", so swap it out with "µ"
+            const spatialUnitsName = spatialUnitsArray[1].replace("mc", "µ");
 
             // Can't manipulate v1Data in place because TypeScript doesn't allow deleting of
             // non-optional keys
@@ -28,8 +39,8 @@ export const updateTrajectoryFileInfoFormat = (
                 msgType: v1Data.msgType,
                 size: v1Data.size,
                 spatialUnits: {
-                    magnitude: v1Data.spatialUnitFactorMeters,
-                    name: "m",
+                    magnitude: spatialUnitsMagnitude,
+                    name: spatialUnitsName,
                 },
                 timeUnits: {
                     magnitude: 1,
@@ -42,9 +53,7 @@ export const updateTrajectoryFileInfoFormat = (
             };
             break;
         default:
-            throw new RangeError(
-                `Invalid version number in TrajectoryFileInfo: ${msg.version}`
-            );
+            throw new RangeError(VERSION_NUM_ERROR + msg.version);
     }
 
     return output as TrajectoryFileInfo;

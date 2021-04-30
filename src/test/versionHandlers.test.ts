@@ -30,7 +30,7 @@ const v1Data = {
         y: 100,
         z: 100,
     },
-    spatialUnitFactorMeters: 1e-6,
+    spatialUnitFactorMeters: 1.5e-9,
     timeStepSize: 0.1,
     totalSteps: 150,
     typeMapping: {
@@ -53,8 +53,8 @@ const v2Data = {
         z: 100,
     },
     spatialUnits: {
-        magnitude: 1e-6,
-        name: "m",
+        magnitude: 1.5,
+        name: "nm",
     },
     timeUnits: {
         magnitude: 1,
