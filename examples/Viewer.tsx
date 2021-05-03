@@ -264,11 +264,13 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public gotoNextFrame(): void {
-        simulariumController.gotoTime(this.state.currentTime + this.state.timeStep);
+        const targetTime = parseFloat((this.state.currentTime + this.state.timeStep).toPrecision(4));
+        simulariumController.gotoTime(targetTime);
     }
 
     public gotoPreviousFrame(): void {
-        simulariumController.gotoTime(this.state.currentTime - this.state.timeStep);
+        const targetTime = parseFloat((this.state.currentTime - this.state.timeStep).toPrecision(4));
+        simulariumController.gotoTime(targetTime);
     }
 
     private configureAndLoad() {
@@ -337,7 +339,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                 <input
                     name="slider"
                     type="range"
-                    min="0"
+                    min={0}
                     value={this.state.currentTime}
                     max={this.state.totalDuration}
                     onChange={this.handleScrubTime}
