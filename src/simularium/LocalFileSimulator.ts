@@ -178,7 +178,9 @@ export class LocalFileSimulator implements ISimulator {
     }
 
     private getFrame(theFrameNumber: number): VisDataMessage {
+        // thoretically we could return all frames here, and as a result the Controller would precache the entire file in VisData
         //        return this.getAllFrames();
+
         return {
             msgType: 0,
             bundleStart: theFrameNumber,
