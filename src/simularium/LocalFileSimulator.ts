@@ -9,7 +9,7 @@ import {
 } from "./types";
 import { ISimulator } from "./ISimulator";
 
-export class LocalFileConnection implements ISimulator {
+export class LocalFileSimulator implements ISimulator {
     protected fileName: string;
     protected simulariumFile: SimulariumFileFormat;
     protected logger: ILogger;

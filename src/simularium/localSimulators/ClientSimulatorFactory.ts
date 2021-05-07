@@ -1,4 +1,4 @@
-import { IClientSimulator } from "./IClientSimulator";
+import { IClientSimulatorImpl } from "./IClientSimulatorImpl";
 import CurveSimulator from "./CurveSimulator";
 import PointSimulator from "./PointSimulator";
 
@@ -9,7 +9,7 @@ export interface ClientSimulatorParams {
 }
 export function createSimulator(
     params: ClientSimulatorParams
-): IClientSimulator {
+): IClientSimulatorImpl {
     if (params.type === "CURVESIM") {
         return new CurveSimulator(
             params["nCurves"] as number,

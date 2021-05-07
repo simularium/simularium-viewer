@@ -1,4 +1,7 @@
-import { IClientSimulator, ClientMessageEnum } from "./IClientSimulator";
+import {
+    IClientSimulatorImpl,
+    ClientMessageEnum,
+} from "./IClientSimulatorImpl";
 import {
     EncodedTypeMapping,
     TrajectoryFileInfoV2,
@@ -6,7 +9,7 @@ import {
 } from "../types";
 import VisTypes from "../VisTypes";
 
-export default class CurveSim implements IClientSimulator {
+export default class CurveSim implements IClientSimulatorImpl {
     nCurves: number;
     curveData: number[];
     nPointsPerCurve: number;

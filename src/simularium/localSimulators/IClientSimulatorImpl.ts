@@ -1,6 +1,6 @@
 import { TrajectoryFileInfoV2, VisDataMessage } from "../types";
 
-export interface IClientSimulator {
+export interface IClientSimulatorImpl {
     update(dt: number): VisDataMessage;
     getInfo(): TrajectoryFileInfoV2;
 }

@@ -5,8 +5,8 @@ import { VisDataMessage, TrajectoryFileInfoV2 } from "./types";
 import {
     ClientMessageEnum,
     ClientPlayBackType,
-    IClientSimulator,
-} from "./localSimulators/IClientSimulator";
+    IClientSimulatorImpl,
+} from "./localSimulators/IClientSimulatorImpl";
 import {
     createSimulator,
     ClientSimulatorParams,
@@ -16,8 +16,8 @@ import { ISimulator } from "./ISimulator";
 // setInterval is the playback engine for now
 let simulatorIntervalId = 0;
 
-export class SimulatorConnection implements ISimulator {
-    private localSimulator: IClientSimulator;
+export class ClientSimulator implements ISimulator {
+    private localSimulator: IClientSimulatorImpl;
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfoV2) => void;
     public onTrajectoryDataArrive: (msg: VisDataMessage) => void;

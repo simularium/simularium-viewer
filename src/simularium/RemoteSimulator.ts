@@ -59,7 +59,7 @@ export interface NetConnectionParams {
     serverPort?: number;
 }
 
-export class NetConnection implements ISimulator {
+export class RemoteSimulator implements ISimulator {
     private webSocket: WebSocket | null;
     private serverIp: string;
     private serverPort: number;

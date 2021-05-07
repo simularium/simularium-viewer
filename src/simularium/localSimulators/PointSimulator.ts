@@ -1,4 +1,7 @@
-import { IClientSimulator, ClientMessageEnum } from "./IClientSimulator";
+import {
+    IClientSimulatorImpl,
+    ClientMessageEnum,
+} from "./IClientSimulatorImpl";
 import {
     EncodedTypeMapping,
     TrajectoryFileInfoV2,
@@ -6,7 +9,7 @@ import {
 } from "../types";
 import VisTypes from "../VisTypes";
 
-export default class PointSim implements IClientSimulator {
+export default class PointSim implements IClientSimulatorImpl {
     nPoints: number;
     pointsData: number[];
     currentFrame: number;
