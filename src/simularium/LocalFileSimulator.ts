@@ -156,7 +156,7 @@ export class LocalFileSimulator implements ISimulator {
         this.onTrajectoryDataArrive(this.getFrame(startFrameNumber));
     }
 
-    public gotoRemoteSimulationTime(timeNanoSeconds: number): void {
+    public gotoRemoteSimulationTime(timeNs: number): void {
         for (
             let frame = 0,
                 numFrames = this.simulariumFile.spatialData.bundleData.length;
@@ -165,10 +165,10 @@ export class LocalFileSimulator implements ISimulator {
         ) {
             const frameTime = this.simulariumFile.spatialData.bundleData[frame]
                 .time;
-            if (timeNanoSeconds < frameTime) {
-                const theFrameNumber = Math.max(frame - 1, 0);
-
+            if (timeNs <= frameTime) {
+                const theFrameNumber = Math.max(frame, 0);
                 this.onTrajectoryDataArrive(this.getFrame(theFrameNumber));
+                break;
             }
         }
     }
