@@ -225,10 +225,9 @@ class Viewer extends React.Component<{}, ViewerState> {
         this.setState({
             totalDuration,
             timeStep: data.timeStepSize,
+            currentFrame: 0,
+            currentTime: 0
         });
-
-        currentTime = 0;
-        currentFrame = 0;
     }
 
     public handleScrubTime(event): void {
@@ -260,11 +259,13 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public gotoNextFrame(): void {
-        simulariumController.gotoTime(currentTime + this.state.timeStep + 1e-9);
+        const targetTime = parseFloat((this.state.currentTime + this.state.timeStep).toPrecision(4));
+        simulariumController.gotoTime(targetTime);
     }
 
     public gotoPreviousFrame(): void {
-        simulariumController.gotoTime(currentTime - this.state.timeStep - 1e-9);
+        const targetTime = parseFloat((this.state.currentTime - this.state.timeStep).toPrecision(4));
+        simulariumController.gotoTime(targetTime);
     }
 
     private configureAndLoad() {
@@ -363,19 +364,23 @@ class Viewer extends React.Component<{}, ViewerState> {
                 </button>
 
                 <br />
-                <input
-                    type="range"
-                    min="0"
-                    value={currentTime}
-                    max={this.state.totalDuration}
-                    onChange={this.handleScrubTime}
-                />
-                <button onClick={this.gotoNextFrame.bind(this)}>
-                    Next Frame
-                </button>
                 <button onClick={this.gotoPreviousFrame.bind(this)}>
                     Previous Frame
                 </button>
+                <button onClick={this.gotoNextFrame.bind(this)}>
+                    Next Frame
+                </button>
+                <input
+                    name="slider"
+                    type="range"
+                    min={0}
+                    value={this.state.currentTime}
+                    max={this.state.totalDuration}
+                    onChange={this.handleScrubTime}
+                />
+                <label htmlFor="slider">
+                    {this.state.currentTime} / {this.state.totalDuration}
+                </label>
                 <br />
                 {this.state.particleTypeNames.map((id, i) => {
                     return (

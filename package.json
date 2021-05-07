@@ -1,6 +1,6 @@
 {
     "name": "@aics/simularium-viewer",
-    "version": "2.7.2",
+    "version": "2.7.4",
     "description": "An npm package to view simulations.",
     "main": "lib/index.js",
     "module": "es/index.js",
@@ -86,6 +86,7 @@
         "parse-pdb": "^1.0.0",
         "react": "~16.9.0",
         "react-dom": "^16.9.0",
+        "si-prefix": "^0.2.0",
         "three": "^0.125.2"
     }
 }
