@@ -9,7 +9,9 @@ import {
 } from "./types";
 import { ISimulator } from "./ISimulator";
 
-export class LocalFileConnection implements ISimulator {
+// a LocalFileSimulator is a ISimulator that plays back the contents of
+// a drag-n-drop trajectory file (a SimulariumFileFormat object)
+export class LocalFileSimulator implements ISimulator {
     protected fileName: string;
     protected simulariumFile: SimulariumFileFormat;
     protected logger: ILogger;
@@ -154,7 +156,7 @@ export class LocalFileConnection implements ISimulator {
         this.onTrajectoryDataArrive(this.getFrame(startFrameNumber));
     }
 
-    public gotoRemoteSimulationTime(timeNanoSeconds: number): void {
+    public gotoRemoteSimulationTime(timeNs: number): void {
         for (
             let frame = 0,
                 numFrames = this.simulariumFile.spatialData.bundleData.length;
@@ -163,10 +165,10 @@ export class LocalFileConnection implements ISimulator {
         ) {
             const frameTime = this.simulariumFile.spatialData.bundleData[frame]
                 .time;
-            if (timeNanoSeconds < frameTime) {
-                const theFrameNumber = Math.max(frame - 1, 0);
-
+            if (timeNs <= frameTime) {
+                const theFrameNumber = Math.max(frame, 0);
                 this.onTrajectoryDataArrive(this.getFrame(theFrameNumber));
+                break;
             }
         }
     }
@@ -176,7 +178,9 @@ export class LocalFileConnection implements ISimulator {
     }
 
     private getFrame(theFrameNumber: number): VisDataMessage {
+        // thoretically we could return all frames here, and as a result the Controller would precache the entire file in VisData
         //        return this.getAllFrames();
+
         return {
             msgType: 0,
             bundleStart: theFrameNumber,

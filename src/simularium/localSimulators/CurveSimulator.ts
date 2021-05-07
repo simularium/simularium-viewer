@@ -1,12 +1,15 @@
-import { IClientSimulator, ClientMessageEnum } from "./IClientSimulator";
+import {
+    IClientSimulatorImpl,
+    ClientMessageEnum,
+} from "./IClientSimulatorImpl";
 import {
     EncodedTypeMapping,
-    TrajectoryFileInfoV2,
+    TrajectoryFileInfo,
     VisDataMessage,
 } from "../types";
 import VisTypes from "../VisTypes";
 
-export default class CurveSim implements IClientSimulator {
+export default class CurveSim implements IClientSimulatorImpl {
     nCurves: number;
     curveData: number[];
     nPointsPerCurve: number;
@@ -145,7 +148,7 @@ export default class CurveSim implements IClientSimulator {
         return frameData;
     }
 
-    public getInfo(): TrajectoryFileInfoV2 {
+    public getInfo(): TrajectoryFileInfo {
         const typeMapping: EncodedTypeMapping = {};
         for (let i = 0; i < this.nTypes; ++i) {
             typeMapping[i] = { name: `fiber${i}` };

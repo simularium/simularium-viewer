@@ -1,7 +1,7 @@
 import jsLogger from "js-logger";
 import { noop } from "lodash";
 import {
-    NetConnection,
+    RemoteSimulator,
     NetConnectionParams,
     VisData,
     VisDataMessage,
@@ -15,17 +15,17 @@ import {
     FILE_STATUS_FAIL,
 } from "../simularium/types";
 
-import { SimulatorConnection } from "../simularium/ClientSimulatorConnection";
+import { ClientSimulator } from "../simularium/ClientSimulator";
 import { ClientSimulatorParams } from "../simularium/localSimulators/ClientSimulatorFactory";
 import { ISimulator } from "../simularium/ISimulator";
-import { LocalFileConnection } from "../simularium/LocalFileConnecton";
+import { LocalFileSimulator } from "../simularium/LocalFileSimulator";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
 // TODO: refine this as part of the public API for initializing the
 // controller (also see SimulatorConnectionParams below)
 interface SimulariumControllerParams {
-    netConnection?: NetConnection;
+    remoteSimulator?: RemoteSimulator;
     netConnectionSettings?: NetConnectionParams;
     trajectoryPlaybackFile?: string;
     trajectoryGeometryFile?: string;
@@ -81,8 +81,8 @@ export default class SimulariumController {
         this.zoomIn = () => noop;
         this.zoomOut = () => noop;
         this.onError = (/*errorMessage*/) => noop;
-        if (params.netConnection) {
-            this.simulator = params.netConnection;
+        if (params.remoteSimulator) {
+            this.simulator = params.remoteSimulator;
             this.simulator.setTrajectoryFileInfoHandler(
                 (trajFileInfo: TrajectoryFileInfo) => {
                     this.handleTrajectoryInfo(trajFileInfo);
@@ -143,14 +143,14 @@ export default class SimulariumController {
         localFile?: SimulariumFileFormat
     ): void {
         if (clientSimulatorParams) {
-            this.simulator = new SimulatorConnection(clientSimulatorParams);
+            this.simulator = new ClientSimulator(clientSimulatorParams);
         } else if (localFile) {
-            this.simulator = new LocalFileConnection(
+            this.simulator = new LocalFileSimulator(
                 this.playBackFile,
                 localFile
             );
         } else if (netConnectionConfig) {
-            this.simulator = new NetConnection(netConnectionConfig);
+            this.simulator = new RemoteSimulator(netConnectionConfig);
         } else {
             throw new Error(
                 "Insufficient data to determine and configure simulator connection"
@@ -298,8 +298,8 @@ export default class SimulariumController {
         this.stop();
 
         // Do I still need this? test...
-        // if (this.netConnection) {
-        //     this.netConnection.disconnect();
+        // if (this.simulator) {
+        //     this.simulator.disconnect();
         // }
 
         try {

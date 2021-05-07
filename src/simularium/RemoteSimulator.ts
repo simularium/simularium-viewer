@@ -59,7 +59,9 @@ export interface NetConnectionParams {
     serverPort?: number;
 }
 
-export class NetConnection implements ISimulator {
+// a RemoteSimulator is a ISimulator that connects to the Simularium Engine
+// back end server and plays back a trajectory specified in the NetConnectionParams
+export class RemoteSimulator implements ISimulator {
     private webSocket: WebSocket | null;
     private serverIp: string;
     private serverPort: number;

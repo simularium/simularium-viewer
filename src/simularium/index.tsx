@@ -1,6 +1,6 @@
 export type {
     NetConnectionParams,
-} from "./NetConnection";
+} from "./RemoteSimulator";
 export type {
     VisDataMessage,
     VisDataFrame,
@@ -8,21 +8,21 @@ export type {
     EncodedTypeMapping,
     SimulariumFileFormat,
 } from "./types";
-export type { 
-    SelectionStateInfo, 
-    UIDisplayData 
+export type {
+    SelectionStateInfo,
+    UIDisplayData
 } from "./SelectionInterface";
 
 export {
-    NetConnection,
+    RemoteSimulator,
     NetMessageEnum
-} from "./NetConnection";
+} from "./RemoteSimulator";
 export { VisGeometry, RenderStyle, NO_AGENT } from "./VisGeometry";
 export { VisData } from "./VisData";
 export { ThreadUtil } from "./ThreadUtil";
-export { 
-    SelectionInterface, 
+export {
+    SelectionInterface,
 } from "./SelectionInterface";
 
-export { DummyNetConnection } from "./mock/DummyNetConnection";
+export { DummyRemoteSimulator } from "./mock/DummyRemoteSimulator";
 
