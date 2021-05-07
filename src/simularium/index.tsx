@@ -24,5 +24,5 @@ export {
     SelectionInterface,
 } from "./SelectionInterface";
 
-export { DummyNetConnection } from "./mock/DummyNetConnection";
+export { DummyRemoteSimulator } from "./mock/DummyRemoteSimulator";
 

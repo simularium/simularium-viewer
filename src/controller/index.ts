@@ -25,7 +25,7 @@ jsLogger.setHandler(jsLogger.createDefaultHandler());
 // TODO: refine this as part of the public API for initializing the
 // controller (also see SimulatorConnectionParams below)
 interface SimulariumControllerParams {
-    netConnection?: RemoteSimulator;
+    remoteSimulator?: RemoteSimulator;
     netConnectionSettings?: NetConnectionParams;
     trajectoryPlaybackFile?: string;
     trajectoryGeometryFile?: string;
@@ -81,8 +81,8 @@ export default class SimulariumController {
         this.zoomIn = () => noop;
         this.zoomOut = () => noop;
         this.onError = (/*errorMessage*/) => noop;
-        if (params.netConnection) {
-            this.simulator = params.netConnection;
+        if (params.remoteSimulator) {
+            this.simulator = params.remoteSimulator;
             this.simulator.setTrajectoryFileInfoHandler(
                 (trajFileInfo: TrajectoryFileInfo) => {
                     this.handleTrajectoryInfo(trajFileInfo);
@@ -298,8 +298,8 @@ export default class SimulariumController {
         this.stop();
 
         // Do I still need this? test...
-        // if (this.netConnection) {
-        //     this.netConnection.disconnect();
+        // if (this.simulator) {
+        //     this.simulator.disconnect();
         // }
 
         try {
