@@ -402,7 +402,6 @@ export class RemoteSimulator implements ISimulator {
             "file-name": fileName,
         };
 
-        //  TODO is this comment correct?
         // begins a stream which will include a TrajectoryFileInfo and a series of VisDataMessages
         // Note that it is possible for the first vis data to arrive before the TrajectoryFileInfo...
         return this.connectToRemoteServer(this.getIp()).then(() => {
