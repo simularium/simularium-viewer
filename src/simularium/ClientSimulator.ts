@@ -1,7 +1,7 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
 
-import { VisDataMessage, TrajectoryFileInfoV2 } from "./types";
+import { VisDataMessage, TrajectoryFileInfo } from "./types";
 import {
     ClientMessageEnum,
     ClientPlayBackType,
@@ -16,10 +16,12 @@ import { ISimulator } from "./ISimulator";
 // setInterval is the playback engine for now
 let simulatorIntervalId = 0;
 
+// a ClientSimulator is a ISimulator that is expected to run purely in procedural javascript in the browser client,
+// with the procedural implementation in a IClientSimulatorImpl
 export class ClientSimulator implements ISimulator {
     private localSimulator: IClientSimulatorImpl;
     protected logger: ILogger;
-    public onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfoV2) => void;
+    public onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfo) => void;
     public onTrajectoryDataArrive: (msg: VisDataMessage) => void;
 
     public constructor(params: ClientSimulatorParams) {
@@ -37,7 +39,7 @@ export class ClientSimulator implements ISimulator {
     }
 
     public setTrajectoryFileInfoHandler(
-        handler: (msg: TrajectoryFileInfoV2) => void
+        handler: (msg: TrajectoryFileInfo) => void
     ): void {
         this.onTrajectoryFileInfoArrive = handler;
     }
@@ -98,7 +100,7 @@ export class ClientSimulator implements ISimulator {
                         );
                         this.onTrajectoryDataArrive(frame);
                     } else {
-                        const a: TrajectoryFileInfoV2 = this.localSimulator.getInfo();
+                        const a: TrajectoryFileInfo = this.localSimulator.getInfo();
                         this.onTrajectoryFileInfoArrive(a);
                     }
                 }
@@ -133,7 +135,7 @@ export class ClientSimulator implements ISimulator {
                 break;
             case ClientMessageEnum.ID_INIT_TRAJECTORY_FILE:
                 {
-                    const a: TrajectoryFileInfoV2 = this.localSimulator.getInfo();
+                    const a: TrajectoryFileInfo = this.localSimulator.getInfo();
                     console.log("receive trajectory file info");
                     this.onTrajectoryFileInfoArrive(a);
                 }

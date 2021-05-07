@@ -9,6 +9,8 @@ import {
 } from "./types";
 import { ISimulator } from "./ISimulator";
 
+// a LocalFileSimulator is a ISimulator that plays back the contents of
+// a drag-n-drop trajectory file (a SimulariumFileFormat object)
 export class LocalFileSimulator implements ISimulator {
     protected fileName: string;
     protected simulariumFile: SimulariumFileFormat;

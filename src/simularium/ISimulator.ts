@@ -1,24 +1,17 @@
-//import jsLogger from "js-logger";
-//import { ILogger } from "js-logger";
-
-import { VisDataMessage, TrajectoryFileInfoV2 } from "./types";
+import { VisDataMessage, TrajectoryFileInfo } from "./types";
 
 // TODO we need to examine this whole interface and document it with comments here
 // what is each function expected to do, from the caller's perspective?
 // are they named appropriately?
 // and are some of them completely specific to websockets only?
 export interface ISimulator {
-    // common to all ISimulators?
-    //protected logger: ILogger;
-
-    // what to do about these? they tend to be injected from the outside
-    //onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfoV2) => void;
-    //onTrajectoryDataArrive: (msg: VisDataMessage) => void;
+    // a callback to notify when TrajctoryFileInfo is ready
     setTrajectoryFileInfoHandler(
-        handler: (msg: TrajectoryFileInfoV2) => void
+        handler: (msg: TrajectoryFileInfo) => void
     ): void;
+
+    // a callback to notify when VisDataMessage is ready (the agent data)
     setTrajectoryDataHandler(handler: (msg: VisDataMessage) => void): void;
-    // others?
 
     socketIsValid(): boolean;
 
