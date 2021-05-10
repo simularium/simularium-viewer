@@ -148,7 +148,7 @@ class Viewer extends React.Component<{}, ViewerState> {
             const simulariumFile = parsedFiles[0];
             const fileName = filesArr[0].name;
             simulariumController
-                .changeFile(fileName, undefined, undefined, { simulariumFile })
+                .changeFile({ simulariumFile }, fileName)
                 .catch((error) => {
                     console.log(error.htmlData);
                     window.alert(`Error loading file: ${error.message}`);
@@ -226,7 +226,7 @@ class Viewer extends React.Component<{}, ViewerState> {
             totalDuration,
             timeStep: data.timeStepSize,
             currentFrame: 0,
-            currentTime: 0
+            currentTime: 0,
         });
     }
 
@@ -259,12 +259,16 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public gotoNextFrame(): void {
-        const targetTime = parseFloat((this.state.currentTime + this.state.timeStep).toPrecision(4));
+        const targetTime = parseFloat(
+            (this.state.currentTime + this.state.timeStep).toPrecision(4)
+        );
         simulariumController.gotoTime(targetTime);
     }
 
     public gotoPreviousFrame(): void {
-        const targetTime = parseFloat((this.state.currentTime - this.state.timeStep).toPrecision(4));
+        const targetTime = parseFloat(
+            (this.state.currentTime - this.state.timeStep).toPrecision(4)
+        );
         simulariumController.gotoTime(targetTime);
     }
 
@@ -272,9 +276,6 @@ class Viewer extends React.Component<{}, ViewerState> {
         simulariumController.configureNetwork(netConnectionSettings);
         if (playbackFile === "TEST_POINTS") {
             simulariumController.changeFile(
-                playbackFile,
-                undefined,
-                undefined,
                 {
                     clientSimulatorParams: {
                         name: "my test sim",
@@ -282,13 +283,11 @@ class Viewer extends React.Component<{}, ViewerState> {
                         nPoints: 1000,
                         nTypes: 4,
                     },
-                }
+                },
+                playbackFile
             );
         } else if (playbackFile === "TEST_FIBERS") {
             simulariumController.changeFile(
-                playbackFile,
-                undefined,
-                undefined,
                 {
                     clientSimulatorParams: {
                         name: "my test sim",
@@ -296,16 +295,15 @@ class Viewer extends React.Component<{}, ViewerState> {
                         nCurves: 1000,
                         nTypes: 4,
                     },
-                }
+                },
+                playbackFile
             );
         } else {
             simulariumController.changeFile(
-                playbackFile,
-                undefined,
-                undefined,
                 {
                     netConnectionSettings,
-                }
+                },
+                playbackFile
             );
         }
     }

@@ -278,12 +278,12 @@ export default class SimulariumController {
     }
 
     public changeFile(
-        // TODO: push newFileName into connectionParams below
+        connectionParams: SimulatorConnectionParams,
+        // TODO: push newFileName into connectionParams
         newFileName: string,
         // TODO: can geometryFile and assetPrefix come from the TrajectoryFileInfo data?
         geometryFile?: string,
-        assetPrefix?: string,
-        connectionParams?: SimulatorConnectionParams
+        assetPrefix?: string
     ): Promise<FileReturn> {
         this.fileChanged = true;
         this.playBackFile = newFileName;
