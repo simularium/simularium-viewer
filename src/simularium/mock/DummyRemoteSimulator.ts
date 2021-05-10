@@ -1,5 +1,5 @@
-import { NetConnection } from "../";
-import { NetConnectionParams, NetMessageEnum } from "../NetConnection";
+import { RemoteSimulator } from "..";
+import { NetConnectionParams, NetMessageEnum } from "../RemoteSimulator";
 
 import { VisDataFrame, VisDataMessage } from "../types";
 
@@ -9,7 +9,7 @@ interface TestDataBundle {
 }
 
 // Mocks the simularium simulation back-end, w/ latency
-export class DummyNetConnection extends NetConnection {
+export class DummyRemoteSimulator extends RemoteSimulator {
     private isStreamingData: boolean;
     private frameCounter: number;
     private isConnected: boolean;

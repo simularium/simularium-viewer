@@ -1,17 +1,17 @@
 import { SimulariumController } from "../controller";
-import { DummyNetConnection } from "../simularium";
+import { DummyRemoteSimulator } from "../simularium";
 
 describe("SimulariumController module", () => {
     describe("SimulariumController Time", () => {
-        test("Go to time in cache", done => {
-            const netConn = new DummyNetConnection({});
+        test("Go to time in cache", (done) => {
+            const netConn = new DummyRemoteSimulator({});
             netConn.timeStep = 1;
             netConn.totalDuration = 100;
             netConn.commandLatencyMS = 0;
             netConn.connectLatencyMS = 0;
 
             const controller = new SimulariumController({
-                netConnection: netConn,
+                remoteSimulator: netConn,
             });
 
             controller.start();

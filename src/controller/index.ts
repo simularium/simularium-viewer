@@ -1,7 +1,7 @@
 import jsLogger from "js-logger";
 import { noop } from "lodash";
 import {
-    NetConnection,
+    RemoteSimulator,
     NetConnectionParams,
     VisData,
     VisDataMessage,
@@ -10,16 +10,22 @@ import {
 } from "../simularium";
 import {
     SimulariumFileFormat,
-    VisDataFrame,
     FileReturn,
     FILE_STATUS_SUCCESS,
     FILE_STATUS_FAIL,
 } from "../simularium/types";
 
+import { ClientSimulator } from "../simularium/ClientSimulator";
+import { ClientSimulatorParams } from "../simularium/localSimulators/ClientSimulatorFactory";
+import { ISimulator } from "../simularium/ISimulator";
+import { LocalFileSimulator } from "../simularium/LocalFileSimulator";
+
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
+// TODO: refine this as part of the public API for initializing the
+// controller (also see SimulatorConnectionParams below)
 interface SimulariumControllerParams {
-    netConnection?: NetConnection;
+    remoteSimulator?: RemoteSimulator;
     netConnectionSettings?: NetConnectionParams;
     trajectoryPlaybackFile?: string;
     trajectoryGeometryFile?: string;
@@ -27,11 +33,19 @@ interface SimulariumControllerParams {
     assetLocation?: string;
 }
 
+// TODO: refine this as part of the public API for initializing the
+// controller with a simulator connection
+interface SimulatorConnectionParams {
+    netConnectionSettings?: NetConnectionParams;
+    clientSimulatorParams?: ClientSimulatorParams;
+    simulariumFile?: SimulariumFileFormat;
+}
+
 const DEFAULT_ASSET_PREFIX =
     "https://aics-agentviz-data.s3.us-east-2.amazonaws.com/meshes/obj";
 
 export default class SimulariumController {
-    public netConnection: NetConnection | undefined;
+    public simulator?: ISimulator;
     public visData: VisData;
     public visGeometry: VisGeometry | undefined;
     public tickIntervalLength: number;
@@ -49,7 +63,6 @@ export default class SimulariumController {
     private isPaused: boolean;
     private fileChanged: boolean;
     private playBackFile: string;
-    private localFile: boolean;
     // used to map geometry to agent types
     private geometryFile: string;
     // used to locate geometry assets
@@ -58,45 +71,37 @@ export default class SimulariumController {
     public constructor(params: SimulariumControllerParams) {
         this.visData = new VisData();
         this.tickIntervalLength = 0; // Will be overwritten when a trajectory is loaded
-        this.postConnect = () => {
-            /* Do Nothing */
-        };
+        this.postConnect = () => noop;
 
-        /* eslint-disable */
-        this.handleTrajectoryInfo = (msg: TrajectoryFileInfo) => {
-            /* Do Nothing */
-        };
+        this.handleTrajectoryInfo = (/*msg: TrajectoryFileInfo*/) => noop;
 
         this.reOrientCamera = () => noop;
         this.resetCamera = () => noop;
         this.centerCamera = () => noop;
         this.zoomIn = () => noop;
         this.zoomOut = () => noop;
-        this.onError = (errorMessage) => {};
-        /* eslint-enable */
-        if (params.netConnection || params.netConnectionSettings) {
-            this.netConnection = params.netConnection
-                ? params.netConnection
-                : new NetConnection(params.netConnectionSettings);
-
-            this.playBackFile = params.trajectoryPlaybackFile || "";
-            this.netConnection.onTrajectoryDataArrive = this.visData.parseAgentsFromNetData.bind(
-                this.visData
+        this.onError = (/*errorMessage*/) => noop;
+        if (params.remoteSimulator) {
+            this.simulator = params.remoteSimulator;
+            this.simulator.setTrajectoryFileInfoHandler(
+                (trajFileInfo: TrajectoryFileInfo) => {
+                    this.handleTrajectoryInfo(trajFileInfo);
+                }
             );
-
-            this.networkEnabled = true;
-            this.isPaused = false;
-            this.fileChanged = false;
-            this.localFile = false;
-            this.geometryFile = this.resolveGeometryFile(
-                params.trajectoryGeometryFile || "",
-                this.playBackFile
+            this.simulator.setTrajectoryDataHandler(
+                this.visData.parseAgentsFromNetData.bind(this.visData)
+            );
+        } else if (params.netConnectionSettings) {
+            this.createSimulatorConnection(
+                params.netConnectionSettings,
+                undefined,
+                undefined
             );
         } else {
             // No network information was passed in
             //  the viewer will be initialized blank
 
-            this.netConnection = undefined;
+            this.simulator = undefined;
 
             // @TODO: Pass this warning upwards (to installing app)
             if (params.trajectoryPlaybackFile) {
@@ -104,15 +109,16 @@ export default class SimulariumController {
                     "trajectoryPlaybackFile param ignored, no network config provided"
                 );
             }
-
-            this.playBackFile = "";
-            this.networkEnabled = false;
-            this.isPaused = false;
-            this.fileChanged = false;
-            this.localFile = true;
-            this.geometryFile = "";
         }
 
+        this.networkEnabled = true;
+        this.isPaused = false;
+        this.fileChanged = false;
+        this.playBackFile = params.trajectoryPlaybackFile || "";
+        this.geometryFile = this.resolveGeometryFile(
+            params.trajectoryGeometryFile || "",
+            this.playBackFile
+        );
         this.assetPrefix = params.assetLocation || DEFAULT_ASSET_PREFIX;
     }
 
@@ -131,41 +137,59 @@ export default class SimulariumController {
         return "";
     }
 
-    public configureNetwork(config: NetConnectionParams): void {
-        if (this.netConnection && this.netConnection.socketIsValid()) {
-            this.netConnection.disconnect();
+    private createSimulatorConnection(
+        netConnectionConfig?: NetConnectionParams,
+        clientSimulatorParams?: ClientSimulatorParams,
+        localFile?: SimulariumFileFormat
+    ): void {
+        if (clientSimulatorParams) {
+            this.simulator = new ClientSimulator(clientSimulatorParams);
+        } else if (localFile) {
+            this.simulator = new LocalFileSimulator(
+                this.playBackFile,
+                localFile
+            );
+        } else if (netConnectionConfig) {
+            this.simulator = new RemoteSimulator(netConnectionConfig);
+        } else {
+            throw new Error(
+                "Insufficient data to determine and configure simulator connection"
+            );
         }
 
-        this.netConnection = new NetConnection(config);
-
-        this.netConnection.onTrajectoryDataArrive = this.visData.parseAgentsFromNetData.bind(
-            this.visData
+        this.simulator.setTrajectoryFileInfoHandler(
+            (trajFileInfo: TrajectoryFileInfo) => {
+                this.handleTrajectoryInfo(trajFileInfo);
+            }
         );
+        this.simulator.setTrajectoryDataHandler(
+            this.visData.parseAgentsFromNetData.bind(this.visData)
+        );
+    }
 
-        this.netConnection.onTrajectoryFileInfoArrive = (
-            trajFileInfo: TrajectoryFileInfo
-        ) => {
-            this.handleTrajectoryInfo(trajFileInfo);
-        };
+    public configureNetwork(config: NetConnectionParams): void {
+        if (this.simulator && this.simulator.socketIsValid()) {
+            this.simulator.disconnect();
+        }
+
+        this.createSimulatorConnection(config);
     }
 
     public get hasChangedFile(): boolean {
         return this.fileChanged;
     }
 
-    public get isLocalFile(): boolean {
-        return this.localFile;
-    }
-
     public connect(): Promise<string> {
-        if (!this.netConnection) {
+        if (!this.simulator) {
             return Promise.reject(
-                "No network connection established in simularium controller."
+                new Error(
+                    "No network connection established in simularium controller."
+                )
             );
         }
 
-        return this.netConnection
-            .connectToRemoteServer(this.netConnection.getIp())
+        return this.simulator
+            .connectToRemoteServer(this.simulator.getIp())
             .then((msg: string) => {
                 this.postConnect();
                 return msg;
@@ -173,7 +197,7 @@ export default class SimulariumController {
     }
 
     public start(): Promise<void> {
-        if (!this.netConnection) {
+        if (!this.simulator) {
             return Promise.reject();
         }
 
@@ -182,9 +206,7 @@ export default class SimulariumController {
         this.isPaused = false;
         this.visData.clearCache();
 
-        return this.netConnection.startRemoteTrajectoryPlayback(
-            this.playBackFile
-        );
+        return this.simulator.startRemoteTrajectoryPlayback(this.playBackFile);
     }
 
     public time(): number {
@@ -192,14 +214,14 @@ export default class SimulariumController {
     }
 
     public stop(): void {
-        if (this.netConnection) {
-            this.netConnection.abortRemoteSim();
+        if (this.simulator) {
+            this.simulator.abortRemoteSim();
         }
     }
 
     public pause(): void {
-        if (this.networkEnabled && this.netConnection) {
-            this.netConnection.pauseRemoteSim();
+        if (this.networkEnabled && this.simulator) {
+            this.simulator.pauseRemoteSim();
         }
 
         this.isPaused = true;
@@ -210,8 +232,8 @@ export default class SimulariumController {
     }
 
     public initializeTrajectoryFile(): void {
-        if (this.netConnection) {
-            this.netConnection.requestTrajectoryFileInfo(this.playBackFile);
+        if (this.simulator) {
+            this.simulator.requestTrajectoryFileInfo(this.playBackFile);
         }
     }
 
@@ -219,11 +241,11 @@ export default class SimulariumController {
         if (this.visData.hasLocalCacheForTime(timeNs)) {
             this.visData.gotoTime(timeNs);
         } else {
-            if (this.networkEnabled && this.netConnection) {
+            if (this.networkEnabled && this.simulator) {
                 // else reset the local cache,
                 //  and play remotely from the desired simulation time
                 this.visData.clearCache();
-                this.netConnection.gotoRemoteSimulationTime(timeNs);
+                this.simulator.gotoRemoteSimulationTime(timeNs);
             }
         }
     }
@@ -234,56 +256,16 @@ export default class SimulariumController {
     }
 
     public resume(): void {
-        if (this.networkEnabled && this.netConnection) {
-            this.netConnection.resumeRemoteSim();
+        if (this.networkEnabled && this.simulator) {
+            this.simulator.resumeRemoteSim();
         }
 
         this.isPaused = false;
     }
 
-    private handleLocalFileChange(
-        simulariumFile: SimulariumFileFormat | undefined
-    ): Promise<FileReturn> {
-        if (!simulariumFile) {
-            const newError = new Error("No file was detected");
-            return Promise.reject(newError);
-        }
-        const { spatialData, trajectoryInfo } = simulariumFile;
-
-        if (!simulariumFile.spatialData) {
-            const newError = new Error(
-                "Simularium files need 'spatialData' array"
-            );
-            return Promise.reject(newError);
-        }
-        spatialData.bundleData.sort(
-            (a: VisDataFrame, b: VisDataFrame): number =>
-                a.frameNumber - b.frameNumber
-        );
-
-        this.pause();
-        this.disableNetworkCommands();
-        try {
-            this.cacheJSON(spatialData);
-        } catch (e) {
-            return Promise.reject(e);
-        }
-        try {
-            this.dragAndDropFileInfo = trajectoryInfo;
-
-            this.handleTrajectoryInfo(this.dragAndDropFileInfo);
-        } catch (e) {
-            return Promise.reject(e);
-        }
-        return Promise.resolve({
-            status: FILE_STATUS_SUCCESS,
-        });
-    }
-
     public clearFile(): void {
         this.fileChanged = false;
         this.playBackFile = "";
-        this.localFile = true; // default
         this.geometryFile = "";
         this.assetPrefix = DEFAULT_ASSET_PREFIX;
         this.visData.clearCache();
@@ -296,15 +278,15 @@ export default class SimulariumController {
     }
 
     public changeFile(
+        connectionParams: SimulatorConnectionParams,
+        // TODO: push newFileName into connectionParams
         newFileName: string,
-        isLocalFile = false,
-        simulariumFile?: SimulariumFileFormat,
+        // TODO: can geometryFile and assetPrefix come from the TrajectoryFileInfo data?
         geometryFile?: string,
         assetPrefix?: string
     ): Promise<FileReturn> {
         this.fileChanged = true;
         this.playBackFile = newFileName;
-        this.localFile = isLocalFile;
         this.geometryFile = this.resolveGeometryFile(
             geometryFile || "",
             newFileName
@@ -315,16 +297,38 @@ export default class SimulariumController {
 
         this.stop();
 
-        if (isLocalFile) {
-            return this.handleLocalFileChange(simulariumFile);
+        // Do I still need this? test...
+        // if (this.simulator) {
+        //     this.simulator.disconnect();
+        // }
+
+        try {
+            if (connectionParams) {
+                this.createSimulatorConnection(
+                    connectionParams.netConnectionSettings,
+                    connectionParams.clientSimulatorParams,
+                    connectionParams.simulariumFile
+                );
+                this.networkEnabled = true;
+                this.isPaused = true;
+            } else {
+                throw new Error("incomplete simulator config provided");
+            }
+        } catch (e) {
+            this.simulator = undefined;
+
+            console.warn(e.message);
+
+            this.networkEnabled = false;
+            this.isPaused = false;
         }
 
-        // otherwise, start a network file
-        if (this.netConnection) {
+        // start the simulation paused and get first frame
+        if (this.simulator) {
             return this.start()
                 .then(() => {
-                    if (this.netConnection) {
-                        this.netConnection.requestSingleFrame(0);
+                    if (this.simulator) {
+                        this.simulator.requestSingleFrame(0);
                     }
                 })
                 .then(() => ({
@@ -356,8 +360,8 @@ export default class SimulariumController {
     public disableNetworkCommands(): void {
         this.networkEnabled = false;
 
-        if (this.netConnection && this.netConnection.socketIsValid()) {
-            this.netConnection.disconnect();
+        if (this.simulator && this.simulator.socketIsValid()) {
+            this.simulator.disconnect();
         }
     }
 
@@ -381,8 +385,8 @@ export default class SimulariumController {
     ) {
         this.handleTrajectoryInfo = callback;
 
-        if (this.netConnection) {
-            this.netConnection.onTrajectoryFileInfoArrive = callback;
+        if (this.simulator) {
+            this.simulator.setTrajectoryFileInfoHandler(callback);
         }
     }
 }

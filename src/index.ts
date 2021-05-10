@@ -8,6 +8,6 @@ export type {
     VisDataFrame,
 } from "./simularium";
 export { Orchestrator, RenderStyle, SimulariumController };
-export { NetConnection, DummyNetConnection } from "./simularium";
+export { RemoteSimulator, DummyRemoteSimulator } from "./simularium";
 
 export default Viewport;

@@ -9,7 +9,6 @@ import SimulariumViewer, {
     RenderStyle,
     SimulariumFileFormat,
 } from "../src";
-
 import "./style.css";
 import { isEqual } from "lodash";
 
@@ -149,17 +148,13 @@ class Viewer extends React.Component<{}, ViewerState> {
             const simulariumFile = parsedFiles[0];
             const fileName = filesArr[0].name;
             simulariumController
-                .changeFile(fileName, true, simulariumFile)
+                .changeFile({ simulariumFile }, fileName)
                 .catch((error) => {
                     console.log(error.htmlData);
                     window.alert(`Error loading file: ${error.message}`);
                 });
         });
     };
-
-    private changeFile(file: string) {
-        simulariumController.changeFile(file);
-    }
 
     public handleJsonMeshData(jsonData): void {
         console.log("Mesh JSON Data: ", jsonData);
@@ -231,7 +226,7 @@ class Viewer extends React.Component<{}, ViewerState> {
             totalDuration,
             timeStep: data.timeStepSize,
             currentFrame: 0,
-            currentTime: 0
+            currentTime: 0,
         });
     }
 
@@ -264,18 +259,53 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public gotoNextFrame(): void {
-        const targetTime = parseFloat((this.state.currentTime + this.state.timeStep).toPrecision(4));
+        const targetTime = parseFloat(
+            (this.state.currentTime + this.state.timeStep).toPrecision(4)
+        );
         simulariumController.gotoTime(targetTime);
     }
 
     public gotoPreviousFrame(): void {
-        const targetTime = parseFloat((this.state.currentTime - this.state.timeStep).toPrecision(4));
+        const targetTime = parseFloat(
+            (this.state.currentTime - this.state.timeStep).toPrecision(4)
+        );
         simulariumController.gotoTime(targetTime);
     }
 
     private configureAndLoad() {
         simulariumController.configureNetwork(netConnectionSettings);
-        simulariumController.changeFile(playbackFile);
+        if (playbackFile === "TEST_POINTS") {
+            simulariumController.changeFile(
+                {
+                    clientSimulatorParams: {
+                        name: "my test sim",
+                        type: "POINTSIM",
+                        nPoints: 1000,
+                        nTypes: 4,
+                    },
+                },
+                playbackFile
+            );
+        } else if (playbackFile === "TEST_FIBERS") {
+            simulariumController.changeFile(
+                {
+                    clientSimulatorParams: {
+                        name: "my test sim",
+                        type: "CURVESIM",
+                        nCurves: 1000,
+                        nTypes: 4,
+                    },
+                },
+                playbackFile
+            );
+        } else {
+            simulariumController.changeFile(
+                {
+                    netConnectionSettings,
+                },
+                playbackFile
+            );
+        }
     }
 
     public render(): JSX.Element {
@@ -312,6 +342,8 @@ class Viewer extends React.Component<{}, ViewerState> {
                     <option value="ATPsynthase_8.h5">ATP 8</option>
                     <option value="ATPsynthase_9.h5">ATP 9</option>
                     <option value="ATPsynthase_10.h5">ATP 10</option>
+                    <option value="TEST_FIBERS">TEST FIBERS</option>
+                    <option value="TEST_POINTS">TEST POINTS</option>
                 </select>
                 <button onClick={() => this.configureAndLoad()}>
                     Load model

@@ -1,11 +1,24 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
 
+import { ISimulator } from "./ISimulator";
+import { TrajectoryFileInfoV2, VisDataMessage } from "./types";
+
 interface NetMessage {
     connId: string;
     msgType: number;
     fileName: string;
 }
+// TODO: proposed new NetMessage data type:
+// This factors the raw data structure away from the networking and transmission info.
+// This allows the data structure to make a bit more sense with respect to typescript typing,
+// and also for raw file drag n drop it doesn't need conection info or msgtype.
+// interface NetMessage {
+//     connId: string; // unique connection to server
+//     msgType: number; // identifies the data structure of the message
+//     fileName: string; // identifies the trajectory this connection is dealing with
+//     payload: Object; // the JS object with the message data itself
+// }
 
 interface MessageEventLike {
     data: string;
@@ -46,7 +59,9 @@ export interface NetConnectionParams {
     serverPort?: number;
 }
 
-export class NetConnection {
+// a RemoteSimulator is a ISimulator that connects to the Simularium Engine
+// back end server and plays back a trajectory specified in the NetConnectionParams
+export class RemoteSimulator implements ISimulator {
     private webSocket: WebSocket | null;
     private serverIp: string;
     private serverPort: number;
@@ -73,6 +88,17 @@ export class NetConnection {
 
         // Frees the reserved backend in the event that the window closes w/o disconnecting
         window.addEventListener("beforeunload", this.onClose.bind(this));
+    }
+
+    public setTrajectoryFileInfoHandler(
+        handler: (msg: TrajectoryFileInfoV2) => void
+    ): void {
+        this.onTrajectoryFileInfoArrive = handler;
+    }
+    public setTrajectoryDataHandler(
+        handler: (msg: VisDataMessage) => void
+    ): void {
+        this.onTrajectoryDataArrive = handler;
     }
 
     /**
@@ -376,6 +402,8 @@ export class NetConnection {
             "file-name": fileName,
         };
 
+        // begins a stream which will include a TrajectoryFileInfo and a series of VisDataMessages
+        // Note that it is possible for the first vis data to arrive before the TrajectoryFileInfo...
         return this.connectToRemoteServer(this.getIp()).then(() => {
             this.sendWebSocketRequest(
                 jsonData,

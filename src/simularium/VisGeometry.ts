@@ -86,12 +86,6 @@ interface MeshLoadRequest {
     cancelled: boolean;
 }
 
-interface HSL {
-    h: number;
-    s: number;
-    l: number;
-}
-
 interface PathData {
     agentId: number;
     numSegments: number;

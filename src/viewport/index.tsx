@@ -211,13 +211,15 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             msg: TrajectoryFileInfoAny
         ) => {
             // Update TrajectoryFileInfo format to latest version
-            const trajectoryFileInfo: TrajectoryFileInfo = updateTrajectoryFileInfoFormat(msg);
-            
+            const trajectoryFileInfo: TrajectoryFileInfo = updateTrajectoryFileInfoFormat(
+                msg
+            );
+
             // Create a new bounding box and tick marks (via resetBounds()) and set
             // VisGeometry.tickIntervalLength, to make it available for use as the length of the
             // scale bar in the UI
             this.visGeometry.handleTrajectoryData(trajectoryFileInfo);
-            
+
             simulariumController.tickIntervalLength = this.visGeometry.tickIntervalLength;
 
             try {
@@ -268,9 +270,10 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             }
         };
 
-        if (simulariumController.netConnection) {
-            simulariumController.connect();
-        }
+        simulariumController
+            .connect()
+            .then((result) => console.log(result))
+            .catch((error) => console.log(error.message));
 
         if (this.vdomRef.current) {
             this.vdomRef.current.addEventListener(
@@ -574,14 +577,11 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         if (elapsedTime > timePerFrame) {
             if (simulariumController.hasChangedFile) {
                 this.visGeometry.clearForNewTrajectory();
-                // skip fetch if local file
-                const p = simulariumController.isLocalFile
-                    ? Promise.resolve()
-                    : this.visGeometry.mapFromJSON(
-                          simulariumController.getFile(),
-                          simulariumController.getGeometryFile(),
-                          simulariumController.getAssetPrefix()
-                      );
+                const p = this.visGeometry.mapFromJSON(
+                    simulariumController.getFile(),
+                    simulariumController.getGeometryFile(),
+                    simulariumController.getAssetPrefix()
+                );
 
                 p.then(() => {
                     this.visGeometry.render(totalElapsedTime);
