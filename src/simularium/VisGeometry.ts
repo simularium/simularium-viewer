@@ -42,6 +42,7 @@ import { AgentData } from "./VisData";
 
 import MoleculeRenderer from "./rendering/MoleculeRenderer";
 import { InstancedFiberGroup } from "./rendering/InstancedFiber";
+import { InstancedMesh } from "./rendering/InstancedMesh";
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 100000;
@@ -84,6 +85,7 @@ interface AgentTypeGeometry {
 interface MeshLoadRequest {
     mesh: Object3D;
     cancelled: boolean;
+    instances: InstancedMesh;
 }
 
 interface PathData {
@@ -666,6 +668,7 @@ class VisGeometry {
         this.meshRegistry.set(meshName, {
             mesh: new Mesh(VisAgent.sphereGeometry),
             cancelled: false,
+            instances: new InstancedMesh(VisAgent.sphereGeometry, 1),
         });
         objLoader.load(
             `${assetPath}/${meshName}`,
@@ -681,10 +684,25 @@ class VisGeometry {
 
                 this.logger.debug("Finished loading mesh: ", meshName);
                 // insert new mesh into meshRegistry
-                this.meshRegistry.set(meshName, {
-                    mesh: object,
-                    cancelled: false,
+                // get its geometry first:
+                let geom: BufferGeometry | null = null;
+                object.traverse((obj) => {
+                    if (!geom && obj instanceof Mesh) {
+                        geom = (obj as Mesh).geometry;
+                        return false;
+                    }
                 });
+                if (geom) {
+                    this.meshRegistry.set(meshName, {
+                        mesh: object,
+                        cancelled: false,
+                        instances: new InstancedMesh(geom, 1),
+                    });
+                } else {
+                    console.error(
+                        "Mesh loaded but could not find instanceable geometry in it"
+                    );
+                }
                 if (!object.name) {
                     object.name = meshName;
                 }
@@ -1024,6 +1042,7 @@ class VisGeometry {
             this.meshRegistry.set(unassignedName, {
                 mesh: new Mesh(VisAgent.sphereGeometry),
                 cancelled: false,
+                instances: new InstancedMesh(VisAgent.sphereGeometry, 1),
             });
             this.onNewRuntimeGeometryType(unassignedName);
         }

@@ -280,7 +280,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                     clientSimulatorParams: {
                         name: "my test sim",
                         type: "POINTSIM",
-                        nPoints: 1000,
+                        nPoints: 8000,
                         nTypes: 4,
                     },
                 },
@@ -333,6 +333,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                     <option value="actin34_0.h5">Actin 34</option>
                     <option value="microtubules30_1.h5">MT 30</option>
                     <option value="endocytosis.simularium">Endocytosis</option>
+                    <option value="pc4covid19.simularium">COVIDLUNG</option>
                     <option value="ATPsynthase_2.h5">ATP 2</option>
                     <option value="ATPsynthase_3.h5">ATP 3</option>
                     <option value="ATPsynthase_4.h5">ATP 4</option>
@@ -425,7 +426,8 @@ class Viewer extends React.Component<{}, ViewerState> {
                     onClick={() =>
                         this.setState({
                             renderStyle:
-                                this.state.renderStyle === RenderStyle.WEBGL1_FALLBACK
+                                this.state.renderStyle ===
+                                RenderStyle.WEBGL1_FALLBACK
                                     ? RenderStyle.WEBGL2_PREFERRED
                                     : RenderStyle.WEBGL1_FALLBACK,
                         })
