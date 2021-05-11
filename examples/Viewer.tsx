@@ -321,6 +321,9 @@ class Viewer extends React.Component<{}, ViewerState> {
                     <option value="medyan_paper_M:A_0.675.simularium">
                         medyan test
                     </option>
+                    <option value="smoldyn_min1_output.simularium">
+                        smoldyn_min1_output
+                    </option>
                     <option value="actin012_3.h5">Actin 12_3</option>
                     <option value="listeria_rocketbugs_normal_fine_2_filtered.simularium">
                         listeria 01
