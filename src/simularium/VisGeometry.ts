@@ -1070,8 +1070,8 @@ class VisGeometry {
         pdbName: string | undefined,
         assetPath: string
     ): void {
-        this.logger.debug("Mesh for id ", id, " set to ", meshName);
-        this.logger.debug("PDB for id ", id, " set to ", pdbName);
+        this.logger.debug(`Mesh for id ${id} set to '${meshName}'`);
+        this.logger.debug(`PDB for id ${id} set to '${pdbName}'`);
         const unassignedName = `${VisAgent.UNASSIGNED_NAME_PREFIX}-${id}`;
         this.visGeomMap.set(id, {
             meshName: meshName || "SPHERE",
@@ -1165,6 +1165,8 @@ class VisGeometry {
         return null;
     }
 
+    // get the json file that accompanies the trajectory
+    // this file includes geometry data
     public mapFromJSON(
         name: string,
         filePath: string,
@@ -1201,6 +1203,8 @@ class VisGeometry {
                         callback
                     );
                 } else {
+                    this.resetMapping();
+
                     // if there is an id to color mapping, set up with spheres
                     for (const i of this.idColorMapping.keys()) {
                         this.visGeomMap.set(i, {
@@ -1573,6 +1577,9 @@ class VisGeometry {
                 runtimeMesh.scale.y = radius * scale;
                 runtimeMesh.scale.z = radius * scale;
 
+                visAgent.mesh.visible =
+                    this.renderStyle === RenderStyle.WEBGL1_FALLBACK;
+
                 // update pdb transforms too
                 const pdb = visAgent.pdbModel;
                 if (pdb && pdb.pdb) {
@@ -1592,13 +1599,7 @@ class VisGeometry {
 
                         obj.visible = false;
                     }
-                }
-                visAgent.mesh.visible =
-                    this.renderStyle === RenderStyle.WEBGL1_FALLBACK;
-                if (
-                    this.renderStyle === RenderStyle.WEBGL2_PREFERRED &&
-                    !(pdb && pdb.pdb)
-                ) {
+                } else if (this.renderStyle === RenderStyle.WEBGL2_PREFERRED) {
                     const instances = this.getInstanceContainerFromId(typeId);
                     if (instances) {
                         instances.addInstance(
