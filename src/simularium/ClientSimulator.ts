@@ -116,7 +116,7 @@ export class ClientSimulator implements ISimulator {
                     simulatorIntervalId = window.setInterval(() => {
                         const frame = this.localSimulator.update(0);
                         this.onTrajectoryDataArrive(frame);
-                    }, 1);
+                    }, 16);
                 }
                 break;
             case ClientMessageEnum.ID_VIS_DATA_ABORT:

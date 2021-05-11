@@ -1,10 +1,12 @@
 import MeshGBufferShaders from "./MeshGBufferShaders";
 import PDBGBufferShaders from "./PDBGBufferShaders";
 import { InstancedFiberGroup } from "./InstancedFiber";
+import { InstancedMesh } from "./InstancedMesh";
 
 import {
     GbufferRenderPass,
     MultipassShaders,
+    setRenderPass,
     setSceneRenderPass,
     updateProjectionMatrix,
     updateResolution,
@@ -40,8 +42,11 @@ class GBufferPass {
     public agentMeshGroup: Group;
     public agentPDBGroup: Group;
     public agentFiberGroup: Group;
+
     public instancedMeshGroup: Group;
+    // instancedMeshGroup consists of fibers and meshes:
     public fibers: InstancedFiberGroup;
+    public meshTypes: InstancedMesh[];
 
     public constructor() {
         this.agentMeshGroup = new Group();
@@ -49,6 +54,7 @@ class GBufferPass {
         this.agentFiberGroup = new Group();
         this.instancedMeshGroup = new Group();
         this.fibers = new InstancedFiberGroup();
+        this.meshTypes = [];
 
         this.meshGbufferMaterials = MeshGBufferShaders.shaderSet;
 
@@ -62,13 +68,15 @@ class GBufferPass {
         agentPDBGroup: Group,
         agentFiberGroup: Group,
         instancedMeshGroup: Group,
-        fibers: InstancedFiberGroup
+        fibers: InstancedFiberGroup,
+        meshes: InstancedMesh[]
     ): void {
         this.agentMeshGroup = agentMeshGroup;
         this.agentPDBGroup = agentPDBGroup;
         this.agentFiberGroup = agentFiberGroup;
         this.instancedMeshGroup = instancedMeshGroup;
         this.fibers = fibers;
+        this.meshTypes = meshes;
     }
 
     public resize(width: number, height: number): void {
@@ -95,6 +103,10 @@ class GBufferPass {
             camera.projectionMatrix
         );
         this.fibers.updateProjectionMatrix(camera.projectionMatrix);
+        for (let i = 0; i < this.meshTypes.length; ++i) {
+            const s = this.meshTypes[i].getShaders();
+            updateProjectionMatrix(s, camera.projectionMatrix);
+        }
 
         // 1. fill colorbuffer
         let renderPass: GbufferRenderPass = GbufferRenderPass.COLOR;
@@ -110,7 +122,7 @@ class GBufferPass {
         renderer.setRenderTarget(colorBuffer);
         renderer.autoClear = true;
 
-        const DO_MESHES = true;
+        const DO_MESHES = false;
         const DO_INSTANCED = true;
         const DO_PDB = true;
 
@@ -136,6 +148,13 @@ class GBufferPass {
             this.instancedMeshGroup.visible = true;
 
             this.fibers.setRenderPass(renderPass);
+            for (let i = 0; i < this.meshTypes.length; ++i) {
+                setRenderPass(
+                    this.meshTypes[i].getMesh(),
+                    this.meshTypes[i].getShaders(),
+                    renderPass
+                );
+            }
             renderer.render(scene, camera);
             // end draw instanced things
             renderer.autoClear = false;
@@ -188,6 +207,13 @@ class GBufferPass {
             this.instancedMeshGroup.visible = true;
 
             this.fibers.setRenderPass(renderPass);
+            for (let i = 0; i < this.meshTypes.length; ++i) {
+                setRenderPass(
+                    this.meshTypes[i].getMesh(),
+                    this.meshTypes[i].getShaders(),
+                    renderPass
+                );
+            }
             renderer.render(scene, camera);
             // end draw instanced things
             renderer.autoClear = false;
@@ -238,6 +264,13 @@ class GBufferPass {
             this.instancedMeshGroup.visible = true;
 
             this.fibers.setRenderPass(renderPass);
+            for (let i = 0; i < this.meshTypes.length; ++i) {
+                setRenderPass(
+                    this.meshTypes[i].getMesh(),
+                    this.meshTypes[i].getShaders(),
+                    renderPass
+                );
+            }
             renderer.render(scene, camera);
             // end draw instanced things
             renderer.autoClear = false;

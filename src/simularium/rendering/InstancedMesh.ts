@@ -10,6 +10,9 @@ import {
 import InstancedMeshShader from "./InstancedMeshShader";
 import { MultipassShaders } from "./MultipassMaterials";
 
+const tmpQuaternion = new Quaternion();
+const tmpEuler = new Euler();
+
 class InstancedMesh {
     // number of control points per curve instance
     private meshGeometry: BufferGeometry;
@@ -25,10 +28,10 @@ class InstancedMesh {
     private currentInstance: number;
     private isUpdating: boolean;
 
-    constructor(meshGeometry: BufferGeometry, count: number) {
+    constructor(meshGeometry: BufferGeometry, name: string, count: number) {
         this.meshGeometry = meshGeometry;
         this.mesh = new Mesh(meshGeometry);
-        this.mesh.name = "instanced agent mesh";
+        this.mesh.name = name;
 
         this.currentInstance = 0;
         this.isUpdating = false;
@@ -75,6 +78,12 @@ class InstancedMesh {
         this.instancedGeometry.instanceCount = n;
     }
 
+    public replaceGeometry(geometry: BufferGeometry, name: string): void {
+        this.mesh.name = name;
+        this.meshGeometry = geometry;
+        this.reallocate(this.getCapacity());
+    }
+
     public reallocate(n: number): void {
         // tell threejs/webgl that we can discard the old buffers
         this.dispose();
@@ -85,10 +94,6 @@ class InstancedMesh {
         );
         // install the new geometry into our Mesh object
         this.mesh.geometry = this.instancedGeometry;
-        this.instancedGeometry.setDrawRange(
-            0,
-            this.meshGeometry.getAttribute("position").count
-        );
 
         // make new array,
         // copy old array into it,
@@ -162,7 +167,7 @@ class InstancedMesh {
         const offset = this.currentInstance;
         this.checkRealloc(this.currentInstance + 1);
         this.positionAttribute.setXYZW(offset, x, y, z, scale);
-        const q = new Quaternion().setFromEuler(new Euler(rx, ry, rz));
+        const q = tmpQuaternion.setFromEuler(tmpEuler.set(rx, ry, rz));
         this.rotationAttribute.setXYZW(offset, q.x, q.y, q.z, q.w);
         this.instanceAttribute.setXY(offset, instanceId, typeId);
 
