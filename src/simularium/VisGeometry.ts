@@ -383,9 +383,12 @@ class VisGeometry {
         if (cameraDefault === undefined) {
             this.camera.position.set(...DEFAULT_CAMERA_POSITION);
             this.initCameraPosition = this.camera.position.clone();
+
             this.camera.up.set(...DEFAULT_CAMERA_UP);
+
             this.camera.lookAt(...DEFAULT_CAMERA_LOOKAT);
             this.controls.target.set(...DEFAULT_CAMERA_LOOKAT);
+
             this.camera.fov = DEFAULT_CAMERA_FOV;
         } else {
             const {
@@ -394,9 +397,21 @@ class VisGeometry {
                 lookAtPosition,
                 fovDegrees,
             } = cameraDefault;
+
             this.camera.position.set(position.x, position.y, position.z);
             this.initCameraPosition = this.camera.position.clone();
-            this.camera.up.set(upVector.x, upVector.y, upVector.z);
+
+            const normalizedUpVector = new Vector3(
+                upVector.x,
+                upVector.y,
+                upVector.z
+            ).normalize();
+            this.camera.up.set(
+                normalizedUpVector.x,
+                normalizedUpVector.y,
+                normalizedUpVector.z
+            );
+
             this.camera.lookAt(
                 lookAtPosition.x,
                 lookAtPosition.y,
@@ -407,10 +422,11 @@ class VisGeometry {
                 lookAtPosition.y,
                 lookAtPosition.z
             );
+
             this.camera.fov = fovDegrees;
         }
+
         this.camera.updateProjectionMatrix();
-        console.log(this.camera);
     }
 
     public resetCamera(): void {
