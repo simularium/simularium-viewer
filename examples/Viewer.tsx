@@ -333,7 +333,6 @@ class Viewer extends React.Component<{}, ViewerState> {
                     <option value="test_traj1.h5">TEST</option>
                     <option value="microtubules_v2_shrinking.h5">M Tub</option>
                     <option value="aster.cmo">Aster</option>
-                    <option value="actin34_0.h5">Actin 34</option>
                     <option value="microtubules30_1.h5">MT 30</option>
                     <option value="endocytosis.simularium">Endocytosis</option>
                     <option value="pc4covid19.simularium">COVIDLUNG</option>
