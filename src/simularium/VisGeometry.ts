@@ -56,6 +56,8 @@ const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 const NO_AGENT = -1;
 const DEFAULT_CAMERA_Z_POSITION = 120;
 const CAMERA_DOLLY_STEP_SIZE = 10;
+const DEFAULT_MESH_NAME = "SPHERE";
+
 export enum RenderStyle {
     WEBGL1_FALLBACK,
     WEBGL2_PREFERRED,
@@ -175,11 +177,7 @@ class VisGeometry {
 
         this.visGeomMap = new Map<number, AgentTypeGeometry>();
         this.meshRegistry = new Map<string | number, MeshLoadRequest>();
-        this.meshRegistry.set("SPHERE", {
-            mesh: new Mesh(VisAgent.sphereGeometry),
-            cancelled: false,
-            instances: new InstancedMesh(VisAgent.sphereGeometry, "SPHERE", 1),
-        });
+        this.initMeshRegistry();
         this.pdbRegistry = new Map<string | number, PDBModel>();
         this.meshLoadAttempted = new Map<string, boolean>();
         this.pdbLoadAttempted = new Map<string, boolean>();
@@ -253,6 +251,19 @@ class VisGeometry {
             this.setupGui();
         }
         this.raycaster = new Raycaster();
+    }
+
+    private initMeshRegistry() {
+        this.meshRegistry.clear();
+        this.meshRegistry.set(DEFAULT_MESH_NAME, {
+            mesh: new Mesh(VisAgent.sphereGeometry),
+            cancelled: false,
+            instances: new InstancedMesh(
+                VisAgent.sphereGeometry,
+                DEFAULT_MESH_NAME,
+                1
+            ),
+        });
     }
 
     public setBackgroundColor(
@@ -673,6 +684,8 @@ class VisGeometry {
         if (this.meshRegistry.has(meshName)) {
             const entry = this.meshRegistry.get(meshName);
             if (entry) {
+                // there is already a mesh registered but we are going to load a new one.
+                // start by resetting this entry to a sphere. we will replace when the new mesh arrives
                 entry.mesh = new Mesh(VisAgent.sphereGeometry);
                 entry.instances.replaceGeometry(
                     VisAgent.sphereGeometry,
@@ -684,6 +697,8 @@ class VisGeometry {
                 );
             }
         } else {
+            // if this mesh is not yet registered, then start off as a sphere
+            // we will replace the sphere in here with the real geometry when it arrives.
             this.meshRegistry.set(meshName, {
                 mesh: new Mesh(VisAgent.sphereGeometry),
                 cancelled: false,
@@ -717,13 +732,9 @@ class VisGeometry {
                     }
                 });
                 if (geom) {
+                    // now replace the geometry in the existing mesh registry entry
                     meshLoadRequest.mesh = object;
                     meshLoadRequest.instances.replaceGeometry(geom, meshName);
-                    // this.meshRegistry.set(meshName, {
-                    //     mesh: object,
-                    //     cancelled: false,
-                    //     instances: new InstancedMesh(geom, meshName, 1),
-                    // });
                 } else {
                     console.error(
                         "Mesh loaded but could not find instanceable geometry in it"
@@ -1025,7 +1036,10 @@ class VisGeometry {
 
             // if we don't have a mesh for this, add a sphere instance to mesh registry?
             if (!this.visGeomMap.has(id)) {
-                this.visGeomMap.set(id, { meshName: "SPHERE", pdbName: "" });
+                this.visGeomMap.set(id, {
+                    meshName: DEFAULT_MESH_NAME,
+                    pdbName: "",
+                });
             }
         });
     }
@@ -1049,12 +1063,7 @@ class VisGeometry {
         this.resetAllGeometry();
 
         this.visGeomMap.clear();
-        this.meshRegistry.clear();
-        this.meshRegistry.set("SPHERE", {
-            mesh: new Mesh(VisAgent.sphereGeometry),
-            cancelled: false,
-            instances: new InstancedMesh(VisAgent.sphereGeometry, "SPHERE", 1),
-        });
+        this.initMeshRegistry();
         this.pdbRegistry.clear();
         this.meshLoadAttempted.clear();
         this.pdbLoadAttempted.clear();
@@ -1063,8 +1072,11 @@ class VisGeometry {
 
     /**
      *   Map Type ID -> Geometry
+     * This mapping is two level.
+     * First agent type id --> meshName, via visGeomMap
+     * Then meshName --> actual mesh, via meshRegistry (or pdbRegistry)
      */
-    public mapIdToGeom(
+    private mapIdToGeom(
         id: number,
         meshName: string | undefined,
         pdbName: string | undefined,
@@ -1074,7 +1086,7 @@ class VisGeometry {
         this.logger.debug(`PDB for id ${id} set to '${pdbName}'`);
         const unassignedName = `${VisAgent.UNASSIGNED_NAME_PREFIX}-${id}`;
         this.visGeomMap.set(id, {
-            meshName: meshName || "SPHERE",
+            meshName: meshName || DEFAULT_MESH_NAME,
             pdbName: pdbName || "",
         });
         if (
@@ -1084,18 +1096,6 @@ class VisGeometry {
         ) {
             this.loadObj(meshName, assetPath);
             this.meshLoadAttempted.set(meshName, true);
-        } else if (!this.meshRegistry.has(unassignedName)) {
-            // assign mesh sphere
-            this.meshRegistry.set(unassignedName, {
-                mesh: new Mesh(VisAgent.sphereGeometry),
-                cancelled: false,
-                instances: new InstancedMesh(
-                    VisAgent.sphereGeometry,
-                    unassignedName,
-                    1
-                ),
-            });
-            this.onNewRuntimeGeometryType(unassignedName);
         }
 
         // try load pdb file also.
@@ -1208,7 +1208,7 @@ class VisGeometry {
                     // if there is an id to color mapping, set up with spheres
                     for (const i of this.idColorMapping.keys()) {
                         this.visGeomMap.set(i, {
-                            meshName: "SPHERE",
+                            meshName: DEFAULT_MESH_NAME,
                             pdbName: "",
                         });
                     }
@@ -1216,7 +1216,7 @@ class VisGeometry {
             });
     }
 
-    public setGeometryData(
+    private setGeometryData(
         jsonData: AgentTypeVisDataMap,
         assetPath: string,
         callback?: (any) => void
@@ -1237,9 +1237,12 @@ class VisGeometry {
                 this.setScaleForId(Number(id), entry.scale);
             }
         });
+
         if (callback) {
             callback(jsonData);
         }
+
+        this.updateScene(this.currentSceneAgents);
     }
 
     public setTickIntervalLength(axisLength: number): void {
