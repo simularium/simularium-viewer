@@ -37,7 +37,7 @@ import * as dat from "dat.gui";
 import jsLogger from "js-logger";
 import { ILogger, ILogLevel } from "js-logger";
 
-import { TrajectoryFileInfo } from "./types";
+import { TrajectoryFileInfo, CameraTransform } from "./types";
 import { AgentData } from "./VisData";
 
 import MoleculeRenderer from "./rendering/MoleculeRenderer";
@@ -54,6 +54,12 @@ const TICK_LENGTH_FACTOR = 100;
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 const NO_AGENT = -1;
 const DEFAULT_CAMERA_Z_POSITION = 120;
+
+const DEFAULT_CAMERA_POSITION: [number, number, number] = [0, 0, 120];
+const DEFAULT_CAMERA_LOOKAT: [number, number, number] = [0, 0, 0];
+const DEFAULT_CAMERA_UP: [number, number, number] = [0, 1, 0];
+const DEFAULT_CAMERA_FOV = 50;
+
 const CAMERA_DOLLY_STEP_SIZE = 10;
 export enum RenderStyle {
     WEBGL1_FALLBACK,
@@ -156,7 +162,6 @@ class VisGeometry {
     private raycaster: Raycaster;
     private supportsMoleculeRendering: boolean;
     private membraneAgent?: VisAgent;
-    private resetCameraOnNewScene: boolean;
     private lodBias: number;
     private lodDistanceStops: number[];
     private needToCenterCamera: boolean;
@@ -168,8 +173,6 @@ class VisGeometry {
     public constructor(loggerLevel: ILogLevel) {
         this.renderStyle = RenderStyle.WEBGL1_FALLBACK;
         this.supportsMoleculeRendering = false;
-        // TODO: pass this flag in from the outside
-        this.resetCameraOnNewScene = true;
 
         this.visGeomMap = new Map<number, AgentTypeGeometry>();
         this.meshRegistry = new Map<string | number, MeshLoadRequest>();
@@ -348,6 +351,7 @@ class VisGeometry {
         return this.renderer.domElement;
     }
 
+    // TODO: rename this function
     public handleTrajectoryData(trajectoryData: TrajectoryFileInfo): void {
         // get bounds.
         if (trajectoryData.hasOwnProperty("size")) {
@@ -370,9 +374,43 @@ class VisGeometry {
         } else {
             this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
         }
-        if (this.resetCameraOnNewScene) {
-            this.resetCamera();
+
+        this.resetCamera();
+        this.positionCamera(trajectoryData.cameraDefault);
+    }
+
+    public positionCamera(cameraDefault: CameraTransform | undefined): void {
+        if (cameraDefault === undefined) {
+            this.camera.position.set(...DEFAULT_CAMERA_POSITION);
+            this.initCameraPosition = this.camera.position.clone();
+            this.camera.up.set(...DEFAULT_CAMERA_UP);
+            this.camera.lookAt(...DEFAULT_CAMERA_LOOKAT);
+            this.controls.target.set(...DEFAULT_CAMERA_LOOKAT);
+            this.camera.fov = DEFAULT_CAMERA_FOV;
+        } else {
+            const {
+                position,
+                upVector,
+                lookAtPosition,
+                fovDegrees,
+            } = cameraDefault;
+            this.camera.position.set(position.x, position.y, position.z);
+            this.initCameraPosition = this.camera.position.clone();
+            this.camera.up.set(upVector.x, upVector.y, upVector.z);
+            this.camera.lookAt(
+                lookAtPosition.x,
+                lookAtPosition.y,
+                lookAtPosition.z
+            );
+            this.controls.target.set(
+                lookAtPosition.x,
+                lookAtPosition.y,
+                lookAtPosition.z
+            );
+            this.camera.fov = fovDegrees;
         }
+        this.camera.updateProjectionMatrix();
+        console.log(this.camera);
     }
 
     public resetCamera(): void {
