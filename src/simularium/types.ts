@@ -15,6 +15,19 @@ export interface VisDataMessage {
     fileName: string;
 }
 
+interface Coordinates3d {
+    x: number;
+    y: number;
+    z: number;
+}
+
+export interface CameraTransform {
+    position: Coordinates3d;
+    lookAtPosition: Coordinates3d;
+    upVector: Coordinates3d;
+    fovDegrees: number;
+}
+
 interface ScatterTrace {
     x: number[];
     y: number[];
@@ -60,11 +73,7 @@ interface TrajectoryFileInfoBase {
     readonly version: number;
     timeStepSize: number;
     totalSteps: number;
-    size: {
-        x: number;
-        y: number;
-        z: number;
-    };
+    size: Coordinates3d;
     typeMapping: EncodedTypeMapping;
 }
 
@@ -81,6 +90,7 @@ export interface TrajectoryFileInfoV2 extends TrajectoryFileInfoBase {
         magnitude: number;
         name: string;
     };
+    cameraDefault: CameraTransform;
 }
 
 export type TrajectoryFileInfoAny = TrajectoryFileInfoV1 | TrajectoryFileInfoV2;
