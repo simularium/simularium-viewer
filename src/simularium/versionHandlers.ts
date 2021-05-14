@@ -62,7 +62,7 @@ export const updateTrajectoryFileInfoFormat = (
                         y: 1,
                         z: 0,
                     },
-                    fovDegrees: 50,
+                    fovDegrees: 75,
                 },
                 timeStepSize: v1Data.timeStepSize,
                 totalSteps: v1Data.totalSteps,

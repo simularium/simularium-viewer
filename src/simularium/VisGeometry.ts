@@ -58,7 +58,7 @@ const DEFAULT_CAMERA_Z_POSITION = 120;
 const DEFAULT_CAMERA_POSITION: [number, number, number] = [0, 0, 120];
 const DEFAULT_CAMERA_LOOKAT: [number, number, number] = [0, 0, 0];
 const DEFAULT_CAMERA_UP: [number, number, number] = [0, 1, 0];
-const DEFAULT_CAMERA_FOV = 50;
+const DEFAULT_CAMERA_FOV = 75;
 
 const CAMERA_DOLLY_STEP_SIZE = 10;
 export enum RenderStyle {
