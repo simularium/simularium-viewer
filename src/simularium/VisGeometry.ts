@@ -53,12 +53,7 @@ const NUM_TICK_INTERVALS = 10;
 const TICK_LENGTH_FACTOR = 100;
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 const NO_AGENT = -1;
-
-const DEFAULT_CAMERA_POSITION: [number, number, number] = [0, 0, 120];
-const DEFAULT_CAMERA_LOOKAT: [number, number, number] = [0, 0, 0];
-const DEFAULT_CAMERA_UP: [number, number, number] = [0, 1, 0]; // Must be a unit vector
-const DEFAULT_CAMERA_FOV = 75; // Degrees
-
+const DEFAULT_CAMERA_Z_POSITION = 120;
 const CAMERA_DOLLY_STEP_SIZE = 10;
 export enum RenderStyle {
     WEBGL1_FALLBACK,
@@ -167,6 +162,7 @@ class VisGeometry {
     private needToReOrientCamera: boolean;
     private rotateDistance: number;
     private initCameraPosition: Vector3;
+    private cameraDefault: CameraTransform;
     private fibers: InstancedFiberGroup;
 
     public constructor(loggerLevel: ILogLevel) {
@@ -189,7 +185,7 @@ class VisGeometry {
         this.hiddenIds = [];
         this.needToCenterCamera = false;
         this.needToReOrientCamera = false;
-        this.rotateDistance = DEFAULT_CAMERA_POSITION[2];
+        this.rotateDistance = DEFAULT_CAMERA_Z_POSITION;
         // will store data for all agents that are drawing paths
         this.paths = [];
 
@@ -219,6 +215,24 @@ class VisGeometry {
         this.camera = new PerspectiveCamera(75, 100 / 100, 0.1, 10000);
 
         this.initCameraPosition = this.camera.position.clone();
+        this.cameraDefault = {
+            position: {
+                x: 0,
+                y: 0,
+                z: 120,
+            },
+            lookAtPosition: {
+                x: 0,
+                y: 0,
+                z: 0,
+            },
+            upVector: {
+                x: 0,
+                y: 1,
+                z: 0,
+            },
+            fovDegrees: 75,
+        };
 
         this.dl = new DirectionalLight(0xffffff, 0.6);
         this.hemiLight = new HemisphereLight(0xffffff, 0x000000, 0.5);
@@ -375,69 +389,66 @@ class VisGeometry {
             this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
         }
 
-        // Position and orient the camera
-        this.resetCamera();
-        this.positionCamera(trajectoryFileInfo.cameraDefault);
-    }
-
-    public positionCamera(cameraDefault: CameraTransform | undefined): void {
-        if (cameraDefault) {
-            const {
-                position,
-                upVector,
-                lookAtPosition,
-                fovDegrees,
-            } = cameraDefault;
-
-            // Set camera position
-            this.camera.position.set(position.x, position.y, position.z);
-            this.initCameraPosition = this.camera.position.clone();
-
-            // Set up vector (needs to be a unit vector)
-            const normalizedUpVector = new Vector3(
-                upVector.x,
-                upVector.y,
-                upVector.z
-            ).normalize();
-            this.camera.up.set(
-                normalizedUpVector.x,
-                normalizedUpVector.y,
-                normalizedUpVector.z
-            );
-
-            // Set lookat position
-            this.camera.lookAt(
-                lookAtPosition.x,
-                lookAtPosition.y,
-                lookAtPosition.z
-            );
-            this.controls.target.set(
-                lookAtPosition.x,
-                lookAtPosition.y,
-                lookAtPosition.z
-            );
-
-            // Set field of view
-            this.camera.fov = fovDegrees;
+        // Get default camera transform values from data
+        if (trajectoryFileInfo.cameraDefault) {
+            this.cameraDefault = trajectoryFileInfo.cameraDefault;
         } else {
             this.logger.warn(
                 "Using default camera settings since none were provided"
             );
-            this.camera.position.set(...DEFAULT_CAMERA_POSITION);
-            this.initCameraPosition = this.camera.position.clone();
-            this.camera.up.set(...DEFAULT_CAMERA_UP);
-            this.camera.lookAt(...DEFAULT_CAMERA_LOOKAT);
-            this.controls.target.set(...DEFAULT_CAMERA_LOOKAT);
-            this.camera.fov = DEFAULT_CAMERA_FOV;
         }
-
-        // Apply the changes above
-        this.camera.updateProjectionMatrix();
+        // Reset then position and orient the camera
+        this.resetCamera();
     }
 
+    // Called when a new file is loaded, the Clear button is clicked, or Reset Camera button is clicked
     public resetCamera(): void {
         this.followObjectId = NO_AGENT;
         this.controls.reset();
+        this.positionCamera();
+    }
+
+    public positionCamera(): void {
+        const {
+            position,
+            upVector,
+            lookAtPosition,
+            fovDegrees,
+        } = this.cameraDefault;
+
+        // Set camera position
+        this.camera.position.set(position.x, position.y, position.z);
+        this.initCameraPosition = this.camera.position.clone();
+
+        // Set up vector (needs to be a unit vector)
+        const normalizedUpVector = new Vector3(
+            upVector.x,
+            upVector.y,
+            upVector.z
+        ).normalize();
+        this.camera.up.set(
+            normalizedUpVector.x,
+            normalizedUpVector.y,
+            normalizedUpVector.z
+        );
+
+        // Set lookat position
+        this.camera.lookAt(
+            lookAtPosition.x,
+            lookAtPosition.y,
+            lookAtPosition.z
+        );
+        this.controls.target.set(
+            lookAtPosition.x,
+            lookAtPosition.y,
+            lookAtPosition.z
+        );
+
+        // Set field of view
+        this.camera.fov = fovDegrees;
+
+        // Apply the changes above
+        this.camera.updateProjectionMatrix();
     }
 
     public centerCamera(): void {
@@ -684,7 +695,7 @@ class VisGeometry {
         this.renderer.setClearColor(this.backgroundColor, 1);
         this.renderer.clear();
 
-        this.camera.position.z = DEFAULT_CAMERA_POSITION[2];
+        this.camera.position.z = DEFAULT_CAMERA_Z_POSITION;
         this.initCameraPosition = this.camera.position.clone();
     }
 
