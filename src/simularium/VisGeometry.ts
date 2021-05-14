@@ -53,7 +53,6 @@ const NUM_TICK_INTERVALS = 10;
 const TICK_LENGTH_FACTOR = 100;
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 const NO_AGENT = -1;
-const DEFAULT_CAMERA_Z_POSITION = 120;
 
 const DEFAULT_CAMERA_POSITION: [number, number, number] = [0, 0, 120];
 const DEFAULT_CAMERA_LOOKAT: [number, number, number] = [0, 0, 0];
@@ -190,7 +189,7 @@ class VisGeometry {
         this.hiddenIds = [];
         this.needToCenterCamera = false;
         this.needToReOrientCamera = false;
-        this.rotateDistance = DEFAULT_CAMERA_Z_POSITION;
+        this.rotateDistance = DEFAULT_CAMERA_POSITION[2];
         // will store data for all agents that are drawing paths
         this.paths = [];
 
@@ -683,7 +682,7 @@ class VisGeometry {
         this.renderer.setClearColor(this.backgroundColor, 1);
         this.renderer.clear();
 
-        this.camera.position.z = DEFAULT_CAMERA_Z_POSITION;
+        this.camera.position.z = DEFAULT_CAMERA_POSITION[2];
         this.initCameraPosition = this.camera.position.clone();
     }
 
