@@ -69,6 +69,9 @@ export const updateTrajectoryFileInfoFormat = (
                 typeMapping: v1Data.typeMapping,
                 version: 2,
             };
+            console.warn(
+                "Using default camera settings since none were provided"
+            );
             break;
         default:
             throw new RangeError(VERSION_NUM_ERROR + msg.version);
