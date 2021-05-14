@@ -389,10 +389,11 @@ class VisGeometry {
                 fovDegrees,
             } = cameraDefault;
 
+            // Set camera position
             this.camera.position.set(position.x, position.y, position.z);
             this.initCameraPosition = this.camera.position.clone();
 
-            // Up vector needs to be a unit vector
+            // Set up vector (needs to be a unit vector)
             const normalizedUpVector = new Vector3(
                 upVector.x,
                 upVector.y,
@@ -404,6 +405,7 @@ class VisGeometry {
                 normalizedUpVector.z
             );
 
+            // Set lookat position
             this.camera.lookAt(
                 lookAtPosition.x,
                 lookAtPosition.y,
@@ -415,6 +417,7 @@ class VisGeometry {
                 lookAtPosition.z
             );
 
+            // Set field of view
             this.camera.fov = fovDegrees;
         } else {
             this.logger.warn(
