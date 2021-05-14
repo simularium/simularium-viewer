@@ -381,6 +381,10 @@ class VisGeometry {
 
     public positionCamera(cameraDefault: CameraTransform | undefined): void {
         if (cameraDefault === undefined) {
+            this.logger.warn(
+                "Using default camera settings since none were provided"
+            );
+
             this.camera.position.set(...DEFAULT_CAMERA_POSITION);
             this.initCameraPosition = this.camera.position.clone();
 
