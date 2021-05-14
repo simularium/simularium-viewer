@@ -56,8 +56,8 @@ const NO_AGENT = -1;
 
 const DEFAULT_CAMERA_POSITION: [number, number, number] = [0, 0, 120];
 const DEFAULT_CAMERA_LOOKAT: [number, number, number] = [0, 0, 0];
-const DEFAULT_CAMERA_UP: [number, number, number] = [0, 1, 0];
-const DEFAULT_CAMERA_FOV = 75;
+const DEFAULT_CAMERA_UP: [number, number, number] = [0, 1, 0]; // Must be a unit vector
+const DEFAULT_CAMERA_FOV = 75; // Degrees
 
 const CAMERA_DOLLY_STEP_SIZE = 10;
 export enum RenderStyle {
@@ -375,26 +375,13 @@ class VisGeometry {
             this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
         }
 
+        // Position and orient the camera
         this.resetCamera();
         this.positionCamera(trajectoryFileInfo.cameraDefault);
     }
 
     public positionCamera(cameraDefault: CameraTransform | undefined): void {
-        if (cameraDefault === undefined) {
-            this.logger.warn(
-                "Using default camera settings since none were provided"
-            );
-
-            this.camera.position.set(...DEFAULT_CAMERA_POSITION);
-            this.initCameraPosition = this.camera.position.clone();
-
-            this.camera.up.set(...DEFAULT_CAMERA_UP);
-
-            this.camera.lookAt(...DEFAULT_CAMERA_LOOKAT);
-            this.controls.target.set(...DEFAULT_CAMERA_LOOKAT);
-
-            this.camera.fov = DEFAULT_CAMERA_FOV;
-        } else {
+        if (cameraDefault) {
             const {
                 position,
                 upVector,
@@ -405,6 +392,7 @@ class VisGeometry {
             this.camera.position.set(position.x, position.y, position.z);
             this.initCameraPosition = this.camera.position.clone();
 
+            // Up vector needs to be a unit vector
             const normalizedUpVector = new Vector3(
                 upVector.x,
                 upVector.y,
@@ -428,8 +416,19 @@ class VisGeometry {
             );
 
             this.camera.fov = fovDegrees;
+        } else {
+            this.logger.warn(
+                "Using default camera settings since none were provided"
+            );
+            this.camera.position.set(...DEFAULT_CAMERA_POSITION);
+            this.initCameraPosition = this.camera.position.clone();
+            this.camera.up.set(...DEFAULT_CAMERA_UP);
+            this.camera.lookAt(...DEFAULT_CAMERA_LOOKAT);
+            this.controls.target.set(...DEFAULT_CAMERA_LOOKAT);
+            this.camera.fov = DEFAULT_CAMERA_FOV;
         }
 
+        // Apply the changes above
         this.camera.updateProjectionMatrix();
     }
 
