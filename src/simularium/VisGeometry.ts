@@ -351,13 +351,14 @@ class VisGeometry {
         return this.renderer.domElement;
     }
 
-    // TODO: rename this function
-    public handleTrajectoryData(trajectoryData: TrajectoryFileInfo): void {
+    public handleTrajectoryFileInfo(
+        trajectoryFileInfo: TrajectoryFileInfo
+    ): void {
         // get bounds.
-        if (trajectoryData.hasOwnProperty("size")) {
-            const bx = trajectoryData.size.x;
-            const by = trajectoryData.size.y;
-            const bz = trajectoryData.size.z;
+        if (trajectoryFileInfo.hasOwnProperty("size")) {
+            const bx = trajectoryFileInfo.size.x;
+            const by = trajectoryFileInfo.size.y;
+            const bz = trajectoryFileInfo.size.z;
             const epsilon = 0.000001;
             if (
                 Math.abs(bx) < epsilon ||
@@ -376,7 +377,7 @@ class VisGeometry {
         }
 
         this.resetCamera();
-        this.positionCamera(trajectoryData.cameraDefault);
+        this.positionCamera(trajectoryFileInfo.cameraDefault);
     }
 
     public positionCamera(cameraDefault: CameraTransform | undefined): void {
