@@ -128,6 +128,24 @@ export default class PointSim implements IClientSimulatorImpl {
                 y: 12,
                 z: 12,
             },
+            cameraDefault: {
+                position: {
+                    x: 0,
+                    y: 0,
+                    z: 120,
+                },
+                lookAtPosition: {
+                    x: 0,
+                    y: 0,
+                    z: 0,
+                },
+                upVector: {
+                    x: 0,
+                    y: 1,
+                    z: 0,
+                },
+                fovDegrees: 75,
+            },
             typeMapping: typeMapping,
             spatialUnits: {
                 magnitude: 1,
