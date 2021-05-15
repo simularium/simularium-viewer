@@ -277,17 +277,13 @@ class MoleculeRenderer {
     }
 
     public setMeshGroups(
-        agentMeshGroup: Group,
         agentPDBGroup: Group,
-        agentFiberGroup: Group,
         instancedMeshGroup: Group,
         fibers: InstancedFiberGroup,
         meshTypes: InstancedMesh[]
     ): void {
         this.gbufferPass.setMeshGroups(
-            agentMeshGroup,
             agentPDBGroup,
-            agentFiberGroup,
             instancedMeshGroup,
             fibers,
             meshTypes

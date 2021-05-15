@@ -7,17 +7,14 @@ import {
     MeshBasicMaterial,
     MeshLambertMaterial,
     Object3D,
-    ShaderMaterial,
     SphereBufferGeometry,
     TubeBufferGeometry,
-    Vector2,
     Vector3,
-    WebGLRenderer,
 } from "three";
 
-import MembraneShader from "./rendering/MembraneShader";
 import PDBModel from "./PDBModel";
 import VisTypes from "./VisTypes";
+import { LegacyRenderer } from "./rendering/LegacyRenderer";
 
 function getHighlightColor(color: Color): Color {
     const hiColor = new Color(color);
@@ -42,46 +39,10 @@ export default class VisAgent {
         32,
         32
     );
-    public static fiberEndcapGeometry: SphereBufferGeometry = new SphereBufferGeometry(
-        1,
-        8,
-        8
-    );
     // this material only used in webGL1 fallback rendering mode
     private static followMaterial: MeshBasicMaterial = new MeshBasicMaterial({
         color: new Color(0.14, 1, 0),
     });
-    private static membraneData: {
-        faces: { name: string }[];
-        sides: { name: string }[];
-        facesMaterial: ShaderMaterial;
-        sidesMaterial: ShaderMaterial;
-        facesUVScale: Vector2;
-        sidesUVScale: Vector2;
-    } = {
-        faces: [{ name: "curved_5nm_Right" }, { name: "curved_5nm_Left" }],
-        sides: [
-            { name: "curved_5nm_Bottom" },
-            { name: "curved_5nm_Top" },
-            { name: "curved_5nm_Back" },
-            { name: "curved_5nm_Front" },
-        ],
-        facesMaterial: MembraneShader.membraneShader.clone() as ShaderMaterial,
-        sidesMaterial: MembraneShader.membraneShader.clone() as ShaderMaterial,
-        facesUVScale: new Vector2(40.0, 40.0),
-        sidesUVScale: new Vector2(2.0, 40.0),
-    };
-    public static updateMembrane(time: number, renderer: WebGLRenderer): void {
-        VisAgent.membraneData.facesMaterial.uniforms.iTime.value = time;
-        VisAgent.membraneData.sidesMaterial.uniforms.iTime.value = time;
-
-        renderer.getDrawingBufferSize(
-            VisAgent.membraneData.facesMaterial.uniforms.iResolution.value
-        );
-        renderer.getDrawingBufferSize(
-            VisAgent.membraneData.sidesMaterial.uniforms.iResolution.value
-        );
-    }
 
     public mesh: Object3D;
     public fiberCurve?: CatmullRomCurve3;
@@ -219,31 +180,33 @@ export default class VisAgent {
     public assignMembraneMaterial(): void {
         if (this.highlighted) {
             // at this time, assign separate material parameters to the faces and sides of the membrane
-            const faceNames = VisAgent.membraneData.faces.map((el) => {
+            const faceNames = LegacyRenderer.membraneData.faces.map((el) => {
                 return el.name;
             });
-            const sideNames = VisAgent.membraneData.sides.map((el) => {
+            const sideNames = LegacyRenderer.membraneData.sides.map((el) => {
                 return el.name;
             });
             this.mesh.traverse((child) => {
                 if (child instanceof Mesh) {
                     if (faceNames.includes(child.name)) {
-                        child.material = VisAgent.membraneData.facesMaterial;
+                        child.material =
+                            LegacyRenderer.membraneData.facesMaterial;
                         child.onBeforeRender = this.onAgentMeshBeforeRender.bind(
                             this
                         );
                     } else if (sideNames.includes(child.name)) {
-                        child.material = VisAgent.membraneData.sidesMaterial;
+                        child.material =
+                            LegacyRenderer.membraneData.sidesMaterial;
                         child.onBeforeRender = this.onAgentMeshBeforeRender.bind(
                             this
                         );
                     }
                 }
             });
-            VisAgent.membraneData.facesMaterial.uniforms.uvscale.value =
-                VisAgent.membraneData.facesUVScale;
-            VisAgent.membraneData.sidesMaterial.uniforms.uvscale.value =
-                VisAgent.membraneData.sidesUVScale;
+            LegacyRenderer.membraneData.facesMaterial.uniforms.uvscale.value =
+                LegacyRenderer.membraneData.facesUVScale;
+            LegacyRenderer.membraneData.sidesMaterial.uniforms.uvscale.value =
+                LegacyRenderer.membraneData.sidesUVScale;
         } else {
             this.mesh.traverse((child) => {
                 if (child instanceof Mesh) {
@@ -372,12 +335,7 @@ export default class VisAgent {
         );
     }
 
-    public updateFiber(
-        subpoints: number[],
-        collisionRadius: number,
-        scale: number,
-        regenerateMesh: boolean
-    ): void {
+    public updateFiber(subpoints: number[]): void {
         const numSubPoints = subpoints.length;
         const numPoints = numSubPoints / 3;
         if (numSubPoints % 3 !== 0) {
@@ -403,18 +361,6 @@ export default class VisAgent {
 
         // set up new fiber as curved tube
         this.fiberCurve = new CatmullRomCurve3(curvePoints);
-
-        if (regenerateMesh) {
-            // expensive
-            const fibergeometry = new TubeBufferGeometry(
-                this.fiberCurve,
-                4 * (numPoints - 1), // 4 segments per control point
-                collisionRadius * scale * 0.5,
-                8, // could reduce this with depth?
-                false
-            );
-            (this.mesh as Mesh).geometry = fibergeometry;
-        }
     }
 
     // make a single generic fiber and return it
