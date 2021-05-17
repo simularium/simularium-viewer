@@ -36,6 +36,7 @@ import * as dat from "dat.gui";
 
 import jsLogger from "js-logger";
 import { ILogger, ILogLevel } from "js-logger";
+import { cloneDeep } from "lodash";
 
 import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC } from "../constants";
 import { TrajectoryFileInfo, CameraSpec } from "./types";
@@ -380,7 +381,7 @@ class VisGeometry {
             this.logger.warn(
                 "Using default camera settings since none were provided"
             );
-            this.cameraDefault = DEFAULT_CAMERA_SPEC;
+            this.cameraDefault = cloneDeep(DEFAULT_CAMERA_SPEC);
         }
         // Reset then position and orient the camera
         this.resetCamera();
