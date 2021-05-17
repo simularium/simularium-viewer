@@ -169,8 +169,10 @@ class VisGeometry {
     private rotateDistance: number;
     private initCameraPosition: Vector3;
     private fibers: InstancedFiberGroup;
+    private forceAgentUpdate: boolean;
 
     public constructor(loggerLevel: ILogLevel) {
+        this.forceAgentUpdate = false;
         this.renderStyle = RenderStyle.WEBGL1_FALLBACK;
         this.supportsMoleculeRendering = false;
         // TODO: pass this flag in from the outside
@@ -464,6 +466,7 @@ class VisGeometry {
             }
         }
 
+        this.forceAgentUpdate = true;
         this.updateScene(this.currentSceneAgents);
     }
 
@@ -473,11 +476,13 @@ class VisGeometry {
 
     public setVisibleByIds(hiddenIds: number[]): void {
         this.hiddenIds = hiddenIds;
+        this.forceAgentUpdate = true;
         this.updateScene(this.currentSceneAgents);
     }
 
     public setHighlightByIds(ids: number[]): void {
         this.highlightedIds = ids;
+        this.forceAgentUpdate = true;
         this.updateScene(this.currentSceneAgents);
     }
 
@@ -927,9 +932,6 @@ class VisGeometry {
         }
     }
 
-    /**
-     *   Run Time Mesh functions
-     */
     public createMaterials(colors: (number | string)[]): void {
         // convert any #FFFFFF -> 0xFFFFFF
         const colorNumbers = colors.map((color) =>
@@ -1479,8 +1481,9 @@ class VisGeometry {
 
         // First, mark ALL inactive and invisible.
         // Note this implies a memory leak of sorts:
-        // the number of agent instances can only grow.  We just hide the unused ones.
-        // worst case is if each frame uses completely different (incrementing) instance ids.
+        // the number of agent instances can only grow during one trajectory run.
+        // We just hide the unused ones.
+        // Worst case is if each frame uses completely different (incrementing) instance ids.
         for (let i = 0; i < MAX_MESHES && i < this.visAgents.length; i += 1) {
             const visAgent = this.visAgents[i];
             visAgent.hideAndDeactivate();
@@ -1559,8 +1562,13 @@ class VisGeometry {
                     changedType ||
                     changedVisType ||
                     changedHighlight ||
-                    this.renderStyle === RenderStyle.WEBGL1_FALLBACK
+                    this.forceAgentUpdate
                 ) {
+                    visAgent.setColor(
+                        this.getColorForTypeId(typeId),
+                        this.getColorIndexForTypeId(typeId)
+                    );
+
                     // pdb has precedence over mesh
                     if (pdbEntry) {
                         if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
@@ -1619,10 +1627,6 @@ class VisGeometry {
                             }
                         }
                     }
-                    visAgent.setColor(
-                        this.getColorForTypeId(typeId),
-                        this.getColorIndexForTypeId(typeId)
-                    );
                 }
 
                 dx = agentData.x - lastx;
@@ -1718,6 +1722,9 @@ class VisGeometry {
         });
 
         this.legacyRenderer.endUpdate(this.scene);
+
+        // reset flag
+        this.forceAgentUpdate = false;
     }
 
     public animateCamera(): void {
