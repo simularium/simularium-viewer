@@ -270,11 +270,6 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             }
         };
 
-        simulariumController
-            .connect()
-            .then((result) => console.log(result))
-            .catch((error) => console.log(error.message));
-
         if (this.vdomRef.current) {
             this.vdomRef.current.addEventListener(
                 "timeChange",
@@ -520,7 +515,6 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         // TODO: intersect with scene's children not including lights?
         // can we select a smaller number of things to hit test?
         const oldFollowObject = this.visGeometry.getFollowObject();
-        this.visGeometry.setFollowObject(NO_AGENT);
 
         // hit testing
         const intersectedObject = this.visGeometry.hitTest(posX, posY);
@@ -541,6 +535,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             if (this.hit) {
                 this.hit = false;
             }
+            this.visGeometry.setFollowObject(NO_AGENT);
         }
     }
 

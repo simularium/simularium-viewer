@@ -1,9 +1,9 @@
 import MembraneShader from "./MembraneShader";
 import PDBModel from "../PDBModel";
+import VisAgent from "../VisAgent";
 
 import {
     BufferGeometry,
-    CatmullRomCurve3,
     Color,
     Material,
     MeshLambertMaterial,
@@ -15,13 +15,19 @@ import {
     Group,
     Mesh,
     Object3D,
+    Points,
+    PointsMaterial,
     Camera,
     Raycaster,
+    Scene,
 } from "three";
+
+const FOLLOW_COLOR = new Color(0xffff00);
+const HIGHLIGHT_COLOR = new Color(0xffffff);
 
 // data and functions for rendering in the low fidelity webgl1 mode
 class LegacyRenderer {
-    private baseMaterial: Material;
+    private baseMaterial: MeshLambertMaterial;
     private highlightMaterial: Material;
     private followMaterial: Material;
 
@@ -32,15 +38,19 @@ class LegacyRenderer {
             color: new Color(0xff00ff),
         });
         this.highlightMaterial = new MeshBasicMaterial({
-            color: new Color(0xffffff),
+            color: new Color(HIGHLIGHT_COLOR),
             transparent: true,
-            opacity: 1.0,
+            opacity: 0.6,
         });
         this.followMaterial = new MeshBasicMaterial({
-            color: new Color(0xffff00),
+            color: new Color(FOLLOW_COLOR),
         });
         this.agentMeshGroup = new Group();
     }
+
+    // public getGroup(): Group {
+    //     return this.agentMeshGroup;
+    // }
 
     public static membraneData: {
         faces: { name: string }[];
@@ -75,99 +85,111 @@ class LegacyRenderer {
         );
     }
 
-    public beginUpdate(): void {
+    public beginUpdate(scene: Scene): void {
+        scene.remove(this.agentMeshGroup);
         // drop the old group as a cheap code way of removing all children.
         this.agentMeshGroup = new Group();
+        this.agentMeshGroup.name = "legacy mesh group";
     }
 
-    public addFiber(curve: CatmullRomCurve3 | undefined, scale: number): void {
-        if (!curve) {
+    public addFiber(visAgent: VisAgent, scale: number, color: Color): void {
+        if (!visAgent.fiberCurve) {
             console.warn("no curve provided");
             return;
         }
         // expensive
         const fibergeometry = new TubeBufferGeometry(
-            curve,
-            4 * (curve.points.length - 1), // 4 segments per control point
+            visAgent.fiberCurve,
+            4 * (visAgent.fiberCurve.points.length - 1), // 4 segments per control point
             scale * 0.5,
             8, // could reduce this with depth?
             false
         );
 
         // resolve material?
-        this.agentMeshGroup.add(new Mesh(fibergeometry));
+        this.agentMeshGroup.add(
+            new Mesh(fibergeometry, this.selectMaterial(visAgent, color))
+        );
+    }
+
+    private selectMaterial(visAgent: VisAgent, color: Color): Material {
+        if (visAgent.followed) {
+            return this.followMaterial;
+        } else if (visAgent.highlighted) {
+            return this.highlightMaterial;
+        } else {
+            const material = this.baseMaterial.clone();
+            (material as MeshLambertMaterial).color = color;
+            return material;
+        }
+    }
+
+    private selectColor(visAgent: VisAgent, color: Color): Color {
+        if (visAgent.followed) {
+            return FOLLOW_COLOR;
+        } else if (visAgent.highlighted) {
+            return HIGHLIGHT_COLOR;
+        } else {
+            return color;
+        }
     }
 
     public addMesh(
         meshGeom: BufferGeometry,
-        x: number,
-        y: number,
-        z: number,
-        rx: number,
-        ry: number,
-        rz: number,
-        scale: number
+        visAgent: VisAgent,
+        scale: number,
+        color: Color
     ): void {
-        const m = new Mesh(meshGeom);
-        m.position.x = x;
-        m.position.y = y;
-        m.position.z = z;
+        const m = new Mesh(meshGeom, this.selectMaterial(visAgent, color));
+        m.position.x = visAgent.agentData.x;
+        m.position.y = visAgent.agentData.y;
+        m.position.z = visAgent.agentData.z;
 
-        m.rotation.x = rx;
-        m.rotation.y = ry;
-        m.rotation.z = rz;
+        m.rotation.x = visAgent.agentData.xrot;
+        m.rotation.y = visAgent.agentData.yrot;
+        m.rotation.z = visAgent.agentData.zrot;
 
         m.scale.x = scale;
         m.scale.y = scale;
         m.scale.z = scale;
 
+        m.userData = { id: visAgent.id };
+
         // resolve material?
         this.agentMeshGroup.add(m);
     }
 
-    public addPdb(
-        pdb: PDBModel,
-        x: number,
-        y: number,
-        z: number,
-        rx: number,
-        ry: number,
-        rz: number,
-        scale: number
-    ): void {
+    public addPdb(pdb: PDBModel, visAgent: VisAgent, color: Color): void {
         // TODO: maybe could only instantiate one LOD at this time??
 
         const pdbObjects: Object3D[] = pdb.instantiate();
         // update pdb transforms too
         for (let lod = 0; lod < pdbObjects.length; ++lod) {
             const obj = pdbObjects[lod];
-            obj.position.x = x;
-            obj.position.y = y;
-            obj.position.z = z;
+            obj.position.x = visAgent.agentData.x;
+            obj.position.y = visAgent.agentData.y;
+            obj.position.z = visAgent.agentData.z;
 
-            obj.rotation.x = rx;
-            obj.rotation.y = ry;
-            obj.rotation.z = rz;
+            obj.rotation.x = visAgent.agentData.xrot;
+            obj.rotation.y = visAgent.agentData.yrot;
+            obj.rotation.z = visAgent.agentData.zrot;
 
-            obj.scale.x = scale;
-            obj.scale.y = scale;
-            obj.scale.z = scale;
+            obj.scale.x = 1.0;
+            obj.scale.y = 1.0;
+            obj.scale.z = 1.0;
 
             obj.visible = false;
             // LOD to be selected at render time, not update time
+            (obj as Points).material = new PointsMaterial({
+                color: this.selectColor(visAgent, color),
+            });
         }
     }
 
-    public endUpdate(): void {
-        // no op
-    }
-
-    public clear(): void {
-        // delete all and dispose?
-        this.agentMeshGroup = new Group();
-        // for (let i = this.agentMeshGroup.children.length - 1; i >= 0; i--) {
-        //     this.agentMeshGroup.remove(this.agentMeshGroup.children[i]);
-        // }
+    public endUpdate(scene: Scene): void {
+        if (this.agentMeshGroup.children.length > 0) {
+            scene.add(this.agentMeshGroup);
+        }
     }
 
     public hitTest(coords: { x: number; y: number }, camera: Camera): number {
@@ -194,6 +216,35 @@ class LegacyRenderer {
         } else {
             const NO_AGENT = -1;
             return NO_AGENT;
+        }
+    }
+
+    private onAgentMeshBeforeRender(
+        this: VisAgent,
+        renderer,
+        scene,
+        camera,
+        geometry,
+        material
+        /* group */
+    ): void {
+        if (!material.uniforms) {
+            return;
+        }
+        // colorIndex is not necessarily equal to typeId but is generally a 1-1 mapping.
+        if (material.uniforms.typeId) {
+            // negate the value if dehighlighted.
+            // see implementation in CompositePass.ts for how the value is interpreted
+            material.uniforms.typeId.value = this.signedTypeId();
+            material.uniformsNeedUpdate = true;
+        }
+        if (material.uniforms.instanceId) {
+            material.uniforms.instanceId.value = Number(this.id);
+            material.uniformsNeedUpdate = true;
+        }
+        if (material.uniforms.radius) {
+            material.uniforms.radius.value = (this.lod + 1) * 0.25; // * 8;
+            material.uniformsNeedUpdate = true;
         }
     }
 }

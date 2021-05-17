@@ -14,6 +14,7 @@ import {
 
 import PDBModel from "./PDBModel";
 import VisTypes from "./VisTypes";
+import { AgentData } from "./VisData";
 import { LegacyRenderer } from "./rendering/LegacyRenderer";
 
 function getHighlightColor(color: Color): Color {
@@ -44,6 +45,8 @@ export default class VisAgent {
         color: new Color(0.14, 1, 0),
     });
 
+    public agentData: AgentData;
+
     public mesh: Object3D;
     public fiberCurve?: CatmullRomCurve3;
     // TODO can this default to a trivial single-atom pdb model?
@@ -66,6 +69,19 @@ export default class VisAgent {
     public id: number;
 
     public constructor(name: string) {
+        this.agentData = {
+            x: 0,
+            y: 0,
+            z: 0,
+            xrot: 0,
+            yrot: 0,
+            zrot: 0,
+            instanceId: NO_AGENT,
+            visType: VisTypes.ID_VIS_TYPE_DEFAULT,
+            type: 0,
+            cr: 1.0,
+            subpoints: [],
+        };
         this.id = NO_AGENT;
         this.visType = VisTypes.ID_VIS_TYPE_DEFAULT;
         this.name = name;
@@ -104,6 +120,19 @@ export default class VisAgent {
         this.followed = false;
         this.highlighted = false;
         this.setColor(new Color(VisAgent.UNASSIGNED_MESH_COLOR), 0);
+        this.agentData = {
+            x: 0,
+            y: 0,
+            z: 0,
+            xrot: 0,
+            yrot: 0,
+            zrot: 0,
+            instanceId: NO_AGENT,
+            visType: VisTypes.ID_VIS_TYPE_DEFAULT,
+            type: 0,
+            cr: 1.0,
+            subpoints: [],
+        };
     }
 
     public resetPDB(): void {
@@ -382,7 +411,11 @@ export default class VisAgent {
         if (this.visType === VisTypes.ID_VIS_TYPE_FIBER && this.fiberCurve) {
             return this.fiberCurve.getPoint(0.5);
         } else {
-            return new Vector3().copy(this.mesh.position);
+            return new Vector3(
+                this.agentData.x,
+                this.agentData.y,
+                this.agentData.z
+            );
         }
     }
 }
