@@ -169,10 +169,8 @@ class VisGeometry {
     private rotateDistance: number;
     private initCameraPosition: Vector3;
     private fibers: InstancedFiberGroup;
-    private forceAgentUpdate: boolean;
 
     public constructor(loggerLevel: ILogLevel) {
-        this.forceAgentUpdate = false;
         this.renderStyle = RenderStyle.WEBGL1_FALLBACK;
         this.supportsMoleculeRendering = false;
         // TODO: pass this flag in from the outside
@@ -466,7 +464,6 @@ class VisGeometry {
             }
         }
 
-        this.forceAgentUpdate = true;
         this.updateScene(this.currentSceneAgents);
     }
 
@@ -476,13 +473,11 @@ class VisGeometry {
 
     public setVisibleByIds(hiddenIds: number[]): void {
         this.hiddenIds = hiddenIds;
-        this.forceAgentUpdate = true;
         this.updateScene(this.currentSceneAgents);
     }
 
     public setHighlightByIds(ids: number[]): void {
         this.highlightedIds = ids;
-        this.forceAgentUpdate = true;
         this.updateScene(this.currentSceneAgents);
     }
 
@@ -1557,74 +1552,66 @@ class VisGeometry {
                 const meshEntry = this.getMeshForAgentType(typeId);
                 const pdbEntry = this.getPdbForAgentType(typeId);
 
-                if (
-                    wasHidden ||
-                    changedType ||
-                    changedVisType ||
-                    changedHighlight ||
-                    this.forceAgentUpdate
-                ) {
-                    visAgent.setColor(
-                        this.getColorForTypeId(typeId),
-                        this.getColorIndexForTypeId(typeId)
-                    );
+                visAgent.setColor(
+                    this.getColorForTypeId(typeId),
+                    this.getColorIndexForTypeId(typeId)
+                );
 
-                    // pdb has precedence over mesh
-                    if (pdbEntry) {
-                        if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
-                            this.legacyRenderer.addPdb(
-                                pdbEntry,
-                                visAgent,
-                                this.getColorForTypeId(typeId)
-                            );
-                        } else {
-                            this.addPdb(
-                                pdbEntry,
+                // pdb has precedence over mesh
+                if (pdbEntry) {
+                    if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
+                        this.legacyRenderer.addPdb(
+                            pdbEntry,
+                            visAgent,
+                            this.getColorForTypeId(typeId)
+                        );
+                    } else {
+                        this.addPdb(
+                            pdbEntry,
+                            agentData.x,
+                            agentData.y,
+                            agentData.z,
+                            agentData.xrot,
+                            agentData.yrot,
+                            agentData.zrot,
+                            1.0
+                        );
+                    }
+                } else {
+                    // no pdb, use mesh
+                    if (!meshEntry) {
+                        console.warn(
+                            "No mesh nor pdb available? Should be unreachable code"
+                        );
+                        return;
+                    }
+                    const meshGeom = meshEntry.mesh;
+                    if (!meshGeom) {
+                        console.warn(
+                            "MeshEntry is present but mesh unavailable. Not rendering agent."
+                        );
+                    }
+                    visAgent.visType = visType;
+                    if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
+                        this.legacyRenderer.addMesh(
+                            (meshGeom as Mesh).geometry,
+                            visAgent,
+                            radius * scale,
+                            this.getColorForTypeId(typeId)
+                        );
+                    } else {
+                        if (meshEntry && meshEntry.instances) {
+                            meshEntry.instances.addInstance(
                                 agentData.x,
                                 agentData.y,
                                 agentData.z,
+                                radius * scale,
                                 agentData.xrot,
                                 agentData.yrot,
                                 agentData.zrot,
-                                1.0
+                                visAgent.id,
+                                visAgent.signedTypeId()
                             );
-                        }
-                    } else {
-                        // no pdb, use mesh
-                        if (!meshEntry) {
-                            console.warn(
-                                "No mesh nor pdb available? Should be unreachable code"
-                            );
-                            return;
-                        }
-                        const meshGeom = meshEntry.mesh;
-                        if (!meshGeom) {
-                            console.warn(
-                                "MeshEntry is present but mesh unavailable. Not rendering agent."
-                            );
-                        }
-                        visAgent.visType = visType;
-                        if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
-                            this.legacyRenderer.addMesh(
-                                (meshGeom as Mesh).geometry,
-                                visAgent,
-                                radius * scale,
-                                this.getColorForTypeId(typeId)
-                            );
-                        } else {
-                            if (meshEntry && meshEntry.instances) {
-                                meshEntry.instances.addInstance(
-                                    agentData.x,
-                                    agentData.y,
-                                    agentData.z,
-                                    radius * scale,
-                                    agentData.xrot,
-                                    agentData.yrot,
-                                    agentData.zrot,
-                                    visAgent.id,
-                                    visAgent.signedTypeId()
-                                );
-                            }
                         }
                     }
                 }
@@ -1722,9 +1709,6 @@ class VisGeometry {
         });
 
         this.legacyRenderer.endUpdate(this.scene);
-
-        // reset flag
-        this.forceAgentUpdate = false;
     }
 
     public animateCamera(): void {
