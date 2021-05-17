@@ -37,7 +37,8 @@ import * as dat from "dat.gui";
 import jsLogger from "js-logger";
 import { ILogger, ILogLevel } from "js-logger";
 
-import { TrajectoryFileInfo, CameraTransform } from "./types";
+import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC } from "../constants";
+import { TrajectoryFileInfo, CameraSpec } from "./types";
 import { AgentData } from "./VisData";
 
 import MoleculeRenderer from "./rendering/MoleculeRenderer";
@@ -53,7 +54,6 @@ const NUM_TICK_INTERVALS = 10;
 const TICK_LENGTH_FACTOR = 100;
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 const NO_AGENT = -1;
-const DEFAULT_CAMERA_Z_POSITION = 120;
 const CAMERA_DOLLY_STEP_SIZE = 10;
 export enum RenderStyle {
     WEBGL1_FALLBACK,
@@ -162,7 +162,7 @@ class VisGeometry {
     private needToReOrientCamera: boolean;
     private rotateDistance: number;
     private initCameraPosition: Vector3;
-    private cameraDefault: CameraTransform;
+    private cameraDefault: CameraSpec;
     private fibers: InstancedFiberGroup;
 
     public constructor(loggerLevel: ILogLevel) {
@@ -215,24 +215,7 @@ class VisGeometry {
         this.camera = new PerspectiveCamera(75, 100 / 100, 0.1, 10000);
 
         this.initCameraPosition = this.camera.position.clone();
-        this.cameraDefault = {
-            position: {
-                x: 0,
-                y: 0,
-                z: 120,
-            },
-            lookAtPosition: {
-                x: 0,
-                y: 0,
-                z: 0,
-            },
-            upVector: {
-                x: 0,
-                y: 1,
-                z: 0,
-            },
-            fovDegrees: 75,
-        };
+        this.cameraDefault = DEFAULT_CAMERA_SPEC;
 
         this.dl = new DirectionalLight(0xffffff, 0.6);
         this.hemiLight = new HemisphereLight(0xffffff, 0x000000, 0.5);
@@ -396,6 +379,7 @@ class VisGeometry {
             this.logger.warn(
                 "Using default camera settings since none were provided"
             );
+            this.cameraDefault = DEFAULT_CAMERA_SPEC;
         }
         // Reset then position and orient the camera
         this.resetCamera();

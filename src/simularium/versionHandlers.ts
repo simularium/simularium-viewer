@@ -1,5 +1,6 @@
 import * as si from "si-prefix";
 
+import { DEFAULT_CAMERA_SPEC } from "../constants";
 import {
     TrajectoryFileInfo,
     TrajectoryFileInfoAny,
@@ -46,24 +47,7 @@ export const updateTrajectoryFileInfoFormat = (
                     magnitude: 1,
                     name: "s",
                 },
-                cameraDefault: {
-                    position: {
-                        x: 0,
-                        y: 0,
-                        z: 120,
-                    },
-                    lookAtPosition: {
-                        x: 0,
-                        y: 0,
-                        z: 0,
-                    },
-                    upVector: {
-                        x: 0,
-                        y: 1,
-                        z: 0,
-                    },
-                    fovDegrees: 75,
-                },
+                cameraDefault: DEFAULT_CAMERA_SPEC,
                 timeStepSize: v1Data.timeStepSize,
                 totalSteps: v1Data.totalSteps,
                 typeMapping: v1Data.typeMapping,
