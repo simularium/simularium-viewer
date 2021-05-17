@@ -350,7 +350,8 @@ class VisGeometry {
     public handleTrajectoryFileInfo(
         trajectoryFileInfo: TrajectoryFileInfo
     ): void {
-        // get bounds.
+        // Create a new bounding box and tick marks and set this.tickIntervalLength (via resetBounds()),
+        // to make it available for use as the length of the scale bar in the UI
         if (trajectoryFileInfo.hasOwnProperty("size")) {
             const bx = trajectoryFileInfo.size.x;
             const by = trajectoryFileInfo.size.y;
