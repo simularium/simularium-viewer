@@ -56,10 +56,6 @@ export default class VisAgent {
     public typeId: number;
     public colorIndex: number;
     public active: boolean;
-    // this material only used in webGL1 fallback rendering mode
-    public baseMaterial: Material;
-    // this material only used in webGL1 fallback rendering mode
-    public highlightMaterial: Material;
     public color: Color;
     public name: string;
     public followed: boolean;
@@ -92,15 +88,7 @@ export default class VisAgent {
         this.followed = false;
         this.hidden = false;
         this.highlighted = false;
-        this.baseMaterial = new MeshLambertMaterial({
-            color: new Color(this.color),
-        });
-        this.highlightMaterial = new MeshBasicMaterial({
-            color: getHighlightColor(this.color),
-            transparent: true,
-            opacity: 1.0,
-        });
-        this.mesh = new Mesh(VisAgent.sphereGeometry, this.baseMaterial);
+        this.mesh = new Mesh(VisAgent.sphereGeometry);
         this.mesh.userData = { id: this.id };
         this.mesh.visible = false;
 
@@ -115,7 +103,7 @@ export default class VisAgent {
         this.id = NO_AGENT;
         this.visType = VisTypes.ID_VIS_TYPE_DEFAULT;
         this.typeId = -1;
-        this.mesh = new Mesh(VisAgent.sphereGeometry, this.baseMaterial);
+        this.mesh = new Mesh(VisAgent.sphereGeometry);
         this.mesh.userData = { id: this.id };
         this.followed = false;
         this.highlighted = false;
@@ -144,14 +132,6 @@ export default class VisAgent {
     public setColor(color: Color, colorIndex: number): void {
         this.color = color;
         this.colorIndex = colorIndex;
-        this.baseMaterial = new MeshLambertMaterial({
-            color: new Color(this.color),
-        });
-        this.highlightMaterial = new MeshBasicMaterial({
-            color: getHighlightColor(this.color),
-            transparent: true,
-            opacity: 1.0,
-        });
         // because this is a new material, we need to re-install it on the geometry
         // TODO deal with highlight and selection state
         this.assignMaterial();
@@ -174,78 +154,75 @@ export default class VisAgent {
     }
 
     private assignMaterial(): void {
-        if (this.mesh.name.includes("membrane")) {
-            return this.assignMembraneMaterial();
-        }
-
-        let material = this.baseMaterial;
-        if (this.followed) {
-            material = VisAgent.followMaterial;
-        } else if (this.highlighted) {
-            material = this.highlightMaterial;
-        }
-
-        for (let i = 0; i < this.pdbObjects.length; ++i) {
-            this.pdbObjects[
-                i
-            ].onBeforeRender = this.onAgentMeshBeforeRender.bind(this);
-        }
-
-        if (this.mesh instanceof Mesh) {
-            this.mesh.material = material;
-            this.mesh.onBeforeRender = this.onAgentMeshBeforeRender.bind(this);
-        } else {
-            this.mesh.traverse((child) => {
-                if (child instanceof Mesh) {
-                    child.material = material;
-                    child.onBeforeRender = this.onAgentMeshBeforeRender.bind(
-                        this
-                    );
-                }
-            });
-        }
+        // if (this.mesh.name.includes("membrane")) {
+        //     return this.assignMembraneMaterial();
+        // }
+        // let material = this.baseMaterial;
+        // if (this.followed) {
+        //     material = VisAgent.followMaterial;
+        // } else if (this.highlighted) {
+        //     material = this.highlightMaterial;
+        // }
+        // for (let i = 0; i < this.pdbObjects.length; ++i) {
+        //     this.pdbObjects[
+        //         i
+        //     ].onBeforeRender = this.onAgentMeshBeforeRender.bind(this);
+        // }
+        // if (this.mesh instanceof Mesh) {
+        //     this.mesh.material = material;
+        //     this.mesh.onBeforeRender = this.onAgentMeshBeforeRender.bind(this);
+        // } else {
+        //     this.mesh.traverse((child) => {
+        //         if (child instanceof Mesh) {
+        //             child.material = material;
+        //             child.onBeforeRender = this.onAgentMeshBeforeRender.bind(
+        //                 this
+        //             );
+        //         }
+        //     });
+        // }
     }
 
     public assignMembraneMaterial(): void {
-        if (this.highlighted) {
-            // at this time, assign separate material parameters to the faces and sides of the membrane
-            const faceNames = LegacyRenderer.membraneData.faces.map((el) => {
-                return el.name;
-            });
-            const sideNames = LegacyRenderer.membraneData.sides.map((el) => {
-                return el.name;
-            });
-            this.mesh.traverse((child) => {
-                if (child instanceof Mesh) {
-                    if (faceNames.includes(child.name)) {
-                        child.material =
-                            LegacyRenderer.membraneData.facesMaterial;
-                        child.onBeforeRender = this.onAgentMeshBeforeRender.bind(
-                            this
-                        );
-                    } else if (sideNames.includes(child.name)) {
-                        child.material =
-                            LegacyRenderer.membraneData.sidesMaterial;
-                        child.onBeforeRender = this.onAgentMeshBeforeRender.bind(
-                            this
-                        );
-                    }
-                }
-            });
-            LegacyRenderer.membraneData.facesMaterial.uniforms.uvscale.value =
-                LegacyRenderer.membraneData.facesUVScale;
-            LegacyRenderer.membraneData.sidesMaterial.uniforms.uvscale.value =
-                LegacyRenderer.membraneData.sidesUVScale;
-        } else {
-            this.mesh.traverse((child) => {
-                if (child instanceof Mesh) {
-                    child.material = this.baseMaterial;
-                    child.onBeforeRender = this.onAgentMeshBeforeRender.bind(
-                        this
-                    );
-                }
-            });
-        }
+        // if (this.highlighted) {
+        //     // at this time, assign separate material parameters to the faces and sides of the membrane
+        //     const faceNames = LegacyRenderer.membraneData.faces.map((el) => {
+        //         return el.name;
+        //     });
+        //     const sideNames = LegacyRenderer.membraneData.sides.map((el) => {
+        //         return el.name;
+        //     });
+        //     this.mesh.traverse((child) => {
+        //         if (child instanceof Mesh) {
+        //             if (faceNames.includes(child.name)) {
+        //                 child.material =
+        //                     LegacyRenderer.membraneData.facesMaterial;
+        //                 child.onBeforeRender = this.onAgentMeshBeforeRender.bind(
+        //                     this
+        //                 );
+        //             } else if (sideNames.includes(child.name)) {
+        //                 child.material =
+        //                     LegacyRenderer.membraneData.sidesMaterial;
+        //                 child.onBeforeRender = this.onAgentMeshBeforeRender.bind(
+        //                     this
+        //                 );
+        //             }
+        //         }
+        //     });
+        //     LegacyRenderer.membraneData.facesMaterial.uniforms.uvscale.value =
+        //         LegacyRenderer.membraneData.facesUVScale;
+        //     LegacyRenderer.membraneData.sidesMaterial.uniforms.uvscale.value =
+        //         LegacyRenderer.membraneData.sidesUVScale;
+        // } else {
+        //     this.mesh.traverse((child) => {
+        //         if (child instanceof Mesh) {
+        //             child.material = this.baseMaterial;
+        //             child.onBeforeRender = this.onAgentMeshBeforeRender.bind(
+        //                 this
+        //             );
+        //         }
+        //     });
+        // }
     }
 
     public signedTypeId(): number {
