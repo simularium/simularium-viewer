@@ -391,10 +391,11 @@ class VisGeometry {
     public resetCamera(): void {
         this.followObjectId = NO_AGENT;
         this.controls.reset();
-        this.positionCamera();
+        this.resetCameraPosition();
     }
 
-    public positionCamera(): void {
+    // Sets camera position and orientation to the trajectory's initial (default) values
+    public resetCameraPosition(): void {
         const {
             position,
             upVector,
@@ -402,11 +403,11 @@ class VisGeometry {
             fovDegrees,
         } = this.cameraDefault;
 
-        // Set camera position
+        // Reset camera position
         this.camera.position.set(position.x, position.y, position.z);
         this.initCameraPosition = this.camera.position.clone();
 
-        // Set up vector (needs to be a unit vector)
+        // Reset up vector (needs to be a unit vector)
         const normalizedUpVector = new Vector3(
             upVector.x,
             upVector.y,
@@ -418,7 +419,7 @@ class VisGeometry {
             normalizedUpVector.z
         );
 
-        // Set lookat position
+        // Reset lookat position
         this.camera.lookAt(
             lookAtPosition.x,
             lookAtPosition.y,
@@ -430,7 +431,7 @@ class VisGeometry {
             lookAtPosition.z
         );
 
-        // Set field of view
+        // Reset field of view
         this.camera.fov = fovDegrees;
 
         // Apply the changes above
