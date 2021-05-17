@@ -216,7 +216,7 @@ class VisGeometry {
         this.camera = new PerspectiveCamera(75, 100 / 100, 0.1, 10000);
 
         this.initCameraPosition = this.camera.position.clone();
-        this.cameraDefault = DEFAULT_CAMERA_SPEC;
+        this.cameraDefault = cloneDeep(DEFAULT_CAMERA_SPEC);
 
         this.dl = new DirectionalLight(0xffffff, 0.6);
         this.hemiLight = new HemisphereLight(0xffffff, 0x000000, 0.5);
