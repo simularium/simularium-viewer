@@ -36,8 +36,10 @@ import * as dat from "dat.gui";
 
 import jsLogger from "js-logger";
 import { ILogger, ILogLevel } from "js-logger";
+import { cloneDeep } from "lodash";
 
-import { TrajectoryFileInfo } from "./types";
+import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC } from "../constants";
+import { TrajectoryFileInfo, CameraSpec } from "./types";
 import { AgentData } from "./VisData";
 
 import MoleculeRenderer from "./rendering/MoleculeRenderer";
@@ -53,7 +55,6 @@ const NUM_TICK_INTERVALS = 10;
 const TICK_LENGTH_FACTOR = 100;
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 const NO_AGENT = -1;
-const DEFAULT_CAMERA_Z_POSITION = 120;
 const CAMERA_DOLLY_STEP_SIZE = 10;
 export enum RenderStyle {
     WEBGL1_FALLBACK,
@@ -156,20 +157,18 @@ class VisGeometry {
     private raycaster: Raycaster;
     private supportsMoleculeRendering: boolean;
     private membraneAgent?: VisAgent;
-    private resetCameraOnNewScene: boolean;
     private lodBias: number;
     private lodDistanceStops: number[];
     private needToCenterCamera: boolean;
     private needToReOrientCamera: boolean;
     private rotateDistance: number;
     private initCameraPosition: Vector3;
+    private cameraDefault: CameraSpec;
     private fibers: InstancedFiberGroup;
 
     public constructor(loggerLevel: ILogLevel) {
         this.renderStyle = RenderStyle.WEBGL1_FALLBACK;
         this.supportsMoleculeRendering = false;
-        // TODO: pass this flag in from the outside
-        this.resetCameraOnNewScene = true;
 
         this.visGeomMap = new Map<number, AgentTypeGeometry>();
         this.meshRegistry = new Map<string | number, MeshLoadRequest>();
@@ -217,6 +216,7 @@ class VisGeometry {
         this.camera = new PerspectiveCamera(75, 100 / 100, 0.1, 10000);
 
         this.initCameraPosition = this.camera.position.clone();
+        this.cameraDefault = cloneDeep(DEFAULT_CAMERA_SPEC);
 
         this.dl = new DirectionalLight(0xffffff, 0.6);
         this.hemiLight = new HemisphereLight(0xffffff, 0x000000, 0.5);
@@ -348,12 +348,15 @@ class VisGeometry {
         return this.renderer.domElement;
     }
 
-    public handleTrajectoryData(trajectoryData: TrajectoryFileInfo): void {
-        // get bounds.
-        if (trajectoryData.hasOwnProperty("size")) {
-            const bx = trajectoryData.size.x;
-            const by = trajectoryData.size.y;
-            const bz = trajectoryData.size.z;
+    public handleTrajectoryFileInfo(
+        trajectoryFileInfo: TrajectoryFileInfo
+    ): void {
+        // Create a new bounding box and tick marks and set this.tickIntervalLength (via resetBounds()),
+        // to make it available for use as the length of the scale bar in the UI
+        if (trajectoryFileInfo.hasOwnProperty("size")) {
+            const bx = trajectoryFileInfo.size.x;
+            const by = trajectoryFileInfo.size.y;
+            const bz = trajectoryFileInfo.size.z;
             const epsilon = 0.000001;
             if (
                 Math.abs(bx) < epsilon ||
@@ -370,14 +373,69 @@ class VisGeometry {
         } else {
             this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
         }
-        if (this.resetCameraOnNewScene) {
-            this.resetCamera();
+
+        // Get default camera transform values from data
+        if (trajectoryFileInfo.cameraDefault) {
+            this.cameraDefault = trajectoryFileInfo.cameraDefault;
+        } else {
+            this.logger.warn(
+                "Using default camera settings since none were provided"
+            );
+            this.cameraDefault = cloneDeep(DEFAULT_CAMERA_SPEC);
         }
+        // Reset then position and orient the camera
+        this.resetCamera();
     }
 
+    // Called when a new file is loaded, the Clear button is clicked, or Reset Camera button is clicked
     public resetCamera(): void {
         this.followObjectId = NO_AGENT;
         this.controls.reset();
+        this.resetCameraPosition();
+    }
+
+    // Sets camera position and orientation to the trajectory's initial (default) values
+    public resetCameraPosition(): void {
+        const {
+            position,
+            upVector,
+            lookAtPosition,
+            fovDegrees,
+        } = this.cameraDefault;
+
+        // Reset camera position
+        this.camera.position.set(position.x, position.y, position.z);
+        this.initCameraPosition = this.camera.position.clone();
+
+        // Reset up vector (needs to be a unit vector)
+        const normalizedUpVector = new Vector3(
+            upVector.x,
+            upVector.y,
+            upVector.z
+        ).normalize();
+        this.camera.up.set(
+            normalizedUpVector.x,
+            normalizedUpVector.y,
+            normalizedUpVector.z
+        );
+
+        // Reset lookat position
+        this.camera.lookAt(
+            lookAtPosition.x,
+            lookAtPosition.y,
+            lookAtPosition.z
+        );
+        this.controls.target.set(
+            lookAtPosition.x,
+            lookAtPosition.y,
+            lookAtPosition.z
+        );
+
+        // Reset field of view
+        this.camera.fov = fovDegrees;
+
+        // Apply the changes above
+        this.camera.updateProjectionMatrix();
     }
 
     public centerCamera(): void {
