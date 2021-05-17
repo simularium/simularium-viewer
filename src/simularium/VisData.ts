@@ -179,10 +179,9 @@ class VisData {
         let end = 0;
         let start = 0;
 
-        while (end < lastEOF) {
-            // contains Frame # | Time Stamp | # of Agents
-            const frameDataView = new Float32Array(data);
+        const frameDataView = new Float32Array(data);
 
+        while (end < lastEOF) {
             // Find the next End of Frame signal
             for (; end < length; end = end + 4) {
                 const curr = byteView.subarray(end, end + eofPhrase.length);
@@ -191,15 +190,23 @@ class VisData {
                 }
             }
 
+            // contains Frame # | Time Stamp | # of Agents
+            const frameInfoView = frameDataView.subarray(
+                start / 4,
+                (start + 12) / 4
+            );
+
+            // contains parsable agents
             const agentDataView = frameDataView.subarray(
                 (start + 12) / 4,
                 end / 4
             );
 
             const parsedFrameData = {
-                time: frameDataView[1],
-                frameNumber: frameDataView[0],
+                time: frameInfoView[1],
+                frameNumber: frameInfoView[0],
             };
+            const expectedNumAgents = frameInfoView[2];
             frameDataArray.push(parsedFrameData);
 
             // Parse the frameData
@@ -293,6 +300,13 @@ class VisData {
                 const agent = parseOneAgent(agentSubSetArray);
                 parsedAgentData.push(agent);
                 dataIter = dataIter + chunkLength;
+            }
+
+            const numParsedAgents = parsedAgentData.length;
+            if (numParsedAgents != expectedNumAgents) {
+                throw new FrontEndError(
+                    "Mismatch between expected num agents and parsed num agents, possible offset error"
+                );
             }
 
             parsedAgentDataArray.push(parsedAgentData);
