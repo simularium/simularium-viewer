@@ -21,7 +21,7 @@ interface Coordinates3d {
     z: number;
 }
 
-export interface CameraTransform {
+export interface CameraSpec {
     position: Coordinates3d;
     lookAtPosition: Coordinates3d;
     upVector: Coordinates3d;
@@ -90,7 +90,7 @@ export interface TrajectoryFileInfoV2 extends TrajectoryFileInfoBase {
         magnitude: number;
         name: string;
     };
-    cameraDefault: CameraTransform;
+    cameraDefault: CameraSpec;
 }
 
 export type TrajectoryFileInfoAny = TrajectoryFileInfoV1 | TrajectoryFileInfoV2;
