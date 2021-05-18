@@ -2,10 +2,8 @@ import {
     CatmullRomCurve3,
     Color,
     LineCurve3,
-    Material,
     Mesh,
     MeshBasicMaterial,
-    MeshLambertMaterial,
     Object3D,
     SphereBufferGeometry,
     TubeBufferGeometry,
@@ -15,20 +13,19 @@ import {
 import PDBModel from "./PDBModel";
 import VisTypes from "./VisTypes";
 import { AgentData } from "./VisData";
-import { LegacyRenderer } from "./rendering/LegacyRenderer";
 
-function getHighlightColor(color: Color): Color {
-    const hiColor = new Color(color);
-    let hsl: {
-        h: number;
-        s: number;
-        l: number;
-    } = { h: 0, s: 0, l: 0 };
-    hsl = hiColor.getHSL(hsl);
-    // increase luminance 80% of the difference toward max
-    hiColor.setHSL(hsl.h, hsl.s, hsl.l + 0.8 * (1.0 - hsl.l));
-    return hiColor;
-}
+// function getHighlightColor(color: Color): Color {
+//     const hiColor = new Color(color);
+//     let hsl: {
+//         h: number;
+//         s: number;
+//         l: number;
+//     } = { h: 0, s: 0, l: 0 };
+//     hsl = hiColor.getHSL(hsl);
+//     // increase luminance 80% of the difference toward max
+//     hiColor.setHSL(hsl.h, hsl.s, hsl.l + 0.8 * (1.0 - hsl.l));
+//     return hiColor;
+// }
 
 const NO_AGENT = -1;
 
@@ -40,10 +37,10 @@ export default class VisAgent {
         32,
         32
     );
-    // this material only used in webGL1 fallback rendering mode
-    private static followMaterial: MeshBasicMaterial = new MeshBasicMaterial({
-        color: new Color(0.14, 1, 0),
-    });
+    // // this material only used in webGL1 fallback rendering mode
+    // private static followMaterial: MeshBasicMaterial = new MeshBasicMaterial({
+    //     color: new Color(0.14, 1, 0),
+    // });
 
     public agentData: AgentData;
 

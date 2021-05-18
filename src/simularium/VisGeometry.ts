@@ -1586,10 +1586,10 @@ class VisGeometry {
             visAgent.typeId = typeId;
             visAgent.active = true;
 
-            const wasHighlighted = visAgent.highlighted;
+            //const wasHighlighted = visAgent.highlighted;
             const isHighlighted = this.highlightedIds.includes(visAgent.typeId);
             visAgent.setHighlighted(isHighlighted);
-            const changedHighlight = wasHighlighted != isHighlighted;
+            //const changedHighlight = wasHighlighted != isHighlighted;
 
             const changedVisType = visType !== visAgent.visType;
 
