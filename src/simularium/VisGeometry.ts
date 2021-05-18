@@ -560,7 +560,6 @@ class VisGeometry {
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
             const visAgent = this.visAgents[i];
             if (typeIds.includes(visAgent.agentData.type)) {
-                //this.resetAgentGeometry(visAgent, meshLoadRequest.mesh);
                 visAgent.setColor(
                     this.getColorForTypeId(visAgent.agentData.type),
                     this.getColorIndexForTypeId(visAgent.agentData.type)
@@ -620,7 +619,6 @@ class VisGeometry {
      *   Setup ThreeJS Scene
      * */
     public setupScene(): void {
-        console.log("NEW SCENE");
         const initWidth = 100;
         const initHeight = 100;
         this.scene = new Scene();
@@ -1572,7 +1570,6 @@ class VisGeometry {
 
             // if not fiber...
             if (visType === VisTypes.ID_VIS_TYPE_DEFAULT) {
-                // did the agent type change since the last sim time?
                 const meshEntry = this.getMeshForAgentType(typeId);
                 const pdbEntry = this.getPdbForAgentType(typeId);
 
