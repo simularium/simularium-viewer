@@ -1,5 +1,6 @@
 import * as si from "si-prefix";
 
+import { DEFAULT_CAMERA_SPEC } from "../constants";
 import {
     TrajectoryFileInfo,
     TrajectoryFileInfoAny,
@@ -46,11 +47,15 @@ export const updateTrajectoryFileInfoFormat = (
                     magnitude: 1,
                     name: "s",
                 },
+                cameraDefault: DEFAULT_CAMERA_SPEC,
                 timeStepSize: v1Data.timeStepSize,
                 totalSteps: v1Data.totalSteps,
                 typeMapping: v1Data.typeMapping,
                 version: 2,
             };
+            console.warn(
+                "Using default camera settings since none were provided"
+            );
             break;
         default:
             throw new RangeError(VERSION_NUM_ERROR + msg.version);

@@ -8,6 +8,7 @@ import {
     VisDataMessage,
 } from "../types";
 import VisTypes from "../VisTypes";
+import { DEFAULT_CAMERA_SPEC } from "../../constants";
 
 export default class CurveSim implements IClientSimulatorImpl {
     nCurves: number;
@@ -166,6 +167,7 @@ export default class CurveSim implements IClientSimulatorImpl {
                 y: 12,
                 z: 12,
             },
+            cameraDefault: DEFAULT_CAMERA_SPEC,
             typeMapping: typeMapping,
             spatialUnits: {
                 magnitude: 1,

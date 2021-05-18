@@ -52,6 +52,24 @@ const v2Data = {
         y: 100,
         z: 100,
     },
+    cameraDefault: {
+        position: {
+            x: 0,
+            y: 0,
+            z: 120,
+        },
+        lookAtPosition: {
+            x: 0,
+            y: 0,
+            z: 0,
+        },
+        upVector: {
+            x: 0,
+            y: 1,
+            z: 0,
+        },
+        fovDegrees: 75,
+    },
     spatialUnits: {
         magnitude: 1.5,
         name: "nm",
