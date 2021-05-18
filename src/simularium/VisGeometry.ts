@@ -1477,41 +1477,6 @@ class VisGeometry {
         return agent;
     }
 
-    private addPdb(
-        pdb: PDBModel,
-        x: number,
-        y: number,
-        z: number,
-        rx: number,
-        ry: number,
-        rz: number,
-        scale: number
-    ): void {
-        // TODO: maybe could only instantiate one LOD at this time??
-
-        const pdbObjects: Object3D[] = pdb.instantiate();
-        // update pdb transforms too
-        for (let lod = 0; lod < pdbObjects.length; ++lod) {
-            const obj = pdbObjects[lod];
-            obj.position.x = x;
-            obj.position.y = y;
-            obj.position.z = z;
-
-            obj.rotation.x = rx;
-            obj.rotation.y = ry;
-            obj.rotation.z = rz;
-
-            obj.scale.x = scale;
-            obj.scale.y = scale;
-            obj.scale.z = scale;
-
-            obj.visible = false;
-            // LOD to be selected at render time, not update time
-
-            this.agentPDBGroup.add(obj);
-        }
-    }
-
     /**
      *   Update Scene
      **/
@@ -1585,7 +1550,7 @@ class VisGeometry {
             }
 
             // agent may have changed type. check before updating
-            const changedType = visAgent.typeId !== typeId;
+            //const changedType = visAgent.typeId !== typeId;
 
             visAgent.typeId = typeId;
             visAgent.active = true;
@@ -1595,11 +1560,11 @@ class VisGeometry {
             visAgent.setHighlighted(isHighlighted);
             //const changedHighlight = wasHighlighted != isHighlighted;
 
-            const changedVisType = visType !== visAgent.visType;
+            //const changedVisType = visType !== visAgent.visType;
 
             visAgent.agentData = agentData;
 
-            const wasHidden = visAgent.hidden;
+            //const wasHidden = visAgent.hidden;
             const isHidden = this.hiddenIds.includes(visAgent.typeId);
             visAgent.setHidden(isHidden);
             if (visAgent.hidden) {
@@ -1628,16 +1593,10 @@ class VisGeometry {
                             this.getColorForTypeId(typeId)
                         );
                     } else {
-                        this.addPdb(
-                            pdbEntry,
-                            agentData.x,
-                            agentData.y,
-                            agentData.z,
-                            agentData.xrot,
-                            agentData.yrot,
-                            agentData.zrot,
-                            1.0
-                        );
+                        if (pdbEntry !== visAgent.pdbModel) {
+                            visAgent.setupPdb(pdbEntry);
+                        }
+                        visAgent.updatePdbTransform(1.0);
                     }
                 } else {
                     // no pdb, use mesh
@@ -1694,52 +1653,7 @@ class VisGeometry {
                     );
                 }
             } else if (visType === VisTypes.ID_VIS_TYPE_FIBER) {
-                // if (visAgent.mesh) {
-                //     visAgent.mesh.position.x = agentData.x;
-                //     visAgent.mesh.position.y = agentData.y;
-                //     visAgent.mesh.position.z = agentData.z;
-
-                //     visAgent.mesh.rotation.x = agentData.xrot;
-                //     visAgent.mesh.rotation.y = agentData.yrot;
-                //     visAgent.mesh.rotation.z = agentData.zrot;
-
-                //     visAgent.mesh.scale.x = 1.0;
-                //     visAgent.mesh.scale.y = 1.0;
-                //     visAgent.mesh.scale.z = 1.0;
-                // }
-
-                // see if we need to initialize this agent as a fiber
-                if (changedVisType) {
-                    if (this.renderStyle !== RenderStyle.WEBGL1_FALLBACK) {
-                        visAgent.visType = visType;
-                        visAgent.setColor(
-                            this.getColorForTypeId(typeId),
-                            this.getColorIndexForTypeId(typeId)
-                        );
-                    } else {
-                        // const meshGeom = VisAgent.makeFiber();
-                        // if (meshGeom) {
-                        //     meshGeom.userData = { id: visAgent.id };
-                        //     meshGeom.name = `Fiber_${instanceId}`;
-                        //     visAgent.visType = visType;
-                        //     visAgent.setColor(
-                        //         this.getColorForTypeId(typeId),
-                        //         this.getColorIndexForTypeId(typeId)
-                        //     );
-                        // }
-                    }
-                }
-                // did the agent type change since the last sim time?
-                if (wasHidden || changedType) {
-                    // if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
-                    //     visAgent.mesh.userData = { id: visAgent.id };
-                    // }
-                    // for fibers we currently only check the color
-                    visAgent.setColor(
-                        this.getColorForTypeId(typeId),
-                        this.getColorIndexForTypeId(typeId)
-                    );
-                }
+                visAgent.visType = visType;
 
                 visAgent.updateFiber(agentData.subpoints);
 

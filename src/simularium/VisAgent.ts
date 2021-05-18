@@ -130,6 +130,58 @@ export default class VisAgent {
     public setupPdb(pdb: PDBModel): void {
         this.pdbModel = pdb;
         this.pdbObjects = pdb.instantiate();
+        // glue the typeid, instanceid, radius to shader:
+        for (let j = 0; j < this.pdbObjects.length; ++j) {
+            this.pdbObjects[j].onBeforeRender = this.onPdbBeforeRender.bind(
+                this
+            );
+        }
+    }
+
+    private onPdbBeforeRender(
+        this: VisAgent,
+        renderer,
+        scene,
+        camera,
+        geometry,
+        material
+        /* group */
+    ): void {
+        if (!material.uniforms) {
+            return;
+        }
+        // colorIndex is not necessarily equal to typeId but is generally a 1-1 mapping.
+        if (material.uniforms.typeId) {
+            // negate the value if dehighlighted.
+            // see implementation in CompositePass.ts for how the value is interpreted
+            material.uniforms.typeId.value = this.signedTypeId();
+            material.uniformsNeedUpdate = true;
+        }
+        if (material.uniforms.instanceId) {
+            material.uniforms.instanceId.value = Number(this.id);
+            material.uniformsNeedUpdate = true;
+        }
+        if (material.uniforms.radius) {
+            material.uniforms.radius.value = (this.lod + 1) * 0.25; // * 8;
+            material.uniformsNeedUpdate = true;
+        }
+    }
+
+    public updatePdbTransform(scale: number): void {
+        for (let lod = 0; lod < this.pdbObjects.length; ++lod) {
+            const obj = this.pdbObjects[lod];
+            obj.position.x = this.agentData.x;
+            obj.position.y = this.agentData.y;
+            obj.position.z = this.agentData.z;
+
+            obj.rotation.x = this.agentData.xrot;
+            obj.rotation.y = this.agentData.yrot;
+            obj.rotation.z = this.agentData.zrot;
+
+            obj.scale.x = scale;
+            obj.scale.y = scale;
+            obj.scale.z = scale;
+        }
     }
 
     public selectLOD(index: number): void {

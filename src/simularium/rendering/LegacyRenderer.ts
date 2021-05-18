@@ -218,35 +218,6 @@ class LegacyRenderer {
             return NO_AGENT;
         }
     }
-
-    private onAgentMeshBeforeRender(
-        this: VisAgent,
-        renderer,
-        scene,
-        camera,
-        geometry,
-        material
-        /* group */
-    ): void {
-        if (!material.uniforms) {
-            return;
-        }
-        // colorIndex is not necessarily equal to typeId but is generally a 1-1 mapping.
-        if (material.uniforms.typeId) {
-            // negate the value if dehighlighted.
-            // see implementation in CompositePass.ts for how the value is interpreted
-            material.uniforms.typeId.value = this.signedTypeId();
-            material.uniformsNeedUpdate = true;
-        }
-        if (material.uniforms.instanceId) {
-            material.uniforms.instanceId.value = Number(this.id);
-            material.uniformsNeedUpdate = true;
-        }
-        if (material.uniforms.radius) {
-            material.uniforms.radius.value = (this.lod + 1) * 0.25; // * 8;
-            material.uniformsNeedUpdate = true;
-        }
-    }
 }
 
 export { LegacyRenderer };
