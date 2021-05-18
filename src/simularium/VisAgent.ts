@@ -1,11 +1,8 @@
 import {
     CatmullRomCurve3,
     Color,
-    LineCurve3,
-    Mesh,
     Object3D,
     SphereBufferGeometry,
-    TubeBufferGeometry,
     Vector3,
 } from "three";
 
@@ -26,12 +23,16 @@ export default class VisAgent {
 
     public agentData: AgentData;
 
+    public visType: number;
+    public id: number;
+
     public fiberCurve?: CatmullRomCurve3;
+
     // TODO can this default to a trivial single-atom pdb model?
     public pdbModel?: PDBModel;
     public pdbObjects: Object3D[];
     public lod: number;
-    public typeId: number;
+
     public colorIndex: number;
     public active: boolean;
     public color: Color;
@@ -39,8 +40,6 @@ export default class VisAgent {
     public followed: boolean;
     public highlighted: boolean;
     public hidden: boolean;
-    public visType: number;
-    public id: number;
 
     public constructor(name: string) {
         this.agentData = {
@@ -61,7 +60,6 @@ export default class VisAgent {
         this.name = name;
         this.color = new Color(VisAgent.UNASSIGNED_MESH_COLOR);
         this.active = false;
-        this.typeId = -1;
         this.colorIndex = 0;
         this.followed = false;
         this.hidden = false;
@@ -77,7 +75,6 @@ export default class VisAgent {
     public resetMesh(): void {
         this.id = NO_AGENT;
         this.visType = VisTypes.ID_VIS_TYPE_DEFAULT;
-        this.typeId = -1;
         this.followed = false;
         this.highlighted = false;
         this.setColor(new Color(VisAgent.UNASSIGNED_MESH_COLOR), 0);
@@ -261,21 +258,6 @@ export default class VisAgent {
 
         // set up new fiber as curved tube
         this.fiberCurve = new CatmullRomCurve3(curvePoints);
-    }
-
-    // make a single generic fiber and return it
-    public static makeFiber(): Mesh {
-        const fibercurve = new LineCurve3(
-            new Vector3(0, 0, 0),
-            new Vector3(1, 1, 1)
-        );
-        const geometry = new TubeBufferGeometry(fibercurve, 1, 1, 1, false);
-        const fiberMesh = new Mesh(geometry);
-        fiberMesh.name = `Fiber`;
-
-        // downstream code will switch this flag
-        fiberMesh.visible = false;
-        return fiberMesh;
     }
 
     public getFollowPosition(): Vector3 {

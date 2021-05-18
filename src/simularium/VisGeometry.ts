@@ -561,11 +561,11 @@ class VisGeometry {
         const nMeshes = this.visAgents.length;
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
             const visAgent = this.visAgents[i];
-            if (typeIds.includes(visAgent.typeId)) {
+            if (typeIds.includes(visAgent.agentData.type)) {
                 //this.resetAgentGeometry(visAgent, meshLoadRequest.mesh);
                 visAgent.setColor(
-                    this.getColorForTypeId(visAgent.typeId),
-                    this.getColorIndexForTypeId(visAgent.typeId)
+                    this.getColorForTypeId(visAgent.agentData.type),
+                    this.getColorIndexForTypeId(visAgent.agentData.type)
                 );
             }
         }
@@ -587,11 +587,11 @@ class VisGeometry {
         const nMeshes = this.visAgents.length;
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
             const visAgent = this.visAgents[i];
-            if (typeIds.includes(visAgent.typeId)) {
+            if (typeIds.includes(visAgent.agentData.type)) {
                 this.resetAgentPDB(visAgent, pdb);
                 visAgent.setColor(
-                    this.getColorForTypeId(visAgent.typeId),
-                    this.getColorIndexForTypeId(visAgent.typeId)
+                    this.getColorForTypeId(visAgent.agentData.type),
+                    this.getColorIndexForTypeId(visAgent.agentData.type)
                 );
             }
         }
@@ -1012,8 +1012,8 @@ class VisGeometry {
 
         this.visAgents.forEach((agent) => {
             agent.setColor(
-                this.getColorForTypeId(agent.typeId),
-                this.getColorIndexForTypeId(agent.typeId)
+                this.getColorForTypeId(agent.agentData.type),
+                this.getColorIndexForTypeId(agent.agentData.type)
             );
         });
     }
@@ -1549,23 +1549,17 @@ class VisGeometry {
                 );
             }
 
-            // agent may have changed type. check before updating
-            //const changedType = visAgent.typeId !== typeId;
-
-            visAgent.typeId = typeId;
             visAgent.active = true;
 
-            //const wasHighlighted = visAgent.highlighted;
-            const isHighlighted = this.highlightedIds.includes(visAgent.typeId);
-            visAgent.setHighlighted(isHighlighted);
-            //const changedHighlight = wasHighlighted != isHighlighted;
-
-            //const changedVisType = visType !== visAgent.visType;
-
+            // update the agent!
             visAgent.agentData = agentData;
 
-            //const wasHidden = visAgent.hidden;
-            const isHidden = this.hiddenIds.includes(visAgent.typeId);
+            const isHighlighted = this.highlightedIds.includes(
+                visAgent.agentData.type
+            );
+            visAgent.setHighlighted(isHighlighted);
+
+            const isHidden = this.hiddenIds.includes(visAgent.agentData.type);
             visAgent.setHidden(isHidden);
             if (visAgent.hidden) {
                 // don't bother to update if type changed while agent is hidden?
