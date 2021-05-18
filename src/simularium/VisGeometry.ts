@@ -1573,16 +1573,16 @@ class VisGeometry {
                 return;
             }
 
+            visAgent.setColor(
+                this.getColorForTypeId(typeId),
+                this.getColorIndexForTypeId(typeId)
+            );
+
             // if not fiber...
             if (visType === VisTypes.ID_VIS_TYPE_DEFAULT) {
                 // did the agent type change since the last sim time?
                 const meshEntry = this.getMeshForAgentType(typeId);
                 const pdbEntry = this.getPdbForAgentType(typeId);
-
-                visAgent.setColor(
-                    this.getColorForTypeId(typeId),
-                    this.getColorIndexForTypeId(typeId)
-                );
 
                 // pdb has precedence over mesh
                 if (pdbEntry) {
