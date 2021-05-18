@@ -896,7 +896,11 @@ class VisGeometry {
                         agent.hide();
                     } else if (agent.hasDrawablePDB()) {
                         const agentDistance = this.camera.position.distanceTo(
-                            agent.mesh.position
+                            new Vector3(
+                                agent.agentData.x,
+                                agent.agentData.y,
+                                agent.agentData.z
+                            )
                         );
                         agent.renderAsPDB(
                             agentDistance,
@@ -1553,22 +1557,22 @@ class VisGeometry {
             lasty = agentData.y;
             lastz = agentData.z;
 
+            // look up last agent with this instanceId.
             let visAgent = this.visAgentInstances.get(instanceId);
 
             const path = this.findPathForAgent(instanceId);
             if (path) {
-                // look up last agent with this instanceId.
-                if (visAgent && visAgent.mesh) {
-                    lastx = visAgent.mesh.position.x;
-                    lasty = visAgent.mesh.position.y;
-                    lastz = visAgent.mesh.position.z;
+                if (visAgent) {
+                    lastx = visAgent.agentData.x;
+                    lasty = visAgent.agentData.y;
+                    lastz = visAgent.agentData.z;
                 }
             }
 
             if (!visAgent) {
                 visAgent = this.createAgent();
                 visAgent.id = instanceId;
-                visAgent.mesh.userData = { id: instanceId };
+                //visAgent.mesh.userData = { id: instanceId };
                 this.visAgentInstances.set(instanceId, visAgent);
                 // set hidden so that it is revealed later in this function:
                 visAgent.hidden = true;
@@ -1690,19 +1694,19 @@ class VisGeometry {
                     );
                 }
             } else if (visType === VisTypes.ID_VIS_TYPE_FIBER) {
-                if (visAgent.mesh) {
-                    visAgent.mesh.position.x = agentData.x;
-                    visAgent.mesh.position.y = agentData.y;
-                    visAgent.mesh.position.z = agentData.z;
+                // if (visAgent.mesh) {
+                //     visAgent.mesh.position.x = agentData.x;
+                //     visAgent.mesh.position.y = agentData.y;
+                //     visAgent.mesh.position.z = agentData.z;
 
-                    visAgent.mesh.rotation.x = agentData.xrot;
-                    visAgent.mesh.rotation.y = agentData.yrot;
-                    visAgent.mesh.rotation.z = agentData.zrot;
+                //     visAgent.mesh.rotation.x = agentData.xrot;
+                //     visAgent.mesh.rotation.y = agentData.yrot;
+                //     visAgent.mesh.rotation.z = agentData.zrot;
 
-                    visAgent.mesh.scale.x = 1.0;
-                    visAgent.mesh.scale.y = 1.0;
-                    visAgent.mesh.scale.z = 1.0;
-                }
+                //     visAgent.mesh.scale.x = 1.0;
+                //     visAgent.mesh.scale.y = 1.0;
+                //     visAgent.mesh.scale.z = 1.0;
+                // }
 
                 // see if we need to initialize this agent as a fiber
                 if (changedVisType) {
@@ -1727,9 +1731,9 @@ class VisGeometry {
                 }
                 // did the agent type change since the last sim time?
                 if (wasHidden || changedType) {
-                    if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
-                        visAgent.mesh.userData = { id: visAgent.id };
-                    }
+                    // if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
+                    //     visAgent.mesh.userData = { id: visAgent.id };
+                    // }
                     // for fibers we currently only check the color
                     visAgent.setColor(
                         this.getColorForTypeId(typeId),

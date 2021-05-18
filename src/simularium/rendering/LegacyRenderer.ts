@@ -106,10 +106,10 @@ class LegacyRenderer {
             false
         );
 
-        // resolve material?
-        this.agentMeshGroup.add(
-            new Mesh(fibergeometry, this.selectMaterial(visAgent, color))
-        );
+        const m = new Mesh(fibergeometry, this.selectMaterial(visAgent, color));
+        m.userData = { id: visAgent.id };
+
+        this.agentMeshGroup.add(m);
     }
 
     private selectMaterial(visAgent: VisAgent, color: Color): Material {

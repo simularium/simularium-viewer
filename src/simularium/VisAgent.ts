@@ -3,7 +3,6 @@ import {
     Color,
     LineCurve3,
     Mesh,
-    MeshBasicMaterial,
     Object3D,
     SphereBufferGeometry,
     TubeBufferGeometry,
@@ -13,19 +12,6 @@ import {
 import PDBModel from "./PDBModel";
 import VisTypes from "./VisTypes";
 import { AgentData } from "./VisData";
-
-// function getHighlightColor(color: Color): Color {
-//     const hiColor = new Color(color);
-//     let hsl: {
-//         h: number;
-//         s: number;
-//         l: number;
-//     } = { h: 0, s: 0, l: 0 };
-//     hsl = hiColor.getHSL(hsl);
-//     // increase luminance 80% of the difference toward max
-//     hiColor.setHSL(hsl.h, hsl.s, hsl.l + 0.8 * (1.0 - hsl.l));
-//     return hiColor;
-// }
 
 const NO_AGENT = -1;
 
@@ -37,14 +23,9 @@ export default class VisAgent {
         32,
         32
     );
-    // // this material only used in webGL1 fallback rendering mode
-    // private static followMaterial: MeshBasicMaterial = new MeshBasicMaterial({
-    //     color: new Color(0.14, 1, 0),
-    // });
 
     public agentData: AgentData;
 
-    public mesh: Object3D;
     public fiberCurve?: CatmullRomCurve3;
     // TODO can this default to a trivial single-atom pdb model?
     public pdbModel?: PDBModel;
@@ -85,9 +66,6 @@ export default class VisAgent {
         this.followed = false;
         this.hidden = false;
         this.highlighted = false;
-        this.mesh = new Mesh(VisAgent.sphereGeometry);
-        this.mesh.userData = { id: this.id };
-        this.mesh.visible = false;
 
         this.fiberCurve = undefined;
 
@@ -100,8 +78,6 @@ export default class VisAgent {
         this.id = NO_AGENT;
         this.visType = VisTypes.ID_VIS_TYPE_DEFAULT;
         this.typeId = -1;
-        this.mesh = new Mesh(VisAgent.sphereGeometry);
-        this.mesh.userData = { id: this.id };
         this.followed = false;
         this.highlighted = false;
         this.setColor(new Color(VisAgent.UNASSIGNED_MESH_COLOR), 0);
@@ -129,9 +105,6 @@ export default class VisAgent {
     public setColor(color: Color, colorIndex: number): void {
         this.color = color;
         this.colorIndex = colorIndex;
-        // because this is a new material, we need to re-install it on the geometry
-        // TODO deal with highlight and selection state
-        this.assignMaterial();
     }
 
     public setHidden(hidden: boolean): void {
@@ -140,86 +113,12 @@ export default class VisAgent {
 
     public setFollowed(followed: boolean): void {
         this.followed = followed;
-        this.assignMaterial();
     }
 
     public setHighlighted(highlighted: boolean): void {
         if (highlighted !== this.highlighted) {
             this.highlighted = highlighted;
-            this.assignMaterial();
         }
-    }
-
-    private assignMaterial(): void {
-        // if (this.mesh.name.includes("membrane")) {
-        //     return this.assignMembraneMaterial();
-        // }
-        // let material = this.baseMaterial;
-        // if (this.followed) {
-        //     material = VisAgent.followMaterial;
-        // } else if (this.highlighted) {
-        //     material = this.highlightMaterial;
-        // }
-        // for (let i = 0; i < this.pdbObjects.length; ++i) {
-        //     this.pdbObjects[
-        //         i
-        //     ].onBeforeRender = this.onAgentMeshBeforeRender.bind(this);
-        // }
-        // if (this.mesh instanceof Mesh) {
-        //     this.mesh.material = material;
-        //     this.mesh.onBeforeRender = this.onAgentMeshBeforeRender.bind(this);
-        // } else {
-        //     this.mesh.traverse((child) => {
-        //         if (child instanceof Mesh) {
-        //             child.material = material;
-        //             child.onBeforeRender = this.onAgentMeshBeforeRender.bind(
-        //                 this
-        //             );
-        //         }
-        //     });
-        // }
-    }
-
-    public assignMembraneMaterial(): void {
-        // if (this.highlighted) {
-        //     // at this time, assign separate material parameters to the faces and sides of the membrane
-        //     const faceNames = LegacyRenderer.membraneData.faces.map((el) => {
-        //         return el.name;
-        //     });
-        //     const sideNames = LegacyRenderer.membraneData.sides.map((el) => {
-        //         return el.name;
-        //     });
-        //     this.mesh.traverse((child) => {
-        //         if (child instanceof Mesh) {
-        //             if (faceNames.includes(child.name)) {
-        //                 child.material =
-        //                     LegacyRenderer.membraneData.facesMaterial;
-        //                 child.onBeforeRender = this.onAgentMeshBeforeRender.bind(
-        //                     this
-        //                 );
-        //             } else if (sideNames.includes(child.name)) {
-        //                 child.material =
-        //                     LegacyRenderer.membraneData.sidesMaterial;
-        //                 child.onBeforeRender = this.onAgentMeshBeforeRender.bind(
-        //                     this
-        //                 );
-        //             }
-        //         }
-        //     });
-        //     LegacyRenderer.membraneData.facesMaterial.uniforms.uvscale.value =
-        //         LegacyRenderer.membraneData.facesUVScale;
-        //     LegacyRenderer.membraneData.sidesMaterial.uniforms.uvscale.value =
-        //         LegacyRenderer.membraneData.sidesUVScale;
-        // } else {
-        //     this.mesh.traverse((child) => {
-        //         if (child instanceof Mesh) {
-        //             child.material = this.baseMaterial;
-        //             child.onBeforeRender = this.onAgentMeshBeforeRender.bind(
-        //                 this
-        //             );
-        //         }
-        //     });
-        // }
     }
 
     public signedTypeId(): number {
@@ -227,60 +126,10 @@ export default class VisAgent {
         // This means we have to subtract 1 in the downstream code (the shaders) if we need the true value.
         return (this.colorIndex + 1) * (this.highlighted ? 1 : -1);
     }
-    private onAgentMeshBeforeRender(
-        this: VisAgent,
-        renderer,
-        scene,
-        camera,
-        geometry,
-        material
-        /* group */
-    ): void {
-        if (!material.uniforms) {
-            return;
-        }
-        // colorIndex is not necessarily equal to typeId but is generally a 1-1 mapping.
-        if (material.uniforms.typeId) {
-            // negate the value if dehighlighted.
-            // see implementation in CompositePass.ts for how the value is interpreted
-            material.uniforms.typeId.value = this.signedTypeId();
-            material.uniformsNeedUpdate = true;
-        }
-        if (material.uniforms.instanceId) {
-            material.uniforms.instanceId.value = Number(this.id);
-            material.uniformsNeedUpdate = true;
-        }
-        if (material.uniforms.radius) {
-            material.uniforms.radius.value = (this.lod + 1) * 0.25; // * 8;
-            material.uniformsNeedUpdate = true;
-        }
-    }
-
-    public setupMeshGeometry(meshGeom: Object3D): void {
-        // remember current transform
-        const p = this.mesh.position;
-        const r = this.mesh.rotation;
-        const s = this.mesh.scale;
-
-        const visible = this.mesh.visible;
-
-        this.mesh = meshGeom.clone();
-        this.mesh.userData = { id: this.id };
-
-        this.mesh.visible = visible;
-        // restore transform
-        this.mesh.position.copy(p);
-        this.mesh.rotation.copy(r);
-        this.mesh.scale.copy(s);
-
-        this.assignMaterial();
-    }
 
     public setupPdb(pdb: PDBModel): void {
         this.pdbModel = pdb;
         this.pdbObjects = pdb.instantiate();
-
-        this.assignMaterial();
     }
 
     public selectLOD(index: number): void {
@@ -300,7 +149,6 @@ export default class VisAgent {
 
     public renderAsMesh(): void {
         this.setPDBInvisible();
-        this.mesh.visible = true;
     }
 
     public renderAsPDB(
@@ -308,8 +156,6 @@ export default class VisAgent {
         distanceStops: number[],
         lodBias: number
     ): void {
-        this.mesh.visible = false;
-
         for (let j = 0; j < distanceStops.length; ++j) {
             // the first distance less than.
             if (myDistance < distanceStops[j]) {
@@ -320,7 +166,6 @@ export default class VisAgent {
     }
 
     public hide(): void {
-        this.mesh.visible = false;
         this.setPDBInvisible();
     }
 
