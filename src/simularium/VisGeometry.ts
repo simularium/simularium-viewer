@@ -334,11 +334,6 @@ class VisGeometry {
         this.renderStyle = renderStyle;
 
         if (changed) {
-            // reset all agents of fiber type so their geometry is re-created.
-            for (const visAgent of this.visAgentInstances.values()) {
-                visAgent.visType = VisTypes.ID_VIS_TYPE_DEFAULT;
-            }
-
             this.constructInstancedFibers();
         }
 
@@ -1606,7 +1601,6 @@ class VisGeometry {
                             "MeshEntry is present but mesh unavailable. Not rendering agent."
                         );
                     }
-                    visAgent.visType = visType;
                     if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
                         this.legacyRenderer.addMesh(
                             (meshGeom as Mesh).geometry,
@@ -1647,8 +1641,6 @@ class VisGeometry {
                     );
                 }
             } else if (visType === VisTypes.ID_VIS_TYPE_FIBER) {
-                visAgent.visType = visType;
-
                 visAgent.updateFiber(agentData.subpoints);
 
                 if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {

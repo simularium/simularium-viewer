@@ -23,7 +23,6 @@ export default class VisAgent {
 
     public agentData: AgentData;
 
-    public visType: number;
     public id: number;
 
     public fiberCurve?: CatmullRomCurve3;
@@ -56,7 +55,6 @@ export default class VisAgent {
             subpoints: [],
         };
         this.id = NO_AGENT;
-        this.visType = VisTypes.ID_VIS_TYPE_DEFAULT;
         this.name = name;
         this.color = new Color(VisAgent.UNASSIGNED_MESH_COLOR);
         this.active = false;
@@ -74,7 +72,6 @@ export default class VisAgent {
 
     public resetMesh(): void {
         this.id = NO_AGENT;
-        this.visType = VisTypes.ID_VIS_TYPE_DEFAULT;
         this.followed = false;
         this.highlighted = false;
         this.setColor(new Color(VisAgent.UNASSIGNED_MESH_COLOR), 0);
@@ -261,7 +258,10 @@ export default class VisAgent {
     }
 
     public getFollowPosition(): Vector3 {
-        if (this.visType === VisTypes.ID_VIS_TYPE_FIBER && this.fiberCurve) {
+        if (
+            this.agentData.visType === VisTypes.ID_VIS_TYPE_FIBER &&
+            this.fiberCurve
+        ) {
             return this.fiberCurve.getPoint(0.5);
         } else {
             return new Vector3(
