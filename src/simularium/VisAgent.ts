@@ -23,8 +23,6 @@ export default class VisAgent {
 
     public agentData: AgentData;
 
-    public id: number;
-
     public fiberCurve?: CatmullRomCurve3;
 
     // TODO can this default to a trivial single-atom pdb model?
@@ -54,7 +52,6 @@ export default class VisAgent {
             cr: 1.0,
             subpoints: [],
         };
-        this.id = NO_AGENT;
         this.name = name;
         this.color = new Color(VisAgent.UNASSIGNED_MESH_COLOR);
         this.active = false;
@@ -71,7 +68,6 @@ export default class VisAgent {
     }
 
     public resetMesh(): void {
-        this.id = NO_AGENT;
         this.followed = false;
         this.highlighted = false;
         this.setColor(new Color(VisAgent.UNASSIGNED_MESH_COLOR), 0);
@@ -152,7 +148,9 @@ export default class VisAgent {
             material.uniformsNeedUpdate = true;
         }
         if (material.uniforms.instanceId) {
-            material.uniforms.instanceId.value = Number(this.id);
+            material.uniforms.instanceId.value = Number(
+                this.agentData.instanceId
+            );
             material.uniformsNeedUpdate = true;
         }
         if (material.uniforms.radius) {

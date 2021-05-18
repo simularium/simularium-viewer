@@ -494,7 +494,10 @@ class VisGeometry {
     }
 
     public setFollowObject(obj: number): void {
-        if (this.membraneAgent && obj === this.membraneAgent.id) {
+        if (
+            this.membraneAgent &&
+            obj === this.membraneAgent.agentData.instanceId
+        ) {
             return;
         }
 
@@ -1531,16 +1534,16 @@ class VisGeometry {
 
             if (!visAgent) {
                 visAgent = this.createAgent();
-                visAgent.id = instanceId;
+                visAgent.agentData.instanceId = instanceId;
                 //visAgent.mesh.userData = { id: instanceId };
                 this.visAgentInstances.set(instanceId, visAgent);
                 // set hidden so that it is revealed later in this function:
                 visAgent.hidden = true;
             }
 
-            if (visAgent.id !== instanceId) {
+            if (visAgent.agentData.instanceId !== instanceId) {
                 console.warn(
-                    `incoming instance id ${instanceId} mismatched with visagent ${visAgent.id}`
+                    `incoming instance id ${instanceId} mismatched with visagent ${visAgent.agentData.instanceId}`
                 );
             }
 
@@ -1618,7 +1621,7 @@ class VisGeometry {
                                 agentData.xrot,
                                 agentData.yrot,
                                 agentData.zrot,
-                                visAgent.id,
+                                visAgent.agentData.instanceId,
                                 visAgent.signedTypeId()
                             );
                         }
@@ -1658,7 +1661,7 @@ class VisGeometry {
                         agentData.y,
                         agentData.z,
                         agentData.cr * scale * 0.5,
-                        visAgent.id,
+                        visAgent.agentData.instanceId,
                         visAgent.signedTypeId()
                     );
                 }
