@@ -164,7 +164,7 @@ export class LocalFileSimulator implements ISimulator {
 
         // Find the index of the frame that has the time matching our target time
         const frameNumber = bundleData.findIndex((bundleData) => {
-            compareFloats(bundleData.time, timeNs, timeStepSize) === 0;
+            return compareFloats(bundleData.time, timeNs, timeStepSize) === 0;
         });
 
         // frameNumber is -1 if findIndex() above doesn't find a match
