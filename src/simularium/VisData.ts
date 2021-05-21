@@ -396,10 +396,11 @@ class VisData {
         this.cacheFrame = -1;
 
         // Find the index of the frame that has the time matching our target time
-        const frameNumber = this.frameDataCache.findIndex(
-            (frameData) =>
+        const frameNumber = this.frameDataCache.findIndex((frameData) => {
+            return (
                 compareFloats(frameData.time, timeNs, this.timeStepSize) === 0
-        );
+            );
+        });
 
         // frameNumber is -1 if findIndex() above doesn't find a match
         this.cacheFrame = Math.max(frameNumber, 0);
