@@ -18,8 +18,7 @@ export const compareFloats = (
         0 if number1 ~= number2
     */
 
-    // 0.01 is arbitrary
-    const epsilon = precisionRef * 0.01;
+    const epsilon = precisionRef * 0.01; // 0.01 is arbitrary
     if (number1 - epsilon > number2) return 1;
     if (number1 + epsilon < number2) return -1;
     return 0;
