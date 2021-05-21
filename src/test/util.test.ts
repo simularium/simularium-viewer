@@ -39,5 +39,10 @@ describe("util", () => {
             );
             expect(result).toEqual(0);
         });
+
+        test("it correctly determines number1 ~= number2 when numbers are equal", () => {
+            const result = compareFloats(0.005, 0.005, 0.005);
+            expect(result).toEqual(0);
+        });
     });
 });
