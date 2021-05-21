@@ -387,18 +387,12 @@ class VisData {
 
     public gotoTime(timeNs: number): void {
         this.cacheFrame = -1;
+        const frameNumber = this.frameDataCache.findIndex(
+            (frameData) => frameData.time >= timeNs
+        );
 
-        for (
-            let frame = 0, numFrames = this.frameDataCache.length;
-            frame < numFrames;
-            frame++
-        ) {
-            const frameTime = this.frameDataCache[frame].time;
-            if (timeNs <= frameTime) {
-                this.cacheFrame = Math.max(frame, 0);
-                break;
-            }
-        }
+        // frameNumber is -1 if findIndex() above doesn't find a match
+        this.cacheFrame = Math.max(frameNumber, 0);
     }
 
     public atLatestFrame(): boolean {
