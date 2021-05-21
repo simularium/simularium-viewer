@@ -376,20 +376,30 @@ class VisData {
      *   Functions to check update
      * */
     public hasLocalCacheForTime(timeNs: number): boolean {
+        const firstFrameTime = this.frameDataCache[0].time;
+        const lastFrameTime = this.frameDataCache[
+            this.frameDataCache.length - 1
+        ].time;
+
+        // Edge cases
         if (
             this.frameDataCache.length > 0 &&
             timeNs === 0 &&
-            this.frameDataCache[0].time <= Number.EPSILON // allow for floating point errors
+            firstFrameTime <= Number.EPSILON // allow for floating point errors
         ) {
+            // First frame is required and it exists in local cache
             return true;
         } else if (this.frameDataCache.length < 2) {
+            // Local cache only has 1 frame but we need something other than the first frame
             return false;
         }
 
-        return (
-            this.frameDataCache[0].time <= timeNs &&
-            this.frameDataCache[this.frameDataCache.length - 1].time >= timeNs
-        );
+        // Non-edge cases
+        const notLessThanFirstFrameTime =
+            compareFloats(timeNs, firstFrameTime, this.timeStepSize) !== -1;
+        const notGreaterThanLastFrameTime =
+            compareFloats(timeNs, lastFrameTime, this.timeStepSize) !== 1;
+        return notLessThanFirstFrameTime && notGreaterThanLastFrameTime;
     }
 
     public gotoTime(timeNs: number): void {
