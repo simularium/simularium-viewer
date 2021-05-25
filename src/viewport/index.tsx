@@ -214,7 +214,9 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             const trajectoryFileInfo: TrajectoryFileInfo = updateTrajectoryFileInfoFormat(
                 msg
             );
-
+            
+            simulariumController.visData.timeStepSize = trajectoryFileInfo.timeStepSize;
+            
             this.visGeometry.handleTrajectoryFileInfo(trajectoryFileInfo);
             simulariumController.tickIntervalLength = this.visGeometry.tickIntervalLength;
 

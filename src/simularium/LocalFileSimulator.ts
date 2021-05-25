@@ -1,6 +1,8 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
 
+import { compareTimes } from "../util";
+
 import {
     VisDataMessage,
     VisDataFrame,
@@ -157,19 +159,17 @@ export class LocalFileSimulator implements ISimulator {
     }
 
     public gotoRemoteSimulationTime(timeNs: number): void {
-        for (
-            let frame = 0,
-                numFrames = this.simulariumFile.spatialData.bundleData.length;
-            frame < numFrames;
-            frame++
-        ) {
-            const frameTime = this.simulariumFile.spatialData.bundleData[frame]
-                .time;
-            if (timeNs <= frameTime) {
-                const theFrameNumber = Math.max(frame, 0);
-                this.onTrajectoryDataArrive(this.getFrame(theFrameNumber));
-                break;
-            }
+        const { bundleData } = this.simulariumFile.spatialData;
+        const { timeStepSize } = this.simulariumFile.trajectoryInfo;
+
+        // Find the index of the frame that has the time matching our target time
+        const frameNumber = bundleData.findIndex((bundleData) => {
+            return compareTimes(bundleData.time, timeNs, timeStepSize) === 0;
+        });
+
+        // frameNumber is -1 if findIndex() above doesn't find a match
+        if (frameNumber !== -1) {
+            this.requestSingleFrame(frameNumber);
         }
     }
 

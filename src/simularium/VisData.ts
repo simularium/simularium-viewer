@@ -1,4 +1,7 @@
 import { difference } from "lodash";
+
+import { compareTimes } from "../util";
+
 import * as util from "./ThreadUtil";
 import {
     TrajectoryFileInfo,
@@ -46,6 +49,9 @@ class VisData {
 
     // eslint-disable-next-line @typescript-eslint/naming-convention
     private _dragAndDropFileInfo: TrajectoryFileInfo | null;
+
+    public timeStepSize: number;
+
     /**
      *   Parses a stream of data sent from the backend
      *
@@ -348,6 +354,7 @@ class VisData {
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
         this.netBuffer = new ArrayBuffer(0);
+        this.timeStepSize = 0;
     }
 
     //get time() { return this.cacheFrame < this.frameDataCache.length ? this.frameDataCache[this.cacheFrame] : -1 }
@@ -369,35 +376,44 @@ class VisData {
      *   Functions to check update
      * */
     public hasLocalCacheForTime(timeNs: number): boolean {
+        const firstFrameTime = this.frameDataCache[0].time;
+        const lastFrameTime = this.frameDataCache[
+            this.frameDataCache.length - 1
+        ].time;
+
+        // Deal with some special cases first
         if (
             this.frameDataCache.length > 0 &&
             timeNs === 0 &&
-            this.frameDataCache[0].time <= Number.EPSILON // allow for floating point errors
+            firstFrameTime <= Number.EPSILON // allow for floating point errors
         ) {
+            // t = 0 is needed, the first frame time is 0, and it exists in local cache
             return true;
         } else if (this.frameDataCache.length < 2) {
+            // Local cache only has 1 frame but we need something other than the first frame
             return false;
         }
 
-        return (
-            this.frameDataCache[0].time <= timeNs &&
-            this.frameDataCache[this.frameDataCache.length - 1].time >= timeNs
-        );
+        const notLessThanFirstFrameTime =
+            compareTimes(timeNs, firstFrameTime, this.timeStepSize) !== -1;
+        const notGreaterThanLastFrameTime =
+            compareTimes(timeNs, lastFrameTime, this.timeStepSize) !== 1;
+        return notLessThanFirstFrameTime && notGreaterThanLastFrameTime;
     }
 
     public gotoTime(timeNs: number): void {
         this.cacheFrame = -1;
 
-        for (
-            let frame = 0, numFrames = this.frameDataCache.length;
-            frame < numFrames;
-            frame++
-        ) {
-            const frameTime = this.frameDataCache[frame].time;
-            if (timeNs <= frameTime) {
-                this.cacheFrame = Math.max(frame, 0);
-                break;
-            }
+        // Find the index of the frame that has the time matching our target time
+        const frameNumber = this.frameDataCache.findIndex((frameData) => {
+            return (
+                compareTimes(frameData.time, timeNs, this.timeStepSize) === 0
+            );
+        });
+
+        // frameNumber is -1 if findIndex() above doesn't find a match
+        if (frameNumber !== -1) {
+            this.cacheFrame = frameNumber;
         }
     }
 
