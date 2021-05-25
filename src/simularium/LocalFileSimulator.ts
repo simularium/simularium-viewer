@@ -168,7 +168,11 @@ export class LocalFileSimulator implements ISimulator {
         });
 
         // frameNumber is -1 if findIndex() above doesn't find a match
-        this.onTrajectoryDataArrive(this.getFrame(Math.max(frameNumber, 0)));
+        if (frameNumber !== -1) {
+            this.onTrajectoryDataArrive(
+                this.getFrame(Math.max(frameNumber, 0))
+            );
+        }
     }
 
     public requestTrajectoryFileInfo(_fileName: string): void {

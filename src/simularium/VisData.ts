@@ -381,20 +381,19 @@ class VisData {
             this.frameDataCache.length - 1
         ].time;
 
-        // Edge cases
+        // Deal with some special cases first
         if (
             this.frameDataCache.length > 0 &&
             timeNs === 0 &&
             firstFrameTime <= Number.EPSILON // allow for floating point errors
         ) {
-            // First frame is required and it exists in local cache
+            // t = 0 is needed, the first frame time is 0, and it exists in local cache
             return true;
         } else if (this.frameDataCache.length < 2) {
             // Local cache only has 1 frame but we need something other than the first frame
             return false;
         }
 
-        // Non-edge cases
         const notLessThanFirstFrameTime =
             compareFloats(timeNs, firstFrameTime, this.timeStepSize) !== -1;
         const notGreaterThanLastFrameTime =
@@ -413,7 +412,9 @@ class VisData {
         });
 
         // frameNumber is -1 if findIndex() above doesn't find a match
-        this.cacheFrame = Math.max(frameNumber, 0);
+        if (frameNumber !== -1) {
+            this.cacheFrame = Math.max(frameNumber, 0);
+        }
     }
 
     public atLatestFrame(): boolean {
