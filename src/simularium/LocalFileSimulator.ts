@@ -1,7 +1,7 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
 
-import { compareFloats } from "../util";
+import { compareTimes } from "../util";
 
 import {
     VisDataMessage,
@@ -164,7 +164,7 @@ export class LocalFileSimulator implements ISimulator {
 
         // Find the index of the frame that has the time matching our target time
         const frameNumber = bundleData.findIndex((bundleData) => {
-            return compareFloats(bundleData.time, timeNs, timeStepSize) === 0;
+            return compareTimes(bundleData.time, timeNs, timeStepSize) === 0;
         });
 
         // frameNumber is -1 if findIndex() above doesn't find a match

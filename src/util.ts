@@ -1,25 +1,26 @@
-export const compareFloats = (
-    number1: number,
-    number2: number,
-    precisionRef: number
+export const compareTimes = (
+    time1: number,
+    time2: number,
+    timeStepSize: number,
+    stepSizeFraction = 0.01
 ): number => {
     /*
-    Compares 2 numbers by using an epsilon padding to bypass any floating point precision issues.
+    Compares two time values in a series by seeing whether they are within some
+    small fraction of the time step size.
 
     Params:
-        number1:            Any number
-        number2:            Any number
-        precisionRef:       A reference number to use for precision, e.g. a time step size if
-                            you're comparing 2 time values in a time series
+        time1:          Any number
+        time2:          Any number
+        timeStepSize:   The step size in a time series
 
     Returns:
-        1 if number1 > number2
-        -1 if number1 < number2
-        0 if number1 ~= number2
+        1 if time1 > time2
+        -1 if time1 < time2
+        0 if time1 ~= time2
     */
 
-    const epsilon = precisionRef * 0.01; // 0.01 is arbitrary
-    if (number1 - epsilon > number2) return 1;
-    if (number1 + epsilon < number2) return -1;
+    const epsilon = timeStepSize * stepSizeFraction;
+    if (time1 - epsilon > time2) return 1;
+    if (time1 + epsilon < time2) return -1;
     return 0;
 };

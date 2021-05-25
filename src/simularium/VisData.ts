@@ -1,6 +1,6 @@
 import { difference } from "lodash";
 
-import { compareFloats } from "../util";
+import { compareTimes } from "../util";
 
 import * as util from "./ThreadUtil";
 import {
@@ -395,9 +395,9 @@ class VisData {
         }
 
         const notLessThanFirstFrameTime =
-            compareFloats(timeNs, firstFrameTime, this.timeStepSize) !== -1;
+            compareTimes(timeNs, firstFrameTime, this.timeStepSize) !== -1;
         const notGreaterThanLastFrameTime =
-            compareFloats(timeNs, lastFrameTime, this.timeStepSize) !== 1;
+            compareTimes(timeNs, lastFrameTime, this.timeStepSize) !== 1;
         return notLessThanFirstFrameTime && notGreaterThanLastFrameTime;
     }
 
@@ -407,7 +407,7 @@ class VisData {
         // Find the index of the frame that has the time matching our target time
         const frameNumber = this.frameDataCache.findIndex((frameData) => {
             return (
-                compareFloats(frameData.time, timeNs, this.timeStepSize) === 0
+                compareTimes(frameData.time, timeNs, this.timeStepSize) === 0
             );
         });
 
