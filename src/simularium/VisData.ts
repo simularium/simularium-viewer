@@ -413,7 +413,7 @@ class VisData {
 
         // frameNumber is -1 if findIndex() above doesn't find a match
         if (frameNumber !== -1) {
-            this.cacheFrame = Math.max(frameNumber, 0);
+            this.cacheFrame = frameNumber;
         }
     }
 
