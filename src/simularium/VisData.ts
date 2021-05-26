@@ -376,23 +376,14 @@ class VisData {
      *   Functions to check update
      * */
     public hasLocalCacheForTime(timeNs: number): boolean {
+        if (this.frameDataCache.length < 1) {
+            return false;
+        }
+
         const firstFrameTime = this.frameDataCache[0].time;
         const lastFrameTime = this.frameDataCache[
             this.frameDataCache.length - 1
         ].time;
-
-        // Deal with some special cases first
-        if (
-            this.frameDataCache.length > 0 &&
-            timeNs === 0 &&
-            firstFrameTime <= Number.EPSILON // allow for floating point errors
-        ) {
-            // t = 0 is needed, the first frame time is 0, and it exists in local cache
-            return true;
-        } else if (this.frameDataCache.length < 2) {
-            // Local cache only has 1 frame but we need something other than the first frame
-            return false;
-        }
 
         const notLessThanFirstFrameTime =
             compareTimes(timeNs, firstFrameTime, this.timeStepSize) !== -1;

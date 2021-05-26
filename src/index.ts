@@ -9,5 +9,6 @@ export type {
 } from "./simularium";
 export { Orchestrator, RenderStyle, SimulariumController };
 export { RemoteSimulator, DummyRemoteSimulator } from "./simularium";
+export { compareTimes } from "./util";
 
 export default Viewport;
