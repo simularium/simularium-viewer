@@ -159,7 +159,6 @@ export class LocalFileSimulator implements ISimulator {
     }
 
     public gotoRemoteSimulationTime(timeNs: number): void {
-        console.log(`LocalFileSimulator.gotoRemoteSimulationTime(${timeNs})`);
         const { bundleData } = this.simulariumFile.spatialData;
         const { timeStepSize } = this.simulariumFile.trajectoryInfo;
 
@@ -172,8 +171,6 @@ export class LocalFileSimulator implements ISimulator {
         if (frameNumber !== -1) {
             this.currentPlaybackFrameIndex = frameNumber;
             this.requestSingleFrame(frameNumber);
-        } else {
-            throw `No frame matching the time ${timeNs} was found in the bundleData`;
         }
     }
 

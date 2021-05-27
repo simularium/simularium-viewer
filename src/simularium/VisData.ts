@@ -389,18 +389,10 @@ class VisData {
             compareTimes(timeNs, firstFrameTime, this.timeStepSize) !== -1;
         const notGreaterThanLastFrameTime =
             compareTimes(timeNs, lastFrameTime, this.timeStepSize) !== 1;
-
-        if (
-            notLessThanFirstFrameTime &&
-            notGreaterThanLastFrameTime === false
-        ) {
-            console.log("no local cache for time");
-        }
         return notLessThanFirstFrameTime && notGreaterThanLastFrameTime;
     }
 
     public gotoTime(timeNs: number): void {
-        console.log(`VisData.gotoTime(${timeNs})`);
         this.cacheFrame = -1;
 
         // Find the index of the frame that has the time matching our target time
@@ -411,9 +403,7 @@ class VisData {
         });
 
         // frameNumber is -1 if findIndex() above doesn't find a match
-        if (frameNumber === -1) {
-            throw `No frame matching the time ${timeNs} was found in the cache`;
-        } else {
+        if (frameNumber !== -1) {
             this.cacheFrame = frameNumber;
         }
     }
@@ -454,7 +444,6 @@ class VisData {
     }
 
     public clearCache(): void {
-        console.log("clearing cache:", this.frameDataCache.length);
         this.frameCache = [];
         this.frameDataCache = [];
         this.cacheFrame = -1;
