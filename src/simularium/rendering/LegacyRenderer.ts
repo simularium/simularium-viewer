@@ -1,4 +1,3 @@
-import MembraneShader from "./MembraneShader";
 import PDBModel from "../PDBModel";
 import VisAgent from "../VisAgent";
 
@@ -8,10 +7,7 @@ import {
     Material,
     MeshLambertMaterial,
     MeshBasicMaterial,
-    ShaderMaterial,
     TubeBufferGeometry,
-    Vector2,
-    WebGLRenderer,
     Group,
     Mesh,
     Object3D,
@@ -46,43 +42,6 @@ class LegacyRenderer {
             color: new Color(FOLLOW_COLOR),
         });
         this.agentMeshGroup = new Group();
-    }
-
-    // public getGroup(): Group {
-    //     return this.agentMeshGroup;
-    // }
-
-    public static membraneData: {
-        faces: { name: string }[];
-        sides: { name: string }[];
-        facesMaterial: ShaderMaterial;
-        sidesMaterial: ShaderMaterial;
-        facesUVScale: Vector2;
-        sidesUVScale: Vector2;
-    } = {
-        faces: [{ name: "curved_5nm_Right" }, { name: "curved_5nm_Left" }],
-        sides: [
-            { name: "curved_5nm_Bottom" },
-            { name: "curved_5nm_Top" },
-            { name: "curved_5nm_Back" },
-            { name: "curved_5nm_Front" },
-        ],
-        facesMaterial: MembraneShader.membraneShader.clone() as ShaderMaterial,
-        sidesMaterial: MembraneShader.membraneShader.clone() as ShaderMaterial,
-        facesUVScale: new Vector2(40.0, 40.0),
-        sidesUVScale: new Vector2(2.0, 40.0),
-    };
-
-    public static updateMembrane(time: number, renderer: WebGLRenderer): void {
-        LegacyRenderer.membraneData.facesMaterial.uniforms.iTime.value = time;
-        LegacyRenderer.membraneData.sidesMaterial.uniforms.iTime.value = time;
-
-        renderer.getDrawingBufferSize(
-            LegacyRenderer.membraneData.facesMaterial.uniforms.iResolution.value
-        );
-        renderer.getDrawingBufferSize(
-            LegacyRenderer.membraneData.sidesMaterial.uniforms.iResolution.value
-        );
     }
 
     public beginUpdate(scene: Scene): void {

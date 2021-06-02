@@ -161,7 +161,6 @@ class VisGeometry {
     public idColorMapping: Map<number, number>;
     private isIdColorMappingSet: boolean;
     private supportsMoleculeRendering: boolean;
-    private membraneAgent?: VisAgent;
     private lodBias: number;
     private lodDistanceStops: number[];
     private needToCenterCamera: boolean;
@@ -205,8 +204,6 @@ class VisGeometry {
         this.instancedMeshGroup = new Group();
 
         this.setupScene();
-
-        this.membraneAgent = undefined;
 
         this.legacyRenderer = new LegacyRenderer();
         this.moleculeRenderer = new MoleculeRenderer();
@@ -494,13 +491,6 @@ class VisGeometry {
     }
 
     public setFollowObject(obj: number): void {
-        if (
-            this.membraneAgent &&
-            obj === this.membraneAgent.agentData.instanceId
-        ) {
-            return;
-        }
-
         if (this.followObjectId !== NO_AGENT) {
             const visAgent = this.visAgentInstances.get(this.followObjectId);
             if (!visAgent) {
@@ -836,19 +826,10 @@ class VisGeometry {
         this.controls.enabled = true;
     }
 
-    public render(time: number): void {
+    public render(_time: number): void {
         if (this.visAgents.length === 0) {
             this.renderer.clear();
             return;
-        }
-
-        const elapsedSeconds = time / 1000;
-
-        if (
-            this.membraneAgent &&
-            this.renderStyle === RenderStyle.WEBGL1_FALLBACK
-        ) {
-            LegacyRenderer.updateMembrane(elapsedSeconds, this.renderer);
         }
 
         this.controls.update();
@@ -2023,8 +2004,6 @@ class VisGeometry {
 
         this.unfollow();
         this.removeAllPaths();
-
-        this.membraneAgent = undefined;
 
         // remove geometry from all visible scene groups.
         // Object3D.remove can be slow, and just doing it in-order here
