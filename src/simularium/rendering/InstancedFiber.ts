@@ -285,7 +285,7 @@ class InstancedFiber {
         y: number,
         z: number,
         scale: number,
-        instanceId: number,
+        uniqueAgentId: number,
         typeId: number
     ): void {
         const offset = this.currentInstance;
@@ -293,7 +293,7 @@ class InstancedFiber {
         this.positionAttribute.setXYZW(offset, x, y, z, scale);
         this.instanceAttribute.setXYZ(
             offset,
-            instanceId,
+            uniqueAgentId,
             typeId,
             this.currentInstance
         );
@@ -370,7 +370,7 @@ class InstancedFiberGroup {
         y: number,
         z: number,
         scale: number,
-        instanceId: number,
+        uniqueAgentId: number,
         typeId: number
     ): void {
         if (!this.fibers[nCurvePts]) {
@@ -383,7 +383,7 @@ class InstancedFiberGroup {
             y,
             z,
             scale,
-            instanceId,
+            uniqueAgentId,
             typeId
         );
     }

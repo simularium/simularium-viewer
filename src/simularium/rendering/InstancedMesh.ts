@@ -161,7 +161,7 @@ class InstancedMesh {
         rx: number,
         ry: number,
         rz: number,
-        instanceId: number,
+        uniqueAgentId: number,
         typeId: number
     ): void {
         const offset = this.currentInstance;
@@ -169,7 +169,7 @@ class InstancedMesh {
         this.positionAttribute.setXYZW(offset, x, y, z, scale);
         const q = tmpQuaternion.setFromEuler(tmpEuler.set(rx, ry, rz));
         this.rotationAttribute.setXYZW(offset, q.x, q.y, q.z, q.w);
-        this.instanceAttribute.setXY(offset, instanceId, typeId);
+        this.instanceAttribute.setXY(offset, uniqueAgentId, typeId);
 
         this.currentInstance++;
     }
