@@ -41,7 +41,7 @@ import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC } from "../constants";
 import { TrajectoryFileInfo, CameraSpec } from "./types";
 import { AgentData } from "./VisData";
 
-import MoleculeRenderer from "./rendering/MoleculeRenderer";
+import SimulariumRenderer from "./rendering/SimulariumRenderer";
 import { InstancedFiberGroup } from "./rendering/InstancedFiber";
 import { InstancedMesh } from "./rendering/InstancedMesh";
 import { LegacyRenderer } from "./rendering/LegacyRenderer";
@@ -134,7 +134,8 @@ class VisGeometry {
     public hiddenIds: number[];
     public paths: PathData[];
     public mlogger: ILogger;
-    public renderer: WebGLRenderer;
+    // this is the threejs object that issues all the webgl calls
+    public threejsrenderer: WebGLRenderer;
     public scene: Scene;
     public camera: PerspectiveCamera;
     public controls: OrbitControls;
@@ -148,7 +149,7 @@ class VisGeometry {
     private boxFarZ: number;
 
     public hemiLight: HemisphereLight;
-    public moleculeRenderer: MoleculeRenderer;
+    public renderer: SimulariumRenderer;
     public legacyRenderer: LegacyRenderer;
     public atomSpread = 3.0;
     public numAtomsPerAgent = 8;
@@ -160,7 +161,7 @@ class VisGeometry {
     public instancedMeshGroup: Group;
     public idColorMapping: Map<number, number>;
     private isIdColorMappingSet: boolean;
-    private supportsMoleculeRendering: boolean;
+    private supportsWebGL2Rendering: boolean;
     private lodBias: number;
     private lodDistanceStops: number[];
     private needToCenterCamera: boolean;
@@ -172,7 +173,7 @@ class VisGeometry {
 
     public constructor(loggerLevel: ILogLevel) {
         this.renderStyle = RenderStyle.WEBGL1_FALLBACK;
-        this.supportsMoleculeRendering = false;
+        this.supportsWebGL2Rendering = false;
 
         this.visGeomMap = new Map<number, AgentTypeGeometry>();
         this.meshRegistry = new Map<string | number, MeshLoadRequest>();
@@ -206,11 +207,11 @@ class VisGeometry {
         this.setupScene();
 
         this.legacyRenderer = new LegacyRenderer();
-        this.moleculeRenderer = new MoleculeRenderer();
+        this.renderer = new SimulariumRenderer();
 
         this.backgroundColor = DEFAULT_BACKGROUND_COLOR;
         this.pathEndColor = this.backgroundColor.clone();
-        this.moleculeRenderer.setBackgroundColor(this.backgroundColor);
+        this.renderer.setBackgroundColor(this.backgroundColor);
 
         this.mlogger = jsLogger.get("visgeometry");
         this.mlogger.setLevel(loggerLevel);
@@ -222,10 +223,10 @@ class VisGeometry {
 
         this.dl = new DirectionalLight(0xffffff, 0.6);
         this.hemiLight = new HemisphereLight(0xffffff, 0x000000, 0.5);
-        this.renderer = new WebGLRenderer({ premultipliedAlpha: false });
+        this.threejsrenderer = new WebGLRenderer({ premultipliedAlpha: false });
         this.controls = new OrbitControls(
             this.camera,
-            this.renderer.domElement
+            this.threejsrenderer.domElement
         );
 
         this.boundingBox = new Box3(
@@ -274,8 +275,8 @@ class VisGeometry {
                 : new Color(c);
         }
         this.pathEndColor = this.backgroundColor.clone();
-        this.moleculeRenderer.setBackgroundColor(this.backgroundColor);
-        this.renderer.setClearColor(this.backgroundColor, 1);
+        this.renderer.setBackgroundColor(this.backgroundColor);
+        this.threejsrenderer.setClearColor(this.backgroundColor, 1);
     }
 
     public setupGui(): void {
@@ -314,16 +315,16 @@ class VisGeometry {
                 this.updateScene(this.currentSceneAgents);
             });
 
-        this.moleculeRenderer.setupGui(gui);
+        this.renderer.setupGui(gui);
     }
 
     public setRenderStyle(renderStyle: RenderStyle): void {
         // if target render style is supported, then change, otherwise don't.
         if (
             renderStyle === RenderStyle.WEBGL2_PREFERRED &&
-            !this.supportsMoleculeRendering
+            !this.supportsWebGL2Rendering
         ) {
-            console.log("Warning: molecule rendering not supported");
+            console.log("Warning: WebGL2 rendering not supported");
             return;
         }
 
@@ -354,7 +355,7 @@ class VisGeometry {
     }
 
     public get renderDom(): HTMLElement {
-        return this.renderer.domElement;
+        return this.threejsrenderer.domElement;
     }
 
     public handleTrajectoryFileInfo(
@@ -646,11 +647,13 @@ class VisGeometry {
 
         if (WEBGL.isWebGL2Available() === false) {
             this.renderStyle = RenderStyle.WEBGL1_FALLBACK;
-            this.supportsMoleculeRendering = false;
-            this.renderer = new WebGLRenderer({ premultipliedAlpha: false });
+            this.supportsWebGL2Rendering = false;
+            this.threejsrenderer = new WebGLRenderer({
+                premultipliedAlpha: false,
+            });
         } else {
             this.renderStyle = RenderStyle.WEBGL2_PREFERRED;
-            this.supportsMoleculeRendering = true;
+            this.supportsWebGL2Rendering = true;
             const canvas = document.createElement("canvas");
             const context: WebGLRenderingContext = canvas.getContext("webgl2", {
                 alpha: false,
@@ -661,15 +664,15 @@ class VisGeometry {
                 context: context,
                 premultipliedAlpha: false,
             };
-            this.renderer = new WebGLRenderer(rendererParams);
+            this.threejsrenderer = new WebGLRenderer(rendererParams);
         }
 
         // set this up after the renderStyle has been set.
         this.constructInstancedFibers();
 
-        this.renderer.setSize(initWidth, initHeight); // expected to change when reparented
-        this.renderer.setClearColor(this.backgroundColor, 1);
-        this.renderer.clear();
+        this.threejsrenderer.setSize(initWidth, initHeight); // expected to change when reparented
+        this.threejsrenderer.setClearColor(this.backgroundColor, 1);
+        this.threejsrenderer.clear();
 
         this.camera.position.z = DEFAULT_CAMERA_Z_POSITION;
         this.initCameraPosition = this.camera.position.clone();
@@ -795,8 +798,8 @@ class VisGeometry {
         height = Math.max(height, 2);
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
-        this.renderer.setSize(width, height);
-        this.moleculeRenderer.resize(width, height);
+        this.threejsrenderer.setSize(width, height);
+        this.renderer.resize(width, height);
     }
 
     public reparent(parent?: HTMLElement | null): void {
@@ -804,18 +807,23 @@ class VisGeometry {
             return;
         }
 
-        parent.appendChild(this.renderer.domElement);
-        this.setUpControls(this.renderer.domElement);
+        parent.appendChild(this.threejsrenderer.domElement);
+        this.setUpControls(this.threejsrenderer.domElement);
 
         this.resize(parent.scrollWidth, parent.scrollHeight);
 
-        this.renderer.setClearColor(this.backgroundColor, 1.0);
-        this.renderer.clear();
+        this.threejsrenderer.setClearColor(this.backgroundColor, 1.0);
+        this.threejsrenderer.clear();
 
-        this.renderer.domElement.setAttribute("style", "top: 0px; left: 0px");
+        this.threejsrenderer.domElement.setAttribute(
+            "style",
+            "top: 0px; left: 0px"
+        );
 
-        this.renderer.domElement.onmouseenter = () => this.enableControls();
-        this.renderer.domElement.onmouseleave = () => this.disableControls();
+        this.threejsrenderer.domElement.onmouseenter = () =>
+            this.enableControls();
+        this.threejsrenderer.domElement.onmouseleave = () =>
+            this.disableControls();
     }
 
     public disableControls(): void {
@@ -828,7 +836,7 @@ class VisGeometry {
 
     public render(_time: number): void {
         if (this.visAgents.length === 0) {
-            this.renderer.clear();
+            this.threejsrenderer.clear();
             return;
         }
 
@@ -862,7 +870,7 @@ class VisGeometry {
 
         if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
             // meshes only.
-            this.renderer.render(this.scene, this.camera);
+            this.threejsrenderer.render(this.scene, this.camera);
         } else {
             // select visibility and representation.
             // and set lod for pdbs.
@@ -900,19 +908,19 @@ class VisGeometry {
                 this.instancedMeshGroup.add(entry.instances.getMesh());
             }
 
-            this.moleculeRenderer.setMeshGroups(
+            this.renderer.setMeshGroups(
                 this.agentPDBGroup,
                 this.instancedMeshGroup,
                 this.fibers,
                 meshTypes
             );
-            this.moleculeRenderer.setFollowedInstance(this.followObjectId);
-            this.moleculeRenderer.setNearFar(this.boxNearZ, this.boxFarZ);
+            this.renderer.setFollowedInstance(this.followObjectId);
+            this.renderer.setNearFar(this.boxNearZ, this.boxFarZ);
             this.boundingBoxMesh.visible = false;
             this.tickMarksMesh.visible = false;
             this.agentPathGroup.visible = false;
-            this.moleculeRenderer.render(
-                this.renderer,
+            this.renderer.render(
+                this.threejsrenderer,
                 this.scene,
                 this.camera,
                 null
@@ -923,14 +931,14 @@ class VisGeometry {
             this.tickMarksMesh.visible = true;
             this.agentPathGroup.visible = true;
 
-            this.renderer.autoClear = false;
+            this.threejsrenderer.autoClear = false;
             // hide everything except the wireframe and paths, and render with the standard renderer
             this.agentPDBGroup.visible = false;
             this.instancedMeshGroup.visible = false;
-            this.renderer.render(this.scene, this.camera);
+            this.threejsrenderer.render(this.scene, this.camera);
             this.agentPDBGroup.visible = true;
             this.instancedMeshGroup.visible = true;
-            this.renderer.autoClear = true;
+            this.threejsrenderer.autoClear = true;
 
             this.scene.autoUpdate = true;
         }
@@ -949,7 +957,7 @@ class VisGeometry {
 
     public hitTest(offsetX: number, offsetY: number): number {
         const size = new Vector2();
-        this.renderer.getSize(size);
+        this.threejsrenderer.getSize(size);
         if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
             const mouse = {
                 x: (offsetX / size.x) * 2 - 1,
@@ -958,8 +966,8 @@ class VisGeometry {
             return this.legacyRenderer.hitTest(mouse, this.camera);
         } else {
             // read from instance buffer pixel!
-            return this.moleculeRenderer.hitTest(
-                this.renderer,
+            return this.renderer.hitTest(
+                this.threejsrenderer,
                 offsetX,
                 size.y - offsetY
             );
@@ -985,7 +993,7 @@ class VisGeometry {
                 ((colorNumbers[i] & 0x000000ff) >> 0) / 255.0;
             this.colorsData[i * 4 + 3] = 1.0;
         }
-        this.moleculeRenderer.updateColors(numColors, this.colorsData);
+        this.renderer.updateColors(numColors, this.colorsData);
 
         this.visAgents.forEach((agent) => {
             agent.setColor(
