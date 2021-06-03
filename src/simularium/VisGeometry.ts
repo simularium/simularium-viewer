@@ -30,6 +30,7 @@ import {
     WebGLRendererParameters,
     Mesh,
     Quaternion,
+    MOUSE,
 } from "three";
 
 import * as dat from "dat.gui";
@@ -475,6 +476,26 @@ class VisGeometry {
             return;
         }
         this.camera.position.copy(newPosition);
+    }
+
+    public setPanningMode(pan: boolean): void {
+        if (!pan) {
+            this.controls.enablePan = false;
+            this.controls.enableRotate = true;
+            this.controls.mouseButtons = {
+                LEFT: MOUSE.ROTATE,
+                MIDDLE: MOUSE.DOLLY,
+                RIGHT: MOUSE.PAN,
+            };
+        } else {
+            this.controls.enablePan = true;
+            this.controls.enableRotate = false;
+            this.controls.mouseButtons = {
+                LEFT: MOUSE.PAN,
+                MIDDLE: MOUSE.DOLLY,
+                RIGHT: MOUSE.ROTATE,
+            };
+        }
     }
 
     public getFollowObject(): number {
