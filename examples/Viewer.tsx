@@ -367,6 +367,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                     name="slider"
                     type="range"
                     min={0}
+                    step={this.state.timeStep}
                     value={this.state.currentTime}
                     max={this.state.totalDuration}
                     onChange={this.handleScrubTime}
