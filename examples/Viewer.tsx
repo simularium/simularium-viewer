@@ -221,7 +221,8 @@ class Viewer extends React.Component<{}, ViewerState> {
 
     public handleTrajectoryInfo(data): void {
         console.log("Trajectory info arrived", data);
-        const totalDuration = data.totalSteps * data.timeStepSize;
+        // NOTE: Currently incorrectly assumes initial time of 0
+        const totalDuration = (data.totalSteps - 1) * data.timeStepSize;
         this.setState({
             totalDuration,
             timeStep: data.timeStepSize,
@@ -259,17 +260,11 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public gotoNextFrame(): void {
-        const targetTime = parseFloat(
-            (this.state.currentTime + this.state.timeStep).toPrecision(4)
-        );
-        simulariumController.gotoTime(targetTime);
+        simulariumController.gotoTime(this.state.currentTime + this.state.timeStep);
     }
 
     public gotoPreviousFrame(): void {
-        const targetTime = parseFloat(
-            (this.state.currentTime - this.state.timeStep).toPrecision(4)
-        );
-        simulariumController.gotoTime(targetTime);
+        simulariumController.gotoTime(this.state.currentTime - this.state.timeStep);
     }
 
     private configureAndLoad() {
