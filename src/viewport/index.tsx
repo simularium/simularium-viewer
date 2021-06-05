@@ -144,6 +144,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         this.zoomIn = this.zoomIn.bind(this);
         this.zoomOut = this.zoomOut.bind(this);
         this.setPanningMode = this.setPanningMode.bind(this);
+        this.setFocusMode = this.setFocusMode.bind(this);
 
         this.visGeometry = new VisGeometry(loggerLevel);
         this.props.simulariumController.visData.clearCache();
@@ -208,6 +209,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         simulariumController.zoomIn = this.zoomIn;
         simulariumController.zoomOut = this.zoomOut;
         simulariumController.setPanningMode = this.setPanningMode;
+        simulariumController.setFocusMode = this.setFocusMode;
         simulariumController.visGeometry = this.visGeometry;
         simulariumController.trajFileInfoCallback = (
             msg: TrajectoryFileInfoAny
@@ -519,6 +521,10 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
     public setPanningMode(pan: boolean): void {
         this.visGeometry.setPanningMode(pan);
+    }
+
+    public setFocusMode(focus: boolean): void {
+        this.visGeometry.setFocusMode(focus);
     }
 
     public onPickObject(posX: number, posY: number): void {
