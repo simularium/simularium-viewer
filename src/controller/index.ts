@@ -56,6 +56,7 @@ export default class SimulariumController {
     public reOrientCamera: () => void;
     public zoomIn: () => void;
     public zoomOut: () => void;
+    public setPanningMode: (pan: boolean) => void;
 
     public onError?: (errorMessage: string) => void;
 
@@ -80,6 +81,7 @@ export default class SimulariumController {
         this.centerCamera = () => noop;
         this.zoomIn = () => noop;
         this.zoomOut = () => noop;
+        this.setPanningMode = (_pan: boolean) => noop;
         this.onError = (/*errorMessage*/) => noop;
         if (params.remoteSimulator) {
             this.simulator = params.remoteSimulator;

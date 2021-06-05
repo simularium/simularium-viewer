@@ -98,6 +98,7 @@ const initialState = {
 
 class Viewer extends React.Component<{}, ViewerState> {
     private viewerRef: React.RefObject<SimulariumViewer>;
+    private panMode = false;
 
     public constructor(props) {
         super(props);
@@ -348,6 +349,10 @@ class Viewer extends React.Component<{}, ViewerState> {
                 <button onClick={() => this.configureAndLoad()}>
                     Load model
                 </button>
+                <button onClick={() => simulariumController.clearFile()}>
+                    Clear
+                </button>
+                <br />
                 <button onClick={() => simulariumController.resume()}>
                     Play
                 </button>
@@ -357,11 +362,6 @@ class Viewer extends React.Component<{}, ViewerState> {
                 <button onClick={() => simulariumController.stop()}>
                     stop
                 </button>
-                <button onClick={() => simulariumController.clearFile()}>
-                    Clear
-                </button>
-
-                <br />
                 <button onClick={this.gotoPreviousFrame.bind(this)}>
                     Previous Frame
                 </button>
@@ -414,6 +414,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                 >
                     {this.state.hideAllAgents ? "Show all" : "Hide all"}
                 </button>
+                <br />
                 <button
                     onClick={() =>
                         this.setState({ showPaths: !this.state.showPaths })
@@ -425,7 +426,8 @@ class Viewer extends React.Component<{}, ViewerState> {
                     onClick={() =>
                         this.setState({
                             renderStyle:
-                                this.state.renderStyle === RenderStyle.WEBGL1_FALLBACK
+                                this.state.renderStyle ===
+                                RenderStyle.WEBGL1_FALLBACK
                                     ? RenderStyle.WEBGL2_PREFERRED
                                     : RenderStyle.WEBGL1_FALLBACK,
                         })
@@ -445,6 +447,14 @@ class Viewer extends React.Component<{}, ViewerState> {
                 <button onClick={() => simulariumController.zoomIn()}>+</button>
                 <button onClick={() => simulariumController.zoomOut()}>
                     -
+                </button>
+                <button
+                    onClick={() => {
+                        this.panMode = !this.panMode;
+                        simulariumController.setPanningMode(this.panMode);
+                    }}
+                >
+                    Pan/Rotate Mode
                 </button>
                 <span>
                     Tick interval length:{" "}
