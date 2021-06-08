@@ -171,6 +171,7 @@ class VisGeometry {
     private initCameraPosition: Vector3;
     private cameraDefault: CameraSpec;
     private fibers: InstancedFiberGroup;
+    private focusMode: boolean;
 
     public constructor(loggerLevel: ILogLevel) {
         this.renderStyle = RenderStyle.WEBGL1_FALLBACK;
@@ -229,6 +230,8 @@ class VisGeometry {
             this.camera,
             this.threejsrenderer.domElement
         );
+        this.setPanningMode(false);
+        this.focusMode = true;
 
         this.boundingBox = new Box3(
             new Vector3(0, 0, 0),
@@ -490,7 +493,7 @@ class VisGeometry {
 
     public setPanningMode(pan: boolean): void {
         if (!pan) {
-            this.controls.enablePan = false;
+            this.controls.enablePan = true;
             this.controls.enableRotate = true;
             this.controls.mouseButtons = {
                 LEFT: MOUSE.ROTATE,
@@ -499,13 +502,17 @@ class VisGeometry {
             };
         } else {
             this.controls.enablePan = true;
-            this.controls.enableRotate = false;
+            this.controls.enableRotate = true;
             this.controls.mouseButtons = {
                 LEFT: MOUSE.PAN,
                 MIDDLE: MOUSE.DOLLY,
                 RIGHT: MOUSE.ROTATE,
             };
         }
+    }
+
+    public setFocusMode(focus: boolean): void {
+        this.focusMode = focus;
     }
 
     public getFollowObject(): number {
@@ -623,7 +630,7 @@ class VisGeometry {
         this.controls.maxDistance = 750;
         this.controls.minDistance = 5;
         this.controls.zoomSpeed = 1.0;
-        this.controls.enablePan = false;
+        this.setPanningMode(false);
         this.controls.saveState();
     }
 
@@ -1689,7 +1696,7 @@ class VisGeometry {
         const lerpRate = 0.2;
         const distanceBuffer = 0.002;
         const rotationBuffer = 0.01;
-        if (this.followObjectId !== NO_AGENT) {
+        if (this.followObjectId !== NO_AGENT && this.focusMode) {
             // keep camera at same distance from target.
             const direction = new Vector3().subVectors(
                 this.camera.position,

@@ -99,6 +99,7 @@ const initialState = {
 class Viewer extends React.Component<{}, ViewerState> {
     private viewerRef: React.RefObject<SimulariumViewer>;
     private panMode = false;
+    private focusMode = true;
 
     public constructor(props) {
         super(props);
@@ -454,6 +455,14 @@ class Viewer extends React.Component<{}, ViewerState> {
                     }}
                 >
                     Pan/Rotate Mode
+                </button>
+                <button
+                    onClick={() => {
+                        this.focusMode = !this.focusMode;
+                        simulariumController.setFocusMode(this.focusMode);
+                    }}
+                >
+                    Focus Mode
                 </button>
                 <span>
                     Tick interval length:{" "}

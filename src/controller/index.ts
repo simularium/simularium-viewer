@@ -57,6 +57,7 @@ export default class SimulariumController {
     public zoomIn: () => void;
     public zoomOut: () => void;
     public setPanningMode: (pan: boolean) => void;
+    public setFocusMode: (focus: boolean) => void;
 
     public onError?: (errorMessage: string) => void;
 
@@ -82,6 +83,7 @@ export default class SimulariumController {
         this.zoomIn = () => noop;
         this.zoomOut = () => noop;
         this.setPanningMode = (_pan: boolean) => noop;
+        this.setFocusMode = (_focus: boolean) => noop;
         this.onError = (/*errorMessage*/) => noop;
         if (params.remoteSimulator) {
             this.simulator = params.remoteSimulator;
