@@ -483,7 +483,7 @@ class VisGeometry {
 
     public setPanningMode(pan: boolean): void {
         if (!pan) {
-            this.controls.enablePan = false;
+            this.controls.enablePan = true;
             this.controls.enableRotate = true;
             this.controls.mouseButtons = {
                 LEFT: MOUSE.ROTATE,
@@ -492,7 +492,7 @@ class VisGeometry {
             };
         } else {
             this.controls.enablePan = true;
-            this.controls.enableRotate = false;
+            this.controls.enableRotate = true;
             this.controls.mouseButtons = {
                 LEFT: MOUSE.PAN,
                 MIDDLE: MOUSE.DOLLY,
@@ -634,7 +634,7 @@ class VisGeometry {
         this.controls.maxDistance = 750;
         this.controls.minDistance = 5;
         this.controls.zoomSpeed = 1.0;
-        this.controls.enablePan = false;
+        this.setPanningMode(false);
         this.controls.saveState();
     }
 
