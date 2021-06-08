@@ -5,6 +5,7 @@ import CompositePass from "./CompositePass";
 import ContourPass from "./ContourPass";
 import DrawBufferPass from "./DrawBufferPass";
 import { InstancedFiberGroup } from "./InstancedFiber";
+import { InstancedMesh } from "./InstancedMesh";
 
 import {
     Color,
@@ -19,7 +20,7 @@ import {
 } from "three";
 import * as dat from "dat.gui";
 
-interface MoleculeRenderParameters {
+interface SimulariumRenderParameters {
     aoradius1: number;
     aoradius2: number;
     blurradius1: number;
@@ -41,7 +42,7 @@ interface MoleculeRenderParameters {
     outlineColor: [number, number, number];
 }
 
-class MoleculeRenderer {
+class SimulariumRenderer {
     public gbufferPass: GBufferPass;
     public ssao1Pass: SSAO1Pass;
     public ssao2Pass: SSAO1Pass;
@@ -58,7 +59,7 @@ class MoleculeRenderer {
     public ssaoBuffer2: WebGLRenderTarget;
     public ssaoBufferBlurred: WebGLRenderTarget;
     public ssaoBufferBlurred2: WebGLRenderTarget;
-    private parameters: MoleculeRenderParameters;
+    private parameters: SimulariumRenderParameters;
     private boundsNear: number;
     private boundsFar: number;
 
@@ -276,18 +277,16 @@ class MoleculeRenderer {
     }
 
     public setMeshGroups(
-        agentMeshGroup: Group,
         agentPDBGroup: Group,
-        agentFiberGroup: Group,
         instancedMeshGroup: Group,
-        fibers: InstancedFiberGroup
+        fibers: InstancedFiberGroup,
+        meshTypes: InstancedMesh[]
     ): void {
         this.gbufferPass.setMeshGroups(
-            agentMeshGroup,
             agentPDBGroup,
-            agentFiberGroup,
             instancedMeshGroup,
-            fibers
+            fibers,
+            meshTypes
         );
     }
 
@@ -439,4 +438,4 @@ class MoleculeRenderer {
     }
 }
 
-export default MoleculeRenderer;
+export default SimulariumRenderer;

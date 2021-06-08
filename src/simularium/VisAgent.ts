@@ -1,36 +1,14 @@
 import {
     CatmullRomCurve3,
     Color,
-    LineCurve3,
-    Material,
-    Mesh,
-    MeshBasicMaterial,
-    MeshLambertMaterial,
     Object3D,
-    ShaderMaterial,
     SphereBufferGeometry,
-    TubeBufferGeometry,
-    Vector2,
     Vector3,
-    WebGLRenderer,
 } from "three";
 
-import MembraneShader from "./rendering/MembraneShader";
 import PDBModel from "./PDBModel";
 import VisTypes from "./VisTypes";
-
-function getHighlightColor(color: Color): Color {
-    const hiColor = new Color(color);
-    let hsl: {
-        h: number;
-        s: number;
-        l: number;
-    } = { h: 0, s: 0, l: 0 };
-    hsl = hiColor.getHSL(hsl);
-    // increase luminance 80% of the difference toward max
-    hiColor.setHSL(hsl.h, hsl.s, hsl.l + 0.8 * (1.0 - hsl.l));
-    return hiColor;
-}
+import { AgentData } from "./VisData";
 
 const NO_AGENT = -1;
 
@@ -42,90 +20,45 @@ export default class VisAgent {
         32,
         32
     );
-    public static fiberEndcapGeometry: SphereBufferGeometry = new SphereBufferGeometry(
-        1,
-        8,
-        8
-    );
-    // this material only used in webGL1 fallback rendering mode
-    private static followMaterial: MeshBasicMaterial = new MeshBasicMaterial({
-        color: new Color(0.14, 1, 0),
-    });
-    private static membraneData: {
-        faces: { name: string }[];
-        sides: { name: string }[];
-        facesMaterial: ShaderMaterial;
-        sidesMaterial: ShaderMaterial;
-        facesUVScale: Vector2;
-        sidesUVScale: Vector2;
-    } = {
-        faces: [{ name: "curved_5nm_Right" }, { name: "curved_5nm_Left" }],
-        sides: [
-            { name: "curved_5nm_Bottom" },
-            { name: "curved_5nm_Top" },
-            { name: "curved_5nm_Back" },
-            { name: "curved_5nm_Front" },
-        ],
-        facesMaterial: MembraneShader.membraneShader.clone() as ShaderMaterial,
-        sidesMaterial: MembraneShader.membraneShader.clone() as ShaderMaterial,
-        facesUVScale: new Vector2(40.0, 40.0),
-        sidesUVScale: new Vector2(2.0, 40.0),
-    };
-    public static updateMembrane(time: number, renderer: WebGLRenderer): void {
-        VisAgent.membraneData.facesMaterial.uniforms.iTime.value = time;
-        VisAgent.membraneData.sidesMaterial.uniforms.iTime.value = time;
 
-        renderer.getDrawingBufferSize(
-            VisAgent.membraneData.facesMaterial.uniforms.iResolution.value
-        );
-        renderer.getDrawingBufferSize(
-            VisAgent.membraneData.sidesMaterial.uniforms.iResolution.value
-        );
-    }
+    public agentData: AgentData;
 
-    public mesh: Object3D;
     public fiberCurve?: CatmullRomCurve3;
+
     // TODO can this default to a trivial single-atom pdb model?
     public pdbModel?: PDBModel;
     public pdbObjects: Object3D[];
     public lod: number;
-    public typeId: number;
+
     public colorIndex: number;
     public active: boolean;
-    // this material only used in webGL1 fallback rendering mode
-    public baseMaterial: Material;
-    // this material only used in webGL1 fallback rendering mode
-    public highlightMaterial: Material;
     public color: Color;
     public name: string;
     public followed: boolean;
     public highlighted: boolean;
     public hidden: boolean;
-    public visType: number;
-    public id: number;
 
     public constructor(name: string) {
-        this.id = NO_AGENT;
-        this.visType = VisTypes.ID_VIS_TYPE_DEFAULT;
+        this.agentData = {
+            x: 0,
+            y: 0,
+            z: 0,
+            xrot: 0,
+            yrot: 0,
+            zrot: 0,
+            instanceId: NO_AGENT,
+            visType: VisTypes.ID_VIS_TYPE_DEFAULT,
+            type: 0,
+            cr: 1.0,
+            subpoints: [],
+        };
         this.name = name;
         this.color = new Color(VisAgent.UNASSIGNED_MESH_COLOR);
         this.active = false;
-        this.typeId = -1;
         this.colorIndex = 0;
         this.followed = false;
         this.hidden = false;
         this.highlighted = false;
-        this.baseMaterial = new MeshLambertMaterial({
-            color: new Color(this.color),
-        });
-        this.highlightMaterial = new MeshBasicMaterial({
-            color: getHighlightColor(this.color),
-            transparent: true,
-            opacity: 1.0,
-        });
-        this.mesh = new Mesh(VisAgent.sphereGeometry, this.baseMaterial);
-        this.mesh.userData = { id: this.id };
-        this.mesh.visible = false;
 
         this.fiberCurve = undefined;
 
@@ -135,14 +68,22 @@ export default class VisAgent {
     }
 
     public resetMesh(): void {
-        this.id = NO_AGENT;
-        this.visType = VisTypes.ID_VIS_TYPE_DEFAULT;
-        this.typeId = -1;
-        this.mesh = new Mesh(VisAgent.sphereGeometry, this.baseMaterial);
-        this.mesh.userData = { id: this.id };
         this.followed = false;
         this.highlighted = false;
         this.setColor(new Color(VisAgent.UNASSIGNED_MESH_COLOR), 0);
+        this.agentData = {
+            x: 0,
+            y: 0,
+            z: 0,
+            xrot: 0,
+            yrot: 0,
+            zrot: 0,
+            instanceId: NO_AGENT,
+            visType: VisTypes.ID_VIS_TYPE_DEFAULT,
+            type: 0,
+            cr: 1.0,
+            subpoints: [],
+        };
     }
 
     public resetPDB(): void {
@@ -154,17 +95,6 @@ export default class VisAgent {
     public setColor(color: Color, colorIndex: number): void {
         this.color = color;
         this.colorIndex = colorIndex;
-        this.baseMaterial = new MeshLambertMaterial({
-            color: new Color(this.color),
-        });
-        this.highlightMaterial = new MeshBasicMaterial({
-            color: getHighlightColor(this.color),
-            transparent: true,
-            opacity: 1.0,
-        });
-        // because this is a new material, we need to re-install it on the geometry
-        // TODO deal with highlight and selection state
-        this.assignMaterial();
     }
 
     public setHidden(hidden: boolean): void {
@@ -173,86 +103,11 @@ export default class VisAgent {
 
     public setFollowed(followed: boolean): void {
         this.followed = followed;
-        this.assignMaterial();
     }
 
     public setHighlighted(highlighted: boolean): void {
         if (highlighted !== this.highlighted) {
             this.highlighted = highlighted;
-            this.assignMaterial();
-        }
-    }
-
-    private assignMaterial(): void {
-        if (this.mesh.name.includes("membrane")) {
-            return this.assignMembraneMaterial();
-        }
-
-        let material = this.baseMaterial;
-        if (this.followed) {
-            material = VisAgent.followMaterial;
-        } else if (this.highlighted) {
-            material = this.highlightMaterial;
-        }
-
-        for (let i = 0; i < this.pdbObjects.length; ++i) {
-            this.pdbObjects[
-                i
-            ].onBeforeRender = this.onAgentMeshBeforeRender.bind(this);
-        }
-
-        if (this.mesh instanceof Mesh) {
-            this.mesh.material = material;
-            this.mesh.onBeforeRender = this.onAgentMeshBeforeRender.bind(this);
-        } else {
-            this.mesh.traverse((child) => {
-                if (child instanceof Mesh) {
-                    child.material = material;
-                    child.onBeforeRender = this.onAgentMeshBeforeRender.bind(
-                        this
-                    );
-                }
-            });
-        }
-    }
-
-    public assignMembraneMaterial(): void {
-        if (this.highlighted) {
-            // at this time, assign separate material parameters to the faces and sides of the membrane
-            const faceNames = VisAgent.membraneData.faces.map((el) => {
-                return el.name;
-            });
-            const sideNames = VisAgent.membraneData.sides.map((el) => {
-                return el.name;
-            });
-            this.mesh.traverse((child) => {
-                if (child instanceof Mesh) {
-                    if (faceNames.includes(child.name)) {
-                        child.material = VisAgent.membraneData.facesMaterial;
-                        child.onBeforeRender = this.onAgentMeshBeforeRender.bind(
-                            this
-                        );
-                    } else if (sideNames.includes(child.name)) {
-                        child.material = VisAgent.membraneData.sidesMaterial;
-                        child.onBeforeRender = this.onAgentMeshBeforeRender.bind(
-                            this
-                        );
-                    }
-                }
-            });
-            VisAgent.membraneData.facesMaterial.uniforms.uvscale.value =
-                VisAgent.membraneData.facesUVScale;
-            VisAgent.membraneData.sidesMaterial.uniforms.uvscale.value =
-                VisAgent.membraneData.sidesUVScale;
-        } else {
-            this.mesh.traverse((child) => {
-                if (child instanceof Mesh) {
-                    child.material = this.baseMaterial;
-                    child.onBeforeRender = this.onAgentMeshBeforeRender.bind(
-                        this
-                    );
-                }
-            });
         }
     }
 
@@ -261,7 +116,19 @@ export default class VisAgent {
         // This means we have to subtract 1 in the downstream code (the shaders) if we need the true value.
         return (this.colorIndex + 1) * (this.highlighted ? 1 : -1);
     }
-    private onAgentMeshBeforeRender(
+
+    public setupPdb(pdb: PDBModel): void {
+        this.pdbModel = pdb;
+        this.pdbObjects = pdb.instantiate();
+        // glue the typeid, instanceid, radius to shader:
+        for (let j = 0; j < this.pdbObjects.length; ++j) {
+            this.pdbObjects[j].onBeforeRender = this.onPdbBeforeRender.bind(
+                this
+            );
+        }
+    }
+
+    private onPdbBeforeRender(
         this: VisAgent,
         renderer,
         scene,
@@ -281,7 +148,9 @@ export default class VisAgent {
             material.uniformsNeedUpdate = true;
         }
         if (material.uniforms.instanceId) {
-            material.uniforms.instanceId.value = Number(this.id);
+            material.uniforms.instanceId.value = Number(
+                this.agentData.instanceId
+            );
             material.uniformsNeedUpdate = true;
         }
         if (material.uniforms.radius) {
@@ -290,31 +159,21 @@ export default class VisAgent {
         }
     }
 
-    public setupMeshGeometry(meshGeom: Object3D): void {
-        // remember current transform
-        const p = this.mesh.position;
-        const r = this.mesh.rotation;
-        const s = this.mesh.scale;
+    public updatePdbTransform(scale: number): void {
+        for (let lod = 0; lod < this.pdbObjects.length; ++lod) {
+            const obj = this.pdbObjects[lod];
+            obj.position.x = this.agentData.x;
+            obj.position.y = this.agentData.y;
+            obj.position.z = this.agentData.z;
 
-        const visible = this.mesh.visible;
+            obj.rotation.x = this.agentData.xrot;
+            obj.rotation.y = this.agentData.yrot;
+            obj.rotation.z = this.agentData.zrot;
 
-        this.mesh = meshGeom.clone();
-        this.mesh.userData = { id: this.id };
-
-        this.mesh.visible = visible;
-        // restore transform
-        this.mesh.position.copy(p);
-        this.mesh.rotation.copy(r);
-        this.mesh.scale.copy(s);
-
-        this.assignMaterial();
-    }
-
-    public setupPdb(pdb: PDBModel): void {
-        this.pdbModel = pdb;
-        this.pdbObjects = pdb.instantiate();
-
-        this.assignMaterial();
+            obj.scale.x = scale;
+            obj.scale.y = scale;
+            obj.scale.z = scale;
+        }
     }
 
     public selectLOD(index: number): void {
@@ -334,7 +193,6 @@ export default class VisAgent {
 
     public renderAsMesh(): void {
         this.setPDBInvisible();
-        this.mesh.visible = true;
     }
 
     public renderAsPDB(
@@ -342,8 +200,6 @@ export default class VisAgent {
         distanceStops: number[],
         lodBias: number
     ): void {
-        this.mesh.visible = false;
-
         for (let j = 0; j < distanceStops.length; ++j) {
             // the first distance less than.
             if (myDistance < distanceStops[j]) {
@@ -354,7 +210,6 @@ export default class VisAgent {
     }
 
     public hide(): void {
-        this.mesh.visible = false;
         this.setPDBInvisible();
     }
 
@@ -372,12 +227,7 @@ export default class VisAgent {
         );
     }
 
-    public updateFiber(
-        subpoints: number[],
-        collisionRadius: number,
-        scale: number,
-        regenerateMesh: boolean
-    ): void {
+    public updateFiber(subpoints: number[]): void {
         const numSubPoints = subpoints.length;
         const numPoints = numSubPoints / 3;
         if (numSubPoints % 3 !== 0) {
@@ -403,40 +253,20 @@ export default class VisAgent {
 
         // set up new fiber as curved tube
         this.fiberCurve = new CatmullRomCurve3(curvePoints);
-
-        if (regenerateMesh) {
-            // expensive
-            const fibergeometry = new TubeBufferGeometry(
-                this.fiberCurve,
-                4 * (numPoints - 1), // 4 segments per control point
-                collisionRadius * scale * 0.5,
-                8, // could reduce this with depth?
-                false
-            );
-            (this.mesh as Mesh).geometry = fibergeometry;
-        }
-    }
-
-    // make a single generic fiber and return it
-    public static makeFiber(): Mesh {
-        const fibercurve = new LineCurve3(
-            new Vector3(0, 0, 0),
-            new Vector3(1, 1, 1)
-        );
-        const geometry = new TubeBufferGeometry(fibercurve, 1, 1, 1, false);
-        const fiberMesh = new Mesh(geometry);
-        fiberMesh.name = `Fiber`;
-
-        // downstream code will switch this flag
-        fiberMesh.visible = false;
-        return fiberMesh;
     }
 
     public getFollowPosition(): Vector3 {
-        if (this.visType === VisTypes.ID_VIS_TYPE_FIBER && this.fiberCurve) {
+        if (
+            this.agentData.visType === VisTypes.ID_VIS_TYPE_FIBER &&
+            this.fiberCurve
+        ) {
             return this.fiberCurve.getPoint(0.5);
         } else {
-            return new Vector3().copy(this.mesh.position);
+            return new Vector3(
+                this.agentData.x,
+                this.agentData.y,
+                this.agentData.z
+            );
         }
     }
 }
