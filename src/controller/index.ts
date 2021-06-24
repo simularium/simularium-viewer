@@ -64,7 +64,6 @@ export default class SimulariumController {
     private networkEnabled: boolean;
     private isPaused: boolean;
     private fileChanged: boolean;
-    private canRequestNewTime: boolean;
     private playBackFile: string;
     // used to map geometry to agent types
     private geometryFile: string;
@@ -119,7 +118,6 @@ export default class SimulariumController {
         this.networkEnabled = true;
         this.isPaused = false;
         this.fileChanged = false;
-        this.canRequestNewTime = true;
         this.playBackFile = params.trajectoryPlaybackFile || "";
         this.geometryFile = this.resolveGeometryFile(
             params.trajectoryGeometryFile || "",
@@ -244,7 +242,8 @@ export default class SimulariumController {
     }
 
     public gotoTime(timeNs: number): void {
-        if (this.canRequestNewTime === false) return;
+        // If in the middle of changing files, ignore any gotoTime requests
+        if (this.fileChanged === true) return;
         if (this.visData.hasLocalCacheForTime(timeNs)) {
             this.visData.gotoTime(timeNs);
         } else {
@@ -293,7 +292,6 @@ export default class SimulariumController {
         assetPrefix?: string
     ): Promise<FileReturn> {
         this.fileChanged = true;
-        this.canRequestNewTime = false;
         this.playBackFile = newFileName;
         this.geometryFile = this.resolveGeometryFile(
             geometryFile || "",
@@ -336,7 +334,6 @@ export default class SimulariumController {
             return this.start()
                 .then(() => {
                     if (this.simulator) {
-                        this.canRequestNewTime = true;
                         this.simulator.requestSingleFrame(0);
                     }
                 })
