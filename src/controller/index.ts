@@ -252,7 +252,7 @@ export default class SimulariumController {
                 //  and play remotely from the desired simulation time
                 this.visData.clearCache();
 
-                // This arbitrary rounding of timeNs is a temporary fix until
+                // NOTE: This arbitrary rounding of timeNs is a temporary fix until
                 // simularium-engine is updated to work with imprecise float time values.
                 // Revert the 2 lines of code below to:
                 // this.simulator.gotoRemoteSimulationTime(timeNs);
