@@ -63,7 +63,7 @@ export default class SimulariumController {
 
     private networkEnabled: boolean;
     private isPaused: boolean;
-    private fileChanged: boolean;
+    private isFileChanging: boolean;
     private playBackFile: string;
     // used to map geometry to agent types
     private geometryFile: string;
@@ -117,7 +117,7 @@ export default class SimulariumController {
 
         this.networkEnabled = true;
         this.isPaused = false;
-        this.fileChanged = false;
+        this.isFileChanging = false;
         this.playBackFile = params.trajectoryPlaybackFile || "";
         this.geometryFile = this.resolveGeometryFile(
             params.trajectoryGeometryFile || "",
@@ -179,8 +179,8 @@ export default class SimulariumController {
         this.createSimulatorConnection(config);
     }
 
-    public get hasChangedFile(): boolean {
-        return this.fileChanged;
+    public get isChangingFile(): boolean {
+        return this.isFileChanging;
     }
 
     public connect(): Promise<string> {
@@ -243,7 +243,7 @@ export default class SimulariumController {
 
     public gotoTime(timeNs: number): void {
         // If in the middle of changing files, ignore any gotoTime requests
-        if (this.fileChanged === true) return;
+        if (this.isFileChanging === true) return;
         if (this.visData.hasLocalCacheForTime(timeNs)) {
             this.visData.gotoTime(timeNs);
         } else {
@@ -270,7 +270,7 @@ export default class SimulariumController {
     }
 
     public clearFile(): void {
-        this.fileChanged = false;
+        this.isFileChanging = false;
         this.playBackFile = "";
         this.geometryFile = "";
         this.assetPrefix = DEFAULT_ASSET_PREFIX;
@@ -291,7 +291,7 @@ export default class SimulariumController {
         geometryFile?: string,
         assetPrefix?: string
     ): Promise<FileReturn> {
-        this.fileChanged = true;
+        this.isFileChanging = true;
         this.playBackFile = newFileName;
         this.geometryFile = this.resolveGeometryFile(
             geometryFile || "",
@@ -348,7 +348,7 @@ export default class SimulariumController {
     }
 
     public markFileChangeAsHandled(): void {
-        this.fileChanged = false;
+        this.isFileChanging = false;
     }
 
     public getFile(): string {
