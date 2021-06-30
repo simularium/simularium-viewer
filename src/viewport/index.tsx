@@ -581,7 +581,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         const elapsedTime = now - this.lastRenderTime;
         const totalElapsedTime = now - this.startTime;
         if (elapsedTime > timePerFrame) {
-            if (simulariumController.hasChangedFile) {
+            if (simulariumController.isChangingFile) {
                 this.visGeometry.clearForNewTrajectory();
                 const p = this.visGeometry.mapFromJSON(
                     simulariumController.getFile(),
