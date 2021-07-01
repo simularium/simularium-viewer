@@ -466,6 +466,7 @@ class VisGeometry {
     public zoomIn(): void {
         const position = this.camera.position.clone();
         const target = this.controls.target.clone();
+        console.log(target);
         const distance = position.distanceTo(target);
         const newDistance = distance - CAMERA_DOLLY_STEP_SIZE;
         const newPosition = new Vector3()
@@ -474,7 +475,9 @@ class VisGeometry {
         if (newDistance <= this.controls.minDistance) {
             return;
         }
-        this.camera.position.copy(newPosition);
+        this.camera.position.copy(
+            new Vector3().addVectors(newPosition, target)
+        );
     }
 
     public zoomOut(): void {
@@ -488,7 +491,9 @@ class VisGeometry {
         if (newDistance >= this.controls.maxDistance) {
             return;
         }
-        this.camera.position.copy(newPosition);
+        this.camera.position.copy(
+            new Vector3().addVectors(newPosition, target)
+        );
     }
 
     public setPanningMode(pan: boolean): void {
