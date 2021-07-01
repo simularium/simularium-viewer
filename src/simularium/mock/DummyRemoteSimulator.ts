@@ -164,9 +164,9 @@ export class DummyRemoteSimulator extends RemoteSimulator {
         }, this.commandLatencyMS);
     }
 
-    public gotoRemoteSimulationTime(timeNS: number): void {
+    public gotoRemoteSimulationTime(time: number): void {
         setTimeout(() => {
-            this.frameCounter = timeNS / this.timeStep;
+            this.frameCounter = time / this.timeStep;
 
             const msg = this.getDataBundle(this.frameCounter, 1);
             this.frameCounter++;

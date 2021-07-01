@@ -375,7 +375,7 @@ class VisData {
     /**
      *   Functions to check update
      * */
-    public hasLocalCacheForTime(timeNs: number): boolean {
+    public hasLocalCacheForTime(time: number): boolean {
         if (this.frameDataCache.length < 1) {
             return false;
         }
@@ -386,20 +386,18 @@ class VisData {
         ].time;
 
         const notLessThanFirstFrameTime =
-            compareTimes(timeNs, firstFrameTime, this.timeStepSize) !== -1;
+            compareTimes(time, firstFrameTime, this.timeStepSize) !== -1;
         const notGreaterThanLastFrameTime =
-            compareTimes(timeNs, lastFrameTime, this.timeStepSize) !== 1;
+            compareTimes(time, lastFrameTime, this.timeStepSize) !== 1;
         return notLessThanFirstFrameTime && notGreaterThanLastFrameTime;
     }
 
-    public gotoTime(timeNs: number): void {
+    public gotoTime(time: number): void {
         this.cacheFrame = -1;
 
         // Find the index of the frame that has the time matching our target time
         const frameNumber = this.frameDataCache.findIndex((frameData) => {
-            return (
-                compareTimes(frameData.time, timeNs, this.timeStepSize) === 0
-            );
+            return compareTimes(frameData.time, time, this.timeStepSize) === 0;
         });
 
         // frameNumber is -1 if findIndex() above doesn't find a match
