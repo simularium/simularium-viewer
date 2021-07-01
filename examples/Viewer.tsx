@@ -234,7 +234,7 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public handleScrubTime(event): void {
-        simulariumController.gotoTime(event.target.value);
+        simulariumController.gotoTime(parseFloat(event.target.value));
     }
 
     public handleUIDisplayData(uiDisplayData: UIDisplayData): void {
