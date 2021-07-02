@@ -158,13 +158,13 @@ export class LocalFileSimulator implements ISimulator {
         this.onTrajectoryDataArrive(this.getFrame(startFrameNumber));
     }
 
-    public gotoRemoteSimulationTime(timeNs: number): void {
+    public gotoRemoteSimulationTime(time: number): void {
         const { bundleData } = this.simulariumFile.spatialData;
         const { timeStepSize } = this.simulariumFile.trajectoryInfo;
 
         // Find the index of the frame that has the time matching our target time
         const frameNumber = bundleData.findIndex((bundleData) => {
-            return compareTimes(bundleData.time, timeNs, timeStepSize) === 0;
+            return compareTimes(bundleData.time, time, timeStepSize) === 0;
         });
 
         // frameNumber is -1 if findIndex() above doesn't find a match

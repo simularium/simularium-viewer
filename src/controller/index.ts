@@ -241,29 +241,29 @@ export default class SimulariumController {
         }
     }
 
-    public gotoTime(timeNs: number): void {
+    public gotoTime(time: number): void {
         // If in the middle of changing files, ignore any gotoTime requests
         if (this.isFileChanging === true) return;
-        if (this.visData.hasLocalCacheForTime(timeNs)) {
-            this.visData.gotoTime(timeNs);
+        if (this.visData.hasLocalCacheForTime(time)) {
+            this.visData.gotoTime(time);
         } else {
             if (this.networkEnabled && this.simulator) {
                 // else reset the local cache,
                 //  and play remotely from the desired simulation time
                 this.visData.clearCache();
 
-                // NOTE: This arbitrary rounding of timeNs is a temporary fix until
+                // NOTE: This arbitrary rounding of time is a temporary fix until
                 // simularium-engine is updated to work with imprecise float time values.
                 // Revert the 2 lines of code below to:
-                // this.simulator.gotoRemoteSimulationTime(timeNs);
-                const roundedTime = parseFloat(timeNs.toPrecision(4));
+                // this.simulator.gotoRemoteSimulationTime(time);
+                const roundedTime = parseFloat(time.toPrecision(4));
                 this.simulator.gotoRemoteSimulationTime(roundedTime);
             }
         }
     }
 
-    public playFromTime(timeNs: number): void {
-        this.gotoTime(timeNs);
+    public playFromTime(time: number): void {
+        this.gotoTime(time);
         this.isPaused = false;
     }
 
