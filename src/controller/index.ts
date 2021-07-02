@@ -389,7 +389,7 @@ export default class SimulariumController {
     /**
      * Camera controls
      * simulariumController.visGeometry gets set in
-     * componentDidMount of the viewer, so also long as the dom is mounted
+     * componentDidMount of the viewer, so as long as the dom is mounted
      * these functions will be callable.
      */
     public zoomIn(): void {
