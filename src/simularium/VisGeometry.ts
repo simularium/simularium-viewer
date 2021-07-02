@@ -463,32 +463,33 @@ class VisGeometry {
         this.rotateDistance = this.camera.position.distanceTo(new Vector3());
     }
 
-    public zoomIn(): void {
+    private dolly(changeBy: number): void {
         const position = this.camera.position.clone();
         const target = this.controls.target.clone();
         const distance = position.distanceTo(target);
-        const newDistance = distance - CAMERA_DOLLY_STEP_SIZE;
+        const newDistance = distance + changeBy;
+        if (
+            newDistance <= this.controls.minDistance ||
+            newDistance >= this.controls.maxDistance
+        ) {
+            return;
+        }
         const newPosition = new Vector3()
             .subVectors(position, target)
             .setLength(newDistance);
-        if (newDistance <= this.controls.minDistance) {
-            return;
-        }
-        this.camera.position.copy(newPosition);
+        this.camera.position.copy(
+            new Vector3().addVectors(newPosition, target)
+        );
+    }
+
+    public zoomIn(): void {
+        const changeBy = -CAMERA_DOLLY_STEP_SIZE;
+        this.dolly(changeBy);
     }
 
     public zoomOut(): void {
-        const position = this.camera.position.clone();
-        const target = this.controls.target.clone();
-        const distance = position.distanceTo(target);
-        const newDistance = distance + CAMERA_DOLLY_STEP_SIZE;
-        const newPosition = new Vector3()
-            .subVectors(position, target)
-            .setLength(newDistance);
-        if (newDistance >= this.controls.maxDistance) {
-            return;
-        }
-        this.camera.position.copy(newPosition);
+        const changeBy = CAMERA_DOLLY_STEP_SIZE;
+        this.dolly(changeBy);
     }
 
     public setPanningMode(pan: boolean): void {
