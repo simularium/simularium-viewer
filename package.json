@@ -10,7 +10,7 @@
         "start": "webpack-dev-server --config webpack.dev.js",
         "lint": "eslint src/**/*.ts src/**/*.tsx",
         "test": "jest src/**/*.test.ts  --coverage",
-        "test:github-action": "jest src/**/*.test.ts --silent --testLocationInResults --coverage --json --outputFile=\"report.json\"",
+        "test:github-action": "npx jest src/**/*.test.ts --silent --testLocationInResults --coverage --json --outputFile=\"report.json\"",
         "typeCheck": "tsc -p tsconfig.json --noEmit",
         "generateTypes": "tsc -p tsconfig.base.json --emitDeclarationOnly",
         "bundle": "BABEL_ENV=es NODE_ENV=production webpack --config webpack.config.js",
