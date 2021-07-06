@@ -12,5 +12,5 @@ jobs:
             - uses: actions/checkout@v1
             - uses: ArtiomTr/jest-coverage-report-action@v1.3
               with:
-                  github-token: ${{ secrets.GITHUB_TOKEN }}
-                  test-script: npx jest src/**/*.test.ts --silent --ci --coverage --coverageReporters="text" --coverageReporters="text-summary" --outputFile="report.json"
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  test_script: npx jest src/**/*.test.ts --silent --ci --coverage --coverageReporters="text" --coverageReporters="text-summary" --outputFile="report.json"
