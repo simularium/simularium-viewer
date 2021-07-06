@@ -55,7 +55,7 @@ export interface ISimulator {
 
     requestSingleFrame(startFrameNumber: number): void;
 
-    gotoRemoteSimulationTime(timeNanoSeconds: number): void;
+    gotoRemoteSimulationTime(time: number): void;
 
     requestTrajectoryFileInfo(fileName: string): void;
 }

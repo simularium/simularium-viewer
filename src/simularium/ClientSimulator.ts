@@ -269,11 +269,11 @@ export class ClientSimulator implements ISimulator {
         );
     }
 
-    public gotoRemoteSimulationTime(timeNanoSeconds: number): void {
+    public gotoRemoteSimulationTime(time: number): void {
         this.sendSimulationRequest(
             {
                 msgType: ClientMessageEnum.ID_GOTO_SIMULATION_TIME,
-                time: timeNanoSeconds,
+                time: time,
             },
             "Load single frame at specified Time"
         );
