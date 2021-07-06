@@ -10,7 +10,7 @@ jobs:
         if: "!contains(github.event.head_commit.message, '[skip ci]')"
         steps:
             - uses: actions/checkout@v1
-              uses: ArtiomTr/jest-coverage-report-action@v1.3
+            - uses: ArtiomTr/jest-coverage-report-action@v1.3
               with:
                   github-token: ${{ secrets.GITHUB_TOKEN }}
                   test-script: npm run test:github-action
