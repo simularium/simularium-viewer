@@ -138,13 +138,6 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         this.animate = this.animate.bind(this);
         this.dispatchUpdatedTime = this.dispatchUpdatedTime.bind(this);
         this.handleTimeChange = this.handleTimeChange.bind(this);
-        this.resetCamera = this.resetCamera.bind(this);
-        this.centerCamera = this.centerCamera.bind(this);
-        this.reOrientCamera = this.reOrientCamera.bind(this);
-        this.zoomIn = this.zoomIn.bind(this);
-        this.zoomOut = this.zoomOut.bind(this);
-        this.setPanningMode = this.setPanningMode.bind(this);
-        this.setFocusMode = this.setFocusMode.bind(this);
 
         this.visGeometry = new VisGeometry(loggerLevel);
         this.props.simulariumController.visData.clearCache();
@@ -203,13 +196,6 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             simulariumController.onError = onError;
         }
 
-        simulariumController.resetCamera = this.resetCamera;
-        simulariumController.reOrientCamera = this.reOrientCamera;
-        simulariumController.centerCamera = this.centerCamera;
-        simulariumController.zoomIn = this.zoomIn;
-        simulariumController.zoomOut = this.zoomOut;
-        simulariumController.setPanningMode = this.setPanningMode;
-        simulariumController.setFocusMode = this.setFocusMode;
         simulariumController.visGeometry = this.visGeometry;
         simulariumController.trajFileInfoCallback = (
             msg: TrajectoryFileInfoAny
@@ -494,34 +480,6 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         );
     }
 
-    public resetCamera(): void {
-        this.visGeometry.resetCamera();
-    }
-
-    public centerCamera(): void {
-        this.visGeometry.centerCamera();
-    }
-
-    public reOrientCamera(): void {
-        this.visGeometry.reOrientCamera();
-    }
-
-    public zoomIn(): void {
-        this.visGeometry.zoomIn();
-    }
-
-    public zoomOut(): void {
-        this.visGeometry.zoomOut();
-    }
-
-    public setPanningMode(pan: boolean): void {
-        this.visGeometry.setPanningMode(pan);
-    }
-
-    public setFocusMode(focus: boolean): void {
-        this.visGeometry.setFocusMode(focus);
-    }
-
     public onPickObject(posX: number, posY: number): void {
         // TODO: intersect with scene's children not including lights?
         // can we select a smaller number of things to hit test?
@@ -634,19 +592,20 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
     }
 
     public renderViewControls(): React.ReactElement {
+        const { simulariumController } = this.props;
         return (
             <div className="view-controls">
-                <button onClick={this.resetCamera} className="btn">
+                <button onClick={simulariumController.resetCamera} className="btn">
                     <FontAwesomeIcon
                         icon={faSyncAlt}
                         transform="flip-h"
                         style={{ color: "#737373" }}
                     />
                 </button>
-                <button onClick={this.centerCamera} className="btn-work">
+                <button onClick={simulariumController.centerCamera} className="btn-work">
                     Re-center
                 </button>
-                <button onClick={this.reOrientCamera} className="btn-word">
+                <button onClick={simulariumController.reOrientCamera} className="btn-word">
                     Starting orientation
                 </button>
             </div>

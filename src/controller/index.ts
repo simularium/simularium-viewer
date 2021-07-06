@@ -51,14 +51,6 @@ export default class SimulariumController {
     public tickIntervalLength: number;
     public handleTrajectoryInfo: (TrajectoryFileInfo) => void;
     public postConnect: () => void;
-    public resetCamera: () => void;
-    public centerCamera: () => void;
-    public reOrientCamera: () => void;
-    public zoomIn: () => void;
-    public zoomOut: () => void;
-    public setPanningMode: (pan: boolean) => void;
-    public setFocusMode: (focus: boolean) => void;
-
     public onError?: (errorMessage: string) => void;
 
     private networkEnabled: boolean;
@@ -76,14 +68,6 @@ export default class SimulariumController {
         this.postConnect = () => noop;
 
         this.handleTrajectoryInfo = (/*msg: TrajectoryFileInfo*/) => noop;
-
-        this.reOrientCamera = () => noop;
-        this.resetCamera = () => noop;
-        this.centerCamera = () => noop;
-        this.zoomIn = () => noop;
-        this.zoomOut = () => noop;
-        this.setPanningMode = (_pan: boolean) => noop;
-        this.setFocusMode = (_focus: boolean) => noop;
         this.onError = (/*errorMessage*/) => noop;
         if (params.remoteSimulator) {
             this.simulator = params.remoteSimulator;
@@ -399,6 +383,54 @@ export default class SimulariumController {
 
         if (this.simulator) {
             this.simulator.setTrajectoryFileInfoHandler(callback);
+        }
+    }
+
+    /**
+     * Camera controls
+     * simulariumController.visGeometry gets set in
+     * componentDidMount of the viewer, so as long as the dom is mounted
+     * these functions will be callable.
+     */
+    public zoomIn(): void {
+        if (this.visGeometry) {
+            this.visGeometry.zoomIn();
+        }
+    }
+
+    public zoomOut(): void {
+        if (this.visGeometry) {
+            this.visGeometry.zoomOut();
+        }
+    }
+
+    public resetCamera(): void {
+        if (this.visGeometry) {
+            this.visGeometry.resetCamera();
+        }
+    }
+
+    public centerCamera(): void {
+        if (this.visGeometry) {
+            this.visGeometry.centerCamera();
+        }
+    }
+
+    public reOrientCamera(): void {
+        if (this.visGeometry) {
+            this.visGeometry.reOrientCamera();
+        }
+    }
+
+    public setPanningMode(pan: boolean): void {
+        if (this.visGeometry) {
+            this.visGeometry.setPanningMode(pan);
+        }
+    }
+
+    public setFocusMode(focus: boolean): void {
+        if (this.visGeometry) {
+            this.visGeometry.setFocusMode(focus);
         }
     }
 }
