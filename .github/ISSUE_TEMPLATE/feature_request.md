@@ -4,7 +4,7 @@ about: '"It would be really cool if x did y..."'
 title: ''
 labels: ''
 assignees: ''
-project: 'Simularium'
+projects: 'Simularium'
 
 ---
 
