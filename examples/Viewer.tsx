@@ -10,7 +10,7 @@ import SimulariumViewer, {
     SimulariumFileFormat,
 } from "../src";
 import "./style.css";
-import { isEqual } from "lodash";
+import { isEqual, findIndex} from "lodash";
 
 const netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
@@ -141,16 +141,36 @@ class Viewer extends React.Component<{}, ViewerState> {
         const filesArr: FileHTML[] = Array.from(files) as FileHTML[];
 
         Promise.all(
-            filesArr.map((file) =>
-                file
-                    .text()
-                    .then((text) => JSON.parse(text) as SimulariumFileFormat)
-            )
+            filesArr.map((file) => {
+                return file.text();
+            })
         ).then((parsedFiles) => {
-            const simulariumFile = parsedFiles[0];
-            const fileName = filesArr[0].name;
+            const simulariumFileIndex = findIndex(filesArr, (file) => file.name.includes(".simularium"));
+            
+            const simulariumFile = JSON.parse(parsedFiles[simulariumFileIndex]);
+
+            const geoFileIndex = findIndex(
+                filesArr,
+                (file) => file.name.includes(".json")
+            );
+            let geometryFile = ""
+            if (geoFileIndex >= 0) {
+                geometryFile = JSON.parse(parsedFiles[geoFileIndex])
+            }
+            const geoAssets = filesArr.reduce((acc, cur, index) =>  {
+                if (index !== geoFileIndex && index !== simulariumFileIndex) {
+                    acc[cur.name] = parsedFiles[index]
+                }
+                return acc
+            }, {})
+            const fileName = filesArr[simulariumFileIndex].name;
+            console.log(parsedFiles)
             simulariumController
-                .changeFile({ simulariumFile }, fileName)
+                .changeFile(
+                    { simulariumFile, geoAssets },
+                    fileName,
+                    geometryFile,
+                )
                 .catch((error) => {
                     console.log(error.htmlData);
                     window.alert(`Error loading file: ${error.message}`);
@@ -262,11 +282,15 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public gotoNextFrame(): void {
-        simulariumController.gotoTime(this.state.currentTime + this.state.timeStep);
+        simulariumController.gotoTime(
+            this.state.currentTime + this.state.timeStep
+        );
     }
 
     public gotoPreviousFrame(): void {
-        simulariumController.gotoTime(this.state.currentTime - this.state.timeStep);
+        simulariumController.gotoTime(
+            this.state.currentTime - this.state.timeStep
+        );
     }
 
     private configureAndLoad() {

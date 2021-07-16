@@ -23,12 +23,16 @@ export class LocalFileSimulator implements ISimulator {
     private playbackIntervalId = 0;
     private currentPlaybackFrameIndex = 0;
 
-    public constructor(fileName: string, simulariumFile: SimulariumFileFormat) {
+    public constructor(
+        fileName: string,
+        simulariumFile: SimulariumFileFormat,
+        geoAsset?: any
+    ) {
         this.fileName = fileName;
         this.simulariumFile = simulariumFile;
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
-
+        this.geoAssets = geoAsset;
         this.onTrajectoryFileInfoArrive = () => {
             /* do nothing */
         };

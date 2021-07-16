@@ -36,7 +36,7 @@ import * as dat from "dat.gui";
 
 import jsLogger from "js-logger";
 import { ILogger, ILogLevel } from "js-logger";
-import { cloneDeep } from "lodash";
+import { cloneDeep, forEach } from "lodash";
 
 import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC } from "../constants";
 import { TrajectoryFileInfo, CameraSpec } from "./types";
@@ -181,6 +181,7 @@ class VisGeometry {
         this.meshRegistry = new Map<string | number, MeshLoadRequest>();
         this.initMeshRegistry();
         this.pdbRegistry = new Map<string | number, PDBModel>();
+        this.cachedPdbRegistry = new Map<string | number, PDBModel>();
         this.meshLoadAttempted = new Map<string, boolean>();
         this.pdbLoadAttempted = new Map<string, boolean>();
         this.scaleMapping = new Map<number, number>();
@@ -707,6 +708,24 @@ class VisGeometry {
         this.initCameraPosition = this.camera.position.clone();
     }
 
+    public cacheLocalAssets(assets) {
+        forEach(assets, (value, key) => {
+            if (key.includes(".pdb")) {
+                const pdbName = key;
+                const pdbModel = new PDBModel(pdbName);
+                this.cachedPdbRegistry.set(pdbName, pdbModel);
+                this.onNewPdb(pdbName);
+                pdbModel.loadLocally(value);
+                // initiate async LOD processing
+                pdbModel.generateLOD().then(() => {
+                    this.logger.debug("Finished loading pdb LODs: ", pdbName);
+                    this.onNewPdb(pdbName);
+                });
+            }
+        });
+        console.log(this.pdbRegistry);
+    }
+
     public loadPdb(pdbName: string, assetPath: string): void {
         const pdbmodel = new PDBModel(pdbName);
         this.pdbRegistry.set(pdbName, pdbmodel);
@@ -1125,19 +1144,26 @@ class VisGeometry {
             this.meshLoadAttempted.set(meshName, true);
         }
 
-        // try load pdb file also.
-        if (
+        if (pdbName && this.cachedPdbRegistry.has(pdbName)) {
+            this.pdbRegistry.set(pdbName, this.cachedPdbRegistry.get(pdbName));
+        } else if (
             pdbName &&
             !this.pdbRegistry.has(pdbName) &&
             !this.pdbLoadAttempted.get(pdbName)
         ) {
+            console.log(
+                "TRYING TO LOAD PDB",
+                this.pdbRegistry.has(pdbName),
+                pdbName,
+                this.pdbRegistry
+            );
             this.loadPdb(pdbName, assetPath);
             this.pdbLoadAttempted.set(pdbName, true);
         } else if (!this.pdbRegistry.has(unassignedName)) {
             // assign single atom pdb
-            const pdbmodel = new PDBModel(unassignedName);
-            pdbmodel.create(1);
-            this.pdbRegistry.set(unassignedName, pdbmodel);
+            // const pdbmodel = new PDBModel(unassignedName);
+            // pdbmodel.create(1);
+            // this.pdbRegistry.set(unassignedName, pdbmodel);
         }
     }
 
@@ -1213,7 +1239,17 @@ class VisGeometry {
         if (!filePath) {
             return Promise.resolve();
         }
+        console.log("MAP FROM JSON", filePath);
         const jsonRequest = new Request(filePath);
+        if (filePath.size) {
+            return Promise.resolve(
+                this.setGeometryData(
+                    filePath as AgentTypeVisDataMap,
+                    assetPath,
+                    callback
+                )
+            );
+        }
         return fetch(jsonRequest)
             .then((response) => {
                 if (!response.ok) {
@@ -1590,7 +1626,6 @@ class VisGeometry {
             if (visType === VisTypes.ID_VIS_TYPE_DEFAULT) {
                 const meshEntry = this.getMeshForAgentType(typeId);
                 const pdbEntry = this.getPdbForAgentType(typeId);
-
                 // pdb has precedence over mesh
                 if (pdbEntry) {
                     if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
@@ -2008,7 +2043,7 @@ class VisGeometry {
     public clearForNewTrajectory(): void {
         this.legacyRenderer.beginUpdate(this.scene);
         this.legacyRenderer.endUpdate(this.scene);
-
+        console.log("WOULD CLEAR FOR NEW TRAJ");
         this.resetMapping();
 
         // remove current scene agents.

@@ -128,7 +128,8 @@ export default class SimulariumController {
     private createSimulatorConnection(
         netConnectionConfig?: NetConnectionParams,
         clientSimulatorParams?: ClientSimulatorParams,
-        localFile?: SimulariumFileFormat
+        localFile?: SimulariumFileFormat,
+        geoAssets?: any
     ): void {
         if (clientSimulatorParams) {
             this.simulator = new ClientSimulator(clientSimulatorParams);
@@ -137,6 +138,8 @@ export default class SimulariumController {
                 this.playBackFile,
                 localFile
             );
+            this.geoAssets = geoAssets;
+            this.visGeometry.cacheLocalAssets(geoAssets);
         } else if (netConnectionConfig) {
             this.simulator = new RemoteSimulator(netConnectionConfig);
         } else {
@@ -287,6 +290,8 @@ export default class SimulariumController {
             geometryFile || "",
             newFileName
         );
+        console.log(assetPrefix, connectionParams);
+
         this.assetPrefix = assetPrefix ? assetPrefix : DEFAULT_ASSET_PREFIX;
         this.visData.WaitForFrame(0);
         this.visData.clearCache();
@@ -303,7 +308,8 @@ export default class SimulariumController {
                 this.createSimulatorConnection(
                     connectionParams.netConnectionSettings,
                     connectionParams.clientSimulatorParams,
-                    connectionParams.simulariumFile
+                    connectionParams.simulariumFile,
+                    connectionParams.geoAssets
                 );
                 this.networkEnabled = true;
                 this.isPaused = true;
