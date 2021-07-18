@@ -14,6 +14,7 @@ import {
     NearestFilter,
     RGBAFormat,
     Scene,
+    WebGLMultipleRenderTargets,
     WebGLRenderer,
     WebGLRenderTarget,
     PerspectiveCamera,
@@ -51,9 +52,7 @@ class SimulariumRenderer {
     public compositePass: CompositePass;
     public contourPass: ContourPass;
     public drawBufferPass: DrawBufferPass;
-    public colorBuffer: WebGLRenderTarget;
-    public normalBuffer: WebGLRenderTarget;
-    public positionBuffer: WebGLRenderTarget;
+    public gbuffer: WebGLMultipleRenderTargets;
     public blurIntermediateBuffer: WebGLRenderTarget;
     public ssaoBuffer: WebGLRenderTarget;
     public ssaoBuffer2: WebGLRenderTarget;
@@ -112,34 +111,18 @@ class SimulariumRenderer {
         this.drawBufferPass = new DrawBufferPass();
 
         // buffers:
-        this.colorBuffer = new WebGLRenderTarget(2, 2, {
-            minFilter: NearestFilter,
-            magFilter: NearestFilter,
-            format: RGBAFormat,
-            type: FloatType,
-            depthBuffer: true,
-            stencilBuffer: false,
-        });
-        this.colorBuffer.texture.generateMipmaps = false;
-        // TODO : MRT AND SHARE DEPTH BUFFER among color, position, normal etc
-        this.normalBuffer = new WebGLRenderTarget(2, 2, {
-            minFilter: NearestFilter,
-            magFilter: NearestFilter,
-            format: RGBAFormat,
-            type: FloatType,
-            depthBuffer: true,
-            stencilBuffer: false,
-        });
-        this.normalBuffer.texture.generateMipmaps = false;
-        this.positionBuffer = new WebGLRenderTarget(2, 2, {
-            minFilter: NearestFilter,
-            magFilter: NearestFilter,
-            format: RGBAFormat,
-            type: FloatType,
-            depthBuffer: true,
-            stencilBuffer: false,
-        });
-        this.positionBuffer.texture.generateMipmaps = false;
+        this.gbuffer = new WebGLMultipleRenderTargets(2, 2, 3);
+        for (let i = 0, il = this.gbuffer.texture.length; i < il; i++) {
+            this.gbuffer.texture[i].minFilter = NearestFilter;
+            this.gbuffer.texture[i].magFilter = NearestFilter;
+            this.gbuffer.texture[i].format = RGBAFormat;
+            this.gbuffer.texture[i].type = FloatType;
+            this.gbuffer.texture[i].generateMipmaps = false;
+        }
+        // Name our G-Buffer attachments for debugging
+        this.gbuffer.texture[0].name = "agentinfo";
+        this.gbuffer.texture[1].name = "normal";
+        this.gbuffer.texture[2].name = "position";
 
         // intermediate blurring buffer
         this.blurIntermediateBuffer = new WebGLRenderTarget(2, 2, {
@@ -260,7 +243,7 @@ class SimulariumRenderer {
     public hitTest(renderer: WebGLRenderer, x: number, y: number): number {
         const pixel = new Float32Array(4).fill(-1);
         // (typeId), (instanceId), fragViewPos.z, fragPosDepth;
-        renderer.readRenderTargetPixels(this.colorBuffer, x, y, 1, 1, pixel);
+        renderer.readRenderTargetPixels(this.gbuffer, x, y, 1, 1, pixel);
         if (pixel[3] === -1) {
             return -1;
         } else {
@@ -291,10 +274,8 @@ class SimulariumRenderer {
     }
 
     public resize(x: number, y: number): void {
-        this.colorBuffer.setSize(x, y);
-        // TODO : MRT AND SHARE DEPTH BUFFER
-        this.normalBuffer.setSize(x, y);
-        this.positionBuffer.setSize(x, y);
+        this.gbuffer.setSize(x, y);
+
         // intermediate blurring buffer
         this.blurIntermediateBuffer.setSize(x, y);
         this.ssaoBuffer.setSize(x, y);
@@ -364,28 +345,25 @@ class SimulariumRenderer {
 
         // 1 draw molecules into G buffers
         // TODO: MRT
-        this.gbufferPass.render(
-            renderer,
-            scene,
-            camera,
-            this.colorBuffer,
-            this.normalBuffer,
-            this.positionBuffer
-        );
+        this.gbufferPass.render(renderer, scene, camera, this.gbuffer);
+
+        const POSITIONBUFFER = 2;
+        const NORMALBUFFER = 1;
+        const AGENTBUFFER = 0;
 
         // 2 render ssao
         this.ssao1Pass.render(
             renderer,
             camera,
             this.ssaoBuffer,
-            this.normalBuffer,
-            this.positionBuffer
+            this.gbuffer.texture[NORMALBUFFER],
+            this.gbuffer.texture[POSITIONBUFFER]
         );
         this.blur1Pass.render(
             renderer,
             this.ssaoBufferBlurred,
             this.ssaoBuffer,
-            this.positionBuffer,
+            this.gbuffer.texture[POSITIONBUFFER],
             this.blurIntermediateBuffer
         );
 
@@ -393,14 +371,14 @@ class SimulariumRenderer {
             renderer,
             camera,
             this.ssaoBuffer2,
-            this.normalBuffer,
-            this.positionBuffer
+            this.gbuffer.texture[NORMALBUFFER],
+            this.gbuffer.texture[POSITIONBUFFER]
         );
         this.blur2Pass.render(
             renderer,
             this.ssaoBufferBlurred2,
             this.ssaoBuffer2,
-            this.positionBuffer,
+            this.gbuffer.texture[POSITIONBUFFER],
             this.blurIntermediateBuffer
         );
 
@@ -415,7 +393,7 @@ class SimulariumRenderer {
             compositeTarget,
             this.ssaoBufferBlurred,
             this.ssaoBufferBlurred2,
-            this.colorBuffer
+            this.gbuffer.texture[AGENTBUFFER]
         );
 
         this.contourPass.render(
@@ -423,8 +401,8 @@ class SimulariumRenderer {
             target,
             compositeTarget,
             // this is the buffer with the instance ids and fragdepth!
-            this.colorBuffer,
-            this.normalBuffer
+            this.gbuffer.texture[AGENTBUFFER],
+            this.gbuffer.texture[NORMALBUFFER]
         );
 
         // DEBUGGING some of the intermediate buffers:

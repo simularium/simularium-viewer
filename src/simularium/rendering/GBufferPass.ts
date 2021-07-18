@@ -3,7 +3,6 @@ import { InstancedFiberGroup } from "./InstancedFiber";
 import { InstancedMesh } from "./InstancedMesh";
 
 import {
-    GbufferRenderPass,
     MRTShaders,
     setRenderPass,
     setSceneRenderPass,
@@ -17,7 +16,7 @@ import {
     Scene,
     WebGLRenderer,
     PerspectiveCamera,
-    WebGLRenderTarget,
+    WebGLMultipleRenderTargets,
 } from "three";
 
 // strategy:
@@ -75,9 +74,7 @@ class GBufferPass {
         renderer: WebGLRenderer,
         scene: Scene,
         camera: PerspectiveCamera,
-        colorBuffer: WebGLRenderTarget,
-        normalBuffer: WebGLRenderTarget,
-        positionBuffer: WebGLRenderTarget
+        gbuffer: WebGLMultipleRenderTargets
     ): void {
         const c = renderer.getClearColor(new Color()).clone();
         const a = renderer.getClearAlpha();
@@ -92,9 +89,6 @@ class GBufferPass {
             updateProjectionMatrix(s, camera.projectionMatrix);
         }
 
-        // 1. fill colorbuffer
-        let renderPass: GbufferRenderPass = GbufferRenderPass.COLOR;
-
         // clear color:
         // x:0 agent type id (0 so that type ids can be positive or negative integers)
         // y:-1 agent instance id (-1 so that 0 remains a distinct instance id from the background)
@@ -102,9 +96,21 @@ class GBufferPass {
         // alpha == -1 is a marker to discard pixels later, will be filled with frag depth
         const COLOR_CLEAR = new Color(0.0, -1.0, 0.0);
         const COLOR_ALPHA = -1.0;
+        // const NORMAL_CLEAR = new Color(0.0, 0.0, 0.0);
+        // const NORMAL_ALPHA = -1.0;
+        // const POSITION_CLEAR = new Color(0.0, 0.0, 0.0);
+        // const POSITION_ALPHA = -1.0;
+
         renderer.setClearColor(COLOR_CLEAR, COLOR_ALPHA);
-        renderer.setRenderTarget(colorBuffer);
-        renderer.autoClear = true;
+        renderer.setRenderTarget(gbuffer);
+        renderer.clear();
+        // renderer.setClearColor(NORMAL_CLEAR, NORMAL_ALPHA);
+        // renderer.setRenderTarget(normalBuffer);
+        // renderer.clear();
+        // renderer.setClearColor(POSITION_CLEAR, POSITION_ALPHA);
+        // renderer.setRenderTarget(positionBuffer);
+        // renderer.clear();
+        renderer.autoClear = false;
 
         const DO_INSTANCED = true;
         const DO_PDB = true;
@@ -114,12 +120,11 @@ class GBufferPass {
             this.agentPDBGroup.visible = false;
             this.instancedMeshGroup.visible = true;
 
-            this.fibers.setRenderPass(renderPass);
+            this.fibers.setRenderPass();
             for (let i = 0; i < this.meshTypes.length; ++i) {
                 setRenderPass(
                     this.meshTypes[i].getMesh(),
-                    this.meshTypes[i].getShaders(),
-                    renderPass
+                    this.meshTypes[i].getShaders()
                 );
             }
             renderer.render(scene, camera);
@@ -133,89 +138,9 @@ class GBufferPass {
             this.agentPDBGroup.visible = true;
             this.instancedMeshGroup.visible = false;
 
-            setSceneRenderPass(scene, this.pdbGbufferMaterials, renderPass);
+            setSceneRenderPass(scene, this.pdbGbufferMaterials);
             renderer.render(scene, camera);
             //end draw pdb
-            renderer.autoClear = false;
-            scene.overrideMaterial = null;
-        }
-
-        renderer.autoClear = true;
-
-        // 2. fill normalbuffer
-        renderPass = GbufferRenderPass.NORMAL;
-
-        const NORMAL_CLEAR = new Color(0.0, 0.0, 0.0);
-        const NORMAL_ALPHA = -1.0;
-
-        renderer.setClearColor(NORMAL_CLEAR, NORMAL_ALPHA);
-        renderer.setRenderTarget(normalBuffer);
-
-        if (DO_INSTANCED) {
-            // draw instanced things
-            this.agentPDBGroup.visible = false;
-            this.instancedMeshGroup.visible = true;
-
-            this.fibers.setRenderPass(renderPass);
-            for (let i = 0; i < this.meshTypes.length; ++i) {
-                setRenderPass(
-                    this.meshTypes[i].getMesh(),
-                    this.meshTypes[i].getShaders(),
-                    renderPass
-                );
-            }
-            renderer.render(scene, camera);
-            // end draw instanced things
-            renderer.autoClear = false;
-            scene.overrideMaterial = null;
-        }
-
-        if (DO_PDB) {
-            this.agentPDBGroup.visible = true;
-            this.instancedMeshGroup.visible = false;
-
-            setSceneRenderPass(scene, this.pdbGbufferMaterials, renderPass);
-            renderer.render(scene, camera);
-            renderer.autoClear = false;
-            scene.overrideMaterial = null;
-        }
-
-        renderer.autoClear = true;
-
-        // 3. fill positionbuffer
-        renderPass = GbufferRenderPass.POSITION;
-
-        const POSITION_CLEAR = new Color(0.0, 0.0, 0.0);
-        const POSITION_ALPHA = -1.0;
-
-        renderer.setClearColor(POSITION_CLEAR, POSITION_ALPHA);
-        renderer.setRenderTarget(positionBuffer);
-
-        if (DO_INSTANCED) {
-            // draw instanced things
-            this.agentPDBGroup.visible = false;
-            this.instancedMeshGroup.visible = true;
-
-            this.fibers.setRenderPass(renderPass);
-            for (let i = 0; i < this.meshTypes.length; ++i) {
-                setRenderPass(
-                    this.meshTypes[i].getMesh(),
-                    this.meshTypes[i].getShaders(),
-                    renderPass
-                );
-            }
-            renderer.render(scene, camera);
-            // end draw instanced things
-            renderer.autoClear = false;
-            scene.overrideMaterial = null;
-        }
-
-        if (DO_PDB) {
-            this.agentPDBGroup.visible = true;
-            this.instancedMeshGroup.visible = false;
-
-            setSceneRenderPass(scene, this.pdbGbufferMaterials, renderPass);
-            renderer.render(scene, camera);
             renderer.autoClear = false;
             scene.overrideMaterial = null;
         }

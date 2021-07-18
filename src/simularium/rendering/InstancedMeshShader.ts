@@ -1,4 +1,4 @@
-import { FrontSide, Matrix4, ShaderMaterial } from "three";
+import { FrontSide, GLSL3, Matrix3, Matrix4, RawShaderMaterial } from "three";
 
 import { MRTShaders } from "./MultipassMaterials";
 
@@ -9,11 +9,18 @@ out vec3 IN_viewPos;
 out vec3 IN_viewNormal;
 out vec2 IN_instanceAndTypeId;
 
+in vec4 position;
+in vec3 normal;
+
 // per instance attributes
 in vec4 translateAndScale; // xyz trans, w scale
 in vec4 rotation; // quaternion
 // instanceID, typeId
 in vec2 instanceAndTypeId;
+
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+uniform mat3 normalMatrix;
 
 vec3 applyQuaternionToVector( vec4 q, vec3 v ) {
     return v + 2.0 * cross( q.xyz, cross( q.xyz, v ) + q.w * v );
@@ -72,15 +79,18 @@ void main() {
 }
 `;
 
-const multiMaterial = new ShaderMaterial({
-    uniforms: {
-        projectionMatrix: { value: new Matrix4() },
-    },
+const multiMaterial = new RawShaderMaterial({
+    glslVersion: GLSL3,
     vertexShader: vertexShader,
     fragmentShader: fragmentShader,
     side: FrontSide,
     transparent: false,
     defines: {},
+    uniforms: {
+        modelViewMatrix: { value: new Matrix4() },
+        normalMatrix: { value: new Matrix3() },
+        projectionMatrix: { value: new Matrix4() },
+    },
 });
 
 const shaderSet: MRTShaders = {

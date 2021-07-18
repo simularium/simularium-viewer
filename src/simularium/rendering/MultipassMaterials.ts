@@ -18,24 +18,13 @@ export function updateResolution(s: MRTShaders, x: number, y: number): void {
     s.mat.uniforms.iResolution.value = new Vector2(x, y);
 }
 
-export enum GbufferRenderPass {
-    COLOR,
-    POSITION,
-    NORMAL,
-}
-
-export function setRenderPass(
-    obj: Mesh,
-    shaderSet: MRTShaders,
-    pass: GbufferRenderPass
-): Material {
+export function setRenderPass(obj: Mesh, shaderSet: MRTShaders): Material {
     obj.material = shaderSet.mat;
 }
 
 export function setSceneRenderPass(
     scene: Scene,
-    shaderSet: MRTShaders,
-    pass: GbufferRenderPass
+    shaderSet: MRTShaders
 ): Material {
     scene.overrideMaterial = shaderSet.mat;
     return scene.overrideMaterial;

@@ -16,7 +16,6 @@ import {
 
 import { createShaders } from "./InstancedFiberShader";
 import {
-    GbufferRenderPass,
     MRTShaders,
     setRenderPass,
     updateProjectionMatrix,
@@ -394,11 +393,12 @@ class InstancedFiberGroup {
         this.isUpdating = false;
     }
 
-    setRenderPass(pass: GbufferRenderPass): void {
+    setRenderPass(): void {
         this.fibers.forEach((fiber) => {
-            setRenderPass(fiber.getMesh(), fiber.getShaders(), pass);
+            setRenderPass(fiber.getMesh(), fiber.getShaders());
         });
     }
+
     updateProjectionMatrix(cam: Matrix4): void {
         this.fibers.forEach((fiber) => {
             updateProjectionMatrix(fiber.getShaders(), cam);
