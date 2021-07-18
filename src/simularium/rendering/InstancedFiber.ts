@@ -17,7 +17,7 @@ import {
 import { createShaders } from "./InstancedFiberShader";
 import {
     GbufferRenderPass,
-    MultipassShaders,
+    MRTShaders,
     setRenderPass,
     updateProjectionMatrix,
 } from "./MultipassMaterials";
@@ -125,7 +125,7 @@ class InstancedFiber {
     private nSegments: number;
     private curveGeometry: BufferGeometry;
     private mesh: Mesh;
-    private shaderSet: MultipassShaders;
+    private shaderSet: MRTShaders;
     private instancedGeometry: InstancedBufferGeometry;
 
     private positionAttribute: InstancedBufferAttribute; // x,y,z,scale
@@ -174,7 +174,7 @@ class InstancedFiber {
         return this.mesh;
     }
 
-    public getShaders(): MultipassShaders {
+    public getShaders(): MRTShaders {
         return this.shaderSet;
     }
 
@@ -221,9 +221,7 @@ class InstancedFiber {
             this.curveGeometry.getAttribute("position").count
         );
 
-        this.shaderSet.color.uniforms.curveData.value = this.curveData;
-        this.shaderSet.normal.uniforms.curveData.value = this.curveData;
-        this.shaderSet.position.uniforms.curveData.value = this.curveData;
+        this.shaderSet.mat.uniforms.curveData.value = this.curveData;
 
         // make new array,
         // copy old array into it,

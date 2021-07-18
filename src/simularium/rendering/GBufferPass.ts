@@ -34,7 +34,7 @@ import {
 
 // draw positions, normals, and instance and type ids of objects
 class GBufferPass {
-    public pdbGbufferMaterials: MultipassShaders;
+    public pdbGbufferMaterials: MRTShaders;
 
     public scene: Scene;
     public agentPDBGroup: Group;

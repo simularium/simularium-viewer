@@ -1,4 +1,4 @@
-import { FrontSide, Matrix4, ShaderMaterial, Vector2 } from "three";
+import { FrontSide, Matrix4, RawShaderMaterial, Vector2 } from "three";
 
 import { MRTShaders } from "./MultipassMaterials";
 
