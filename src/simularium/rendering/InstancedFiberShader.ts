@@ -1,6 +1,6 @@
 import { FrontSide, Matrix4, RawShaderMaterial, GLSL3 } from "three";
 
-import { MultipassShaders } from "./MultipassMaterials";
+import { MRTShaders } from "./MultipassMaterials";
 
 const vertexShader = `
 precision highp float;
@@ -15,15 +15,9 @@ in vec4 translateAndScale; // xyz trans, w scale
 // instanceID, typeId, and which row of texture contains this curve
 in vec3 instanceAndTypeId;
 
-#ifdef WRITE_POS
 out vec3 IN_viewPos;
-#endif
-#ifdef WRITE_NORMAL
 out vec3 IN_viewNormal;
-#endif
-#ifdef WRITE_INSTANCE
 out vec2 IN_instanceAndTypeId;
-#endif
 
 // built-in uniforms from ThreeJS camera and Object3D
 uniform mat4 projectionMatrix;
@@ -303,15 +297,10 @@ void main() {
 
   // project our vertex position
   vec4 mvPosition = modelViewMatrix * vec4(transformed, 1.0);
-  #ifdef WRITE_POS
+
   IN_viewPos = mvPosition.xyz;
-  #endif
-  #ifdef WRITE_NORMAL
   IN_viewNormal = normalize(transformedNormal);
-  #endif
-  #ifdef WRITE_INSTANCE
   IN_instanceAndTypeId = instanceAndTypeId.xy;
-  #endif
 
   gl_Position = projectionMatrix * mvPosition;
 }
@@ -322,8 +311,12 @@ const fragmentShader = `
 precision highp float;
 
 in vec3 IN_viewPos;
+in vec3 IN_viewNormal;
 in vec2 IN_instanceAndTypeId;
-out vec4 fragColor;
+
+layout(location = 0) out vec4 gAgentInfo;
+layout(location = 1) out vec4 gNormal;
+layout(location = 2) out vec4 gPos;
 
 uniform mat4 projectionMatrix;
 
@@ -338,39 +331,21 @@ void main()	{
     float fragPosDepth = (((f - n) * fragPosNDC.z) + n + f) / 2.0;
 
     // type id, instance id, zEye, zFragDepth
-    fragColor = vec4(IN_instanceAndTypeId.y, IN_instanceAndTypeId.x, fragViewPos.z, fragPosDepth);
-}
-`;
+    gAgentInfo = vec4(IN_instanceAndTypeId.y, IN_instanceAndTypeId.x, fragViewPos.z, fragPosDepth);
 
-const normalShader = `
-precision highp float;
-
-in vec3 IN_viewNormal;
-out vec4 fragColor;
-void main()	{
     vec3 normal = IN_viewNormal;
     normal = normalize(normal);
     vec3 normalOut = normal * 0.5 + 0.5;
-    fragColor = vec4(normalOut, 1.0);
-}
-`;
+    gNormal = vec4(normalOut, 1.0);
 
-const positionShader = `
-precision highp float;
-
-in vec3 IN_viewPos;
-out vec4 fragColor;
-void main()	{
-    
-    vec3 fragViewPos = IN_viewPos;
-    fragColor = vec4(fragViewPos.x, fragViewPos.y, fragViewPos.z, 1.0);
+    gPos = vec4(fragViewPos.x, fragViewPos.y, fragViewPos.z, 1.0);
 }
 `;
 
 function createShaders(
     lengthSegments: number,
     nPointsPerCurve: number
-): MultipassShaders {
+): MRTShaders {
     const shaderDefines = {
         lengthSegments: lengthSegments,
         ROBUST: false,
@@ -379,7 +354,7 @@ function createShaders(
         NUM_POINTS: nPointsPerCurve,
     };
 
-    const colorMaterial = new RawShaderMaterial({
+    const multiMaterial = new RawShaderMaterial({
         glslVersion: GLSL3,
         vertexShader: vertexShader,
         fragmentShader: fragmentShader,
@@ -387,9 +362,6 @@ function createShaders(
         transparent: false,
         defines: {
             ...shaderDefines,
-            WRITE_NORMAL: false,
-            WRITE_INSTANCE: true,
-            WRITE_POS: true,
         },
         uniforms: {
             curveData: { value: null },
@@ -397,44 +369,8 @@ function createShaders(
         },
     });
 
-    const normalMaterial = new RawShaderMaterial({
-        glslVersion: GLSL3,
-        vertexShader: vertexShader,
-        fragmentShader: normalShader,
-        side: FrontSide,
-        transparent: false,
-        defines: {
-            ...shaderDefines,
-            WRITE_NORMAL: true,
-            WRITE_INSTANCE: false,
-            WRITE_POS: false,
-        },
-        uniforms: {
-            curveData: { value: null },
-            projectionMatrix: { value: new Matrix4() },
-        },
-    });
-    const positionMaterial = new RawShaderMaterial({
-        glslVersion: GLSL3,
-        vertexShader: vertexShader,
-        fragmentShader: positionShader,
-        side: FrontSide,
-        transparent: false,
-        defines: {
-            ...shaderDefines,
-            WRITE_NORMAL: false,
-            WRITE_INSTANCE: false,
-            WRITE_POS: true,
-        },
-        uniforms: {
-            curveData: { value: null },
-            projectionMatrix: { value: new Matrix4() },
-        },
-    });
     return {
-        color: colorMaterial,
-        normal: normalMaterial,
-        position: positionMaterial,
+        mat: multiMaterial,
     };
 }
 

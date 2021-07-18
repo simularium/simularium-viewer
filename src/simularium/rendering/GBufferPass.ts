@@ -1,11 +1,10 @@
-import MeshGBufferShaders from "./MeshGBufferShaders";
 import PDBGBufferShaders from "./PDBGBufferShaders";
 import { InstancedFiberGroup } from "./InstancedFiber";
 import { InstancedMesh } from "./InstancedMesh";
 
 import {
     GbufferRenderPass,
-    MultipassShaders,
+    MRTShaders,
     setRenderPass,
     setSceneRenderPass,
     updateProjectionMatrix,
@@ -35,7 +34,6 @@ import {
 
 // draw positions, normals, and instance and type ids of objects
 class GBufferPass {
-    public meshGbufferMaterials: MultipassShaders;
     public pdbGbufferMaterials: MultipassShaders;
 
     public scene: Scene;
@@ -51,8 +49,6 @@ class GBufferPass {
         this.instancedMeshGroup = new Group();
         this.fibers = new InstancedFiberGroup();
         this.meshTypes = [];
-
-        this.meshGbufferMaterials = MeshGBufferShaders.shaderSet;
 
         this.pdbGbufferMaterials = PDBGBufferShaders.shaderSet;
 
@@ -86,10 +82,6 @@ class GBufferPass {
         const c = renderer.getClearColor(new Color()).clone();
         const a = renderer.getClearAlpha();
 
-        updateProjectionMatrix(
-            this.meshGbufferMaterials,
-            camera.projectionMatrix
-        );
         updateProjectionMatrix(
             this.pdbGbufferMaterials,
             camera.projectionMatrix

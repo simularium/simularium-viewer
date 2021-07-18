@@ -1,6 +1,6 @@
 import { FrontSide, Matrix4, ShaderMaterial, Vector2 } from "three";
 
-import { MultipassShaders } from "./MultipassMaterials";
+import { MRTShaders } from "./MultipassMaterials";
 
 const vertexShader = `
 precision highp float;
@@ -29,6 +29,11 @@ precision highp float;
 varying vec3 IN_viewPos;
 varying float IN_radius;
 
+
+layout(location = 0) out vec4 gAgentInfo;
+layout(location = 1) out vec4 gNormal;
+layout(location = 2) out vec4 gPos;
+
     uniform vec2 iResolution;
     uniform float typeId;
     uniform float instanceId;
@@ -38,41 +43,6 @@ varying float IN_radius;
     uniform mat4 projectionMatrix;
     
     void main()	{
-        vec2 uv = (gl_PointCoord - vec2(.5, .5)) * 2.0;
-        float lensqr = dot(uv, uv);
-        if (lensqr > 1.0) discard;
-
-        vec3 fragViewPos = IN_viewPos;
-        // adding pushes Z back. so "center" of sphere is "frontmost"
-        fragViewPos.z += IN_radius * scale * sqrt(1.0 - lensqr);
-      
-        vec4 fragPosClip = projectionMatrix * vec4(fragViewPos, 1.0);
-        vec3 fragPosNDC = fragPosClip.xyz / fragPosClip.w;
-        float n = gl_DepthRange.near;
-        float f = gl_DepthRange.far;
-        float fragPosDepth = (((f - n) * fragPosNDC.z) + n + f) / 2.0;
-
-        gl_FragDepth = fragPosDepth;
-      
-        gl_FragColor = vec4(typeId, instanceId, fragViewPos.z, fragPosDepth);
-    }
-
-`;
-
-const normalShader = `
-precision highp float;
-
-varying vec3 IN_viewPos;
-varying float IN_radius;
-
-    uniform vec2 iResolution;
-
-    uniform float scale;
-    uniform mat4 modelViewMatrix;
-    uniform mat4 projectionMatrix;
-    
-    void main()	{
-        
         vec2 uv = (gl_PointCoord - vec2(.5, .5)) * 2.0;
         float lensqr = dot(uv, uv);
         if (lensqr > 1.0) discard;
@@ -92,50 +62,15 @@ varying float IN_radius;
         float fragPosDepth = (((f - n) * fragPosNDC.z) + n + f) / 2.0;
 
         gl_FragDepth = fragPosDepth;
-
-        gl_FragColor = vec4(normalOut, 1.0);
-    }
-
-`;
-const positionShader = `
-precision highp float;
-
-varying vec3 IN_viewPos;
-varying float IN_radius;
-
-    uniform vec2 iResolution;
-
-    uniform float scale;
-    uniform mat4 modelViewMatrix;
-    uniform mat4 projectionMatrix;
-    
-    void main()	{
-        
-        vec2 uv = (gl_PointCoord - vec2(.5, .5)) * 2.0;
-        float lensqr = dot(uv, uv);
-        if (lensqr > 1.0) discard;
-
-        vec3 normal = vec3(uv.x, uv.y, sqrt(1.0 - lensqr));
-        normal = normalize(normal);
-
-        vec3 fragViewPos = IN_viewPos;
-        // adding pushes Z back. so "center" of sphere is "frontmost"
-        fragViewPos.z += IN_radius * scale * sqrt(1.0 - lensqr);
       
-        vec4 fragPosClip = projectionMatrix * vec4(fragViewPos, 1.0);
-        vec3 fragPosNDC = fragPosClip.xyz / fragPosClip.w;
-        float n = gl_DepthRange.near;
-        float f = gl_DepthRange.far;
-        float fragPosDepth = (((f - n) * fragPosNDC.z) + n + f) / 2.0;
-
-        gl_FragDepth = fragPosDepth;
-      
-        gl_FragColor = vec4(fragViewPos.x, fragViewPos.y, fragViewPos.z, 1.0);
+        gAgentInfo = vec4(typeId, instanceId, fragViewPos.z, fragPosDepth);
+        gNormal = vec4(normalOut, 1.0);
+        gPos = vec4(fragViewPos.x, fragViewPos.y, fragViewPos.z, 1.0);
     }
 
 `;
 
-const colorMaterial = new ShaderMaterial({
+const multiMaterial = new RawShaderMaterial({
     uniforms: {
         radius: { value: 1.0 },
         iResolution: { value: new Vector2() },
@@ -149,35 +84,9 @@ const colorMaterial = new ShaderMaterial({
     side: FrontSide,
     transparent: false,
 });
-const normalMaterial = new ShaderMaterial({
-    uniforms: {
-        radius: { value: 1.0 },
-        iResolution: { value: new Vector2() },
-        scale: { value: 1.0 },
-        projectionMatrix: { value: new Matrix4() },
-    },
-    vertexShader: vertexShader,
-    fragmentShader: normalShader,
-    side: FrontSide,
-    transparent: false,
-});
-const positionMaterial = new ShaderMaterial({
-    uniforms: {
-        radius: { value: 1.0 },
-        iResolution: { value: new Vector2() },
-        scale: { value: 1.0 },
-        projectionMatrix: { value: new Matrix4() },
-    },
-    vertexShader: vertexShader,
-    fragmentShader: positionShader,
-    side: FrontSide,
-    transparent: false,
-});
 
-const shaderSet: MultipassShaders = {
-    color: colorMaterial,
-    position: positionMaterial,
-    normal: normalMaterial,
+const shaderSet: MRTShaders = {
+    mat: multiMaterial,
 };
 
 export default {
