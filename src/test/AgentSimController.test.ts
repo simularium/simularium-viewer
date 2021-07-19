@@ -1,3 +1,4 @@
+import "regenerator-runtime/runtime.js";
 import { SimulariumController } from "../controller";
 import { DummyRemoteSimulator } from "../simularium";
 

@@ -1,3 +1,4 @@
+import "regenerator-runtime/runtime.js";
 import { SelectionInterface } from "../simularium";
 
 const idMapping = {
