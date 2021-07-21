@@ -346,10 +346,9 @@ class VisData {
     }
 
     public constructor() {
+        this.webWorker = null;
         if (util.ThreadUtil.browserSupportsWebWorkers()) {
             this.setupWebWorker();
-        } else {
-            this.webWorker = null;
         }
         this.frameCache = [];
         this.frameDataCache = [];
