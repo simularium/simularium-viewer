@@ -18,6 +18,7 @@ import { ISimulator } from "./ISimulator";
 export class ClientSimulator implements ISimulator {
     private localSimulator: IClientSimulatorImpl;
     private simulatorIntervalId = 0;
+    private dataInterval = 1;
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfo) => void;
     public onTrajectoryDataArrive: (msg: VisDataMessage) => void;
@@ -115,7 +116,7 @@ export class ClientSimulator implements ISimulator {
                     this.simulatorIntervalId = window.setInterval(() => {
                         const frame = this.localSimulator.update(0);
                         this.onTrajectoryDataArrive(frame);
-                    }, 1);
+                    }, this.dataInterval);
                 }
                 break;
             case ClientMessageEnum.ID_VIS_DATA_ABORT:
