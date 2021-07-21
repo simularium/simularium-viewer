@@ -410,12 +410,8 @@ class VisGeometry {
 
     // Sets camera position and orientation to the trajectory's initial (default) values
     public resetCameraPosition(): void {
-        const {
-            position,
-            upVector,
-            lookAtPosition,
-            fovDegrees,
-        } = this.cameraDefault;
+        const { position, upVector, lookAtPosition, fovDegrees } =
+            this.cameraDefault;
 
         // Reset camera position
         this.camera.position.set(position.x, position.y, position.z);
@@ -539,7 +535,7 @@ class VisGeometry {
                 visAgent.setFollowed(true);
             }
         }
-
+        console.log("setFollowObject");
         this.updateScene(this.currentSceneAgents);
     }
 
@@ -1090,6 +1086,7 @@ class VisGeometry {
         this.resetAllGeometry();
 
         this.visGeomMap.clear();
+        console.log("resetMapping: initMeshRegistry");
         this.initMeshRegistry();
         this.pdbRegistry.clear();
         this.meshLoadAttempted.clear();
@@ -1498,7 +1495,7 @@ class VisGeometry {
         if (!this.isIdColorMappingSet) {
             return;
         }
-
+        console.log("updateScene");
         this.currentSceneAgents = agents;
 
         let dx = 0,
@@ -2008,7 +2005,7 @@ class VisGeometry {
     public clearForNewTrajectory(): void {
         this.legacyRenderer.beginUpdate(this.scene);
         this.legacyRenderer.endUpdate(this.scene);
-
+        console.log("clearForNewTrajectory");
         this.resetMapping();
 
         // remove current scene agents.

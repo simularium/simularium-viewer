@@ -244,6 +244,8 @@ class SimulariumRenderer {
         const pixel = new Float32Array(4).fill(-1);
         // (typeId), (instanceId), fragViewPos.z, fragPosDepth;
 
+        return -1;
+
         // TODO
         // - create 1x1 render target
         // - in here, do a quick draw from this.gbuffer.texture[0] into the 1x1

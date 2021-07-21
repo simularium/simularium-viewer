@@ -13,13 +13,11 @@ import {
 } from "./localSimulators/ClientSimulatorFactory";
 import { ISimulator } from "./ISimulator";
 
-// setInterval is the playback engine for now
-let simulatorIntervalId = 0;
-
 // a ClientSimulator is a ISimulator that is expected to run purely in procedural javascript in the browser client,
 // with the procedural implementation in a IClientSimulatorImpl
 export class ClientSimulator implements ISimulator {
     private localSimulator: IClientSimulatorImpl;
+    private simulatorIntervalId = 0;
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfo) => void;
     public onTrajectoryDataArrive: (msg: VisDataMessage) => void;
@@ -100,20 +98,21 @@ export class ClientSimulator implements ISimulator {
                         );
                         this.onTrajectoryDataArrive(frame);
                     } else {
-                        const a: TrajectoryFileInfo = this.localSimulator.getInfo();
+                        const a: TrajectoryFileInfo =
+                            this.localSimulator.getInfo();
                         this.onTrajectoryFileInfoArrive(a);
                     }
                 }
                 break;
             case ClientMessageEnum.ID_VIS_DATA_PAUSE:
                 {
-                    window.clearInterval(simulatorIntervalId);
-                    simulatorIntervalId = 0;
+                    window.clearInterval(this.simulatorIntervalId);
+                    this.simulatorIntervalId = 0;
                 }
                 break;
             case ClientMessageEnum.ID_VIS_DATA_RESUME:
                 {
-                    simulatorIntervalId = window.setInterval(() => {
+                    this.simulatorIntervalId = window.setInterval(() => {
                         const frame = this.localSimulator.update(0);
                         this.onTrajectoryDataArrive(frame);
                     }, 1);
@@ -121,8 +120,8 @@ export class ClientSimulator implements ISimulator {
                 break;
             case ClientMessageEnum.ID_VIS_DATA_ABORT:
                 {
-                    window.clearInterval(simulatorIntervalId);
-                    simulatorIntervalId = 0;
+                    window.clearInterval(this.simulatorIntervalId);
+                    this.simulatorIntervalId = 0;
                 }
                 break;
             case ClientMessageEnum.ID_GOTO_SIMULATION_TIME:
