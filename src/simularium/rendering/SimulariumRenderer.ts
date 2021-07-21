@@ -243,6 +243,11 @@ class SimulariumRenderer {
     public hitTest(renderer: WebGLRenderer, x: number, y: number): number {
         const pixel = new Float32Array(4).fill(-1);
         // (typeId), (instanceId), fragViewPos.z, fragPosDepth;
+
+        // TODO
+        // - create 1x1 render target
+        // - in here, do a quick draw from this.gbuffer.texture[0] into the 1x1
+        // - use readRenderTargetPixels to get the pixel out of the 1x1
         renderer.readRenderTargetPixels(this.gbuffer, x, y, 1, 1, pixel);
         if (pixel[3] === -1) {
             return -1;
