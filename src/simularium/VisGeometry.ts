@@ -535,7 +535,6 @@ class VisGeometry {
                 visAgent.setFollowed(true);
             }
         }
-        console.log("setFollowObject");
         this.updateScene(this.currentSceneAgents);
     }
 
@@ -1086,7 +1085,6 @@ class VisGeometry {
         this.resetAllGeometry();
 
         this.visGeomMap.clear();
-        console.log("resetMapping: initMeshRegistry");
         this.initMeshRegistry();
         this.pdbRegistry.clear();
         this.meshLoadAttempted.clear();
@@ -1495,7 +1493,6 @@ class VisGeometry {
         if (!this.isIdColorMappingSet) {
             return;
         }
-        console.log("updateScene");
         this.currentSceneAgents = agents;
 
         let dx = 0,
@@ -2005,7 +2002,6 @@ class VisGeometry {
     public clearForNewTrajectory(): void {
         this.legacyRenderer.beginUpdate(this.scene);
         this.legacyRenderer.endUpdate(this.scene);
-        console.log("clearForNewTrajectory");
         this.resetMapping();
 
         // remove current scene agents.
