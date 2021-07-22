@@ -20,6 +20,7 @@ import {
     PerspectiveCamera,
 } from "three";
 import * as dat from "dat.gui";
+import HitTestHelper from "./HitTestHelper";
 
 interface SimulariumRenderParameters {
     aoradius1: number;
@@ -53,6 +54,7 @@ class SimulariumRenderer {
     public contourPass: ContourPass;
     public drawBufferPass: DrawBufferPass;
     public gbuffer: WebGLMultipleRenderTargets;
+    private hitTestHelper: HitTestHelper;
     public blurIntermediateBuffer: WebGLRenderTarget;
     public ssaoBuffer: WebGLRenderTarget;
     public ssaoBuffer2: WebGLRenderTarget;
@@ -123,6 +125,8 @@ class SimulariumRenderer {
         this.gbuffer.texture[0].name = "agentinfo";
         this.gbuffer.texture[1].name = "normal";
         this.gbuffer.texture[2].name = "position";
+
+        this.hitTestHelper = new HitTestHelper();
 
         // intermediate blurring buffer
         this.blurIntermediateBuffer = new WebGLRenderTarget(2, 2, {
@@ -241,16 +245,14 @@ class SimulariumRenderer {
     }
 
     public hitTest(renderer: WebGLRenderer, x: number, y: number): number {
-        const pixel = new Float32Array(4).fill(-1);
+        const pixel = this.hitTestHelper.hitTest(
+            renderer,
+            this.gbuffer.texture[0],
+            x / this.gbuffer.width,
+            y / this.gbuffer.height
+        );
         // (typeId), (instanceId), fragViewPos.z, fragPosDepth;
 
-        return -1;
-
-        // TODO
-        // - create 1x1 render target
-        // - in here, do a quick draw from this.gbuffer.texture[0] into the 1x1
-        // - use readRenderTargetPixels to get the pixel out of the 1x1
-        renderer.readRenderTargetPixels(this.gbuffer, x, y, 1, 1, pixel);
         if (pixel[3] === -1) {
             return -1;
         } else {
