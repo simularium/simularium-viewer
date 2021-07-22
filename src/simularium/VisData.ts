@@ -327,27 +327,23 @@ class VisData {
         };
     }
 
-    private setupWebWorker() {
-        this.webWorker = util.ThreadUtil.createWebWorkerFromFunction(
-            this.convertVisDataWorkFunctionToString()
-        );
-
-        // event.data is of type ParsedBundle
-        this.webWorker.onmessage = (event) => {
-            Array.prototype.push.apply(
-                this.frameDataCache,
-                event.data.frameDataArray
-            );
-            Array.prototype.push.apply(
-                this.frameCache,
-                event.data.parsedAgentDataArray
-            );
-        };
-    }
-
     public constructor() {
         if (util.ThreadUtil.browserSupportsWebWorkers()) {
-            this.setupWebWorker();
+            this.webWorker = util.ThreadUtil.createWebWorkerFromFunction(
+                this.convertVisDataWorkFunctionToString()
+            );
+
+            // event.data is of type ParsedBundle
+            this.webWorker.onmessage = (event) => {
+                Array.prototype.push.apply(
+                    this.frameDataCache,
+                    event.data.frameDataArray
+                );
+                Array.prototype.push.apply(
+                    this.frameCache,
+                    event.data.parsedAgentDataArray
+                );
+            };
         } else {
             this.webWorker = null;
         }
@@ -452,17 +448,6 @@ class VisData {
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
         this.netBuffer = new ArrayBuffer(0);
-    }
-
-    public cancelAllWorkers(): void {
-        // we need to be able to terminate any queued work in the worker during trajectory changeovers
-        if (
-            util.ThreadUtil.browserSupportsWebWorkers() &&
-            this.webWorker !== null
-        ) {
-            this.webWorker.terminate();
-            this.setupWebWorker();
-        }
     }
 
     public parseAgentsFromNetData(msg: VisDataMessage | ArrayBuffer): void {
