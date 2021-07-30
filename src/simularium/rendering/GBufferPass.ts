@@ -83,6 +83,8 @@ class GBufferPass {
             this.pdbGbufferMaterials,
             camera.projectionMatrix
         );
+        // this.pdbGbufferMaterials.mat.uniforms.modelViewMatrix.value =
+        //     camera.modelViewMatrix;
         this.fibers.updateProjectionMatrix(camera.projectionMatrix);
         for (let i = 0; i < this.meshTypes.length; ++i) {
             const s = this.meshTypes[i].getShaders();

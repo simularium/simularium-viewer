@@ -366,6 +366,7 @@ function createShaders(
         uniforms: {
             curveData: { value: null },
             projectionMatrix: { value: new Matrix4() },
+            modelViewMatrix: { value: new Matrix4() },
         },
     });
 

@@ -1595,7 +1595,8 @@ class VisGeometry {
                         );
                     } else {
                         if (pdbEntry !== visAgent.pdbModel) {
-                            visAgent.setupPdb(pdbEntry);
+                            this.resetAgentPDB(visAgent, pdbEntry);
+                            //visAgent.setupPdb(pdbEntry);
                         }
                         visAgent.updatePdbTransform(1.0);
                     }
