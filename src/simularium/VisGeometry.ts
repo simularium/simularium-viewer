@@ -1595,6 +1595,7 @@ class VisGeometry {
                         );
                     } else {
                         if (pdbEntry !== visAgent.pdbModel) {
+                            // race condition? agents arrived after pdb did?
                             this.resetAgentPDB(visAgent, pdbEntry);
                             //visAgent.setupPdb(pdbEntry);
                         }
