@@ -10,7 +10,7 @@ module.exports = {
         path: path.resolve(__dirname, "public"),
     },
     mode: "development",
-    devtool: "inline-source-map",
+    devtool: "source-map",
     plugins: [
         new HtmlWebpackPlugin({
             template: "./examples/index.html",
@@ -18,13 +18,14 @@ module.exports = {
         new MiniCssExtractPlugin({
             filename: "style.[contenthash].css",
         }),
-        new CopyWebpackPlugin([
-            {
-                from: "examples/assets",
-                to: path.resolve(__dirname, "public/assets"),
-            },
-        ]),
-        //new WorkerPlugin()
+        new CopyWebpackPlugin({
+            patterns: [
+                {
+                    from: "examples/assets",
+                    to: path.resolve(__dirname, "public/assets"),
+                },
+            ],
+        }),
     ],
     devServer: {
         publicPath: "/public/",
@@ -57,17 +58,6 @@ module.exports = {
             {
                 test: /\.(png|svg|jpg|gif)$/,
                 use: ["file-loader"],
-            },
-            {
-                test: /KMeansWorker\.(js|ts)$/i,
-                use: [
-                    {
-                        loader: "worker-loader?inline=true",
-                    },
-                    {
-                        loader: "babel-loader",
-                    },
-                ],
             },
         ],
     },

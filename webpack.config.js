@@ -20,17 +20,6 @@ module.exports = {
                     },
                 ],
             },
-            {
-                test: /KMeansWorker\.(js|ts)$/i,
-                use: [
-                    {
-                        loader: "worker-loader?inline=true",
-                    },
-                    {
-                        loader: "babel-loader",
-                    },
-                ],
-            },
         ],
     },
     resolve: {
