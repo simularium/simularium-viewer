@@ -20,6 +20,12 @@ import { ClientSimulatorParams } from "../simularium/localSimulators/ClientSimul
 import { ISimulator } from "../simularium/ISimulator";
 import { LocalFileSimulator } from "../simularium/LocalFileSimulator";
 
+// TODO get this info passed in from the outside or read in as data
+const SIMULARIUM_ASSETS_BUCKET =
+    "https://aics-simularium-data.s3.us-east-2.amazonaws.com";
+const DEFAULT_ASSET_PREFIX = `${SIMULARIUM_ASSETS_BUCKET}/meshes/obj`;
+const DEFAULT_VISDATA_PREFIX = `${SIMULARIUM_ASSETS_BUCKET}/visdata`;
+
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
 // TODO: refine this as part of the public API for initializing the
@@ -40,9 +46,6 @@ interface SimulatorConnectionParams {
     clientSimulatorParams?: ClientSimulatorParams;
     simulariumFile?: SimulariumFileFormat;
 }
-
-const DEFAULT_ASSET_PREFIX =
-    "https://aics-agentviz-data.s3.us-east-2.amazonaws.com/meshes/obj";
 
 export default class SimulariumController {
     public simulator?: ISimulator;
@@ -120,7 +123,7 @@ export default class SimulariumController {
         }
         // if there's no geometryFile, then make an assumption about the playbackFileName
         if (playbackFileName) {
-            return `https://aics-agentviz-data.s3.us-east-2.amazonaws.com/visdata/${playbackFileName}.json`;
+            return `${DEFAULT_VISDATA_PREFIX}/${playbackFileName}.json`;
         }
         return "";
     }
@@ -288,9 +291,9 @@ export default class SimulariumController {
             newFileName
         );
         this.assetPrefix = assetPrefix ? assetPrefix : DEFAULT_ASSET_PREFIX;
+        this.visData.cancelAllWorkers();
         this.visData.WaitForFrame(0);
         this.visData.clearCache();
-        this.visData.cancelAllWorkers();
 
         this.stop();
 
