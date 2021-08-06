@@ -321,6 +321,7 @@ class PDBModel {
     }
 
     private async processPdbLod(n, sizes, allData) {
+        // https://webpack.js.org/guides/web-workers/#syntax
         const worker = new Worker(
             new URL("./worker/KMeansWorker.ts", import.meta.url)
         );
