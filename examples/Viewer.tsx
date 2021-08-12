@@ -164,7 +164,6 @@ class Viewer extends React.Component<{}, ViewerState> {
                 return acc
             }, {})
             const fileName = filesArr[simulariumFileIndex].name;
-            console.log(parsedFiles)
             simulariumController
                 .changeFile(
                     { simulariumFile, geoAssets },
@@ -172,7 +171,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                     geometryFile,
                 )
                 .catch((error) => {
-                    console.log(error.htmlData);
+                    console.log("Error loading file", error);
                     window.alert(`Error loading file: ${error.message}`);
                 });
         });
@@ -194,7 +193,6 @@ class Viewer extends React.Component<{}, ViewerState> {
 
     public turnAgentsOnOff(nameToToggle: string) {
         let currentHiddenAgents = this.state.selectionStateInfo.hiddenAgents;
-        console.log(currentHiddenAgents);
         let nextHiddenAgents = [];
         if (currentHiddenAgents.some((a) => a.name === nameToToggle)) {
             nextHiddenAgents = currentHiddenAgents.filter(
@@ -206,7 +204,6 @@ class Viewer extends React.Component<{}, ViewerState> {
                 { name: nameToToggle, tags: [] },
             ];
         }
-        console.log(nextHiddenAgents);
         this.setState({
             ...this.state,
             selectionStateInfo: {
@@ -219,7 +216,6 @@ class Viewer extends React.Component<{}, ViewerState> {
     public turnAgentHighlightsOnOff(nameToToggle: string) {
         let currentHighlightedAgents = this.state.selectionStateInfo
             .highlightedAgents;
-        console.log(currentHighlightedAgents);
         let nextHighlightedAgents = [];
         if (currentHighlightedAgents.some((a) => a.name === nameToToggle)) {
             nextHighlightedAgents = currentHighlightedAgents.filter(
@@ -231,7 +227,6 @@ class Viewer extends React.Component<{}, ViewerState> {
                 { name: nameToToggle, tags: [] },
             ];
         }
-        console.log(nextHighlightedAgents);
         this.setState({
             ...this.state,
             selectionStateInfo: {
