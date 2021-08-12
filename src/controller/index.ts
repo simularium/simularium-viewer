@@ -39,6 +39,7 @@ interface SimulatorConnectionParams {
     netConnectionSettings?: NetConnectionParams;
     clientSimulatorParams?: ClientSimulatorParams;
     simulariumFile?: SimulariumFileFormat;
+    geoAssets?: any;
 }
 
 const DEFAULT_ASSET_PREFIX =
@@ -138,7 +139,9 @@ export default class SimulariumController {
                 this.playBackFile,
                 localFile
             );
-            this.visGeometry.cacheLocalAssets(geoAssets);
+            if (this.visGeometry && geoAssets) {
+                this.visGeometry.cacheLocalAssets(geoAssets);
+            }
         } else if (netConnectionConfig) {
             this.simulator = new RemoteSimulator(netConnectionConfig);
         } else {

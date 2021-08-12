@@ -1163,7 +1163,7 @@ class VisGeometry {
         if (meshName && this.cachedMeshRegistry.has(meshName)) {
             this.meshRegistry.set(
                 meshName,
-                this.cachedMeshRegistry.get(meshName)
+                this.cachedMeshRegistry.get(meshName) as MeshLoadRequest
             );
             this.cachedMeshRegistry.delete(meshName);
         } else if (
@@ -1176,7 +1176,10 @@ class VisGeometry {
         }
         // check first if the file was loaded locally
         if (pdbName && this.cachedPdbRegistry.has(pdbName)) {
-            this.pdbRegistry.set(pdbName, this.cachedPdbRegistry.get(pdbName));
+            this.pdbRegistry.set(
+                pdbName,
+                this.cachedPdbRegistry.get(pdbName) as PDBModel
+            );
             this.cachedPdbRegistry.delete(pdbName);
         } else if (
             pdbName &&
