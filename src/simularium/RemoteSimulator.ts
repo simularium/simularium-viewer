@@ -1,5 +1,6 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
+import FrontEndError from "./FrontEndError";
 
 import { ISimulator } from "./ISimulator";
 import { TrajectoryFileInfoV2, VisDataMessage } from "./types";
@@ -264,7 +265,10 @@ export class RemoteSimulator implements ISimulator {
         return connectPromise;
     }
 
-    public connectToRemoteServer(address: string): Promise<string> {
+    public connectToRemoteServer(
+        address: string,
+        timeout = 1000
+    ): Promise<string> {
         const remoteStartPromise = new Promise<string>((resolve, reject) => {
             if (this.socketIsConnected()) {
                 return resolve("Remote sim successfully started");
@@ -276,15 +280,15 @@ export class RemoteSimulator implements ISimulator {
                 new Promise((resolve) =>
                     setTimeout(() => {
                         resolve(this.socketIsConnected());
-                    }, 1000)
+                    }, timeout)
                 );
 
             const handleReturn = async () => {
                 const isConnected = await waitForIsConnected();
-                secondsWaited++;
+                timeWaited += timeout;
                 if (isConnected) {
                     resolve("Remote sim successfully started");
-                } else if (secondsWaited < TOTAL_WAIT_SECONDS) {
+                } else if (timeWaited < MAX_WAIT_TIME) {
                     return await handleReturn();
                 } else if (connectionTries <= MAX_CONNECTION_TRIES) {
                     connectionTries++;
@@ -297,8 +301,8 @@ export class RemoteSimulator implements ISimulator {
                     );
                 }
             };
-            const TOTAL_WAIT_SECONDS = 2;
-            let secondsWaited = 0;
+            const MAX_WAIT_TIME = 2 * timeout;
+            let timeWaited = 0;
             const MAX_CONNECTION_TRIES = 2;
             let connectionTries = 1;
             return startPromise.then(handleReturn);
@@ -404,12 +408,16 @@ export class RemoteSimulator implements ISimulator {
 
         // begins a stream which will include a TrajectoryFileInfo and a series of VisDataMessages
         // Note that it is possible for the first vis data to arrive before the TrajectoryFileInfo...
-        return this.connectToRemoteServer(this.getIp()).then(() => {
-            this.sendWebSocketRequest(
-                jsonData,
-                "Start Trajectory File Playback"
-            );
-        });
+        return this.connectToRemoteServer(this.getIp())
+            .then(() => {
+                this.sendWebSocketRequest(
+                    jsonData,
+                    "Start Trajectory File Playback"
+                );
+            })
+            .catch((error) => {
+                throw new FrontEndError(error);
+            });
     }
 
     public pauseRemoteSim(): void {
