@@ -126,33 +126,37 @@ function createTube(
     // sample the curve in two places
     const prev = sampleCurve(t1, points);
     const next = sampleCurve(t2, points);
-    // console.log("prev=", prev);
-    // console.log("next=", next);
 
-    // compute the TBN matrix
+    // compute the TBN matrix (aka the Frenet-Serret frame)
+
+    // tangent is just the direction along our small delta
     vT.copy(new Vector3().copy(next).sub(prev).normalize());
-    // if (next-prev) and (next+prev) are parallel, then B will be zero
+
+    // if next-prev and next+prev are parallel, then
+    // our normal and binormal will be ill-defined so we need to check for that
+    // check parallel by dot the unit vectors and check close to +/-1
     const check = new Vector3()
-        .copy(next)
-        .sub(prev)
-        .dot(new Vector3().copy(next).add(prev));
-    if (check > 0.00001) {
+        .copy(vT)
+        .dot(new Vector3().copy(next).add(prev).normalize());
+    if (Math.abs(check) < 0.999) {
+        // cross product of parallel vectors is 0, so T must not be parallel to next+prev
+        // hence the above check.
         vB.copy(
             new Vector3().copy(next).add(prev).normalize().cross(vT).normalize()
         );
     } else {
-        // special case for which N ad B are not well defined.
+        // special case for which N and B are not well defined.
         // so we will just pick something
         let min = 1.0;
-        if (vT.x <= min) {
-            min = vT.x;
+        if (Math.abs(vT.x) <= min) {
+            min = Math.abs(vT.x);
             vB.x = 1.0;
         }
-        if (vT.y <= min) {
-            min = vT.y;
+        if (Math.abs(vT.y) <= min) {
+            min = Math.abs(vT.y);
             vB.y = 1.0;
         }
-        if (vT.z <= min) {
+        if (Math.abs(vT.z) <= min) {
             vB.z = 1.0;
         }
         const tmpVec = new Vector3().copy(vT).cross(vB).normalize();
@@ -225,6 +229,13 @@ describe("Test curve", () => {
         const points: Vector3[] = [
             new Vector3(-70, 0, 0),
             new Vector3(10, 0, 0),
+        ];
+        walkCurve(points);
+    });
+    test("on-axis curve computes valid positions", () => {
+        const points: Vector3[] = [
+            new Vector3(10, 0, 0),
+            new Vector3(-70, 0, 0),
         ];
         walkCurve(points);
     });

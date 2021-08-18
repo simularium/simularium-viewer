@@ -271,8 +271,9 @@ void createTube (float t, vec2 volume, out vec3 offset, out vec3 normal) {
 
   // if next-prev and next+prev are parallel, then
   // our normal and binormal will be ill-defined so we need to check for that
-  float check = dot(next - prev, next + prev);
-  if (check > 0.00001) {
+  // check parallel by dot the unit vectors and check close to +/-1
+  float check = dot(T, normalize(next + prev));
+  if (abs(check) < 0.999) {
     // cross product of parallel vectors is 0, so T must not be parallel to next+prev
     // hence the above check.
     B = normalize(cross(T, next + prev));
@@ -281,15 +282,15 @@ void createTube (float t, vec2 volume, out vec3 offset, out vec3 normal) {
     // special case for which N and B are not well defined. 
     // so we will just pick something
     float min = 1.0;
-    if (T.x <= min) {
-      min = T.x;
+    if (abs(T.x) <= min) {
+      min = abs(T.x);
       B.x = 1.0;
     }
-    if (T.y <= min) {
-      min = T.y;
+    if (abs(T.y) <= min) {
+      min = abs(T.y);
       B.y = 1.0;
     }
-    if (T.z <= min) {
+    if (abs(T.z) <= min) {
       B.z = 1.0;
     }
     vec3 tmpVec = normalize(cross(T, B));
