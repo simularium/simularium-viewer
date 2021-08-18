@@ -19,7 +19,8 @@
         "processCSS": "postcss src/viewport/index.css --output style/style.css",
         "build": "npm-run-all generateTypes bundle transpileES transpileCommonJs processCSS",
         "publish-patch": "npm version patch | xargs -I {} sh -c 'git push origin {}'",
-        "postpublish-patch": "git push origin main"
+        "postpublish-patch": "git push origin main",
+        "version": "auto-changelog -p --tag-pattern v.+ && git add CHANGELOG.md"
     },
     "files": [
         "es",
