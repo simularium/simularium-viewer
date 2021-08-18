@@ -8,8 +8,19 @@ describe("RemoteSimulator", () => {
     };
     const serverUri = `wss://${simulatorParams.serverIp}:${simulatorParams.serverPort}`;
 
+    describe("connectToUri", () => {
+        test("opens a WebSocket connection", () => {
+            const simulator = new RemoteSimulator({});
+            expect(simulator.socketIsValid()).toBe(false);
+
+            simulator.connectToUri(serverUri);
+
+            expect(simulator.socketIsValid()).toBe(true);
+        });
+    });
+
     describe("connectToRemoteServer", () => {
-        test("successfully connects", async () => {
+        test("successfully connects to server", async () => {
             const remoteSimulator = new RemoteSimulator(simulatorParams);
 
             const result = await remoteSimulator.connectToRemoteServer(
@@ -36,6 +47,7 @@ describe("RemoteSimulator", () => {
             }
         });
     });
+
     describe("startRemoteTrajectoryPlayback", () => {
         test("sends WebSocket request to start playback", async () => {
             const remoteSimulator = new RemoteSimulator(simulatorParams);
