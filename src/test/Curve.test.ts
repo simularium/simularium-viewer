@@ -1,17 +1,18 @@
 import { Vector2, Vector3, Vector4 } from "three";
 
-// THIS TEST IS A REPLICA/PORT OF THE GLSL SHADER CODE IN
+// THIS TEST MODULE IS A REPLICA/PORT OF THE GLSL SHADER CODE IN
 // simularium/rendering/InstancedFiberShader.ts
 // AND IS MEANT TO VERIFY SOME EDGE CASES FOR CURVE GENERATION
 
-// Angles to spherical coordinates
-function spherical(r, phi, theta): Vector3 {
-    return new Vector3(
-        r * Math.cos(phi) * Math.cos(theta),
-        r * Math.cos(phi) * Math.sin(theta),
-        r * Math.sin(phi)
+// verify that T,N,B are non zero vecs and all perp
+function allzero(v: Vector3, epsilon = 0.0001): boolean {
+    return (
+        Math.abs(v.x) < epsilon &&
+        Math.abs(v.y) < epsilon &&
+        Math.abs(v.z) < epsilon
     );
 }
+
 function initCubicPolynomial(x0, x1, t0, t1): Vector4 {
     return new Vector4(
         x0,
@@ -176,31 +177,25 @@ function createTube(
     ); //.xyz = sampleCurve(t) + B * volume.x * circX + N * volume.y * circY;
 }
 
-describe("Test curve", () => {
-    test("curve shader computes correct positions", () => {
-        // the curve itself; to be loaded at beginning of main
-        const points: Vector3[] = [
-            new Vector3(-70, 0, 0),
-            new Vector3(10, 0, 0),
-        ];
+function walkCurve(points) {
+    // angle is a radial angle around the oriented cylinder centered at the point on the curve
+    const angle = 0;
+    // volume is just a radius scale factor
+    const volume = new Vector2(1, 1);
 
-        // t to sample goes from 0 to 1.
-        const t = 0;
-        // angle is a radial angle around the oriented cylinder centered at the point on the curve
-        const angle = 0;
-        // volume is just a radius scale factor
-        const volume = new Vector2(1, 1);
+    // outputs:
 
-        // outputs:
-
-        // pt and normal on the tube centered on our curve:
-        const transformed = new Vector3();
-        const objectNormal = new Vector3();
-        // Frenet-Serret frame around this pt on the curve:
-        // tangent, binormal, normal
-        const T = new Vector3();
-        const B = new Vector3();
-        const N = new Vector3();
+    // pt and normal on the tube centered on our curve:
+    const transformed = new Vector3();
+    const objectNormal = new Vector3();
+    // Frenet-Serret frame around this pt on the curve:
+    // tangent, binormal, normal
+    const T = new Vector3();
+    const B = new Vector3();
+    const N = new Vector3();
+    // walk along whole curve
+    const nsteps = 8;
+    for (let t = 0; t < 1.0; t += 1.0 / nsteps) {
         createTube(
             points,
             t,
@@ -212,26 +207,32 @@ describe("Test curve", () => {
             B,
             N
         );
-        console.log("T=", T);
-        console.log("B=", B);
-        console.log("N=", N);
 
-        // verify that T,N,B are non zero vecs and all perp
-        function allzero(v: Vector3, epsilon = 0.0001): boolean {
-            return (
-                Math.abs(v.x) < epsilon &&
-                Math.abs(v.y) < epsilon &&
-                Math.abs(v.z) < epsilon
-            );
-        }
         expect(allzero(T)).toBe(false);
         expect(allzero(B)).toBe(false);
         expect(allzero(N)).toBe(false);
         expect(T.length()).not.toBeCloseTo(0);
         expect(B.length()).not.toBeCloseTo(0);
         expect(N.length()).not.toBeCloseTo(0);
-        expect(T.dot(B)).toEqual(0);
-        expect(T.dot(N)).toEqual(0);
-        expect(N.dot(B)).toEqual(0);
+        expect(T.dot(B)).toBeCloseTo(0);
+        expect(T.dot(N)).toBeCloseTo(0);
+        expect(N.dot(B)).toBeCloseTo(0);
+    }
+}
+
+describe("Test curve", () => {
+    test("on-axis curve computes valid positions", () => {
+        const points: Vector3[] = [
+            new Vector3(-70, 0, 0),
+            new Vector3(10, 0, 0),
+        ];
+        walkCurve(points);
+    });
+    test("very short curve computes valid positions", () => {
+        const points: Vector3[] = [
+            new Vector3(0.8003046890483816, -0.0012372934219477827, 0.0),
+            new Vector3(-0.7998676465812267, 0.0016908162423625583, 0.0),
+        ];
+        walkCurve(points);
     });
 });
