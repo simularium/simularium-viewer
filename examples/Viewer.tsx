@@ -149,16 +149,9 @@ class Viewer extends React.Component<{}, ViewerState> {
             
             const simulariumFile = JSON.parse(parsedFiles[simulariumFileIndex]);
 
-            const geoFileIndex = findIndex(
-                filesArr,
-                (file) => file.name.includes(".json")
-            );
-            let geometryFile = ""
-            if (geoFileIndex >= 0) {
-                geometryFile = JSON.parse(parsedFiles[geoFileIndex])
-            }
+            // TODO: better if this is a folder
             const geoAssets = filesArr.reduce((acc, cur, index) =>  {
-                if (index !== geoFileIndex && index !== simulariumFileIndex) {
+                if (index !== simulariumFileIndex) {
                     acc[cur.name] = parsedFiles[index]
                 }
                 return acc
@@ -168,7 +161,6 @@ class Viewer extends React.Component<{}, ViewerState> {
                 .changeFile(
                     { simulariumFile, geoAssets },
                     fileName,
-                    geometryFile,
                 )
                 .catch((error) => {
                     console.log("Error loading file", error);
@@ -497,6 +489,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                         onTimeChange={this.handleTimeChange.bind(this)}
                         simulariumController={simulariumController}
                         onJsonDataArrived={this.handleJsonMeshData}
+                        showCameraControls={false}
                         onTrajectoryFileInfoChanged={this.handleTrajectoryInfo.bind(
                             this
                         )}

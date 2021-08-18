@@ -55,10 +55,16 @@ interface Plot {
 
 type CachedObservables = Plot[];
 
+// per agent type Visdata format
+export interface AgentTypeVisData {
+    displayType: "PDB" | "OBJ" | "SPHERE" | "CUBE" | "GIZMO";
+    url: string;
+    color: string;
+}
+
 export interface AgentDisplayData {
     name: string;
-    pdb?: string;
-    mesh?: string;
+    geometry?: AgentTypeVisData;
 }
 export interface EncodedTypeMapping {
     [key: number]: AgentDisplayData;

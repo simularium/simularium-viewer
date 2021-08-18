@@ -36,10 +36,15 @@ import * as dat from "dat.gui";
 
 import jsLogger from "js-logger";
 import { ILogger, ILogLevel } from "js-logger";
-import { cloneDeep, forEach } from "lodash";
+import { cloneDeep, forEach, isEmpty, mapValues } from "lodash";
 
 import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC } from "../constants";
-import { TrajectoryFileInfo, CameraSpec } from "./types";
+import {
+    TrajectoryFileInfo,
+    CameraSpec,
+    AgentTypeVisData,
+    EncodedTypeMapping,
+} from "./types";
 import { AgentData } from "./VisData";
 
 import SimulariumRenderer from "./rendering/SimulariumRenderer";
@@ -86,6 +91,11 @@ interface AgentTypeGeometry {
     pdbName: string;
 }
 
+export interface AgentDisplayDataWithGeometry {
+    name: string;
+    geometry: AgentTypeVisData;
+}
+
 interface MeshLoadRequest {
     mesh: Object3D;
     cancelled: boolean;
@@ -102,13 +112,6 @@ interface PathData {
     geometry: BufferGeometry;
     material: LineBasicMaterial;
     line: LineSegments;
-}
-
-// per agent type Visdata format
-interface AgentTypeVisData {
-    mesh?: string;
-    scale: number;
-    pdb?: string;
 }
 
 type AgentTypeVisDataMap = Map<string, AgentTypeVisData>;
@@ -404,6 +407,7 @@ class VisGeometry {
         }
         // Reset then position and orient the camera
         this.resetCamera();
+        this.handleAgentGeometry(trajectoryFileInfo.typeMapping);
     }
 
     // Called when a new file is loaded, the Clear button is clicked, or Reset Camera button is clicked
@@ -743,34 +747,31 @@ class VisGeometry {
         console.log(this.meshRegistry);
     }
 
-    public loadPdb(pdbName: string, assetPath: string): void {
-        const pdbmodel = new PDBModel(pdbName);
-        this.pdbRegistry.set(pdbName, pdbmodel);
-        pdbmodel.download(`${assetPath}/${pdbName}`).then(
+    public loadPdb(url: string): void {
+        const pdbmodel = new PDBModel(url);
+        this.pdbRegistry.set(url, pdbmodel);
+        pdbmodel.download(url).then(
             () => {
-                const pdbEntry = this.pdbRegistry.get(pdbName);
+                const pdbEntry = this.pdbRegistry.get(url);
                 if (
                     pdbEntry &&
                     pdbEntry === pdbmodel &&
                     !pdbEntry.isCancelled()
                 ) {
-                    this.logger.debug("Finished loading pdb: ", pdbName);
-                    this.onNewPdb(pdbName);
+                    this.logger.debug("Finished loading pdb: ", url);
+                    this.onNewPdb(url);
                     // initiate async LOD processing
                     pdbmodel.generateLOD().then(() => {
-                        this.logger.debug(
-                            "Finished loading pdb LODs: ",
-                            pdbName
-                        );
-                        this.onNewPdb(pdbName);
+                        this.logger.debug("Finished loading pdb LODs: ", url);
+                        this.onNewPdb(url);
                     });
                 }
             },
             (reason) => {
-                this.pdbRegistry.delete(pdbName);
+                this.pdbRegistry.delete(url);
                 if (reason !== REASON_CANCELLED) {
                     console.error(reason);
-                    this.logger.debug("Failed to load pdb: ", pdbName);
+                    this.logger.debug("Failed to load pdb: ", url);
                 }
             }
         );
@@ -842,25 +843,25 @@ class VisGeometry {
         this.onNewRuntimeGeometryType(registry, meshName);
     }
 
-    public loadObj(meshName: string, assetPath: string): void {
+    public loadObj(url: string): void {
         const objLoader = new OBJLoader();
-        this.prepMeshRegistryForNewObj(this.meshRegistry, meshName);
+        this.prepMeshRegistryForNewObj(this.meshRegistry, url);
         objLoader.load(
-            `${assetPath}/${meshName}`,
+            url,
             (object) => {
-                this.handleObjResponse(this.meshRegistry, meshName, object);
+                this.handleObjResponse(this.meshRegistry, url, object);
             },
             (xhr) => {
                 this.logger.debug(
-                    meshName,
+                    url,
                     " ",
                     `${(xhr.loaded / xhr.total) * 100}% loaded`
                 );
             },
             (error) => {
-                this.meshRegistry.delete(meshName);
+                this.meshRegistry.delete(url);
                 console.error(error);
-                this.logger.debug("Failed to load mesh: ", error, meshName);
+                this.logger.debug("Failed to load mesh: ", error, url);
             }
         );
     }
@@ -1149,45 +1150,47 @@ class VisGeometry {
      */
     private mapIdToGeom(
         id: number,
-        meshName: string | undefined,
-        pdbName: string | undefined,
-        assetPath: string
+        url: string,
+        displayType: string,
+        color: string
     ): void {
-        this.logger.debug(`Mesh for id ${id} set to '${meshName}'`);
-        this.logger.debug(`PDB for id ${id} set to '${pdbName}'`);
+        this.logger.debug(`Geo for id ${id} set to '${url}'`);
         const unassignedName = `${VisAgent.UNASSIGNED_NAME_PREFIX}-${id}`;
+        const isMesh = displayType === "OBJ";
+        const isPBD = displayType === "PDB";
+        console.log(isMesh, isPBD, displayType);
         this.visGeomMap.set(id, {
-            meshName: meshName || DEFAULT_MESH_NAME,
-            pdbName: pdbName || "",
+            meshName: isMesh ? url : DEFAULT_MESH_NAME,
+            pdbName: isPBD ? url : "",
         });
-        if (meshName && this.cachedMeshRegistry.has(meshName)) {
+        if (isMesh && this.cachedMeshRegistry.has(url)) {
             this.meshRegistry.set(
-                meshName,
-                this.cachedMeshRegistry.get(meshName) as MeshLoadRequest
+                url,
+                this.cachedMeshRegistry.get(url) as MeshLoadRequest
             );
-            this.cachedMeshRegistry.delete(meshName);
+            this.cachedMeshRegistry.delete(url);
         } else if (
-            meshName &&
-            !this.meshRegistry.has(meshName) &&
-            !this.meshLoadAttempted.get(meshName)
+            isMesh &&
+            !this.meshRegistry.has(url) &&
+            !this.meshLoadAttempted.get(url)
         ) {
-            this.loadObj(meshName, assetPath);
-            this.meshLoadAttempted.set(meshName, true);
+            this.loadObj(url);
+            this.meshLoadAttempted.set(url, true);
         }
         // check first if the file was loaded locally
-        if (pdbName && this.cachedPdbRegistry.has(pdbName)) {
+        if (isPBD && this.cachedPdbRegistry.has(url)) {
             this.pdbRegistry.set(
-                pdbName,
-                this.cachedPdbRegistry.get(pdbName) as PDBModel
+                url,
+                this.cachedPdbRegistry.get(url) as PDBModel
             );
-            this.cachedPdbRegistry.delete(pdbName);
+            this.cachedPdbRegistry.delete(url);
         } else if (
-            pdbName &&
-            !this.pdbRegistry.has(pdbName) &&
-            !this.pdbLoadAttempted.get(pdbName)
+            isPBD &&
+            !this.pdbRegistry.has(url) &&
+            !this.pdbLoadAttempted.get(url)
         ) {
-            this.loadPdb(pdbName, assetPath);
-            this.pdbLoadAttempted.set(pdbName, true);
+            this.loadPdb(url);
+            this.pdbLoadAttempted.set(url, true);
         } else if (!this.pdbRegistry.has(unassignedName)) {
             // assign single atom pdb
             const pdbmodel = new PDBModel(unassignedName);
@@ -1257,91 +1260,55 @@ class VisGeometry {
         return null;
     }
 
-    // get the json file that accompanies the trajectory
-    // this file includes geometry data
-    public mapFromJSON(
-        name: string,
-        filePath: string | AgentTypeVisDataMap,
-        assetPath: string,
+    public handleAgentGeometry(
+        typeMapping: EncodedTypeMapping,
         callback?: (any) => void
-    ): Promise<void | Response> {
-        if (!filePath) {
-            return Promise.resolve();
-        }
-        if (filePath.size) {
-            return Promise.resolve(
-                this.setGeometryData(
-                    filePath as AgentTypeVisDataMap,
-                    assetPath,
-                    callback
-                )
-            );
-        }
-        const jsonRequest = new Request(filePath);
+    ) {
+        this.clearForNewTrajectory();
 
-        return fetch(jsonRequest)
-            .then((response) => {
-                if (!response.ok) {
-                    return Promise.reject(response);
-                }
-                return response.json();
-            })
-            .catch((response: Response) => {
-                if (response.status === 404) {
-                    console.warn(
-                        `Could not fetch geometry info for ${name} because ${filePath} does not exist.`
-                    );
-                } else {
-                    console.error(
-                        `Could not fetch geometry info for ${name}: ${response.statusText}`
-                    );
-                }
-            })
-            .then((data) => {
-                if (data) {
-                    this.setGeometryData(
-                        data as AgentTypeVisDataMap,
-                        assetPath,
-                        callback
-                    );
-                } else {
-                    this.resetMapping();
+        const geoMap = mapValues(typeMapping, (value) => {
+            if (value.geometry) {
+                return value;
+            } else {
+                return null;
+            }
+        });
+        if (!isEmpty(geoMap)) {
+            this.setGeometryData(geoMap, callback);
+        } else {
+            this.resetMapping();
 
-                    // if there is an id to color mapping, set up with spheres
-                    for (const i of this.idColorMapping.keys()) {
-                        this.visGeomMap.set(i, {
-                            meshName: DEFAULT_MESH_NAME,
-                            pdbName: "",
-                        });
-                    }
-                }
-            });
+            // if there is an id to color mapping, set up with spheres
+            for (const i of this.idColorMapping.keys()) {
+                this.visGeomMap.set(i, {
+                    meshName: DEFAULT_MESH_NAME,
+                    pdbName: "",
+                });
+            }
+        }
     }
 
     private setGeometryData(
-        jsonData: AgentTypeVisDataMap,
-        assetPath: string,
+        typeMapping: EncodedTypeMapping,
         callback?: (any) => void
     ): void {
         // clear things out in advance of loading all new geometry
         this.resetMapping();
 
-        this.logger.debug("JSON Mesh mapping loaded: ", jsonData);
+        this.logger.debug("JSON Mesh mapping loaded: ", typeMapping);
 
-        Object.keys(jsonData).forEach((id) => {
-            const entry: AgentTypeVisData = jsonData[id];
-            if (id === "size") {
-                console.log("WARNING: Ignoring deprecated bounding box data");
-            } else {
-                // mesh name is entry.mesh
-                // pdb name is entry.pdb
-                this.mapIdToGeom(Number(id), entry.mesh, entry.pdb, assetPath);
-                this.setScaleForId(Number(id), entry.scale);
-            }
+        Object.keys(typeMapping).forEach((id) => {
+            const entry: AgentDisplayDataWithGeometry = typeMapping[id];
+            this.mapIdToGeom(
+                Number(id),
+                entry.geometry.url,
+                entry.geometry.displayType,
+                entry.geometry.color
+            );
         });
 
         if (callback) {
-            callback(jsonData);
+            callback(typeMapping);
         }
 
         this.updateScene(this.currentSceneAgents);
