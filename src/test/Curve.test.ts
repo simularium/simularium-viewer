@@ -113,9 +113,9 @@ function createTube(
     volume: Vector2,
     offset: Vector3,
     normal: Vector3,
-    T: Vector3,
-    B: Vector3,
-    N: Vector3
+    vT: Vector3,
+    vB: Vector3,
+    vN: Vector3
 ) {
     // find prev and next sample along curve
 
@@ -130,36 +130,36 @@ function createTube(
     // console.log("next=", next);
 
     // compute the TBN matrix
-    T.copy(new Vector3().copy(next).sub(prev).normalize());
+    vT.copy(new Vector3().copy(next).sub(prev).normalize());
     // if (next-prev) and (next+prev) are parallel, then B will be zero
     const check = new Vector3()
         .copy(next)
         .sub(prev)
         .dot(new Vector3().copy(next).add(prev));
     if (check > 0.00001) {
-        B.copy(
-            new Vector3().copy(next).add(prev).normalize().cross(T).normalize()
+        vB.copy(
+            new Vector3().copy(next).add(prev).normalize().cross(vT).normalize()
         );
     } else {
         // special case for which N ad B are not well defined.
         // so we will just pick something
         let min = 1.0;
-        if (T.x <= min) {
-            min = T.x;
-            B.x = 1.0;
+        if (vT.x <= min) {
+            min = vT.x;
+            vB.x = 1.0;
         }
-        if (T.y <= min) {
-            min = T.y;
-            B.y = 1.0;
+        if (vT.y <= min) {
+            min = vT.y;
+            vB.y = 1.0;
         }
-        if (T.z <= min) {
-            B.z = 1.0;
+        if (vT.z <= min) {
+            vB.z = 1.0;
         }
-        const tmpVec = new Vector3().copy(T).cross(B).normalize();
-        B.copy(new Vector3().copy(T).cross(tmpVec).normalize()); // = normalize(cross(T, tmpVec));
+        const tmpVec = new Vector3().copy(vT).cross(vB).normalize();
+        vB.copy(new Vector3().copy(vT).cross(tmpVec).normalize()); // = normalize(cross(T, tmpVec));
     }
 
-    N.copy(new Vector3().copy(T).cross(B)); //-normalize(cross(B, T));
+    vN.copy(new Vector3().copy(vT).cross(vB)); //-normalize(cross(B, T));
 
     // extrude outward to create a tube
     const tubeAngle = angle;
@@ -167,8 +167,8 @@ function createTube(
     const circY = Math.sin(tubeAngle);
 
     // compute position and normal
-    const bx = new Vector3().copy(B).multiplyScalar(circX);
-    const ny = new Vector3().copy(N).multiplyScalar(circY);
+    const bx = new Vector3().copy(vB).multiplyScalar(circX);
+    const ny = new Vector3().copy(vN).multiplyScalar(circY);
     normal.copy(new Vector3().copy(bx).add(ny).normalize()); //xyz = normalize(B * circX + N * circY);
     offset.copy(
         sampleCurve(t, points)
