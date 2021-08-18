@@ -256,15 +256,6 @@ export class RemoteSimulator implements ISimulator {
         return `wss://${this.serverIp}:${this.serverPort}/`;
     }
 
-    private connectToUriAsync(address): Promise<string> {
-        const connectPromise = new Promise<string>((resolve) => {
-            this.connectToUri(address);
-            resolve("Successfully connected to uri!");
-        });
-
-        return connectPromise;
-    }
-
     public connectToRemoteServer(
         address: string,
         timeout = 1000
@@ -274,7 +265,6 @@ export class RemoteSimulator implements ISimulator {
                 return resolve("Remote sim successfully started");
             }
 
-            const startPromise = this.connectToUriAsync(address);
             // wait 1 second for websocket to open
             const waitForIsConnected = () =>
                 new Promise((resolve) =>
@@ -289,10 +279,11 @@ export class RemoteSimulator implements ISimulator {
                 if (isConnected) {
                     resolve("Remote sim successfully started");
                 } else if (timeWaited < MAX_WAIT_TIME) {
-                    return await handleReturn();
+                    return handleReturn();
                 } else if (connectionTries <= MAX_CONNECTION_TRIES) {
+                    this.connectToUri(address);
                     connectionTries++;
-                    return this.connectToUriAsync(address).then(handleReturn);
+                    return handleReturn();
                 } else {
                     reject(
                         new Error(
@@ -305,7 +296,8 @@ export class RemoteSimulator implements ISimulator {
             let timeWaited = 0;
             const MAX_CONNECTION_TRIES = 2;
             let connectionTries = 1;
-            return startPromise.then(handleReturn);
+            this.connectToUri(address);
+            return handleReturn();
         });
 
         return remoteStartPromise;
