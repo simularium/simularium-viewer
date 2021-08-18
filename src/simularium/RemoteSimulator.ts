@@ -261,11 +261,16 @@ export class RemoteSimulator implements ISimulator {
         timeout = 1000
     ): Promise<string> {
         const remoteStartPromise = new Promise<string>((resolve, reject) => {
+            const MAX_WAIT_TIME = 2 * timeout;
+            const MAX_CONNECTION_TRIES = 2;
+            let timeWaited = 0;
+            let connectionTries = 1;
+
             if (this.socketIsConnected()) {
                 return resolve("Remote sim successfully started");
             }
 
-            // wait 1 second for websocket to open
+            // Wait a specified time for websocket to open
             const waitForIsConnected = () =>
                 new Promise((resolve) =>
                     setTimeout(() => {
@@ -292,10 +297,7 @@ export class RemoteSimulator implements ISimulator {
                     );
                 }
             };
-            const MAX_WAIT_TIME = 2 * timeout;
-            let timeWaited = 0;
-            const MAX_CONNECTION_TRIES = 2;
-            let connectionTries = 1;
+
             this.connectToUri(address);
             return handleReturn();
         });
