@@ -262,16 +262,23 @@ void createTube (float t, vec2 volume, out vec3 offset, out vec3 normal) {
   vec3 prev = sampleCurve(t1);
   vec3 next = sampleCurve(t2);
 
-  // compute the TBN matrix
+  // compute the TBN matrix (aka the Frenet-Serret frame)
+
+  // tangent is just the direction along our small delta
   vec3 T = normalize(next - prev);
-  vec3 B = vec3(0,0,0);
-  // if normalize(next-prev) and next+prev are parallel, then B will be zero
-  float check = dot(next-prev, next+prev);
+
+  vec3 B = vec3(0, 0, 0);
+
+  // if next-prev and next+prev are parallel, then
+  // our normal and binormal will be ill-defined so we need to check for that
+  float check = dot(next - prev, next + prev);
   if (check > 0.00001) {
+    // cross product of parallel vectors is 0, so T must not be parallel to next+prev
+    // hence the above check.
     B = normalize(cross(T, next + prev));
   }
   else {
-    // special case for which N ad B are not well defined. 
+    // special case for which N and B are not well defined. 
     // so we will just pick something
     float min = 1.0;
     if (T.x <= min) {
@@ -288,6 +295,8 @@ void createTube (float t, vec2 volume, out vec3 offset, out vec3 normal) {
     vec3 tmpVec = normalize(cross(T, B));
     B = normalize(cross(T, tmpVec));
   }
+
+  // now that we have T and B perpendicular, we can easily make N
   vec3 N = -normalize(cross(B, T));
 
   // extrude outward to create a tube
