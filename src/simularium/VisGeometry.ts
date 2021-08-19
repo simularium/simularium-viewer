@@ -44,6 +44,7 @@ import {
     CameraSpec,
     AgentTypeVisData,
     EncodedTypeMapping,
+    SphereDisplayType,
 } from "./types";
 import { AgentData } from "./VisData";
 
@@ -129,6 +130,7 @@ class VisGeometry {
     public pdbRegistry: Map<string | number, PDBModel>;
     // stores locally loaded pdb data
     public cachedPdbRegistry: Map<string | number, PDBModel>;
+    // stores locally loaded obj data
     public cachedMeshRegistry: Map<string | number, MeshLoadRequest>;
     public meshLoadAttempted: Map<string, boolean>;
     public pdbLoadAttempted: Map<string, boolean>;
@@ -570,7 +572,10 @@ class VisGeometry {
         this.setHighlightByIds([]);
     }
 
-    public onNewRuntimeGeometryType(registry, meshName: string): void {
+    public onNewRuntimeGeometryType(
+        registry: Map<string | number, PDBModel | MeshLoadRequest>,
+        meshName: string
+    ): void {
         // find all typeIds for this meshName
         const typeIds = [...this.visGeomMap.entries()]
             .filter(({ 1: v }) => v.meshName === meshName)
@@ -777,7 +782,10 @@ class VisGeometry {
         );
     }
 
-    private prepMeshRegistryForNewObj(registry, meshName: string): void {
+    private prepMeshRegistryForNewObj(
+        registry: Map<string | number, MeshLoadRequest>,
+        meshName: string
+    ): void {
         if (registry.has(meshName)) {
             const entry = registry.get(meshName);
             if (entry) {
@@ -808,7 +816,11 @@ class VisGeometry {
         }
     }
 
-    handleObjResponse(registry, meshName: string, object): void {
+    handleObjResponse(
+        registry: Map<string | number, MeshLoadRequest>,
+        meshName: string,
+        object: Object3D
+    ): void {
         const meshLoadRequest = registry.get(meshName);
         if (
             (meshLoadRequest && meshLoadRequest.cancelled) ||
@@ -1150,15 +1162,20 @@ class VisGeometry {
      */
     private mapIdToGeom(
         id: number,
-        url: string,
         displayType: string,
-        color: string
+        url?: string,
+        color?: string
     ): void {
         this.logger.debug(`Geo for id ${id} set to '${url}'`);
         const unassignedName = `${VisAgent.UNASSIGNED_NAME_PREFIX}-${id}`;
         const isMesh = displayType === "OBJ";
         const isPBD = displayType === "PDB";
-        console.log(isMesh, isPBD, displayType);
+        console.log(color); // TODO: handle color
+        if (!url) {
+            // displayType not either pdb or obj, will show a sphere
+            // TODO: handle CUBE
+            return;
+        }
         this.visGeomMap.set(id, {
             meshName: isMesh ? url : DEFAULT_MESH_NAME,
             pdbName: isPBD ? url : "",
@@ -1263,14 +1280,22 @@ class VisGeometry {
     public handleAgentGeometry(
         typeMapping: EncodedTypeMapping,
         callback?: (any) => void
-    ) {
+    ): void {
         this.clearForNewTrajectory();
 
         const geoMap = mapValues(typeMapping, (value) => {
             if (value.geometry) {
                 return value;
             } else {
-                return null;
+                const displayType: SphereDisplayType = "SPHERE";
+                return {
+                    ...value,
+                    geometry: {
+                        displayType,
+                        url: "",
+                        color: "",
+                    },
+                };
             }
         });
         if (!isEmpty(geoMap)) {
@@ -1301,8 +1326,8 @@ class VisGeometry {
             const entry: AgentDisplayDataWithGeometry = typeMapping[id];
             this.mapIdToGeom(
                 Number(id),
-                entry.geometry.url,
                 entry.geometry.displayType,
+                entry.geometry.url,
                 entry.geometry.color
             );
         });
