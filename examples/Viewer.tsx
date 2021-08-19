@@ -3,6 +3,7 @@ import type {
     UIDisplayData,
     SelectionStateInfo,
 } from "../src/simularium/SelectionInterface";
+import { TEST_CONNECTION_SETTINGS } from "../src/constants";
 
 import SimulariumViewer, {
     SimulariumController,
@@ -12,10 +13,7 @@ import SimulariumViewer, {
 import "./style.css";
 import { isEqual } from "lodash";
 
-const netConnectionSettings = {
-    serverIp: "staging-node1-agentviz-backend.cellexplore.net",
-    serverPort: 9002,
-};
+const netConnectionSettings = TEST_CONNECTION_SETTINGS;
 
 let playbackFile = "medyan_paper_M:A_0.675.simularium";
 let queryStringFile = "";

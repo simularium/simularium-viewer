@@ -1,3 +1,5 @@
+import { TEST_CONNECTION_SETTINGS } from "../constants";
+
 import { RemoteSimulator } from "..";
 import {
     CONNECTION_SUCCESS_MSG,
@@ -10,10 +12,7 @@ describe("RemoteSimulator", () => {
     // "[netconnection] WS Connection Request Sent:  wss://..."
     jest.spyOn(global.console, "debug").mockImplementation(() => jest.fn());
 
-    const simulatorParams = {
-        serverIp: "staging-node1-agentviz-backend.cellexplore.net",
-        serverPort: 9002,
-    };
+    const simulatorParams = TEST_CONNECTION_SETTINGS;
     const serverUri = `wss://${simulatorParams.serverIp}:${simulatorParams.serverPort}`;
 
     describe("connectToUri", () => {
