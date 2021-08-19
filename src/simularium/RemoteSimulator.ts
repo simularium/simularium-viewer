@@ -57,7 +57,7 @@ const enum PlayBackType {
 
 export const CONNECTION_SUCCESS_MSG = "Remote sim successfully started";
 export const CONNECTION_FAIL_MSG =
-    "Failed to connect to server; try reloading.If the problem persists, there may be a problem with your connection speed, or the server might be too busy.";
+    "Failed to connect to server; try reloading. If the problem persists, there may be a problem with your connection speed or the server might be too busy.";
 
 export interface NetConnectionParams {
     serverIp?: string;
