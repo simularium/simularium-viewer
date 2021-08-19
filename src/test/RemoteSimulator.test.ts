@@ -59,7 +59,7 @@ describe("RemoteSimulator", () => {
             );
             expect(request).toBeCalled();
         });
-        test("throws error emitted by connectToRemoteServer when connection fails", async () => {
+        test("throws error emitted by connectToRemoteServer as a FrontEndError if connection fails", async () => {
             const remoteSimulator = new RemoteSimulator(simulatorParams);
             jest.spyOn(
                 remoteSimulator,

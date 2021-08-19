@@ -282,6 +282,12 @@ export class RemoteSimulator implements ISimulator {
                     }, timeout)
                 );
 
+            /*
+            Initially wait for a max wait time of MAX_WAIT_TIME, then retry connecting 
+            <MAX_RETRIES> time(s). In a retry, only wait for the amount of time 
+            specified as `timeout`. (Can reset timeWaited to 0 upon retry if we want to
+            wait for `MAX_WAIT_TIME` in a retry too)
+            */
             const checkConnection = async () => {
                 const isConnected = await waitForWebSocket();
                 timeWaited += timeout;
