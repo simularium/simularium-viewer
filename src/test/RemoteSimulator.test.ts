@@ -1,16 +1,20 @@
 import { RemoteSimulator } from "..";
+import {
+    CONNECTION_SUCCESS_MSG,
+    CONNECTION_FAIL_MSG,
+} from "../simularium/RemoteSimulator";
 import FrontEndError from "../simularium/FrontEndError";
 
 describe("RemoteSimulator", () => {
+    // Silence console.debug messages like this in Jest output:
+    // "[netconnection] WS Connection Request Sent:  wss://..."
+    jest.spyOn(global.console, "debug").mockImplementation(() => jest.fn());
+
     const simulatorParams = {
         serverIp: "staging-node1-agentviz-backend.cellexplore.net",
         serverPort: 9002,
     };
     const serverUri = `wss://${simulatorParams.serverIp}:${simulatorParams.serverPort}`;
-
-    // Silence console.debug messages like this in Jest output:
-    // "[netconnection] WS Connection Request Sent:  wss://..."
-    jest.spyOn(global.console, "debug").mockImplementation(() => jest.fn());
 
     describe("connectToUri", () => {
         test("creates a valid WebSocket object", () => {
@@ -28,7 +32,7 @@ describe("RemoteSimulator", () => {
             const message = await remoteSimulator.connectToRemoteServer(
                 serverUri
             );
-            expect(message).toEqual("Remote sim successfully started");
+            expect(message).toEqual(CONNECTION_SUCCESS_MSG);
         });
         test("emits error if connecting to server takes longer than allotted time", async () => {
             const remoteSimulator = new RemoteSimulator(simulatorParams);
@@ -40,11 +44,7 @@ describe("RemoteSimulator", () => {
                     veryShortTimeout
                 );
             } catch (error) {
-                expect(error).toEqual(
-                    new Error(
-                        "Failed to connected to requested server, try reloading. If problem keeps occurring check your connection speed"
-                    )
-                );
+                expect(error).toEqual(new Error(CONNECTION_FAIL_MSG));
             }
         });
     });
@@ -65,14 +65,14 @@ describe("RemoteSimulator", () => {
             jest.spyOn(
                 remoteSimulator,
                 "connectToRemoteServer"
-            ).mockRejectedValue(new Error("Failed to connect"));
+            ).mockRejectedValue(new Error("Mock error message"));
 
             try {
                 await remoteSimulator.startRemoteTrajectoryPlayback(
                     "endocytosis.simularium"
                 );
             } catch (error) {
-                expect(error).toEqual(new FrontEndError("Failed to connect"));
+                expect(error).toEqual(new FrontEndError("Mock error message"));
             }
         });
     });

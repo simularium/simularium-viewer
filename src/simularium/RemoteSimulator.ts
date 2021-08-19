@@ -55,6 +55,10 @@ const enum PlayBackType {
     LENGTH,
 }
 
+export const CONNECTION_SUCCESS_MSG = "Remote sim successfully started";
+export const CONNECTION_FAIL_MSG =
+    "Failed to connect to server; try reloading.If the problem persists, there may be a problem with your connection speed, or the server might be too busy.";
+
 export interface NetConnectionParams {
     serverIp?: string;
     serverPort?: number;
@@ -267,7 +271,7 @@ export class RemoteSimulator implements ISimulator {
             let retries = 0;
 
             if (this.socketIsConnected()) {
-                return resolve("Remote sim successfully started");
+                return resolve(CONNECTION_SUCCESS_MSG);
             }
 
             // Wait a specified time for websocket to open
@@ -282,7 +286,7 @@ export class RemoteSimulator implements ISimulator {
                 const isConnected = await waitForWebSocket();
                 timeWaited += timeout;
                 if (isConnected) {
-                    resolve("Remote sim successfully started");
+                    resolve(CONNECTION_SUCCESS_MSG);
                 } else if (timeWaited < MAX_WAIT_TIME) {
                     return checkConnection();
                 } else if (retries < MAX_RETRIES) {
@@ -290,11 +294,7 @@ export class RemoteSimulator implements ISimulator {
                     retries++;
                     return checkConnection();
                 } else {
-                    reject(
-                        new Error(
-                            "Failed to connected to requested server, try reloading. If problem keeps occurring check your connection speed"
-                        )
-                    );
+                    reject(new Error(CONNECTION_FAIL_MSG));
                 }
             };
 
