@@ -261,34 +261,34 @@ export class RemoteSimulator implements ISimulator {
         timeout = 1000
     ): Promise<string> {
         const remoteStartPromise = new Promise<string>((resolve, reject) => {
-            const MAX_WAIT_TIME = 2 * timeout;
-            const MAX_CONNECTION_TRIES = 2;
+            const MAX_WAIT_TIME = 4 * timeout;
+            const MAX_RETRIES = 1;
             let timeWaited = 0;
-            let connectionTries = 1;
+            let retries = 0;
 
             if (this.socketIsConnected()) {
                 return resolve("Remote sim successfully started");
             }
 
             // Wait a specified time for websocket to open
-            const waitForIsConnected = () =>
+            const waitForWebSocket = () =>
                 new Promise((resolve) =>
                     setTimeout(() => {
                         resolve(this.socketIsConnected());
                     }, timeout)
                 );
 
-            const handleReturn = async () => {
-                const isConnected = await waitForIsConnected();
+            const checkConnection = async () => {
+                const isConnected = await waitForWebSocket();
                 timeWaited += timeout;
                 if (isConnected) {
                     resolve("Remote sim successfully started");
                 } else if (timeWaited < MAX_WAIT_TIME) {
-                    return handleReturn();
-                } else if (connectionTries <= MAX_CONNECTION_TRIES) {
+                    return checkConnection();
+                } else if (retries < MAX_RETRIES) {
                     this.connectToUri(address);
-                    connectionTries++;
-                    return handleReturn();
+                    retries++;
+                    return checkConnection();
                 } else {
                     reject(
                         new Error(
@@ -299,7 +299,7 @@ export class RemoteSimulator implements ISimulator {
             };
 
             this.connectToUri(address);
-            return handleReturn();
+            return checkConnection();
         });
 
         return remoteStartPromise;
