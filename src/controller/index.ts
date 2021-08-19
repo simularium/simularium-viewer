@@ -39,9 +39,6 @@ interface SimulatorConnectionParams {
     geoAssets?: any;
 }
 
-const DEFAULT_ASSET_PREFIX =
-    "https://aics-agentviz-data.s3.us-east-2.amazonaws.com/meshes/obj";
-
 export default class SimulariumController {
     public simulator?: ISimulator;
     public visData: VisData;
@@ -65,7 +62,7 @@ export default class SimulariumController {
         this.onError = (/*errorMessage*/) => noop;
 
         // might only be used in unit testing
-        // mocked up the simuulator?
+        // mocked up the simulator?
         if (params.remoteSimulator) {
             this.simulator = params.remoteSimulator;
             this.simulator.setTrajectoryFileInfoHandler(
