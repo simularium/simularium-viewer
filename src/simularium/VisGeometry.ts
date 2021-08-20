@@ -36,7 +36,7 @@ import * as dat from "dat.gui";
 
 import jsLogger from "js-logger";
 import { ILogger, ILogLevel } from "js-logger";
-import { cloneDeep, forEach, isEmpty, mapValues } from "lodash";
+import { cloneDeep } from "lodash";
 
 import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC } from "../constants";
 import {
@@ -44,8 +44,6 @@ import {
     CameraSpec,
     AgentTypeVisData,
     EncodedTypeMapping,
-    SphereDisplayType,
-    AgentDisplayData,
 } from "./types";
 import { AgentData } from "./VisData";
 
