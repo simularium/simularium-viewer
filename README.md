@@ -18,7 +18,7 @@ https://www.npmjs.com/package/@aics/simularium-viewer
 ---
 
 ## Description
-This viewer can visualize trajectories that are in Simularium format (see the file format documentation [here](https://github.com/allen-cell-animated/simulariumio/blob/master/file_format.md)). The viewer can operate in the following modes:
+This viewer can visualize trajectories that are in Simularium format (see the file format documentation [here](https://github.com/allen-cell-animated/simulariumio/blob/main/file_format.md)). The viewer can operate in the following modes:
 
 **drag-and-drop**  
 Drag a Simularium file into the window (WebGL) area of the viewer.

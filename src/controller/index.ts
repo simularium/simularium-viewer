@@ -260,6 +260,7 @@ export default class SimulariumController {
         this.playBackFile = newFileName;
         this.visData.WaitForFrame(0);
         this.visData.clearCache();
+        this.visData.cancelAllWorkers();
 
         this.stop();
 
