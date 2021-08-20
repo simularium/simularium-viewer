@@ -527,6 +527,9 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         const totalElapsedTime = now - this.startTime;
         if (elapsedTime > timePerFrame) {
             if (simulariumController.isChangingFile) {
+                this.visGeometry.render(totalElapsedTime);
+                this.lastRenderTime = Date.now();
+                this.lastRenderedAgentTime = -1;
                 simulariumController.markFileChangeAsHandled();
            
                 this.animationRequestID = requestAnimationFrame(
