@@ -231,7 +231,7 @@ export class RemoteSimulator implements ISimulator {
     /**
      * WebSocket Connect
      * */
-    public connectToUri(uri: string): void {
+    public createWebSocket(uri: string): void {
         if (this.socketIsValid()) {
             this.disconnect();
         }
@@ -296,7 +296,7 @@ export class RemoteSimulator implements ISimulator {
                 } else if (timeWaited < MAX_WAIT_TIME) {
                     return checkConnection();
                 } else if (retries < MAX_RETRIES) {
-                    this.connectToUri(address);
+                    this.createWebSocket(address);
                     retries++;
                     return checkConnection();
                 } else {
@@ -304,7 +304,7 @@ export class RemoteSimulator implements ISimulator {
                 }
             };
 
-            this.connectToUri(address);
+            this.createWebSocket(address);
             return checkConnection();
         });
 

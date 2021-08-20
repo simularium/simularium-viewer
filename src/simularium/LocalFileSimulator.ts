@@ -56,7 +56,7 @@ export class LocalFileSimulator implements ISimulator {
     /**
      * Connect
      * */
-    public connectToUri(_uri: string): void {
+    public createWebSocket(_uri: string): void {
         // not implemented
     }
 
