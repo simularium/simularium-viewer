@@ -193,6 +193,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         }
         if (onError) {
             simulariumController.onError = onError;
+            this.visGeometry.setOnErrorCallBack(onError)
         }
 
         simulariumController.visGeometry = this.visGeometry;

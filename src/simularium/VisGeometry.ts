@@ -36,7 +36,7 @@ import * as dat from "dat.gui";
 
 import jsLogger from "js-logger";
 import { ILogger, ILogLevel } from "js-logger";
-import { cloneDeep } from "lodash";
+import { cloneDeep, noop } from "lodash";
 
 import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC } from "../constants";
 import {
@@ -118,6 +118,7 @@ type AgentTypeVisDataMap = Map<string, AgentTypeVisData>;
 type Bounds = readonly [number, number, number, number, number, number];
 
 class VisGeometry {
+    public onError: (errorMessage: string) => void;
     public renderStyle: RenderStyle;
     public backgroundColor: Color;
     public pathEndColor: Color;
@@ -250,6 +251,7 @@ class VisGeometry {
         this.colorsData = new Float32Array(0);
         this.lodBias = 0;
         this.lodDistanceStops = [40, 100, 150, Number.MAX_VALUE];
+        this.onError = (/*errorMessage*/) => noop;
         if (loggerLevel === jsLogger.DEBUG) {
             this.setupGui();
         }
@@ -266,6 +268,10 @@ class VisGeometry {
                 1
             ),
         });
+    }
+
+    public setOnErrorCallBack(onError: (msg: string) => void): void {
+        this.onError = onError;
     }
 
     public setBackgroundColor(
@@ -732,8 +738,13 @@ class VisGeometry {
             (reason) => {
                 this.pdbRegistry.delete(url);
                 if (reason !== REASON_CANCELLED) {
-                    console.error(reason);
                     this.logger.debug("Failed to load pdb: ", url);
+
+                    this.onError(
+                        `Failed to fetch PDB file:
+                            ${url}.
+                            Showing spheres for this geometry instead`
+                    );
                 }
             }
         );
@@ -808,7 +819,7 @@ class VisGeometry {
     public loadObj(url: string): void {
         const objLoader = new OBJLoader();
         this.prepMeshRegistryForNewObj(url);
-        objLoader.load(
+        return objLoader.load(
             url,
             (object) => {
                 this.handleObjResponse(url, object);
@@ -823,6 +834,9 @@ class VisGeometry {
             (error) => {
                 // if the request fails, leave agent as a sphere by default
                 this.logger.debug("Failed to load mesh: ", error, url);
+                this.onError(
+                    `Failed to load mesh: ${url}. Showing spheres for this geometry instead, `
+                );
             }
         );
     }
@@ -833,8 +847,8 @@ class VisGeometry {
         loadFunctionName: string
     ) {
         if (!registry.has(url) && !this.geoLoadAttempted.get(url)) {
-            this[loadFunctionName](url);
             this.geoLoadAttempted.set(url, true);
+            return this[loadFunctionName](url);
         }
     }
 
@@ -1219,7 +1233,6 @@ class VisGeometry {
 
     private setGeometryData(typeMapping: EncodedTypeMapping): void {
         this.logger.debug("JSON Mesh mapping loaded: ", typeMapping);
-        console.log("BEFORE", this.currentSceneAgents);
         Object.keys(typeMapping).forEach((id) => {
             const entry: AgentDisplayDataWithGeometry = typeMapping[id];
             this.mapIdToGeom(
