@@ -10,7 +10,7 @@ import SimulariumViewer, {
     SimulariumFileFormat,
 } from "../src";
 import "./style.css";
-import { isEqual, findIndex} from "lodash";
+import { isEqual, findIndex } from "lodash";
 
 const netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
@@ -145,14 +145,13 @@ class Viewer extends React.Component<{}, ViewerState> {
                 return file.text();
             })
         ).then((parsedFiles) => {
-            const simulariumFileIndex = findIndex(filesArr, (file) => file.name.includes(".simularium"));
+            const simulariumFileIndex = findIndex(filesArr, (file) =>
+                file.name.includes(".simularium")
+            );
             const simulariumFile = JSON.parse(parsedFiles[simulariumFileIndex]);
             const fileName = filesArr[simulariumFileIndex].name;
             simulariumController
-                .changeFile(
-                    { simulariumFile },
-                    fileName,
-                )
+                .changeFile({ simulariumFile }, fileName)
                 .catch((error) => {
                     console.log("Error loading file", error);
                     window.alert(`Error loading file: ${error.message}`);
