@@ -564,17 +564,14 @@ class VisGeometry {
         this.setHighlightByIds([]);
     }
 
-    public onNewRuntimeGeometryType(
-        registry: Map<string | number, PDBModel | MeshLoadRequest>,
-        meshName: string
-    ): void {
+    public onNewRuntimeGeometryType(meshName: string): void {
         // find all typeIds for this meshName
         const typeIds = [...this.visGeomMap.entries()]
             .filter(({ 1: v }) => v.meshName === meshName)
             .map(([k]) => k);
 
         // assuming the meshLoadRequest has already been added to the registry
-        const meshLoadRequest = registry.get(meshName);
+        const meshLoadRequest = this.meshRegistry.get(meshName);
         if (meshLoadRequest === undefined) {
             console.error(`Mesh name ${meshName} not found in mesh registry`);
             return;
@@ -813,7 +810,7 @@ class VisGeometry {
         if (!object.name) {
             object.name = meshName;
         }
-        this.onNewRuntimeGeometryType(registry, meshName);
+        this.onNewRuntimeGeometryType(meshName);
     }
 
     public loadObj(url: string): void {
