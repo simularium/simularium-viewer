@@ -45,6 +45,7 @@ import {
     AgentTypeVisData,
     EncodedTypeMapping,
     SphereDisplayType,
+    AgentDisplayData,
 } from "./types";
 import { AgentData } from "./VisData";
 
@@ -1214,24 +1215,45 @@ class VisGeometry {
         return null;
     }
 
+    private createAgentMapWithGeometry(
+        typeMapping: EncodedTypeMapping
+    ): { [key: number]: AgentDisplayDataWithGeometry } {
+        return mapValues(typeMapping, (value: AgentDisplayData) => {
+            let geometry = {};
+            if (value.geometry) {
+                let url = value.geometry.url || "";
+                let { displayType } = value.geometry;
+                if (!displayType) {
+                    // we're relying on the data to have a displayType to tell us what sort of data the url is pointing at
+                    // if the user fails to provide the displayType, we'll default to loading a sphere, and clear out the url
+                    url = "";
+                    displayType = "SPHERE";
+                }
+
+                geometry = {
+                    ...value.geometry,
+                    displayType,
+                    url,
+                    color: value.geometry.color || "",
+                };
+            } else {
+                geometry = {
+                    displayType: "SPHERE",
+                    url: "",
+                    color: "",
+                };
+            }
+            return {
+                ...value,
+                geometry,
+            } as AgentDisplayDataWithGeometry;
+        });
+    }
+
     public handleAgentGeometry(typeMapping: EncodedTypeMapping): void {
         this.clearForNewTrajectory();
 
-        const geoMap = mapValues(typeMapping, (value) => {
-            if (value.geometry) {
-                return value;
-            } else {
-                const displayType: SphereDisplayType = "SPHERE";
-                return {
-                    ...value,
-                    geometry: {
-                        displayType,
-                        url: "",
-                        color: "",
-                    },
-                };
-            }
-        });
+        const geoMap = this.createAgentMapWithGeometry(typeMapping);
         if (!isEmpty(geoMap)) {
             this.setGeometryData(geoMap);
         } else {
@@ -1247,7 +1269,7 @@ class VisGeometry {
 
     private setGeometryData(typeMapping: EncodedTypeMapping): void {
         this.logger.debug("JSON Mesh mapping loaded: ", typeMapping);
-
+        console.log("BEFORE", this.currentSceneAgents);
         Object.keys(typeMapping).forEach((id) => {
             const entry: AgentDisplayDataWithGeometry = typeMapping[id];
             this.mapIdToGeom(
@@ -1257,6 +1279,8 @@ class VisGeometry {
                 entry.geometry.color
             );
         });
+        console.log("AFTER", this.currentSceneAgents);
+
         this.updateScene(this.currentSceneAgents);
     }
 
