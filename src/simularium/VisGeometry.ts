@@ -740,12 +740,9 @@ class VisGeometry {
         );
     }
 
-    private prepMeshRegistryForNewObj(
-        registry: Map<string | number, MeshLoadRequest>,
-        meshName: string
-    ): void {
-        if (registry.has(meshName)) {
-            const entry = registry.get(meshName);
+    private prepMeshRegistryForNewObj(meshName: string): void {
+        if (this.meshRegistry.has(meshName)) {
+            const entry = this.meshRegistry.get(meshName);
             if (entry) {
                 // there is already a mesh registered but we are going to load a new one.
                 // start by resetting this entry to a sphere. we will replace when the new mesh arrives
@@ -762,7 +759,7 @@ class VisGeometry {
         } else {
             // if this mesh is not yet registered, then start off as a sphere
             // we will replace the sphere in here with the real geometry when it arrives.
-            registry.set(meshName, {
+            this.meshRegistry.set(meshName, {
                 mesh: new Mesh(VisAgent.sphereGeometry),
                 cancelled: false,
                 instances: new InstancedMesh(
@@ -774,17 +771,13 @@ class VisGeometry {
         }
     }
 
-    handleObjResponse(
-        registry: Map<string | number, MeshLoadRequest>,
-        meshName: string,
-        object: Object3D
-    ): void {
-        const meshLoadRequest = registry.get(meshName);
+    handleObjResponse(meshName: string, object: Object3D): void {
+        const meshLoadRequest = this.meshRegistry.get(meshName);
         if (
             (meshLoadRequest && meshLoadRequest.cancelled) ||
             !meshLoadRequest
         ) {
-            registry.delete(meshName);
+            this.meshRegistry.delete(meshName);
             return;
         }
 
@@ -815,15 +808,11 @@ class VisGeometry {
 
     public loadObj(url: string): void {
         const objLoader = new OBJLoader();
-        if (!this) {
-            console.log("THIS", this);
-            return;
-        }
-        this.prepMeshRegistryForNewObj(this.meshRegistry, url);
+        this.prepMeshRegistryForNewObj(url);
         objLoader.load(
             url,
             (object) => {
-                this.handleObjResponse(this.meshRegistry, url, object);
+                this.handleObjResponse(url, object);
             },
             (xhr) => {
                 this.logger.debug(
@@ -840,7 +829,7 @@ class VisGeometry {
         );
     }
 
-    private manageRegistry(
+    private attemptToLoadGeometry(
         url: string,
         registry: Map<string | number, PDBModel | MeshLoadRequest>,
         loadFunctionName: string
@@ -1145,7 +1134,7 @@ class VisGeometry {
         console.log(color); // TODO: handle color
         if (!url) {
             // displayType not either pdb or obj, will show a sphere
-            // TODO: handle CUBE
+            // TODO: handle CUBE, GIZMO etc
             return;
         }
         this.visGeomMap.set(id, {
@@ -1153,10 +1142,9 @@ class VisGeometry {
             pdbName: isPBD ? url : "",
         });
         if (isMesh) {
-            this.manageRegistry(url, this.meshRegistry, "loadObj");
-        }
-        if (isPBD) {
-            this.manageRegistry(url, this.pdbRegistry, "loadPdb");
+            this.attemptToLoadGeometry(url, this.meshRegistry, "loadObj");
+        } else if (isPBD) {
+            this.attemptToLoadGeometry(url, this.pdbRegistry, "loadPdb");
         } else if (!this.pdbRegistry.has(unassignedName)) {
             // assign single atom pdb
             const pdbmodel = new PDBModel(unassignedName);
@@ -1226,10 +1214,7 @@ class VisGeometry {
         return null;
     }
 
-    public handleAgentGeometry(
-        typeMapping: EncodedTypeMapping,
-        callback?: (any) => void
-    ): void {
+    public handleAgentGeometry(typeMapping: EncodedTypeMapping): void {
         this.clearForNewTrajectory();
 
         const geoMap = mapValues(typeMapping, (value) => {
@@ -1248,10 +1233,8 @@ class VisGeometry {
             }
         });
         if (!isEmpty(geoMap)) {
-            this.setGeometryData(geoMap, callback);
+            this.setGeometryData(geoMap);
         } else {
-            this.resetMapping();
-
             // if there is an id to color mapping, set up with spheres
             for (const i of this.idColorMapping.keys()) {
                 this.visGeomMap.set(i, {
@@ -1262,13 +1245,7 @@ class VisGeometry {
         }
     }
 
-    private setGeometryData(
-        typeMapping: EncodedTypeMapping,
-        callback?: (any) => void
-    ): void {
-        // clear things out in advance of loading all new geometry
-        this.resetMapping();
-
+    private setGeometryData(typeMapping: EncodedTypeMapping): void {
         this.logger.debug("JSON Mesh mapping loaded: ", typeMapping);
 
         Object.keys(typeMapping).forEach((id) => {
@@ -1280,11 +1257,6 @@ class VisGeometry {
                 entry.geometry.color
             );
         });
-
-        if (callback) {
-            callback(typeMapping);
-        }
-
         this.updateScene(this.currentSceneAgents);
     }
 
