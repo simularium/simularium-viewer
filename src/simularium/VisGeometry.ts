@@ -777,7 +777,7 @@ class VisGeometry {
         }
     }
 
-    handleObjResponse(meshName: string, object: Object3D): void {
+    private handleObjResponse(meshName: string, object: Object3D): void {
         const meshLoadRequest = this.meshRegistry.get(meshName);
         if (
             (meshLoadRequest && meshLoadRequest.cancelled) ||
