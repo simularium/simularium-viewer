@@ -312,11 +312,11 @@ export class RemoteSimulator implements ISimulator {
         }
 
         this.createWebSocket(address);
-
         const isConnectionSuccessful = await this.checkConnection(
             address,
             MAX_WAIT_TIME
         );
+
         if (isConnectionSuccessful) {
             return CONNECTION_SUCCESS_MSG;
         } else {
