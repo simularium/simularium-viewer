@@ -1138,7 +1138,7 @@ class VisGeometry {
         this.logger.debug(`Geo for id ${id} set to '${url}'`);
         const unassignedName = `${VisAgent.UNASSIGNED_NAME_PREFIX}-${id}`;
         const isMesh = displayType === "OBJ";
-        const isPBD = displayType === "PDB";
+        const isPDB = displayType === "PDB";
         console.log(color); // TODO: handle color
         if (!url) {
             // displayType not either pdb or obj, will show a sphere
@@ -1147,11 +1147,11 @@ class VisGeometry {
         }
         this.visGeomMap.set(id, {
             meshName: isMesh ? url : DEFAULT_MESH_NAME,
-            pdbName: isPBD ? url : "",
+            pdbName: isPDB ? url : "",
         });
         if (isMesh) {
             this.attemptToLoadGeometry(url, this.meshRegistry, "loadObj");
-        } else if (isPBD) {
+        } else if (isPDB) {
             this.attemptToLoadGeometry(url, this.pdbRegistry, "loadPdb");
         } else if (!this.pdbRegistry.has(unassignedName)) {
             // assign single atom pdb
