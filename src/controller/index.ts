@@ -61,7 +61,7 @@ export default class SimulariumController {
         this.onError = (/*errorMessage*/) => noop;
 
         // might only be used in unit testing
-        // mocked up the simulator?
+        // TODO: change test so controller isn't initialized with a remoteSimulator
         if (params.remoteSimulator) {
             this.simulator = params.remoteSimulator;
             this.simulator.setTrajectoryFileInfoHandler(
@@ -72,8 +72,9 @@ export default class SimulariumController {
             this.simulator.setTrajectoryDataHandler(
                 this.visData.parseAgentsFromNetData.bind(this.visData)
             );
-            // might be when we've loaded a file?
-            // probably better to init empty
+
+            // TODO: probably remove this? We're never initalizing the controller
+            // with any settings on the website.
         } else if (params.netConnectionSettings) {
             this.createSimulatorConnection(
                 params.netConnectionSettings,
