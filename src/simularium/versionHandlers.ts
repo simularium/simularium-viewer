@@ -3,14 +3,36 @@ import * as si from "si-prefix";
 
 import { DEFAULT_CAMERA_SPEC } from "../constants";
 import {
-    AgentDisplayData,
-    EncodedTypeMapping,
+    CubeDisplayType,
+    GizmoDisplayType,
+    ObjDisplayType,
+    PdbDisplayType,
+    SphereDisplayType,
     TrajectoryFileInfo,
     TrajectoryFileInfoAny,
     TrajectoryFileInfoV1,
 } from "./types";
 import { AgentDisplayDataWithGeometry } from "./VisGeometry";
 
+// the data may come in missing any of these values
+export interface AgentTypeVisDataPreProcessing {
+    displayType?:
+        | PdbDisplayType
+        | ObjDisplayType
+        | SphereDisplayType
+        | CubeDisplayType
+        | GizmoDisplayType;
+    url?: string;
+    color?: string;
+}
+
+export interface AgentDisplayDataPreProcessing {
+    name: string;
+    geometry?: AgentTypeVisDataPreProcessing;
+}
+export interface EncodedTypeMappingPreProcessing {
+    [key: number]: AgentDisplayDataPreProcessing;
+}
 /*
 Handles different trajectory file format versions.
 Currently supported versions: 1, 2
@@ -18,10 +40,10 @@ Currently supported versions: 1, 2
 const LATEST_VERSION = 3;
 const VERSION_NUM_ERROR = "Invalid version number in TrajectoryFileInfo:";
 
-const sanitizeAgentMapGeometryData = (
-    typeMapping: EncodedTypeMapping
+export const sanitizeAgentMapGeometryData = (
+    typeMapping: EncodedTypeMappingPreProcessing
 ): { [key: number]: AgentDisplayDataWithGeometry } => {
-    return mapValues(typeMapping, (value: AgentDisplayData) => {
+    return mapValues(typeMapping, (value: AgentDisplayDataPreProcessing) => {
         let geometry = {};
         if (value.geometry) {
             let url = value.geometry.url || "";
@@ -56,21 +78,16 @@ const sanitizeAgentMapGeometryData = (
 export const updateTrajectoryFileInfoFormat = (
     msg: TrajectoryFileInfoAny
 ): TrajectoryFileInfo => {
-    let output = msg;
+    let output = {
+        ...msg,
+        typeMapping: sanitizeAgentMapGeometryData(msg.typeMapping),
+        version: LATEST_VERSION,
+    };
 
     switch (msg.version) {
         case LATEST_VERSION:
-            output = {
-                ...msg,
-                typeMapping: sanitizeAgentMapGeometryData(msg.typeMapping),
-            };
             break;
         case 2:
-            output = {
-                ...msg,
-                typeMapping: sanitizeAgentMapGeometryData(msg.typeMapping),
-                version: LATEST_VERSION,
-            };
             break;
         case 1:
             const v1Data = msg as TrajectoryFileInfoV1;
@@ -100,7 +117,7 @@ export const updateTrajectoryFileInfoFormat = (
                 cameraDefault: DEFAULT_CAMERA_SPEC,
                 timeStepSize: v1Data.timeStepSize,
                 totalSteps: v1Data.totalSteps,
-                typeMapping: sanitizeAgentMapGeometryData(v1Data.typeMapping),
+                typeMapping: output.typeMapping,
                 version: LATEST_VERSION,
             };
             console.warn(

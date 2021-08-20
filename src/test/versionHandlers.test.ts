@@ -1,4 +1,8 @@
-import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
+import { PdbDisplayType, SphereDisplayType } from "../simularium/types";
+import {
+    sanitizeAgentMapGeometryData,
+    updateTrajectoryFileInfoFormat,
+} from "../simularium/versionHandlers";
 
 const invalidVersionData = {
     connId: "7496831076a233f0-2c337fed-4493-ad92-79f194744174ba05635426fd",
@@ -91,30 +95,97 @@ const v2Data = {
     version: 2,
 };
 
-const v3Data = {
-    ...v2Data,
-    typeMapping: {
-        "0": {
-            name: "Actin",
-            geometry: {
-                displayType: "SPHERE",
-                color: "",
-                url: "",
-            },
-        },
-        "1": {
-            name: "Budding vesicle",
-            geometry: {
-                displayType: "SPHERE",
-                color: "",
-                url: "",
-            },
+const typeMappingWithGeo = {
+    "0": {
+        name: "Actin",
+        geometry: {
+            displayType: "PDB" as PdbDisplayType,
+            color: "#fff",
+            url: "url-to-data",
         },
     },
+    "1": {
+        name: "Budding vesicle",
+        geometry: {
+            displayType: "PDB" as PdbDisplayType,
+            color: "#fff",
+            url: "url-to-data",
+        },
+    },
+};
+
+const typeMappingWithDefaultGeo = {
+    "0": {
+        name: "Actin",
+        geometry: {
+            displayType: "SPHERE" as SphereDisplayType,
+            color: "",
+            url: "",
+        },
+    },
+    "1": {
+        name: "Budding vesicle",
+        geometry: {
+            displayType: "SPHERE" as SphereDisplayType,
+            color: "",
+            url: "",
+        },
+    },
+};
+
+const typeMappingNoGeo = {
+    "0": {
+        name: "Actin",
+    },
+    "1": {
+        name: "Budding vesicle",
+    },
+};
+
+const typeMappingMissingDisplayType = {
+    "0": {
+        name: "Actin",
+        geometry: {
+            color: "",
+            url: "url",
+        },
+    },
+    "1": {
+        name: "Budding vesicle",
+        geometry: {
+            color: "",
+            url: "url",
+        },
+    },
+};
+
+const v3Data = {
+    ...v2Data,
+    typeMapping: typeMappingWithDefaultGeo,
     version: 3,
 };
 
 describe("Version handlers", () => {
+    describe("sanitizeAgentMapGeometryData", () => {
+        test("it returns back the same data if it already has geometry data per agent", () => {
+            const result = sanitizeAgentMapGeometryData(typeMappingWithGeo);
+            expect(result).toEqual(typeMappingWithGeo);
+        });
+    });
+    describe("sanitizeAgentMapGeometryData", () => {
+        test("it adds in default geo data if none is provided", () => {
+            const result = sanitizeAgentMapGeometryData(typeMappingNoGeo);
+            expect(result).toEqual(typeMappingWithDefaultGeo);
+        });
+    });
+    describe("sanitizeAgentMapGeometryData", () => {
+        test("it converts to the default geo data if displayType is missing", () => {
+            const result = sanitizeAgentMapGeometryData(
+                typeMappingMissingDisplayType
+            );
+            expect(result).toEqual(typeMappingWithDefaultGeo);
+        });
+    });
     describe("updateTrajectoryFileInfoFormat", () => {
         test("it throws error if data has invalid version", () => {
             const msg = invalidVersionData;
@@ -130,6 +201,11 @@ describe("Version handlers", () => {
         });
         test("it converts v1 data to latest format", () => {
             const msg = v1Data;
+            const output = updateTrajectoryFileInfoFormat(msg);
+            expect(output).toEqual(v3Data);
+        });
+        test("it converts v2 data to latest format", () => {
+            const msg = v2Data;
             const output = updateTrajectoryFileInfoFormat(msg);
             expect(output).toEqual(v3Data);
         });
