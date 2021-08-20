@@ -98,7 +98,7 @@ class PDBModel {
         return this.pdb ? this.pdb.atoms.length : 0;
     }
 
-    public loadLocally(data) {
+    public loadLocally(data: string): void {
         this.pdb = parsePdb(data) as PDBType;
         if (this.pdb.atoms.length > 0) {
             this.fixupCoordinates();

@@ -36,7 +36,7 @@ interface SimulatorConnectionParams {
     netConnectionSettings?: NetConnectionParams;
     clientSimulatorParams?: ClientSimulatorParams;
     simulariumFile?: SimulariumFileFormat;
-    geoAssets?: any;
+    geoAssets?: { [key: string]: string };
 }
 
 export default class SimulariumController {
@@ -105,7 +105,7 @@ export default class SimulariumController {
         netConnectionConfig?: NetConnectionParams,
         clientSimulatorParams?: ClientSimulatorParams,
         localFile?: SimulariumFileFormat,
-        geoAssets?: any
+        geoAssets?: { [key: string]: string }
     ): void {
         if (clientSimulatorParams) {
             this.simulator = new ClientSimulator(clientSimulatorParams);
