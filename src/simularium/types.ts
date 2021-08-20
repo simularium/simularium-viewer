@@ -77,6 +77,7 @@ export interface AgentDisplayData {
     name: string;
     geometry?: AgentTypeVisData;
 }
+
 export interface EncodedTypeMapping {
     [key: number]: AgentDisplayData;
 }
