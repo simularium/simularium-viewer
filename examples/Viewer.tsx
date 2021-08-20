@@ -146,20 +146,11 @@ class Viewer extends React.Component<{}, ViewerState> {
             })
         ).then((parsedFiles) => {
             const simulariumFileIndex = findIndex(filesArr, (file) => file.name.includes(".simularium"));
-            
             const simulariumFile = JSON.parse(parsedFiles[simulariumFileIndex]);
-
-            // TODO: better if this is a folder
-            const geoAssets = filesArr.reduce((acc, cur, index) =>  {
-                if (index !== simulariumFileIndex) {
-                    acc[cur.name] = parsedFiles[index]
-                }
-                return acc
-            }, {})
             const fileName = filesArr[simulariumFileIndex].name;
             simulariumController
                 .changeFile(
-                    { simulariumFile, geoAssets },
+                    { simulariumFile },
                     fileName,
                 )
                 .catch((error) => {
