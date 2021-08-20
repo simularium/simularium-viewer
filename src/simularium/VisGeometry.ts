@@ -1215,56 +1215,9 @@ class VisGeometry {
         return null;
     }
 
-    private createAgentMapWithGeometry(
-        typeMapping: EncodedTypeMapping
-    ): { [key: number]: AgentDisplayDataWithGeometry } {
-        return mapValues(typeMapping, (value: AgentDisplayData) => {
-            let geometry = {};
-            if (value.geometry) {
-                let url = value.geometry.url || "";
-                let { displayType } = value.geometry;
-                if (!displayType) {
-                    // we're relying on the data to have a displayType to tell us what sort of data the url is pointing at
-                    // if the user fails to provide the displayType, we'll default to loading a sphere, and clear out the url
-                    url = "";
-                    displayType = "SPHERE";
-                }
-
-                geometry = {
-                    ...value.geometry,
-                    displayType,
-                    url,
-                    color: value.geometry.color || "",
-                };
-            } else {
-                geometry = {
-                    displayType: "SPHERE",
-                    url: "",
-                    color: "",
-                };
-            }
-            return {
-                ...value,
-                geometry,
-            } as AgentDisplayDataWithGeometry;
-        });
-    }
-
     public handleAgentGeometry(typeMapping: EncodedTypeMapping): void {
         this.clearForNewTrajectory();
-
-        const geoMap = this.createAgentMapWithGeometry(typeMapping);
-        if (!isEmpty(geoMap)) {
-            this.setGeometryData(geoMap);
-        } else {
-            // if there is an id to color mapping, set up with spheres
-            for (const i of this.idColorMapping.keys()) {
-                this.visGeomMap.set(i, {
-                    meshName: DEFAULT_MESH_NAME,
-                    pdbName: "",
-                });
-            }
-        }
+        this.setGeometryData(typeMapping);
     }
 
     private setGeometryData(typeMapping: EncodedTypeMapping): void {
