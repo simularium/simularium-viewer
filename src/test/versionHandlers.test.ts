@@ -91,6 +91,29 @@ const v2Data = {
     version: 2,
 };
 
+const v3Data = {
+    ...v2Data,
+    typeMapping: {
+        "0": {
+            name: "Actin",
+            geometry: {
+                displayType: "SPHERE",
+                color: "",
+                url: "",
+            },
+        },
+        "1": {
+            name: "Budding vesicle",
+            geometry: {
+                displayType: "SPHERE",
+                color: "",
+                url: "",
+            },
+        },
+    },
+    version: 3,
+};
+
 describe("Version handlers", () => {
     describe("updateTrajectoryFileInfoFormat", () => {
         test("it throws error if data has invalid version", () => {
@@ -100,15 +123,15 @@ describe("Version handlers", () => {
             };
             expect(conversion).toThrowError(RangeError);
         });
-        test("it returns v2 (latest) data as is", () => {
+        test("it returns v3(latest) data as is", () => {
             const msg = v2Data;
             const output = updateTrajectoryFileInfoFormat(msg);
-            expect(output).toEqual(v2Data);
+            expect(output).toEqual(v3Data);
         });
-        test("it converts v1 data to v2 format", () => {
+        test("it converts v1 data to latest format", () => {
             const msg = v1Data;
             const output = updateTrajectoryFileInfoFormat(msg);
-            expect(output).toEqual(v2Data);
+            expect(output).toEqual(v3Data);
         });
     });
 });

@@ -15,7 +15,7 @@ import { AgentDisplayDataWithGeometry } from "./VisGeometry";
 Handles different trajectory file format versions.
 Currently supported versions: 1, 2
 */
-const LATEST_VERSION = 2;
+const LATEST_VERSION = 3;
 const VERSION_NUM_ERROR = "Invalid version number in TrajectoryFileInfo:";
 
 const sanitizeAgentMapGeometryData = (
@@ -63,6 +63,13 @@ export const updateTrajectoryFileInfoFormat = (
             output = {
                 ...msg,
                 typeMapping: sanitizeAgentMapGeometryData(msg.typeMapping),
+            };
+            break;
+        case 2:
+            output = {
+                ...msg,
+                typeMapping: sanitizeAgentMapGeometryData(msg.typeMapping),
+                version: LATEST_VERSION,
             };
             break;
         case 1:
