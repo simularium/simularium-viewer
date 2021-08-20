@@ -3,27 +3,34 @@ import {
     CONNECTION_FAIL_MSG,
 } from "../simularium/RemoteSimulator";
 import FrontEndError from "../simularium/FrontEndError";
-import { TEST_CONNECTION_SETTINGS } from "../constants";
 import { RemoteSimulator } from "..";
+
+import { TEST_CONNECTION_SETTINGS } from "../constants";
 
 describe("RemoteSimulator", () => {
     // Silence console.debug messages like this in Jest output:
     // "[netconnection] WS Connection Request Sent:  wss://..."
-    jest.spyOn(global.console, "debug").mockImplementation(() => jest.fn());
+    // jest.spyOn(global.console, "debug").mockImplementation(() => jest.fn());
 
-    describe("connectToUri", () => {
-        test("creates a valid WebSocket object", () => {
+    const CONNECTION_SETTINGS = {
+        serverIp: "dummy.uri.com",
+        serverPort: 1234,
+    };
+
+    describe("createWebSocket", () => {
+        test("creates a WebSocket object", () => {
             const simulator = new RemoteSimulator({});
             expect(simulator.socketIsValid()).toBe(false);
 
-            simulator.connectToUri(simulator.getIp());
+            simulator.createWebSocket(simulator.getIp());
             expect(simulator.socketIsValid()).toBe(true);
         });
     });
 
     describe("connectToRemoteServer", () => {
-        test("successfully connects to server", async () => {
+        test("emits a 'connection success' message if connection succeeds", async () => {
             const simulator = new RemoteSimulator(TEST_CONNECTION_SETTINGS);
+
             const message = await simulator.connectToRemoteServer(
                 simulator.getIp()
             );

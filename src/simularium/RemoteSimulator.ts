@@ -74,11 +74,15 @@ export class RemoteSimulator implements ISimulator {
     public onTrajectoryFileInfoArrive: (NetMessage) => void;
     public onTrajectoryDataArrive: (NetMessage) => void;
     protected lastRequestedFile: string;
+    public connectionTimeWaited: number;
+    public connectionRetries: number;
 
     public constructor(opts?: NetConnectionParams) {
         this.webSocket = null;
         this.serverIp = opts && opts.serverIp ? opts.serverIp : "localhost";
         this.serverPort = opts && opts.serverPort ? opts.serverPort : 9002;
+        this.connectionTimeWaited = 0;
+        this.connectionRetries = 0;
         this.lastRequestedFile = "";
 
         this.logger = jsLogger.get("netconnection");
@@ -260,55 +264,64 @@ export class RemoteSimulator implements ISimulator {
         return `wss://${this.serverIp}:${this.serverPort}/`;
     }
 
-    public connectToRemoteServer(
+    // Wait a specified time for websocket to open
+    public async waitForWebSocket(timeout: number): Promise<boolean> {
+        return new Promise((resolve) =>
+            setTimeout(() => {
+                resolve(this.socketIsConnected());
+            }, timeout)
+        );
+    }
+
+    /*
+    Initially wait for a max wait time of MAX_WAIT_TIME, then retry connecting
+    <MAX_RETRIES> time(s). In a retry, only wait for the amount of time
+    specified as timeout. (Can reset timeWaited to 0 upon retry if we want to
+    wait for MAX_WAIT_TIME in a retry too)
+    */
+    public async checkConnection(
+        address: string,
+        maxWaitTime: number,
+        maxRetries = 1,
+        timeout = 1000
+    ): Promise<boolean> {
+        const isConnected = await this.waitForWebSocket(timeout);
+        this.connectionTimeWaited += timeout;
+
+        if (isConnected) {
+            return true;
+        } else if (this.connectionTimeWaited < maxWaitTime) {
+            return this.checkConnection(address, maxWaitTime);
+        } else if (this.connectionRetries < maxRetries) {
+            this.createWebSocket(address);
+            this.connectionRetries++;
+            return this.checkConnection(address, maxWaitTime);
+        } else {
+            return false;
+        }
+    }
+
+    public async connectToRemoteServer(
         address: string,
         timeout = 1000
     ): Promise<string> {
-        const remoteStartPromise = new Promise<string>((resolve, reject) => {
-            const MAX_WAIT_TIME = 4 * timeout;
-            const MAX_RETRIES = 1;
-            let timeWaited = 0;
-            let retries = 0;
+        const MAX_WAIT_TIME = 4 * timeout;
 
-            if (this.socketIsConnected()) {
-                return resolve(CONNECTION_SUCCESS_MSG);
-            }
+        if (this.socketIsConnected()) {
+            return CONNECTION_SUCCESS_MSG;
+        }
 
-            // Wait a specified time for websocket to open
-            const waitForWebSocket = () =>
-                new Promise((resolve) =>
-                    setTimeout(() => {
-                        resolve(this.socketIsConnected());
-                    }, timeout)
-                );
+        this.createWebSocket(address);
 
-            /*
-            Initially wait for a max wait time of MAX_WAIT_TIME, then retry connecting 
-            <MAX_RETRIES> time(s). In a retry, only wait for the amount of time 
-            specified as timeout. (Can reset timeWaited to 0 upon retry if we want to
-            wait for MAX_WAIT_TIME in a retry too)
-            */
-            const checkConnection = async () => {
-                const isConnected = await waitForWebSocket();
-                timeWaited += timeout;
-                if (isConnected) {
-                    resolve(CONNECTION_SUCCESS_MSG);
-                } else if (timeWaited < MAX_WAIT_TIME) {
-                    return checkConnection();
-                } else if (retries < MAX_RETRIES) {
-                    this.createWebSocket(address);
-                    retries++;
-                    return checkConnection();
-                } else {
-                    reject(new Error(CONNECTION_FAIL_MSG));
-                }
-            };
-
-            this.createWebSocket(address);
-            return checkConnection();
-        });
-
-        return remoteStartPromise;
+        const isConnectionSuccessful = await this.checkConnection(
+            address,
+            MAX_WAIT_TIME
+        );
+        if (isConnectionSuccessful) {
+            return CONNECTION_SUCCESS_MSG;
+        } else {
+            throw new Error(CONNECTION_FAIL_MSG);
+        }
     }
 
     /**
