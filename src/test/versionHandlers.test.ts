@@ -195,7 +195,7 @@ describe("Version handlers", () => {
             expect(conversion).toThrowError(RangeError);
         });
         test("it returns v3(latest) data as is", () => {
-            const msg = v2Data;
+            const msg = v3Data;
             const output = updateTrajectoryFileInfoFormat(msg);
             expect(output).toEqual(v3Data);
         });
