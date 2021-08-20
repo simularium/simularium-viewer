@@ -3,6 +3,7 @@ import * as si from "si-prefix";
 
 import { DEFAULT_CAMERA_SPEC } from "../constants";
 import {
+    AgentDisplayDataWithGeometry,
     CubeDisplayType,
     GizmoDisplayType,
     ObjDisplayType,
@@ -12,7 +13,6 @@ import {
     TrajectoryFileInfoAny,
     TrajectoryFileInfoV1,
 } from "./types";
-import { AgentDisplayDataWithGeometry } from "./VisGeometry";
 
 // the data may come in missing any of these values
 export interface AgentTypeVisDataPreProcessing {

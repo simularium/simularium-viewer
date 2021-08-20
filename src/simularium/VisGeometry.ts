@@ -44,6 +44,7 @@ import {
     CameraSpec,
     AgentTypeVisData,
     EncodedTypeMapping,
+    AgentDisplayDataWithGeometry,
 } from "./types";
 import { AgentData } from "./VisData";
 
@@ -89,11 +90,6 @@ function removeByName(group: Group, name: string): void {
 interface AgentTypeGeometry {
     meshName: string;
     pdbName: string;
-}
-
-export interface AgentDisplayDataWithGeometry {
-    name: string;
-    geometry: AgentTypeVisData;
 }
 
 interface MeshLoadRequest {

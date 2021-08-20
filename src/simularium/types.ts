@@ -73,6 +73,11 @@ export interface AgentTypeVisData {
     color: string;
 }
 
+export interface AgentDisplayDataWithGeometry {
+    name: string;
+    geometry: AgentTypeVisData;
+}
+
 export interface AgentDisplayData {
     name: string;
     geometry?: AgentTypeVisData;
