@@ -9,5 +9,8 @@ module.exports = {
         es: {
             presets: [["@babel/preset-env", { modules: false }]],
         },
+        test: {
+            plugins: ["@babel/plugin-transform-runtime"]
+        }
     },
 };
