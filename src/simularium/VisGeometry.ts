@@ -821,8 +821,7 @@ class VisGeometry {
                 );
             },
             (error) => {
-                this.meshRegistry.delete(url);
-                console.error(error);
+                // if the request fails, leave agent as a sphere by default
                 this.logger.debug("Failed to load mesh: ", error, url);
             }
         );
