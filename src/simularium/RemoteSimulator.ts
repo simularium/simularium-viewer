@@ -277,7 +277,7 @@ export class RemoteSimulator implements ISimulator {
 
     public async checkConnection(
         address: string,
-        timeout: number,
+        timeout = 1000,
         maxRetries = 1
     ): Promise<boolean> {
         // Initially wait for a max wait time of maxWaitTime, then retry
@@ -302,10 +302,7 @@ export class RemoteSimulator implements ISimulator {
         }
     }
 
-    public async connectToRemoteServer(
-        address: string,
-        timeout = 1000
-    ): Promise<string> {
+    public async connectToRemoteServer(address: string): Promise<string> {
         this.connectionTimeWaited = 0;
         this.connectionRetries = 0;
 
@@ -314,10 +311,7 @@ export class RemoteSimulator implements ISimulator {
         }
 
         this.createWebSocket(address);
-        const isConnectionSuccessful = await this.checkConnection(
-            address,
-            timeout
-        );
+        const isConnectionSuccessful = await this.checkConnection(address);
 
         if (isConnectionSuccessful) {
             return CONNECTION_SUCCESS_MSG;
