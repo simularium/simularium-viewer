@@ -8,7 +8,7 @@ import { RemoteSimulator } from "..";
 describe("RemoteSimulator", () => {
     // Silence console.debug messages like this in Jest output:
     // "[netconnection] WS Connection Request Sent:  wss://..."
-    // jest.spyOn(global.console, "debug").mockImplementation(() => jest.fn());
+    jest.spyOn(global.console, "debug").mockImplementation(() => jest.fn());
 
     const CONNECTION_SETTINGS = {
         serverIp: "dummy.uri.com",
