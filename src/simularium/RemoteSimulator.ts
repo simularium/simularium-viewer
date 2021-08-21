@@ -236,6 +236,8 @@ export class RemoteSimulator implements ISimulator {
      * WebSocket Connect
      * */
     public createWebSocket(uri: string): void {
+        // Create and initialize a WebSocket object
+
         if (this.socketIsValid()) {
             this.disconnect();
         }
@@ -264,8 +266,8 @@ export class RemoteSimulator implements ISimulator {
         return `wss://${this.serverIp}:${this.serverPort}/`;
     }
 
-    // Wait a specified time for websocket to open
     public async waitForWebSocket(timeout: number): Promise<boolean> {
+        // Wait a specified time then check WebSocket status
         return new Promise((resolve) =>
             setTimeout(() => {
                 resolve(this.socketIsConnected());
@@ -281,6 +283,7 @@ export class RemoteSimulator implements ISimulator {
         // Initially wait for a max wait time of maxWaitTime, then retry
         // connecting <maxRetries> time(s). In a retry, only wait for the
         // amount of time specified as timeout.
+
         const maxWaitTime = 4 * timeout;
 
         const isConnected = await this.waitForWebSocket(timeout);
