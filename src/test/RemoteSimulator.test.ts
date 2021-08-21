@@ -55,21 +55,12 @@ describe("RemoteSimulator", () => {
         });
         test("returns true if connection succeeds on the retry", async () => {
             const simulator = new RemoteSimulator(CONNECTION_SETTINGS);
-            jest.spyOn(simulator, "waitForWebSocket").mockResolvedValueOnce(
-                false
-            );
-            jest.spyOn(simulator, "waitForWebSocket").mockResolvedValueOnce(
-                false
-            );
-            jest.spyOn(simulator, "waitForWebSocket").mockResolvedValueOnce(
-                false
-            );
-            jest.spyOn(simulator, "waitForWebSocket").mockResolvedValueOnce(
-                false
-            );
-            jest.spyOn(simulator, "waitForWebSocket").mockResolvedValueOnce(
-                true
-            );
+            const waitForWebSocket = jest.spyOn(simulator, "waitForWebSocket");
+            waitForWebSocket.mockResolvedValueOnce(false);
+            waitForWebSocket.mockResolvedValueOnce(false);
+            waitForWebSocket.mockResolvedValueOnce(false);
+            waitForWebSocket.mockResolvedValueOnce(false);
+            waitForWebSocket.mockResolvedValueOnce(true);
 
             const isConnected = await simulator.checkConnection(
                 simulator.getIp(),
