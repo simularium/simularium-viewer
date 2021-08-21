@@ -19,8 +19,3 @@ export const DEFAULT_CAMERA_SPEC: CameraSpec = {
     },
     fovDegrees: 75,
 };
-
-export const TEST_CONNECTION_SETTINGS = {
-    serverIp: "staging-node1-agentviz-backend.cellexplore.net",
-    serverPort: 9002,
-};
