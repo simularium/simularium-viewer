@@ -273,29 +273,27 @@ export class RemoteSimulator implements ISimulator {
         );
     }
 
-    /*
-    Initially wait for a max wait time of MAX_WAIT_TIME, then retry connecting
-    <MAX_RETRIES> time(s). In a retry, only wait for the amount of time
-    specified as timeout. (Can reset timeWaited to 0 upon retry if we want to
-    wait for MAX_WAIT_TIME in a retry too)
-    */
     public async checkConnection(
         address: string,
-        maxWaitTime: number,
-        maxRetries = 1,
-        timeout = 1000
+        timeout: number,
+        maxRetries = 1
     ): Promise<boolean> {
+        // Initially wait for a max wait time of maxWaitTime, then retry
+        // connecting <maxRetries> time(s). In a retry, only wait for the
+        // amount of time specified as timeout.
+        const maxWaitTime = 4 * timeout;
+
         const isConnected = await this.waitForWebSocket(timeout);
         this.connectionTimeWaited += timeout;
 
         if (isConnected) {
             return true;
         } else if (this.connectionTimeWaited < maxWaitTime) {
-            return this.checkConnection(address, maxWaitTime);
+            return this.checkConnection(address, timeout);
         } else if (this.connectionRetries < maxRetries) {
             this.createWebSocket(address);
             this.connectionRetries++;
-            return this.checkConnection(address, maxWaitTime);
+            return this.checkConnection(address, timeout);
         } else {
             return false;
         }
@@ -305,7 +303,8 @@ export class RemoteSimulator implements ISimulator {
         address: string,
         timeout = 1000
     ): Promise<string> {
-        const MAX_WAIT_TIME = 4 * timeout;
+        this.connectionTimeWaited = 0;
+        this.connectionRetries = 0;
 
         if (this.socketIsConnected()) {
             return CONNECTION_SUCCESS_MSG;
@@ -314,7 +313,7 @@ export class RemoteSimulator implements ISimulator {
         this.createWebSocket(address);
         const isConnectionSuccessful = await this.checkConnection(
             address,
-            MAX_WAIT_TIME
+            timeout
         );
 
         if (isConnectionSuccessful) {

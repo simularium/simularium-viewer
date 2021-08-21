@@ -19,11 +19,68 @@ describe("RemoteSimulator", () => {
 
     describe("createWebSocket", () => {
         test("creates a WebSocket object", () => {
-            const simulator = new RemoteSimulator({});
+            const simulator = new RemoteSimulator(CONNECTION_SETTINGS);
             expect(simulator.socketIsValid()).toBe(false);
 
             simulator.createWebSocket(simulator.getIp());
             expect(simulator.socketIsValid()).toBe(true);
+        });
+    });
+
+    describe("checkConnection", () => {
+        const timeout = 1000;
+
+        test("returns true if connection succeeds within allotted time with no retries", async () => {
+            const simulator = new RemoteSimulator(CONNECTION_SETTINGS);
+            jest.spyOn(simulator, "waitForWebSocket").mockResolvedValue(true);
+
+            const isConnected = await simulator.checkConnection(
+                simulator.getIp(),
+                timeout
+            );
+            expect(isConnected).toBe(true);
+            expect(simulator.connectionTimeWaited).toBe(timeout);
+            expect(simulator.connectionRetries).toBe(0);
+        });
+        test("returns false if connection does not succeed within allotted time and number of retries", async () => {
+            const simulator = new RemoteSimulator(CONNECTION_SETTINGS);
+            jest.spyOn(simulator, "waitForWebSocket").mockResolvedValue(false);
+
+            const isConnected = await simulator.checkConnection(
+                simulator.getIp(),
+                timeout
+            );
+            expect(isConnected).toBe(false);
+            // Expect 4 timeouts on initial connection + 1 timeout on retry connection
+            expect(simulator.connectionTimeWaited).toBe(timeout * 5);
+            expect(simulator.connectionRetries).toBe(1);
+        });
+        test("returns true if connection succeeds on the retry", async () => {
+            const simulator = new RemoteSimulator(CONNECTION_SETTINGS);
+            jest.spyOn(simulator, "waitForWebSocket").mockResolvedValueOnce(
+                false
+            );
+            jest.spyOn(simulator, "waitForWebSocket").mockResolvedValueOnce(
+                false
+            );
+            jest.spyOn(simulator, "waitForWebSocket").mockResolvedValueOnce(
+                false
+            );
+            jest.spyOn(simulator, "waitForWebSocket").mockResolvedValueOnce(
+                false
+            );
+            jest.spyOn(simulator, "waitForWebSocket").mockResolvedValueOnce(
+                true
+            );
+
+            const isConnected = await simulator.checkConnection(
+                simulator.getIp(),
+                timeout
+            );
+            expect(isConnected).toBe(true);
+            // Expect 4 timeouts on initial connection + 1 timeout on retry connection
+            expect(simulator.connectionTimeWaited).toBe(timeout * 5);
+            expect(simulator.connectionRetries).toBe(1);
         });
     });
 
