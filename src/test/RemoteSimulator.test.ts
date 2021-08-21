@@ -5,8 +5,6 @@ import {
 import FrontEndError from "../simularium/FrontEndError";
 import { RemoteSimulator } from "..";
 
-import { TEST_CONNECTION_SETTINGS } from "../constants";
-
 describe("RemoteSimulator", () => {
     // Silence console.debug messages like this in Jest output:
     // "[netconnection] WS Connection Request Sent:  wss://..."
