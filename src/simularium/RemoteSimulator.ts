@@ -280,6 +280,9 @@ export class RemoteSimulator implements ISimulator {
         timeout = 1000,
         maxRetries = 1
     ): Promise<boolean> {
+        // Check if the WebSocket becomes connected within an allotted amount
+        // of time and number of retries.
+
         // Initially wait for a max wait time of maxWaitTime, then retry
         // connecting <maxRetries> time(s). In a retry, only wait for the
         // amount of time specified as timeout.
