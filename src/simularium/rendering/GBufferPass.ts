@@ -83,8 +83,6 @@ class GBufferPass {
             this.pdbGbufferMaterials,
             camera.projectionMatrix
         );
-        // this.pdbGbufferMaterials.mat.uniforms.modelViewMatrix.value =
-        //     camera.modelViewMatrix;
         this.fibers.updateProjectionMatrix(camera.projectionMatrix);
         for (let i = 0; i < this.meshTypes.length; ++i) {
             const s = this.meshTypes[i].getShaders();
@@ -96,22 +94,13 @@ class GBufferPass {
         // y:-1 agent instance id (-1 so that 0 remains a distinct instance id from the background)
         // z:0 view space depth
         // alpha == -1 is a marker to discard pixels later, will be filled with frag depth
+        // note that current multiple render target implementation does not allow for separate clear values
         const COLOR_CLEAR = new Color(0.0, -1.0, 0.0);
         const COLOR_ALPHA = -1.0;
-        // const NORMAL_CLEAR = new Color(0.0, 0.0, 0.0);
-        // const NORMAL_ALPHA = -1.0;
-        // const POSITION_CLEAR = new Color(0.0, 0.0, 0.0);
-        // const POSITION_ALPHA = -1.0;
 
         renderer.setClearColor(COLOR_CLEAR, COLOR_ALPHA);
         renderer.setRenderTarget(gbuffer);
         renderer.clear();
-        // renderer.setClearColor(NORMAL_CLEAR, NORMAL_ALPHA);
-        // renderer.setRenderTarget(normalBuffer);
-        // renderer.clear();
-        // renderer.setClearColor(POSITION_CLEAR, POSITION_ALPHA);
-        // renderer.setRenderTarget(positionBuffer);
-        // renderer.clear();
         renderer.autoClear = false;
 
         const DO_INSTANCED = true;
