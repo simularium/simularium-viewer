@@ -1,3 +1,4 @@
+import "regenerator-runtime/runtime.js";
 import { Vector2, Vector3, Vector4 } from "three";
 
 // THIS TEST MODULE IS A REPLICA/PORT OF THE GLSL SHADER CODE IN
