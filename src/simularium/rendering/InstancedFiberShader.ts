@@ -153,10 +153,10 @@ vec3 getTangent (vec3 a, vec3 b) {
   return normalize(b - a);
 }
 
-void rotateByAxisAngle (inout vec3 normal, vec3 axis, float angle) {
+void rotateByAxisAngle (inout vec3 normal, vec3 axis, float rotAngle) {
   // http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/index.htm
   // assumes axis is normalized
-  float halfAngle = angle / 2.0;
+  float halfAngle = rotAngle / 2.0;
   float s = sin(halfAngle);
   vec4 quat = vec4(axis * s, cos(halfAngle));
   normal = normal + 2.0 * cross(quat.xyz, cross(quat.xyz, normal) + quat.w * normal);
@@ -165,11 +165,11 @@ void rotateByAxisAngle (inout vec3 normal, vec3 axis, float angle) {
 void createTube (float t, vec2 volume, out vec3 outPosition, out vec3 outNormal) {
   // Reference:
   // https://github.com/mrdoob/three.js/blob/b07565918713771e77b8701105f2645b1e5009a7/src/extras/core/Curve.js#L268
-  float nextT = t + (1.0 / lengthSegments);
+  float nextT = t + (1.0 / float(lengthSegments));
 
   // find first tangent
   vec3 point0 = sampleCurve(0.0);
-  vec3 point1 = sampleCurve(1.0 / lengthSegments);
+  vec3 point1 = sampleCurve(1.0 / float(lengthSegments));
 
   vec3 lastTangent = getTangent(point0, point1);
   vec3 absTangent = abs(lastTangent);
@@ -199,9 +199,9 @@ void createTube (float t, vec2 volume, out vec3 outPosition, out vec3 outNormal)
   vec3 tangent;
   vec3 binormal;
   vec3 point;
-  float maxLen = (lengthSegments - 1.0);
+  float maxLen = (float(lengthSegments) - 1.0);
   float epSq = EPSILON * EPSILON;
-  for (float i = 1.0; i < lengthSegments; i += 1.0) {
+  for (float i = 1.0; i < float(lengthSegments); i += 1.0) {
     float u = i / maxLen;
     // could avoid additional sample here at expense of ternary
     // point = i == 1.0 ? point1 : sampleCurve(u);
@@ -256,9 +256,42 @@ void createTube (float t, vec2 volume, out vec3 offset, out vec3 normal) {
   vec3 prev = sampleCurve(t1);
   vec3 next = sampleCurve(t2);
 
-  // compute the TBN matrix
+  // compute the TBN matrix (aka the Frenet-Serret frame)
+
+  // tangent is just the direction along our small delta
   vec3 T = normalize(next - prev);
-  vec3 B = normalize(cross(T, next + prev));
+
+  vec3 B = vec3(0, 0, 0);
+
+  // if next-prev and next+prev are parallel, then
+  // our normal and binormal will be ill-defined so we need to check for that
+  // check parallel by dot the unit vectors and check close to +/-1
+  float check = dot(T, normalize(next + prev));
+  if (abs(check) < 0.999) {
+    // cross product of parallel vectors is 0, so T must not be parallel to next+prev
+    // hence the above check.
+    B = normalize(cross(T, next + prev));
+  }
+  else {
+    // special case for which N and B are not well defined. 
+    // so we will just pick something
+    float min = 1.0;
+    if (abs(T.x) <= min) {
+      min = abs(T.x);
+      B.x = 1.0;
+    }
+    if (abs(T.y) <= min) {
+      min = abs(T.y);
+      B.y = 1.0;
+    }
+    if (abs(T.z) <= min) {
+      B.z = 1.0;
+    }
+    vec3 tmpVec = normalize(cross(T, B));
+    B = normalize(cross(T, tmpVec));
+  }
+
+  // now that we have T and B perpendicular, we can easily make N
   vec3 N = -normalize(cross(B, T));
 
   // extrude outward to create a tube
@@ -349,7 +382,7 @@ function createShaders(
     const shaderDefines = {
         lengthSegments: lengthSegments,
         ROBUST: false,
-        ROBUST_NORMALS: true, // can be disabled for a slight optimization
+        ROBUST_NORMAL: true, // can be disabled for a slight optimization
         FLAT_SHADED: false,
         NUM_POINTS: nPointsPerCurve,
     };
