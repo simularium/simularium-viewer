@@ -96,17 +96,18 @@ describe("RemoteSimulator", () => {
     });
 
     describe("startRemoteTrajectoryPlayback", () => {
-        test("sends WebSocket request to start playback", async () => {
+        test("does not throw error if connectToRemoteServer succeeds", async () => {
             const simulator = new RemoteSimulator(CONNECTION_SETTINGS);
             jest.spyOn(simulator, "connectToRemoteServer").mockResolvedValue(
                 CONNECTION_SUCCESS_MSG
             );
-            const request = jest.spyOn(simulator, "sendWebSocketRequest");
 
-            await simulator.startRemoteTrajectoryPlayback(
-                "endocytosis.simularium"
-            );
-            expect(request).toBeCalled();
+            expect(
+                async () =>
+                    await simulator.startRemoteTrajectoryPlayback(
+                        "endocytosis.simularium"
+                    )
+            ).not.toThrow();
         });
         test("throws error emitted by connectToRemoteServer as a FrontEndError if connection fails", async () => {
             const simulator = new RemoteSimulator(CONNECTION_SETTINGS);

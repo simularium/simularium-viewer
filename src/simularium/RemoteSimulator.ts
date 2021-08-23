@@ -330,7 +330,7 @@ export class RemoteSimulator implements ISimulator {
         this.logger.debug("Web Socket Request Sent: ", whatRequest, jsonData);
     }
 
-    public sendWebSocketRequest(jsonData, requestDescription: string): void {
+    private sendWebSocketRequest(jsonData, requestDescription: string): void {
         if (this.webSocket !== null) {
             this.webSocket.send(JSON.stringify(jsonData));
         }
