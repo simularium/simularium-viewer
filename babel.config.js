@@ -1,5 +1,8 @@
 module.exports = {
-    plugins: ["@babel/plugin-proposal-class-properties", "const-enum"],
+    plugins: [
+        "@babel/plugin-proposal-class-properties", 
+        "const-enum", 
+        "@babel/plugin-transform-runtime"],
     presets: [
         "@babel/preset-env",
         "@babel/preset-typescript",
