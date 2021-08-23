@@ -150,8 +150,14 @@ class Viewer extends React.Component<{}, ViewerState> {
             );
             const simulariumFile = JSON.parse(parsedFiles[simulariumFileIndex]);
             const fileName = filesArr[simulariumFileIndex].name;
+            const geoAssets = filesArr.reduce((acc, cur, index) => {
+                if (index !== simulariumFileIndex) {
+                    acc[cur.name] = parsedFiles[index];
+                }
+                return acc;
+            }, {});
             simulariumController
-                .changeFile({ simulariumFile }, fileName)
+                .changeFile({ simulariumFile, geoAssets }, fileName)
                 .catch((error) => {
                     console.log("Error loading file", error);
                     window.alert(`Error loading file: ${error.message}`);
