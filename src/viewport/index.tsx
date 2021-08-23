@@ -202,7 +202,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         ) => {
             // Update TrajectoryFileInfo format to latest version
             const trajectoryFileInfo: TrajectoryFileInfo = updateTrajectoryFileInfoFormat(
-                msg
+                msg, onError
             );
 
             simulariumController.visData.timeStepSize =

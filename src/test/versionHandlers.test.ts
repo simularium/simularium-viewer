@@ -1,5 +1,6 @@
 import { PdbDisplayType, SphereDisplayType } from "../simularium/types";
 import {
+    makeUrlErrorMessage,
     sanitizeAgentMapGeometryData,
     updateTrajectoryFileInfoFormat,
 } from "../simularium/versionHandlers";
@@ -166,6 +167,26 @@ const v3Data = {
 };
 
 describe("Version handlers", () => {
+    describe("makeUrlErrorMessage", () => {
+        test("it will create a message for the user if there is not displayType", () => {
+            const key = "1";
+            const url = "";
+            const message = makeUrlErrorMessage(key, url);
+            expect(message).toEqual(
+                `No typeMapping[${key}].geometry.displayType. Geometry will default to spheres`
+            );
+        });
+    });
+    describe("makeUrlErrorMessage", () => {
+        test("it will create a message for the user if the url is getting set to an empty string", () => {
+            const key = "1";
+            const url = "url-to-geo.com";
+            const message = makeUrlErrorMessage(key, url);
+            expect(message).toEqual(
+                `Missing typeMapping[${key}].geometry.displayType, so we couldn't request ${url}. Geometry will default to spheres`
+            );
+        });
+    });
     describe("sanitizeAgentMapGeometryData", () => {
         test("it returns back the same data if it already has geometry data per agent", () => {
             const result = sanitizeAgentMapGeometryData(typeMappingWithGeo);
@@ -184,6 +205,17 @@ describe("Version handlers", () => {
                 typeMappingMissingDisplayType
             );
             expect(result).toEqual(typeMappingWithDefaultGeo);
+        });
+    });
+    describe("sanitizeAgentMapGeometryData", () => {
+        test("it will pass up an error message if there is a url but no type mapping", () => {
+            let message = "";
+            const onError = (msg: string) => (message = msg);
+            sanitizeAgentMapGeometryData(
+                typeMappingMissingDisplayType,
+                onError
+            );
+            expect(message).toContain("Geometry will default to spheres");
         });
     });
     describe("updateTrajectoryFileInfoFormat", () => {
