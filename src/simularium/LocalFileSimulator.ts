@@ -56,10 +56,6 @@ export class LocalFileSimulator implements ISimulator {
     /**
      * Connect
      * */
-    public createWebSocket(_uri: string): void {
-        // not implemented
-    }
-
     public disconnect(): void {
         this.abortRemoteSim();
     }

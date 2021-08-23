@@ -56,13 +56,6 @@ export class ClientSimulator implements ISimulator {
     /**
      * Connect
      * */
-    public createWebSocket(uri: string): void {
-        if (this.socketIsValid()) {
-            this.disconnect();
-        }
-        this.logger.debug("Connection Request Sent: ", uri);
-    }
-
     public disconnect(): void {
         if (!this.socketIsValid()) {
             this.logger.warn("disconnect failed, client is not connected");
@@ -100,8 +93,7 @@ export class ClientSimulator implements ISimulator {
                         );
                         this.onTrajectoryDataArrive(frame);
                     } else {
-                        const a: TrajectoryFileInfo =
-                            this.localSimulator.getInfo();
+                        const a: TrajectoryFileInfo = this.localSimulator.getInfo();
                         this.onTrajectoryFileInfoArrive(a);
                     }
                 }

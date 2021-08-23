@@ -18,8 +18,6 @@ export interface ISimulator {
     /**
      * Connect
      * */
-    createWebSocket(uri: string): void;
-
     disconnect(): void;
 
     getIp(): string;
