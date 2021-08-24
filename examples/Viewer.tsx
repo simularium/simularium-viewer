@@ -137,25 +137,43 @@ class Viewer extends React.Component<{}, ViewerState> {
         const input = event.target as HTMLInputElement;
         const data: DataTransfer = event.dataTransfer as DataTransfer;
 
-        const files: FileList = input.files || data.files;
-        const filesArr: FileHTML[] = Array.from(files) as FileHTML[];
+        const files: DataTransferItemList = data.items;
+        const filesArr: DataTransferItem[] = Array.from(
+            files
+        ) as DataTransferItem[];
+        const getAsStringCallBack = (string) => {
+
+            console.log(string)
+            return new Promise((resolve, reject) => {
+                if (string) {
+                    resolve(string)
+                } else {
+                    reject()
+                }
+            } ) 
+        }
 
         Promise.all(
-            filesArr.map((file) => {
-                return file.text();
+            filesArr.map((item) => {
+                console.log(item, item.getAsFile(), item.getAsString)
+                return item.getAsString(getAsStringCallBack);
+                return item.getAsFile();
             })
         ).then((parsedFiles) => {
-            const simulariumFileIndex = findIndex(filesArr, (file) =>
-                file.name.includes(".simularium")
-            );
-            const simulariumFile = JSON.parse(parsedFiles[simulariumFileIndex]);
-            const fileName = filesArr[simulariumFileIndex].name;
-            const geoAssets = filesArr.reduce((acc, cur, index) => {
-                if (index !== simulariumFileIndex) {
-                    acc[cur.name] = parsedFiles[index];
-                }
-                return acc;
-            }, {});
+            console.log(parsedFiles)
+            return 
+            // const simulariumFileIndex = findIndex(parsedFiles, (file) =>
+            //     file.name.includes(".simularium")
+            // );
+            // const simulariumFile = JSON.parse(parsedFiles[simulariumFileIndex]);
+            // const fileName = filesArr[simulariumFileIndex].name;
+            // const geoAssets = filesArr.reduce((acc, cur, index) => {
+            //     if (index !== simulariumFileIndex) {
+            //         console.log(cur);
+            //         acc[cur.name] = parsedFiles[index];
+            //     }
+            //     return acc;
+            // }, {});
             simulariumController
                 .changeFile({ simulariumFile, geoAssets }, fileName)
                 .catch((error) => {
