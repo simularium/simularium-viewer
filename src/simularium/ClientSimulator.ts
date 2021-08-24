@@ -55,13 +55,6 @@ export class ClientSimulator implements ISimulator {
     /**
      * Connect
      * */
-    public connectToUri(uri: string): void {
-        if (this.socketIsValid()) {
-            this.disconnect();
-        }
-        this.logger.debug("Connection Request Sent: ", uri);
-    }
-
     public disconnect(): void {
         if (!this.socketIsValid()) {
             this.logger.warn("disconnect failed, client is not connected");

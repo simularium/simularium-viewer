@@ -56,10 +56,6 @@ export class LocalFileSimulator implements ISimulator {
     /**
      * Connect
      * */
-    public connectToUri(_uri: string): void {
-        // not implemented
-    }
-
     public disconnect(): void {
         this.abortRemoteSim();
     }
