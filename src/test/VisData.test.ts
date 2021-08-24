@@ -1,4 +1,3 @@
-import "regenerator-runtime/runtime.js";
 import { VisData, VisDataMessage, NetMessageEnum } from "../simularium";
 
 // Sample data of a single agent of type '7'
