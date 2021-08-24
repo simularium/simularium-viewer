@@ -22,6 +22,10 @@ import {
 import * as dat from "dat.gui";
 import HitTestHelper from "./HitTestHelper";
 
+const AGENTBUFFER = 0;
+const NORMALBUFFER = 1;
+const POSITIONBUFFER = 2;
+
 interface SimulariumRenderParameters {
     aoradius1: number;
     aoradius2: number;
@@ -122,9 +126,9 @@ class SimulariumRenderer {
             this.gbuffer.texture[i].generateMipmaps = false;
         }
         // Name our G-Buffer attachments for debugging
-        this.gbuffer.texture[0].name = "agentinfo";
-        this.gbuffer.texture[1].name = "normal";
-        this.gbuffer.texture[2].name = "position";
+        this.gbuffer.texture[AGENTBUFFER].name = "agentinfo";
+        this.gbuffer.texture[NORMALBUFFER].name = "normal";
+        this.gbuffer.texture[POSITIONBUFFER].name = "position";
 
         this.hitTestHelper = new HitTestHelper();
 
@@ -247,7 +251,7 @@ class SimulariumRenderer {
     public hitTest(renderer: WebGLRenderer, x: number, y: number): number {
         const pixel = this.hitTestHelper.hitTest(
             renderer,
-            this.gbuffer.texture[0],
+            this.gbuffer.texture[AGENTBUFFER],
             x / this.gbuffer.width,
             y / this.gbuffer.height
         );
@@ -353,12 +357,7 @@ class SimulariumRenderer {
         // depth buffer should be not written to or tested again after this.
 
         // 1 draw molecules into G buffers
-        // TODO: MRT
         this.gbufferPass.render(renderer, scene, camera, this.gbuffer);
-
-        const POSITIONBUFFER = 2;
-        const NORMALBUFFER = 1;
-        const AGENTBUFFER = 0;
 
         // 2 render ssao
         this.ssao1Pass.render(
