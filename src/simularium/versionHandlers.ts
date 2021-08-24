@@ -83,8 +83,8 @@ export const sanitizeAgentMapGeometryData = (
                     url = "";
                     displayType = "SPHERE";
                 } else if (
-                    (!url && displayType === "PDB") ||
-                    displayType === "OBJ"
+                    !url &&
+                    (displayType === "PDB" || displayType === "OBJ")
                 ) {
                     const message = makeMissingUrlErrorMessage(
                         key,

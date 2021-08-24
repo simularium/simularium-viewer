@@ -192,7 +192,7 @@ const v3Data = {
 
 describe("Version handlers", () => {
     describe("makeUrlErrorMessage", () => {
-        test("it will create a message for the user if there is not displayType", () => {
+        test("it will create an error message for the user given an empty string fro the url", () => {
             const key = "1";
             const url = "";
             const message = makeMissingDisplayTypeErrorMessage(key, url);
@@ -200,9 +200,7 @@ describe("Version handlers", () => {
                 `No typeMapping[${key}].geometry.displayType. Geometry will default to spheres`
             );
         });
-    });
-    describe("makeUrlErrorMessage", () => {
-        test("it will create a message for the user if the url is getting set to an empty string", () => {
+        test("it will create an error message for the user if there is a url", () => {
             const key = "1";
             const url = "url-to-geo.com";
             const message = makeMissingDisplayTypeErrorMessage(key, url);

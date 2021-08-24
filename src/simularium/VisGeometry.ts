@@ -831,7 +831,7 @@ class VisGeometry {
                 // if the request fails, leave agent as a sphere by default
                 this.logger.debug("Failed to load mesh: ", error, url);
                 this.onError(
-                    `Failed to load mesh: ${url}. Showing spheres for this geometry instead, `
+                    `Failed to load mesh: ${url}. Showing spheres for this geometry instead.`
                 );
             }
         );
@@ -1228,7 +1228,7 @@ class VisGeometry {
     }
 
     private setGeometryData(typeMapping: EncodedTypeMapping): void {
-        this.logger.debug("JSON Mesh mapping loaded: ", typeMapping);
+        this.logger.debug("Received type mapping data: ", typeMapping);
         Object.keys(typeMapping).forEach((id) => {
             const entry: AgentDisplayDataWithGeometry = typeMapping[id];
             this.mapIdToGeom(
