@@ -262,11 +262,15 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public gotoNextFrame(): void {
-        simulariumController.gotoTime(this.state.currentTime + this.state.timeStep);
+        simulariumController.gotoTime(
+            this.state.currentTime + this.state.timeStep
+        );
     }
 
     public gotoPreviousFrame(): void {
-        simulariumController.gotoTime(this.state.currentTime - this.state.timeStep);
+        simulariumController.gotoTime(
+            this.state.currentTime - this.state.timeStep
+        );
     }
 
     private configureAndLoad() {

@@ -187,16 +187,15 @@ class ContourPass {
         renderer: WebGLRenderer,
         target: WebGLRenderTarget | null,
         colorBuffer: WebGLRenderTarget,
-        instanceIdBuffer: WebGLRenderTarget,
-        normalsBuffer: WebGLRenderTarget
+        instanceIdBuffer: WebGLTexture,
+        normalsBuffer: WebGLTexture
     ): void {
         // this render pass has to fill frag depth for future render passes
         this.pass.material.depthWrite = true;
         this.pass.material.depthTest = true;
         this.pass.material.uniforms.colorTex.value = colorBuffer.texture;
-        this.pass.material.uniforms.instanceIdTex.value =
-            instanceIdBuffer.texture;
-        this.pass.material.uniforms.normalsTex.value = normalsBuffer.texture;
+        this.pass.material.uniforms.instanceIdTex.value = instanceIdBuffer;
+        this.pass.material.uniforms.normalsTex.value = normalsBuffer;
 
         // const c = renderer.getClearColor().clone();
         // const a = renderer.getClearAlpha();
