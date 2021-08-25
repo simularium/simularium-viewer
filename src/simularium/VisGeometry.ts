@@ -1244,8 +1244,14 @@ class VisGeometry {
                 entry.geometry.color
             );
         });
-        console.log("AFTER", this.currentSceneAgents);
-
+        // NOTE: do we need this call here?
+        // Seems to only ever be called with an empty array.
+        if (this.currentSceneAgents.length) {
+            console.log(
+                "Need to update scene with current agents:",
+                this.currentSceneAgents
+            );
+        }
         this.updateScene(this.currentSceneAgents);
     }
 
