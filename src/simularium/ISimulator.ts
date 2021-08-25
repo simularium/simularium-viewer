@@ -18,8 +18,6 @@ export interface ISimulator {
     /**
      * Connect
      * */
-    connectToUri(uri: string): void;
-
     disconnect(): void;
 
     getIp(): string;

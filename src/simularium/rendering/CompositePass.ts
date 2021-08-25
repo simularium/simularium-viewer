@@ -253,12 +253,12 @@ class CompositePass {
         target: WebGLRenderTarget,
         ssaoBuffer1: WebGLRenderTarget,
         ssaoBuffer2: WebGLRenderTarget,
-        colorBuffer: WebGLRenderTarget
+        colorBuffer: WebGLTexture
     ): void {
         this.pass.material.uniforms.zNear.value = camera.near;
         this.pass.material.uniforms.zFar.value = camera.far;
 
-        this.pass.material.uniforms.colorTex.value = colorBuffer.texture;
+        this.pass.material.uniforms.colorTex.value = colorBuffer;
         this.pass.material.uniforms.ssaoTex1.value = ssaoBuffer1.texture;
         this.pass.material.uniforms.ssaoTex2.value = ssaoBuffer2.texture;
 

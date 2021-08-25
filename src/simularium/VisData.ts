@@ -384,9 +384,8 @@ class VisData {
         }
 
         const firstFrameTime = this.frameDataCache[0].time;
-        const lastFrameTime = this.frameDataCache[
-            this.frameDataCache.length - 1
-        ].time;
+        const lastFrameTime =
+            this.frameDataCache[this.frameDataCache.length - 1].time;
 
         const notLessThanFirstFrameTime =
             compareTimes(time, firstFrameTime, this.timeStepSize) !== -1;

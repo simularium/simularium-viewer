@@ -122,13 +122,13 @@ class SSAO1Pass {
         renderer: WebGLRenderer,
         camera: PerspectiveCamera,
         target: WebGLRenderTarget,
-        normals: WebGLRenderTarget,
-        positions: WebGLRenderTarget
+        normals: WebGLTexture,
+        positions: WebGLTexture
     ): void {
         this.pass.material.uniforms.projectionMatrix.value =
             camera.projectionMatrix;
-        this.pass.material.uniforms.viewPosTex.value = positions.texture;
-        this.pass.material.uniforms.normalTex.value = normals.texture;
+        this.pass.material.uniforms.viewPosTex.value = positions;
+        this.pass.material.uniforms.normalTex.value = normals;
 
         const c = renderer.getClearColor(new Color()).clone();
         const a = renderer.getClearAlpha();
