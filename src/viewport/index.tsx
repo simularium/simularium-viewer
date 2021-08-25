@@ -179,7 +179,6 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             onTrajectoryFileInfoChanged,
             onUIDisplayDataChanged,
             loadInitialData,
-            onJsonDataArrived,
             onError,
         } = this.props;
         this.visGeometry.reparent(this.vdomRef.current);
@@ -194,6 +193,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         }
         if (onError) {
             simulariumController.onError = onError;
+            this.visGeometry.setOnErrorCallBack(onError)
         }
 
         simulariumController.visGeometry = this.visGeometry;
@@ -202,7 +202,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         ) => {
             // Update TrajectoryFileInfo format to latest version
             const trajectoryFileInfo: TrajectoryFileInfo = updateTrajectoryFileInfoFormat(
-                msg
+                msg, onError
             );
 
             simulariumController.visData.timeStepSize =
@@ -243,18 +243,6 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
         simulariumController.postConnect = () => {
             if (loadInitialData) {
-                const fileName = simulariumController.getFile();
-                this.visGeometry
-                    .mapFromJSON(
-                        fileName,
-                        simulariumController.getGeometryFile(),
-                        simulariumController.getAssetPrefix(),
-                        onJsonDataArrived
-                    )
-                    .then(() => {
-                        this.visGeometry.render(this.startTime);
-                        this.lastRenderTime = Date.now();
-                    });
                 simulariumController.initializeTrajectoryFile();
             }
         };
@@ -540,32 +528,14 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         const totalElapsedTime = now - this.startTime;
         if (elapsedTime > timePerFrame) {
             if (simulariumController.isChangingFile) {
-                this.visGeometry.clearForNewTrajectory();
-                const p = this.visGeometry.mapFromJSON(
-                    simulariumController.getFile(),
-                    simulariumController.getGeometryFile(),
-                    simulariumController.getAssetPrefix()
-                );
-
-                p.then(() => {
-                    this.visGeometry.render(totalElapsedTime);
-                    this.lastRenderTime = Date.now();
-                    this.lastRenderedAgentTime = -1;
-                    this.animationRequestID = requestAnimationFrame(
-                        this.animate
-                    );
-                });
-
-                p.catch(() => {
-                    this.visGeometry.render(totalElapsedTime);
-                    this.lastRenderTime = Date.now();
-                    this.lastRenderedAgentTime = -1;
-                    this.animationRequestID = requestAnimationFrame(
-                        this.animate
-                    );
-                });
-
+                this.visGeometry.render(totalElapsedTime);
+                this.lastRenderTime = Date.now();
+                this.lastRenderedAgentTime = -1;
                 simulariumController.markFileChangeAsHandled();
+           
+                this.animationRequestID = requestAnimationFrame(
+                    this.animate
+                );
 
                 return;
             }

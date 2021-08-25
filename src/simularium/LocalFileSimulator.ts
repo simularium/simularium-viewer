@@ -28,7 +28,6 @@ export class LocalFileSimulator implements ISimulator {
         this.simulariumFile = simulariumFile;
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
-
         this.onTrajectoryFileInfoArrive = () => {
             /* do nothing */
         };
