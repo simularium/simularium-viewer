@@ -368,6 +368,12 @@ class VisGeometry {
     public handleTrajectoryFileInfo(
         trajectoryFileInfo: TrajectoryFileInfo
     ): void {
+        this.handleBoundingBoxData(trajectoryFileInfo);
+        this.handleCameraData(trajectoryFileInfo.cameraDefault);
+        this.handleAgentGeometry(trajectoryFileInfo.typeMapping);
+    }
+
+    private handleBoundingBoxData(trajectoryFileInfo: TrajectoryFileInfo) {
         // Create a new bounding box and tick marks and set this.tickIntervalLength (via resetBounds()),
         // to make it available for use as the length of the scale bar in the UI
         if (trajectoryFileInfo.hasOwnProperty("size")) {
@@ -390,19 +396,19 @@ class VisGeometry {
         } else {
             this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
         }
+    }
 
+    private handleCameraData(cameraDefault: CameraSpec) {
         // Get default camera transform values from data
-        if (trajectoryFileInfo.cameraDefault) {
-            this.cameraDefault = trajectoryFileInfo.cameraDefault;
+        if (cameraDefault) {
+            this.cameraDefault = cameraDefault;
         } else {
             this.logger.warn(
                 "Using default camera settings since none were provided"
             );
             this.cameraDefault = cloneDeep(DEFAULT_CAMERA_SPEC);
         }
-        // Reset then position and orient the camera
         this.resetCamera();
-        this.handleAgentGeometry(trajectoryFileInfo.typeMapping);
     }
 
     // Called when a new file is loaded, the Clear button is clicked, or Reset Camera button is clicked
