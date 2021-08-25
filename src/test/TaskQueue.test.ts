@@ -1,9 +1,7 @@
-import "regenerator-runtime/runtime";
-
 import { TaskQueue, REASON_CANCELLED } from "../simularium/worker/TaskQueue";
 
-const delay = t => {
-    const resultPromise = new Promise(resolve => {
+const delay = (t) => {
+    const resultPromise = new Promise((resolve) => {
         setTimeout(() => resolve(t), t);
     });
     return resultPromise;
@@ -13,7 +11,7 @@ describe("TaskQueue module", () => {
     // note that tests all add more than 4 tasks to exceed the max concurrency of the queue
     test("it resolves tasks that finish synchronously", () => {
         const add = (x, y) => {
-            const resultPromise = new Promise(resolve => {
+            const resultPromise = new Promise((resolve) => {
                 resolve(x + y);
             });
             return resultPromise;
@@ -26,13 +24,13 @@ describe("TaskQueue module", () => {
         const p4 = q.enqueue(() => add(4, 7));
         const p5 = q.enqueue(() => add(4, 8));
         const expected = [3, 6, 9, 10, 11, 12];
-        Promise.all([p0, p1, p2, p3, p4, p5]).then(retData => {
+        Promise.all([p0, p1, p2, p3, p4, p5]).then((retData) => {
             expect(retData).toEqual(expected);
         });
     });
     test("it resolves all delayed tasks", async () => {
         const addDelayed = (x, y, t) => {
-            const resultPromise = new Promise(resolve => {
+            const resultPromise = new Promise((resolve) => {
                 setTimeout(() => resolve(x + y), t);
             });
             return resultPromise;
@@ -99,7 +97,7 @@ describe("TaskQueue module", () => {
     });
     test("it handles the case when some tasks throw", async () => {
         const addButThrowOdd = (x, y) => {
-            const resultPromise = new Promise(resolve => {
+            const resultPromise = new Promise((resolve) => {
                 if ((x + y) % 2) {
                     throw "Odd sums are thrown";
                 }
@@ -154,22 +152,22 @@ describe("TaskQueue module", () => {
         q.stopAll();
         expect(q.getLength()).toBe(0);
 
-        p0.then(value => {
+        p0.then((value) => {
             expect(value).toBe(1000);
         });
-        p1.then(value => {
+        p1.then((value) => {
             expect(value).toBe(1001);
         });
-        p2.then(value => {
+        p2.then((value) => {
             expect(value).toBe(1002);
         });
-        p3.then(value => {
+        p3.then((value) => {
             expect(value).toBe(1003);
         });
-        p4.then(null, error => {
+        p4.then(null, (error) => {
             expect(error).toBe(REASON_CANCELLED);
         });
-        p5.then(null, error => {
+        p5.then(null, (error) => {
             expect(error).toBe(REASON_CANCELLED);
         });
     });
@@ -194,25 +192,25 @@ describe("TaskQueue module", () => {
         const p6 = q.enqueue(() => delay(1006));
         expect(q.getLength()).toBe(1);
 
-        p0.then(value => {
+        p0.then((value) => {
             expect(value).toBe(1000);
         });
-        p1.then(value => {
+        p1.then((value) => {
             expect(value).toBe(1001);
         });
-        p2.then(value => {
+        p2.then((value) => {
             expect(value).toBe(1002);
         });
-        p3.then(value => {
+        p3.then((value) => {
             expect(value).toBe(1003);
         });
-        p4.then(null, error => {
+        p4.then(null, (error) => {
             expect(error).toBe(REASON_CANCELLED);
         });
-        p5.then(null, error => {
+        p5.then(null, (error) => {
             expect(error).toBe(REASON_CANCELLED);
         });
-        p6.then(value => {
+        p6.then((value) => {
             expect(value).toBe(1006);
         });
     });

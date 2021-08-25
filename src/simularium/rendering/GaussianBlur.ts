@@ -169,7 +169,7 @@ class BlurPass {
         renderer: WebGLRenderer,
         target: WebGLRenderTarget,
         source: WebGLRenderTarget,
-        positions: WebGLRenderTarget,
+        positions: WebGLTexture,
         intermediateBuffer: WebGLRenderTarget
     ): void {
         const c = renderer.getClearColor(new Color()).clone();
@@ -182,15 +182,13 @@ class BlurPass {
         // y = ( intermediate, viewpos ) --> dest
 
         this.blurXpass.pass.material.uniforms.colorTex.value = source.texture;
-        this.blurXpass.pass.material.uniforms.viewPosTex.value =
-            positions.texture;
+        this.blurXpass.pass.material.uniforms.viewPosTex.value = positions;
 
         this.blurXpass.render(renderer, intermediateBuffer);
 
         this.blurYpass.pass.material.uniforms.colorTex.value =
             intermediateBuffer.texture;
-        this.blurYpass.pass.material.uniforms.viewPosTex.value =
-            positions.texture;
+        this.blurYpass.pass.material.uniforms.viewPosTex.value = positions;
 
         this.blurYpass.render(renderer, target);
 

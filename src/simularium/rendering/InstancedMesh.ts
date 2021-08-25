@@ -8,7 +8,7 @@ import {
 } from "three";
 
 import InstancedMeshShader from "./InstancedMeshShader";
-import { MultipassShaders } from "./MultipassMaterials";
+import { MRTShaders } from "./MultipassMaterials";
 
 const tmpQuaternion = new Quaternion();
 const tmpEuler = new Euler();
@@ -17,7 +17,7 @@ class InstancedMesh {
     // number of control points per curve instance
     private meshGeometry: BufferGeometry;
     private mesh: Mesh;
-    private shaderSet: MultipassShaders;
+    private shaderSet: MRTShaders;
     private instancedGeometry: InstancedBufferGeometry;
 
     private positionAttribute: InstancedBufferAttribute; // x,y,z,scale
@@ -65,7 +65,7 @@ class InstancedMesh {
         return this.mesh;
     }
 
-    public getShaders(): MultipassShaders {
+    public getShaders(): MRTShaders {
         return this.shaderSet;
     }
 

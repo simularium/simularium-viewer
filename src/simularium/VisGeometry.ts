@@ -545,7 +545,6 @@ class VisGeometry {
                 visAgent.setFollowed(true);
             }
         }
-
         this.updateScene(this.currentSceneAgents);
     }
 
@@ -1471,7 +1470,6 @@ class VisGeometry {
         if (!this.isIdColorMappingSet) {
             return;
         }
-
         this.currentSceneAgents = agents;
 
         let dx = 0,

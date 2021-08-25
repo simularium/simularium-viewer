@@ -1,5 +1,6 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
+import FrontEndError from "./FrontEndError";
 
 import { ISimulator } from "./ISimulator";
 import { TrajectoryFileInfoV2, VisDataMessage } from "./types";
@@ -54,6 +55,10 @@ const enum PlayBackType {
     LENGTH,
 }
 
+export const CONNECTION_SUCCESS_MSG = "Remote sim successfully started";
+export const CONNECTION_FAIL_MSG =
+    "Failed to connect to server; try reloading. If the problem persists, there may be a problem with your connection speed or the server might be too busy.";
+
 export interface NetConnectionParams {
     serverIp?: string;
     serverPort?: number;
@@ -69,11 +74,15 @@ export class RemoteSimulator implements ISimulator {
     public onTrajectoryFileInfoArrive: (NetMessage) => void;
     public onTrajectoryDataArrive: (NetMessage) => void;
     protected lastRequestedFile: string;
+    public connectionTimeWaited: number;
+    public connectionRetries: number;
 
     public constructor(opts?: NetConnectionParams) {
         this.webSocket = null;
         this.serverIp = opts && opts.serverIp ? opts.serverIp : "localhost";
         this.serverPort = opts && opts.serverPort ? opts.serverPort : 9002;
+        this.connectionTimeWaited = 0;
+        this.connectionRetries = 0;
         this.lastRequestedFile = "";
 
         this.logger = jsLogger.get("netconnection");
@@ -226,7 +235,9 @@ export class RemoteSimulator implements ISimulator {
     /**
      * WebSocket Connect
      * */
-    public connectToUri(uri: string): void {
+    public createWebSocket(uri: string): void {
+        // Create and initialize a WebSocket object
+
         if (this.socketIsValid()) {
             this.disconnect();
         }
@@ -255,56 +266,61 @@ export class RemoteSimulator implements ISimulator {
         return `wss://${this.serverIp}:${this.serverPort}/`;
     }
 
-    private connectToUriAsync(address): Promise<string> {
-        const connectPromise = new Promise<string>((resolve) => {
-            this.connectToUri(address);
-            resolve("Successfully connected to uri!");
-        });
-
-        return connectPromise;
+    public async waitForWebSocket(timeout: number): Promise<boolean> {
+        // Wait a specified time then check WebSocket status
+        return new Promise((resolve) =>
+            setTimeout(() => {
+                resolve(this.socketIsConnected());
+            }, timeout)
+        );
     }
 
-    public connectToRemoteServer(address: string): Promise<string> {
-        const remoteStartPromise = new Promise<string>((resolve, reject) => {
-            if (this.socketIsConnected()) {
-                return resolve("Remote sim successfully started");
-            }
+    public async checkConnection(
+        address: string,
+        timeout = 1000,
+        maxRetries = 1
+    ): Promise<boolean> {
+        // Check if the WebSocket becomes connected within an allotted amount
+        // of time and number of retries.
 
-            const startPromise = this.connectToUriAsync(address);
-            // wait 1 second for websocket to open
-            const waitForIsConnected = () =>
-                new Promise((resolve) =>
-                    setTimeout(() => {
-                        resolve(this.socketIsConnected());
-                    }, 1000)
-                );
+        // Initially wait for a max wait time of maxWaitTime, then retry
+        // connecting <maxRetries> time(s). In a retry, only wait for the
+        // amount of time specified as timeout.
 
-            const handleReturn = async () => {
-                const isConnected = await waitForIsConnected();
-                secondsWaited++;
-                if (isConnected) {
-                    resolve("Remote sim successfully started");
-                } else if (secondsWaited < TOTAL_WAIT_SECONDS) {
-                    return await handleReturn();
-                } else if (connectionTries <= MAX_CONNECTION_TRIES) {
-                    connectionTries++;
-                    return this.connectToUriAsync(address).then(handleReturn);
-                } else {
-                    reject(
-                        new Error(
-                            "Failed to connected to requested server, try reloading. If problem keeps occurring check your connection speed"
-                        )
-                    );
-                }
-            };
-            const TOTAL_WAIT_SECONDS = 2;
-            let secondsWaited = 0;
-            const MAX_CONNECTION_TRIES = 2;
-            let connectionTries = 1;
-            return startPromise.then(handleReturn);
-        });
+        const maxWaitTime = 4 * timeout;
 
-        return remoteStartPromise;
+        const isConnected = await this.waitForWebSocket(timeout);
+        this.connectionTimeWaited += timeout;
+
+        if (isConnected) {
+            return true;
+        } else if (this.connectionTimeWaited < maxWaitTime) {
+            return this.checkConnection(address, timeout);
+        } else if (this.connectionRetries < maxRetries) {
+            this.createWebSocket(address);
+            this.connectionRetries++;
+            return this.checkConnection(address, timeout);
+        } else {
+            return false;
+        }
+    }
+
+    public async connectToRemoteServer(address: string): Promise<string> {
+        this.connectionTimeWaited = 0;
+        this.connectionRetries = 0;
+
+        if (this.socketIsConnected()) {
+            return CONNECTION_SUCCESS_MSG;
+        }
+
+        this.createWebSocket(address);
+        const isConnectionSuccessful = await this.checkConnection(address);
+
+        if (isConnectionSuccessful) {
+            return CONNECTION_SUCCESS_MSG;
+        } else {
+            throw new Error(CONNECTION_FAIL_MSG);
+        }
     }
 
     /**
@@ -314,7 +330,7 @@ export class RemoteSimulator implements ISimulator {
         this.logger.debug("Web Socket Request Sent: ", whatRequest, jsonData);
     }
 
-    private sendWebSocketRequest(jsonData, requestDescription): void {
+    private sendWebSocketRequest(jsonData, requestDescription: string): void {
         if (this.webSocket !== null) {
             this.webSocket.send(JSON.stringify(jsonData));
         }
@@ -404,12 +420,16 @@ export class RemoteSimulator implements ISimulator {
 
         // begins a stream which will include a TrajectoryFileInfo and a series of VisDataMessages
         // Note that it is possible for the first vis data to arrive before the TrajectoryFileInfo...
-        return this.connectToRemoteServer(this.getIp()).then(() => {
-            this.sendWebSocketRequest(
-                jsonData,
-                "Start Trajectory File Playback"
-            );
-        });
+        return this.connectToRemoteServer(this.getIp())
+            .then(() => {
+                this.sendWebSocketRequest(
+                    jsonData,
+                    "Start Trajectory File Playback"
+                );
+            })
+            .catch((error) => {
+                throw new FrontEndError(error);
+            });
     }
 
     public pauseRemoteSim(): void {
