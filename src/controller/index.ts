@@ -1,5 +1,5 @@
 import jsLogger from "js-logger";
-import { noop } from "lodash";
+import { isEmpty, noop } from "lodash";
 import {
     RemoteSimulator,
     NetConnectionParams,
@@ -122,7 +122,7 @@ export default class SimulariumController {
                 this.playBackFile,
                 localFile
             );
-            if (this.visGeometry && geoAssets) {
+            if (this.visGeometry && geoAssets && !isEmpty(geoAssets)) {
                 this.visGeometry.cacheLocalAssets(geoAssets);
             }
         } else if (netConnectionConfig) {
