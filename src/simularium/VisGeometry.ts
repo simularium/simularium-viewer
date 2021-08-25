@@ -373,6 +373,12 @@ class VisGeometry {
     public handleTrajectoryFileInfo(
         trajectoryFileInfo: TrajectoryFileInfo
     ): void {
+        this.handleBoundingBoxData(trajectoryFileInfo);
+        this.handleCameraData(trajectoryFileInfo.cameraDefault);
+        this.handleAgentGeometry(trajectoryFileInfo.typeMapping);
+    }
+
+    private handleBoundingBoxData(trajectoryFileInfo: TrajectoryFileInfo) {
         // Create a new bounding box and tick marks and set this.tickIntervalLength (via resetBounds()),
         // to make it available for use as the length of the scale bar in the UI
         if (trajectoryFileInfo.hasOwnProperty("size")) {
@@ -395,19 +401,19 @@ class VisGeometry {
         } else {
             this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
         }
+    }
 
+    private handleCameraData(cameraDefault: CameraSpec) {
         // Get default camera transform values from data
-        if (trajectoryFileInfo.cameraDefault) {
-            this.cameraDefault = trajectoryFileInfo.cameraDefault;
+        if (cameraDefault) {
+            this.cameraDefault = cameraDefault;
         } else {
             this.logger.warn(
                 "Using default camera settings since none were provided"
             );
             this.cameraDefault = cloneDeep(DEFAULT_CAMERA_SPEC);
         }
-        // Reset then position and orient the camera
         this.resetCamera();
-        this.handleAgentGeometry(trajectoryFileInfo.typeMapping);
     }
 
     // Called when a new file is loaded, the Clear button is clicked, or Reset Camera button is clicked
@@ -548,7 +554,6 @@ class VisGeometry {
                 visAgent.setFollowed(true);
             }
         }
-
         this.updateScene(this.currentSceneAgents);
     }
 
@@ -877,7 +882,7 @@ class VisGeometry {
                 // if the request fails, leave agent as a sphere by default
                 this.logger.debug("Failed to load mesh: ", error, url);
                 this.onError(
-                    `Failed to load mesh: ${url}. Showing spheres for this geometry instead, `
+                    `Failed to load mesh: ${url}. Showing spheres for this geometry instead.`
                 );
             }
         );
@@ -1192,7 +1197,7 @@ class VisGeometry {
         this.logger.debug(`Geo for id ${id} set to '${url}'`);
         const unassignedName = `${VisAgent.UNASSIGNED_NAME_PREFIX}-${id}`;
         const isMesh = displayType === "OBJ";
-        const isPBD = displayType === "PDB";
+        const isPDB = displayType === "PDB";
         console.log(color); // TODO: handle color
         if (!url) {
             // displayType not either pdb or obj, will show a sphere
@@ -1201,7 +1206,7 @@ class VisGeometry {
         }
         this.visGeomMap.set(id, {
             meshName: isMesh ? url : DEFAULT_MESH_NAME,
-            pdbName: isPBD ? url : "",
+            pdbName: isPDB ? url : "",
         });
         if (isMesh) {
             this.attemptToLoadGeometry(
@@ -1210,7 +1215,7 @@ class VisGeometry {
                 "loadObj",
                 this.cachedMeshRegistry
             );
-        } else if (isPBD) {
+        } else if (isPDB) {
             this.attemptToLoadGeometry(
                 url,
                 this.pdbRegistry,
@@ -1292,7 +1297,7 @@ class VisGeometry {
     }
 
     private setGeometryData(typeMapping: EncodedTypeMapping): void {
-        this.logger.debug("JSON Mesh mapping loaded: ", typeMapping);
+        this.logger.debug("Received type mapping data: ", typeMapping);
         Object.keys(typeMapping).forEach((id) => {
             const entry: AgentDisplayDataWithGeometry = typeMapping[id];
             this.mapIdToGeom(
@@ -1523,7 +1528,6 @@ class VisGeometry {
         if (!this.isIdColorMappingSet) {
             return;
         }
-
         this.currentSceneAgents = agents;
 
         let dx = 0,
@@ -1625,7 +1629,9 @@ class VisGeometry {
                         );
                     } else {
                         if (pdbEntry !== visAgent.pdbModel) {
-                            visAgent.setupPdb(pdbEntry);
+                            // race condition? agents arrived after pdb did?
+                            this.resetAgentPDB(visAgent, pdbEntry);
+                            //visAgent.setupPdb(pdbEntry);
                         }
                         visAgent.updatePdbTransform(1.0);
                     }

@@ -1,5 +1,11 @@
-import { PdbDisplayType, SphereDisplayType } from "../simularium/types";
 import {
+    ObjDisplayType,
+    PdbDisplayType,
+    SphereDisplayType,
+} from "../simularium/types";
+import {
+    makeMissingDisplayTypeErrorMessage,
+    makeMissingUrlErrorMessage,
     sanitizeAgentMapGeometryData,
     updateTrajectoryFileInfoFormat,
 } from "../simularium/versionHandlers";
@@ -159,6 +165,25 @@ const typeMappingMissingDisplayType = {
     },
 };
 
+const typeMappingMissingUrl = {
+    "0": {
+        name: "Actin",
+        geometry: {
+            color: "",
+            displayType: "OBJ" as ObjDisplayType,
+            url: "",
+        },
+    },
+    "1": {
+        name: "Budding vesicle",
+        geometry: {
+            color: "",
+            displayType: "PDB" as PdbDisplayType,
+            url: "",
+        },
+    },
+};
+
 const v3Data = {
     ...v2Data,
     typeMapping: typeMappingWithDefaultGeo,
@@ -166,24 +191,67 @@ const v3Data = {
 };
 
 describe("Version handlers", () => {
+    describe("makeUrlErrorMessage", () => {
+        test("it will create an error message for the user given an empty string fro the url", () => {
+            const key = "1";
+            const url = "";
+            const message = makeMissingDisplayTypeErrorMessage(key, url);
+            expect(message).toEqual(
+                `No typeMapping[${key}].geometry.displayType. Geometry will default to spheres`
+            );
+        });
+        test("it will create an error message for the user if there is a url", () => {
+            const key = "1";
+            const url = "url-to-geo.com";
+            const message = makeMissingDisplayTypeErrorMessage(key, url);
+            expect(message).toEqual(
+                `Missing typeMapping[${key}].geometry.displayType, so we couldn't request ${url}. Geometry will default to spheres`
+            );
+        });
+    });
+    describe("makeMissingUrlErrorMessage", () => {
+        test("it will create a message for the user if the url is missing but the displayType was PDB or OBJ", () => {
+            const key = "1";
+            const displayType = "OBJ";
+            const message = makeMissingUrlErrorMessage(key, displayType);
+            expect(message).toEqual(
+                `DisplayType was ${displayType} but missing typeMapping[${key}].geometry.url, so we couldn't request the file. Geometry will default to spheres`
+            );
+        });
+    });
     describe("sanitizeAgentMapGeometryData", () => {
         test("it returns back the same data if it already has geometry data per agent", () => {
             const result = sanitizeAgentMapGeometryData(typeMappingWithGeo);
             expect(result).toEqual(typeMappingWithGeo);
         });
-    });
-    describe("sanitizeAgentMapGeometryData", () => {
         test("it adds in default geo data if none is provided", () => {
             const result = sanitizeAgentMapGeometryData(typeMappingNoGeo);
             expect(result).toEqual(typeMappingWithDefaultGeo);
         });
-    });
-    describe("sanitizeAgentMapGeometryData", () => {
         test("it converts to the default geo data if displayType is missing", () => {
             const result = sanitizeAgentMapGeometryData(
                 typeMappingMissingDisplayType
             );
             expect(result).toEqual(typeMappingWithDefaultGeo);
+        });
+        test("it will pass up an error message if there is a url but no displayType", () => {
+            let message = "";
+            const onError = (msg: string) => (message = msg);
+            sanitizeAgentMapGeometryData(
+                typeMappingMissingDisplayType,
+                onError
+            );
+            expect(message).toContain("Geometry will default to spheres");
+        });
+        test("it will return default geometry if there is a url but displayType is OBJ or PDB ", () => {
+            const result = sanitizeAgentMapGeometryData(typeMappingMissingUrl);
+            expect(result).toEqual(typeMappingWithDefaultGeo);
+        });
+        test("it will pass up an error message if there is a url but displayType is OBJ or PDB ", () => {
+            let message = "";
+            const onError = (msg: string) => (message = msg);
+            sanitizeAgentMapGeometryData(typeMappingMissingUrl, onError);
+            expect(message).toContain("Geometry will default to spheres");
         });
     });
     describe("updateTrajectoryFileInfoFormat", () => {

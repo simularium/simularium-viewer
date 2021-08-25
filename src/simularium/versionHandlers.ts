@@ -39,48 +39,93 @@ Currently supported versions: 1, 2
 */
 const LATEST_VERSION = 3;
 const VERSION_NUM_ERROR = "Invalid version number in TrajectoryFileInfo:";
+export const makeMissingDisplayTypeErrorMessage = (
+    key: string,
+    url: string
+): string => {
+    if (url) {
+        return `Missing typeMapping[${key}].geometry.displayType, so we couldn't request ${url}. Geometry will default to spheres`;
+    } else {
+        return `No typeMapping[${key}].geometry.displayType. Geometry will default to spheres`;
+    }
+};
+
+export const makeMissingUrlErrorMessage = (
+    key: string,
+    displayType: PdbDisplayType | ObjDisplayType
+): string => {
+    return `DisplayType was ${displayType} but missing typeMapping[${key}].geometry.url, so we couldn't request the file. Geometry will default to spheres`;
+};
 
 export const sanitizeAgentMapGeometryData = (
-    typeMapping: EncodedTypeMappingPreProcessing
+    typeMapping: EncodedTypeMappingPreProcessing,
+    onError?: (msg: string) => void
 ): { [key: number]: AgentDisplayDataWithGeometry } => {
-    return mapValues(typeMapping, (value: AgentDisplayDataPreProcessing) => {
-        let geometry = {};
-        if (value.geometry) {
-            let url = value.geometry.url || "";
-            let { displayType } = value.geometry;
-            if (!displayType) {
-                // we're relying on the data to have a displayType to tell us what sort of data the url is pointing at
-                // if the user fails to provide the displayType, we'll default to loading a sphere, and clear out the url
-                url = "";
-                displayType = "SPHERE";
-            }
+    return mapValues(
+        typeMapping,
+        (value: AgentDisplayDataPreProcessing, key) => {
+            let geometry = {};
+            if (value.geometry) {
+                let url = value.geometry.url || "";
+                let { displayType } = value.geometry;
+                if (!displayType) {
+                    // we're relying on the data to have a displayType to tell us what sort of data the url is pointing at
+                    // if the user fails to provide the displayType, we'll default to loading a sphere, and clear out the url
+                    const message = makeMissingDisplayTypeErrorMessage(
+                        key,
+                        url
+                    );
+                    if (onError) {
+                        onError(message);
+                    } else {
+                        console.log(message);
+                    }
+                    url = "";
+                    displayType = "SPHERE";
+                } else if (
+                    !url &&
+                    (displayType === "PDB" || displayType === "OBJ")
+                ) {
+                    const message = makeMissingUrlErrorMessage(
+                        key,
+                        displayType
+                    );
+                    if (onError) {
+                        onError(message);
+                    } else {
+                        console.log(message);
+                    }
+                    displayType = "SPHERE";
+                }
 
-            geometry = {
-                ...value.geometry,
-                displayType,
-                url,
-                color: value.geometry.color || "",
-            };
-        } else {
-            geometry = {
-                displayType: "SPHERE",
-                url: "",
-                color: "",
-            };
+                geometry = {
+                    ...value.geometry,
+                    displayType,
+                    url,
+                    color: value.geometry.color || "",
+                };
+            } else {
+                geometry = {
+                    displayType: "SPHERE",
+                    url: "",
+                    color: "",
+                };
+            }
+            return {
+                ...value,
+                geometry,
+            } as AgentDisplayDataWithGeometry;
         }
-        return {
-            ...value,
-            geometry,
-        } as AgentDisplayDataWithGeometry;
-    });
+    );
 };
 
 export const updateTrajectoryFileInfoFormat = (
-    msg: TrajectoryFileInfoAny
+    msg: TrajectoryFileInfoAny,
+    onError?: (msg: string) => void
 ): TrajectoryFileInfo => {
     let output = {
         ...msg,
-        typeMapping: sanitizeAgentMapGeometryData(msg.typeMapping),
+        typeMapping: sanitizeAgentMapGeometryData(msg.typeMapping, onError),
         version: LATEST_VERSION,
     };
 

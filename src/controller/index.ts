@@ -100,6 +100,13 @@ export default class SimulariumController {
         this.isPaused = false;
         this.isFileChanging = false;
         this.playBackFile = params.trajectoryPlaybackFile || "";
+        this.zoomIn = this.zoomIn.bind(this);
+        this.zoomOut = this.zoomOut.bind(this);
+        this.resetCamera = this.resetCamera.bind(this);
+        this.centerCamera = this.centerCamera.bind(this);
+        this.reOrientCamera = this.reOrientCamera.bind(this);
+        this.setPanningMode = this.setPanningMode.bind(this);
+        this.setFocusMode = this.setFocusMode.bind(this);
     }
 
     private createSimulatorConnection(
