@@ -432,7 +432,6 @@ export default class SimulariumController {
     }
 
     public setPanningMode(pan: boolean): void {
-        console.log("THIS:", this);
         if (this.visGeometry) {
             this.visGeometry.setPanningMode(pan);
         }
