@@ -621,13 +621,17 @@ class VisGeometry {
         this.updateScene(this.currentSceneAgents);
     }
 
-    private resetAgentPDB(visAgent, pdb): void {
+    private resetAgentPDB(visAgent, pdb?): void {
         for (let lod = 0; lod < visAgent.pdbObjects.length; ++lod) {
             this.agentPDBGroup.remove(visAgent.pdbObjects[lod]);
         }
-        visAgent.setupPdb(pdb);
-        for (let lod = 0; lod < visAgent.pdbObjects.length; ++lod) {
-            this.agentPDBGroup.add(visAgent.pdbObjects[lod]);
+        if (pdb) {
+            visAgent.setupPdb(pdb);
+            for (let lod = 0; lod < visAgent.pdbObjects.length; ++lod) {
+                this.agentPDBGroup.add(visAgent.pdbObjects[lod]);
+            }
+        } else {
+            visAgent.resetPDB();
         }
     }
 
@@ -1239,8 +1243,14 @@ class VisGeometry {
                 entry.geometry.color
             );
         });
-        console.log("AFTER", this.currentSceneAgents);
-
+        // NOTE: do we need this call here?
+        // Seems to only ever be called with an empty array.
+        if (this.currentSceneAgents.length) {
+            console.log(
+                "Need to update scene with current agents:",
+                this.currentSceneAgents
+            );
+        }
         this.updateScene(this.currentSceneAgents);
     }
 
@@ -1456,7 +1466,7 @@ class VisGeometry {
     /**
      *   Update Scene
      **/
-    public updateScene(agents: AgentData[]): void {
+    private updateScene(agents: AgentData[]): void {
         if (!this.isIdColorMappingSet) {
             return;
         }
@@ -1563,7 +1573,6 @@ class VisGeometry {
                         if (pdbEntry !== visAgent.pdbModel) {
                             // race condition? agents arrived after pdb did?
                             this.resetAgentPDB(visAgent, pdbEntry);
-                            //visAgent.setupPdb(pdbEntry);
                         }
                         visAgent.updatePdbTransform(1.0);
                     }
@@ -1574,6 +1583,10 @@ class VisGeometry {
                             "No mesh nor pdb available? Should be unreachable code"
                         );
                         return;
+                    }
+                    // Was previously a PDB object, but in it's new state will be drawn as a mesh
+                    if (visAgent.hasDrawablePDB()) {
+                        this.resetAgentPDB(visAgent);
                     }
                     const meshGeom = meshEntry.mesh;
                     if (!meshGeom) {
