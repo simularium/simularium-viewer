@@ -425,12 +425,8 @@ class VisGeometry {
 
     // Sets camera position and orientation to the trajectory's initial (default) values
     public resetCameraPosition(): void {
-        const {
-            position,
-            upVector,
-            lookAtPosition,
-            fovDegrees,
-        } = this.cameraDefault;
+        const { position, upVector, lookAtPosition, fovDegrees } =
+            this.cameraDefault;
 
         // Reset camera position
         this.camera.position.set(position.x, position.y, position.z);
@@ -793,10 +789,24 @@ class VisGeometry {
         }
     }
 
+    private checkAndSanitizePath(pathOrUrl: string): string {
+        /**
+         * if given a url, return it. If given a path, return it in the form "/filename"
+         */
+        const isUrlRegEX =
+            /(https?:\/\/)([\w\-])+\.{1}([a-zA-Z]{2,63})([\/\w-]*)*\/?\??([^#\n\r]*)?#?([^\n\r]*)/g;
+        if (isUrlRegEX.test(pathOrUrl)) {
+            return pathOrUrl;
+        } else if (/\B(\/)/g.test(pathOrUrl)) {
+            return pathOrUrl;
+        }
+        return `/${pathOrUrl}`;
+    }
+
     public cacheLocalAssets(assets: { [key: string]: string }): void {
         forEach(assets, (value, key) => {
             if (key.includes(".pdb")) {
-                const pdbName = key;
+                const pdbName = this.checkAndSanitizePath(key);
                 const pdbModel = new PDBModel(pdbName);
                 this.cachedPdbRegistry.set(pdbName, pdbModel);
                 this.onNewPdb(pdbName);
@@ -807,7 +817,7 @@ class VisGeometry {
                     this.onNewPdb(pdbName);
                 });
             } else if (key.includes(".obj")) {
-                const meshName = key;
+                const meshName = this.checkAndSanitizePath(key);
                 this.prepMeshRegistryForNewObj(
                     this.cachedMeshRegistry,
                     meshName
@@ -821,7 +831,6 @@ class VisGeometry {
                 );
             }
         });
-        console.log(this.meshRegistry);
     }
 
     private handleObjResponse(
@@ -894,16 +903,19 @@ class VisGeometry {
         loadFunctionName: string,
         cachedRegistry: Map<string | number, PDBModel | MeshLoadRequest>
     ) {
-        if (cachedRegistry.has(url)) {
+        const urlOrPath = this.checkAndSanitizePath(url);
+        if (cachedRegistry.has(urlOrPath)) {
             registry.set(
                 url,
-                cachedRegistry.get(url) as PDBModel | MeshLoadRequest
+                cachedRegistry.get(urlOrPath) as PDBModel | MeshLoadRequest
             );
-            cachedRegistry.delete(url);
-        }
-        if (!registry.has(url) && !this.geoLoadAttempted.get(url)) {
-            this.geoLoadAttempted.set(url, true);
-            return this[loadFunctionName](url);
+            cachedRegistry.delete(urlOrPath);
+        } else if (
+            !registry.has(urlOrPath) &&
+            !this.geoLoadAttempted.get(urlOrPath)
+        ) {
+            this.geoLoadAttempted.set(urlOrPath, true);
+            return this[loadFunctionName](urlOrPath);
         }
     }
 
