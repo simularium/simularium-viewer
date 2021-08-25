@@ -913,6 +913,7 @@ class VisGeometry {
                 url,
                 cachedRegistry.get(urlOrPath) as PDBModel | MeshLoadRequest
             );
+            this.geoLoadAttempted.set(urlOrPath, true);
             cachedRegistry.delete(urlOrPath);
         } else if (
             !registry.has(urlOrPath) &&
