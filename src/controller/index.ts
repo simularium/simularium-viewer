@@ -108,6 +108,14 @@ export default class SimulariumController {
             this.playBackFile
         );
         this.assetPrefix = params.assetLocation || DEFAULT_ASSET_PREFIX;
+
+        this.zoomIn = this.zoomIn.bind(this);
+        this.zoomOut = this.zoomOut.bind(this);
+        this.resetCamera = this.resetCamera.bind(this);
+        this.centerCamera = this.centerCamera.bind(this);
+        this.reOrientCamera = this.reOrientCamera.bind(this);
+        this.setPanningMode = this.setPanningMode.bind(this);
+        this.setFocusMode = this.setFocusMode.bind(this);
     }
 
     private resolveGeometryFile(
