@@ -340,16 +340,16 @@ export class RemoteSimulator implements ISimulator {
     }
 
     private sendWebSocketRequest(jsonData, requestDescription: string): void {
-        // if (!this.socketIsValid()) {
-        console.error("Connection to server was closed unexpectedly.");
-        this.onError(
-            "Connection to server was closed unexpectedly. Try reloading. If the problem persists, the server may be too busy. Please try again at another time."
-        );
-        // }
-        // if (this.webSocket !== null) {
-        //     this.webSocket.send(JSON.stringify(jsonData));
-        // }
-        // this.logWebSocketRequest(requestDescription, jsonData);
+        if (!this.socketIsValid()) {
+            console.error("Connection to server was closed unexpectedly.");
+            this.onError(
+                "Connection to server was closed unexpectedly. Try reloading. If the problem persists, the server may be too busy. Please try again at another time."
+            );
+        }
+        if (this.webSocket !== null) {
+            this.webSocket.send(JSON.stringify(jsonData));
+        }
+        this.logWebSocketRequest(requestDescription, jsonData);
     }
 
     /**
