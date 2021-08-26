@@ -814,17 +814,13 @@ class VisGeometry {
         });
     }
 
-    private handleObjResponse(
-        meshRegistry: Map<string | number, MeshLoadRequest>,
-        meshName: string,
-        object: Object3D
-    ): void {
-        const meshLoadRequest = meshRegistry.get(meshName);
+    private handleObjResponse(meshName: string, object: Object3D): void {
+        const meshLoadRequest = this.meshRegistry.get(meshName);
         if (
             (meshLoadRequest && meshLoadRequest.cancelled) ||
             !meshLoadRequest
         ) {
-            meshRegistry.delete(meshName);
+            this.meshRegistry.delete(meshName);
             return;
         }
 
@@ -896,7 +892,7 @@ class VisGeometry {
                 this.prepMeshRegistryForNewObj(urlOrPath);
                 const objLoader = new OBJLoader();
                 const object = objLoader.parse(file.data);
-                this.handleObjResponse(this.meshRegistry, urlOrPath, object);
+                this.handleObjResponse(urlOrPath, object);
             }
         } else if (
             !registry.has(urlOrPath) &&
