@@ -1,6 +1,6 @@
 {
     "name": "@aics/simularium-viewer",
-    "version": "2.9.7",
+    "version": "2.9.8",
     "description": "An npm package to view simulations.",
     "main": "lib/index.js",
     "module": "es/index.js",
@@ -18,7 +18,8 @@
         "processCSS": "postcss src/viewport/index.css --output style/style.css",
         "build": "npm-run-all generateTypes bundle transpileES transpileCommonJs processCSS",
         "publish-patch": "npm version patch | xargs -I {} sh -c 'git push origin {}'",
-        "postpublish-patch": "git push origin main"
+        "postpublish-patch": "git push origin main",
+        "version": "auto-changelog -p --tag-pattern v.+ && git add CHANGELOG.md"
     },
     "files": [
         "es",
@@ -67,6 +68,9 @@
         "postcss-cli": "^8.3.1",
         "postcss-preset-env": "^6.7.0",
         "prettier": "^2.2.1",
+        "react": "^16.9.0",
+        "react-dom": "^16.9.0",
+        "regenerator-runtime": "^0.13.7",
         "rimraf": "~2.6",
         "ts-jest": "^27.0.4",
         "ts-node": "~10.1.0",
@@ -79,6 +83,10 @@
         "react": "~16.14.0",
         "react-dom": "^16.14.0"
     },
+    "peerDependencies": {
+        "react": "^16.9.0",
+        "react-dom": "^16.9.0"
+    },
     "dependencies": {
         "@fortawesome/fontawesome-free": "^5.15.2",
         "@fortawesome/fontawesome-svg-core": "^1.2.34",
@@ -89,6 +97,6 @@
         "js-logger": "^1.6.1",
         "parse-pdb": "^1.0.0",
         "si-prefix": "^0.2.0",
-        "three": "^0.125.2"
+        "three": "^0.131.3"
     }
 }

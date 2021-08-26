@@ -34,9 +34,6 @@ interface SimulariumControllerParams {
     remoteSimulator?: RemoteSimulator;
     netConnectionSettings?: NetConnectionParams;
     trajectoryPlaybackFile?: string;
-    trajectoryGeometryFile?: string;
-    // a URL prefix to locate the assets in the trajectoryGeometryFile
-    assetLocation?: string;
 }
 
 // TODO: refine this as part of the public API for initializing the
@@ -60,10 +57,6 @@ export default class SimulariumController {
     private isPaused: boolean;
     private isFileChanging: boolean;
     private playBackFile: string;
-    // used to map geometry to agent types
-    private geometryFile: string;
-    // used to locate geometry assets
-    private assetPrefix: string;
 
     public constructor(params: SimulariumControllerParams) {
         this.visData = new VisData();
@@ -72,6 +65,9 @@ export default class SimulariumController {
 
         this.handleTrajectoryInfo = (/*msg: TrajectoryFileInfo*/) => noop;
         this.onError = (/*errorMessage*/) => noop;
+
+        // might only be used in unit testing
+        // TODO: change test so controller isn't initialized with a remoteSimulator
         if (params.remoteSimulator) {
             this.simulator = params.remoteSimulator;
             this.simulator.setTrajectoryFileInfoHandler(
@@ -82,6 +78,9 @@ export default class SimulariumController {
             this.simulator.setTrajectoryDataHandler(
                 this.visData.parseAgentsFromNetData.bind(this.visData)
             );
+
+            // TODO: probably remove this? We're never initalizing the controller
+            // with any settings on the website.
         } else if (params.netConnectionSettings) {
             this.createSimulatorConnection(
                 params.netConnectionSettings,
@@ -106,26 +105,13 @@ export default class SimulariumController {
         this.isPaused = false;
         this.isFileChanging = false;
         this.playBackFile = params.trajectoryPlaybackFile || "";
-        this.geometryFile = this.resolveGeometryFile(
-            params.trajectoryGeometryFile || "",
-            this.playBackFile
-        );
-        this.assetPrefix = params.assetLocation || DEFAULT_ASSET_PREFIX;
-    }
-
-    private resolveGeometryFile(
-        geometryFile: string,
-        playbackFileName: string
-    ): string {
-        // if we got a geometryFile, assume it's a complete URL
-        if (geometryFile) {
-            return geometryFile;
-        }
-        // if there's no geometryFile, then make an assumption about the playbackFileName
-        if (playbackFileName) {
-            return `${DEFAULT_VISDATA_PREFIX}/${playbackFileName}.json`;
-        }
-        return "";
+        this.zoomIn = this.zoomIn.bind(this);
+        this.zoomOut = this.zoomOut.bind(this);
+        this.resetCamera = this.resetCamera.bind(this);
+        this.centerCamera = this.centerCamera.bind(this);
+        this.reOrientCamera = this.reOrientCamera.bind(this);
+        this.setPanningMode = this.setPanningMode.bind(this);
+        this.setFocusMode = this.setFocusMode.bind(this);
     }
 
     private createSimulatorConnection(
@@ -265,8 +251,6 @@ export default class SimulariumController {
     public clearFile(): void {
         this.isFileChanging = false;
         this.playBackFile = "";
-        this.geometryFile = "";
-        this.assetPrefix = DEFAULT_ASSET_PREFIX;
         this.visData.clearCache();
         this.disableNetworkCommands();
         this.pause();
@@ -279,19 +263,10 @@ export default class SimulariumController {
     public changeFile(
         connectionParams: SimulatorConnectionParams,
         // TODO: push newFileName into connectionParams
-        newFileName: string,
-        // TODO: can geometryFile and assetPrefix come from the TrajectoryFileInfo data?
-        geometryFile?: string,
-        assetPrefix?: string
+        newFileName: string
     ): Promise<FileReturn> {
         this.isFileChanging = true;
         this.playBackFile = newFileName;
-        this.geometryFile = this.resolveGeometryFile(
-            geometryFile || "",
-            newFileName
-        );
-        this.assetPrefix = assetPrefix ? assetPrefix : DEFAULT_ASSET_PREFIX;
-        this.visData.cancelAllWorkers();
         this.visData.WaitForFrame(0);
         this.visData.clearCache();
 
@@ -309,7 +284,7 @@ export default class SimulariumController {
                     connectionParams.clientSimulatorParams,
                     connectionParams.simulariumFile
                 );
-                this.networkEnabled = true;
+                this.networkEnabled = true; // This confuses me, because local files also go through this code path
                 this.isPaused = true;
             } else {
                 throw new Error("incomplete simulator config provided");
@@ -349,14 +324,6 @@ export default class SimulariumController {
         return this.playBackFile;
     }
 
-    public getGeometryFile(): string {
-        return this.geometryFile;
-    }
-
-    public getAssetPrefix(): string {
-        return this.assetPrefix;
-    }
-
     public disableNetworkCommands(): void {
         this.networkEnabled = false;
 
@@ -384,7 +351,6 @@ export default class SimulariumController {
         callback: (msg: TrajectoryFileInfo) => void
     ) {
         this.handleTrajectoryInfo = callback;
-
         if (this.simulator) {
             this.simulator.setTrajectoryFileInfoHandler(callback);
         }

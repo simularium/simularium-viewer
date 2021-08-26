@@ -28,7 +28,6 @@ export class LocalFileSimulator implements ISimulator {
         this.simulariumFile = simulariumFile;
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
-
         this.onTrajectoryFileInfoArrive = () => {
             /* do nothing */
         };
@@ -56,10 +55,6 @@ export class LocalFileSimulator implements ISimulator {
     /**
      * Connect
      * */
-    public connectToUri(_uri: string): void {
-        // not implemented
-    }
-
     public disconnect(): void {
         this.abortRemoteSim();
     }

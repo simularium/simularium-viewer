@@ -10,7 +10,7 @@ import SimulariumViewer, {
     SimulariumFileFormat,
 } from "../src";
 import "./style.css";
-import { isEqual } from "lodash";
+import { isEqual, findIndex } from "lodash";
 
 const netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
@@ -141,18 +141,19 @@ class Viewer extends React.Component<{}, ViewerState> {
         const filesArr: FileHTML[] = Array.from(files) as FileHTML[];
 
         Promise.all(
-            filesArr.map((file) =>
-                file
-                    .text()
-                    .then((text) => JSON.parse(text) as SimulariumFileFormat)
-            )
+            filesArr.map((file) => {
+                return file.text();
+            })
         ).then((parsedFiles) => {
-            const simulariumFile = parsedFiles[0];
-            const fileName = filesArr[0].name;
+            const simulariumFileIndex = findIndex(filesArr, (file) =>
+                file.name.includes(".simularium")
+            );
+            const simulariumFile = JSON.parse(parsedFiles[simulariumFileIndex]);
+            const fileName = filesArr[simulariumFileIndex].name;
             simulariumController
                 .changeFile({ simulariumFile }, fileName)
                 .catch((error) => {
-                    console.log(error.htmlData);
+                    console.log("Error loading file", error);
                     window.alert(`Error loading file: ${error.message}`);
                 });
         });
@@ -174,7 +175,6 @@ class Viewer extends React.Component<{}, ViewerState> {
 
     public turnAgentsOnOff(nameToToggle: string) {
         let currentHiddenAgents = this.state.selectionStateInfo.hiddenAgents;
-        console.log(currentHiddenAgents);
         let nextHiddenAgents = [];
         if (currentHiddenAgents.some((a) => a.name === nameToToggle)) {
             nextHiddenAgents = currentHiddenAgents.filter(
@@ -186,7 +186,6 @@ class Viewer extends React.Component<{}, ViewerState> {
                 { name: nameToToggle, tags: [] },
             ];
         }
-        console.log(nextHiddenAgents);
         this.setState({
             ...this.state,
             selectionStateInfo: {
@@ -199,7 +198,6 @@ class Viewer extends React.Component<{}, ViewerState> {
     public turnAgentHighlightsOnOff(nameToToggle: string) {
         let currentHighlightedAgents = this.state.selectionStateInfo
             .highlightedAgents;
-        console.log(currentHighlightedAgents);
         let nextHighlightedAgents = [];
         if (currentHighlightedAgents.some((a) => a.name === nameToToggle)) {
             nextHighlightedAgents = currentHighlightedAgents.filter(
@@ -211,7 +209,6 @@ class Viewer extends React.Component<{}, ViewerState> {
                 { name: nameToToggle, tags: [] },
             ];
         }
-        console.log(nextHighlightedAgents);
         this.setState({
             ...this.state,
             selectionStateInfo: {
@@ -262,11 +259,15 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public gotoNextFrame(): void {
-        simulariumController.gotoTime(this.state.currentTime + this.state.timeStep);
+        simulariumController.gotoTime(
+            this.state.currentTime + this.state.timeStep
+        );
     }
 
     public gotoPreviousFrame(): void {
-        simulariumController.gotoTime(this.state.currentTime - this.state.timeStep);
+        simulariumController.gotoTime(
+            this.state.currentTime - this.state.timeStep
+        );
     }
 
     private configureAndLoad() {
@@ -478,6 +479,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                         onTimeChange={this.handleTimeChange.bind(this)}
                         simulariumController={simulariumController}
                         onJsonDataArrived={this.handleJsonMeshData}
+                        showCameraControls={false}
                         onTrajectoryFileInfoChanged={this.handleTrajectoryInfo.bind(
                             this
                         )}
