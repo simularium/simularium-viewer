@@ -766,11 +766,8 @@ class VisGeometry {
         );
     }
 
-    private prepMeshRegistryForNewObj(
-        meshRegistry: Map<string | number, MeshLoadRequest>,
-        meshName: string
-    ): void {
-        if (meshRegistry.has(meshName)) {
+    private prepMeshRegistryForNewObj(meshName: string): void {
+        if (this.meshRegistry.has(meshName)) {
             const entry = this.meshRegistry.get(meshName);
             if (entry) {
                 // there is already a mesh registered but we are going to load a new one.
@@ -788,7 +785,7 @@ class VisGeometry {
         } else {
             // if this mesh is not yet registered, then start off as a sphere
             // we will replace the sphere in here with the real geometry when it arrives.
-            meshRegistry.set(meshName, {
+            this.meshRegistry.set(meshName, {
                 mesh: new Mesh(VisAgent.sphereGeometry),
                 cancelled: false,
                 instances: new InstancedMesh(
@@ -858,7 +855,7 @@ class VisGeometry {
 
     public fetchObj(url: string): void {
         const objLoader = new OBJLoader();
-        this.prepMeshRegistryForNewObj(this.meshRegistry, url);
+        this.prepMeshRegistryForNewObj(url);
         return objLoader.load(
             url,
             (object) => {
@@ -896,7 +893,7 @@ class VisGeometry {
                 this.geoLoadAttempted.set(urlOrPath, true);
                 this.localGeoFiles.delete(urlOrPath);
             } else if (file && file.displayType === "OBJ") {
-                this.prepMeshRegistryForNewObj(this.meshRegistry, urlOrPath);
+                this.prepMeshRegistryForNewObj(urlOrPath);
                 const objLoader = new OBJLoader();
                 const object = objLoader.parse(file.data);
                 this.handleObjResponse(this.meshRegistry, urlOrPath, object);
