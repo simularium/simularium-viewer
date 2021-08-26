@@ -76,7 +76,7 @@ export class RemoteSimulator implements ISimulator {
     protected lastRequestedFile: string;
     public connectionTimeWaited: number;
     public connectionRetries: number;
-    public onError: (errorMessage: string) => void | (() => void);
+    public handleError: (errorMessage: string) => void | (() => void);
 
     public constructor(
         opts?: NetConnectionParams,
@@ -88,7 +88,7 @@ export class RemoteSimulator implements ISimulator {
         this.connectionTimeWaited = 0;
         this.connectionRetries = 0;
         this.lastRequestedFile = "";
-        this.onError =
+        this.handleError =
             errorHandler ||
             (() => {
                 /* do nothing */
@@ -342,7 +342,7 @@ export class RemoteSimulator implements ISimulator {
     private sendWebSocketRequest(jsonData, requestDescription: string): void {
         if (!this.socketIsValid()) {
             console.error("Connection to server was closed unexpectedly.");
-            this.onError(
+            this.handleError(
                 "Connection to server was closed unexpectedly. Try reloading. If the problem persists, the server may be too busy. Please try again at another time."
             );
         }
