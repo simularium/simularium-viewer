@@ -60,15 +60,15 @@ export type ObjDisplayType = "OBJ";
 export type SphereDisplayType = "SPHERE";
 export type CubeDisplayType = "CUBE";
 export type GizmoDisplayType = "GIZMO";
-
+export type GeometryDisplayType =
+    | PdbDisplayType
+    | ObjDisplayType
+    | SphereDisplayType
+    | CubeDisplayType
+    | GizmoDisplayType;
 // per agent type Visdata format
 export interface AgentTypeVisData {
-    displayType:
-        | PdbDisplayType
-        | ObjDisplayType
-        | SphereDisplayType
-        | CubeDisplayType
-        | GizmoDisplayType;
+    displayType: GeometryDisplayType;
     url: string;
     color: string;
 }

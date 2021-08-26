@@ -42,9 +42,11 @@ import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC } from "../constants";
 import {
     TrajectoryFileInfo,
     CameraSpec,
-    AgentTypeVisData,
     EncodedTypeMapping,
     AgentDisplayDataWithGeometry,
+    ObjDisplayType,
+    PdbDisplayType,
+    GeometryDisplayType,
 } from "./types";
 import { AgentData } from "./VisData";
 
@@ -89,8 +91,18 @@ function removeByName(group: Group, name: string): void {
 }
 
 interface AgentTypeGeometry {
-    meshName: string;
-    pdbName: string;
+    name: string;
+    displayType: GeometryDisplayType;
+}
+
+interface PdbGeometry {
+    geometry: PDBModel;
+    displayType: PdbDisplayType;
+}
+
+interface MeshGeometry {
+    geometry: MeshLoadRequest;
+    displayType: ObjDisplayType;
 }
 
 interface MeshLoadRequest {
@@ -111,7 +123,11 @@ interface PathData {
     line: LineSegments;
 }
 
-type AgentTypeVisDataMap = Map<string, AgentTypeVisData>;
+interface CachedFileData {
+    displayType: ObjDisplayType | PdbDisplayType;
+    data: string;
+}
+
 type Bounds = readonly [number, number, number, number, number, number];
 
 class VisGeometry {
@@ -125,9 +141,8 @@ class VisGeometry {
     public meshRegistry: Map<string | number, MeshLoadRequest>;
     // maps pdb name to pdb data
     public pdbRegistry: Map<string | number, PDBModel>;
-    // stores locally loaded pdb data
-    public cachedPdbRegistry: Map<string | number, PDBModel>;
-    public cachedMeshRegistry: Map<string | number, MeshLoadRequest>;
+    // stores locally loaded geo files
+    public localGeoFiles: Map<string, CachedFileData>;
     public geoLoadAttempted: Map<string, boolean>;
     public scaleMapping: Map<number, number>;
     public followObjectId: number;
@@ -182,10 +197,9 @@ class VisGeometry {
 
         this.visGeomMap = new Map<number, AgentTypeGeometry>();
         this.meshRegistry = new Map<string | number, MeshLoadRequest>();
-        this.cachedMeshRegistry = new Map<string | number, MeshLoadRequest>();
         this.initMeshRegistry();
         this.pdbRegistry = new Map<string | number, PDBModel>();
-        this.cachedPdbRegistry = new Map<string | number, PDBModel>();
+        this.localGeoFiles = new Map<string, CachedFileData>();
         this.geoLoadAttempted = new Map<string, boolean>();
         this.scaleMapping = new Map<number, number>();
         this.idColorMapping = new Map<number, number>();
@@ -572,19 +586,19 @@ class VisGeometry {
         this.setHighlightByIds([]);
     }
 
-    public onNewRuntimeGeometryType(
-        meshRegistry: Map<string | number, MeshLoadRequest>,
-        meshName: string
-    ): void {
-        // find all typeIds for this meshName
-        const typeIds = [...this.visGeomMap.entries()]
-            .filter(({ 1: v }) => v.meshName === meshName)
+    private getAllTypeIdsForGeometryName(name: string) {
+        return [...this.visGeomMap.entries()]
+            .filter(({ 1: v }) => v.name === name)
             .map(([k]) => k);
+    }
+
+    public onNewRuntimeGeometryType(geoName: string, displayType, data): void {
+        // find all typeIds for this meshName
+        const typeIds = this.getAllTypeIdsForGeometryName(geoName);
 
         // assuming the meshLoadRequest has already been added to the registry
-        const meshLoadRequest = meshRegistry.get(meshName);
-        if (meshLoadRequest === undefined) {
-            console.error(`Mesh name ${meshName} not found in mesh registry`);
+        if (data === undefined) {
+            console.error(`Mesh name ${geoName} not found in mesh registry`);
             return;
         }
 
@@ -594,32 +608,9 @@ class VisGeometry {
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
             const visAgent = this.visAgents[i];
             if (typeIds.includes(visAgent.agentData.type)) {
-                visAgent.setColor(
-                    this.getColorForTypeId(visAgent.agentData.type),
-                    this.getColorIndexForTypeId(visAgent.agentData.type)
-                );
-            }
-        }
-
-        this.updateScene(this.currentSceneAgents);
-    }
-
-    public onNewPdb(pdbName: string): void {
-        // find all typeIds for this meshName
-        const typeIds = [...this.visGeomMap.entries()]
-            .filter(({ 1: v }) => v.pdbName === pdbName)
-            .map(([k]) => k);
-
-        // assuming the pdb has already been added to the registry
-        const pdb = this.pdbRegistry.get(pdbName);
-
-        // go over all objects and update mesh of this typeId
-        // if this happens before the first updateScene, then the visAgents don't have type id's yet.
-        const nMeshes = this.visAgents.length;
-        for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
-            const visAgent = this.visAgents[i];
-            if (typeIds.includes(visAgent.agentData.type)) {
-                this.resetAgentPDB(visAgent, pdb);
+                if (displayType === "PDB") {
+                    this.resetAgentPDB(visAgent, data);
+                }
                 visAgent.setColor(
                     this.getColorForTypeId(visAgent.agentData.type),
                     this.getColorIndexForTypeId(visAgent.agentData.type)
@@ -725,7 +716,21 @@ class VisGeometry {
         this.initCameraPosition = this.camera.position.clone();
     }
 
-    public loadPdb(url: string): void {
+    public loadPdb(url: string, pdbmodel: PDBModel): void {
+        this.logger.debug("Finished loading pdb: ", url);
+        this.onNewRuntimeGeometryType(url, "PDB", this.pdbRegistry.get(url));
+        // initiate async LOD processing
+        pdbmodel.generateLOD().then(() => {
+            this.logger.debug("Finished loading pdb LODs: ", url);
+            this.onNewRuntimeGeometryType(
+                url,
+                "PDB",
+                this.pdbRegistry.get(url)
+            );
+        });
+    }
+
+    public fetchPdb(url: string): void {
         const pdbmodel = new PDBModel(url);
         this.pdbRegistry.set(url, pdbmodel);
         pdbmodel.download(url).then(
@@ -736,13 +741,7 @@ class VisGeometry {
                     pdbEntry === pdbmodel &&
                     !pdbEntry.isCancelled()
                 ) {
-                    this.logger.debug("Finished loading pdb: ", url);
-                    this.onNewPdb(url);
-                    // initiate async LOD processing
-                    pdbmodel.generateLOD().then(() => {
-                        this.logger.debug("Finished loading pdb LODs: ", url);
-                        this.onNewPdb(url);
-                    });
+                    this.loadPdb(url, pdbmodel);
                 }
             },
             (reason) => {
@@ -755,6 +754,13 @@ class VisGeometry {
                             ${url}.
                             Showing spheres for this geometry instead`
                     );
+                    const ids = this.getAllTypeIdsForGeometryName(url);
+                    forEach(ids, (id) => {
+                        this.visGeomMap.set(id, {
+                            name: DEFAULT_MESH_NAME,
+                            displayType: "OBJ",
+                        });
+                    });
                 }
             }
         );
@@ -796,30 +802,17 @@ class VisGeometry {
 
     public cacheLocalAssets(assets: { [key: string]: string }): void {
         forEach(assets, (value, key) => {
+            const pathName = checkAndSanitizePath(key);
             if (key.includes(".pdb")) {
-                const pdbName = checkAndSanitizePath(key);
-                const pdbModel = new PDBModel(pdbName);
-                this.cachedPdbRegistry.set(pdbName, pdbModel);
-                this.onNewPdb(pdbName);
-                pdbModel.parsePDBData(value);
-                // initiate async LOD processing
-                pdbModel.generateLOD().then(() => {
-                    this.logger.debug("Finished loading pdb LODs: ", pdbName);
-                    this.onNewPdb(pdbName);
+                this.localGeoFiles.set(pathName, {
+                    data: value,
+                    displayType: "PDB",
                 });
             } else if (key.includes(".obj")) {
-                const meshName = checkAndSanitizePath(key);
-                this.prepMeshRegistryForNewObj(
-                    this.cachedMeshRegistry,
-                    meshName
-                );
-                const objLoader = new OBJLoader();
-                const object = objLoader.parse(value);
-                this.handleObjResponse(
-                    this.cachedMeshRegistry,
-                    meshName,
-                    object
-                );
+                this.localGeoFiles.set(pathName, {
+                    data: value,
+                    displayType: "OBJ",
+                });
             }
         });
     }
@@ -860,10 +853,10 @@ class VisGeometry {
         if (!object.name) {
             object.name = meshName;
         }
-        this.onNewRuntimeGeometryType(meshRegistry, meshName);
+        this.onNewRuntimeGeometryType(meshName, "OBJ", meshLoadRequest);
     }
 
-    public loadObj(url: string): void {
+    public fetchObj(url: string): void {
         const objLoader = new OBJLoader();
         this.prepMeshRegistryForNewObj(this.meshRegistry, url);
         return objLoader.load(
@@ -889,25 +882,31 @@ class VisGeometry {
     }
 
     private attemptToLoadGeometry(
-        url: string,
+        urlOrPath: string,
         registry: Map<string | number, PDBModel | MeshLoadRequest>,
-        loadFunctionName: string,
-        cachedRegistry: Map<string | number, PDBModel | MeshLoadRequest>
+        fetchFunctionName: string
     ) {
-        const urlOrPath = checkAndSanitizePath(url);
-        if (cachedRegistry.has(urlOrPath)) {
-            registry.set(
-                url,
-                cachedRegistry.get(urlOrPath) as PDBModel | MeshLoadRequest
-            );
-            this.geoLoadAttempted.set(urlOrPath, true);
-            cachedRegistry.delete(urlOrPath);
+        if (this.localGeoFiles.has(urlOrPath)) {
+            const file = this.localGeoFiles.get(urlOrPath);
+            if (file && file.displayType === "PDB") {
+                const pdbModel = new PDBModel(urlOrPath);
+                pdbModel.parsePDBData(file.data);
+                this.pdbRegistry.set(urlOrPath, pdbModel);
+                this.loadPdb(urlOrPath, pdbModel);
+                this.geoLoadAttempted.set(urlOrPath, true);
+                this.localGeoFiles.delete(urlOrPath);
+            } else if (file && file.displayType === "OBJ") {
+                this.prepMeshRegistryForNewObj(this.meshRegistry, urlOrPath);
+                const objLoader = new OBJLoader();
+                const object = objLoader.parse(file.data);
+                this.handleObjResponse(this.meshRegistry, urlOrPath, object);
+            }
         } else if (
             !registry.has(urlOrPath) &&
             !this.geoLoadAttempted.get(urlOrPath)
         ) {
             this.geoLoadAttempted.set(urlOrPath, true);
-            return this[loadFunctionName](urlOrPath);
+            return this[fetchFunctionName](urlOrPath);
         }
     }
 
@@ -1154,8 +1153,8 @@ class VisGeometry {
             // if we don't have a mesh for this, add a sphere instance to mesh registry?
             if (!this.visGeomMap.has(id)) {
                 this.visGeomMap.set(id, {
-                    meshName: DEFAULT_MESH_NAME,
-                    pdbName: "",
+                    name: DEFAULT_MESH_NAME,
+                    displayType: "OBJ",
                 });
             }
         });
@@ -1194,7 +1193,7 @@ class VisGeometry {
      */
     private mapIdToGeom(
         id: number,
-        displayType: string,
+        displayType: GeometryDisplayType,
         url?: string,
         color?: string
     ): void {
@@ -1208,24 +1207,19 @@ class VisGeometry {
             // TODO: handle CUBE, GIZMO etc
             return;
         }
+        const urlOrPath = checkAndSanitizePath(url);
         this.visGeomMap.set(id, {
-            meshName: isMesh ? url : DEFAULT_MESH_NAME,
-            pdbName: isPDB ? url : "",
+            name: urlOrPath || DEFAULT_MESH_NAME,
+            displayType,
         });
         if (isMesh) {
             this.attemptToLoadGeometry(
-                url,
+                urlOrPath,
                 this.meshRegistry,
-                "loadObj",
-                this.cachedMeshRegistry
+                "fetchObj"
             );
         } else if (isPDB) {
-            this.attemptToLoadGeometry(
-                url,
-                this.pdbRegistry,
-                "loadPdb",
-                this.cachedPdbRegistry
-            );
+            this.attemptToLoadGeometry(urlOrPath, this.pdbRegistry, "fetchPdb");
         } else if (!this.pdbRegistry.has(unassignedName)) {
             // assign single atom pdb
             const pdbmodel = new PDBModel(unassignedName);
@@ -1234,30 +1228,17 @@ class VisGeometry {
         }
     }
 
-    public getGeomFromId(id: number): Object3D | null {
-        if (this.visGeomMap.has(id)) {
-            const entry = this.visGeomMap.get(id);
-            if (entry) {
-                const meshName = entry.meshName;
-                if (meshName && this.meshRegistry.has(meshName)) {
-                    const meshLoadRequest = this.meshRegistry.get(meshName);
-                    if (meshLoadRequest) {
-                        return meshLoadRequest.mesh;
-                    }
-                }
-            }
-        }
-
-        return null;
-    }
-
     public getInstanceContainerFromId(id: number): InstancedMesh | null {
         if (this.visGeomMap.has(id)) {
             const entry = this.visGeomMap.get(id);
             if (entry) {
-                const meshName = entry.meshName;
-                if (meshName && this.meshRegistry.has(meshName)) {
-                    const meshLoadRequest = this.meshRegistry.get(meshName);
+                const { name, displayType } = entry;
+                if (
+                    name &&
+                    displayType === "OBJ" &&
+                    this.meshRegistry.has(name)
+                ) {
+                    const meshLoadRequest = this.meshRegistry.get(name);
                     if (meshLoadRequest) {
                         return meshLoadRequest.instances;
                     }
@@ -1268,30 +1249,25 @@ class VisGeometry {
         return null;
     }
 
-    private getMeshForAgentType(id: number): MeshLoadRequest | null {
+    private getGeoForAgentType(id: number): PdbGeometry | MeshGeometry | null {
         const entry = this.visGeomMap.get(id);
-        if (entry) {
-            if (entry.meshName) {
-                const meshLoadRequest = this.meshRegistry.get(entry.meshName);
-                if (meshLoadRequest) {
-                    return meshLoadRequest;
-                }
+        if (entry && entry.name) {
+            const meshLoadRequest = this.meshRegistry.get(entry.name);
+            const pdb = this.pdbRegistry.get(entry.name);
+            if (meshLoadRequest) {
+                return {
+                    geometry: meshLoadRequest,
+                    displayType: entry.displayType as ObjDisplayType,
+                };
+            }
+            if (pdb) {
+                return {
+                    geometry: pdb as PDBModel,
+                    displayType: entry.displayType as PdbDisplayType,
+                };
             }
         }
-        return null;
-    }
-
-    public getPdbForAgentType(id: number): PDBModel | null {
-        const entry = this.visGeomMap.get(id);
-        if (entry) {
-            if (entry.pdbName) {
-                const pdb = this.pdbRegistry.get(entry.pdbName);
-                if (pdb) {
-                    return pdb;
-                }
-            }
-        }
-
+        console.log("NO ENTRY", entry, this.meshRegistry, this.pdbRegistry);
         return null;
     }
 
@@ -1627,31 +1603,36 @@ class VisGeometry {
 
             // if not fiber...
             if (visType === VisTypes.ID_VIS_TYPE_DEFAULT) {
-                const meshEntry = this.getMeshForAgentType(typeId);
-                const pdbEntry = this.getPdbForAgentType(typeId);
+                const response = this.getGeoForAgentType(typeId);
+
+                if (!response) {
+                    // no pdb, use mesh
+                    if (!response) {
+                        console.warn(
+                            `No mesh nor pdb available for ${typeId}? Should be unreachable code`
+                        );
+                        return;
+                    }
+                }
+                const { geometry, displayType } = response;
                 // pdb has precedence over mesh
-                if (pdbEntry) {
+                if (geometry && displayType === "PDB") {
                     if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
                         this.legacyRenderer.addPdb(
-                            pdbEntry,
+                            geometry as PDBModel,
                             visAgent,
                             this.getColorForTypeId(typeId)
                         );
                     } else {
-                        if (pdbEntry !== visAgent.pdbModel) {
+                        if (geometry !== visAgent.pdbModel) {
                             // race condition? agents arrived after pdb did?
-                            this.resetAgentPDB(visAgent, pdbEntry);
+                            this.resetAgentPDB(visAgent, geometry);
                         }
                         visAgent.updatePdbTransform(1.0);
                     }
                 } else {
-                    // no pdb, use mesh
-                    if (!meshEntry) {
-                        console.warn(
-                            "No mesh nor pdb available? Should be unreachable code"
-                        );
-                        return;
-                    }
+                    const meshEntry = geometry as MeshLoadRequest;
+
                     // Was previously a PDB object, but in it's new state will be drawn as a mesh
                     if (visAgent.hasDrawablePDB()) {
                         this.resetAgentPDB(visAgent);
