@@ -20,12 +20,6 @@ import { ClientSimulatorParams } from "../simularium/localSimulators/ClientSimul
 import { ISimulator } from "../simularium/ISimulator";
 import { LocalFileSimulator } from "../simularium/LocalFileSimulator";
 
-// TODO get this info passed in from the outside or read in as data
-const SIMULARIUM_ASSETS_BUCKET =
-    "https://aics-simularium-data.s3.us-east-2.amazonaws.com";
-const DEFAULT_ASSET_PREFIX = `${SIMULARIUM_ASSETS_BUCKET}/meshes/obj`;
-const DEFAULT_VISDATA_PREFIX = `${SIMULARIUM_ASSETS_BUCKET}/visdata`;
-
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
 // TODO: refine this as part of the public API for initializing the

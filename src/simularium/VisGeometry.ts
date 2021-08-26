@@ -42,7 +42,6 @@ import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC } from "../constants";
 import {
     TrajectoryFileInfo,
     CameraSpec,
-    AgentTypeVisData,
     EncodedTypeMapping,
     AgentDisplayDataWithGeometry,
 } from "./types";
@@ -110,7 +109,6 @@ interface PathData {
     line: LineSegments;
 }
 
-type AgentTypeVisDataMap = Map<string, AgentTypeVisData>;
 type Bounds = readonly [number, number, number, number, number, number];
 
 class VisGeometry {
