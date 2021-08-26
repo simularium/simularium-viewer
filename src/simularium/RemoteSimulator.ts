@@ -357,10 +357,6 @@ export class RemoteSimulator implements ISimulator {
      * Websocket Update Parameters
      */
     public sendTimeStepUpdate(newTimeStep: number): void {
-        if (!this.socketIsValid()) {
-            return;
-        }
-
         const jsonData = {
             msgType: NetMessageEnum.ID_UPDATE_TIME_STEP,
             timeStep: newTimeStep,
@@ -369,10 +365,6 @@ export class RemoteSimulator implements ISimulator {
     }
 
     public sendParameterUpdate(paramName: string, paramValue: number): void {
-        if (!this.socketIsValid()) {
-            return;
-        }
-
         const jsonData = {
             msgType: NetMessageEnum.ID_UPDATE_RATE_PARAM,
             paramName: paramName,
@@ -382,10 +374,6 @@ export class RemoteSimulator implements ISimulator {
     }
 
     public sendModelDefinition(model: string): void {
-        if (!this.socketIsValid()) {
-            return;
-        }
-
         const dataToSend = {
             model: model,
             msgType: NetMessageEnum.ID_MODEL_DEFINITION,
