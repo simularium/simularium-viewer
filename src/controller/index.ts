@@ -107,7 +107,6 @@ export default class SimulariumController {
         this.setPanningMode = this.setPanningMode.bind(this);
         this.setFocusMode = this.setFocusMode.bind(this);
     }
-    
 
     private createSimulatorConnection(
         netConnectionConfig?: NetConnectionParams,
@@ -122,7 +121,10 @@ export default class SimulariumController {
                 localFile
             );
         } else if (netConnectionConfig) {
-            this.simulator = new RemoteSimulator(netConnectionConfig);
+            this.simulator = new RemoteSimulator(
+                netConnectionConfig,
+                this.onError
+            );
         } else {
             throw new Error(
                 "Insufficient data to determine and configure simulator connection"

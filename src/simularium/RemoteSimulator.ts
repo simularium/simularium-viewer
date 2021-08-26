@@ -76,14 +76,23 @@ export class RemoteSimulator implements ISimulator {
     protected lastRequestedFile: string;
     public connectionTimeWaited: number;
     public connectionRetries: number;
+    public onError: (errorMessage: string) => void | (() => void);
 
-    public constructor(opts?: NetConnectionParams) {
+    public constructor(
+        opts?: NetConnectionParams,
+        errorHandler?: (error: string) => void
+    ) {
         this.webSocket = null;
         this.serverIp = opts && opts.serverIp ? opts.serverIp : "localhost";
         this.serverPort = opts && opts.serverPort ? opts.serverPort : 9002;
         this.connectionTimeWaited = 0;
         this.connectionRetries = 0;
         this.lastRequestedFile = "";
+        this.onError =
+            errorHandler ||
+            (() => {
+                /* do nothing */
+            });
 
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
@@ -331,10 +340,16 @@ export class RemoteSimulator implements ISimulator {
     }
 
     private sendWebSocketRequest(jsonData, requestDescription: string): void {
-        if (this.webSocket !== null) {
-            this.webSocket.send(JSON.stringify(jsonData));
-        }
-        this.logWebSocketRequest(requestDescription, jsonData);
+        // if (!this.socketIsValid()) {
+        console.error("Connection to server was closed unexpectedly.");
+        this.onError(
+            "Connection to server was closed unexpectedly. Try reloading. If the problem persists, the server may be too busy. Please try again at another time."
+        );
+        // }
+        // if (this.webSocket !== null) {
+        //     this.webSocket.send(JSON.stringify(jsonData));
+        // }
+        // this.logWebSocketRequest(requestDescription, jsonData);
     }
 
     /**
