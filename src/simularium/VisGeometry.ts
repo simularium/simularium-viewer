@@ -814,7 +814,7 @@ class VisGeometry {
                 const pdbModel = new PDBModel(pdbName);
                 this.cachedPdbRegistry.set(pdbName, pdbModel);
                 this.onNewPdb(pdbName);
-                pdbModel.loadLocally(value);
+                pdbModel.parsePDBData(value);
                 // initiate async LOD processing
                 pdbModel.generateLOD().then(() => {
                     this.logger.debug("Finished loading pdb LODs: ", pdbName);
