@@ -52,6 +52,7 @@ import SimulariumRenderer from "./rendering/SimulariumRenderer";
 import { InstancedFiberGroup } from "./rendering/InstancedFiber";
 import { InstancedMesh } from "./rendering/InstancedMesh";
 import { LegacyRenderer } from "./rendering/LegacyRenderer";
+import { checkAndSanitizePath } from "../util";
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 100000;
@@ -793,24 +794,10 @@ class VisGeometry {
         }
     }
 
-    private checkAndSanitizePath(pathOrUrl: string): string {
-        /**
-         * if given a url, return it. If given a path, return it in the form "/filename"
-         */
-        const isUrlRegEX =
-            /(https?:\/\/)([\w\-])+\.{1}([a-zA-Z]{2,63})([\/\w-]*)*\/?\??([^#\n\r]*)?#?([^\n\r]*)/g;
-        if (isUrlRegEX.test(pathOrUrl)) {
-            return pathOrUrl;
-        } else if (/\B(\/)/g.test(pathOrUrl)) {
-            return pathOrUrl;
-        }
-        return `/${pathOrUrl}`;
-    }
-
     public cacheLocalAssets(assets: { [key: string]: string }): void {
         forEach(assets, (value, key) => {
             if (key.includes(".pdb")) {
-                const pdbName = this.checkAndSanitizePath(key);
+                const pdbName = checkAndSanitizePath(key);
                 const pdbModel = new PDBModel(pdbName);
                 this.cachedPdbRegistry.set(pdbName, pdbModel);
                 this.onNewPdb(pdbName);
@@ -821,7 +808,7 @@ class VisGeometry {
                     this.onNewPdb(pdbName);
                 });
             } else if (key.includes(".obj")) {
-                const meshName = this.checkAndSanitizePath(key);
+                const meshName = checkAndSanitizePath(key);
                 this.prepMeshRegistryForNewObj(
                     this.cachedMeshRegistry,
                     meshName
@@ -907,7 +894,7 @@ class VisGeometry {
         loadFunctionName: string,
         cachedRegistry: Map<string | number, PDBModel | MeshLoadRequest>
     ) {
-        const urlOrPath = this.checkAndSanitizePath(url);
+        const urlOrPath = checkAndSanitizePath(url);
         if (cachedRegistry.has(urlOrPath)) {
             registry.set(
                 url,

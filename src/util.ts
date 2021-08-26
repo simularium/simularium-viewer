@@ -24,3 +24,17 @@ export const compareTimes = (
     if (time1 + epsilon < time2) return -1;
     return 0;
 };
+
+export const checkAndSanitizePath = (pathOrUrl: string): string => {
+    /**
+     * if given a url, return it. If given a path, return it in the form "/filename"
+     */
+    const isUrlRegEX =
+        /(https?:\/\/)([\w\-])+\.{1}([a-zA-Z]{2,63})([\/\w-]*)*\/?\??([^#\n\r]*)?#?([^\n\r]*)/g;
+    if (isUrlRegEX.test(pathOrUrl)) {
+        return pathOrUrl;
+    } else if (/\B(\/)/g.test(pathOrUrl)) {
+        return pathOrUrl;
+    }
+    return `/${pathOrUrl}`;
+};
