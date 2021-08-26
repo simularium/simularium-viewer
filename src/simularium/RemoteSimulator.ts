@@ -449,9 +449,6 @@ export class RemoteSimulator implements ISimulator {
     }
 
     public pauseRemoteSim(): void {
-        if (!this.socketIsValid()) {
-            return;
-        }
         this.sendWebSocketRequest(
             { msgType: NetMessageEnum.ID_VIS_DATA_PAUSE },
             "Pause Simulation"
@@ -459,9 +456,6 @@ export class RemoteSimulator implements ISimulator {
     }
 
     public resumeRemoteSim(): void {
-        if (!this.socketIsValid()) {
-            return;
-        }
         this.sendWebSocketRequest(
             { msgType: NetMessageEnum.ID_VIS_DATA_RESUME },
             "Resume Simulation"
