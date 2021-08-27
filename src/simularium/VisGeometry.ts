@@ -592,7 +592,11 @@ class VisGeometry {
             .map(([k]) => k);
     }
 
-    public onNewRuntimeGeometryType(geoName: string, displayType, data): void {
+    public onNewRuntimeGeometryType(
+        geoName: string,
+        displayType: PdbDisplayType | ObjDisplayType,
+        data: PDBModel | MeshLoadRequest
+    ): void {
         // find all typeIds for this meshName
         const typeIds = this.getAllTypeIdsForGeometryName(geoName);
 
@@ -718,15 +722,12 @@ class VisGeometry {
 
     public loadPdb(url: string, pdbmodel: PDBModel): void {
         this.logger.debug("Finished loading pdb: ", url);
-        this.onNewRuntimeGeometryType(url, "PDB", this.pdbRegistry.get(url));
+        // called after the geo is stored
+        this.onNewRuntimeGeometryType(url, "PDB", pdbmodel);
         // initiate async LOD processing
         pdbmodel.generateLOD().then(() => {
             this.logger.debug("Finished loading pdb LODs: ", url);
-            this.onNewRuntimeGeometryType(
-                url,
-                "PDB",
-                this.pdbRegistry.get(url)
-            );
+            this.onNewRuntimeGeometryType(url, "PDB", pdbmodel);
         });
     }
 
