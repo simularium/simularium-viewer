@@ -1260,7 +1260,6 @@ class VisGeometry {
                 };
             }
         }
-        console.log("NO ENTRY", entry, this.meshRegistry, this.pdbRegistry);
         return null;
     }
 
@@ -1610,16 +1609,17 @@ class VisGeometry {
                 const { geometry, displayType } = response;
                 // pdb has precedence over mesh
                 if (geometry && displayType === "PDB") {
+                    const pdbEntry = geometry as PDBModel;
                     if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
                         this.legacyRenderer.addPdb(
-                            geometry as PDBModel,
+                            pdbEntry,
                             visAgent,
                             this.getColorForTypeId(typeId)
                         );
                     } else {
-                        if (geometry !== visAgent.pdbModel) {
+                        if (pdbEntry !== visAgent.pdbModel) {
                             // race condition? agents arrived after pdb did?
-                            this.resetAgentPDB(visAgent, geometry);
+                            this.resetAgentPDB(visAgent, pdbEntry);
                         }
                         visAgent.updatePdbTransform(1.0);
                     }
