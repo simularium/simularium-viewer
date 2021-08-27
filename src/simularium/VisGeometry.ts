@@ -887,14 +887,16 @@ class VisGeometry {
                 pdbModel.parsePDBData(file.data);
                 this.pdbRegistry.set(urlOrPath, pdbModel);
                 this.loadPdb(urlOrPath, pdbModel);
-                this.geoLoadAttempted.set(urlOrPath, true);
-                this.localGeoFiles.delete(urlOrPath);
             } else if (file && file.displayType === "OBJ") {
+                // stores the name in the registry
                 this.prepMeshRegistryForNewObj(urlOrPath);
                 const objLoader = new OBJLoader();
                 const object = objLoader.parse(file.data);
                 this.handleObjResponse(urlOrPath, object);
             }
+            this.geoLoadAttempted.set(urlOrPath, true);
+            // don't need to store file data once it's loaded into registry
+            this.localGeoFiles.delete(urlOrPath);
         } else if (
             !registry.has(urlOrPath) &&
             !this.geoLoadAttempted.get(urlOrPath)
