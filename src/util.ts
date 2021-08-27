@@ -27,7 +27,8 @@ export const compareTimes = (
 
 export const checkAndSanitizePath = (pathOrUrl: string): string => {
     /**
-     * if given a url, return it. If given a path, return it in the form "/filename"
+     * if given a url, return it. If given a path, return it in the form "/filename" (if it already
+     * has a forward slash, also return it unmodified)
      */
     const isUrlRegEX =
         /(https?:\/\/)([\w\-])+\.{1}([a-zA-Z]{2,63})([\/\w-]*)*\/?\??([^#\n\r]*)?#?([^\n\r]*)/g;
