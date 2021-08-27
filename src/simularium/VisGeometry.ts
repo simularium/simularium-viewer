@@ -855,7 +855,7 @@ class VisGeometry {
         return objLoader.load(
             url,
             (object) => {
-                this.handleObjResponse(this.meshRegistry, url, object);
+                this.handleObjResponse(url, object);
             },
             (xhr) => {
                 this.logger.debug(
