@@ -1,8 +1,4 @@
-import {
-    ObjDisplayType,
-    PdbDisplayType,
-    SphereDisplayType,
-} from "../simularium/types";
+import { GeometryDisplayType } from "../simularium/types";
 import {
     makeMissingDisplayTypeErrorMessage,
     makeMissingUrlErrorMessage,
@@ -105,7 +101,7 @@ const typeMappingWithGeo = {
     "0": {
         name: "Actin",
         geometry: {
-            displayType: "PDB" as PdbDisplayType,
+            displayType: GeometryDisplayType.PdbDisplayType,
             color: "#fff",
             url: "url-to-data",
         },
@@ -113,7 +109,7 @@ const typeMappingWithGeo = {
     "1": {
         name: "Budding vesicle",
         geometry: {
-            displayType: "PDB" as PdbDisplayType,
+            displayType: GeometryDisplayType.PdbDisplayType,
             color: "#fff",
             url: "url-to-data",
         },
@@ -124,7 +120,7 @@ const typeMappingWithDefaultGeo = {
     "0": {
         name: "Actin",
         geometry: {
-            displayType: "SPHERE" as SphereDisplayType,
+            displayType: GeometryDisplayType.SphereDisplayType,
             color: "",
             url: "",
         },
@@ -132,7 +128,7 @@ const typeMappingWithDefaultGeo = {
     "1": {
         name: "Budding vesicle",
         geometry: {
-            displayType: "SPHERE" as SphereDisplayType,
+            displayType: GeometryDisplayType.SphereDisplayType,
             color: "",
             url: "",
         },
@@ -170,7 +166,7 @@ const typeMappingMissingUrl = {
         name: "Actin",
         geometry: {
             color: "",
-            displayType: "OBJ" as ObjDisplayType,
+            displayType: GeometryDisplayType.ObjDisplayType,
             url: "",
         },
     },
@@ -178,7 +174,7 @@ const typeMappingMissingUrl = {
         name: "Budding vesicle",
         geometry: {
             color: "",
-            displayType: "PDB" as PdbDisplayType,
+            displayType: GeometryDisplayType.PdbDisplayType,
             url: "",
         },
     },
@@ -212,7 +208,7 @@ describe("Version handlers", () => {
     describe("makeMissingUrlErrorMessage", () => {
         test("it will create a message for the user if the url is missing but the displayType was PDB or OBJ", () => {
             const key = "1";
-            const displayType = "OBJ";
+            const displayType = GeometryDisplayType.ObjDisplayType;
             const message = makeMissingUrlErrorMessage(key, displayType);
             expect(message).toEqual(
                 `DisplayType was ${displayType} but missing typeMapping[${key}].geometry.url, so we couldn't request the file. Geometry will default to spheres`

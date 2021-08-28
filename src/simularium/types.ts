@@ -55,17 +55,13 @@ interface Plot {
 
 type CachedObservables = Plot[];
 
-export type PdbDisplayType = "PDB";
-export type ObjDisplayType = "OBJ";
-export type SphereDisplayType = "SPHERE";
-export type CubeDisplayType = "CUBE";
-export type GizmoDisplayType = "GIZMO";
-export type GeometryDisplayType =
-    | PdbDisplayType
-    | ObjDisplayType
-    | SphereDisplayType
-    | CubeDisplayType
-    | GizmoDisplayType;
+export enum GeometryDisplayType {
+    PdbDisplayType = "PDB",
+    ObjDisplayType = "OBJ",
+    SphereDisplayType = "SPHERE",
+    CubeDisplayType = "CUBE",
+    GizmoDisplayType = "GIZMO",
+}
 // per agent type Visdata format
 export interface AgentTypeVisData {
     displayType: GeometryDisplayType;
