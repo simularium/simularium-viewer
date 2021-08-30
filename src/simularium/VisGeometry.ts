@@ -708,21 +708,30 @@ class VisGeometry {
         this.initCameraPosition = this.camera.position.clone();
     }
 
-    public loadPdb(url: string, pdbmodel: PDBModel): void {
-        this.logger.debug("Finished loading pdb: ", url);
+    /** Loads pdb model and updates scene. The urlorPath variable is used here as
+     * an identifier key, not to access the geometry. This function can be called with
+     * either locally loaded geometry or a fetch response
+     */
+    public loadPdb(urlOrPath: string, pdbmodel: PDBModel): void {
+        this.logger.debug("Finished loading pdb: ", urlOrPath);
         // called after the geo is stored
-        this.onNewRuntimeGeometryType(url, GeometryDisplayType.PDB, pdbmodel);
+        this.onNewRuntimeGeometryType(
+            urlOrPath,
+            GeometryDisplayType.PDB,
+            pdbmodel
+        );
         // initiate async LOD processing
         pdbmodel.generateLOD().then(() => {
-            this.logger.debug("Finished loading pdb LODs: ", url);
+            this.logger.debug("Finished loading pdb LODs: ", urlOrPath);
             this.onNewRuntimeGeometryType(
-                url,
+                urlOrPath,
                 GeometryDisplayType.PDB,
                 pdbmodel
             );
         });
     }
 
+    /** Downloads a PDB from an external source */
     public fetchPdb(url: string): void {
         const pdbmodel = new PDBModel(url);
         this.pdbRegistry.set(url, pdbmodel);
