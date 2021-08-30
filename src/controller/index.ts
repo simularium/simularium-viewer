@@ -1,5 +1,5 @@
 import jsLogger from "js-logger";
-import { noop } from "lodash";
+import { isEmpty, noop } from "lodash";
 import {
     RemoteSimulator,
     NetConnectionParams,
@@ -36,6 +36,7 @@ interface SimulatorConnectionParams {
     netConnectionSettings?: NetConnectionParams;
     clientSimulatorParams?: ClientSimulatorParams;
     simulariumFile?: SimulariumFileFormat;
+    geoAssets?: { [key: string]: string };
 }
 
 export default class SimulariumController {
@@ -107,12 +108,12 @@ export default class SimulariumController {
         this.setPanningMode = this.setPanningMode.bind(this);
         this.setFocusMode = this.setFocusMode.bind(this);
     }
-    
 
     private createSimulatorConnection(
         netConnectionConfig?: NetConnectionParams,
         clientSimulatorParams?: ClientSimulatorParams,
-        localFile?: SimulariumFileFormat
+        localFile?: SimulariumFileFormat,
+        geoAssets?: { [key: string]: string }
     ): void {
         if (clientSimulatorParams) {
             this.simulator = new ClientSimulator(clientSimulatorParams);
@@ -121,6 +122,9 @@ export default class SimulariumController {
                 this.playBackFile,
                 localFile
             );
+            if (this.visGeometry && geoAssets && !isEmpty(geoAssets)) {
+                this.visGeometry.cacheLocalAssets(geoAssets);
+            }
         } else if (netConnectionConfig) {
             this.simulator = new RemoteSimulator(netConnectionConfig);
         } else {
@@ -278,7 +282,8 @@ export default class SimulariumController {
                 this.createSimulatorConnection(
                     connectionParams.netConnectionSettings,
                     connectionParams.clientSimulatorParams,
-                    connectionParams.simulariumFile
+                    connectionParams.simulariumFile,
+                    connectionParams.geoAssets
                 );
                 this.networkEnabled = true; // This confuses me, because local files also go through this code path
                 this.isPaused = true;
