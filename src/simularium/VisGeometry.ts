@@ -49,6 +49,7 @@ import { InstancedMesh } from "./rendering/InstancedMesh";
 import { LegacyRenderer } from "./rendering/LegacyRenderer";
 import GeometryStore, { DEFAULT_MESH_NAME } from "./VisGeometry/GeometryStore";
 import {
+    AgentGeometry,
     GeometryDisplayType,
     MeshGeometry,
     MeshLoadRequest,
@@ -947,9 +948,13 @@ class VisGeometry {
         this.scaleMapping.clear();
     }
 
-    private getGeoKeyForId(id: number): string | null {
-        const name = this.visGeomMap.get(id);
-        return name || null;
+    private getGeoForAgentType(id: number): AgentGeometry | null {
+        const entryName = this.visGeomMap.get(id);
+        if (!entryName) {
+            console.log("not in visGeomMap", id);
+            return null; // unreachable, but here for typeScript
+        }
+        return this.geometryStore.getGeoForAgentType(entryName);
     }
 
     public handleAgentGeometry(typeMapping: EncodedTypeMapping): void {
@@ -968,14 +973,6 @@ class VisGeometry {
             // be able to call onNewGeometry from here instead of as a callback
             this.geometryStore.mapKeyToGeom(Number(id), entry.geometry);
         });
-        // NOTE: do we need this call here?
-        // Seems to only ever be called with an empty array.
-        if (this.currentSceneAgents.length) {
-            console.log(
-                "Need to update scene with current agents:",
-                this.currentSceneAgents
-            );
-        }
         this.updateScene(this.currentSceneAgents);
     }
 
@@ -1188,6 +1185,94 @@ class VisGeometry {
         return agent;
     }
 
+    private renderPdb(typeId: number, visAgent: VisAgent, pdbEntry: PDBModel) {
+        if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
+            this.legacyRenderer.addPdb(
+                pdbEntry,
+                visAgent,
+                this.getColorForTypeId(typeId)
+            );
+        } else {
+            if (pdbEntry !== visAgent.pdbModel) {
+                // race condition? agents arrived after pdb did?
+                this.resetAgentPDB(visAgent, pdbEntry);
+            }
+            visAgent.updatePdbTransform(1.0);
+        }
+    }
+
+    private renderMesh(
+        typeId: number,
+        visAgent: VisAgent,
+        meshEntry: MeshLoadRequest,
+        agentData: AgentData
+    ) {
+        const radius = agentData.cr ? agentData.cr : 1;
+        const scale = this.getScaleForId(typeId);
+
+        // Was previously a PDB object, but in it's new state will be drawn as a mesh
+        if (visAgent.hasDrawablePDB()) {
+            this.resetAgentPDB(visAgent);
+        }
+        const meshGeom = meshEntry.mesh;
+        if (!meshGeom) {
+            console.warn(
+                "MeshEntry is present but mesh unavailable. Not rendering agent."
+            );
+        }
+        if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
+            this.legacyRenderer.addMesh(
+                (meshGeom as Mesh).geometry,
+                visAgent,
+                radius * scale,
+                this.getColorForTypeId(typeId)
+            );
+        } else {
+            if (meshEntry && meshEntry.instances) {
+                meshEntry.instances.addInstance(
+                    agentData.x,
+                    agentData.y,
+                    agentData.z,
+                    radius * scale,
+                    agentData.xrot,
+                    agentData.yrot,
+                    agentData.zrot,
+                    visAgent.agentData.instanceId,
+                    visAgent.signedTypeId()
+                );
+            }
+        }
+    }
+
+    private renderFiber(
+        typeId: number,
+        visAgent: VisAgent,
+        agentData: AgentData
+    ) {
+        visAgent.updateFiber(agentData.subpoints);
+        const scale = this.getScaleForId(typeId);
+
+        if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
+            this.legacyRenderer.addFiber(
+                visAgent,
+                agentData.cr * scale,
+                this.getColorForTypeId(typeId)
+            );
+        } else {
+            // update/add to render list
+            this.fibers.addInstance(
+                agentData.subpoints.length / 3,
+                agentData.subpoints,
+                agentData.x,
+                agentData.y,
+                agentData.z,
+                agentData.cr * scale * 0.5,
+                visAgent.agentData.instanceId,
+                visAgent.signedTypeId()
+            );
+        }
+    }
+
     /**
      *   Update Scene
      **/
@@ -1197,6 +1282,7 @@ class VisGeometry {
         }
         this.currentSceneAgents = agents;
 
+        // values for updating agent path
         let dx = 0,
             dy = 0,
             dz = 0;
@@ -1222,8 +1308,6 @@ class VisGeometry {
             const visType = agentData["vis-type"];
             const instanceId = agentData.instanceId;
             const typeId = agentData.type;
-            const scale = this.getScaleForId(typeId);
-            const radius = agentData.cr ? agentData.cr : 1;
 
             lastx = agentData.x;
             lasty = agentData.y;
@@ -1281,14 +1365,10 @@ class VisGeometry {
 
             // if not fiber...
             if (visType === VisTypes.ID_VIS_TYPE_DEFAULT) {
-                const entryName = this.getGeoKeyForId(typeId);
-                if (!entryName) {
-                    return;
-                }
-
-                const response =
-                    this.geometryStore.getGeoForAgentType(entryName);
+                const response = this.getGeoForAgentType(typeId);
                 if (!response) {
+                    console.log(this.geometryStore.registry, this.visGeomMap);
+
                     console.warn(
                         `No mesh nor pdb available for ${typeId}? Should be unreachable code`
                     );
@@ -1297,55 +1377,10 @@ class VisGeometry {
                 const { geometry, displayType } = response;
                 if (geometry && displayType === GeometryDisplayType.PDB) {
                     const pdbEntry = geometry as PDBModel;
-                    if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
-                        this.legacyRenderer.addPdb(
-                            pdbEntry,
-                            visAgent,
-                            this.getColorForTypeId(typeId)
-                        );
-                    } else {
-                        if (pdbEntry !== visAgent.pdbModel) {
-                            // race condition? agents arrived after pdb did?
-                            this.resetAgentPDB(visAgent, pdbEntry);
-                        }
-                        visAgent.updatePdbTransform(1.0);
-                    }
+                    this.renderPdb(typeId, visAgent, pdbEntry);
                 } else {
-                    // assumed displayType is GeometryDisplayType.ObjDisplayType here?
                     const meshEntry = geometry as MeshLoadRequest;
-
-                    // Was previously a PDB object, but in it's new state will be drawn as a mesh
-                    if (visAgent.hasDrawablePDB()) {
-                        this.resetAgentPDB(visAgent);
-                    }
-                    const meshGeom = meshEntry.mesh;
-                    if (!meshGeom) {
-                        console.warn(
-                            "MeshEntry is present but mesh unavailable. Not rendering agent."
-                        );
-                    }
-                    if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
-                        this.legacyRenderer.addMesh(
-                            (meshGeom as Mesh).geometry,
-                            visAgent,
-                            radius * scale,
-                            this.getColorForTypeId(typeId)
-                        );
-                    } else {
-                        if (meshEntry && meshEntry.instances) {
-                            meshEntry.instances.addInstance(
-                                agentData.x,
-                                agentData.y,
-                                agentData.z,
-                                radius * scale,
-                                agentData.xrot,
-                                agentData.yrot,
-                                agentData.zrot,
-                                visAgent.agentData.instanceId,
-                                visAgent.signedTypeId()
-                            );
-                        }
-                    }
+                    this.renderMesh(typeId, visAgent, meshEntry, agentData);
                 }
 
                 dx = agentData.x - lastx;
@@ -1364,27 +1399,7 @@ class VisGeometry {
                     );
                 }
             } else if (visType === VisTypes.ID_VIS_TYPE_FIBER) {
-                visAgent.updateFiber(agentData.subpoints);
-
-                if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
-                    this.legacyRenderer.addFiber(
-                        visAgent,
-                        agentData.cr * scale,
-                        this.getColorForTypeId(typeId)
-                    );
-                } else {
-                    // update/add to render list
-                    this.fibers.addInstance(
-                        agentData.subpoints.length / 3,
-                        agentData.subpoints,
-                        agentData.x,
-                        agentData.y,
-                        agentData.z,
-                        agentData.cr * scale * 0.5,
-                        visAgent.agentData.instanceId,
-                        visAgent.signedTypeId()
-                    );
-                }
+                this.renderFiber(typeId, visAgent, agentData);
             }
         });
 
