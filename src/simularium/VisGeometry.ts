@@ -713,7 +713,6 @@ class VisGeometry {
      * either locally loaded geometry or a fetch response
      */
     public loadPdb(urlOrPath: string, pdbmodel: PDBModel): void {
-        this.logger.debug("Finished loading pdb: ", urlOrPath);
         // called after the geo is stored
         this.onNewRuntimeGeometryType(
             urlOrPath,
@@ -743,6 +742,8 @@ class VisGeometry {
                     pdbEntry === pdbmodel &&
                     !pdbEntry.isCancelled()
                 ) {
+                    this.logger.debug("Finished downloading pdb: ", url);
+
                     this.loadPdb(url, pdbmodel);
                 }
             },
