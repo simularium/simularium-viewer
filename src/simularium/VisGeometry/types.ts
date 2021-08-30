@@ -16,12 +16,19 @@ export enum GeometryDisplayType {
     GIZMO = "GIZMO",
 }
 
-export interface AgentGeometry {
-    geometry: PDBModel | MeshLoadRequest;
-    displayType: GeometryDisplayType;
+export type PrimitiveDisplayType =
+    | GeometryDisplayType.SPHERE
+    | GeometryDisplayType.CUBE
+    | GeometryDisplayType.GIZMO;
+
+export interface PDBGeometry {
+    geometry: PDBModel;
+    displayType: GeometryDisplayType.PDB;
 }
 
-export interface AgentTypeGeometry {
-    name: string;
-    displayType: GeometryDisplayType;
+export interface MeshGeometry {
+    geometry: MeshLoadRequest;
+    displayType: GeometryDisplayType.OBJ | PrimitiveDisplayType;
 }
+
+export type AgentGeometry = PDBGeometry | MeshGeometry;

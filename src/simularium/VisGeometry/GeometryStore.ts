@@ -6,11 +6,10 @@ import { checkAndSanitizePath } from "../../util";
 import PDBModel from "../PDBModel";
 import { InstancedMesh } from "../rendering/InstancedMesh";
 import VisAgent from "../VisAgent";
-import { REASON_CANCELLED } from "../worker/TaskQueue";
 import {
     AgentGeometry,
-    AgentTypeGeometry,
     GeometryDisplayType,
+    MeshGeometry,
     MeshLoadRequest,
 } from "./types";
 import TaskQueue from "../worker/TaskQueue";
@@ -37,7 +36,7 @@ class GeometryStore {
         this.onNewRuntimeGeometry = handleNewGeoCallback;
     }
 
-    public init() {
+    public init(): void {
         this._registry.clear();
         this._registry.set(DEFAULT_MESH_NAME, {
             displayType: GeometryDisplayType.SPHERE,
@@ -57,18 +56,31 @@ class GeometryStore {
         return this._registry;
     }
 
+    public getAllMeshes(): Map<string, MeshGeometry> {
+        const newArray = [...this._registry]
+            .filter(
+                ([_, value]) => value.displayType !== GeometryDisplayType.PDB
+            )
+            .map(([key, value]) => [key, value as MeshGeometry]);
+        return new Map(newArray);
+    }
+
     public updateMeshes(): void {
         this._registry.forEach((value) => {
-            if (value.geometry.instances) {
-                value.instances.beginUpdate();
+            const { displayType } = value;
+            if (displayType === GeometryDisplayType.OBJ) {
+                const agentGeo = value as MeshGeometry;
+                agentGeo.geometry.instances.beginUpdate();
             }
         });
     }
 
     public endUpdateMeshes(): void {
         this._registry.forEach((value) => {
-            if (value.geometry.instances) {
-                value.instances.endUpdate();
+            const { displayType } = value;
+            if (displayType === GeometryDisplayType.OBJ) {
+                const agentGeo = value as MeshGeometry;
+                agentGeo.geometry.instances.endUpdate();
             }
         });
     }
@@ -126,7 +138,7 @@ class GeometryStore {
         this.onNewRuntimeGeometry(urlOrPath, GeometryDisplayType.PDB, pdbModel);
         // initiate async LOD processing
         pdbModel.generateLOD().then(() => {
-            this.logger.debug("Finished loading pdb LODs: ", urlOrPath);
+            // this.logger.debug("Finished loading pdb LODs: ", urlOrPath);
             this.onNewRuntimeGeometry(
                 urlOrPath,
                 GeometryDisplayType.PDB,
@@ -148,7 +160,7 @@ class GeometryStore {
                 if (
                     pdbEntry &&
                     pdbEntry.geometry === pdbmodel &&
-                    !pdbEntry.geometry.isCancelled()
+                    !pdbEntry.geometry.cancelled
                 ) {
                     // this.logger.debug("Finished downloading pdb: ", url);
 
@@ -208,7 +220,11 @@ class GeometryStore {
 
     private handleObjResponse(meshName: string, object: Object3D): void {
         const item = this._registry.get(meshName);
-        const meshLoadRequest = item?.geometry as MeshLoadRequest;
+        if (!item) {
+            // should be unreachable, but needed for TypeScript
+            return;
+        }
+        const meshLoadRequest = item.geometry as MeshLoadRequest;
         if (
             (meshLoadRequest && meshLoadRequest.cancelled) ||
             !meshLoadRequest

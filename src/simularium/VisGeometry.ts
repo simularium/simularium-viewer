@@ -47,7 +47,7 @@ import SimulariumRenderer from "./rendering/SimulariumRenderer";
 import { InstancedFiberGroup } from "./rendering/InstancedFiber";
 import { InstancedMesh } from "./rendering/InstancedMesh";
 import { LegacyRenderer } from "./rendering/LegacyRenderer";
-import GeometryStore from "./VisGeometry/GeometryStore";
+import GeometryStore, { DEFAULT_MESH_NAME } from "./VisGeometry/GeometryStore";
 import { GeometryDisplayType, MeshLoadRequest } from "./VisGeometry/types";
 import { checkAndSanitizePath } from "../util";
 
@@ -779,9 +779,11 @@ class VisGeometry {
 
             // collect up the meshes that have > 0 instances
             const meshTypes: InstancedMesh[] = [];
-            for (const entry of this.meshRegistry.values()) {
-                meshTypes.push(entry.instances);
-                this.instancedMeshGroup.add(entry.instances.getMesh());
+            for (const entry of this.geometryStore.getAllMeshes().values()) {
+                console.log(entry);
+                const { geometry } = entry;
+                meshTypes.push(geometry.instances);
+                this.instancedMeshGroup.add(geometry.instances.getMesh());
             }
 
             this.renderer.setMeshGroups(
@@ -1745,6 +1747,3 @@ class VisGeometry {
 
 export { VisGeometry, NO_AGENT };
 export default VisGeometry;
-function DEFAULT_MESH_NAME(id: number, DEFAULT_MESH_NAME: any) {
-    throw new Error("Function not implemented.");
-}
