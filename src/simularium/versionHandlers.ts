@@ -4,11 +4,7 @@ import * as si from "si-prefix";
 import { DEFAULT_CAMERA_SPEC } from "../constants";
 import {
     AgentDisplayDataWithGeometry,
-    CubeDisplayType,
-    GizmoDisplayType,
-    ObjDisplayType,
-    PdbDisplayType,
-    SphereDisplayType,
+    GeometryDisplayType,
     TrajectoryFileInfo,
     TrajectoryFileInfoAny,
     TrajectoryFileInfoV1,
@@ -16,12 +12,7 @@ import {
 
 // the data may come in missing any of these values
 export interface AgentTypeVisDataPreProcessing {
-    displayType?:
-        | PdbDisplayType
-        | ObjDisplayType
-        | SphereDisplayType
-        | CubeDisplayType
-        | GizmoDisplayType;
+    displayType?: GeometryDisplayType;
     url?: string;
     color?: string;
 }
@@ -52,7 +43,9 @@ export const makeMissingDisplayTypeErrorMessage = (
 
 export const makeMissingUrlErrorMessage = (
     key: string,
-    displayType: PdbDisplayType | ObjDisplayType
+    displayType:
+        | GeometryDisplayType.PdbDisplayType
+        | GeometryDisplayType.ObjDisplayType
 ): string => {
     return `DisplayType was ${displayType} but missing typeMapping[${key}].geometry.url, so we couldn't request the file. Geometry will default to spheres`;
 };
@@ -81,10 +74,11 @@ export const sanitizeAgentMapGeometryData = (
                         console.log(message);
                     }
                     url = "";
-                    displayType = "SPHERE";
+                    displayType = GeometryDisplayType.SphereDisplayType;
                 } else if (
                     !url &&
-                    (displayType === "PDB" || displayType === "OBJ")
+                    (displayType === GeometryDisplayType.PdbDisplayType ||
+                        displayType === GeometryDisplayType.ObjDisplayType)
                 ) {
                     const message = makeMissingUrlErrorMessage(
                         key,
@@ -95,7 +89,7 @@ export const sanitizeAgentMapGeometryData = (
                     } else {
                         console.log(message);
                     }
-                    displayType = "SPHERE";
+                    displayType = GeometryDisplayType.SphereDisplayType;
                 }
 
                 geometry = {

@@ -44,8 +44,6 @@ import {
     CameraSpec,
     EncodedTypeMapping,
     AgentDisplayDataWithGeometry,
-    ObjDisplayType,
-    PdbDisplayType,
     GeometryDisplayType,
 } from "./types";
 import { AgentData } from "./VisData";
@@ -95,14 +93,9 @@ interface AgentTypeGeometry {
     displayType: GeometryDisplayType;
 }
 
-interface PdbGeometry {
-    geometry: PDBModel;
-    displayType: PdbDisplayType;
-}
-
-interface MeshGeometry {
-    geometry: MeshLoadRequest;
-    displayType: ObjDisplayType;
+interface AgentGeometry {
+    geometry: PDBModel | MeshLoadRequest;
+    displayType: GeometryDisplayType;
 }
 
 interface MeshLoadRequest {
@@ -123,11 +116,6 @@ interface PathData {
     line: LineSegments;
 }
 
-interface CachedFileData {
-    displayType: ObjDisplayType | PdbDisplayType;
-    data: string;
-}
-
 type Bounds = readonly [number, number, number, number, number, number];
 
 class VisGeometry {
@@ -142,7 +130,7 @@ class VisGeometry {
     // maps pdb name to pdb data
     public pdbRegistry: Map<string | number, PDBModel>;
     // stores locally loaded geo files
-    public localGeoFiles: Map<string, CachedFileData>;
+    public localGeoFiles: Map<string, string>;
     public geoLoadAttempted: Map<string, boolean>;
     public scaleMapping: Map<number, number>;
     public followObjectId: number;
@@ -199,7 +187,7 @@ class VisGeometry {
         this.meshRegistry = new Map<string | number, MeshLoadRequest>();
         this.initMeshRegistry();
         this.pdbRegistry = new Map<string | number, PDBModel>();
-        this.localGeoFiles = new Map<string, CachedFileData>();
+        this.localGeoFiles = new Map<string, string>();
         this.geoLoadAttempted = new Map<string, boolean>();
         this.scaleMapping = new Map<number, number>();
         this.idColorMapping = new Map<number, number>();
@@ -594,7 +582,7 @@ class VisGeometry {
 
     public onNewRuntimeGeometryType(
         geoName: string,
-        displayType: PdbDisplayType | ObjDisplayType,
+        displayType: GeometryDisplayType,
         data: PDBModel | MeshLoadRequest
     ): void {
         // find all typeIds for this meshName
@@ -612,7 +600,7 @@ class VisGeometry {
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
             const visAgent = this.visAgents[i];
             if (typeIds.includes(visAgent.agentData.type)) {
-                if (displayType === "PDB") {
+                if (displayType === GeometryDisplayType.PdbDisplayType) {
                     this.resetAgentPDB(visAgent, data);
                 }
                 visAgent.setColor(
@@ -723,11 +711,19 @@ class VisGeometry {
     public loadPdb(url: string, pdbmodel: PDBModel): void {
         this.logger.debug("Finished loading pdb: ", url);
         // called after the geo is stored
-        this.onNewRuntimeGeometryType(url, "PDB", pdbmodel);
+        this.onNewRuntimeGeometryType(
+            url,
+            GeometryDisplayType.PdbDisplayType,
+            pdbmodel
+        );
         // initiate async LOD processing
         pdbmodel.generateLOD().then(() => {
             this.logger.debug("Finished loading pdb LODs: ", url);
-            this.onNewRuntimeGeometryType(url, "PDB", pdbmodel);
+            this.onNewRuntimeGeometryType(
+                url,
+                GeometryDisplayType.PdbDisplayType,
+                pdbmodel
+            );
         });
     }
 
@@ -759,7 +755,8 @@ class VisGeometry {
                     forEach(ids, (id) => {
                         this.visGeomMap.set(id, {
                             name: DEFAULT_MESH_NAME,
-                            displayType: "OBJ",
+                            // should use SPHERE here?
+                            displayType: GeometryDisplayType.ObjDisplayType,
                         });
                     });
                 }
@@ -801,17 +798,7 @@ class VisGeometry {
     public cacheLocalAssets(assets: { [key: string]: string }): void {
         forEach(assets, (value, key) => {
             const pathName = checkAndSanitizePath(key);
-            if (key.includes(".pdb")) {
-                this.localGeoFiles.set(pathName, {
-                    data: value,
-                    displayType: "PDB",
-                });
-            } else if (key.includes(".obj")) {
-                this.localGeoFiles.set(pathName, {
-                    data: value,
-                    displayType: "OBJ",
-                });
-            }
+            this.localGeoFiles.set(pathName, value);
         });
     }
 
@@ -847,7 +834,11 @@ class VisGeometry {
         if (!object.name) {
             object.name = meshName;
         }
-        this.onNewRuntimeGeometryType(meshName, "OBJ", meshLoadRequest);
+        this.onNewRuntimeGeometryType(
+            meshName,
+            GeometryDisplayType.ObjDisplayType,
+            meshLoadRequest
+        );
     }
 
     public fetchObj(url: string): void {
@@ -878,20 +869,23 @@ class VisGeometry {
     private attemptToLoadGeometry(
         urlOrPath: string,
         registry: Map<string | number, PDBModel | MeshLoadRequest>,
-        fetchFunctionName: string
+        displayType: GeometryDisplayType
     ) {
         if (this.localGeoFiles.has(urlOrPath)) {
             const file = this.localGeoFiles.get(urlOrPath);
-            if (file && file.displayType === "PDB") {
+            if (file && displayType === GeometryDisplayType.PdbDisplayType) {
                 const pdbModel = new PDBModel(urlOrPath);
-                pdbModel.parsePDBData(file.data);
+                pdbModel.parsePDBData(file);
                 this.pdbRegistry.set(urlOrPath, pdbModel);
                 this.loadPdb(urlOrPath, pdbModel);
-            } else if (file && file.displayType === "OBJ") {
+            } else if (
+                file &&
+                displayType === GeometryDisplayType.ObjDisplayType
+            ) {
                 // stores the name in the registry
                 this.prepMeshRegistryForNewObj(urlOrPath);
                 const objLoader = new OBJLoader();
-                const object = objLoader.parse(file.data);
+                const object = objLoader.parse(file);
                 this.handleObjResponse(urlOrPath, object);
             }
             this.geoLoadAttempted.set(urlOrPath, true);
@@ -902,7 +896,17 @@ class VisGeometry {
             !this.geoLoadAttempted.get(urlOrPath)
         ) {
             this.geoLoadAttempted.set(urlOrPath, true);
-            return this[fetchFunctionName](urlOrPath);
+            if (displayType == GeometryDisplayType.PdbDisplayType) {
+                return this.fetchPdb(urlOrPath);
+            } else if (displayType == GeometryDisplayType.ObjDisplayType) {
+                return this.fetchObj(urlOrPath);
+            } else {
+                console.error(
+                    "Don't know how to load this geometry: ",
+                    displayType,
+                    urlOrPath
+                );
+            }
         }
     }
 
@@ -1150,7 +1154,8 @@ class VisGeometry {
             if (!this.visGeomMap.has(id)) {
                 this.visGeomMap.set(id, {
                     name: DEFAULT_MESH_NAME,
-                    displayType: "OBJ",
+                    // TODO this should be SPHERE type!
+                    displayType: GeometryDisplayType.ObjDisplayType,
                 });
             }
         });
@@ -1195,8 +1200,8 @@ class VisGeometry {
     ): void {
         this.logger.debug(`Geo for id ${id} set to '${url}'`);
         const unassignedName = `${VisAgent.UNASSIGNED_NAME_PREFIX}-${id}`;
-        const isMesh = displayType === "OBJ";
-        const isPDB = displayType === "PDB";
+        const isMesh = displayType === GeometryDisplayType.ObjDisplayType;
+        const isPDB = displayType === GeometryDisplayType.PdbDisplayType;
         console.log(color); // TODO: handle color
         if (!url) {
             // displayType not either pdb or obj, will show a sphere
@@ -1212,10 +1217,14 @@ class VisGeometry {
             this.attemptToLoadGeometry(
                 urlOrPath,
                 this.meshRegistry,
-                "fetchObj"
+                displayType
             );
         } else if (isPDB) {
-            this.attemptToLoadGeometry(urlOrPath, this.pdbRegistry, "fetchPdb");
+            this.attemptToLoadGeometry(
+                urlOrPath,
+                this.pdbRegistry,
+                displayType
+            );
         } else if (!this.pdbRegistry.has(unassignedName)) {
             // assign single atom pdb
             const pdbmodel = new PDBModel(unassignedName);
@@ -1231,7 +1240,7 @@ class VisGeometry {
                 const { name, displayType } = entry;
                 if (
                     name &&
-                    displayType === "OBJ" &&
+                    displayType === GeometryDisplayType.ObjDisplayType &&
                     this.meshRegistry.has(name)
                 ) {
                     const meshLoadRequest = this.meshRegistry.get(name);
@@ -1245,7 +1254,7 @@ class VisGeometry {
         return null;
     }
 
-    private getGeoForAgentType(id: number): PdbGeometry | MeshGeometry | null {
+    private getGeoForAgentType(id: number): AgentGeometry | null {
         const entry = this.visGeomMap.get(id);
         if (entry && entry.name) {
             const meshLoadRequest = this.meshRegistry.get(entry.name);
@@ -1253,13 +1262,13 @@ class VisGeometry {
             if (meshLoadRequest) {
                 return {
                     geometry: meshLoadRequest,
-                    displayType: entry.displayType as ObjDisplayType,
+                    displayType: GeometryDisplayType.ObjDisplayType,
                 };
             }
             if (pdb) {
                 return {
-                    geometry: pdb as PDBModel,
-                    displayType: entry.displayType as PdbDisplayType,
+                    geometry: pdb,
+                    displayType: GeometryDisplayType.PdbDisplayType,
                 };
             }
         }
@@ -1611,7 +1620,10 @@ class VisGeometry {
                 }
                 const { geometry, displayType } = response;
                 // pdb has precedence over mesh
-                if (geometry && displayType === "PDB") {
+                if (
+                    geometry &&
+                    displayType === GeometryDisplayType.PdbDisplayType
+                ) {
                     const pdbEntry = geometry as PDBModel;
                     if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
                         this.legacyRenderer.addPdb(
@@ -1627,6 +1639,7 @@ class VisGeometry {
                         visAgent.updatePdbTransform(1.0);
                     }
                 } else {
+                    // assumed displayType is GeometryDisplayType.ObjDisplayType here?
                     const meshEntry = geometry as MeshLoadRequest;
 
                     // Was previously a PDB object, but in it's new state will be drawn as a mesh
