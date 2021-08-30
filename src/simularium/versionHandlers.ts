@@ -4,24 +4,15 @@ import * as si from "si-prefix";
 import { DEFAULT_CAMERA_SPEC } from "../constants";
 import {
     AgentDisplayDataWithGeometry,
-    CubeDisplayType,
-    GizmoDisplayType,
-    ObjDisplayType,
-    PdbDisplayType,
-    SphereDisplayType,
     TrajectoryFileInfo,
     TrajectoryFileInfoAny,
     TrajectoryFileInfoV1,
 } from "./types";
+import { GeometryDisplayType } from "./VisGeometry/types";
 
 // the data may come in missing any of these values
 export interface AgentTypeVisDataPreProcessing {
-    displayType?:
-        | PdbDisplayType
-        | ObjDisplayType
-        | SphereDisplayType
-        | CubeDisplayType
-        | GizmoDisplayType;
+    displayType?: GeometryDisplayType;
     url?: string;
     color?: string;
 }

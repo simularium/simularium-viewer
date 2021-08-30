@@ -1,9 +1,4 @@
 import {
-    ObjDisplayType,
-    PdbDisplayType,
-    SphereDisplayType,
-} from "../simularium/types";
-import {
     makeMissingDisplayTypeErrorMessage,
     makeMissingUrlErrorMessage,
     sanitizeAgentMapGeometryData,

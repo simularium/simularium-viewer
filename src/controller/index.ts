@@ -123,7 +123,7 @@ export default class SimulariumController {
                 localFile
             );
             if (this.visGeometry && geoAssets && !isEmpty(geoAssets)) {
-                this.visGeometry.cacheLocalAssets(geoAssets);
+                this.visGeometry.geometryStore.cacheLocalAssets(geoAssets);
             }
         } else if (netConnectionConfig) {
             this.simulator = new RemoteSimulator(netConnectionConfig);

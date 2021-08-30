@@ -1,3 +1,5 @@
+import { GeometryDisplayType } from "./VisGeometry/types";
+
 export interface VisDataFrame {
     data: number[];
     frameNumber: number;
@@ -55,20 +57,8 @@ interface Plot {
 
 type CachedObservables = Plot[];
 
-export type PdbDisplayType = "PDB";
-export type ObjDisplayType = "OBJ";
-export type SphereDisplayType = "SPHERE";
-export type CubeDisplayType = "CUBE";
-export type GizmoDisplayType = "GIZMO";
-
-// per agent type Visdata format
 export interface AgentTypeVisData {
-    displayType:
-        | PdbDisplayType
-        | ObjDisplayType
-        | SphereDisplayType
-        | CubeDisplayType
-        | GizmoDisplayType;
+    displayType: GeometryDisplayType;
     url: string;
     color: string;
 }

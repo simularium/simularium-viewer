@@ -74,7 +74,7 @@ class PDBModel {
     private bounds: Box3;
     // cancelled means we have abandoned this pdb
     // and if it is still initializing, it should be dropped/ignored as soon as processing is done
-    private cancelled: boolean;
+    private _cancelled: boolean;
 
     public constructor(filePath: string) {
         this.filePath = filePath;
@@ -82,16 +82,16 @@ class PDBModel {
         this.pdb = null;
         this.lods = [];
         this.lodSizes = [];
-        this.cancelled = false;
+        this._cancelled = false;
         this.bounds = new Box3();
     }
 
-    public setCancelled(): void {
-        this.cancelled = true;
+    public set cancelled(cancelled: boolean) {
+        this._cancelled = cancelled;
     }
 
-    public isCancelled(): boolean {
-        return this.cancelled;
+    public get cancelled(): boolean {
+        return this._cancelled;
     }
 
     public getNumAtoms(): number {
