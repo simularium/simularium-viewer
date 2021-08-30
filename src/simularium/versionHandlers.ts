@@ -43,9 +43,7 @@ export const makeMissingDisplayTypeErrorMessage = (
 
 export const makeMissingUrlErrorMessage = (
     key: string,
-    displayType:
-        | GeometryDisplayType.PdbDisplayType
-        | GeometryDisplayType.ObjDisplayType
+    displayType: GeometryDisplayType.PDB | GeometryDisplayType.OBJ
 ): string => {
     return `DisplayType was ${displayType} but missing typeMapping[${key}].geometry.url, so we couldn't request the file. Geometry will default to spheres`;
 };
@@ -74,11 +72,11 @@ export const sanitizeAgentMapGeometryData = (
                         console.log(message);
                     }
                     url = "";
-                    displayType = GeometryDisplayType.SphereDisplayType;
+                    displayType = GeometryDisplayType.SPHERE;
                 } else if (
                     !url &&
-                    (displayType === GeometryDisplayType.PdbDisplayType ||
-                        displayType === GeometryDisplayType.ObjDisplayType)
+                    (displayType === GeometryDisplayType.PDB ||
+                        displayType === GeometryDisplayType.OBJ)
                 ) {
                     const message = makeMissingUrlErrorMessage(
                         key,
@@ -89,7 +87,7 @@ export const sanitizeAgentMapGeometryData = (
                     } else {
                         console.log(message);
                     }
-                    displayType = GeometryDisplayType.SphereDisplayType;
+                    displayType = GeometryDisplayType.SPHERE;
                 }
 
                 geometry = {
