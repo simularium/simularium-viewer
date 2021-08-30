@@ -48,7 +48,11 @@ import { InstancedFiberGroup } from "./rendering/InstancedFiber";
 import { InstancedMesh } from "./rendering/InstancedMesh";
 import { LegacyRenderer } from "./rendering/LegacyRenderer";
 import GeometryStore, { DEFAULT_MESH_NAME } from "./VisGeometry/GeometryStore";
-import { GeometryDisplayType, MeshLoadRequest } from "./VisGeometry/types";
+import {
+    GeometryDisplayType,
+    MeshGeometry,
+    MeshLoadRequest,
+} from "./VisGeometry/types";
 import { checkAndSanitizePath } from "../util";
 
 const MAX_PATH_LEN = 32;
@@ -779,11 +783,15 @@ class VisGeometry {
 
             // collect up the meshes that have > 0 instances
             const meshTypes: InstancedMesh[] = [];
-            for (const entry of this.geometryStore.getAllMeshes().values()) {
-                console.log(entry);
-                const { geometry } = entry;
-                meshTypes.push(geometry.instances);
-                this.instancedMeshGroup.add(geometry.instances.getMesh());
+            for (const entry of this.geometryStore.registry.values()) {
+                const { displayType } = entry;
+                if (displayType !== GeometryDisplayType.PDB) {
+                    const meshEntry = entry as MeshGeometry;
+                    meshTypes.push(meshEntry.geometry.instances);
+                    this.instancedMeshGroup.add(
+                        meshEntry.geometry.instances.getMesh()
+                    );
+                }
             }
 
             this.renderer.setMeshGroups(

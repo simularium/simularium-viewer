@@ -56,15 +56,6 @@ class GeometryStore {
         return this._registry;
     }
 
-    public getAllMeshes(): Map<string, MeshGeometry> {
-        const newArray = [...this._registry]
-            .filter(
-                ([_, value]) => value.displayType !== GeometryDisplayType.PDB
-            )
-            .map(([key, value]) => [key, value as MeshGeometry]);
-        return new Map(newArray);
-    }
-
     public updateMeshes(): void {
         this._registry.forEach((value) => {
             const { displayType } = value;
