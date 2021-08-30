@@ -48,11 +48,7 @@ import { InstancedFiberGroup } from "./rendering/InstancedFiber";
 import { InstancedMesh } from "./rendering/InstancedMesh";
 import { LegacyRenderer } from "./rendering/LegacyRenderer";
 import GeometryStore from "./VisGeometry/GeometryStore";
-import {
-    AgentTypeGeometry,
-    GeometryDisplayType,
-    MeshLoadRequest,
-} from "./VisGeometry/types";
+import { GeometryDisplayType, MeshLoadRequest } from "./VisGeometry/types";
 import { checkAndSanitizePath } from "../util";
 
 const MAX_PATH_LEN = 32;
@@ -1289,7 +1285,6 @@ class VisGeometry {
                     return;
                 }
                 const { geometry, displayType } = response;
-
                 if (geometry && displayType === GeometryDisplayType.PDB) {
                     const pdbEntry = geometry as PDBModel;
                     if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
