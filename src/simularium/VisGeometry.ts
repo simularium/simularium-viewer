@@ -95,7 +95,7 @@ interface AgentTypeGeometry {
 
 interface AgentGeometry {
     geometry: PDBModel | MeshLoadRequest;
-    displayType: GeometryDisplayType;
+    displayType: GeometryDisplayType.PDB | GeometryDisplayType.OBJ;
 }
 
 interface MeshLoadRequest {
@@ -889,16 +889,18 @@ class VisGeometry {
             !this.geoLoadAttempted.get(urlOrPath)
         ) {
             this.geoLoadAttempted.set(urlOrPath, true);
-            if (displayType == GeometryDisplayType.PDB) {
-                return this.fetchPdb(urlOrPath);
-            } else if (displayType == GeometryDisplayType.OBJ) {
-                return this.fetchObj(urlOrPath);
-            } else {
-                console.error(
-                    "Don't know how to load this geometry: ",
-                    displayType,
-                    urlOrPath
-                );
+            switch (displayType) {
+                case GeometryDisplayType.PDB:
+                    return this.fetchPdb(urlOrPath);
+                case GeometryDisplayType.OBJ:
+                    return this.fetchObj(urlOrPath);
+                default:
+                    console.error(
+                        "Don't know how to load this geometry: ",
+                        displayType,
+                        urlOrPath
+                    );
+                    break;
             }
         }
     }
