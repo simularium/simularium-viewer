@@ -34,7 +34,7 @@ export const checkAndSanitizePath = (pathOrUrl: string): string => {
         /(https?:\/\/)([\w\-])+\.{1}([a-zA-Z]{2,63})([\/\w-]*)*\/?\??([^#\n\r]*)?#?([^\n\r]*)/g;
     if (isUrlRegEX.test(pathOrUrl)) {
         return pathOrUrl;
-    } else if (/\B(\/)/g.test(pathOrUrl)) {
+    } else if (/\B\//g.test(pathOrUrl)) {
         return pathOrUrl;
     }
     return `/${pathOrUrl}`;
