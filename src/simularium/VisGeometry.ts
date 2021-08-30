@@ -1182,7 +1182,7 @@ class VisGeometry {
     }
 
     /**
-     *   Map Type ID -> Geometry
+     * Map Type ID -> Geometry
      * This mapping is two level.
      * First agent type id --> meshName, via visGeomMap
      * Then meshName --> actual mesh, via meshRegistry (or pdbRegistry)
@@ -1208,16 +1208,10 @@ class VisGeometry {
             name: urlOrPath || DEFAULT_MESH_NAME,
             displayType,
         });
-        if (isMesh) {
+        if (isMesh || isPDB) {
             this.attemptToLoadGeometry(
                 urlOrPath,
                 this.meshRegistry,
-                displayType
-            );
-        } else if (isPDB) {
-            this.attemptToLoadGeometry(
-                urlOrPath,
-                this.pdbRegistry,
                 displayType
             );
         } else if (!this.pdbRegistry.has(unassignedName)) {
@@ -1226,27 +1220,6 @@ class VisGeometry {
             pdbmodel.create(1);
             this.pdbRegistry.set(unassignedName, pdbmodel);
         }
-    }
-
-    public getInstanceContainerFromId(id: number): InstancedMesh | null {
-        if (this.visGeomMap.has(id)) {
-            const entry = this.visGeomMap.get(id);
-            if (entry) {
-                const { name, displayType } = entry;
-                if (
-                    name &&
-                    displayType === GeometryDisplayType.OBJ &&
-                    this.meshRegistry.has(name)
-                ) {
-                    const meshLoadRequest = this.meshRegistry.get(name);
-                    if (meshLoadRequest) {
-                        return meshLoadRequest.instances;
-                    }
-                }
-            }
-        }
-
-        return null;
     }
 
     private getGeoForAgentType(id: number): AgentGeometry | null {
@@ -1605,13 +1578,10 @@ class VisGeometry {
                 const response = this.getGeoForAgentType(typeId);
 
                 if (!response) {
-                    // no pdb, use mesh
-                    if (!response) {
-                        console.warn(
-                            `No mesh nor pdb available for ${typeId}? Should be unreachable code`
-                        );
-                        return;
-                    }
+                    console.warn(
+                        `No mesh nor pdb available for ${typeId}? Should be unreachable code`
+                    );
+                    return;
                 }
                 const { geometry, displayType } = response;
                 // pdb has precedence over mesh
