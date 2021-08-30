@@ -101,7 +101,7 @@ const typeMappingWithGeo = {
     "0": {
         name: "Actin",
         geometry: {
-            displayType: GeometryDisplayType.PdbDisplayType,
+            displayType: GeometryDisplayType.PDB,
             color: "#fff",
             url: "url-to-data",
         },
@@ -109,7 +109,7 @@ const typeMappingWithGeo = {
     "1": {
         name: "Budding vesicle",
         geometry: {
-            displayType: GeometryDisplayType.PdbDisplayType,
+            displayType: GeometryDisplayType.PDB,
             color: "#fff",
             url: "url-to-data",
         },
@@ -120,7 +120,7 @@ const typeMappingWithDefaultGeo = {
     "0": {
         name: "Actin",
         geometry: {
-            displayType: GeometryDisplayType.SphereDisplayType,
+            displayType: GeometryDisplayType.SPHERE,
             color: "",
             url: "",
         },
@@ -128,7 +128,7 @@ const typeMappingWithDefaultGeo = {
     "1": {
         name: "Budding vesicle",
         geometry: {
-            displayType: GeometryDisplayType.SphereDisplayType,
+            displayType: GeometryDisplayType.SPHERE,
             color: "",
             url: "",
         },
@@ -166,7 +166,7 @@ const typeMappingMissingUrl = {
         name: "Actin",
         geometry: {
             color: "",
-            displayType: GeometryDisplayType.ObjDisplayType,
+            displayType: GeometryDisplayType.OBJ,
             url: "",
         },
     },
@@ -174,7 +174,7 @@ const typeMappingMissingUrl = {
         name: "Budding vesicle",
         geometry: {
             color: "",
-            displayType: GeometryDisplayType.PdbDisplayType,
+            displayType: GeometryDisplayType.PDB,
             url: "",
         },
     },
@@ -208,7 +208,7 @@ describe("Version handlers", () => {
     describe("makeMissingUrlErrorMessage", () => {
         test("it will create a message for the user if the url is missing but the displayType was PDB or OBJ", () => {
             const key = "1";
-            const displayType = GeometryDisplayType.ObjDisplayType;
+            const displayType = GeometryDisplayType.OBJ;
             const message = makeMissingUrlErrorMessage(key, displayType);
             expect(message).toEqual(
                 `DisplayType was ${displayType} but missing typeMapping[${key}].geometry.url, so we couldn't request the file. Geometry will default to spheres`
