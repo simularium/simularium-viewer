@@ -108,27 +108,6 @@ class PDBModel {
         }
     }
 
-    public download(url: string): Promise<void> {
-        const pdbRequest = new Request(url);
-        return fetch(pdbRequest)
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error(
-                        `Error fetching ${this.filePath} from ${url}`
-                    );
-                }
-                return response.text();
-            })
-            .then((data) => {
-                if (this.cancelled) {
-                    return Promise.reject(REASON_CANCELLED);
-                }
-                // note pdb atom coordinates are in angstroms
-                // 1 nm is 10 angstroms
-                this.parsePDBData(data);
-            });
-    }
-
     // build a fake random pdb
     public create(nAtoms: number, atomSpread = 10): Promise<void> {
         const atoms: PDBAtom[] = [];
