@@ -15,7 +15,6 @@ import { KMeansWorkerType } from "./worker/KMeansWorker";
 
 import KMeans from "./rendering/KMeans3d";
 import TaskQueue from "./worker/TaskQueue";
-import { REASON_CANCELLED } from "./worker/TaskQueue";
 
 interface PDBAtom {
     serial?: number;

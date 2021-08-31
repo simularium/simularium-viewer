@@ -26,8 +26,8 @@ import {
 import * as dat from "dat.gui";
 
 import jsLogger from "js-logger";
-import Logger, { ILogger, ILogLevel } from "js-logger";
-import { cloneDeep, forEach, noop } from "lodash";
+import { ILogger, ILogLevel } from "js-logger";
+import { cloneDeep, noop } from "lodash";
 
 import VisAgent from "./VisAgent";
 import VisTypes from "./VisTypes";
@@ -163,9 +163,7 @@ class VisGeometry {
         this.supportsWebGL2Rendering = false;
 
         this.visGeomMap = new Map<number, string>();
-        this.geometryStore = new GeometryStore(
-            this.onNewRuntimeGeometryType.bind(this)
-        );
+        this.geometryStore = new GeometryStore();
         this.geometryStore.init();
 
         this.scaleMapping = new Map<number, number>();

@@ -1,4 +1,4 @@
-import { forEach, noop } from "lodash";
+import { forEach } from "lodash";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 
 import { BufferGeometry, Object3D, Mesh } from "three";
@@ -24,17 +24,11 @@ class GeometryStore {
     private geoLoadAttempted: Map<string, boolean>;
     private _cachedAssets: Map<string, string>;
     private _registry: Registry;
-    private onNewRuntimeGeometry = (
-        name: string,
-        displayType: GeometryDisplayType,
-        data: PDBModel | MeshLoadRequest
-    ) => noop;
 
-    constructor(handleNewGeoCallback) {
+    constructor() {
         this.geoLoadAttempted = new Map<string, boolean>();
         this._cachedAssets = new Map<string, string>();
         this._registry = new Map<string, AgentGeometry>();
-        this.onNewRuntimeGeometry = handleNewGeoCallback;
     }
 
     public init(): void {
@@ -228,14 +222,14 @@ class GeometryStore {
                     this.handleObjResponse(url, object);
                     resolve(object);
                 },
-                (xhr) => {
+                () => {
                     // this.logger.debug(
                     //     url,
                     //     " ",
                     //     `${(xhr.loaded / xhr.total) * 100}% loaded`
                     // );
                 },
-                (error) => {
+                () => {
                     // if the request fails, leave agent as a sphere by default
                     // this.logger.debug("Failed to load mesh: ", error, url);
                     return reject(`Failed to load mesh: ${url}`);
