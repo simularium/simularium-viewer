@@ -199,7 +199,6 @@ class VisGeometry {
         this.renderer.setBackgroundColor(this.backgroundColor);
 
         this.mlogger = jsLogger.get("visgeometry");
-        console.log(loggerLevel);
         this.mlogger.setLevel(loggerLevel);
 
         this.camera = new PerspectiveCamera(75, 100 / 100, 0.1, 10000);
@@ -304,7 +303,7 @@ class VisGeometry {
             renderStyle === RenderStyle.WEBGL2_PREFERRED &&
             !this.supportsWebGL2Rendering
         ) {
-            console.log("Warning: WebGL2 rendering not supported");
+            this.logger.warn("Warning: WebGL2 rendering not supported");
             return;
         }
 
@@ -359,7 +358,7 @@ class VisGeometry {
                 Math.abs(by) < epsilon ||
                 Math.abs(bz) < epsilon
             ) {
-                console.log(
+                this.logger.warn(
                     "WARNING: Bounding box: at least one bound is zero; using default bounds"
                 );
                 this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
@@ -897,7 +896,9 @@ class VisGeometry {
     private getColorIndexForTypeId(typeId: number): number {
         const index = this.idColorMapping.get(typeId);
         if (index === undefined) {
-            console.log("getColorIndexForTypeId could not find " + typeId);
+            this.logger.error(
+                "getColorIndexForTypeId could not find " + typeId
+            );
             return 0;
         }
         return index % (this.colorsData.length / 4);
@@ -950,7 +951,7 @@ class VisGeometry {
     private getGeoForAgentType(id: number): AgentGeometry | null {
         const entryName = this.visGeomMap.get(id);
         if (!entryName) {
-            console.log("not in visGeomMap", id);
+            this.logger.error("not in visGeomMap", id);
             return null; // unreachable, but here for typeScript
         }
         return this.geometryStore.getGeoForAgentType(entryName);
@@ -980,7 +981,6 @@ class VisGeometry {
                         geometry,
                         errorMessage,
                     } = returned;
-                    console.log(returned);
                     this.onNewRuntimeGeometryType(
                         lookupKey,
                         displayType,
@@ -1185,7 +1185,7 @@ class VisGeometry {
     public resetBounds(volumeDimensions?: number[]): void {
         this.scene.remove(this.boundingBoxMesh, this.tickMarksMesh);
         if (!volumeDimensions) {
-            console.log("invalid volume dimensions received");
+            this.logger.warn("invalid volume dimensions received");
             return;
         }
         const [bx, by, bz] = volumeDimensions;
@@ -1615,7 +1615,7 @@ class VisGeometry {
             return path.agentId === id;
         });
         if (pathindex === -1) {
-            console.log(
+            this.logger.warn(
                 "attempted to remove path for agent " +
                     id +
                     " that doesn't exist."
