@@ -309,7 +309,14 @@ class GeometryStore {
         if (!url) {
             // displayType not either pdb or obj, will show a sphere
             // TODO: handle CUBE, GIZMO etc
-            return Promise.resolve(undefined);
+            const lookupKey = `${id}-${displayType}`;
+            const geometry = this.getNewSphereGeometry(lookupKey);
+            this.setGeometryInRegistry(
+                lookupKey,
+                geometry,
+                GeometryDisplayType.SPHERE
+            );
+            return Promise.resolve({ geometry });
         }
         const lookupKey = checkAndSanitizePath(url);
 
