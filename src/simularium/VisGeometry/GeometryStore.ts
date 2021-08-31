@@ -90,7 +90,7 @@ class GeometryStore {
 
         // don't process any queued requests
         TaskQueue.stopAll();
-        // signal to cancel any pending pdbs
+        // signal to cancel any pending geometries
         this._registry.forEach((value) => {
             value.geometry.cancelled = true;
         });
@@ -183,8 +183,7 @@ class GeometryStore {
     private handleObjResponse(meshName: string, object: Object3D): void {
         const item = this._registry.get(meshName);
         if (!item) {
-            // should be unreachable, but needed for TypeScript
-            return;
+            return; // should be unreachable, but needed for TypeScript
         }
         const meshLoadRequest = item.geometry as MeshLoadRequest;
         if (
@@ -225,7 +224,7 @@ class GeometryStore {
         return new Promise((resolve, reject) => {
             objLoader.load(
                 url,
-                (object) => {
+                (object: Object3D) => {
                     this.handleObjResponse(url, object);
                     resolve(object);
                 },
@@ -250,6 +249,8 @@ class GeometryStore {
         displayType: GeometryDisplayType
     ): Promise<PDBModel | MeshLoadRequest | undefined> {
         if (this._cachedAssets.has(urlOrPath)) {
+            // if it's in the cached assets, parse the data
+            // store it in the registry, and return it
             const file = this._cachedAssets.get(urlOrPath);
             let geometry;
             if (file && displayType === GeometryDisplayType.PDB) {
@@ -265,6 +266,7 @@ class GeometryStore {
                 this.handleObjResponse(urlOrPath, object);
                 geometry = object;
             }
+            // make sure we know not to try to load it from the url
             this.geoLoadAttempted.set(urlOrPath, true);
             // don't need to store file data once it's loaded into registry
             this._cachedAssets.delete(urlOrPath);
@@ -299,6 +301,7 @@ class GeometryStore {
             }
         }
         // already loaded or attempted to load this geometry
+        // still want to return a promise
         return Promise.resolve(undefined);
     }
     /**
