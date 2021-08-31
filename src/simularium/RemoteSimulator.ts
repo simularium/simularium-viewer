@@ -346,9 +346,11 @@ export class RemoteSimulator implements ISimulator {
             }
             this.logWebSocketRequest(requestDescription, jsonData);
         } else {
-            console.error("Connection to server was closed unexpectedly.");
+            console.error(
+                "Request to server cannot be made with a closed Websocket connection."
+            );
             this.handleError(
-                "Connection to server was closed unexpectedly. Try reloading. If the problem persists, the server may be too busy. Please try again at another time."
+                "Connection to server is closed; please try reloading. If the problem persists, the server may be too busy. Please try again at another time."
             );
         }
     }
