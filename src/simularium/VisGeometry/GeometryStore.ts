@@ -1,11 +1,15 @@
 import { forEach } from "lodash";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
-
+import jsLogger, { ILogger, ILogLevel } from "js-logger";
 import { BufferGeometry, Object3D, Mesh } from "three";
+
 import { checkAndSanitizePath } from "../../util";
 import PDBModel from "../PDBModel";
 import { InstancedMesh } from "../rendering/InstancedMesh";
 import VisAgent from "../VisAgent";
+import TaskQueue from "../worker/TaskQueue";
+import { AgentTypeVisData } from "../types";
+
 import {
     AgentGeometry,
     GeometryDisplayType,
@@ -13,8 +17,6 @@ import {
     MeshGeometry,
     MeshLoadRequest,
 } from "./types";
-import TaskQueue from "../worker/TaskQueue";
-import { AgentTypeVisData } from "../types";
 
 export const DEFAULT_MESH_NAME = "SPHERE";
 
@@ -24,11 +26,16 @@ class GeometryStore {
     private geoLoadAttempted: Map<string, boolean>;
     private _cachedAssets: Map<string, string>;
     private _registry: Registry;
+    public mlogger: ILogger;
 
-    constructor() {
+    constructor(loggerLevel?: ILogLevel) {
         this.geoLoadAttempted = new Map<string, boolean>();
         this._cachedAssets = new Map<string, string>();
         this._registry = new Map<string, AgentGeometry>();
+        this.mlogger = jsLogger.get("geometry-store");
+        if (loggerLevel) {
+            this.mlogger.setLevel(loggerLevel);
+        }
     }
 
     public init(): void {
@@ -136,7 +143,7 @@ class GeometryStore {
                 pdbModel.parsePDBData(data);
                 const pdbEntry = this._registry.get(url);
                 if (pdbEntry && pdbEntry.geometry === pdbModel) {
-                    // this.logger.debug("Finished downloading pdb: ", url);
+                    this.mlogger.info("Finished downloading pdb: ", url);
 
                     return pdbModel;
                 } else {
@@ -188,7 +195,7 @@ class GeometryStore {
             return;
         }
 
-        // this.logger.debug("Finished loading mesh: ", meshName);
+        this.mlogger.debug("Finished loading mesh: ", meshName);
         // insert new mesh into meshRegistry
         // get its geometry first:
         let geom: BufferGeometry | null = null;
@@ -222,16 +229,16 @@ class GeometryStore {
                     this.handleObjResponse(url, object);
                     resolve(object);
                 },
-                () => {
-                    // this.logger.debug(
-                    //     url,
-                    //     " ",
-                    //     `${(xhr.loaded / xhr.total) * 100}% loaded`
-                    // );
+                (xhr) => {
+                    this.mlogger.info(
+                        url,
+                        " ",
+                        `${(xhr.loaded / xhr.total) * 100}% loaded`
+                    );
                 },
-                () => {
+                (error) => {
                     // if the request fails, leave agent as a sphere by default
-                    // this.logger.debug("Failed to load mesh: ", error, url);
+                    this.mlogger.warn("Failed to load mesh: ", error, url);
                     return reject(`Failed to load mesh: ${url}`);
                 }
             );
@@ -302,7 +309,7 @@ class GeometryStore {
         geometry: AgentTypeVisData
     ): Promise<GeometryStoreLoadResponse | undefined> {
         const { displayType, color, url } = geometry;
-        // this.logger.debug(`Geo for id ${id} set to '${url}'`);
+        this.mlogger.debug(`Geo for id ${id} set to '${url}'`);
         const isMesh = displayType === GeometryDisplayType.OBJ;
         const isPDB = displayType === GeometryDisplayType.PDB;
         console.log(color); // TODO: handle color

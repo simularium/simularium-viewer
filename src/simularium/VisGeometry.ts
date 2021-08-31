@@ -163,7 +163,7 @@ class VisGeometry {
         this.supportsWebGL2Rendering = false;
 
         this.visGeomMap = new Map<number, string>();
-        this.geometryStore = new GeometryStore();
+        this.geometryStore = new GeometryStore(loggerLevel);
         this.geometryStore.init();
 
         this.scaleMapping = new Map<number, number>();
