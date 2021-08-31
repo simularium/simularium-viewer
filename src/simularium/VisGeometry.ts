@@ -976,18 +976,18 @@ class VisGeometry {
                         // no new geometry to load
                         return;
                     }
+                    // will only have a returned displayType if it changed.
                     const {
                         displayType: returnedDisplayType,
                         geometry,
                         errorMessage,
                     } = returned;
+                    const newDisplayType = returnedDisplayType || displayType;
                     this.onNewRuntimeGeometryType(
                         lookupKey,
-                        displayType,
+                        newDisplayType,
                         geometry
                     );
-                    // will only have a returned displayType if it changed.
-                    const newDisplayType = returnedDisplayType || displayType;
                     // handle additional async update to LOD for pdbs
                     if (
                         newDisplayType === GeometryDisplayType.PDB &&
@@ -1001,7 +1001,7 @@ class VisGeometry {
                             );
                             this.onNewRuntimeGeometryType(
                                 lookupKey,
-                                displayType,
+                                newDisplayType,
                                 geometry
                             );
                         });
