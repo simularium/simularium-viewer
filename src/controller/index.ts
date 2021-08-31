@@ -264,6 +264,11 @@ export default class SimulariumController {
     ): Promise<FileReturn> {
         this.isFileChanging = true;
         this.playBackFile = newFileName;
+
+        if (this.simulator instanceof RemoteSimulator) {
+            this.simulator.handleError = () => noop;
+        }
+
         this.visData.WaitForFrame(0);
         this.visData.clearCache();
         this.visData.cancelAllWorkers();
