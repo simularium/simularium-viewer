@@ -32,3 +32,9 @@ export interface MeshGeometry {
 }
 
 export type AgentGeometry = PDBGeometry | MeshGeometry;
+
+export interface GeometryStoreLoadResponse {
+    displayType?: GeometryDisplayType;
+    geometry: MeshLoadRequest | PDBModel;
+    errorMessage?: string;
+}

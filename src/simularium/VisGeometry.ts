@@ -26,8 +26,8 @@ import {
 import * as dat from "dat.gui";
 
 import jsLogger from "js-logger";
-import { ILogger, ILogLevel } from "js-logger";
-import { cloneDeep, noop } from "lodash";
+import Logger, { ILogger, ILogLevel } from "js-logger";
+import { cloneDeep, forEach, noop } from "lodash";
 
 import VisAgent from "./VisAgent";
 import VisTypes from "./VisTypes";
@@ -201,6 +201,7 @@ class VisGeometry {
         this.renderer.setBackgroundColor(this.backgroundColor);
 
         this.mlogger = jsLogger.get("visgeometry");
+        console.log(loggerLevel);
         this.mlogger.setLevel(loggerLevel);
 
         this.camera = new PerspectiveCamera(75, 100 / 100, 0.1, 10000);
@@ -377,7 +378,7 @@ class VisGeometry {
         if (cameraDefault) {
             this.cameraDefault = cameraDefault;
         } else {
-            this.logger.warn(
+            this.logger.info(
                 "Using default camera settings since none were provided"
             );
             this.cameraDefault = cloneDeep(DEFAULT_CAMERA_SPEC);
@@ -963,15 +964,62 @@ class VisGeometry {
     }
 
     private setGeometryData(typeMapping: EncodedTypeMapping): void {
-        this.logger.debug("Received type mapping data: ", typeMapping);
+        this.logger.info("Received type mapping data: ", typeMapping);
         Object.keys(typeMapping).forEach((id) => {
             const entry: AgentDisplayDataWithGeometry = typeMapping[id];
             const { url, displayType } = entry.geometry;
-            const key = url ? checkAndSanitizePath(url) : displayType;
-            this.visGeomMap.set(Number(id), key);
-            // NOTE: It would be nice to be able to have this return a promise and
-            // be able to call onNewGeometry from here instead of as a callback
-            this.geometryStore.mapKeyToGeom(Number(id), entry.geometry);
+            const lookupKey = url ? checkAndSanitizePath(url) : displayType;
+            this.visGeomMap.set(Number(id), lookupKey);
+            this.geometryStore
+                .mapKeyToGeom(Number(id), entry.geometry)
+                .then((returned) => {
+                    if (!returned) {
+                        // no new geometry to load
+                        return;
+                    }
+                    const {
+                        displayType: returnedDisplayType,
+                        geometry,
+                        errorMessage,
+                    } = returned;
+                    console.log(returned);
+                    this.onNewRuntimeGeometryType(
+                        lookupKey,
+                        displayType,
+                        geometry
+                    );
+                    // will only have a returned displayType if it changed.
+                    const newDisplayType = returnedDisplayType || displayType;
+                    // handle additional async update to LOD for pdbs
+                    if (
+                        newDisplayType === GeometryDisplayType.PDB &&
+                        geometry
+                    ) {
+                        const pdbModel = geometry as PDBModel;
+                        return pdbModel.generateLOD().then(() => {
+                            this.logger.info(
+                                "Finished loading pdb LODs: ",
+                                lookupKey
+                            );
+                            this.onNewRuntimeGeometryType(
+                                lookupKey,
+                                displayType,
+                                geometry
+                            );
+                        });
+                    }
+                    // if returned with a resolve, but has an error message,
+                    // the error was handled, and the geometry was replaced with a sphere
+                    // but still good to tell the user about it.
+                    if (errorMessage) {
+                        this.onError(errorMessage);
+                        this.logger.info(errorMessage);
+                    }
+                })
+                .catch((reason) => {
+                    this.onError(reason);
+                    this.logger.info(reason);
+                });
         });
         this.updateScene(this.currentSceneAgents);
     }
@@ -1209,7 +1257,6 @@ class VisGeometry {
     ) {
         const radius = agentData.cr ? agentData.cr : 1;
         const scale = this.getScaleForId(typeId);
-
         // Was previously a PDB object, but in it's new state will be drawn as a mesh
         if (visAgent.hasDrawablePDB()) {
             this.resetAgentPDB(visAgent);
@@ -1335,7 +1382,7 @@ class VisGeometry {
             }
 
             if (visAgent.agentData.instanceId !== instanceId) {
-                console.warn(
+                this.logger.warn(
                     `incoming instance id ${instanceId} mismatched with visagent ${visAgent.agentData.instanceId}`
                 );
             }
@@ -1367,9 +1414,7 @@ class VisGeometry {
             if (visType === VisTypes.ID_VIS_TYPE_DEFAULT) {
                 const response = this.getGeoForAgentType(typeId);
                 if (!response) {
-                    console.log(this.geometryStore.registry, this.visGeomMap);
-
-                    console.warn(
+                    this.logger.warn(
                         `No mesh nor pdb available for ${typeId}? Should be unreachable code`
                     );
                     return;
