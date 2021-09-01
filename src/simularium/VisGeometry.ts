@@ -1338,7 +1338,9 @@ class VisGeometry {
         this.legacyRenderer.beginUpdate(this.scene);
 
         this.fibers.beginUpdate();
-        this.geometryStore.updateMeshes();
+        this.geometryStore.forEachMesh((agentGeo) => {
+            agentGeo.geometry.instances.beginUpdate();
+        });
         // First, mark ALL inactive and invisible.
         // Note this implies a memory leak of sorts:
         // the number of agent instances can only grow during one trajectory run.
@@ -1447,7 +1449,9 @@ class VisGeometry {
         });
 
         this.fibers.endUpdate();
-        this.geometryStore.endUpdateMeshes();
+        this.geometryStore.forEachMesh((agentGeo) => {
+            agentGeo.geometry.instances.endUpdate();
+        });
         this.legacyRenderer.endUpdate(this.scene);
     }
 

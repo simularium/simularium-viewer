@@ -58,22 +58,12 @@ class GeometryStore {
         return this._registry;
     }
 
-    public updateMeshes(): void {
+    public forEachMesh(iteratee: (geo: MeshGeometry) => void): void {
         this._registry.forEach((value) => {
             const { displayType } = value;
             if (displayType !== GeometryDisplayType.PDB) {
                 const agentGeo = value as MeshGeometry;
-                agentGeo.geometry.instances.beginUpdate();
-            }
-        });
-    }
-
-    public endUpdateMeshes(): void {
-        this._registry.forEach((value) => {
-            const { displayType } = value;
-            if (displayType !== GeometryDisplayType.PDB) {
-                const agentGeo = value as MeshGeometry;
-                agentGeo.geometry.instances.endUpdate();
+                iteratee(agentGeo);
             }
         });
     }
