@@ -126,7 +126,10 @@ export default class SimulariumController {
                 this.visGeometry.cacheLocalAssets(geoAssets);
             }
         } else if (netConnectionConfig) {
-            this.simulator = new RemoteSimulator(netConnectionConfig);
+            this.simulator = new RemoteSimulator(
+                netConnectionConfig,
+                this.onError
+            );
         } else {
             throw new Error(
                 "Insufficient data to determine and configure simulator connection"
@@ -266,6 +269,11 @@ export default class SimulariumController {
     ): Promise<FileReturn> {
         this.isFileChanging = true;
         this.playBackFile = newFileName;
+
+        if (this.simulator instanceof RemoteSimulator) {
+            this.simulator.handleError = () => noop;
+        }
+
         this.visData.WaitForFrame(0);
         this.visData.clearCache();
         this.visData.cancelAllWorkers();
