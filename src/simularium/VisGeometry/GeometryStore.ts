@@ -299,9 +299,9 @@ class GeometryStore {
      */
     public async mapKeyToGeom(
         id: number,
-        geometry: AgentTypeVisData
+        agentVisData: AgentTypeVisData
     ): Promise<GeometryStoreLoadResponse | undefined> {
-        const { displayType, color, url } = geometry;
+        const { displayType, color, url } = agentVisData;
         this.mlogger.debug(`Geo for id ${id} set to '${url}'`);
         const isMesh = displayType === GeometryDisplayType.OBJ;
         const isPDB = displayType === GeometryDisplayType.PDB;
