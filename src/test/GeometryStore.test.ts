@@ -150,7 +150,26 @@ describe("GeometryStore module", () => {
             if (returned && savedMesh) {
                 expect(returned.geometry).toEqual(savedMesh.geometry);
                 expect(returned.displayType).toBeFalsy();
-                expect(returned.displayType).toBeFalsy();
+                expect(returned.errorMessage).toBeFalsy();
+            }
+        });
+        test("if a request fails, returns a sphere with an error message", async () => {
+            const store = new GeometryStore();
+            store.init();
+            const returned = await store.mapKeyToGeom(1, {
+                displayType: GeometryDisplayType.OBJ,
+                url: "test",
+                color: "",
+            });
+
+            expect(returned).toBeTruthy();
+            if (returned) {
+                expect(returned.displayType).toEqual(
+                    GeometryDisplayType.SPHERE
+                );
+                expect(returned.errorMessage).toEqual(
+                    "Failed to load mesh: /test"
+                );
             }
         });
     });
