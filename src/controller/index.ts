@@ -276,6 +276,7 @@ export default class SimulariumController {
 
         this.visData.WaitForFrame(0);
         this.visData.clearCache();
+        this.visData.cancelAllWorkers();
 
         this.stop();
 
