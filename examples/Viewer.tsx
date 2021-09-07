@@ -139,10 +139,9 @@ class Viewer extends React.Component<{}, ViewerState> {
 
         const files: FileList = input.files || data.files;
         const filesArr: FileHTML[] = Array.from(files) as FileHTML[];
-
         Promise.all(
-            filesArr.map((file) => {
-                return file.text();
+            filesArr.map((item) => {
+                return item.text();
             })
         ).then((parsedFiles) => {
             const simulariumFileIndex = findIndex(filesArr, (file) =>
@@ -150,8 +149,14 @@ class Viewer extends React.Component<{}, ViewerState> {
             );
             const simulariumFile = JSON.parse(parsedFiles[simulariumFileIndex]);
             const fileName = filesArr[simulariumFileIndex].name;
+            const geoAssets = filesArr.reduce((acc, cur, index) => {
+                if (index !== simulariumFileIndex) {
+                    acc[cur.name] = parsedFiles[index];
+                }
+                return acc;
+            }, {});
             simulariumController
-                .changeFile({ simulariumFile }, fileName)
+                .changeFile({ simulariumFile, geoAssets }, fileName)
                 .catch((error) => {
                     console.log("Error loading file", error);
                     window.alert(`Error loading file: ${error.message}`);

@@ -97,6 +97,16 @@ class PDBModel {
         return this.pdb ? this.pdb.atoms.length : 0;
     }
 
+    public parsePDBData(data: string): void {
+        this.pdb = parsePdb(data) as PDBType;
+        if (this.pdb.atoms.length > 0) {
+            this.fixupCoordinates();
+            console.log(`PDB ${this.name} has ${this.pdb.atoms.length} atoms`);
+            this.checkChains();
+            return this.initializeLOD();
+        }
+    }
+
     public download(url: string): Promise<void> {
         const pdbRequest = new Request(url);
         return fetch(pdbRequest)
@@ -114,15 +124,7 @@ class PDBModel {
                 }
                 // note pdb atom coordinates are in angstroms
                 // 1 nm is 10 angstroms
-                this.pdb = parsePdb(data) as PDBType;
-                if (this.pdb.atoms.length > 0) {
-                    this.fixupCoordinates();
-                    console.log(
-                        `PDB ${this.name} has ${this.pdb.atoms.length} atoms`
-                    );
-                    this.checkChains();
-                    return this.initializeLOD();
-                }
+                this.parsePDBData(data);
             });
     }
 

@@ -92,8 +92,7 @@ export class ClientSimulator implements ISimulator {
                         );
                         this.onTrajectoryDataArrive(frame);
                     } else {
-                        const a: TrajectoryFileInfo =
-                            this.localSimulator.getInfo();
+                        const a: TrajectoryFileInfo = this.localSimulator.getInfo();
                         this.onTrajectoryFileInfoArrive(a);
                     }
                 }
