@@ -23,13 +23,13 @@ export const DEFAULT_MESH_NAME = "SPHERE";
 type Registry = Map<string, AgentGeometry>;
 
 class GeometryStore {
-    private geoLoadAttempted: Map<string, boolean>;
+    private _geoLoadAttempted: Map<string, boolean>;
     private _cachedAssets: Map<string, string>;
     private _registry: Registry;
     public mlogger: ILogger;
 
     constructor(loggerLevel?: ILogLevel) {
-        this.geoLoadAttempted = new Map<string, boolean>();
+        this._geoLoadAttempted = new Map<string, boolean>();
         this._cachedAssets = new Map<string, string>();
         this._registry = new Map<string, AgentGeometry>();
         this.mlogger = jsLogger.get("geometry-store");
@@ -39,7 +39,7 @@ class GeometryStore {
     }
 
     public init(): void {
-        this.geoLoadAttempted.clear();
+        this._geoLoadAttempted.clear();
         this._registry.clear();
         this._registry.set(DEFAULT_MESH_NAME, {
             displayType: GeometryDisplayType.SPHERE,
@@ -258,7 +258,7 @@ class GeometryStore {
                 geometry = object;
             }
             // make sure we know not to try to load it from the url
-            this.geoLoadAttempted.set(urlOrPath, true);
+            this._geoLoadAttempted.set(urlOrPath, true);
             // don't need to store file data once it's loaded into registry
             this._cachedAssets.delete(urlOrPath);
             if (!geometry) {
@@ -270,9 +270,9 @@ class GeometryStore {
             return Promise.resolve(geometry);
         } else if (
             !this._registry.has(urlOrPath) &&
-            !this.geoLoadAttempted.get(urlOrPath)
+            !this._geoLoadAttempted.get(urlOrPath)
         ) {
-            this.geoLoadAttempted.set(urlOrPath, true);
+            this._geoLoadAttempted.set(urlOrPath, true);
             switch (displayType) {
                 case GeometryDisplayType.PDB:
                     return this.fetchPdb(urlOrPath).then((pdbModel) => {
