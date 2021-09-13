@@ -39,6 +39,7 @@ class GeometryStore {
     }
 
     public init(): void {
+        this.geoLoadAttempted.clear();
         this._registry.clear();
         this._registry.set(DEFAULT_MESH_NAME, {
             displayType: GeometryDisplayType.SPHERE,
