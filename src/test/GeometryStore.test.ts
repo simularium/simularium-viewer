@@ -19,7 +19,7 @@ describe("GeometryStore module", () => {
 
             expect(registry.size).toEqual(1);
         });
-        test("it creates clears out a registry", () => {
+        test("it clears out a registry", () => {
             const store = new GeometryStore();
             store.init();
             const registry = store.registry;
