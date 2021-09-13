@@ -76,14 +76,23 @@ export class RemoteSimulator implements ISimulator {
     protected lastRequestedFile: string;
     public connectionTimeWaited: number;
     public connectionRetries: number;
+    public handleError: (errorMessage: string) => void | (() => void);
 
-    public constructor(opts?: NetConnectionParams) {
+    public constructor(
+        opts?: NetConnectionParams,
+        errorHandler?: (error: string) => void
+    ) {
         this.webSocket = null;
         this.serverIp = opts && opts.serverIp ? opts.serverIp : "localhost";
         this.serverPort = opts && opts.serverPort ? opts.serverPort : 9002;
         this.connectionTimeWaited = 0;
         this.connectionRetries = 0;
         this.lastRequestedFile = "";
+        this.handleError =
+            errorHandler ||
+            (() => {
+                /* do nothing */
+            });
 
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
@@ -331,20 +340,25 @@ export class RemoteSimulator implements ISimulator {
     }
 
     private sendWebSocketRequest(jsonData, requestDescription: string): void {
-        if (this.webSocket !== null) {
-            this.webSocket.send(JSON.stringify(jsonData));
+        if (this.socketIsValid()) {
+            if (this.webSocket !== null) {
+                this.webSocket.send(JSON.stringify(jsonData));
+            }
+            this.logWebSocketRequest(requestDescription, jsonData);
+        } else {
+            console.error(
+                "Request to server cannot be made with a closed Websocket connection."
+            );
+            this.handleError(
+                "Connection to server is closed; please try reloading. If the problem persists, the server may be too busy. Please try again at another time."
+            );
         }
-        this.logWebSocketRequest(requestDescription, jsonData);
     }
 
     /**
      * Websocket Update Parameters
      */
     public sendTimeStepUpdate(newTimeStep: number): void {
-        if (!this.socketIsValid()) {
-            return;
-        }
-
         const jsonData = {
             msgType: NetMessageEnum.ID_UPDATE_TIME_STEP,
             timeStep: newTimeStep,
@@ -353,10 +367,6 @@ export class RemoteSimulator implements ISimulator {
     }
 
     public sendParameterUpdate(paramName: string, paramValue: number): void {
-        if (!this.socketIsValid()) {
-            return;
-        }
-
         const jsonData = {
             msgType: NetMessageEnum.ID_UPDATE_RATE_PARAM,
             paramName: paramName,
@@ -366,10 +376,6 @@ export class RemoteSimulator implements ISimulator {
     }
 
     public sendModelDefinition(model: string): void {
-        if (!this.socketIsValid()) {
-            return;
-        }
-
         const dataToSend = {
             model: model,
             msgType: NetMessageEnum.ID_MODEL_DEFINITION,
@@ -433,9 +439,6 @@ export class RemoteSimulator implements ISimulator {
     }
 
     public pauseRemoteSim(): void {
-        if (!this.socketIsValid()) {
-            return;
-        }
         this.sendWebSocketRequest(
             { msgType: NetMessageEnum.ID_VIS_DATA_PAUSE },
             "Pause Simulation"
@@ -443,9 +446,6 @@ export class RemoteSimulator implements ISimulator {
     }
 
     public resumeRemoteSim(): void {
-        if (!this.socketIsValid()) {
-            return;
-        }
         this.sendWebSocketRequest(
             { msgType: NetMessageEnum.ID_VIS_DATA_RESUME },
             "Resume Simulation"
