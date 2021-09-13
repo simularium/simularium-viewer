@@ -98,6 +98,8 @@ class PDBModel {
     }
 
     public parsePDBData(data: string): void {
+        // NOTE: pdb atom coordinates are in angstroms
+        // 1 nm is 10 angstroms
         this.pdb = parsePdb(data) as PDBType;
         if (this.pdb.atoms.length > 0) {
             this.fixupCoordinates();
