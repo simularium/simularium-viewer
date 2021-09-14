@@ -2,40 +2,42 @@
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
 
 name: Node.js CI
+env:
+    NODE_VERSION: "14.x"
 
 on: [push]
 
 jobs:
-  lint:
-    name:  ✅ Lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup Node
-        uses: actions/setup-node@v1
-        with:
-          node-version: '12.x'
-      - run: npm ci
-      - run: npm run lint --if-present
-  test:
-    name: Unit Test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup Node
-        uses: actions/setup-node@v1
-        with:
-          node-version: '12.x'
-      - run: npm ci
-      - run: npm test --if-present
-  typeCheck:
-    name: Type Check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup Node
-        uses: actions/setup-node@v1
-        with:
-          node-version: '12.x'
-      - run: npm ci
-      - run: npm run typeCheck --if-present
+    lint:
+        name: ✅ Lint
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+            - name: Setup Node
+              uses: actions/setup-node@v1
+              with:
+                  node-version: ${{env.NODE_VERSION}}
+            - run: npm ci
+            - run: npm run lint --if-present
+    test:
+        name: Unit Test
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+            - name: Setup Node
+              uses: actions/setup-node@v1
+              with:
+                  node-version: ${{env.NODE_VERSION}}
+            - run: npm ci
+            - run: npm test --if-present
+    typeCheck:
+        name: Type Check
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+            - name: Setup Node
+              uses: actions/setup-node@v1
+              with:
+                  node-version: ${{env.NODE_VERSION}}
+            - run: npm ci
+            - run: npm run typeCheck --if-present
