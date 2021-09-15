@@ -23,6 +23,22 @@ export const DEFAULT_MESH_NAME = "SPHERE";
 type Registry = Map<string, AgentGeometry>;
 
 class GeometryStore {
+    /**
+     * Stores Key --> GeometryData Map
+     * Key can be a file name or a url (any unique string).
+     *
+     * Handles fetching the geometry data from an external source via
+     * urls or a local file that was loaded directly into the viewer and returns the
+     * resulting data as a promise.
+     *
+     * Won't fetch the same geometry twice for the same trajectory.
+     *
+     * Should be cleared out with each new trajectory loaded.
+     *
+     * There is a helper function for modifying meshes, but otherwise this is
+     * just a store module, it doesn't know anything about the trajectory or
+     * agent ids, or do anything with the geometries other than load and store them.
+     */
     private _geoLoadAttempted: Map<string, boolean>;
     private _cachedAssets: Map<string, string>;
     private _registry: Registry;
@@ -72,6 +88,7 @@ class GeometryStore {
     }
 
     public forEachMesh(iteratee: (geo: MeshGeometry) => void): void {
+        // forEach method for manipulating ThreeJs Mesh objects
         this._registry.forEach((value) => {
             const { displayType } = value;
             if (displayType !== GeometryDisplayType.PDB) {
@@ -100,13 +117,16 @@ class GeometryStore {
     }
 
     public cacheLocalAssets(assets: { [key: string]: string }): void {
+        // store local files as data strings until they're ready to be
+        // parsed as geometry.
         forEach(assets, (value, key) => {
             const path = checkAndSanitizePath(key);
             this._cachedAssets.set(path, value);
         });
     }
 
-    private getNewSphereGeometry(meshName: string): MeshLoadRequest {
+    private createNewSphereGeometry(meshName: string): MeshLoadRequest {
+        /** create new default geometry */
         return {
             mesh: new Mesh(VisAgent.sphereGeometry),
             cancelled: false,
@@ -125,8 +145,8 @@ class GeometryStore {
         });
     }
 
-    /** Downloads a PDB from an external source */
     private fetchPdb(url: string): Promise<PDBModel | undefined> {
+        /** Downloads a PDB from an external source */
         const pdbModel = new PDBModel(url);
         this.setGeometryInRegistry(url, pdbModel, GeometryDisplayType.PDB);
         return fetch(url)
@@ -156,10 +176,11 @@ class GeometryStore {
     }
 
     private prepMeshRegistryForNewObj(meshName: string): void {
+        /** Create a place in the registry to store the new object registered to meshName */
         if (this._registry.has(meshName)) {
             const entry = this._registry.get(meshName);
             if (!entry) {
-                return;
+                return; // should be unreachable, but needed for TypeScript
             }
             const { geometry, displayType } = entry;
             if (geometry && displayType !== GeometryDisplayType.PDB) {
@@ -177,7 +198,7 @@ class GeometryStore {
             // we will replace the sphere in here with the real geometry when it arrives.
             this.setGeometryInRegistry(
                 meshName,
-                this.getNewSphereGeometry(meshName),
+                this.createNewSphereGeometry(meshName),
                 GeometryDisplayType.SPHERE
             );
         }
@@ -222,6 +243,7 @@ class GeometryStore {
     }
 
     private fetchObj(url: string): Promise<Object3D> {
+        /** Request an obj from an external source */
         const objLoader = new OBJLoader();
         this.prepMeshRegistryForNewObj(url);
         return new Promise((resolve, reject) => {
@@ -251,6 +273,17 @@ class GeometryStore {
         urlOrPath: string,
         displayType: GeometryDisplayType
     ): Promise<PDBModel | MeshLoadRequest | undefined> {
+        /**
+         * Load new geometry if necessary, ie this geometry hasn't already
+         * been loaded or attempted and failed to be loaded.
+         *
+         * If it's already been attempted, or is already in the registry,
+         * this will return Promise<undefined>
+         *
+         * Otherwise, it first checks the cache, and then tries to load via
+         * a url. If provided a url and the loading fails, the geometry is replaced
+         * by default geometry (sphere), and the user is notified.
+         */
         if (this._cachedAssets.has(urlOrPath)) {
             // if it's in the cached assets, parse the data
             // store it in the registry, and return it
@@ -307,13 +340,16 @@ class GeometryStore {
         // still want to return a promise
         return Promise.resolve(undefined);
     }
-    /**
-     * stores meshName --> actual mesh
-     */
+
     public async mapKeyToGeom(
         id: number,
         agentVisData: AgentTypeVisData
     ): Promise<GeometryStoreLoadResponse | undefined> {
+        /**
+         * stores meshName --> actual mesh, returns a Promise.
+         * If Promise caches, the geometry is replaced with a sphere
+         * and the user is notified.
+         */
         const { displayType, color, url } = agentVisData;
         this.mlogger.debug(`Geo for id ${id} set to '${url}'`);
         const isMesh = displayType === GeometryDisplayType.OBJ;
@@ -323,7 +359,7 @@ class GeometryStore {
             // displayType not either pdb or obj, will show a sphere
             // TODO: handle CUBE, GIZMO etc
             const lookupKey = `${id}-${displayType}`;
-            const geometry = this.getNewSphereGeometry(lookupKey);
+            const geometry = this.createNewSphereGeometry(lookupKey);
             this.setGeometryInRegistry(
                 lookupKey,
                 geometry,
@@ -345,7 +381,7 @@ class GeometryStore {
                 .catch((e) => {
                     // if anything goes wrong, add a new sphere to the registry
                     // using this same lookup key
-                    const geometry = this.getNewSphereGeometry(lookupKey);
+                    const geometry = this.createNewSphereGeometry(lookupKey);
                     this.setGeometryInRegistry(
                         lookupKey,
                         geometry,
