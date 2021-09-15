@@ -164,8 +164,6 @@ class VisGeometry {
 
         this.visGeomMap = new Map<number, string>();
         this.geometryStore = new GeometryStore(loggerLevel);
-        this.geometryStore.init();
-
         this.scaleMapping = new Map<number, number>();
         this.idColorMapping = new Map<number, number>();
         this.isIdColorMappingSet = false;
@@ -944,7 +942,7 @@ class VisGeometry {
     public resetMapping(): void {
         this.resetAllGeometry();
         this.visGeomMap.clear();
-        this.geometryStore.init();
+        this.geometryStore.reset();
         this.scaleMapping.clear();
     }
 

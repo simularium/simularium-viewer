@@ -1,6 +1,6 @@
-import { InstancedMesh } from "../simularium/rendering/InstancedMesh";
 import { Mesh } from "three";
 
+import { InstancedMesh } from "../simularium/rendering/InstancedMesh";
 import VisAgent from "../simularium/VisAgent";
 import GeometryStore, {
     DEFAULT_MESH_NAME,
@@ -9,19 +9,15 @@ import { GeometryDisplayType } from "../simularium/VisGeometry/types";
 import PDBModel from "../simularium/PDBModel";
 
 describe("GeometryStore module", () => {
-    describe("GeometryStore init", () => {
-        test("it creates a registry with a single mesh", () => {
-            const store = new GeometryStore();
-            store.init();
-            const registry = store.registry;
-
-            expect(registry.get(DEFAULT_MESH_NAME)).toBeTruthy();
-
-            expect(registry.size).toEqual(1);
-        });
+    test("it creates a registry with a single mesh", () => {
+        const store = new GeometryStore();
+        const registry = store.registry;
+        expect(registry.get(DEFAULT_MESH_NAME)).toBeTruthy();
+        expect(registry.size).toEqual(1);
+    });
+    describe("GeometryStore reset", () => {
         test("it clears out a registry", () => {
             const store = new GeometryStore();
-            store.init();
             const registry = store.registry;
             const addedItem = "to-delete";
             registry.set(addedItem, {
@@ -38,7 +34,7 @@ describe("GeometryStore module", () => {
             });
             expect(registry.get(addedItem)).toBeTruthy();
             expect(registry.size).toEqual(2);
-            store.init();
+            store.reset();
             expect(registry.get(DEFAULT_MESH_NAME)).toBeTruthy();
             expect(registry.get(addedItem)).toBeFalsy();
             expect(registry.size).toEqual(1);
@@ -47,7 +43,6 @@ describe("GeometryStore module", () => {
     describe("GeometryStore forEachMesh", () => {
         test("it modifies each mesh object in registry", () => {
             const store = new GeometryStore();
-            store.init();
             store.forEachMesh((geoMesh) => {
                 geoMesh.geometry.cancelled = true;
             });
@@ -60,7 +55,6 @@ describe("GeometryStore module", () => {
         });
         test("it wont modify PDBs", () => {
             const store = new GeometryStore();
-            store.init();
             const registry = store.registry;
             const pdbName = "pdb.pdb";
             registry.set(pdbName, {
@@ -85,19 +79,11 @@ describe("GeometryStore module", () => {
     describe("getGeoForAgentType", () => {
         test("it will return a geo if it exists", () => {
             const store = new GeometryStore();
-            store.init();
-            const mesh = store.getGeoForAgentType(DEFAULT_MESH_NAME);
-            expect(mesh).toBeTruthy();
-        });
-        test("it will return a geo if it exists", () => {
-            const store = new GeometryStore();
-            store.init();
             const mesh = store.getGeoForAgentType(DEFAULT_MESH_NAME);
             expect(mesh).toBeTruthy();
         });
         test("it will return a null if no geo exists", () => {
             const store = new GeometryStore();
-            store.init();
             const mesh = store.getGeoForAgentType("no mesh");
             expect(mesh).toBeNull();
         });
@@ -105,7 +91,6 @@ describe("GeometryStore module", () => {
     describe("cancelAll", () => {
         test("it will change all geometries to cancelled", () => {
             const store = new GeometryStore();
-            store.init();
             const registry = store.registry;
             const pdbName = "pdb.pdb";
             registry.set(pdbName, {
@@ -137,8 +122,8 @@ describe("GeometryStore module", () => {
     describe("mapKeyToGeom", () => {
         test("it returns a sphere geometry after storing it in the registry", async () => {
             const store = new GeometryStore();
-            store.init();
-            const returned = await store.mapKeyToGeom(1, {
+            const id = 1;
+            const returned = await store.mapKeyToGeom(id, {
                 displayType: GeometryDisplayType.SPHERE,
                 url: "",
                 color: "",
@@ -146,7 +131,11 @@ describe("GeometryStore module", () => {
             const registry = store.registry;
 
             expect(returned).toBeTruthy();
-            const savedMesh = registry.get("1-SPHERE");
+            const savedMesh = registry.get(
+                `${id}-${GeometryDisplayType.SPHERE}`
+            );
+            // returned and saveMesh will always exist, but typeScript is uncertain
+            // hence this if statement
             if (returned && savedMesh) {
                 expect(returned.geometry).toEqual(savedMesh.geometry);
                 expect(returned.displayType).toBeFalsy();
@@ -155,7 +144,6 @@ describe("GeometryStore module", () => {
         });
         test("if a request fails, returns a sphere with an error message", async () => {
             const store = new GeometryStore();
-            store.init();
             const returned = await store.mapKeyToGeom(1, {
                 displayType: GeometryDisplayType.OBJ,
                 url: "test",

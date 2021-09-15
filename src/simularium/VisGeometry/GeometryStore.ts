@@ -33,12 +33,24 @@ class GeometryStore {
         this._cachedAssets = new Map<string, string>();
         this._registry = new Map<string, AgentGeometry>();
         this.mlogger = jsLogger.get("geometry-store");
+        this._registry.set(DEFAULT_MESH_NAME, {
+            displayType: GeometryDisplayType.SPHERE,
+            geometry: {
+                mesh: new Mesh(VisAgent.sphereGeometry),
+                cancelled: false,
+                instances: new InstancedMesh(
+                    VisAgent.sphereGeometry,
+                    DEFAULT_MESH_NAME,
+                    1
+                ),
+            },
+        });
         if (loggerLevel) {
             this.mlogger.setLevel(loggerLevel);
         }
     }
 
-    public init(): void {
+    public reset(): void {
         this._geoLoadAttempted.clear();
         this._registry.clear();
         this._registry.set(DEFAULT_MESH_NAME, {
