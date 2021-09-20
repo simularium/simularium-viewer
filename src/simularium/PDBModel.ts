@@ -14,7 +14,6 @@ import { KMeansWorkerType } from "./worker/KMeansWorker";
 
 import KMeans from "./rendering/KMeans3d";
 import TaskQueue from "./worker/TaskQueue";
-import { REASON_CANCELLED } from "./worker/TaskQueue";
 
 interface PDBAtom {
     serial?: number;
@@ -73,7 +72,7 @@ class PDBModel {
     private bounds: Box3;
     // cancelled means we have abandoned this pdb
     // and if it is still initializing, it should be dropped/ignored as soon as processing is done
-    private cancelled: boolean;
+    private _cancelled: boolean;
 
     public constructor(filePath: string) {
         this.filePath = filePath;
@@ -81,16 +80,16 @@ class PDBModel {
         this.pdb = null;
         this.lods = [];
         this.lodSizes = [];
-        this.cancelled = false;
+        this._cancelled = false;
         this.bounds = new Box3();
     }
 
-    public setCancelled(): void {
-        this.cancelled = true;
+    public set cancelled(cancelled: boolean) {
+        this._cancelled = cancelled;
     }
 
-    public isCancelled(): boolean {
-        return this.cancelled;
+    public get cancelled(): boolean {
+        return this._cancelled;
     }
 
     public getNumAtoms(): number {
@@ -98,6 +97,8 @@ class PDBModel {
     }
 
     public parsePDBData(data: string): void {
+        // NOTE: pdb atom coordinates are in angstroms
+        // 1 nm is 10 angstroms
         this.pdb = parsePdb(data) as PDBType;
         if (this.pdb.atoms.length > 0) {
             this.fixupCoordinates();
@@ -105,27 +106,6 @@ class PDBModel {
             this.checkChains();
             return this.initializeLOD();
         }
-    }
-
-    public download(url: string): Promise<void> {
-        const pdbRequest = new Request(url);
-        return fetch(pdbRequest)
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error(
-                        `Error fetching ${this.filePath} from ${url}`
-                    );
-                }
-                return response.text();
-            })
-            .then((data) => {
-                if (this.cancelled) {
-                    return Promise.reject(REASON_CANCELLED);
-                }
-                // note pdb atom coordinates are in angstroms
-                // 1 nm is 10 angstroms
-                this.parsePDBData(data);
-            });
     }
 
     // build a fake random pdb

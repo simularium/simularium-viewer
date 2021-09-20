@@ -28,6 +28,7 @@ module.exports = {
             {
                 selector: "property",
                 format: ["camelCase", "UPPER_CASE"],
+                leadingUnderscore: "allow",
             },
             {
                 selector: "typeLike",

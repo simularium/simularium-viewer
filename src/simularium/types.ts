@@ -1,3 +1,5 @@
+import { GeometryDisplayType } from "./VisGeometry/types";
+
 export interface VisDataFrame {
     data: number[];
     frameNumber: number;
@@ -55,14 +57,6 @@ interface Plot {
 
 type CachedObservables = Plot[];
 
-export enum GeometryDisplayType {
-    PDB = "PDB",
-    OBJ = "OBJ",
-    SPHERE = "SPHERE",
-    CUBE = "CUBE",
-    GIZMO = "GIZMO",
-}
-// per agent type Visdata format
 export interface AgentTypeVisData {
     displayType: GeometryDisplayType;
     url: string;

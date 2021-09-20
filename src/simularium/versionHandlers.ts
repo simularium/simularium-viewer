@@ -4,11 +4,11 @@ import * as si from "si-prefix";
 import { DEFAULT_CAMERA_SPEC } from "../constants";
 import {
     AgentDisplayDataWithGeometry,
-    GeometryDisplayType,
     TrajectoryFileInfo,
     TrajectoryFileInfoAny,
     TrajectoryFileInfoV1,
 } from "./types";
+import { GeometryDisplayType } from "./VisGeometry/types";
 
 // the data may come in missing any of these values
 export interface AgentTypeVisDataPreProcessing {
