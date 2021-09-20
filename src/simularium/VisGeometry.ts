@@ -966,11 +966,15 @@ class VisGeometry {
             const entry: AgentDisplayDataWithGeometry = typeMapping[id];
             const { url, displayType } = entry.geometry;
             const lookupKey = url ? checkAndSanitizePath(url) : displayType;
+            // map id --> lookupKey
             this.visGeomMap.set(Number(id), lookupKey);
+            // get geom for lookupKey,
+            // will only load each geometry once, so may return nothing
+            // if the same geometry is assigned to more than one agent
             this.geometryStore
                 .mapKeyToGeom(Number(id), entry.geometry)
-                .then((returned) => {
-                    if (!returned) {
+                .then((newGeometryLoaded) => {
+                    if (!newGeometryLoaded) {
                         // no new geometry to load
                         return;
                     }
@@ -979,7 +983,7 @@ class VisGeometry {
                         displayType: returnedDisplayType,
                         geometry,
                         errorMessage,
-                    } = returned;
+                    } = newGeometryLoaded;
                     const newDisplayType = returnedDisplayType || displayType;
                     this.onNewRuntimeGeometryType(
                         lookupKey,
