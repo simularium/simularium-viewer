@@ -1229,7 +1229,11 @@ class VisGeometry {
         return agent;
     }
 
-    private renderPdb(typeId: number, visAgent: VisAgent, pdbEntry: PDBModel) {
+    private addPdbToDrawList(
+        typeId: number,
+        visAgent: VisAgent,
+        pdbEntry: PDBModel
+    ) {
         if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
             this.legacyRenderer.addPdb(
                 pdbEntry,
@@ -1245,7 +1249,7 @@ class VisGeometry {
         }
     }
 
-    private renderMesh(
+    private addMeshToDrawList(
         typeId: number,
         visAgent: VisAgent,
         meshEntry: MeshLoadRequest,
@@ -1287,7 +1291,7 @@ class VisGeometry {
         }
     }
 
-    private renderFiber(
+    private addFiberToDrawList(
         typeId: number,
         visAgent: VisAgent,
         agentData: AgentData
@@ -1420,10 +1424,15 @@ class VisGeometry {
                 const { geometry, displayType } = response;
                 if (geometry && displayType === GeometryDisplayType.PDB) {
                     const pdbEntry = geometry as PDBModel;
-                    this.renderPdb(typeId, visAgent, pdbEntry);
+                    this.addPdbToDrawList(typeId, visAgent, pdbEntry);
                 } else {
                     const meshEntry = geometry as MeshLoadRequest;
-                    this.renderMesh(typeId, visAgent, meshEntry, agentData);
+                    this.addMeshToDrawList(
+                        typeId,
+                        visAgent,
+                        meshEntry,
+                        agentData
+                    );
                 }
 
                 dx = agentData.x - lastx;
@@ -1442,7 +1451,7 @@ class VisGeometry {
                     );
                 }
             } else if (visType === VisTypes.ID_VIS_TYPE_FIBER) {
-                this.renderFiber(typeId, visAgent, agentData);
+                this.addFiberToDrawList(typeId, visAgent, agentData);
             }
         });
 
