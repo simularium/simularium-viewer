@@ -46,10 +46,10 @@ import {
 } from "../types";
 import { AgentData } from "../VisData";
 
-import SimulariumRenderer from "../rendering/SimulariumRenderer";
-import { InstancedFiberGroup } from "../rendering/InstancedFiber";
-import { InstancedMesh } from "../rendering/InstancedMesh";
-import { LegacyRenderer } from "../rendering/LegacyRenderer";
+import SimulariumRenderer from "./rendering/SimulariumRenderer";
+import { InstancedFiberGroup } from "./rendering/InstancedFiber";
+import { InstancedMesh } from "./rendering/InstancedMesh";
+import { LegacyRenderer } from "./rendering/LegacyRenderer";
 import GeometryStore, { DEFAULT_MESH_NAME } from "./GeometryStore";
 import {
     AgentGeometry,
