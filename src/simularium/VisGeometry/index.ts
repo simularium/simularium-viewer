@@ -29,32 +29,35 @@ import jsLogger from "js-logger";
 import { ILogger, ILogLevel } from "js-logger";
 import { cloneDeep, noop } from "lodash";
 
-import VisAgent from "./VisAgent";
-import VisTypes from "./VisTypes";
-import PDBModel from "./PDBModel";
-import FrontEndError from "./FrontEndError";
+import VisAgent from "../VisAgent";
+import VisTypes from "../VisTypes";
+import PDBModel from "../PDBModel";
+import FrontEndError from "../FrontEndError";
 
-import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC } from "../constants";
+import {
+    DEFAULT_CAMERA_Z_POSITION,
+    DEFAULT_CAMERA_SPEC,
+} from "../../constants";
 import {
     TrajectoryFileInfo,
     CameraSpec,
     EncodedTypeMapping,
     AgentDisplayDataWithGeometry,
-} from "./types";
-import { AgentData } from "./VisData";
+} from "../types";
+import { AgentData } from "../VisData";
 
-import SimulariumRenderer from "./rendering/SimulariumRenderer";
-import { InstancedFiberGroup } from "./rendering/InstancedFiber";
-import { InstancedMesh } from "./rendering/InstancedMesh";
-import { LegacyRenderer } from "./rendering/LegacyRenderer";
-import GeometryStore, { DEFAULT_MESH_NAME } from "./VisGeometry/GeometryStore";
+import SimulariumRenderer from "../rendering/SimulariumRenderer";
+import { InstancedFiberGroup } from "../rendering/InstancedFiber";
+import { InstancedMesh } from "../rendering/InstancedMesh";
+import { LegacyRenderer } from "../rendering/LegacyRenderer";
+import GeometryStore, { DEFAULT_MESH_NAME } from "./GeometryStore";
 import {
     AgentGeometry,
     GeometryDisplayType,
     MeshGeometry,
     MeshLoadRequest,
-} from "./VisGeometry/types";
-import { checkAndSanitizePath } from "../util";
+} from "./types";
+import { checkAndSanitizePath } from "../../util";
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 100000;
