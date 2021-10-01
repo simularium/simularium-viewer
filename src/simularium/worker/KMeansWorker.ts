@@ -1,7 +1,7 @@
 import "regenerator-runtime/runtime";
 import * as Comlink from "comlink";
 
-import KMeans3d from "../rendering/KMeans3d";
+import KMeans3d from "../VisGeometry/rendering/KMeans3d";
 
 class KMeansWorker {
     async run(k, sizes, data) {
