@@ -1,6 +1,6 @@
 import { Mesh } from "three";
 
-import { InstancedMesh } from "../simularium/rendering/InstancedMesh";
+import { InstancedMesh } from "../simularium/VisGeometry/rendering/InstancedMesh";
 import VisAgent from "../simularium/VisAgent";
 import GeometryStore, {
     DEFAULT_MESH_NAME,

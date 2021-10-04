@@ -12,7 +12,7 @@ import {
 
 import { KMeansWorkerType } from "./worker/KMeansWorker";
 
-import KMeans from "./rendering/KMeans3d";
+import KMeans from "./VisGeometry/rendering/KMeans3d";
 import TaskQueue from "./worker/TaskQueue";
 
 interface PDBAtom {

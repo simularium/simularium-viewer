@@ -5,7 +5,7 @@ import { BufferGeometry, Object3D, Mesh } from "three";
 
 import { checkAndSanitizePath } from "../../util";
 import PDBModel from "../PDBModel";
-import { InstancedMesh } from "../rendering/InstancedMesh";
+import { InstancedMesh } from "./rendering/InstancedMesh";
 import VisAgent from "../VisAgent";
 import TaskQueue from "../worker/TaskQueue";
 import { AgentTypeVisData } from "../types";

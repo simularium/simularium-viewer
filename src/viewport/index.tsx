@@ -16,7 +16,7 @@ import {
     NO_AGENT,
 } from "../simularium";
 import { TrajectoryFileInfoAny } from "../simularium/types";
-import { RenderStyle } from "../simularium/VisGeometry";
+import { RenderStyle } from "../simularium";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
 
 export type PropColor = string | number | [number, number, number];
@@ -213,7 +213,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
             try {
                 this.selectionInterface.parse(trajectoryFileInfo.typeMapping);
-            } catch (e) {
+            } catch (e: any) {
                 if (onError) {
                     onError(`error parsing 'typeMapping' data, ${e.message}`);
                 } else {

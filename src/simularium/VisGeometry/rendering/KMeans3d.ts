@@ -105,12 +105,7 @@ export default class KMeans {
     public dataDimensionExtents(data: Float32Array): number[] {
         //data = data || this.data;
         const extents = [
-            1000000,
-            1000000,
-            1000000,
-            -1000000,
-            -1000000,
-            -1000000,
+            1000000, 1000000, 1000000, -1000000, -1000000, -1000000,
         ];
 
         for (let i = 0; i < data.length / 3; i++) {

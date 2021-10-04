@@ -1,6 +1,6 @@
 import { Object3D } from "three";
 import PDBModel from "../PDBModel";
-import { InstancedMesh } from "../rendering/InstancedMesh";
+import { InstancedMesh } from "./rendering/InstancedMesh";
 
 export interface MeshLoadRequest {
     mesh: Object3D;
