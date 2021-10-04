@@ -97,8 +97,8 @@ export default class PdbSim implements IClientSimulatorImpl {
             agentData.push(this.pointsData[ii * 3 + 0]); // x
             agentData.push(this.pointsData[ii * 3 + 1]); // y
             agentData.push(this.pointsData[ii * 3 + 2]); // z
-            agentData.push(0); // rx
-            agentData.push(0); // ry
+            agentData.push(Math.random() * 3.14159265 * 0.5); // rx
+            agentData.push(Math.random() * 3.14159265 * 0.5); // ry
             agentData.push(0); // rz
             agentData.push(1.0); // collision radius
             agentData.push(0); // subpoints
