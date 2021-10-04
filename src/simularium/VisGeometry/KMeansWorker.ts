@@ -1,7 +1,7 @@
 import "regenerator-runtime/runtime";
 import * as Comlink from "comlink";
 
-import KMeans3d from "../VisGeometry/rendering/KMeans3d";
+import KMeans3d from "./rendering/KMeans3d";
 
 class KMeansWorker {
     async run(k, sizes, data) {
@@ -17,7 +17,3 @@ class KMeansWorker {
 export type KMeansWorkerType = typeof KMeansWorker;
 
 Comlink.expose(KMeansWorker);
-
-// I know of no other way to deal with this, see the documentation for webpack's worker-loader.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default self as any;

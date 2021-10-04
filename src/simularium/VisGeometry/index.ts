@@ -29,9 +29,9 @@ import jsLogger from "js-logger";
 import { ILogger, ILogLevel } from "js-logger";
 import { cloneDeep, noop } from "lodash";
 
-import VisAgent from "../VisAgent";
+import VisAgent from "./VisAgent";
 import VisTypes from "../VisTypes";
-import PDBModel from "../PDBModel";
+import PDBModel from "./PDBModel";
 import FrontEndError from "../FrontEndError";
 
 import {

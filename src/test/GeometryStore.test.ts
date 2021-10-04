@@ -1,12 +1,12 @@
 import { Mesh } from "three";
 
 import { InstancedMesh } from "../simularium/VisGeometry/rendering/InstancedMesh";
-import VisAgent from "../simularium/VisAgent";
+import VisAgent from "../simularium/VisGeometry/VisAgent";
 import GeometryStore, {
     DEFAULT_MESH_NAME,
 } from "../simularium/VisGeometry/GeometryStore";
 import { GeometryDisplayType } from "../simularium/VisGeometry/types";
-import PDBModel from "../simularium/PDBModel";
+import PDBModel from "../simularium/VisGeometry/PDBModel";
 
 describe("GeometryStore module", () => {
     test("it creates a registry with a single mesh", () => {

@@ -64,13 +64,13 @@ export class TaskQueue {
             this.numActiveWorkers++;
             // run the task
             item.promise()
-                .then(value => {
+                .then((value) => {
                     this.numActiveWorkers--;
                     item.resolve(value);
                     // as soon as I finish, check the queue for another task
                     this.dequeue();
                 })
-                .catch(err => {
+                .catch((err) => {
                     this.numActiveWorkers--;
                     item.reject(err);
                     // as soon as I fail, check the queue for another task

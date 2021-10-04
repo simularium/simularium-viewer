@@ -7,19 +7,16 @@ import {
 } from "three";
 
 import PDBModel from "./PDBModel";
-import VisTypes from "./VisTypes";
-import { AgentData } from "./VisData";
+import VisTypes from "../VisTypes";
+import { AgentData } from "../VisData";
 
 const NO_AGENT = -1;
 
 export default class VisAgent {
     private static readonly UNASSIGNED_MESH_COLOR = 0xff00ff;
     public static readonly UNASSIGNED_NAME_PREFIX = "Unassigned";
-    public static sphereGeometry: SphereBufferGeometry = new SphereBufferGeometry(
-        1,
-        32,
-        32
-    );
+    public static sphereGeometry: SphereBufferGeometry =
+        new SphereBufferGeometry(1, 32, 32);
 
     public agentData: AgentData;
 
@@ -122,9 +119,8 @@ export default class VisAgent {
         this.pdbObjects = pdb.instantiate();
         // glue the typeid, instanceid, radius to shader:
         for (let j = 0; j < this.pdbObjects.length; ++j) {
-            this.pdbObjects[j].onBeforeRender = this.onPdbBeforeRender.bind(
-                this
-            );
+            this.pdbObjects[j].onBeforeRender =
+                this.onPdbBeforeRender.bind(this);
         }
     }
 

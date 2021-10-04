@@ -4,10 +4,10 @@ import jsLogger, { ILogger, ILogLevel } from "js-logger";
 import { BufferGeometry, Object3D, Mesh } from "three";
 
 import { checkAndSanitizePath } from "../../util";
-import PDBModel from "../PDBModel";
+import PDBModel from "./PDBModel";
 import { InstancedMesh } from "./rendering/InstancedMesh";
-import VisAgent from "../VisAgent";
-import TaskQueue from "../worker/TaskQueue";
+import VisAgent from "./VisAgent";
+import TaskQueue from "../TaskQueue";
 import { AgentTypeVisData } from "../types";
 
 import {

@@ -10,10 +10,10 @@ import {
     Vector3,
 } from "three";
 
-import { KMeansWorkerType } from "./worker/KMeansWorker";
+import { KMeansWorkerType } from "./KMeansWorker";
 
-import KMeans from "./VisGeometry/rendering/KMeans3d";
-import TaskQueue from "./worker/TaskQueue";
+import KMeans from "./rendering/KMeans3d";
+import TaskQueue from "../TaskQueue";
 
 interface PDBAtom {
     serial?: number;
@@ -305,7 +305,7 @@ class PDBModel {
     private async processPdbLod(n, sizes, allData) {
         // https://webpack.js.org/guides/web-workers/#syntax
         const worker = new Worker(
-            new URL("./worker/KMeansWorker.ts", import.meta.url)
+            new URL("./KMeansWorker.ts", import.meta.url)
         );
         const kMeansWorkerClass = Comlink.wrap<KMeansWorkerType>(worker);
         const workerobj = await new kMeansWorkerClass();
