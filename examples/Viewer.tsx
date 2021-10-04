@@ -201,8 +201,8 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public turnAgentHighlightsOnOff(nameToToggle: string) {
-        let currentHighlightedAgents = this.state.selectionStateInfo
-            .highlightedAgents;
+        let currentHighlightedAgents =
+            this.state.selectionStateInfo.highlightedAgents;
         let nextHighlightedAgents = [];
         if (currentHighlightedAgents.some((a) => a.name === nameToToggle)) {
             nextHighlightedAgents = currentHighlightedAgents.filter(
@@ -301,6 +301,16 @@ class Viewer extends React.Component<{}, ViewerState> {
                 },
                 playbackFile
             );
+        } else if (playbackFile === "TEST_PDB") {
+            simulariumController.changeFile(
+                {
+                    clientSimulatorParams: {
+                        name: "my test sim",
+                        type: "PDBSIM",
+                    },
+                },
+                playbackFile
+            );
         } else {
             simulariumController.changeFile(
                 {
@@ -348,6 +358,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                     <option value="ATPsynthase_8.h5">ATP 8</option>
                     <option value="ATPsynthase_9.h5">ATP 9</option>
                     <option value="ATPsynthase_10.h5">ATP 10</option>
+                    <option value="TEST_PDB">TEST PDB</option>
                     <option value="TEST_FIBERS">TEST FIBERS</option>
                     <option value="TEST_POINTS">TEST POINTS</option>
                 </select>

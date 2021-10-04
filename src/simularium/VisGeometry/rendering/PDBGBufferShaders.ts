@@ -7,7 +7,6 @@ precision highp float;
 
     uniform vec2 iResolution;
     uniform float scale;
-    uniform float radius;
     uniform mat4 modelViewMatrix;
     uniform mat4 projectionMatrix;
 
@@ -15,11 +14,31 @@ precision highp float;
 
     out vec3 IN_viewPos;
     out float IN_radius;
+    out vec2 IN_instanceAndTypeId;
 
+    // per instance attributes
+    in vec4 translateAndScale; // xyz trans, w scale
+    in vec4 rotation; // quaternion
+    // instanceID, typeId, lod_scale
+    in vec3 instanceAndTypeId; 
+
+    vec3 applyQuaternionToVector( vec4 q, vec3 v ) {
+        return v + 2.0 * cross( q.xyz, cross( q.xyz, v ) + q.w * v );
+    }
+    
     void main()	{
         vec3 p = position.xyz;
+    
+        // per-instance transform
+        p *= translateAndScale.w;
+        p = applyQuaternionToVector(rotation, p);
+        p += translateAndScale.xyz;
+    
+        float radius = instanceAndTypeId.z;
+
         vec4 modelViewPosition = modelViewMatrix * vec4(p, 1.0);
         IN_viewPos = modelViewPosition.xyz;
+        IN_instanceAndTypeId = instanceAndTypeId.xy;
 
         gl_Position = projectionMatrix * modelViewPosition;
 
@@ -33,14 +52,13 @@ precision highp float;
 
 in vec3 IN_viewPos;
 in float IN_radius;
+in vec2 IN_instanceAndTypeId;
 
 layout(location = 0) out vec4 gAgentInfo;
 layout(location = 1) out vec4 gNormal;
 layout(location = 2) out vec4 gPos;
 
     uniform vec2 iResolution;
-    uniform float typeId;
-    uniform float instanceId;
     
     uniform float scale;
     uniform mat4 projectionMatrix;
@@ -66,7 +84,7 @@ layout(location = 2) out vec4 gPos;
 
         gl_FragDepth = fragPosDepth;
       
-        gAgentInfo = vec4(typeId, instanceId, fragViewPos.z, fragPosDepth);
+        gAgentInfo = vec4(IN_instanceAndTypeId.y, IN_instanceAndTypeId.x, fragViewPos.z, fragPosDepth);
         gNormal = vec4(normalOut, 1.0);
         gPos = vec4(fragViewPos.x, fragViewPos.y, fragViewPos.z, 1.0);
     }
@@ -76,13 +94,10 @@ layout(location = 2) out vec4 gPos;
 const multiMaterial = new RawShaderMaterial({
     glslVersion: GLSL3,
     uniforms: {
-        radius: { value: 1.0 },
         iResolution: { value: new Vector2() },
         scale: { value: 1.0 },
         modelViewMatrix: { value: new Matrix4() },
         projectionMatrix: { value: new Matrix4() },
-        typeId: { value: 0 },
-        instanceId: { value: 0 },
     },
     vertexShader: vertexShader,
     fragmentShader: fragmentShader,

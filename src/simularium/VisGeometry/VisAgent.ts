@@ -6,7 +6,6 @@ import {
     Vector3,
 } from "three";
 
-import PDBModel from "./PDBModel";
 import VisTypes from "../VisTypes";
 import { AgentData } from "../VisData";
 
@@ -21,11 +20,6 @@ export default class VisAgent {
     public agentData: AgentData;
 
     public fiberCurve?: CatmullRomCurve3;
-
-    // TODO can this default to a trivial single-atom pdb model?
-    public pdbModel?: PDBModel;
-    public pdbObjects: Object3D[];
-    public lod: number;
 
     public colorIndex: number;
     public active: boolean;
@@ -58,10 +52,6 @@ export default class VisAgent {
         this.highlighted = false;
 
         this.fiberCurve = undefined;
-
-        this.pdbModel = undefined;
-        this.pdbObjects = [];
-        this.lod = 0;
     }
 
     public resetMesh(): void {
@@ -81,12 +71,6 @@ export default class VisAgent {
             cr: 1.0,
             subpoints: [],
         };
-    }
-
-    public resetPDB(): void {
-        this.pdbModel = undefined;
-        this.pdbObjects = [];
-        this.lod = 0;
     }
 
     public setColor(color: Color, colorIndex: number): void {
@@ -112,16 +96,6 @@ export default class VisAgent {
         // Note, adding 1 to colorIndex because it can be 0 and the signed multiplier won't do anything.
         // This means we have to subtract 1 in the downstream code (the shaders) if we need the true value.
         return (this.colorIndex + 1) * (this.highlighted ? 1 : -1);
-    }
-
-    public setupPdb(pdb: PDBModel): void {
-        this.pdbModel = pdb;
-        this.pdbObjects = pdb.instantiate();
-        // glue the typeid, instanceid, radius to shader:
-        for (let j = 0; j < this.pdbObjects.length; ++j) {
-            this.pdbObjects[j].onBeforeRender =
-                this.onPdbBeforeRender.bind(this);
-        }
     }
 
     private onPdbBeforeRender(
@@ -150,77 +124,14 @@ export default class VisAgent {
             material.uniformsNeedUpdate = true;
         }
         if (material.uniforms.radius) {
-            material.uniforms.radius.value = (this.lod + 1) * 0.25; // * 8;
+            const lod = 0;
+            material.uniforms.radius.value = (lod + 1) * 0.25; // * 8;
             material.uniformsNeedUpdate = true;
         }
     }
 
-    public updatePdbTransform(scale: number): void {
-        for (let lod = 0; lod < this.pdbObjects.length; ++lod) {
-            const obj = this.pdbObjects[lod];
-            obj.position.x = this.agentData.x;
-            obj.position.y = this.agentData.y;
-            obj.position.z = this.agentData.z;
-
-            obj.rotation.x = this.agentData.xrot;
-            obj.rotation.y = this.agentData.yrot;
-            obj.rotation.z = this.agentData.zrot;
-
-            obj.scale.x = scale;
-            obj.scale.y = scale;
-            obj.scale.z = scale;
-        }
-    }
-
-    public selectLOD(index: number): void {
-        this.setPDBInvisible();
-        if (index < 0 || index >= this.pdbObjects.length) {
-            index = this.pdbObjects.length - 1;
-        }
-        this.lod = index;
-        this.pdbObjects[index].visible = true;
-    }
-
-    public setPDBInvisible(): void {
-        for (let j = 0; j < this.pdbObjects.length; ++j) {
-            this.pdbObjects[j].visible = false;
-        }
-    }
-
-    public renderAsMesh(): void {
-        this.setPDBInvisible();
-    }
-
-    public renderAsPDB(
-        myDistance: number,
-        distanceStops: number[],
-        lodBias: number
-    ): void {
-        for (let j = 0; j < distanceStops.length; ++j) {
-            // the first distance less than.
-            if (myDistance < distanceStops[j]) {
-                this.selectLOD(j + lodBias);
-                break;
-            }
-        }
-    }
-
-    public hide(): void {
-        this.setPDBInvisible();
-    }
-
     public hideAndDeactivate(): void {
-        this.hide();
         this.active = false;
-    }
-
-    public hasDrawablePDB(): boolean {
-        return (
-            this.pdbModel !== undefined &&
-            this.pdbModel.pdb !== null &&
-            this.pdbObjects.length > 0 &&
-            !this.pdbModel.name.startsWith(VisAgent.UNASSIGNED_NAME_PREFIX)
-        );
     }
 
     public updateFiber(subpoints: number[]): void {

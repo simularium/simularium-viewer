@@ -5,7 +5,7 @@ import { BufferGeometry, Object3D, Mesh } from "three";
 
 import { checkAndSanitizePath } from "../../util";
 import PDBModel from "./PDBModel";
-import { InstancedMesh } from "./rendering/InstancedMesh";
+import { InstancedMesh, InstanceType } from "./rendering/InstancedMesh";
 import VisAgent from "./VisAgent";
 import TaskQueue from "../TaskQueue";
 import { AgentTypeVisData } from "../types";
@@ -55,6 +55,7 @@ class GeometryStore {
                 mesh: new Mesh(VisAgent.sphereGeometry),
                 cancelled: false,
                 instances: new InstancedMesh(
+                    InstanceType.MESH,
                     VisAgent.sphereGeometry,
                     DEFAULT_MESH_NAME,
                     1
@@ -75,6 +76,7 @@ class GeometryStore {
                 mesh: new Mesh(VisAgent.sphereGeometry),
                 cancelled: false,
                 instances: new InstancedMesh(
+                    InstanceType.MESH,
                     VisAgent.sphereGeometry,
                     DEFAULT_MESH_NAME,
                     1
@@ -93,6 +95,17 @@ class GeometryStore {
             const { displayType } = value;
             if (displayType !== GeometryDisplayType.PDB) {
                 const agentGeo = value as MeshGeometry;
+                iteratee(agentGeo);
+            }
+        });
+    }
+
+    public forEachPDB(iteratee: (geo: PDBModel) => void): void {
+        // forEach method for manipulating ThreeJs Mesh objects
+        this._registry.forEach((value) => {
+            const { displayType } = value;
+            if (displayType === GeometryDisplayType.PDB) {
+                const agentGeo = value.geometry as PDBModel;
                 iteratee(agentGeo);
             }
         });
@@ -130,7 +143,12 @@ class GeometryStore {
         return {
             mesh: new Mesh(VisAgent.sphereGeometry),
             cancelled: false,
-            instances: new InstancedMesh(VisAgent.sphereGeometry, meshName, 1),
+            instances: new InstancedMesh(
+                InstanceType.MESH,
+                VisAgent.sphereGeometry,
+                meshName,
+                1
+            ),
         };
     }
 

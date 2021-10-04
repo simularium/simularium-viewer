@@ -16,7 +16,7 @@ in vec3 normal;
 in vec4 translateAndScale; // xyz trans, w scale
 in vec4 rotation; // quaternion
 // instanceID, typeId
-in vec2 instanceAndTypeId;
+in vec3 instanceAndTypeId;
 
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;

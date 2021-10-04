@@ -14,6 +14,7 @@ import { KMeansWorkerType } from "./KMeansWorker";
 
 import KMeans from "./rendering/KMeans3d";
 import TaskQueue from "../TaskQueue";
+import { InstancedMesh, InstanceType } from "./rendering/InstancedMesh";
 
 interface PDBAtom {
     serial?: number;
@@ -60,6 +61,7 @@ interface PDBType {
 type LevelOfDetail = {
     geometry: BufferGeometry;
     vertices: Float32Array;
+    instances: InstancedMesh;
 };
 
 class PDBModel {
@@ -251,13 +253,29 @@ class PDBModel {
         // fill LOD 0 with the raw points
         const lod0 = allData.slice();
         const geometry0 = this.createGPUBuffer(lod0);
-        this.lods.push({ geometry: geometry0, vertices: lod0 });
+        this.lods.push({
+            geometry: geometry0,
+            vertices: lod0,
+            instances: new InstancedMesh(
+                InstanceType.POINTS,
+                geometry0,
+                this.name + "_LOD0",
+                0
+            ),
+        });
         // start at 1, and add the rest
         for (let i = 1; i < this.lodSizes.length; ++i) {
             const loddata = KMeans.randomSeeds(this.lodSizes[i], allData);
+            const geometry = this.createGPUBuffer(loddata);
             this.lods.push({
-                geometry: this.createGPUBuffer(loddata),
+                geometry: geometry,
                 vertices: loddata,
+                instances: new InstancedMesh(
+                    InstanceType.POINTS,
+                    geometry,
+                    this.name + "_LOD" + i,
+                    0
+                ),
             });
         }
     }
@@ -285,10 +303,45 @@ class PDBModel {
 
         // update the new LODs
         for (let i = 0; i < sizes.length; ++i) {
-            this.lods[i + 1] = {
-                geometry: this.createGPUBuffer(retData[i]),
+            const lodIndex = i + 1;
+            // if old LOD existed we can dispose now.
+            if (this.lods[lodIndex]) {
+                this.lods[lodIndex].instances.dispose();
+            }
+            const geometry = this.createGPUBuffer(retData[i]);
+            this.lods[lodIndex] = {
+                geometry: geometry,
                 vertices: retData[i],
+                instances: new InstancedMesh(
+                    InstanceType.POINTS,
+                    geometry,
+                    this.name + "_LOD" + lodIndex,
+                    0
+                ),
             };
+        }
+    }
+
+    public numLODs(): number {
+        return this.lods.length;
+    }
+
+    public getLOD(index: number): InstancedMesh {
+        if (index < 0 || index >= this.lods.length) {
+            index = this.lods.length - 1;
+        }
+        return this.lods[index].instances;
+    }
+
+    public beginUpdate(): void {
+        for (let i = 0; i < this.lods.length; ++i) {
+            this.lods[i].instances.beginUpdate();
+        }
+    }
+
+    public endUpdate(): void {
+        for (let i = 0; i < this.lods.length; ++i) {
+            this.lods[i].instances.endUpdate();
         }
     }
 

@@ -5,7 +5,6 @@ import { InstancedMesh } from "./InstancedMesh";
 import {
     MRTShaders,
     setRenderPass,
-    setSceneRenderPass,
     updateProjectionMatrix,
     updateResolution,
 } from "./MultipassMaterials";
@@ -36,7 +35,6 @@ class GBufferPass {
     public pdbGbufferMaterials: MRTShaders;
 
     public scene: Scene;
-    public agentPDBGroup: Group;
 
     public instancedMeshGroup: Group;
     // instancedMeshGroup consists of fibers and meshes:
@@ -44,7 +42,6 @@ class GBufferPass {
     public meshTypes: InstancedMesh[];
 
     public constructor() {
-        this.agentPDBGroup = new Group();
         this.instancedMeshGroup = new Group();
         this.fibers = new InstancedFiberGroup();
         this.meshTypes = [];
@@ -55,12 +52,10 @@ class GBufferPass {
     }
 
     public setMeshGroups(
-        agentPDBGroup: Group,
         instancedMeshGroup: Group,
         fibers: InstancedFiberGroup,
         meshes: InstancedMesh[]
     ): void {
-        this.agentPDBGroup = agentPDBGroup;
         this.instancedMeshGroup = instancedMeshGroup;
         this.fibers = fibers;
         this.meshTypes = meshes;
@@ -79,6 +74,7 @@ class GBufferPass {
         const c = renderer.getClearColor(new Color()).clone();
         const a = renderer.getClearAlpha();
 
+        // TODO necessary??  now handled in the meshTypes loop below
         updateProjectionMatrix(
             this.pdbGbufferMaterials,
             camera.projectionMatrix
@@ -103,12 +99,11 @@ class GBufferPass {
         renderer.clear();
         renderer.autoClear = false;
 
+        // TODO guess what, everybody is instanced now
         const DO_INSTANCED = true;
-        const DO_PDB = true;
 
         if (DO_INSTANCED) {
             // draw instanced things
-            this.agentPDBGroup.visible = false;
             this.instancedMeshGroup.visible = true;
 
             this.fibers.setRenderPass();
@@ -120,18 +115,6 @@ class GBufferPass {
             }
             renderer.render(scene, camera);
             // end draw instanced things
-            renderer.autoClear = false;
-            scene.overrideMaterial = null;
-        }
-
-        if (DO_PDB) {
-            // begin draw pdb
-            this.agentPDBGroup.visible = true;
-            this.instancedMeshGroup.visible = false;
-
-            setSceneRenderPass(scene, this.pdbGbufferMaterials);
-            renderer.render(scene, camera);
-            //end draw pdb
             renderer.autoClear = false;
             scene.overrideMaterial = null;
         }

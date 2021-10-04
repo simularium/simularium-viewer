@@ -4,19 +4,25 @@ import {
     InstancedBufferAttribute,
     InstancedBufferGeometry,
     Mesh,
+    Points,
     Quaternion,
 } from "three";
 
 import InstancedMeshShader from "./InstancedMeshShader";
 import { MRTShaders } from "./MultipassMaterials";
+import PDBGBufferShaders from "./PDBGBufferShaders";
 
 const tmpQuaternion = new Quaternion();
 const tmpEuler = new Euler();
 
+export enum InstanceType {
+    MESH,
+    POINTS,
+}
+
 class InstancedMesh {
-    // number of control points per curve instance
-    private meshGeometry: BufferGeometry;
-    private mesh: Mesh;
+    private baseGeometry: BufferGeometry;
+    private drawable: Mesh | Points;
     private shaderSet: MRTShaders;
     private instancedGeometry: InstancedBufferGeometry;
 
@@ -28,10 +34,18 @@ class InstancedMesh {
     private currentInstance: number;
     private isUpdating: boolean;
 
-    constructor(meshGeometry: BufferGeometry, name: string, count: number) {
-        this.meshGeometry = meshGeometry;
-        this.mesh = new Mesh(meshGeometry);
-        this.mesh.name = name;
+    constructor(
+        type: InstanceType,
+        baseGeometry: BufferGeometry,
+        name: string,
+        count: number
+    ) {
+        this.baseGeometry = baseGeometry;
+        this.drawable =
+            type === InstanceType.MESH
+                ? new Mesh(baseGeometry)
+                : new Points(baseGeometry);
+        this.drawable.name = name;
 
         this.currentInstance = 0;
         this.isUpdating = false;
@@ -39,7 +53,10 @@ class InstancedMesh {
         this.instancedGeometry = new InstancedBufferGeometry();
         this.instancedGeometry.instanceCount = 0;
 
-        this.shaderSet = InstancedMeshShader.shaderSet;
+        this.shaderSet =
+            type === InstanceType.MESH
+                ? InstancedMeshShader.shaderSet
+                : PDBGBufferShaders.shaderSet;
 
         // make typescript happy. these will be reallocated in reallocate()
         this.positionAttribute = new InstancedBufferAttribute(
@@ -56,13 +73,13 @@ class InstancedMesh {
         );
 
         // because instanced, threejs needs to know not to early cull
-        this.mesh.frustumCulled = false;
+        this.drawable.frustumCulled = false;
 
         this.reallocate(count);
     }
 
-    public getMesh(): Mesh {
-        return this.mesh;
+    public getMesh(): Mesh | Points {
+        return this.drawable;
     }
 
     public getShaders(): MRTShaders {
@@ -73,14 +90,20 @@ class InstancedMesh {
         return this.instanceAttribute.count;
     }
 
+    public instanceCount(): number {
+        return this.instancedGeometry.instanceCount;
+    }
+
     private updateInstanceCount(n: number): void {
         //console.log("total draws = " + n);
         this.instancedGeometry.instanceCount = n;
     }
 
     public replaceGeometry(geometry: BufferGeometry, name: string): void {
-        this.mesh.name = name;
-        this.meshGeometry = geometry;
+        // TODO this does not handle changing mesh to points or vice versa.
+        // e.g you can't have PDBs start out as spheres and then async transition to PDBs
+        this.drawable.name = name;
+        this.baseGeometry = geometry;
         this.reallocate(this.getCapacity());
     }
 
@@ -90,10 +113,10 @@ class InstancedMesh {
 
         // we must create a new Geometry to have things update correctly
         this.instancedGeometry = new InstancedBufferGeometry().copy(
-            this.meshGeometry
+            this.baseGeometry
         );
         // install the new geometry into our Mesh object
-        this.mesh.geometry = this.instancedGeometry;
+        this.drawable.geometry = this.instancedGeometry;
 
         // make new array,
         // copy old array into it,
@@ -112,11 +135,11 @@ class InstancedMesh {
         this.rotationAttribute = new InstancedBufferAttribute(newRot, 4, false);
         this.instancedGeometry.setAttribute("rotation", this.rotationAttribute);
 
-        const newInst = new Float32Array(2 * n);
+        const newInst = new Float32Array(3 * n);
         newInst.set(this.instanceAttribute.array);
         this.instanceAttribute = new InstancedBufferAttribute(
             newInst,
-            2,
+            3,
             false
         );
         this.instancedGeometry.setAttribute(
@@ -133,6 +156,7 @@ class InstancedMesh {
     beginUpdate(): void {
         this.isUpdating = true;
         this.currentInstance = 0;
+        this.updateInstanceCount(0);
     }
 
     private checkRealloc(count: number) {
@@ -162,14 +186,15 @@ class InstancedMesh {
         ry: number,
         rz: number,
         uniqueAgentId: number,
-        typeId: number
+        typeId: number,
+        lodScale = 1
     ): void {
         const offset = this.currentInstance;
         this.checkRealloc(this.currentInstance + 1);
         this.positionAttribute.setXYZW(offset, x, y, z, scale);
         const q = tmpQuaternion.setFromEuler(tmpEuler.set(rx, ry, rz));
         this.rotationAttribute.setXYZW(offset, q.x, q.y, q.z, q.w);
-        this.instanceAttribute.setXY(offset, uniqueAgentId, typeId);
+        this.instanceAttribute.setXYZ(offset, uniqueAgentId, typeId, lodScale);
 
         this.currentInstance++;
     }

@@ -1,6 +1,7 @@
 import { IClientSimulatorImpl } from "./IClientSimulatorImpl";
 import CurveSimulator from "./CurveSimulator";
 import PointSimulator from "./PointSimulator";
+import PdbSimulator from "./PdbSimulator";
 
 export interface ClientSimulatorParams {
     type: string;
@@ -20,6 +21,8 @@ export function createSimulator(
             params["nPoints"] as number,
             params["nTypes"] as number
         );
+    } else if (params.type === "PDBSIM") {
+        return new PdbSimulator();
     }
     throw new Error("unknown simulator type");
 }
