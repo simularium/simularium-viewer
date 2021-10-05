@@ -1,15 +1,14 @@
 import {
     IClientSimulatorImpl,
     ClientMessageEnum,
-} from "./IClientSimulatorImpl";
+} from "../src/simularium/localSimulators/IClientSimulatorImpl";
 import {
     EncodedTypeMapping,
     TrajectoryFileInfo,
     VisDataMessage,
-} from "../types";
-import { GeometryDisplayType } from "../VisGeometry/types";
-import VisTypes from "../VisTypes";
-import { DEFAULT_CAMERA_SPEC } from "../../constants";
+} from "../src/simularium/types";
+import VisTypes from "../src/simularium/VisTypes";
+import { GeometryDisplayType } from "../src/simularium/VisGeometry/types";
 
 export default class PdbSim implements IClientSimulatorImpl {
     nPoints: number;
@@ -17,13 +16,16 @@ export default class PdbSim implements IClientSimulatorImpl {
     currentFrame: number;
     nTypes: number;
     size: [number, number, number];
+    agentdata: number[];
 
-    constructor(nPoints = 4000, nTypes = 4) {
+    constructor(nPoints = 16000, nTypes = 4) {
         this.currentFrame = 0;
         this.size = [250, 250, 250];
         this.nPoints = nPoints;
         this.nTypes = nTypes;
         this.pointsData = this.makePoints(nPoints);
+        // 11 is the number of numbers for each agent
+        this.agentdata = new Array(nPoints * 11);
     }
 
     private randomFloat(min, max) {
@@ -73,7 +75,7 @@ export default class PdbSim implements IClientSimulatorImpl {
 
     public update(_dt: number): VisDataMessage {
         //const dt_adjusted = dt / 1000;
-        const amplitude = this.size[0] * 0.05;
+        const amplitude = this.size[0] * 0.01;
         for (let ii = 0; ii < this.nPoints; ++ii) {
             this.pointsData[ii * 3 + 0] += this.randomFloat(
                 -amplitude,
@@ -89,19 +91,19 @@ export default class PdbSim implements IClientSimulatorImpl {
             );
         }
         // fill agent data.
-        const agentData: number[] = [];
+        // optimize: preallocate this array? maybe even use Float32Array?
         for (let ii = 0; ii < this.nPoints; ++ii) {
-            agentData.push(VisTypes.ID_VIS_TYPE_DEFAULT); // vis type
-            agentData.push(ii); // instance id
-            agentData.push(ii % this.nTypes); // type
-            agentData.push(this.pointsData[ii * 3 + 0]); // x
-            agentData.push(this.pointsData[ii * 3 + 1]); // y
-            agentData.push(this.pointsData[ii * 3 + 2]); // z
-            agentData.push(Math.random() * 3.14159265 * 0.5); // rx
-            agentData.push(Math.random() * 3.14159265 * 0.5); // ry
-            agentData.push(0); // rz
-            agentData.push(1.0); // collision radius
-            agentData.push(0); // subpoints
+            this.agentdata[ii * 11 + 0] = VisTypes.ID_VIS_TYPE_DEFAULT; // vis type
+            this.agentdata[ii * 11 + 1] = ii; // instance id
+            this.agentdata[ii * 11 + 2] = ii % this.nTypes; // type
+            this.agentdata[ii * 11 + 3] = this.pointsData[ii * 3 + 0]; // x
+            this.agentdata[ii * 11 + 4] = this.pointsData[ii * 3 + 1]; // y
+            this.agentdata[ii * 11 + 5] = this.pointsData[ii * 3 + 2]; // z
+            this.agentdata[ii * 11 + 6] = Math.random() * 3.14159265 * 0.5; // rx
+            this.agentdata[ii * 11 + 7] = Math.random() * 3.14159265 * 0.5; // ry
+            this.agentdata[ii * 11 + 8] = 0; // rz
+            this.agentdata[ii * 11 + 9] = 1.0; // collision radius
+            this.agentdata[ii * 11 + 10] = 0; // subpoints
         }
         const frameData: VisDataMessage = {
             // TODO get msgType out of here
@@ -110,7 +112,7 @@ export default class PdbSim implements IClientSimulatorImpl {
             bundleSize: 1, // frames
             bundleData: [
                 {
-                    data: agentData,
+                    data: this.agentdata,
                     frameNumber: this.currentFrame,
                     time: this.currentFrame,
                 },

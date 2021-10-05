@@ -12,6 +12,10 @@ import SimulariumViewer, {
 import "./style.css";
 import { isEqual, findIndex } from "lodash";
 
+import PointSimulator from "./PointSimulator";
+import PdbSimulator from "./PdbSimulator";
+import CurveSimulator from "./CurveSimulator";
+
 const netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
     serverPort: 9002,
@@ -280,34 +284,21 @@ class Viewer extends React.Component<{}, ViewerState> {
         if (playbackFile === "TEST_POINTS") {
             simulariumController.changeFile(
                 {
-                    clientSimulatorParams: {
-                        name: "my test sim",
-                        type: "POINTSIM",
-                        nPoints: 8000,
-                        nTypes: 4,
-                    },
+                    clientSimulator: new PointSimulator(8000, 4),
                 },
                 playbackFile
             );
         } else if (playbackFile === "TEST_FIBERS") {
             simulariumController.changeFile(
                 {
-                    clientSimulatorParams: {
-                        name: "my test sim",
-                        type: "CURVESIM",
-                        nCurves: 1000,
-                        nTypes: 4,
-                    },
+                    clientSimulator: new CurveSimulator(1000, 4),
                 },
                 playbackFile
             );
         } else if (playbackFile === "TEST_PDB") {
             simulariumController.changeFile(
                 {
-                    clientSimulatorParams: {
-                        name: "my test sim",
-                        type: "PDBSIM",
-                    },
+                    clientSimulator: new PdbSimulator(),
                 },
                 playbackFile
             );

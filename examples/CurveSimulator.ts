@@ -1,14 +1,14 @@
 import {
     IClientSimulatorImpl,
     ClientMessageEnum,
-} from "./IClientSimulatorImpl";
+} from "../src/simularium/localSimulators/IClientSimulatorImpl";
 import {
     EncodedTypeMapping,
     TrajectoryFileInfo,
     VisDataMessage,
-} from "../types";
-import VisTypes from "../VisTypes";
-import { DEFAULT_CAMERA_SPEC } from "../../constants";
+} from "../src/simularium/types";
+import VisTypes from "../src/simularium/VisTypes";
+import { DEFAULT_CAMERA_SPEC } from "../src/constants";
 
 export default class CurveSim implements IClientSimulatorImpl {
     nCurves: number;
@@ -102,15 +102,12 @@ export default class CurveSim implements IClientSimulatorImpl {
         const amplitude = 0.05;
         for (let ii = 0; ii < this.nCurves; ++ii) {
             for (let jj = 0; jj < this.nPointsPerCurve; ++jj) {
-                this.curveData[
-                    ii * nFloatsPerCurve + jj * 3 + 0
-                ] += this.randomFloat(-amplitude, amplitude);
-                this.curveData[
-                    ii * nFloatsPerCurve + jj * 3 + 1
-                ] += this.randomFloat(-amplitude, amplitude);
-                this.curveData[
-                    ii * nFloatsPerCurve + jj * 3 + 2
-                ] += this.randomFloat(-amplitude, amplitude);
+                this.curveData[ii * nFloatsPerCurve + jj * 3 + 0] +=
+                    this.randomFloat(-amplitude, amplitude);
+                this.curveData[ii * nFloatsPerCurve + jj * 3 + 1] +=
+                    this.randomFloat(-amplitude, amplitude);
+                this.curveData[ii * nFloatsPerCurve + jj * 3 + 2] +=
+                    this.randomFloat(-amplitude, amplitude);
             }
         }
         // fill agent data.
