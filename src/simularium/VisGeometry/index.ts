@@ -1266,7 +1266,8 @@ class VisGeometry {
             this.legacyRenderer.addPdb(
                 pdbEntry,
                 visAgent,
-                this.getColorForTypeId(typeId)
+                this.getColorForTypeId(typeId),
+                this.lodDistanceStops
             );
         } else {
             // if the pdb doesn't have any lods yet then we can't draw with it.
