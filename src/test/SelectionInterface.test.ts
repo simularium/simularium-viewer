@@ -1,4 +1,5 @@
-import { SelectionInterface } from "../simularium";
+import { mapValues } from "lodash";
+import { EncodedTypeMapping, SelectionInterface } from "../simularium";
 
 const idMapping = {
     0: { name: "A" },
@@ -19,7 +20,7 @@ const idMapping = {
 const color = "";
 
 describe("SelectionInterface module", () => {
-    describe("Handles Input", () => {
+    describe("decode", () => {
         test("Can decode valid encoded input", () => {
             const input = "name#tag1_tag2";
             const si = new SelectionInterface();
@@ -47,7 +48,7 @@ describe("SelectionInterface module", () => {
         });
     });
 
-    describe("Parsing", () => {
+    describe("parse", () => {
         test("Parse id-name mapping", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
@@ -58,6 +59,64 @@ describe("SelectionInterface module", () => {
             expect(si.containsName("D")).toEqual(true);
             expect(si.containsTag("t1")).toEqual(true);
             expect(si.containsTag("t2")).toEqual(true);
+        });
+    });
+
+    describe("getUnmodifiedStateId", () => {
+        test("it returns the id of the unmodified state", () => {
+            const si = new SelectionInterface();
+            si.parse(idMapping);
+            const unmodA = si.getUnmodifiedStateId("A");
+            const unmodB = si.getUnmodifiedStateId("B");
+            const unmodC = si.getUnmodifiedStateId("C");
+            const unmodD = si.getUnmodifiedStateId("D");
+
+            expect(unmodA).toEqual(0);
+            expect(unmodB).toEqual(4);
+            expect(unmodC).toEqual(8);
+            expect(unmodD).toEqual(12);
+        });
+        test("it returns null if no unmodified state", () => {
+            const si = new SelectionInterface();
+            si.parse(idMapping);
+            const unmod = si.getUnmodifiedStateId("E");
+            expect(unmod).toBeNull;
+        });
+    });
+
+    describe("getColorsForName", () => {
+        test("it returns a list of colors for every id an agent name has", () => {
+            const si = new SelectionInterface();
+            si.parse(idMapping);
+            const agentName = "A";
+            const colors = si.getColorsForName(agentName);
+            const ids = si.getIds(agentName);
+            expect(colors.length).toEqual(ids.length);
+        });
+        test("it returns an array of empty strings if no user ids given", () => {
+            const si = new SelectionInterface();
+            si.parse(idMapping);
+            const agentName = "A";
+            const colors = si.getColorsForName(agentName);
+            expect(colors).toEqual(["", "", "", ""]);
+        });
+        test("it returns an array of colors if they are given", () => {
+            const si = new SelectionInterface();
+            const color = "#aaaaa";
+            const idMappingWithColors = mapValues(idMapping, (entry) => {
+                return {
+                    ...entry,
+                    geometry: {
+                        url: "",
+                        displayType: "",
+                        color,
+                    },
+                };
+            });
+            si.parse(idMappingWithColors as EncodedTypeMapping);
+            const agentName = "A";
+            const colors = si.getColorsForName(agentName);
+            expect(colors).toEqual([color, color, color, color]);
         });
     });
 
