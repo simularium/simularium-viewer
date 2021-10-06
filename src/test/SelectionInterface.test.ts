@@ -16,13 +16,14 @@ const idMapping = {
     12: { name: "D" },
     13: { name: "E#t1000" },
 };
+const color = "";
 
 describe("SelectionInterface module", () => {
     describe("Handles Input", () => {
         test("Can decode valid encoded input", () => {
             const input = "name#tag1_tag2";
             const si = new SelectionInterface();
-            si.decode(input);
+            si.decode(input, color);
 
             expect(si.containsName("name"));
             expect(si.containsTag("tag1"));
@@ -32,7 +33,7 @@ describe("SelectionInterface module", () => {
         test("Can decode valid untagged input", () => {
             const input = "name";
             const si = new SelectionInterface();
-            si.decode(input);
+            si.decode(input, color);
 
             expect(si.containsName("name"));
         });
@@ -41,7 +42,7 @@ describe("SelectionInterface module", () => {
             const input = "#no_name";
             const si = new SelectionInterface();
             expect(() => {
-                si.decode(input);
+                si.decode(input, color);
             }).toThrowError();
         });
     });
