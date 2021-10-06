@@ -95,7 +95,7 @@ class SelectionInterface {
         }
 
         const uniqueTags = [...new Set(tags)];
-        const entry = { id: id, name: name, tags: uniqueTags, color };
+        const entry = { id, name, tags: uniqueTags, color };
         if (!this.containsName(name)) {
             this.entries[name] = [];
         }
