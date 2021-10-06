@@ -11,6 +11,7 @@
         "lint": "eslint src/**/*.ts src/**/*.tsx",
         "test": "jest src/**/*.test.ts --coverage",
         "typeCheck": "tsc -p tsconfig.json --noEmit",
+        "all-checks": "npm-run-all lint test typeCheck",
         "generateTypes": "tsc -p tsconfig.base.json --emitDeclarationOnly",
         "bundle": "BABEL_ENV=es NODE_ENV=production webpack --config webpack.config.js",
         "transpileES": "TS_NODE_PROJECT=tsconfig.es.json BABEL_ENV=es babel src --out-dir es --extensions .ts,.tsx --ignore src/**/*.test.ts",
