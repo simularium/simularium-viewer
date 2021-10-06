@@ -508,9 +508,9 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                 // otherwise, we need to update any user defined colors
                 newColors.forEach((color, index) => {
                     // color for each agent id (can be different states of a single
-                    // entity. Ie, bound and unbound states.
+                    // entity, ie, bound and unbound states).
                     // All agents with unspecified colors in this grouping
-                    // will still get the same color as each other
+                    // will still get the same default color as each other
                     let agentColorIndex = defaultColorIndex;
                     if (color) {
                         agentColorIndex = this.colors.indexOf(color);
