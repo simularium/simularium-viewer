@@ -930,7 +930,7 @@ class VisGeometry {
 
     public setColorForIds(ids: number[], colorId: number): void {
         /**
-         * Sets one color for a set if ids, using an index into a color array
+         * Sets one color for a set of ids, using an index into a color array
          * @param ids agent ids that should all have the same color
          * @param colorId index into the color array
          */
