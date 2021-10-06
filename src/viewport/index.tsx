@@ -221,57 +221,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                 }
             }
             onTrajectoryFileInfoChanged(trajectoryFileInfo);
-
-            this.visGeometry.clearColorMapping();
-            const uiDisplayData = this.selectionInterface.getUIDisplayData();
-            let defaultColorIndex = 0;
-            let needToUpdateMaterials = false;
-
-            uiDisplayData.forEach((entry) => {
-                // list of ids that all have this same name
-                const ids = this.selectionInterface.getIds(entry.name);
-                const newColors = this.selectionInterface.getColorsForName(entry.name);
-                const hasNewColors = filter(newColors).length > 0
-                if (!hasNewColors) {
-                    // if no colors have been by the user set for this name, 
-                    // just give all states of this agent name the same color
-                    this.visGeometry.setColorForIds(ids, defaultColorIndex)
-                    defaultColorIndex++;
-                    return
-                }
-                newColors.forEach((color, index) => {
-                    let colorIndex = defaultColorIndex
-                    if (color) {
-                        colorIndex = this.colors.indexOf(color)
-                        if (colorIndex == -1) {
-                            // add color to color array
-                            // const colorNum = hexStringToNumber(color)
-                            this.colors = [...this.colors, color];
-                            colorIndex = this.colors.length - 1;
-                        }
-                        needToUpdateMaterials = true
-                    } 
-                    this.visGeometry.setColorForId(
-                        ids[index],
-                        colorIndex
-                    );
-
-                })
-                entry.color =
-                    "#" +
-                    this.visGeometry
-                        .getColorForIndex(defaultColorIndex)
-                        .getHexString();
-                // if we used any of the default color array
-                if (filter(newColors).length !== ids.length) {
-
-                    defaultColorIndex = defaultColorIndex + 1;
-                }
-            });
-            if (needToUpdateMaterials) {
-                this.visGeometry.createMaterials(this.colors)
-            }
-            this.visGeometry.finalizeIdColorMapping();
+            const uiDisplayData = this.setAgentColors();
             onUIDisplayDataChanged(uiDisplayData);
         };
 
@@ -528,6 +478,58 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             }
             this.visGeometry.setFollowObject(NO_AGENT);
         }
+    }
+
+    private setAgentColors() {
+
+        this.visGeometry.clearColorMapping();
+        const uiDisplayData = this.selectionInterface.getUIDisplayData();
+        let defaultColorIndex = 0;
+        let needToUpdateMaterials = false;
+
+        uiDisplayData.forEach((entry) => {
+            // list of ids that all have this same name
+            const ids = this.selectionInterface.getIds(entry.name);
+            const newColors = this.selectionInterface.getColorsForName(
+                entry.name
+            );
+            const hasNewColors = filter(newColors).length > 0;
+            if (!hasNewColors) {
+                // if no colors have been by the user set for this name,
+                // just give all states of this agent name the same color
+                this.visGeometry.setColorForIds(ids, defaultColorIndex);
+                defaultColorIndex++;
+                return;
+            }
+            newColors.forEach((color, index) => {
+                let colorIndex = defaultColorIndex;
+                if (color) {
+                    colorIndex = this.colors.indexOf(color);
+                    if (colorIndex == -1) {
+                        // add color to color array
+                        // const colorNum = hexStringToNumber(color)
+                        this.colors = [...this.colors, color];
+                        colorIndex = this.colors.length - 1;
+                    }
+                    needToUpdateMaterials = true;
+                }
+                this.visGeometry.setColorForId(ids[index], colorIndex);
+            });
+            entry.color =
+                "#" +
+                this.visGeometry
+                    .getColorForIndex(defaultColorIndex)
+                    .getHexString();
+            // if we used any of the default color array
+            if (filter(newColors).length !== ids.length) {
+                defaultColorIndex = defaultColorIndex + 1;
+            }
+        });
+        if (needToUpdateMaterials) {
+            this.visGeometry.createMaterials(this.colors);
+        }
+        this.visGeometry.finalizeIdColorMapping();
+        return uiDisplayData;
     }
 
     private handleTimeChange(e: Event): void {
