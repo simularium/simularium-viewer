@@ -99,7 +99,7 @@ class GBufferPass {
         renderer.clear();
         renderer.autoClear = false;
 
-        // TODO guess what, everybody is instanced now
+        // everybody (pdb, mesh, and fiber) is instanced now
         const DO_INSTANCED = true;
 
         if (DO_INSTANCED) {

@@ -76,6 +76,7 @@ export default class PdbSim implements IClientSimulatorImpl {
     public update(_dt: number): VisDataMessage {
         //const dt_adjusted = dt / 1000;
         const amplitude = this.size[0] * 0.01;
+        // fill agent data.
         for (let ii = 0; ii < this.nPoints; ++ii) {
             this.pointsData[ii * 3 + 0] += this.randomFloat(
                 -amplitude,
@@ -89,10 +90,7 @@ export default class PdbSim implements IClientSimulatorImpl {
                 -amplitude,
                 amplitude
             );
-        }
-        // fill agent data.
-        // optimize: preallocate this array? maybe even use Float32Array?
-        for (let ii = 0; ii < this.nPoints; ++ii) {
+
             this.agentdata[ii * 11 + 0] = VisTypes.ID_VIS_TYPE_DEFAULT; // vis type
             this.agentdata[ii * 11 + 1] = ii; // instance id
             this.agentdata[ii * 11 + 2] = ii % this.nTypes; // type

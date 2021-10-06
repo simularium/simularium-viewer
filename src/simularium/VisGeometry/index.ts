@@ -162,7 +162,7 @@ class VisGeometry {
     private focusMode: boolean;
 
     // Scene update will populate these lists of visible pdb agents.
-    // These lists are reserved and iterated at render time to detemine LOD.
+    // These lists are iterated at render time to detemine LOD.
     // This is because camera updates happen at a different frequency than scene updates.
     private agentsWithPdbsToDraw: VisAgent[];
     private agentPdbsToDraw: PDBModel[];

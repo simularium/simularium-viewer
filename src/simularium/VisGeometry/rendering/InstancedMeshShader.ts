@@ -64,7 +64,7 @@ void main() {
     vec3 fragPosNDC = fragPosClip.xyz / fragPosClip.w;
     float n = gl_DepthRange.near;
     float f = gl_DepthRange.far;
-    // TODO: is this the smae as gl_FragCoord.z ???
+    // TODO: is this the same as gl_FragCoord.z ???
     float fragPosDepth = (((f - n) * fragPosNDC.z) + n + f) / 2.0;
 
     gAgentInfo = vec4(IN_instanceAndTypeId.y, IN_instanceAndTypeId.x, fragViewPos.z, fragPosDepth);

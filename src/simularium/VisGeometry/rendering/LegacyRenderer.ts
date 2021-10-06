@@ -125,8 +125,6 @@ class LegacyRenderer {
         color: Color,
         distances: number[]
     ): void {
-        // TODO: maybe could only instantiate one LOD at this time??
-
         const pdbGroup = new LOD();
         const pdbObjects: Object3D[] = pdb.instantiate();
         // update pdb transforms too
