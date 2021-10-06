@@ -102,10 +102,10 @@ class SelectionInterface {
         this.entries[name].push(entry);
     }
 
-    public getUnmodifiedStateId(name: string): number {
+    public getUnmodifiedStateId(name: string): number | null {
         const entryList = this.entries[name];
         if (!entryList) {
-            null;
+            return null;
         }
 
         const unmodified = entryList.find((entry: DecodedTypeEntry) => {
