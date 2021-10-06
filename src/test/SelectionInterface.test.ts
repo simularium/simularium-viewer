@@ -108,7 +108,7 @@ describe("SelectionInterface module", () => {
         });
         test("it returns an array of colors if they are given", () => {
             const si = new SelectionInterface();
-            const color = "#aaaaa";
+            const color = "#aaaaaa";
             const idMappingWithColors = mapValues(idMapping, (entry) => {
                 return {
                     ...entry,
