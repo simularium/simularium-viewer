@@ -213,7 +213,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
             try {
                 this.selectionInterface.parse(trajectoryFileInfo.typeMapping);
-            } catch (e: any) {
+            } catch (e) {
                 if (onError) {
                     onError(`error parsing 'typeMapping' data, ${e.message}`);
                 } else {
@@ -488,41 +488,58 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         let needToUpdateMaterials = false;
 
         uiDisplayData.forEach((entry) => {
+            // the color for the whole grouping for this entry.name
+            let entryColorIndex = defaultColorIndex;
+            // the id (if present, of the unmodified state of this entry)
+            const unmodifiedId = this.selectionInterface.getUnmodifiedStateId(entry.name);
             // list of ids that all have this same name
             const ids = this.selectionInterface.getIds(entry.name);
+            // list of colors for this entry, will be empty strings for 
+            // ids that don't have a user set color
             const newColors = this.selectionInterface.getColorsForName(
                 entry.name
             );
             const hasNewColors = filter(newColors).length > 0;
             if (!hasNewColors) {
-                // if no colors have been by the user set for this name,
+                // if no colors have been set by the user for this name,
                 // just give all states of this agent name the same color
                 this.visGeometry.setColorForIds(ids, defaultColorIndex);
-                defaultColorIndex++;
-                return;
-            }
-            newColors.forEach((color, index) => {
-                let colorIndex = defaultColorIndex;
-                if (color) {
-                    colorIndex = this.colors.indexOf(color);
-                    if (colorIndex == -1) {
-                        // add color to color array
-                        // const colorNum = hexStringToNumber(color)
-                        this.colors = [...this.colors, color];
-                        colorIndex = this.colors.length - 1;
+            } else {
+                // otherwise, we need to update any user defined colors
+                newColors.forEach((color, index) => {
+                    // color for each agent id (can be different states of a single
+                    // entity. Ie, bound and unbound states.
+                    // All agents with unspecified colors in this grouping
+                    // will still get the same color as each other
+                    let agentColorIndex = defaultColorIndex;
+                    if (color) {
+                        agentColorIndex = this.colors.indexOf(color);
+                        if (agentColorIndex == -1) {
+                            // add color to color array
+                            this.colors = [...this.colors, color];
+                            agentColorIndex = this.colors.length - 1;
+                        }
+                        needToUpdateMaterials = true;
                     }
-                    needToUpdateMaterials = true;
-                }
-                this.visGeometry.setColorForId(ids[index], colorIndex);
-            });
+                    // if the user set a color for the unmodified 
+                    // state, use that for the whole group as well
+                    // otherwise the grouping color may be completely different
+                    if (unmodifiedId && unmodifiedId == ids[index]) {
+                        entryColorIndex = agentColorIndex;
+                    }
+                    this.visGeometry.setColorForId(ids[index], agentColorIndex);
+                });
+            }
             entry.color =
                 "#" +
                 this.visGeometry
-                    .getColorForIndex(defaultColorIndex)
+                    .getColorForIndex(entryColorIndex)
                     .getHexString();
+                    
             // if we used any of the default color array
+            // need to go to the next default color.
             if (filter(newColors).length !== ids.length) {
-                defaultColorIndex = defaultColorIndex + 1;
+                defaultColorIndex++;
             }
         });
         if (needToUpdateMaterials) {

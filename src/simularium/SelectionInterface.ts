@@ -21,6 +21,7 @@ export interface SelectionStateInfo {
 interface DisplayStateEntry {
     name: string;
     id: string;
+    color: string;
 }
 
 interface UIDisplayEntry {
@@ -101,6 +102,18 @@ class SelectionInterface {
         this.entries[name].push(entry);
     }
 
+    public getUnmodifiedStateId(name: string): number {
+        const entryList = this.entries[name];
+        if (!entryList) {
+            null;
+        }
+
+        const unmodified = entryList.find((entry: DecodedTypeEntry) => {
+            return entry.tags.length === 0;
+        });
+        return unmodified ? unmodified.id : null;
+    }
+
     public getColorsForName(name: string): string[] {
         const entryList = this.entries[name];
         const colors: string[] = [];
@@ -112,7 +125,6 @@ class SelectionInterface {
                 colors.push(entry.color);
             }
         });
-
         return colors;
     }
 
