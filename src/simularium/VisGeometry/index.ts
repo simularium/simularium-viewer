@@ -161,6 +161,12 @@ class VisGeometry {
     private fibers: InstancedFiberGroup;
     private focusMode: boolean;
 
+    // Scene update will populate these lists of visible pdb agents.
+    // These lists are reserved and iterated at render time to detemine LOD.
+    // This is because camera updates happen at a different frequency than scene updates.
+    private agentsWithPdbsToDraw: VisAgent[];
+    private agentPdbsToDraw: PDBModel[];
+
     public constructor(loggerLevel: ILogLevel) {
         this.renderStyle = RenderStyle.WEBGL1_FALLBACK;
         this.supportsWebGL2Rendering = false;
@@ -232,6 +238,9 @@ class VisGeometry {
         this.colorsData = new Float32Array(0);
         this.lodBias = 0;
         this.lodDistanceStops = [40, 100, 150, Number.MAX_VALUE];
+        this.agentsWithPdbsToDraw = [];
+        this.agentPdbsToDraw = [];
+
         this.onError = (/*errorMessage*/) => noop;
         if (loggerLevel === jsLogger.DEBUG) {
             this.setupGui();
@@ -694,6 +703,52 @@ class VisGeometry {
         this.controls.enabled = true;
     }
 
+    private setPdbLods(): void {
+        // set lod for pdbs.
+        this.geometryStore.forEachPDB((agentGeo) => {
+            agentGeo.beginUpdate();
+        });
+
+        let visAgent, agentData, pdbEntry;
+        for (let i = 0; i < this.agentPdbsToDraw.length; ++i) {
+            visAgent = this.agentsWithPdbsToDraw[i];
+            agentData = visAgent.agentData;
+            // TODO should visAgent hold onto its PDBEntry? would save this second array
+            pdbEntry = this.agentPdbsToDraw[i];
+            const agentDistance = this.camera.position.distanceTo(
+                new Vector3(agentData.x, agentData.y, agentData.z)
+            );
+            for (let j = 0; j < this.lodDistanceStops.length; ++j) {
+                // the first distance less than.
+                if (agentDistance < this.lodDistanceStops[j] + 100) {
+                    const index = j + this.lodBias;
+                    const instancedMesh = pdbEntry.getLOD(index);
+
+                    const radius = agentData.cr ? agentData.cr : 1;
+                    const scale = this.getScaleForId(agentData.typeId);
+
+                    instancedMesh.addInstance(
+                        agentData.x,
+                        agentData.y,
+                        agentData.z,
+                        radius * scale,
+                        agentData.xrot,
+                        agentData.yrot,
+                        agentData.zrot,
+                        visAgent.agentData.instanceId,
+                        visAgent.signedTypeId(),
+                        // a scale value for LODs
+                        (index + 1) * 0.25
+                    );
+                    break;
+                }
+            }
+        }
+        this.geometryStore.forEachPDB((agentGeo) => {
+            agentGeo.endUpdate();
+        });
+    }
+
     public render(_time: number): void {
         if (this.visAgents.length === 0) {
             this.threejsrenderer.clear();
@@ -732,6 +787,8 @@ class VisGeometry {
             // meshes only.
             this.threejsrenderer.render(this.scene, this.camera);
         } else {
+            this.setPdbLods();
+
             this.scene.updateMatrixWorld();
             this.scene.autoUpdate = false;
 
@@ -1203,11 +1260,8 @@ class VisGeometry {
     private addPdbToDrawList(
         typeId: number,
         visAgent: VisAgent,
-        pdbEntry: PDBModel,
-        agentData: AgentData
+        pdbEntry: PDBModel
     ) {
-        const radius = agentData.cr ? agentData.cr : 1;
-        const scale = this.getScaleForId(typeId);
         if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
             this.legacyRenderer.addPdb(
                 pdbEntry,
@@ -1215,33 +1269,12 @@ class VisGeometry {
                 this.getColorForTypeId(typeId)
             );
         } else {
-            // find LOD and add instance
+            // if the pdb doesn't have any lods yet then we can't draw with it.
             if (pdbEntry && pdbEntry.numLODs() > 0) {
-                const agentDistance = this.camera.position.distanceTo(
-                    new Vector3(agentData.x, agentData.y, agentData.z)
-                );
-                for (let j = 0; j < this.lodDistanceStops.length; ++j) {
-                    // the first distance less than.
-                    if (agentDistance < this.lodDistanceStops[j]) {
-                        const index = j + this.lodBias;
-                        const instancedMesh = pdbEntry.getLOD(index);
-
-                        instancedMesh.addInstance(
-                            agentData.x,
-                            agentData.y,
-                            agentData.z,
-                            radius * scale,
-                            agentData.xrot,
-                            agentData.yrot,
-                            agentData.zrot,
-                            visAgent.agentData.instanceId,
-                            visAgent.signedTypeId(),
-                            // a scale value for LODs
-                            (index + 1) * 0.25
-                        );
-                        break;
-                    }
-                }
+                // add to render list
+                // then at render time, select LOD based on camera
+                this.agentsWithPdbsToDraw.push(visAgent);
+                this.agentPdbsToDraw.push(pdbEntry);
             }
         }
     }
@@ -1336,9 +1369,8 @@ class VisGeometry {
         this.geometryStore.forEachMesh((agentGeo) => {
             agentGeo.geometry.instances.beginUpdate();
         });
-        this.geometryStore.forEachPDB((agentGeo) => {
-            agentGeo.beginUpdate();
-        });
+        this.agentsWithPdbsToDraw = [];
+        this.agentPdbsToDraw = [];
 
         // First, mark ALL inactive and invisible.
         // Note this implies a memory leak of sorts:
@@ -1419,12 +1451,7 @@ class VisGeometry {
                 const { geometry, displayType } = response;
                 if (geometry && displayType === GeometryDisplayType.PDB) {
                     const pdbEntry = geometry as PDBModel;
-                    this.addPdbToDrawList(
-                        typeId,
-                        visAgent,
-                        pdbEntry,
-                        agentData
-                    );
+                    this.addPdbToDrawList(typeId, visAgent, pdbEntry);
                 } else {
                     const meshEntry = geometry as MeshLoadRequest;
                     this.addMeshToDrawList(
@@ -1458,9 +1485,6 @@ class VisGeometry {
         this.fibers.endUpdate();
         this.geometryStore.forEachMesh((agentGeo) => {
             agentGeo.geometry.instances.endUpdate();
-        });
-        this.geometryStore.forEachPDB((agentGeo) => {
-            agentGeo.endUpdate();
         });
         this.legacyRenderer.endUpdate(this.scene);
     }
