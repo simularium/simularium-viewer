@@ -5,6 +5,7 @@ interface DecodedTypeEntry {
     id: number;
     name: string;
     tags: string[];
+    color: string;
 }
 
 export interface SelectionEntry {
@@ -64,11 +65,15 @@ class SelectionInterface {
             if (!idNameMapping[id].name) {
                 throw new Error(`Missing agent name for agent ${id}`);
             }
-            this.decode(idNameMapping[id].name, parseInt(id));
+            let color = "";
+            if (idNameMapping[id].geometry) {
+                color = idNameMapping[id].geometry.color || "";
+            }
+            this.decode(idNameMapping[id].name, color, parseInt(id));
         });
     }
 
-    public decode(encodedName: string, idParam?: number): void {
+    public decode(encodedName: string, color: string, idParam?: number): void {
         let name = "";
         let tags: string[] = [];
         const id = idParam !== undefined ? idParam : -1;
@@ -89,11 +94,26 @@ class SelectionInterface {
         }
 
         const uniqueTags = [...new Set(tags)];
-        const entry = { id: id, name: name, tags: uniqueTags };
+        const entry = { id: id, name: name, tags: uniqueTags, color };
         if (!this.containsName(name)) {
             this.entries[name] = [];
         }
         this.entries[name].push(entry);
+    }
+
+    public getColorsForName(name: string): string[] {
+        const entryList = this.entries[name];
+        const colors: string[] = [];
+        if (!entryList) {
+            return [];
+        }
+        entryList.forEach((entry: DecodedTypeEntry) => {
+            if (entry.id >= 0) {
+                colors.push(entry.color);
+            }
+        });
+
+        return colors;
     }
 
     public getIds(name: string, tags?: string[]): number[] {
@@ -137,7 +157,7 @@ class SelectionInterface {
 
     /*
      * If an entity has both a name and all the tags specified in the
-     * selection state info, it will be considered hilighted
+     * selection state info, it will be considered highlighted
      */
     public getHighlightedIds(info: SelectionStateInfo): number[] {
         const requests = info.highlightedAgents;
@@ -188,6 +208,7 @@ class SelectionInterface {
                     const displayState: DisplayStateEntry = {
                         name: tag,
                         id: tag,
+                        color: entry.color,
                     };
                     displayStates.push(displayState);
                 });

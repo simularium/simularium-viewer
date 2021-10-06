@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSyncAlt } from "@fortawesome/free-solid-svg-icons";
 import SimulariumController from "../controller";
 
-import { forOwn, isEqual } from "lodash";
+import { filter, forOwn, isEqual } from "lodash";
 
 import {
     VisGeometry,
@@ -71,13 +71,13 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
     private startTime: number;
     private vdomRef: React.RefObject<HTMLInputElement>;
     private handlers: { [key: string]: (e: Event) => void };
-
+    
     private hit: boolean;
     private animationRequestID: number;
     private lastRenderedAgentTime: number;
 
     private stats: Stats;
-
+    public colors: (number | string)[];
     public static defaultProps = {
         renderStyle: RenderStyle.WEBGL2_PREFERRED,
         backgroundColor: [0, 0, 0],
@@ -98,7 +98,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
         const loggerLevel =
             props.loggerLevel === "debug" ? jsLogger.DEBUG : jsLogger.OFF;
-        const colors = props.agentColors || [
+        this.colors = props.agentColors || [
             0x6ac1e5,
             0xff2200,
             0xee7967,
@@ -142,7 +142,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         this.visGeometry = new VisGeometry(loggerLevel);
         this.props.simulariumController.visData.clearCache();
         this.visGeometry.setupScene();
-        this.visGeometry.createMaterials(colors);
+        this.visGeometry.createMaterials(this.colors);
         this.vdomRef = React.createRef();
         this.lastRenderTime = Date.now();
         this.startTime = Date.now();
@@ -168,7 +168,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                 x: 0,
                 y: 0,
                 time: 0,
-            },
+            }
         };
     }
 
@@ -224,20 +224,54 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
             this.visGeometry.clearColorMapping();
             const uiDisplayData = this.selectionInterface.getUIDisplayData();
-            let colorIndex = 0;
-            uiDisplayData.forEach((entry) => {
-                const ids = this.selectionInterface.getIds(entry.name);
-                this.visGeometry.setColorForIds(ids, colorIndex);
+            let defaultColorIndex = 0;
+            let needToUpdateMaterials = false;
 
+            uiDisplayData.forEach((entry) => {
+                // list of ids that all have this same name
+                const ids = this.selectionInterface.getIds(entry.name);
+                const newColors = this.selectionInterface.getColorsForName(entry.name);
+                const hasNewColors = filter(newColors).length > 0
+                if (!hasNewColors) {
+                    // if no colors have been by the user set for this name, 
+                    // just give all states of this agent name the same color
+                    this.visGeometry.setColorForIds(ids, defaultColorIndex)
+                    defaultColorIndex++;
+                    return
+                }
+                newColors.forEach((color, index) => {
+                    let colorIndex = defaultColorIndex
+                    if (color) {
+                        colorIndex = this.colors.indexOf(color)
+                        if (colorIndex == -1) {
+                            // add color to color array
+                            // const colorNum = hexStringToNumber(color)
+                            this.colors = [...this.colors, color];
+                            colorIndex = this.colors.length - 1;
+                        }
+                        needToUpdateMaterials = true
+                    } 
+                    this.visGeometry.setColorForId(
+                        ids[index],
+                        colorIndex
+                    );
+
+                })
                 entry.color =
                     "#" +
                     this.visGeometry
-                        .getColorForIndex(colorIndex)
+                        .getColorForIndex(defaultColorIndex)
                         .getHexString();
-                colorIndex = colorIndex + 1;
-            });
-            this.visGeometry.finalizeIdColorMapping();
+                // if we used any of the default color array
+                if (filter(newColors).length !== ids.length) {
 
+                    defaultColorIndex = defaultColorIndex + 1;
+                }
+            });
+            if (needToUpdateMaterials) {
+                this.visGeometry.createMaterials(this.colors)
+            }
+            this.visGeometry.finalizeIdColorMapping();
             onUIDisplayDataChanged(uiDisplayData);
         };
 
