@@ -709,20 +709,20 @@ class VisGeometry {
             agentGeo.beginUpdate();
         });
 
-        let visAgent, agentData, pdbEntry;
-        for (let i = 0; i < this.agentPdbsToDraw.length; ++i) {
+        let visAgent, agentData, pdbModel;
+        const agentPos = new Vector3();
+        for (let i = 0; i < this.agentsWithPdbsToDraw.length; ++i) {
             visAgent = this.agentsWithPdbsToDraw[i];
             agentData = visAgent.agentData;
             // TODO should visAgent hold onto its PDBEntry? would save this second array
-            pdbEntry = this.agentPdbsToDraw[i];
-            const agentDistance = this.camera.position.distanceTo(
-                new Vector3(agentData.x, agentData.y, agentData.z)
-            );
+            pdbModel = this.agentPdbsToDraw[i];
+            agentPos.set(agentData.x, agentData.y, agentData.z);
+            const agentDistance = this.camera.position.distanceTo(agentPos);
             for (let j = 0; j < this.lodDistanceStops.length; ++j) {
                 // the first distance less than.
-                if (agentDistance < this.lodDistanceStops[j] + 100) {
+                if (agentDistance < this.lodDistanceStops[j]) {
                     const index = j + this.lodBias;
-                    const instancedMesh = pdbEntry.getLOD(index);
+                    const instancedMesh = pdbModel.getLOD(index);
 
                     const radius = agentData.cr ? agentData.cr : 1;
                     const scale = this.getScaleForId(agentData.typeId);
@@ -1369,6 +1369,7 @@ class VisGeometry {
         this.geometryStore.forEachMesh((agentGeo) => {
             agentGeo.geometry.instances.beginUpdate();
         });
+        // these lists must be emptied on every scene update.
         this.agentsWithPdbsToDraw = [];
         this.agentPdbsToDraw = [];
 
