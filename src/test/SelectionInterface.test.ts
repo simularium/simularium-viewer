@@ -63,6 +63,12 @@ describe("SelectionInterface module", () => {
     });
 
     describe("getUnmodifiedStateId", () => {
+        test("it returns null if name not in interface", () => {
+            const si = new SelectionInterface();
+            si.parse(idMapping);
+            const result = si.getUnmodifiedStateId("Not in state");
+            expect(result).toBeNull;
+        });
         test("it returns the id of the unmodified state", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
