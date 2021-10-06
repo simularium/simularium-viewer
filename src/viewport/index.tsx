@@ -514,7 +514,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                     let agentColorIndex = defaultColorIndex;
                     if (color) {
                         agentColorIndex = this.colors.indexOf(color);
-                        if (agentColorIndex == -1) {
+                        if (agentColorIndex === -1) {
                             // add color to color array
                             this.colors = [...this.colors, color];
                             agentColorIndex = this.colors.length - 1;
