@@ -350,11 +350,10 @@ class GeometryStore {
          * If Promise caches, the geometry is replaced with a sphere
          * and the user is notified.
          */
-        const { displayType, color, url } = agentVisData;
+        const { displayType, url } = agentVisData;
         this.mlogger.debug(`Geo for id ${id} set to '${url}'`);
         const isMesh = displayType === GeometryDisplayType.OBJ;
         const isPDB = displayType === GeometryDisplayType.PDB;
-        console.log(color); // TODO: handle color
         if (!url) {
             // displayType not either pdb or obj, will show a sphere
             // TODO: handle CUBE, GIZMO etc

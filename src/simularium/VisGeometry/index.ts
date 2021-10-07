@@ -910,21 +910,37 @@ class VisGeometry {
         return this.getColorForIndex(index);
     }
 
+    public setColorForId(id: number, colorId: number): void {
+        /**
+         * @param id agent id
+         * @param colorId index into the color array
+         */
+        if (this.isIdColorMappingSet) {
+            throw new FrontEndError(
+                "Attempted to set agent-color after color mapping was finalized"
+            );
+        }
+        this.idColorMapping.set(id, colorId);
+
+        // if we don't have a mesh for this, add a sphere instance to mesh registry?
+        if (!this.visGeomMap.has(id)) {
+            this.visGeomMap.set(id, DEFAULT_MESH_NAME);
+        }
+    }
+
     public setColorForIds(ids: number[], colorId: number): void {
+        /**
+         * Sets one color for a set of ids, using an index into a color array
+         * @param ids agent ids that should all have the same color
+         * @param colorId index into the color array
+         */
         if (this.isIdColorMappingSet) {
             throw new FrontEndError(
                 "Attempted to set agent-color after color mapping was finalized"
             );
         }
 
-        ids.forEach((id) => {
-            this.idColorMapping.set(id, colorId);
-
-            // if we don't have a mesh for this, add a sphere instance to mesh registry?
-            if (!this.visGeomMap.has(id)) {
-                this.visGeomMap.set(id, DEFAULT_MESH_NAME);
-            }
-        });
+        ids.forEach((id) => this.setColorForId(id, colorId));
     }
 
     public getColorForIndex(index: number): Color {
