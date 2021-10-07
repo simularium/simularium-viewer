@@ -205,6 +205,7 @@ class InstancedMesh {
         // assumes the entire buffers are invalidated.
         this.instanceAttribute.needsUpdate = true;
         this.positionAttribute.needsUpdate = true;
+        this.rotationAttribute.needsUpdate = true;
         this.isUpdating = false;
     }
 }

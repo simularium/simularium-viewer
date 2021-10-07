@@ -722,12 +722,12 @@ class VisGeometry {
                 // the first distance less than.
                 if (agentDistance < this.lodDistanceStops[j]) {
                     const index = j + this.lodBias;
-                    const instancedMesh = pdbModel.getLOD(index);
+                    const instancedPdb = pdbModel.getLOD(index);
 
                     const radius = agentData.cr ? agentData.cr : 1;
-                    const scale = this.getScaleForId(agentData.typeId);
+                    const scale = this.getScaleForId(agentData.type);
 
-                    instancedMesh.addInstance(
+                    instancedPdb.addInstance(
                         agentData.x,
                         agentData.y,
                         agentData.z,

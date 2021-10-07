@@ -236,6 +236,7 @@ class PDBModel {
         }
         const n = this.pdb.atoms.length;
 
+        // levels of detail go from most detailed to least
         this.lodSizes = [
             n,
             Math.max(Math.floor(n / 8), 1),
