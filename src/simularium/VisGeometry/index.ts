@@ -723,14 +723,13 @@ class VisGeometry {
                     const index = j + this.lodBias;
                     const instancedPdb = pdbModel.getLOD(index);
 
-                    const radius = agentData.cr ? agentData.cr : 1;
-                    const scale = this.getScaleForId(agentData.type);
-
                     instancedPdb.addInstance(
                         agentData.x,
                         agentData.y,
                         agentData.z,
-                        radius * scale,
+                        // We do not support scaling of pdb yet.
+                        // pdb positions are already in native physical units
+                        1.0,
                         agentData.xrot,
                         agentData.yrot,
                         agentData.zrot,
