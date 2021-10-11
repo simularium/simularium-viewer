@@ -709,7 +709,9 @@ class VisGeometry {
             agentGeo.beginUpdate();
         });
 
-        let visAgent, agentData, pdbModel;
+        let visAgent: VisAgent;
+        let agentData: AgentData;
+        let pdbModel: PDBModel;
         const agentPos = new Vector3();
         for (let i = 0; i < this.agentsWithPdbsToDraw.length; ++i) {
             visAgent = this.agentsWithPdbsToDraw[i];
@@ -809,10 +811,8 @@ class VisGeometry {
                     for (let i = 0; i < pdbEntry.geometry.numLODs(); ++i) {
                         const lod = pdbEntry.geometry.getLOD(i);
                         if (lod.instanceCount() > 0) {
-                            meshTypes.push(pdbEntry.geometry.getLOD(i));
-                            this.instancedMeshGroup.add(
-                                pdbEntry.geometry.getLOD(i).getMesh()
-                            );
+                            meshTypes.push(lod);
+                            this.instancedMeshGroup.add(lod.getMesh());
                         }
                     }
                 }

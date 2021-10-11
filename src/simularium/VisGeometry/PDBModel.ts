@@ -266,11 +266,11 @@ class PDBModel {
         });
         // start at 1, and add the rest
         for (let i = 1; i < this.lodSizes.length; ++i) {
-            const loddata = KMeans.randomSeeds(this.lodSizes[i], allData);
-            const geometry = this.createGPUBuffer(loddata);
+            const lodData = KMeans.randomSeeds(this.lodSizes[i], allData);
+            const geometry = this.createGPUBuffer(lodData);
             this.lods.push({
                 geometry: geometry,
-                vertices: loddata,
+                vertices: lodData,
                 instances: new InstancedMesh(
                     InstanceType.POINTS,
                     geometry,

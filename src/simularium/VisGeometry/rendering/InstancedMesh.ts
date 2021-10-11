@@ -28,7 +28,7 @@ class InstancedMesh {
 
     private positionAttribute: InstancedBufferAttribute; // x,y,z,scale
     private rotationAttribute: InstancedBufferAttribute; // quaternion
-    private instanceAttribute: InstancedBufferAttribute; // instance id, type id (color index)
+    private instanceAttribute: InstancedBufferAttribute; // instance id, type id (color index), lod scale
 
     // while updating instances
     private currentInstance: number;
