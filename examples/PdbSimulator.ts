@@ -77,31 +77,31 @@ export default class PdbSim implements IClientSimulatorImpl {
         //const dt_adjusted = dt / 1000;
         const amplitude = this.size[0] * 0.01;
         // fill agent data.
-        for (let ii = 0; ii < this.nPoints; ++ii) {
-            this.pointsData[ii * 3 + 0] += this.randomFloat(
+        for (let i = 0; i < this.nPoints; ++i) {
+            this.pointsData[i * 3 + 0] += this.randomFloat(
                 -amplitude,
                 amplitude
             );
-            this.pointsData[ii * 3 + 1] += this.randomFloat(
+            this.pointsData[i * 3 + 1] += this.randomFloat(
                 -amplitude,
                 amplitude
             );
-            this.pointsData[ii * 3 + 2] += this.randomFloat(
+            this.pointsData[i * 3 + 2] += this.randomFloat(
                 -amplitude,
                 amplitude
             );
 
-            this.agentdata[ii * 11 + 0] = VisTypes.ID_VIS_TYPE_DEFAULT; // vis type
-            this.agentdata[ii * 11 + 1] = ii; // instance id
-            this.agentdata[ii * 11 + 2] = ii % this.nTypes; // type
-            this.agentdata[ii * 11 + 3] = this.pointsData[ii * 3 + 0]; // x
-            this.agentdata[ii * 11 + 4] = this.pointsData[ii * 3 + 1]; // y
-            this.agentdata[ii * 11 + 5] = this.pointsData[ii * 3 + 2]; // z
-            this.agentdata[ii * 11 + 6] = Math.random() * 3.14159265 * 0.5; // rx
-            this.agentdata[ii * 11 + 7] = Math.random() * 3.14159265 * 0.5; // ry
-            this.agentdata[ii * 11 + 8] = 0; // rz
-            this.agentdata[ii * 11 + 9] = 1.0; // collision radius
-            this.agentdata[ii * 11 + 10] = 0; // subpoints
+            this.agentdata[i * 11 + 0] = VisTypes.ID_VIS_TYPE_DEFAULT; // vis type
+            this.agentdata[i * 11 + 1] = i; // instance id
+            this.agentdata[i * 11 + 2] = i % this.nTypes; // type
+            this.agentdata[i * 11 + 3] = this.pointsData[i * 3 + 0]; // x
+            this.agentdata[i * 11 + 4] = this.pointsData[i * 3 + 1]; // y
+            this.agentdata[i * 11 + 5] = this.pointsData[i * 3 + 2]; // z
+            this.agentdata[i * 11 + 6] = Math.random() * 3.14159265 * 0.5; // rx
+            this.agentdata[i * 11 + 7] = Math.random() * 3.14159265 * 0.5; // ry
+            this.agentdata[i * 11 + 8] = 0; // rz
+            this.agentdata[i * 11 + 9] = 1.0; // collision radius
+            this.agentdata[i * 11 + 10] = 0; // subpoints
         }
         const frameData: VisDataMessage = {
             // TODO get msgType out of here
@@ -141,6 +141,8 @@ export default class PdbSim implements IClientSimulatorImpl {
                 },
             };
         }
+        const FOV_DEGREES = 75;
+        const DEGREES_TO_RADIANS = 3.14159265 / 180.0;
         return {
             // TODO get msgType and connId out of here
             connId: "hello world",
@@ -159,11 +161,12 @@ export default class PdbSim implements IClientSimulatorImpl {
                     x: 0,
                     y: 0,
                     z:
+                        // set a z value that will roughly frame the bounding box within our camera field of view
                         Math.sqrt(
                             this.size[0] * this.size[0] +
                                 this.size[1] * this.size[1] +
                                 this.size[2] * this.size[2]
-                        ) * Math.tan((0.5 * 75 * 3.14159256) / 180.0),
+                        ) * Math.tan(0.5 * FOV_DEGREES * DEGREES_TO_RADIANS),
                 },
                 lookAtPosition: {
                     x: 0,
@@ -175,7 +178,7 @@ export default class PdbSim implements IClientSimulatorImpl {
                     y: 1,
                     z: 0,
                 },
-                fovDegrees: 75,
+                fovDegrees: FOV_DEGREES,
             },
             typeMapping: typeMapping,
             spatialUnits: {
