@@ -709,15 +709,12 @@ class VisGeometry {
             agentGeo.beginUpdate();
         });
 
-        let visAgent: VisAgent;
-        let agentData: AgentData;
-        let pdbModel: PDBModel;
         const agentPos = new Vector3();
         for (let i = 0; i < this.agentsWithPdbsToDraw.length; ++i) {
-            visAgent = this.agentsWithPdbsToDraw[i];
-            agentData = visAgent.agentData;
+            const visAgent = this.agentsWithPdbsToDraw[i];
+            const agentData = visAgent.agentData;
             // TODO should visAgent hold onto its PDBEntry? would save this second array
-            pdbModel = this.agentPdbsToDraw[i];
+            const pdbModel = this.agentPdbsToDraw[i];
             agentPos.set(agentData.x, agentData.y, agentData.z);
             const agentDistance = this.camera.position.distanceTo(agentPos);
             for (let j = 0; j < this.lodDistanceStops.length; ++j) {
