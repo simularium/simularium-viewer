@@ -9,6 +9,7 @@ import {
     MeshBasicMaterial,
     TubeBufferGeometry,
     Group,
+    LOD,
     Mesh,
     Object3D,
     Points,
@@ -118,31 +119,38 @@ class LegacyRenderer {
         this.agentMeshGroup.add(m);
     }
 
-    public addPdb(pdb: PDBModel, visAgent: VisAgent, color: Color): void {
-        // TODO: maybe could only instantiate one LOD at this time??
-
+    public addPdb(
+        pdb: PDBModel,
+        visAgent: VisAgent,
+        color: Color,
+        distances: number[]
+    ): void {
+        const pdbGroup = new LOD();
         const pdbObjects: Object3D[] = pdb.instantiate();
         // update pdb transforms too
-        for (let lod = 0; lod < pdbObjects.length; ++lod) {
+        for (let lod = pdbObjects.length - 1; lod >= 0; --lod) {
             const obj = pdbObjects[lod];
-            obj.position.x = visAgent.agentData.x;
-            obj.position.y = visAgent.agentData.y;
-            obj.position.z = visAgent.agentData.z;
-
-            obj.rotation.x = visAgent.agentData.xrot;
-            obj.rotation.y = visAgent.agentData.yrot;
-            obj.rotation.z = visAgent.agentData.zrot;
-
-            obj.scale.x = 1.0;
-            obj.scale.y = 1.0;
-            obj.scale.z = 1.0;
-
-            obj.visible = false;
+            obj.userData = { id: visAgent.agentData.instanceId };
             // LOD to be selected at render time, not update time
             (obj as Points).material = new PointsMaterial({
                 color: this.selectColor(visAgent, color),
             });
+            pdbGroup.addLevel(obj, distances[lod]);
         }
+        pdbGroup.position.x = visAgent.agentData.x;
+        pdbGroup.position.y = visAgent.agentData.y;
+        pdbGroup.position.z = visAgent.agentData.z;
+
+        pdbGroup.rotation.x = visAgent.agentData.xrot;
+        pdbGroup.rotation.y = visAgent.agentData.yrot;
+        pdbGroup.rotation.z = visAgent.agentData.zrot;
+
+        pdbGroup.scale.x = 1.0;
+        pdbGroup.scale.y = 1.0;
+        pdbGroup.scale.z = 1.0;
+        pdbGroup.userData = { id: visAgent.agentData.instanceId };
+
+        this.agentMeshGroup.add(pdbGroup);
     }
 
     public endUpdate(scene: Scene): void {

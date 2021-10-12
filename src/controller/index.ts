@@ -16,7 +16,7 @@ import {
 } from "../simularium/types";
 
 import { ClientSimulator } from "../simularium/ClientSimulator";
-import { ClientSimulatorParams } from "../simularium/localSimulators/ClientSimulatorFactory";
+import { IClientSimulatorImpl } from "../simularium/localSimulators/IClientSimulatorImpl";
 import { ISimulator } from "../simularium/ISimulator";
 import { LocalFileSimulator } from "../simularium/LocalFileSimulator";
 
@@ -34,7 +34,7 @@ interface SimulariumControllerParams {
 // controller with a simulator connection
 interface SimulatorConnectionParams {
     netConnectionSettings?: NetConnectionParams;
-    clientSimulatorParams?: ClientSimulatorParams;
+    clientSimulator?: IClientSimulatorImpl;
     simulariumFile?: SimulariumFileFormat;
     geoAssets?: { [key: string]: string };
 }
@@ -111,12 +111,12 @@ export default class SimulariumController {
 
     private createSimulatorConnection(
         netConnectionConfig?: NetConnectionParams,
-        clientSimulatorParams?: ClientSimulatorParams,
+        clientSimulator?: IClientSimulatorImpl,
         localFile?: SimulariumFileFormat,
         geoAssets?: { [key: string]: string }
     ): void {
-        if (clientSimulatorParams) {
-            this.simulator = new ClientSimulator(clientSimulatorParams);
+        if (clientSimulator) {
+            this.simulator = new ClientSimulator(clientSimulator);
         } else if (localFile) {
             this.simulator = new LocalFileSimulator(
                 this.playBackFile,
@@ -289,7 +289,7 @@ export default class SimulariumController {
             if (connectionParams) {
                 this.createSimulatorConnection(
                     connectionParams.netConnectionSettings,
-                    connectionParams.clientSimulatorParams,
+                    connectionParams.clientSimulator,
                     connectionParams.simulariumFile,
                     connectionParams.geoAssets
                 );

@@ -273,17 +273,11 @@ class SimulariumRenderer {
     }
 
     public setMeshGroups(
-        agentPDBGroup: Group,
         instancedMeshGroup: Group,
         fibers: InstancedFiberGroup,
         meshTypes: InstancedMesh[]
     ): void {
-        this.gbufferPass.setMeshGroups(
-            agentPDBGroup,
-            instancedMeshGroup,
-            fibers,
-            meshTypes
-        );
+        this.gbufferPass.setMeshGroups(instancedMeshGroup, fibers, meshTypes);
     }
 
     public resize(x: number, y: number): void {

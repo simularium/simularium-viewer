@@ -1,6 +1,9 @@
 import { Mesh } from "three";
 
-import { InstancedMesh } from "../simularium/VisGeometry/rendering/InstancedMesh";
+import {
+    InstancedMesh,
+    InstanceType,
+} from "../simularium/VisGeometry/rendering/InstancedMesh";
 import VisAgent from "../simularium/VisGeometry/VisAgent";
 import GeometryStore, {
     DEFAULT_MESH_NAME,
@@ -26,6 +29,7 @@ describe("GeometryStore module", () => {
                     mesh: new Mesh(VisAgent.sphereGeometry),
                     cancelled: false,
                     instances: new InstancedMesh(
+                        InstanceType.MESH,
                         VisAgent.sphereGeometry,
                         addedItem,
                         1
@@ -104,6 +108,7 @@ describe("GeometryStore module", () => {
                     mesh: new Mesh(VisAgent.sphereGeometry),
                     cancelled: false,
                     instances: new InstancedMesh(
+                        InstanceType.MESH,
                         VisAgent.sphereGeometry,
                         addedItem,
                         1

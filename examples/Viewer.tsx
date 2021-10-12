@@ -12,6 +12,10 @@ import SimulariumViewer, {
 import "./style.css";
 import { isEqual, findIndex } from "lodash";
 
+import PointSimulator from "./PointSimulator";
+import PdbSimulator from "./PdbSimulator";
+import CurveSimulator from "./CurveSimulator";
+
 const netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
     serverPort: 9002,
@@ -201,8 +205,8 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public turnAgentHighlightsOnOff(nameToToggle: string) {
-        let currentHighlightedAgents = this.state.selectionStateInfo
-            .highlightedAgents;
+        let currentHighlightedAgents =
+            this.state.selectionStateInfo.highlightedAgents;
         let nextHighlightedAgents = [];
         if (currentHighlightedAgents.some((a) => a.name === nameToToggle)) {
             nextHighlightedAgents = currentHighlightedAgents.filter(
@@ -280,24 +284,21 @@ class Viewer extends React.Component<{}, ViewerState> {
         if (playbackFile === "TEST_POINTS") {
             simulariumController.changeFile(
                 {
-                    clientSimulatorParams: {
-                        name: "my test sim",
-                        type: "POINTSIM",
-                        nPoints: 8000,
-                        nTypes: 4,
-                    },
+                    clientSimulator: new PointSimulator(8000, 4),
                 },
                 playbackFile
             );
         } else if (playbackFile === "TEST_FIBERS") {
             simulariumController.changeFile(
                 {
-                    clientSimulatorParams: {
-                        name: "my test sim",
-                        type: "CURVESIM",
-                        nCurves: 1000,
-                        nTypes: 4,
-                    },
+                    clientSimulator: new CurveSimulator(1000, 4),
+                },
+                playbackFile
+            );
+        } else if (playbackFile === "TEST_PDB") {
+            simulariumController.changeFile(
+                {
+                    clientSimulator: new PdbSimulator(),
                 },
                 playbackFile
             );
@@ -348,6 +349,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                     <option value="ATPsynthase_8.h5">ATP 8</option>
                     <option value="ATPsynthase_9.h5">ATP 9</option>
                     <option value="ATPsynthase_10.h5">ATP 10</option>
+                    <option value="TEST_PDB">TEST PDB</option>
                     <option value="TEST_FIBERS">TEST FIBERS</option>
                     <option value="TEST_POINTS">TEST POINTS</option>
                 </select>

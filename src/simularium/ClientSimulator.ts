@@ -7,10 +7,6 @@ import {
     ClientPlayBackType,
     IClientSimulatorImpl,
 } from "./localSimulators/IClientSimulatorImpl";
-import {
-    createSimulator,
-    ClientSimulatorParams,
-} from "./localSimulators/ClientSimulatorFactory";
 import { ISimulator } from "./ISimulator";
 
 // a ClientSimulator is a ISimulator that is expected to run purely in procedural javascript in the browser client,
@@ -23,7 +19,7 @@ export class ClientSimulator implements ISimulator {
     public onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfo) => void;
     public onTrajectoryDataArrive: (msg: VisDataMessage) => void;
 
-    public constructor(params: ClientSimulatorParams) {
+    public constructor(sim: IClientSimulatorImpl) {
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
 
@@ -33,8 +29,7 @@ export class ClientSimulator implements ISimulator {
         this.onTrajectoryDataArrive = () => {
             /* do nothing */
         };
-        console.log("NEW SIMULATORCONNECTION");
-        this.localSimulator = createSimulator(params);
+        this.localSimulator = sim;
     }
 
     public setTrajectoryFileInfoHandler(
@@ -92,7 +87,8 @@ export class ClientSimulator implements ISimulator {
                         );
                         this.onTrajectoryDataArrive(frame);
                     } else {
-                        const a: TrajectoryFileInfo = this.localSimulator.getInfo();
+                        const a: TrajectoryFileInfo =
+                            this.localSimulator.getInfo();
                         this.onTrajectoryFileInfoArrive(a);
                     }
                 }
