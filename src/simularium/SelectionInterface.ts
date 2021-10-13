@@ -289,7 +289,7 @@ class SelectionInterface {
                     // if the user set a color for the unmodified
                     // state, use that for the whole group as well
                     // otherwise the grouping color may be completely different
-                    if (unmodifiedId !== null && unmodifiedId === ids[index]) {
+                    if (unmodifiedId === ids[index]) {
                         entryColorIndex = agentColorIndex;
                     }
                     visGeometry.setColorForId(ids[index], agentColorIndex);
