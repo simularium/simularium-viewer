@@ -485,7 +485,6 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         this.visGeometry.clearColorMapping();
         const uiDisplayData = this.selectionInterface.getUIDisplayData();
         let defaultColorIndex = 0;
-        let needToUpdateMaterials = false;
 
         uiDisplayData.forEach((entry) => {
             // the color for the whole grouping for this entry.name
@@ -519,12 +518,12 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                             this.colors = [...this.colors, color];
                             agentColorIndex = this.colors.length - 1;
                         }
-                        needToUpdateMaterials = true;
+                        this.visGeometry.createMaterials(this.colors);
                     }
                     // if the user set a color for the unmodified 
                     // state, use that for the whole group as well
                     // otherwise the grouping color may be completely different
-                    if (unmodifiedId && unmodifiedId === ids[index]) {
+                    if (unmodifiedId !== null && unmodifiedId === ids[index]) {
                         entryColorIndex = agentColorIndex;
                     }
                     this.visGeometry.setColorForId(ids[index], agentColorIndex);
@@ -535,16 +534,14 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                 this.visGeometry
                     .getColorForIndex(entryColorIndex)
                     .getHexString();
-                    
+
             // if we used any of the default color array
             // need to go to the next default color.
             if (filter(newColors).length !== ids.length) {
                 defaultColorIndex++;
             }
         });
-        if (needToUpdateMaterials) {
-            this.visGeometry.createMaterials(this.colors);
-        }
+
         this.visGeometry.finalizeIdColorMapping();
         return uiDisplayData;
     }
