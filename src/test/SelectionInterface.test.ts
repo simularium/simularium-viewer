@@ -1,5 +1,11 @@
 import { mapValues } from "lodash";
+import { Color } from "three";
 import { EncodedTypeMapping, SelectionInterface } from "../simularium";
+import {
+    UIDisplayData,
+    UIDisplayEntry,
+    VisGeometryMock,
+} from "../simularium/SelectionInterface";
 
 const idMapping = {
     0: { name: "A" },
@@ -307,12 +313,133 @@ describe("SelectionInterface module", () => {
         });
     });
 
-    describe("UI Display Data", () => {
+    describe("getUIDisplayData", () => {
         test("Doesn't crash", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
 
             si.getUIDisplayData();
+        });
+    });
+
+    describe("setAgentColors", () => {
+        const defaultColor = "#000000";
+        const defaultColorListLength = 6;
+        let si: SelectionInterface;
+        let uiDisplayData: UIDisplayData;
+        let uiDisplayDataForA: UIDisplayEntry | undefined;
+        let uiDisplayDataForB: UIDisplayEntry | undefined;
+        let uiDisplayDataForE: UIDisplayEntry | undefined;
+        let colorList = Array(defaultColorListLength).fill(defaultColor);
+        const agentColors = {
+            A: "#aaaaaa",
+            B: "#bbbbbb",
+            C: "#cccccc",
+            D: "#dddddd",
+        };
+        const idMappingWithColors = mapValues(idMapping, (entry) => {
+            return {
+                ...entry,
+                geometry: {
+                    url: "",
+                    displayType: "",
+                    color: agentColors[entry.name[0]],
+                },
+            };
+        });
+        const visGeometryMock: VisGeometryMock = {
+            createMaterials: jest.fn((colors) => (colorList = colors)),
+            setColorForIds: jest.fn(),
+            setColorForId: jest.fn(),
+            getColorForIndex: jest.fn(
+                (index: number) => new Color(colorList[index])
+            ),
+            finalizeIdColorMapping: jest.fn(),
+        };
+        beforeEach(() => {
+            si = new SelectionInterface();
+            si.parse(idMappingWithColors as EncodedTypeMapping);
+            uiDisplayData = si.getUIDisplayData();
+            uiDisplayDataForA = uiDisplayData.find(
+                (entry) => entry.name === "A"
+            );
+            uiDisplayDataForB = uiDisplayData.find(
+                (entry) => entry.name === "B"
+            );
+            uiDisplayDataForE = uiDisplayData.find(
+                (entry) => entry.name === "E"
+            );
+        });
+
+        test("it will create a new material for each of the use defined colors", () => {
+            si.setAgentColors(uiDisplayData, colorList, visGeometryMock);
+            const numberOfNewColors = Object.keys(agentColors).length;
+            expect(colorList.length).toEqual(
+                numberOfNewColors + defaultColorListLength
+            );
+            expect(visGeometryMock.createMaterials).toHaveBeenCalledTimes(
+                numberOfNewColors
+            );
+        });
+
+        test("it set the entry color to the 'unmodified' state color if provided", () => {
+            // Mostly for typescript, but should fail test if this is undefined
+            if (!uiDisplayDataForA || !uiDisplayDataForB) {
+                throw new Error(
+                    "The initial ui data is messed up, missing A or B entries"
+                );
+            }
+            // initially should have no color
+            expect(uiDisplayDataForA.color).toEqual("");
+            expect(uiDisplayDataForB.color).toEqual("");
+            si.setAgentColors(uiDisplayData, colorList, visGeometryMock);
+            expect(uiDisplayDataForA.color).toEqual("#aaaaaa");
+            expect(uiDisplayDataForB.color).toEqual("#bbbbbb");
+        });
+        test("If no user colors are provided entry will get a default color", () => {
+            // Mostly for typescript, but should fail test if this is undefined
+            if (!uiDisplayDataForE) {
+                throw new Error(
+                    "The initial ui data is messed up, missing E entries"
+                );
+            }
+            // initially should have no color
+            expect(uiDisplayDataForE.color).toEqual("");
+            si.setAgentColors(uiDisplayData, colorList, visGeometryMock);
+            expect(uiDisplayDataForE.color).toEqual("#000000");
+            expect(visGeometryMock.setColorForIds).toHaveBeenCalledWith(
+                [13],
+                0
+            );
+        });
+        test("If no user colors are provided all the ids for an entry will get a default color", () => {
+            si.setAgentColors(uiDisplayData, colorList, visGeometryMock);
+            expect(visGeometryMock.setColorForIds).toHaveBeenCalledWith(
+                [13],
+                0
+            );
+        });
+        test("If user colors are provided each id will be set with the new color", () => {
+            si.setAgentColors(uiDisplayData, colorList, visGeometryMock);
+            // the first new user color will be appended to the end of the list
+            const indexOfColorForA = defaultColorListLength;
+            // these are all the agent A ids, each should get the first new color assigned
+            expect(visGeometryMock.setColorForId).toHaveBeenCalledWith(
+                0,
+                indexOfColorForA
+            );
+            expect(visGeometryMock.setColorForId).toHaveBeenCalledWith(
+                1,
+                indexOfColorForA
+            );
+            expect(visGeometryMock.setColorForId).toHaveBeenCalledWith(
+                2,
+                indexOfColorForA
+            );
+            expect(visGeometryMock.setColorForId).toHaveBeenCalledWith(
+                3,
+                indexOfColorForA
+            );
         });
     });
 });

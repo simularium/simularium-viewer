@@ -221,7 +221,9 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
                 }
             }
             onTrajectoryFileInfoChanged(trajectoryFileInfo);
-            const uiDisplayData = this.setAgentColors();
+            this.visGeometry.clearColorMapping();
+            const uiDisplayData = this.selectionInterface.getUIDisplayData();
+            this.selectionInterface.setAgentColors(uiDisplayData, this.colors, this.visGeometry);
             onUIDisplayDataChanged(uiDisplayData);
         };
 
@@ -478,72 +480,6 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             }
             this.visGeometry.setFollowObject(NO_AGENT);
         }
-    }
-
-    private setAgentColors() {
-
-        this.visGeometry.clearColorMapping();
-        const uiDisplayData = this.selectionInterface.getUIDisplayData();
-        let defaultColorIndex = 0;
-
-        uiDisplayData.forEach((entry) => {
-            // the color for the whole grouping for this entry.name
-            let entryColorIndex = defaultColorIndex;
-            // the id (if present, of the unmodified state of this entry)
-            const unmodifiedId = this.selectionInterface.getUnmodifiedStateId(entry.name);
-            // list of ids that all have this same name
-            const ids = this.selectionInterface.getIds(entry.name);
-            // list of colors for this entry, will be empty strings for 
-            // ids that don't have a user set color
-            const newColors = this.selectionInterface.getColorsForName(
-                entry.name
-            );
-            const hasNewColors = filter(newColors).length > 0;
-            if (!hasNewColors) {
-                // if no colors have been set by the user for this name,
-                // just give all states of this agent name the same color
-                this.visGeometry.setColorForIds(ids, defaultColorIndex);
-            } else {
-                // otherwise, we need to update any user defined colors
-                newColors.forEach((color, index) => {
-                    // color for each agent id (can be different states of a single
-                    // entity, ie, bound and unbound states).
-                    // All agents with unspecified colors in this grouping
-                    // will still get the same default color as each other
-                    let agentColorIndex = defaultColorIndex;
-                    if (color) {
-                        agentColorIndex = this.colors.indexOf(color);
-                        if (agentColorIndex === -1) {
-                            // add color to color array
-                            this.colors = [...this.colors, color];
-                            agentColorIndex = this.colors.length - 1;
-                        }
-                        this.visGeometry.createMaterials(this.colors);
-                    }
-                    // if the user set a color for the unmodified 
-                    // state, use that for the whole group as well
-                    // otherwise the grouping color may be completely different
-                    if (unmodifiedId !== null && unmodifiedId === ids[index]) {
-                        entryColorIndex = agentColorIndex;
-                    }
-                    this.visGeometry.setColorForId(ids[index], agentColorIndex);
-                });
-            }
-            entry.color =
-                "#" +
-                this.visGeometry
-                    .getColorForIndex(entryColorIndex)
-                    .getHexString();
-
-            // if we used any of the default color array
-            // need to go to the next default color.
-            if (filter(newColors).length !== ids.length) {
-                defaultColorIndex++;
-            }
-        });
-
-        this.visGeometry.finalizeIdColorMapping();
-        return uiDisplayData;
     }
 
     private handleTimeChange(e: Event): void {
