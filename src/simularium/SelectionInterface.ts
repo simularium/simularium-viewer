@@ -1,4 +1,6 @@
+import { filter } from "lodash";
 import { EncodedTypeMapping } from "./types";
+import { convertColorNumberToString } from "./VisGeometry/color-utils";
 
 // An individual entry parsed from an encoded name
 interface DecodedTypeEntry {
@@ -24,7 +26,7 @@ interface DisplayStateEntry {
     color: string;
 }
 
-interface UIDisplayEntry {
+export interface UIDisplayEntry {
     name: string;
     displayStates: DisplayStateEntry[];
     color: string;
@@ -233,6 +235,64 @@ class SelectionInterface {
                 color,
             };
         });
+    }
+
+    public setAgentColors(
+        uiDisplayData: UIDisplayData,
+        colors: (string | number)[],
+        setColorForIds: (ids: number[], number) => void
+    ): (string | number)[] {
+        let defaultColorIndex = 0;
+        uiDisplayData.forEach((entry) => {
+            // the color for the whole grouping for this entry.name
+            let entryColorIndex = defaultColorIndex;
+            // the id (if present, of the unmodified state of this entry)
+            const unmodifiedId = this.getUnmodifiedStateId(entry.name);
+            // list of ids that all have this same name
+            const ids = this.getIds(entry.name);
+            // list of colors for this entry, will be empty strings for
+            // ids that don't have a user set color
+            const newColors = this.getColorsForName(entry.name);
+            const hasNewColors = filter(newColors).length > 0;
+            if (!hasNewColors) {
+                // if no colors have been set by the user for this name,
+                // just give all states of this agent name the same color
+                setColorForIds(ids, defaultColorIndex);
+            } else {
+                // otherwise, we need to update any user defined colors
+                newColors.forEach((color, index) => {
+                    // color for each agent id (can be different states of a single
+                    // entity, ie, bound and unbound states).
+                    // All agents with unspecified colors in this grouping
+                    // will still get the same default color as each other
+                    let agentColorIndex = defaultColorIndex;
+                    if (color) {
+                        agentColorIndex = colors.indexOf(color);
+                        if (agentColorIndex === -1) {
+                            // add color to color array
+                            colors = [...colors, color];
+                            agentColorIndex = colors.length - 1;
+                        }
+                    }
+                    // if the user set a color for the unmodified
+                    // state, use that for the whole group as well
+                    // otherwise the grouping color may be completely different
+                    if (unmodifiedId === ids[index]) {
+                        entryColorIndex = agentColorIndex;
+                    }
+                    setColorForIds([ids[index]], agentColorIndex);
+                });
+            }
+            entry.color = convertColorNumberToString(colors[entryColorIndex]);
+
+            // if we used any of the default color array
+            // need to go to the next default color.
+            if (filter(newColors).length !== ids.length) {
+                defaultColorIndex++;
+            }
+        });
+
+        return colors;
     }
 }
 
