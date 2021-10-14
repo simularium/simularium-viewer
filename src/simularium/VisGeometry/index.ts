@@ -58,6 +58,7 @@ import {
     MeshLoadRequest,
 } from "./types";
 import { checkAndSanitizePath } from "../../util";
+import { convertColorStringToNumber } from "./color-utils";
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 100000;
@@ -869,16 +870,8 @@ class VisGeometry {
         });
     }
 
-    private convertColorStringToNumber(color: number | string): number {
-        if (typeof color !== "string") {
-            return color;
-        }
-        return parseInt(color.toString().replace(/^#/, "0x"), 16);
-    }
-
     private setColorArray(colors: (number | string)[]): void {
-        const colorNumbers = colors.map(this.convertColorStringToNumber);
-
+        const colorNumbers = colors.map(convertColorStringToNumber);
         const numColors = colors.length;
         // fill buffer of colors:
         this.colorsData = new Float32Array(numColors * 4);
@@ -895,7 +888,7 @@ class VisGeometry {
     }
 
     public addNewColor(color: number | string): void {
-        const colorNumber = this.convertColorStringToNumber(color);
+        const colorNumber = convertColorStringToNumber(color);
         const newColor = [
             ((colorNumber & 0x00ff0000) >> 16) / 255.0,
             ((colorNumber & 0x0000ff00) >> 8) / 255.0,
@@ -935,16 +928,11 @@ class VisGeometry {
         return this.getColorForIndex(index);
     }
 
-    public setColorForId(id: number, colorId: number): void {
+    private setColorForId(id: number, colorId: number): void {
         /**
          * @param id agent id
          * @param colorId index into the color array
          */
-        if (this.isIdColorMappingSet) {
-            throw new FrontEndError(
-                "Attempted to set agent-color after color mapping was finalized"
-            );
-        }
         this.idColorMapping.set(id, colorId);
 
         // if we don't have a mesh for this, add a sphere instance to mesh registry?
@@ -964,7 +952,6 @@ class VisGeometry {
                 "Attempted to set agent-color after color mapping was finalized"
             );
         }
-
         ids.forEach((id) => this.setColorForId(id, colorId));
     }
 
@@ -976,14 +963,7 @@ class VisGeometry {
         );
     }
 
-    public finalizeIdColorMapping(needToUpdateMaterials: boolean): void {
-        if (needToUpdateMaterials) {
-            this.renderer.updateColors(
-                this.colorsData.length / 4,
-                this.colorsData
-            );
-        }
-        this.setAgentColors();
+    public finalizeIdColorMapping(): void {
         this.isIdColorMappingSet = true;
     }
 

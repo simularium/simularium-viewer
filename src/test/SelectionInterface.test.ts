@@ -1,23 +1,9 @@
-import Logger from "js-logger";
 import { mapValues } from "lodash";
-import { Color } from "three";
 import { EncodedTypeMapping, SelectionInterface } from "../simularium";
 import {
     UIDisplayData,
     UIDisplayEntry,
 } from "../simularium/SelectionInterface";
-
-jest.mock("../simularium/VisGeometry");
-import VisGeometry from "../simularium/VisGeometry";
-// interface for testing function without
-// having to mock the whole VisGeometry class
-export interface VisGeometryMock extends VisGeometry {
-    setColorForIds: () => void;
-    setColorForId: () => void;
-    getColorForIndex: (index: number) => Color;
-    finalizeIdColorMapping: () => void;
-    addNewColor: () => void;
-}
 
 const idMapping = {
     0: { name: "A" },
@@ -342,7 +328,7 @@ describe("SelectionInterface module", () => {
         let uiDisplayDataForA: UIDisplayEntry | undefined;
         let uiDisplayDataForB: UIDisplayEntry | undefined;
         let uiDisplayDataForE: UIDisplayEntry | undefined;
-        let colorList = Array(defaultColorListLength).fill(defaultColor);
+        const colorList = Array(defaultColorListLength).fill(defaultColor);
         const agentColors = {
             A: "#aaaaaa",
             B: "#bbbbbb",
@@ -359,14 +345,7 @@ describe("SelectionInterface module", () => {
                 },
             };
         });
-        const visGeometryMock = new VisGeometry(Logger.getLevel());
-        visGeometryMock.setColorForIds = jest.fn();
-        visGeometryMock.setColorForId = jest.fn();
-        visGeometryMock.getColorForIndex = jest.fn(
-            (index: number) => new Color(colorList[index])
-        );
-        visGeometryMock.finalizeIdColorMapping = jest.fn();
-        visGeometryMock.addNewColor = jest.fn((color) => colorList.push(color));
+        const setColorForIds = jest.fn();
 
         beforeEach(() => {
             si = new SelectionInterface();
@@ -384,13 +363,15 @@ describe("SelectionInterface module", () => {
         });
 
         test("it will create a new material for each of the use defined colors", () => {
-            si.setAgentColors(uiDisplayData, colorList, visGeometryMock);
             const numberOfNewColors = Object.keys(agentColors).length;
-            expect(colorList.length).toEqual(
-                numberOfNewColors + defaultColorListLength
+            const updatedColors = si.setAgentColors(
+                uiDisplayData,
+                colorList,
+                setColorForIds
             );
-            expect(visGeometryMock.addNewColor).toHaveBeenCalledTimes(
-                numberOfNewColors
+
+            expect(updatedColors.length).toEqual(
+                numberOfNewColors + defaultColorListLength
             );
         });
 
@@ -404,7 +385,7 @@ describe("SelectionInterface module", () => {
             // initially should have no color
             expect(uiDisplayDataForA.color).toEqual("");
             expect(uiDisplayDataForB.color).toEqual("");
-            si.setAgentColors(uiDisplayData, colorList, visGeometryMock);
+            si.setAgentColors(uiDisplayData, colorList, setColorForIds);
             expect(uiDisplayDataForA.color).toEqual("#aaaaaa");
             expect(uiDisplayDataForB.color).toEqual("#bbbbbb");
         });
@@ -417,41 +398,23 @@ describe("SelectionInterface module", () => {
             }
             // initially should have no color
             expect(uiDisplayDataForE.color).toEqual("");
-            si.setAgentColors(uiDisplayData, colorList, visGeometryMock);
+            si.setAgentColors(uiDisplayData, colorList, setColorForIds);
             expect(uiDisplayDataForE.color).toEqual("#000000");
-            expect(visGeometryMock.setColorForIds).toHaveBeenCalledWith(
-                [13],
-                0
-            );
+            expect(setColorForIds).toHaveBeenCalledWith([13], 0);
         });
         test("If no user colors are provided all the ids for an entry will get a default color", () => {
-            si.setAgentColors(uiDisplayData, colorList, visGeometryMock);
-            expect(visGeometryMock.setColorForIds).toHaveBeenCalledWith(
-                [13],
-                0
-            );
+            si.setAgentColors(uiDisplayData, colorList, setColorForIds);
+            expect(setColorForIds).toHaveBeenCalledWith([13], 0);
         });
         test("If user colors are provided each id will be set with the new color", () => {
-            si.setAgentColors(uiDisplayData, colorList, visGeometryMock);
+            si.setAgentColors(uiDisplayData, colorList, setColorForIds);
             // the first new user color will be appended to the end of the list
             const indexOfColorForA = defaultColorListLength;
             // these are all the agent A ids, each should get the first new color assigned
-            expect(visGeometryMock.setColorForId).toHaveBeenCalledWith(
-                0,
-                indexOfColorForA
-            );
-            expect(visGeometryMock.setColorForId).toHaveBeenCalledWith(
-                1,
-                indexOfColorForA
-            );
-            expect(visGeometryMock.setColorForId).toHaveBeenCalledWith(
-                2,
-                indexOfColorForA
-            );
-            expect(visGeometryMock.setColorForId).toHaveBeenCalledWith(
-                3,
-                indexOfColorForA
-            );
+            expect(setColorForIds).toHaveBeenCalledWith([0], indexOfColorForA);
+            expect(setColorForIds).toHaveBeenCalledWith([1], indexOfColorForA);
+            expect(setColorForIds).toHaveBeenCalledWith([2], indexOfColorForA);
+            expect(setColorForIds).toHaveBeenCalledWith([3], indexOfColorForA);
         });
     });
 });

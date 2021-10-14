@@ -1,6 +1,6 @@
 import { filter } from "lodash";
-import { VisGeometry } from ".";
 import { EncodedTypeMapping } from "./types";
+import { convertColorNumberToString } from "./VisGeometry/color-utils";
 
 // An individual entry parsed from an encoded name
 interface DecodedTypeEntry {
@@ -240,10 +240,9 @@ class SelectionInterface {
     public setAgentColors(
         uiDisplayData: UIDisplayData,
         colors: (string | number)[],
-        visGeometry: VisGeometry
-    ): UIDisplayData {
+        setColorForIds: (ids: number[], number) => void
+    ): (string | number)[] {
         let defaultColorIndex = 0;
-        let needToUpdateMaterials = false;
         uiDisplayData.forEach((entry) => {
             // the color for the whole grouping for this entry.name
             let entryColorIndex = defaultColorIndex;
@@ -258,7 +257,7 @@ class SelectionInterface {
             if (!hasNewColors) {
                 // if no colors have been set by the user for this name,
                 // just give all states of this agent name the same color
-                visGeometry.setColorForIds(ids, defaultColorIndex);
+                setColorForIds(ids, defaultColorIndex);
             } else {
                 // otherwise, we need to update any user defined colors
                 newColors.forEach((color, index) => {
@@ -273,8 +272,6 @@ class SelectionInterface {
                             // add color to color array
                             colors = [...colors, color];
                             agentColorIndex = colors.length - 1;
-                            visGeometry.addNewColor(color);
-                            needToUpdateMaterials = true;
                         }
                     }
                     // if the user set a color for the unmodified
@@ -283,12 +280,10 @@ class SelectionInterface {
                     if (unmodifiedId === ids[index]) {
                         entryColorIndex = agentColorIndex;
                     }
-                    visGeometry.setColorForId(ids[index], agentColorIndex);
+                    setColorForIds([ids[index]], agentColorIndex);
                 });
             }
-            entry.color =
-                "#" +
-                visGeometry.getColorForIndex(entryColorIndex).getHexString();
+            entry.color = convertColorNumberToString(colors[entryColorIndex]);
 
             // if we used any of the default color array
             // need to go to the next default color.
@@ -297,8 +292,7 @@ class SelectionInterface {
             }
         });
 
-        visGeometry.finalizeIdColorMapping(needToUpdateMaterials);
-        return uiDisplayData;
+        return colors;
     }
 }
 

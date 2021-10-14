@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSyncAlt } from "@fortawesome/free-solid-svg-icons";
 import SimulariumController from "../controller";
 
-import { filter, forOwn, isEqual } from "lodash";
+import { forOwn, isEqual } from "lodash";
 
 import {
     VisGeometry,
@@ -223,7 +223,12 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             onTrajectoryFileInfoChanged(trajectoryFileInfo);
             this.visGeometry.clearColorMapping();
             const uiDisplayData = this.selectionInterface.getUIDisplayData();
-            this.selectionInterface.setAgentColors(uiDisplayData, this.colors, this.visGeometry);
+            const updatedColors = this.selectionInterface.setAgentColors(uiDisplayData, this.colors, this.visGeometry.setColorForIds.bind(this.visGeometry));
+            if (!isEqual(updatedColors, this.colors)) {
+                this.colors = updatedColors; 
+                this.visGeometry.createMaterials(this.colors)
+            }
+            this.visGeometry.finalizeIdColorMapping();
             onUIDisplayDataChanged(uiDisplayData);
         };
 
