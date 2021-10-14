@@ -77,7 +77,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
     private lastRenderedAgentTime: number;
 
     private stats: Stats;
-    public colors: (number | string)[];
+    public defaultColors: (number | string)[];
     public static defaultProps = {
         renderStyle: RenderStyle.WEBGL2_PREFERRED,
         backgroundColor: [0, 0, 0],
@@ -98,7 +98,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
 
         const loggerLevel =
             props.loggerLevel === "debug" ? jsLogger.DEBUG : jsLogger.OFF;
-        this.colors = props.agentColors || [
+        this.defaultColors = props.agentColors || [
             0x6ac1e5,
             0xff2200,
             0xee7967,
@@ -142,7 +142,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         this.visGeometry = new VisGeometry(loggerLevel);
         this.props.simulariumController.visData.clearCache();
         this.visGeometry.setupScene();
-        this.visGeometry.createMaterials(this.colors);
+        this.visGeometry.createMaterials(this.defaultColors);
         this.vdomRef = React.createRef();
         this.lastRenderTime = Date.now();
         this.startTime = Date.now();
@@ -223,10 +223,9 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             onTrajectoryFileInfoChanged(trajectoryFileInfo);
             this.visGeometry.clearColorMapping();
             const uiDisplayData = this.selectionInterface.getUIDisplayData();
-            const updatedColors = this.selectionInterface.setAgentColors(uiDisplayData, this.colors, this.visGeometry.setColorForIds.bind(this.visGeometry));
-            if (!isEqual(updatedColors, this.colors)) {
-                this.colors = updatedColors; 
-                this.visGeometry.createMaterials(this.colors)
+            const updatedColors = this.selectionInterface.setAgentColors(uiDisplayData, this.defaultColors, this.visGeometry.setColorForIds.bind(this.visGeometry));
+            if (!isEqual(updatedColors, this.defaultColors)) {
+                this.visGeometry.createMaterials(updatedColors);
             }
             this.visGeometry.finalizeIdColorMapping();
             onUIDisplayDataChanged(uiDisplayData);
