@@ -860,11 +860,24 @@ class VisGeometry {
         }
     }
 
-    public createMaterials(colors: (number | string)[]): void {
-        // convert any #FFFFFF -> 0xFFFFFF
-        const colorNumbers = colors.map((color) =>
-            parseInt(color.toString().replace(/^#/, "0x"), 16)
-        );
+    private setAgentColors(): void {
+        this.visAgents.forEach((agent) => {
+            agent.setColor(
+                this.getColorForTypeId(agent.agentData.type),
+                this.getColorIndexForTypeId(agent.agentData.type)
+            );
+        });
+    }
+
+    private convertColorStringToNumber(color: number | string): number {
+        if (typeof color !== "string") {
+            return color;
+        }
+        return parseInt(color.toString().replace(/^#/, "0x"), 16);
+    }
+
+    private setColorArray(colors: (number | string)[]): void {
+        const colorNumbers = colors.map(this.convertColorStringToNumber);
 
         const numColors = colors.length;
         // fill buffer of colors:
@@ -879,14 +892,26 @@ class VisGeometry {
                 ((colorNumbers[i] & 0x000000ff) >> 0) / 255.0;
             this.colorsData[i * 4 + 3] = 1.0;
         }
-        this.renderer.updateColors(numColors, this.colorsData);
+    }
 
-        this.visAgents.forEach((agent) => {
-            agent.setColor(
-                this.getColorForTypeId(agent.agentData.type),
-                this.getColorIndexForTypeId(agent.agentData.type)
-            );
-        });
+    public addNewColor(color: number | string): void {
+        const colorNumber = this.convertColorStringToNumber(color);
+        const newColor = [
+            ((colorNumber & 0x00ff0000) >> 16) / 255.0,
+            ((colorNumber & 0x0000ff00) >> 8) / 255.0,
+            ((colorNumber & 0x000000ff) >> 0) / 255.0,
+            1.0,
+        ];
+        const newArray = [...this.colorsData, ...newColor];
+        const newColorData = new Float32Array(newArray.length);
+        newColorData.set(newArray);
+        this.colorsData = newColorData;
+    }
+
+    public createMaterials(colors: (number | string)[]): void {
+        this.setColorArray(colors);
+        this.renderer.updateColors(colors.length, this.colorsData);
+        this.setAgentColors();
     }
 
     public clearColorMapping(): void {
@@ -951,7 +976,14 @@ class VisGeometry {
         );
     }
 
-    public finalizeIdColorMapping(): void {
+    public finalizeIdColorMapping(needToUpdateMaterials: boolean): void {
+        if (needToUpdateMaterials) {
+            this.renderer.updateColors(
+                this.colorsData.length / 4,
+                this.colorsData
+            );
+        }
+        this.setAgentColors();
         this.isIdColorMappingSet = true;
     }
 
