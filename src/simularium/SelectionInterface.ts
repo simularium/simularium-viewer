@@ -1,17 +1,7 @@
 import { filter } from "lodash";
-import { Color } from "three";
 import { VisGeometry } from ".";
 import { EncodedTypeMapping } from "./types";
 
-// interface for testing function without
-// having to mock the whole VisGeometry class
-export interface VisGeometryMock {
-    createMaterials: (colors: (string | number)[]) => void;
-    setColorForIds: () => void;
-    setColorForId: () => void;
-    getColorForIndex: (index: number) => Color;
-    finalizeIdColorMapping: () => void;
-}
 // An individual entry parsed from an encoded name
 interface DecodedTypeEntry {
     id: number;
@@ -250,10 +240,10 @@ class SelectionInterface {
     public setAgentColors(
         uiDisplayData: UIDisplayData,
         colors: (string | number)[],
-        visGeometry: VisGeometry | VisGeometryMock
+        visGeometry: VisGeometry
     ): UIDisplayData {
         let defaultColorIndex = 0;
-
+        let needToUpdateMaterials = false;
         uiDisplayData.forEach((entry) => {
             // the color for the whole grouping for this entry.name
             let entryColorIndex = defaultColorIndex;
@@ -283,7 +273,8 @@ class SelectionInterface {
                             // add color to color array
                             colors = [...colors, color];
                             agentColorIndex = colors.length - 1;
-                            visGeometry.createMaterials(colors);
+                            visGeometry.addNewColor(color);
+                            needToUpdateMaterials = true;
                         }
                     }
                     // if the user set a color for the unmodified
@@ -306,8 +297,7 @@ class SelectionInterface {
             }
         });
 
-        visGeometry.finalizeIdColorMapping();
-        // passed
+        visGeometry.finalizeIdColorMapping(needToUpdateMaterials);
         return uiDisplayData;
     }
 }
