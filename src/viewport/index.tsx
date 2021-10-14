@@ -21,7 +21,7 @@ import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
 
 export type PropColor = string | number | [number, number, number];
 
-interface ViewportProps {
+type ViewportProps = {
     renderStyle: RenderStyle;
     backgroundColor?: PropColor;
     agentColors?: (number | string)[]; //TODO: accept all Color formats
@@ -42,43 +42,9 @@ interface ViewportProps {
     selectionStateInfo: SelectionStateInfo;
     showCameraControls: boolean;
     onError?: (errorMessage: string) => void;
-}
+} & Partial<DefaultProps>
 
-interface Click {
-    x: number;
-    y: number;
-    time: number;
-}
-
-interface ViewportState {
-    lastClick: Click;
-}
-
-export interface TimeData {
-    time: number;
-    frameNumber: number;
-}
-
-// max time in milliseconds for a mouse/touch interaction to be considered a click;
-const MAX_CLICK_TIME = 300;
-// for float errors
-const CLICK_TOLERANCE = 1e-4;
-
-class Viewport extends React.Component<ViewportProps, ViewportState> {
-    private visGeometry: VisGeometry;
-    private selectionInterface: SelectionInterface;
-    private lastRenderTime: number;
-    private startTime: number;
-    private vdomRef: React.RefObject<HTMLInputElement>;
-    private handlers: { [key: string]: (e: Event) => void };
-    
-    private hit: boolean;
-    private animationRequestID: number;
-    private lastRenderedAgentTime: number;
-
-    private stats: Stats;
-    public defaultColors: (number | string)[];
-    public static defaultProps = {
+const defaultProps = {
         renderStyle: RenderStyle.WEBGL2_PREFERRED,
         backgroundColor: [0, 0, 0],
         height: 800,
@@ -87,18 +53,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         hideAllAgents: false,
         showPaths: true,
         showBounds: true,
-    };
-
-    private static isCustomEvent(event: Event): event is CustomEvent {
-        return "detail" in event;
-    }
-
-    public constructor(props: ViewportProps) {
-        super(props);
-
-        const loggerLevel =
-            props.loggerLevel === "debug" ? jsLogger.DEBUG : jsLogger.OFF;
-        this.defaultColors = props.agentColors || [
+        agentColors: [
             0x6ac1e5,
             0xff2200,
             0xee7967,
@@ -133,7 +88,55 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             0x00ffaa,
             0x00ffff,
             0x0066ff,
-        ];
+        ]
+    };
+
+type DefaultProps = typeof defaultProps
+
+interface Click {
+    x: number;
+    y: number;
+    time: number;
+}
+
+interface ViewportState {
+    lastClick: Click;
+}
+
+export interface TimeData {
+    time: number;
+    frameNumber: number;
+}
+
+// max time in milliseconds for a mouse/touch interaction to be considered a click;
+const MAX_CLICK_TIME = 300;
+// for float errors
+const CLICK_TOLERANCE = 1e-4;
+
+class Viewport extends React.Component<ViewportProps & DefaultProps, ViewportState> {
+    private visGeometry: VisGeometry;
+    private selectionInterface: SelectionInterface;
+    private lastRenderTime: number;
+    private startTime: number;
+    private vdomRef: React.RefObject<HTMLInputElement>;
+    private handlers: { [key: string]: (e: Event) => void };
+    
+    private hit: boolean;
+    private animationRequestID: number;
+    private lastRenderedAgentTime: number;
+
+    private stats: Stats;
+    public static defaultProps = defaultProps
+
+    private static isCustomEvent(event: Event): event is CustomEvent {
+        return "detail" in event;
+    }
+
+    public constructor(props: ViewportProps & DefaultProps) {
+        super(props);
+
+        const loggerLevel =
+            props.loggerLevel === "debug" ? jsLogger.DEBUG : jsLogger.OFF;
 
         this.animate = this.animate.bind(this);
         this.dispatchUpdatedTime = this.dispatchUpdatedTime.bind(this);
@@ -142,7 +145,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
         this.visGeometry = new VisGeometry(loggerLevel);
         this.props.simulariumController.visData.clearCache();
         this.visGeometry.setupScene();
-        this.visGeometry.createMaterials(this.defaultColors);
+        this.visGeometry.createMaterials(props.agentColors);
         this.vdomRef = React.createRef();
         this.lastRenderTime = Date.now();
         this.startTime = Date.now();
@@ -180,6 +183,7 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             onUIDisplayDataChanged,
             loadInitialData,
             onError,
+            agentColors
         } = this.props;
         this.visGeometry.reparent(this.vdomRef.current);
         if (backgroundColor !== undefined) {
@@ -223,8 +227,8 @@ class Viewport extends React.Component<ViewportProps, ViewportState> {
             onTrajectoryFileInfoChanged(trajectoryFileInfo);
             this.visGeometry.clearColorMapping();
             const uiDisplayData = this.selectionInterface.getUIDisplayData();
-            const updatedColors = this.selectionInterface.setAgentColors(uiDisplayData, this.defaultColors, this.visGeometry.setColorForIds.bind(this.visGeometry));
-            if (!isEqual(updatedColors, this.defaultColors)) {
+            const updatedColors = this.selectionInterface.setAgentColors(uiDisplayData, agentColors, this.visGeometry.setColorForIds.bind(this.visGeometry));
+            if (!isEqual(updatedColors, agentColors)) {
                 this.visGeometry.createMaterials(updatedColors);
             }
             this.visGeometry.finalizeIdColorMapping();
