@@ -1,11 +1,23 @@
+import Logger from "js-logger";
 import { mapValues } from "lodash";
 import { Color } from "three";
 import { EncodedTypeMapping, SelectionInterface } from "../simularium";
 import {
     UIDisplayData,
     UIDisplayEntry,
-    VisGeometryMock,
 } from "../simularium/SelectionInterface";
+
+jest.mock("../simularium/VisGeometry");
+import VisGeometry from "../simularium/VisGeometry";
+// interface for testing function without
+// having to mock the whole VisGeometry class
+export interface VisGeometryMock extends VisGeometry {
+    setColorForIds: () => void;
+    setColorForId: () => void;
+    getColorForIndex: (index: number) => Color;
+    finalizeIdColorMapping: () => void;
+    addNewColor: () => void;
+}
 
 const idMapping = {
     0: { name: "A" },
@@ -347,15 +359,15 @@ describe("SelectionInterface module", () => {
                 },
             };
         });
-        const visGeometryMock: VisGeometryMock = {
-            createMaterials: jest.fn((colors) => (colorList = colors)),
-            setColorForIds: jest.fn(),
-            setColorForId: jest.fn(),
-            getColorForIndex: jest.fn(
-                (index: number) => new Color(colorList[index])
-            ),
-            finalizeIdColorMapping: jest.fn(),
-        };
+        const visGeometryMock = new VisGeometry(Logger.getLevel());
+        visGeometryMock.setColorForIds = jest.fn();
+        visGeometryMock.setColorForId = jest.fn();
+        visGeometryMock.getColorForIndex = jest.fn(
+            (index: number) => new Color(colorList[index])
+        );
+        visGeometryMock.finalizeIdColorMapping = jest.fn();
+        visGeometryMock.addNewColor = jest.fn((color) => colorList.push(color));
+
         beforeEach(() => {
             si = new SelectionInterface();
             si.parse(idMappingWithColors as EncodedTypeMapping);
@@ -377,7 +389,7 @@ describe("SelectionInterface module", () => {
             expect(colorList.length).toEqual(
                 numberOfNewColors + defaultColorListLength
             );
-            expect(visGeometryMock.createMaterials).toHaveBeenCalledTimes(
+            expect(visGeometryMock.addNewColor).toHaveBeenCalledTimes(
                 numberOfNewColors
             );
         });
