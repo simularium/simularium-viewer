@@ -7,7 +7,6 @@ import type {
 import SimulariumViewer, {
     SimulariumController,
     RenderStyle,
-    SimulariumFileFormat,
 } from "../src";
 import "./style.css";
 import { isEqual, findIndex } from "lodash";
@@ -67,7 +66,7 @@ interface ViewerState {
     width: number;
     selectionStateInfo: SelectionStateInfo;
     hideAllAgents: boolean;
-    agentColors: (number | string)[];
+    agentColors: (number[] | string[]);
     showPaths: boolean;
     timeStep: number;
     totalDuration: number;
@@ -394,19 +393,21 @@ class Viewer extends React.Component<{}, ViewerState> {
                             <label htmlFor={id}>{id}</label>
                             <input
                                 type="checkbox"
-                                onClick={(event) =>
-                                    this.turnAgentsOnOff(event.target.value)
-                                }
+                                onClick={(event) => {
+                                    const target: { value: string; }  = event.target as HTMLInputElement;
+                                    return this.turnAgentsOnOff(target.value)
+                                }}
                                 value={id}
                                 defaultChecked={true}
                             />
                             <input
                                 type="checkbox"
-                                onClick={(event) =>
+                                onClick={(event) => {
+                                    const target: { value: string; }  = event.target as HTMLInputElement;
                                     this.turnAgentHighlightsOnOff(
-                                        event.target.value
+                                        target.value
                                     )
-                                }
+                                }}
                                 value={id}
                                 defaultChecked={false}
                             />
