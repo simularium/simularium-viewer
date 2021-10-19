@@ -393,21 +393,13 @@ class Viewer extends React.Component<{}, ViewerState> {
                             <label htmlFor={id}>{id}</label>
                             <input
                                 type="checkbox"
-                                onClick={(event) => {
-                                    const target: { value: string; }  = event.target as HTMLInputElement;
-                                    return this.turnAgentsOnOff(target.value)
-                                }}
+                                onClick={(event) => this.turnAgentsOnOff((event.target as HTMLInputElement).value)}
                                 value={id}
                                 defaultChecked={true}
                             />
                             <input
                                 type="checkbox"
-                                onClick={(event) => {
-                                    const target: { value: string; }  = event.target as HTMLInputElement;
-                                    this.turnAgentHighlightsOnOff(
-                                        target.value
-                                    )
-                                }}
+                                onClick={(event) => this.turnAgentHighlightsOnOff((event.target as HTMLInputElement).value)}
                                 value={id}
                                 defaultChecked={false}
                             />
