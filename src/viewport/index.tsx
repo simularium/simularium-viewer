@@ -24,7 +24,7 @@ export type PropColor = string | number | [number, number, number];
 type ViewportProps = {
     renderStyle: RenderStyle;
     backgroundColor?: PropColor;
-    agentColors?: (number | string)[]; //TODO: accept all Color formats
+    agentColors?: (number[] | string[]); //TODO: accept all Color formats
     height: number;
     width: number;
     loggerLevel: string;
@@ -88,7 +88,7 @@ const defaultProps = {
             0x00ffaa,
             0x00ffff,
             0x0066ff,
-        ]
+        ] as (string[] | number[])
     };
 
 type DefaultProps = typeof defaultProps
