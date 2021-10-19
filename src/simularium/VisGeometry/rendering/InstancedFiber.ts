@@ -194,14 +194,20 @@ class InstancedFiber {
         // build new data texture
         // one row per curve, number of colums = num of curve control pts
         // TODO: consolidate space better.
+
+        const newData = new Float32Array(n * this.nCurvePoints * 3);
+        // start by copying the old data into the new array
+        // ASSUMES THERE IS SPACE. This depends on reallocate only growing the array.
+        // Otherwise an exception is thrown.
+        const oldData = this.curveData.image.data;
+        newData.set(oldData);
         this.curveData = new DataTexture(
-            new Float32Array(n * this.nCurvePoints * 3),
+            newData,
             this.nCurvePoints,
             n,
             RGBFormat,
             FloatType
         );
-        // we don't copy the old data texture in here because on every update, we are re-filling it
 
         this.curveGeometry = createTubeGeometry(
             this.nRadialSections,
