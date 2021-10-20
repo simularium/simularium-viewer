@@ -287,7 +287,10 @@ class SelectionInterface {
 
             // if we used any of the default color array
             // need to go to the next default color.
-            if (filter(newColors).length !== ids.length) {
+            if (
+                filter(newColors).length !== ids.length ||
+                entryColorIndex === defaultColorIndex
+            ) {
                 defaultColorIndex++;
             }
         });
