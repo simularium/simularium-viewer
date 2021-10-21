@@ -167,7 +167,16 @@ class GeometryStore {
         /** Downloads a PDB from an external source */
         const pdbModel = new PDBModel(url);
         this.setGeometryInRegistry(url, pdbModel, GeometryDisplayType.PDB);
-        return fetch(url)
+        let actualUrl = url.slice();
+        if (!actualUrl.startsWith("http")) {
+            // assume this is a PDB ID to be loaded from the actual PDB
+            const ext = ".pdb";
+            if (actualUrl.endsWith(ext)) {
+                actualUrl = url.slice(0, -ext.length);
+            }
+            actualUrl = `https://files.rcsb.org/download/${actualUrl}.pdb`;
+        }
+        return fetch(actualUrl)
             .then((response) => {
                 if (!response.ok) {
                     throw new Error(
@@ -181,11 +190,14 @@ class GeometryStore {
                     this._registry.delete(url);
                     return Promise.resolve(undefined);
                 }
-                pdbModel.parsePDBData(data);
+                if (actualUrl.endsWith(".cif")) {
+                    pdbModel.parseCIFData(data);
+                } else {
+                    pdbModel.parsePDBData(data);
+                }
                 const pdbEntry = this._registry.get(url);
                 if (pdbEntry && pdbEntry.geometry === pdbModel) {
                     this.mlogger.info("Finished downloading pdb: ", url);
-
                     return pdbModel;
                 } else {
                     // TODO: what should happen here?
@@ -309,7 +321,11 @@ class GeometryStore {
             let geometry;
             if (file && displayType === GeometryDisplayType.PDB) {
                 const pdbModel = new PDBModel(urlOrPath);
-                pdbModel.parsePDBData(file);
+                if (urlOrPath.endsWith(".cif")) {
+                    pdbModel.parseCIFData(file);
+                } else {
+                    pdbModel.parsePDBData(file);
+                }
                 this.setGeometryInRegistry(urlOrPath, pdbModel, displayType);
                 geometry = pdbModel;
             } else if (file && displayType === GeometryDisplayType.OBJ) {

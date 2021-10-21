@@ -2,6 +2,7 @@ import "regenerator-runtime/runtime";
 
 import * as Comlink from "comlink";
 import parsePdb from "parse-pdb";
+import parseMmcif from "parse-mmcif";
 import {
     Box3,
     BufferGeometry,
@@ -96,6 +97,16 @@ class PDBModel {
 
     public getNumAtoms(): number {
         return this.pdb ? this.pdb.atoms.length : 0;
+    }
+
+    public parseCIFData(data: string): void {
+        this.pdb = parseMmcif(data) as PDBType;
+        if (this.pdb.atoms.length > 0) {
+            this.fixupCoordinates();
+            console.log(`PDB ${this.name} has ${this.pdb.atoms.length} atoms`);
+            this.checkChains();
+            return this.initializeLOD();
+        }
     }
 
     public parsePDBData(data: string): void {

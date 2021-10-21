@@ -123,21 +123,42 @@ export default class PdbSim implements IClientSimulatorImpl {
 
     public getInfo(): TrajectoryFileInfo {
         const urls = [
+            "https://files.rcsb.org/download/4V40.cif",
+            "7DAM",
+            "7PWD",
             "https://aics-simularium-data.s3.us-east-2.amazonaws.com/meshes/obj/actin.pdb",
             "https://aics-simularium-data.s3.us-east-2.amazonaws.com/meshes/obj/arp2.pdb",
             "https://aics-simularium-data.s3.us-east-2.amazonaws.com/meshes/obj/arp3.pdb",
             "https://aics-simularium-data.s3.us-east-2.amazonaws.com/meshes/obj/tubA.pdb",
             "https://aics-simularium-data.s3.us-east-2.amazonaws.com/meshes/obj/tubB.pdb",
         ];
+        const names = [
+            "4V40",
+            "7DAM",
+            "7PWD",
+            "actin",
+            "arp2",
+            "arp3",
+            "tubA",
+            "tubB",
+        ];
+        const colors = [
+            "ff0000",
+            "00ff00",
+            "0000ff",
+            "ffff00",
+            "ff00ff",
+            "00ffff",
+        ];
 
         const typeMapping: EncodedTypeMapping = {};
         for (let i = 0; i < this.nTypes; ++i) {
             typeMapping[i] = {
-                name: `point${i}`,
+                name: names[i],
                 geometry: {
                     displayType: GeometryDisplayType.PDB,
                     url: urls[i % urls.length],
-                    color: "ff0000",
+                    color: colors[i],
                 },
             };
         }
