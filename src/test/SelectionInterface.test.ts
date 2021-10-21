@@ -21,6 +21,7 @@ const idMapping = {
     12: { name: "D" },
     13: { name: "E#t1000" },
 };
+
 const color = "";
 
 describe("SelectionInterface module", () => {
@@ -321,27 +322,54 @@ describe("SelectionInterface module", () => {
     });
 
     describe("setAgentColors", () => {
-        const defaultColor = "#000000";
+        const defaultColor = "#0";
         const defaultColorListLength = 6;
         let si: SelectionInterface;
         let uiDisplayData: UIDisplayData;
         let uiDisplayDataForA: UIDisplayEntry | undefined;
         let uiDisplayDataForB: UIDisplayEntry | undefined;
         let uiDisplayDataForE: UIDisplayEntry | undefined;
-        const colorList = Array(defaultColorListLength).fill(defaultColor);
+        let uiDisplayDataForF: UIDisplayEntry | undefined;
+        let uiDisplayDataForG: UIDisplayEntry | undefined;
+        const colorList: string[] = [];
+        for (let index = 0; index < defaultColorListLength; index++) {
+            colorList.push(defaultColor + index);
+        }
+        // A, B and C all have all the same colors set for all agents types,
+        // and all have an unmodified agent type.
+        // D is only unmodified, so has no children, still has a color set.
+        // E has no color set, and no unmodified type
+        // F has a color set, and no unmodified type
+        // G has two different colors for it's two states, and no unmodified type
         const agentColors = {
             A: "#aaaaaa",
             B: "#bbbbbb",
             C: "#cccccc",
             D: "#dddddd",
+            F: "#ffffff",
         };
-        const idMappingWithColors = mapValues(idMapping, (entry) => {
+        const newIdMapping: {
+            [key: number]: { name: string; color?: string };
+        } = {
+            ...idMapping,
+            14: { name: "F#t1000" },
+            15: {
+                name: "G#1",
+                color: "#g1",
+            },
+            16: {
+                name: "G#2",
+                color: "#g2",
+            },
+        };
+
+        const idMappingWithColors = mapValues(newIdMapping, (entry) => {
             return {
                 ...entry,
                 geometry: {
                     url: "",
                     displayType: "",
-                    color: agentColors[entry.name[0]],
+                    color: entry.color || agentColors[entry.name[0]],
                 },
             };
         });
@@ -360,10 +388,16 @@ describe("SelectionInterface module", () => {
             uiDisplayDataForE = uiDisplayData.find(
                 (entry) => entry.name === "E"
             );
+            uiDisplayDataForF = uiDisplayData.find(
+                (entry) => entry.name === "F"
+            );
+            uiDisplayDataForG = uiDisplayData.find(
+                (entry) => entry.name === "G"
+            );
         });
 
         test("it will create a new material for each of the use defined colors", () => {
-            const numberOfNewColors = Object.keys(agentColors).length;
+            const numberOfNewColors = Object.keys(agentColors).length + 2;
             const updatedColors = si.setAgentColors(
                 uiDisplayData,
                 colorList,
@@ -376,35 +410,34 @@ describe("SelectionInterface module", () => {
         });
 
         test("it set the entry color to the 'unmodified' state color if provided", () => {
-            // Mostly for typescript, but should fail test if this is undefined
-            if (!uiDisplayDataForA || !uiDisplayDataForB) {
-                throw new Error(
-                    "The initial ui data is messed up, missing A or B entries"
-                );
-            }
             // initially should have no color
-            expect(uiDisplayDataForA.color).toEqual("");
-            expect(uiDisplayDataForB.color).toEqual("");
+            expect(uiDisplayDataForA?.color).toEqual("");
+            expect(uiDisplayDataForB?.color).toEqual("");
             si.setAgentColors(uiDisplayData, colorList, setColorForIds);
-            expect(uiDisplayDataForA.color).toEqual("#aaaaaa");
-            expect(uiDisplayDataForB.color).toEqual("#bbbbbb");
+            expect(uiDisplayDataForA?.color).toEqual("#aaaaaa");
+            expect(uiDisplayDataForB?.color).toEqual("#bbbbbb");
         });
         test("If no user colors are provided entry will get a default color", () => {
             // Mostly for typescript, but should fail test if this is undefined
-            if (!uiDisplayDataForE) {
-                throw new Error(
-                    "The initial ui data is messed up, missing E entries"
-                );
-            }
+
             // initially should have no color
-            expect(uiDisplayDataForE.color).toEqual("");
+            expect(uiDisplayDataForE?.color).toEqual("");
             si.setAgentColors(uiDisplayData, colorList, setColorForIds);
-            expect(uiDisplayDataForE.color).toEqual("#000000");
+            expect(uiDisplayDataForE?.color).toEqual("#00");
             expect(setColorForIds).toHaveBeenCalledWith([13], 0);
         });
         test("If no user colors are provided all the ids for an entry will get a default color", () => {
             si.setAgentColors(uiDisplayData, colorList, setColorForIds);
             expect(setColorForIds).toHaveBeenCalledWith([13], 0);
+        });
+        test("if all the colors are the same, the parent entry will also get that color, even if no unmodified color set", () => {
+            si.setAgentColors(uiDisplayData, colorList, setColorForIds);
+            expect(uiDisplayDataForF?.color).toEqual("#ffffff");
+        });
+        test("Parent agents that don't have defined colors, all get different default colors", () => {
+            si.setAgentColors(uiDisplayData, colorList, setColorForIds);
+            expect(uiDisplayDataForE?.color).toEqual("#00");
+            expect(uiDisplayDataForG?.color).toEqual("#01");
         });
         test("If user colors are provided each id will be set with the new color", () => {
             si.setAgentColors(uiDisplayData, colorList, setColorForIds);

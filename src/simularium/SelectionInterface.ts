@@ -1,4 +1,4 @@
-import { filter } from "lodash";
+import { filter, uniq } from "lodash";
 import { EncodedTypeMapping } from "./types";
 import { convertColorNumberToString } from "./VisGeometry/color-utils";
 
@@ -254,6 +254,7 @@ class SelectionInterface {
             // ids that don't have a user set color
             const newColors = this.getColorsForName(entry.name);
             const hasNewColors = filter(newColors).length > 0;
+            const allTheSameColor = uniq(newColors).length === 1;
             if (!hasNewColors) {
                 // if no colors have been set by the user for this name,
                 // just give all states of this agent name the same color
@@ -275,16 +276,17 @@ class SelectionInterface {
                         }
                     }
                     // if the user set a color for the unmodified
-                    // state, use that for the whole group as well
-                    // otherwise the grouping color may be completely different
-                    if (unmodifiedId === ids[index]) {
+                    // state, or used all the same colors for all states of this agent,
+                    // use that for the group as well
+                    // otherwise the grouping color will just be whatever comes next in
+                    // the default color list.
+                    if (unmodifiedId === ids[index] || allTheSameColor) {
                         entryColorIndex = agentColorIndex;
                     }
                     setColorForIds([ids[index]], agentColorIndex);
                 });
             }
             entry.color = convertColorNumberToString(colors[entryColorIndex]);
-
             // if we used any of the default color array
             // need to go to the next default color.
             if (
