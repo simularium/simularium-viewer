@@ -212,8 +212,19 @@ class SelectionInterface {
             const displayStates: DisplayStateEntry[] = [];
             const encounteredTags: string[] = [];
 
-            this.entries[name].forEach((entry) => {
-                entry.tags.forEach((tag) => {
+            const hasMultipleStates =
+                Object.keys(this.entries[name]).length > 1;
+            this.entries[name].forEach((entry: DecodedTypeEntry) => {
+                // add unmodified state if there are multiple states, and one of them
+                // has no state tags
+                if (!entry.tags.length && hasMultipleStates) {
+                    displayStates.push({
+                        name: "<unmodified>",
+                        id: "", // selects agents with no state tags
+                        color: entry.color,
+                    });
+                }
+                entry.tags.forEach((tag: string) => {
                     if (encounteredTags.includes(tag)) {
                         return;
                     }
