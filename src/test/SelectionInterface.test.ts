@@ -397,7 +397,7 @@ describe("SelectionInterface module", () => {
         });
 
         test("it will create a new material for each of the use defined colors", () => {
-            const numberOfNewColors = Object.keys(agentColors).length + 2;
+            const numberOfNewColors = Object.keys(agentColors).length + 2; // two additional colors for G
             const updatedColors = si.setAgentColors(
                 uiDisplayData,
                 colorList,
