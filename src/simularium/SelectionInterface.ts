@@ -272,8 +272,6 @@ class SelectionInterface {
         uiDisplayData.forEach((entry) => {
             // the color for the whole grouping for this entry.name
             let entryColorIndex = defaultColorIndex;
-            // the id (if present, of the unmodified state of this entry)
-            const unmodifiedId = this.getUnmodifiedStateId(entry.name);
             // list of ids that all have this same name
             const ids = this.getIds(entry.name);
             // list of colors for this entry, will be empty strings for
@@ -309,12 +307,10 @@ class SelectionInterface {
                             colors[entryColorIndex]
                         );
                     }
-                    // if the user set a color for the unmodified
-                    // state, or used all the same colors for all states of this agent,
+                    // if the user used all the same colors for all states of this agent,
                     // use that for the group as well
-                    // otherwise the grouping color will just be whatever comes next in
-                    // the default color list.
-                    if (unmodifiedId === ids[index] || allTheSameColor) {
+                    // otherwise the grouping color will be blank
+                    if (allTheSameColor) {
                         entryColorIndex = agentColorIndex;
                     } else {
                         entryColorIndex = -1;
