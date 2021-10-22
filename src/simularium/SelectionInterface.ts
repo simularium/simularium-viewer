@@ -196,7 +196,6 @@ class SelectionInterface {
             const tags = r.tags;
             indices = [...indices, ...this.getIds(name, tags)];
         });
-
         return indices;
     }
 
@@ -225,8 +224,7 @@ class SelectionInterface {
         return Object.keys(this.entries).map((name) => {
             const displayStates: DisplayStateEntry[] = [];
             const encounteredTags: string[] = [];
-
-            this.entries[name].forEach((entry) => {
+            this.entries[name].forEach((entry: DecodedTypeEntry) => {
                 entry.tags.forEach((tag) => {
                     if (encounteredTags.includes(tag)) {
                         return;
@@ -251,7 +249,11 @@ class SelectionInterface {
         });
     }
 
-    private updateUiDataColor(entry, id, color) {
+    private updateUiDataColor(
+        entry: UIDisplayEntry,
+        id: number,
+        color: number | string
+    ) {
         const tagsToUpdate = this.getTagsById(entry.name, id);
         entry.displayStates.map((displayState: DisplayStateEntry) => {
             if (tagsToUpdate.includes(displayState.id)) {
@@ -264,7 +266,7 @@ class SelectionInterface {
     public setAgentColors(
         uiDisplayData: UIDisplayData,
         colors: (string | number)[],
-        setColorForIds: (ids: number[], number) => void
+        setColorForIds: (ids: number[], colorIndex: number) => void
     ): (string | number)[] {
         let defaultColorIndex = 0;
         uiDisplayData.forEach((entry) => {
