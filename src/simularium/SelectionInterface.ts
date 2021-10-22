@@ -251,6 +251,16 @@ class SelectionInterface {
         });
     }
 
+    private updateUiDataColor(entry, id, color) {
+        const tagsToUpdate = this.getTagsById(entry.name, id);
+        entry.displayStates.map((displayState: DisplayStateEntry) => {
+            if (tagsToUpdate.includes(displayState.id)) {
+                displayState.color = convertColorNumberToString(color);
+            }
+            return displayState;
+        });
+    }
+
     public setAgentColors(
         uiDisplayData: UIDisplayData,
         colors: (string | number)[],
@@ -291,18 +301,11 @@ class SelectionInterface {
                         }
                     } else {
                         // need update the display data with the default color being used
-                        const tagsToUpdate = this.getTagsById(
-                            entry.name,
-                            ids[index]
+                        this.updateUiDataColor(
+                            entry,
+                            ids[index],
+                            colors[entryColorIndex]
                         );
-                        entry.displayStates.map((displayState) => {
-                            if (tagsToUpdate.includes(displayState.id)) {
-                                displayState.color = convertColorNumberToString(
-                                    colors[entryColorIndex]
-                                );
-                            }
-                            return displayState;
-                        });
                     }
                     // if the user set a color for the unmodified
                     // state, or used all the same colors for all states of this agent,
