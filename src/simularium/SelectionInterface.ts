@@ -1,4 +1,4 @@
-import { filter, uniq } from "lodash";
+import { filter, find, uniq } from "lodash";
 import { EncodedTypeMapping } from "./types";
 import { convertColorNumberToString } from "./VisGeometry/color-utils";
 
@@ -70,7 +70,7 @@ class SelectionInterface {
             }
             let color = "";
             if (idNameMapping[id].geometry) {
-                color = idNameMapping[id].geometry.color || "";
+                color = idNameMapping[id].geometry.color;
             }
             this.decode(idNameMapping[id].name, color, parseInt(id));
         });
@@ -169,6 +169,20 @@ class SelectionInterface {
         return indices;
     }
 
+    public getTagsById(name: string, id: number): string[] {
+        const entryList = this.entries[name];
+        if (!entryList) {
+            return [];
+        }
+        const state = find(
+            entryList,
+            (entry: DecodedTypeEntry) => entry.id === id
+        );
+        if (state) {
+            return state.tags;
+        }
+        return [];
+    }
     /*
      * If an entity has both a name and all the tags specified in the
      * selection state info, it will be considered highlighted
@@ -266,6 +280,7 @@ class SelectionInterface {
                     // entity, ie, bound and unbound states).
                     // All agents with unspecified colors in this grouping
                     // will still get the same default color as each other
+
                     let agentColorIndex = defaultColorIndex;
                     if (color) {
                         agentColorIndex = colors.indexOf(color);
@@ -274,6 +289,20 @@ class SelectionInterface {
                             colors = [...colors, color];
                             agentColorIndex = colors.length - 1;
                         }
+                    } else {
+                        // need update the display data with the default color being used
+                        const tagsToUpdate = this.getTagsById(
+                            entry.name,
+                            ids[index]
+                        );
+                        entry.displayStates.map((displayState) => {
+                            if (tagsToUpdate.includes(displayState.id)) {
+                                displayState.color = convertColorNumberToString(
+                                    colors[entryColorIndex]
+                                );
+                            }
+                            return displayState;
+                        });
                     }
                     // if the user set a color for the unmodified
                     // state, or used all the same colors for all states of this agent,
