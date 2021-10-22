@@ -167,6 +167,23 @@ class Viewer extends React.Component<{}, ViewerState> {
         });
     };
 
+    public loadFromUrl(url): void {
+        fetch(url)
+            .then((item) => {
+                return item.text();
+            })
+            .then((parsedFile) => {
+                const simulariumFile = JSON.parse(parsedFile);
+                const fileName = url;
+                simulariumController
+                    .changeFile({ simulariumFile }, fileName)
+                    .catch((error) => {
+                        console.log("Error loading file", error);
+                        window.alert(`Error loading file: ${error.message}`);
+                    });
+            });
+    }
+
     public handleJsonMeshData(jsonData): void {
         console.log("Mesh JSON Data: ", jsonData);
     }
@@ -280,6 +297,9 @@ class Viewer extends React.Component<{}, ViewerState> {
 
     private configureAndLoad() {
         simulariumController.configureNetwork(netConnectionSettings);
+        if (playbackFile.startsWith("http")) {
+            return this.loadFromUrl(playbackFile);
+        }
         if (playbackFile === "TEST_POINTS") {
             simulariumController.changeFile(
                 {

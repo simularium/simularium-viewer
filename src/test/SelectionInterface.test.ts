@@ -339,6 +339,71 @@ describe("SelectionInterface module", () => {
 
             si.getUIDisplayData();
         });
+        test("It adds an unmodified state to agents that have one", () => {
+            const si = new SelectionInterface();
+            si.parse(idMapping);
+            const uiDisplayData = si.getUIDisplayData();
+            const uiDisplayDataForA = uiDisplayData.find(
+                (entry) => entry.name === "A"
+            );
+            const uiDisplayDataForB = uiDisplayData.find(
+                (entry) => entry.name === "B"
+            );
+            const uiDisplayDataForC = uiDisplayData.find(
+                (entry) => entry.name === "C"
+            );
+            const unmodifiedDisplayState = {
+                name: "<unmodified>",
+                id: "",
+                color: "",
+            };
+            expect(uiDisplayDataForA?.displayStates.length).toEqual(3);
+            expect(uiDisplayDataForA?.displayStates).toContainEqual(
+                unmodifiedDisplayState
+            );
+            expect(uiDisplayDataForB?.displayStates.length).toEqual(3);
+            expect(uiDisplayDataForB?.displayStates).toContainEqual(
+                unmodifiedDisplayState
+            );
+            expect(uiDisplayDataForC?.displayStates.length).toEqual(3);
+            expect(uiDisplayDataForC?.displayStates).toContainEqual(
+                unmodifiedDisplayState
+            );
+        });
+        test("It doesn't add an unmodified state to agents that don't have one", () => {
+            const si = new SelectionInterface();
+            si.parse(idMapping);
+            const uiDisplayData = si.getUIDisplayData();
+            const uiDisplayDataForE = uiDisplayData.find(
+                (entry) => entry.name === "E"
+            );
+            const unmodifiedDisplayState = {
+                name: "<unmodified>",
+                id: "",
+                color: "",
+            };
+            expect(uiDisplayDataForE?.displayStates.length).toEqual(1);
+            expect(uiDisplayDataForE?.displayStates).not.toContainEqual(
+                unmodifiedDisplayState
+            );
+        });
+        test("It doesn't include unmodified state if there are no other tags", () => {
+            const si = new SelectionInterface();
+            si.parse(idMapping);
+            const uiDisplayData = si.getUIDisplayData();
+            const uiDisplayDataForD = uiDisplayData.find(
+                (entry) => entry.name === "D"
+            );
+            const unmodifiedDisplayState = {
+                name: "<unmodified>",
+                id: "",
+                color: "",
+            };
+            expect(uiDisplayDataForD?.displayStates.length).toEqual(0);
+            expect(uiDisplayDataForD?.displayStates).not.toContainEqual(
+                unmodifiedDisplayState
+            );
+        });
     });
 
     describe("setAgentColors", () => {
