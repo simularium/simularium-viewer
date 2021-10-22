@@ -434,10 +434,9 @@ describe("SelectionInterface module", () => {
             si.setAgentColors(uiDisplayData, colorList, setColorForIds);
             expect(uiDisplayDataForF?.color).toEqual("#ffffff");
         });
-        test("Parent agents that don't have defined colors, all get different default colors", () => {
+        test("If user defined colors are different, parent doesn't get a color", () => {
             si.setAgentColors(uiDisplayData, colorList, setColorForIds);
-            expect(uiDisplayDataForE?.color).toEqual("#00");
-            expect(uiDisplayDataForG?.color).toEqual("#01");
+            expect(uiDisplayDataForG?.color).toEqual("");
         });
         test("If user colors are provided each id will be set with the new color", () => {
             si.setAgentColors(uiDisplayData, colorList, setColorForIds);

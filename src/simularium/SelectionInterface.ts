@@ -282,11 +282,19 @@ class SelectionInterface {
                     // the default color list.
                     if (unmodifiedId === ids[index] || allTheSameColor) {
                         entryColorIndex = agentColorIndex;
+                    } else {
+                        entryColorIndex = -1;
                     }
                     setColorForIds([ids[index]], agentColorIndex);
                 });
             }
-            entry.color = convertColorNumberToString(colors[entryColorIndex]);
+            if (entryColorIndex > -1) {
+                entry.color = convertColorNumberToString(
+                    colors[entryColorIndex]
+                );
+            } else {
+                entry.color = "";
+            }
             // if we used any of the default color array
             // need to go to the next default color.
             if (
