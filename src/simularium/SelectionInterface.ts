@@ -266,11 +266,10 @@ class SelectionInterface {
         color: number | string
     ) {
         const tagsToUpdate = this.getTagsById(entry.name, id);
-        entry.displayStates.map((displayState: DisplayStateEntry) => {
+        entry.displayStates.forEach((displayState: DisplayStateEntry) => {
             if (tagsToUpdate.includes(displayState.id)) {
                 displayState.color = convertColorNumberToString(color);
             }
-            return displayState;
         });
     }
 
