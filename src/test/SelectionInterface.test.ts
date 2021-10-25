@@ -198,7 +198,7 @@ describe("SelectionInterface module", () => {
             expect(ids).toEqual([1, 2, 3, 5, 6, 7, 9, 10, 11]);
         });
     });
-    describe("getTagsBy", () => {
+    describe("getTags", () => {
         test("It returns an array of tags that exist on an type id", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
