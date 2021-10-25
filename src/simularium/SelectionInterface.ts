@@ -169,7 +169,7 @@ class SelectionInterface {
         return indices;
     }
 
-    public getTagsById(name: string, id: number): string[] {
+    public getTags(name: string, id: number): string[] {
         const entryList = this.entries[name];
         if (!entryList) {
             return [];
@@ -265,7 +265,7 @@ class SelectionInterface {
         id: number,
         color: number | string
     ) {
-        const tagsToUpdate = this.getTagsById(entry.name, id);
+        const tagsToUpdate = this.getTags(entry.name, id);
         entry.displayStates.forEach((displayState: DisplayStateEntry) => {
             if (tagsToUpdate.includes(displayState.id)) {
                 displayState.color = convertColorNumberToString(color);
@@ -279,14 +279,14 @@ class SelectionInterface {
         setColorForIds: (ids: number[], colorIndex: number) => void
     ): (string | number)[] {
         let defaultColorIndex = 0;
-        uiDisplayData.forEach((entry) => {
+        uiDisplayData.forEach((group) => {
             // the color for the whole grouping for this entry.name
-            let entryColorIndex = defaultColorIndex;
+            let groupColorIndex = defaultColorIndex;
             // list of ids that all have this same name
-            const ids = this.getIds(entry.name);
+            const ids = this.getIds(group.name);
             // list of colors for this entry, will be empty strings for
             // ids that don't have a user set color
-            const newColors = this.getColorsForName(entry.name);
+            const newColors = this.getColorsForName(group.name);
             const hasNewColors = filter(newColors).length > 0;
             const allTheSameColor = uniq(newColors).length === 1;
             if (!hasNewColors) {
@@ -312,34 +312,34 @@ class SelectionInterface {
                     } else {
                         // need update the display data with the default color being used
                         this.updateUiDataColor(
-                            entry,
+                            group,
                             ids[index],
-                            colors[entryColorIndex]
+                            colors[groupColorIndex]
                         );
                     }
                     // if the user used all the same colors for all states of this agent,
                     // use that for the group as well
                     // otherwise the grouping color will be blank
                     if (allTheSameColor) {
-                        entryColorIndex = agentColorIndex;
+                        groupColorIndex = agentColorIndex;
                     } else {
-                        entryColorIndex = -1;
+                        groupColorIndex = -1;
                     }
                     setColorForIds([ids[index]], agentColorIndex);
                 });
             }
-            if (entryColorIndex > -1) {
-                entry.color = convertColorNumberToString(
-                    colors[entryColorIndex]
+            if (groupColorIndex > -1) {
+                group.color = convertColorNumberToString(
+                    colors[groupColorIndex]
                 );
             } else {
-                entry.color = "";
+                group.color = "";
             }
             // if we used any of the default color array
             // need to go to the next default color.
             if (
                 filter(newColors).length !== ids.length ||
-                entryColorIndex === defaultColorIndex
+                groupColorIndex === defaultColorIndex
             ) {
                 defaultColorIndex++;
             }

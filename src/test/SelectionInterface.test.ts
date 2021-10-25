@@ -198,23 +198,23 @@ describe("SelectionInterface module", () => {
             expect(ids).toEqual([1, 2, 3, 5, 6, 7, 9, 10, 11]);
         });
     });
-    describe("getTagsById", () => {
+    describe("getTagsBy", () => {
         test("It returns an array of tags that exist on an type id", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
-            const tags = si.getTagsById("A", 3);
+            const tags = si.getTags("A", 3);
             expect(tags).toEqual(["t1", "t2"]);
         });
         test("It returns an empty array if no tags exist", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
-            const tags = si.getTagsById("D", 12);
+            const tags = si.getTags("D", 12);
             expect(tags).toEqual([]);
         });
         test("It returns an empty array if name and id don't match", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
-            const tags = si.getTagsById("A", 12);
+            const tags = si.getTags("A", 12);
             expect(tags).toEqual([]);
         });
     });
