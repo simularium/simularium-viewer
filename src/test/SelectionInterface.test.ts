@@ -503,8 +503,6 @@ describe("SelectionInterface module", () => {
             expect(uiDisplayDataForB?.color).toEqual("#bbbbbb");
         });
         test("If no user colors are provided entry will get a default color", () => {
-            // Mostly for typescript, but should fail test if this is undefined
-
             // initially should have no color
             expect(uiDisplayDataForE?.color).toEqual("");
             si.setAgentColors(uiDisplayData, colorList, setColorForIds);
