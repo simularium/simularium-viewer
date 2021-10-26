@@ -163,13 +163,10 @@ class GeometryStore {
         });
     }
 
-    private fetchPdb(
-        url: string,
-        displayType: GeometryDisplayType.CIF | GeometryDisplayType.PDB
-    ): Promise<PDBModel | undefined> {
+    private fetchPdb(url: string): Promise<PDBModel | undefined> {
         /** Downloads a PDB from an external source */
         const pdbModel = new PDBModel(url);
-        this.setGeometryInRegistry(url, pdbModel, displayType);
+        this.setGeometryInRegistry(url, pdbModel, GeometryDisplayType.PDB);
         ////////////////////////
         // if url is ID then try to fetch as cif, then if error try to fetch as pdb
         // else if URL is http then just fetch URL and process file type based on file extension
@@ -212,11 +209,7 @@ class GeometryStore {
                     this._registry.delete(url);
                     return Promise.resolve(undefined);
                 }
-                if (isPDBfile) {
-                    pdbModel.parsePDBData(data);
-                } else {
-                    pdbModel.parseCIFData(data);
-                }
+                pdbModel.parseFileFormat(data);
                 const pdbEntry = this._registry.get(url);
                 if (pdbEntry && pdbEntry.geometry === pdbModel) {
                     this.mlogger.info("Finished downloading pdb: ", url);
@@ -343,11 +336,7 @@ class GeometryStore {
             let geometry;
             if (file && displayType === GeometryDisplayType.PDB) {
                 const pdbModel = new PDBModel(urlOrPath);
-                if (displayType === GeometryDisplayType.CIF) {
-                    pdbModel.parseCIFData(file);
-                } else {
-                    pdbModel.parsePDBData(file);
-                }
+                pdbModel.parseFileFormat(file);
                 this.setGeometryInRegistry(urlOrPath, pdbModel, displayType);
                 geometry = pdbModel;
             } else if (file && displayType === GeometryDisplayType.OBJ) {
@@ -376,12 +365,9 @@ class GeometryStore {
             this._geoLoadAttempted.set(urlOrPath, true);
             switch (displayType) {
                 case GeometryDisplayType.PDB:
-                case GeometryDisplayType.CIF:
-                    return this.fetchPdb(urlOrPath, displayType).then(
-                        (pdbModel) => {
-                            return pdbModel;
-                        }
-                    );
+                    return this.fetchPdb(urlOrPath).then((pdbModel) => {
+                        return pdbModel;
+                    });
                 case GeometryDisplayType.OBJ:
                     return this.fetchObj(urlOrPath).then((object) => {
                         return object;

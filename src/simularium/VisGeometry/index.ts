@@ -1039,7 +1039,10 @@ class VisGeometry {
                         geometry
                     );
                     // handle additional async update to LOD for pdbs
-                    if (isPDBLike(newDisplayType) && geometry) {
+                    if (
+                        newDisplayType === GeometryDisplayType.PDB &&
+                        geometry
+                    ) {
                         const pdbModel = geometry as PDBModel;
                         return pdbModel.generateLOD().then(() => {
                             this.logger.info(

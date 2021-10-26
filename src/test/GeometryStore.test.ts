@@ -101,11 +101,6 @@ describe("GeometryStore module", () => {
                 displayType: GeometryDisplayType.PDB,
                 geometry: new PDBModel(pdbName),
             });
-            const cifName = "pdb.cif";
-            registry.set(cifName, {
-                displayType: GeometryDisplayType.CIF,
-                geometry: new PDBModel(cifName),
-            });
             const addedItem = "mesh";
             registry.set(addedItem, {
                 displayType: GeometryDisplayType.OBJ,

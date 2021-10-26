@@ -99,7 +99,18 @@ class PDBModel {
         return this.pdb ? this.pdb.atoms.length : 0;
     }
 
-    public parseCIFData(data: string): void {
+    public parseFileFormat(data: string): void {
+        // PDB should always begin with "HEADER"
+        // CIF should always begin with "#\#CIF_"
+        // but the CIF prefix is a convention and not as strict a requirement.
+        if (data.startsWith("HEADER")) {
+            this.parsePDBData(data);
+        } else {
+            this.parseCIFData(data);
+        }
+    }
+
+    private parseCIFData(data: string): void {
         this.pdb = parseMmcif(data) as PDBType;
         if (this.pdb.atoms.length > 0) {
             this.fixupCoordinates();
@@ -109,7 +120,7 @@ class PDBModel {
         }
     }
 
-    public parsePDBData(data: string): void {
+    private parsePDBData(data: string): void {
         // NOTE: pdb atom coordinates are in angstroms
         // 1 nm is 10 angstroms
         this.pdb = parsePdb(data) as PDBType;
