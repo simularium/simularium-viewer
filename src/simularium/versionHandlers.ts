@@ -43,7 +43,7 @@ export const makeMissingDisplayTypeErrorMessage = (
 
 export const makeMissingUrlErrorMessage = (
     key: string,
-    displayType: GeometryDisplayType
+    displayType: GeometryDisplayType.PDB | GeometryDisplayType.OBJ
 ): string => {
     return `DisplayType was ${displayType} but missing typeMapping[${key}].geometry.url, so we couldn't request the file. Geometry will default to spheres`;
 };
