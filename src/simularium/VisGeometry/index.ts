@@ -54,7 +54,6 @@ import GeometryStore, { DEFAULT_MESH_NAME } from "./GeometryStore";
 import {
     AgentGeometry,
     GeometryDisplayType,
-    isPDBLike,
     MeshGeometry,
     MeshLoadRequest,
     PDBGeometry,
@@ -796,7 +795,7 @@ class VisGeometry {
             const meshTypes: InstancedMesh[] = [];
             for (const entry of this.geometryStore.registry.values()) {
                 const { displayType } = entry;
-                if (!isPDBLike(displayType)) {
+                if (displayType !== GeometryDisplayType.PDB) {
                     const meshEntry = entry as MeshGeometry;
                     if (meshEntry.geometry.instances.instanceCount() > 0) {
                         meshTypes.push(meshEntry.geometry.instances);
@@ -1473,7 +1472,7 @@ class VisGeometry {
                     return;
                 }
                 const { geometry, displayType } = response;
-                if (geometry && isPDBLike(displayType)) {
+                if (geometry && displayType === GeometryDisplayType.PDB) {
                     const pdbEntry = geometry as PDBModel;
                     this.addPdbToDrawList(typeId, visAgent, pdbEntry);
                 } else {

@@ -8,7 +8,7 @@ import {
     TrajectoryFileInfoAny,
     TrajectoryFileInfoV1,
 } from "./types";
-import { GeometryDisplayType, isPDBLike } from "./VisGeometry/types";
+import { GeometryDisplayType } from "./VisGeometry/types";
 
 // the data may come in missing any of these values
 export interface AgentTypeVisDataPreProcessing {
@@ -75,7 +75,7 @@ export const sanitizeAgentMapGeometryData = (
                     displayType = GeometryDisplayType.SPHERE;
                 } else if (
                     !url &&
-                    (isPDBLike(displayType) ||
+                    (displayType === GeometryDisplayType.PDB ||
                         displayType === GeometryDisplayType.OBJ)
                 ) {
                     const message = makeMissingUrlErrorMessage(
