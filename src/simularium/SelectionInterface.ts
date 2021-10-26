@@ -1,4 +1,4 @@
-import { filter } from "lodash";
+import { filter, find, uniq } from "lodash";
 import { EncodedTypeMapping } from "./types";
 import { convertColorNumberToString } from "./VisGeometry/color-utils";
 
@@ -70,7 +70,7 @@ class SelectionInterface {
             }
             let color = "";
             if (idNameMapping[id].geometry) {
-                color = idNameMapping[id].geometry.color || "";
+                color = idNameMapping[id].geometry.color;
             }
             this.decode(idNameMapping[id].name, color, parseInt(id));
         });
@@ -169,6 +169,20 @@ class SelectionInterface {
         return indices;
     }
 
+    public getTags(name: string, id: number): string[] {
+        const entryList = this.entries[name];
+        if (!entryList) {
+            return [];
+        }
+        const state = find(
+            entryList,
+            (entry: DecodedTypeEntry) => entry.id === id
+        );
+        if (state) {
+            return state.tags;
+        }
+        return [];
+    }
     /*
      * If an entity has both a name and all the tags specified in the
      * selection state info, it will be considered highlighted
@@ -182,7 +196,6 @@ class SelectionInterface {
             const tags = r.tags;
             indices = [...indices, ...this.getIds(name, tags)];
         });
-
         return indices;
     }
 
@@ -211,9 +224,19 @@ class SelectionInterface {
         return Object.keys(this.entries).map((name) => {
             const displayStates: DisplayStateEntry[] = [];
             const encounteredTags: string[] = [];
-
-            this.entries[name].forEach((entry) => {
-                entry.tags.forEach((tag) => {
+            const hasMultipleStates =
+                Object.keys(this.entries[name]).length > 1;
+            this.entries[name].forEach((entry: DecodedTypeEntry) => {
+                // add unmodified state if there are multiple states, and one of them
+                // has no state tags
+                if (!entry.tags.length && hasMultipleStates) {
+                    displayStates.push({
+                        name: "<unmodified>",
+                        id: "", // selects agents with no state tags
+                        color: entry.color,
+                    });
+                }
+                entry.tags.forEach((tag: string) => {
                     if (encounteredTags.includes(tag)) {
                         return;
                     }
@@ -237,23 +260,35 @@ class SelectionInterface {
         });
     }
 
+    private updateUiDataColor(
+        entry: UIDisplayEntry,
+        id: number,
+        color: number | string
+    ) {
+        const tagsToUpdate = this.getTags(entry.name, id);
+        entry.displayStates.forEach((displayState: DisplayStateEntry) => {
+            if (tagsToUpdate.includes(displayState.id)) {
+                displayState.color = convertColorNumberToString(color);
+            }
+        });
+    }
+
     public setAgentColors(
         uiDisplayData: UIDisplayData,
         colors: (string | number)[],
-        setColorForIds: (ids: number[], number) => void
+        setColorForIds: (ids: number[], colorIndex: number) => void
     ): (string | number)[] {
         let defaultColorIndex = 0;
-        uiDisplayData.forEach((entry) => {
+        uiDisplayData.forEach((group) => {
             // the color for the whole grouping for this entry.name
-            let entryColorIndex = defaultColorIndex;
-            // the id (if present, of the unmodified state of this entry)
-            const unmodifiedId = this.getUnmodifiedStateId(entry.name);
+            let groupColorIndex = defaultColorIndex;
             // list of ids that all have this same name
-            const ids = this.getIds(entry.name);
+            const ids = this.getIds(group.name);
             // list of colors for this entry, will be empty strings for
             // ids that don't have a user set color
-            const newColors = this.getColorsForName(entry.name);
+            const newColors = this.getColorsForName(group.name);
             const hasNewColors = filter(newColors).length > 0;
+            const allTheSameColor = uniq(newColors).length === 1;
             if (!hasNewColors) {
                 // if no colors have been set by the user for this name,
                 // just give all states of this agent name the same color
@@ -265,6 +300,7 @@ class SelectionInterface {
                     // entity, ie, bound and unbound states).
                     // All agents with unspecified colors in this grouping
                     // will still get the same default color as each other
+
                     let agentColorIndex = defaultColorIndex;
                     if (color) {
                         agentColorIndex = colors.indexOf(color);
@@ -273,21 +309,38 @@ class SelectionInterface {
                             colors = [...colors, color];
                             agentColorIndex = colors.length - 1;
                         }
+                    } else {
+                        // need update the display data with the default color being used
+                        this.updateUiDataColor(
+                            group,
+                            ids[index],
+                            colors[groupColorIndex]
+                        );
                     }
-                    // if the user set a color for the unmodified
-                    // state, use that for the whole group as well
-                    // otherwise the grouping color may be completely different
-                    if (unmodifiedId === ids[index]) {
-                        entryColorIndex = agentColorIndex;
+                    // if the user used all the same colors for all states of this agent,
+                    // use that for the group as well
+                    // otherwise the grouping color will be blank
+                    if (allTheSameColor) {
+                        groupColorIndex = agentColorIndex;
+                    } else {
+                        groupColorIndex = -1;
                     }
                     setColorForIds([ids[index]], agentColorIndex);
                 });
             }
-            entry.color = convertColorNumberToString(colors[entryColorIndex]);
-
+            if (groupColorIndex > -1) {
+                group.color = convertColorNumberToString(
+                    colors[groupColorIndex]
+                );
+            } else {
+                group.color = "";
+            }
             // if we used any of the default color array
             // need to go to the next default color.
-            if (filter(newColors).length !== ids.length) {
+            if (
+                filter(newColors).length !== ids.length ||
+                groupColorIndex === defaultColorIndex
+            ) {
                 defaultColorIndex++;
             }
         });
