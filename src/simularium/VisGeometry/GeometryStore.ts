@@ -185,6 +185,9 @@ class GeometryStore {
                 if (response.ok) {
                     return response.text();
                 } else if (pdbID) {
+                    // TODO:
+                    // Can we confirm that the rcsb.org servers have every id as a cif file?
+                    // If so, then we don't need to do this second try and we can always use .cif.
                     // try again as pdb
                     actualUrl = `https://files.rcsb.org/download/${pdbID}.pdb`;
                     return fetch(actualUrl).then((response) => {
@@ -206,7 +209,7 @@ class GeometryStore {
                     this._registry.delete(url);
                     return Promise.resolve(undefined);
                 }
-                pdbModel.parseFileFormat(data);
+                pdbModel.parseFileFormat(data, actualUrl);
                 const pdbEntry = this._registry.get(url);
                 if (pdbEntry && pdbEntry.geometry === pdbModel) {
                     this.mlogger.info("Finished downloading pdb: ", url);
@@ -339,7 +342,7 @@ class GeometryStore {
             let geometry;
             if (file && displayType === GeometryDisplayType.PDB) {
                 const pdbModel = new PDBModel(urlOrPath);
-                pdbModel.parseFileFormat(file);
+                pdbModel.parseFileFormat(file, urlOrPath);
                 this.setGeometryInRegistry(urlOrPath, pdbModel, displayType);
                 geometry = pdbModel;
             } else if (file && displayType === GeometryDisplayType.OBJ) {

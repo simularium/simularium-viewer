@@ -99,11 +99,13 @@ class PDBModel {
         return this.pdb ? this.pdb.atoms.length : 0;
     }
 
-    public parseFileFormat(data: string): void {
-        // PDB should always begin with "HEADER"
-        // CIF should always begin with "#\#CIF_"
-        // but the CIF prefix is a convention and not as strict a requirement.
-        if (data.startsWith("HEADER")) {
+    public parseFileFormat(data: string, url: string): void {
+        // It would be great if we could distinguish the formats only from the data content.
+        // Files from the PDB seem to follow this convention:
+        // .pdb files start with "HEADER"
+        // .cif files start with "data_"
+        // but we have encountered other .pdb files that do not begin with "HEADER".
+        if (url.endsWith(".pdb")) {
             this.parsePDBData(data);
         } else {
             this.parseCIFData(data);
