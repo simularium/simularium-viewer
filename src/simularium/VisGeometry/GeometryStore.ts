@@ -165,19 +165,19 @@ class GeometryStore {
 
     private fetchPdb(url: string): Promise<PDBModel | undefined> {
         /** Downloads a PDB from an external source */
+
         const pdbModel = new PDBModel(url);
         this.setGeometryInRegistry(url, pdbModel, GeometryDisplayType.PDB);
-        ////////////////////////
-        // if url is ID then try to fetch as cif, then if error try to fetch as pdb
-        // else if URL is http then just fetch URL and process file type based on file extension
-        ////////////////////////
         let actualUrl = url.slice();
-        // TODO make sure this is re-entrant with setting these vars in the
         let pdbID = "";
         if (!actualUrl.startsWith("http")) {
             // assume this is a PDB ID to be loaded from the actual PDB
+            // if not a valid ID, then download will fail.
             pdbID = actualUrl;
-            // prefer mmCIF first
+            // prefer mmCIF first. If this fails, we will try .pdb.
+            // TODO:
+            // Can we confirm that the rcsb.org servers have every id as a cif file?
+            // If so, then we don't need to do this second try and we can always use .cif.
             actualUrl = `https://files.rcsb.org/download/${pdbID}.cif`;
         }
         return fetch(actualUrl)
@@ -185,9 +185,6 @@ class GeometryStore {
                 if (response.ok) {
                     return response.text();
                 } else if (pdbID) {
-                    // TODO:
-                    // Can we confirm that the rcsb.org servers have every id as a cif file?
-                    // If so, then we don't need to do this second try and we can always use .cif.
                     // try again as pdb
                     actualUrl = `https://files.rcsb.org/download/${pdbID}.pdb`;
                     return fetch(actualUrl).then((response) => {
