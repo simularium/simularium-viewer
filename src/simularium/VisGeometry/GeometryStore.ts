@@ -14,6 +14,7 @@ import {
     AgentGeometry,
     GeometryDisplayType,
     GeometryStoreLoadResponse,
+    isPDBLike,
     MeshGeometry,
     MeshLoadRequest,
 } from "./types";
@@ -93,7 +94,7 @@ class GeometryStore {
         // forEach method for manipulating ThreeJs Mesh objects
         this._registry.forEach((value) => {
             const { displayType } = value;
-            if (displayType !== GeometryDisplayType.PDB) {
+            if (!isPDBLike(displayType)) {
                 const agentGeo = value as MeshGeometry;
                 iteratee(agentGeo);
             }
@@ -104,7 +105,7 @@ class GeometryStore {
         // forEach method for manipulating ThreeJs Mesh objects
         this._registry.forEach((value) => {
             const { displayType } = value;
-            if (displayType === GeometryDisplayType.PDB) {
+            if (isPDBLike(displayType)) {
                 const agentGeo = value.geometry as PDBModel;
                 iteratee(agentGeo);
             }
@@ -163,18 +164,27 @@ class GeometryStore {
         });
     }
 
-    private fetchPdb(url: string): Promise<PDBModel | undefined> {
+    private fetchPdb(
+        url: string,
+        displayType: GeometryDisplayType.CIF | GeometryDisplayType.PDB
+    ): Promise<PDBModel | undefined> {
         /** Downloads a PDB from an external source */
         const pdbModel = new PDBModel(url);
-        this.setGeometryInRegistry(url, pdbModel, GeometryDisplayType.PDB);
+        this.setGeometryInRegistry(url, pdbModel, displayType);
         let actualUrl = url.slice();
         if (!actualUrl.startsWith("http")) {
             // assume this is a PDB ID to be loaded from the actual PDB
-            const ext = ".pdb";
-            if (actualUrl.endsWith(ext)) {
-                actualUrl = url.slice(0, -ext.length);
+            const extPDB = ".pdb";
+            if (actualUrl.endsWith(extPDB)) {
+                actualUrl = url.slice(0, -extPDB.length);
             }
-            actualUrl = `https://files.rcsb.org/download/${actualUrl}.pdb`;
+            const extCIF = ".cif";
+            if (actualUrl.endsWith(extCIF)) {
+                actualUrl = url.slice(0, -extCIF.length);
+            }
+            const ext =
+                displayType === GeometryDisplayType.PDB ? extPDB : extCIF;
+            actualUrl = `https://files.rcsb.org/download/${actualUrl}${ext}`;
         }
         return fetch(actualUrl)
             .then((response) => {
@@ -190,7 +200,7 @@ class GeometryStore {
                     this._registry.delete(url);
                     return Promise.resolve(undefined);
                 }
-                if (actualUrl.endsWith(".cif")) {
+                if (displayType === GeometryDisplayType.CIF) {
                     pdbModel.parseCIFData(data);
                 } else {
                     pdbModel.parsePDBData(data);
@@ -213,7 +223,7 @@ class GeometryStore {
                 return; // should be unreachable, but needed for TypeScript
             }
             const { geometry, displayType } = entry;
-            if (geometry && displayType !== GeometryDisplayType.PDB) {
+            if (geometry && !isPDBLike(displayType)) {
                 const meshRequest = geometry as MeshLoadRequest;
                 // there is already a mesh registered but we are going to load a new one.
                 // start by resetting this entry to a sphere. we will replace when the new mesh arrives
@@ -319,9 +329,9 @@ class GeometryStore {
             // store it in the registry, and return it
             const file = this._cachedAssets.get(urlOrPath);
             let geometry;
-            if (file && displayType === GeometryDisplayType.PDB) {
+            if (file && isPDBLike(displayType)) {
                 const pdbModel = new PDBModel(urlOrPath);
-                if (urlOrPath.endsWith(".cif")) {
+                if (displayType === GeometryDisplayType.CIF) {
                     pdbModel.parseCIFData(file);
                 } else {
                     pdbModel.parsePDBData(file);
@@ -354,9 +364,12 @@ class GeometryStore {
             this._geoLoadAttempted.set(urlOrPath, true);
             switch (displayType) {
                 case GeometryDisplayType.PDB:
-                    return this.fetchPdb(urlOrPath).then((pdbModel) => {
-                        return pdbModel;
-                    });
+                case GeometryDisplayType.CIF:
+                    return this.fetchPdb(urlOrPath, displayType).then(
+                        (pdbModel) => {
+                            return pdbModel;
+                        }
+                    );
                 case GeometryDisplayType.OBJ:
                     return this.fetchObj(urlOrPath).then((object) => {
                         return object;
@@ -387,7 +400,7 @@ class GeometryStore {
         const { displayType, url } = agentVisData;
         this.mlogger.debug(`Geo for id ${id} set to '${url}'`);
         const isMesh = displayType === GeometryDisplayType.OBJ;
-        const isPDB = displayType === GeometryDisplayType.PDB;
+        const isPDB = isPDBLike(displayType);
         if (!url) {
             // displayType not either pdb or obj, will show a sphere
             // TODO: handle CUBE, GIZMO etc

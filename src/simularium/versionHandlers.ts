@@ -8,7 +8,7 @@ import {
     TrajectoryFileInfoAny,
     TrajectoryFileInfoV1,
 } from "./types";
-import { GeometryDisplayType } from "./VisGeometry/types";
+import { GeometryDisplayType, isPDBLike } from "./VisGeometry/types";
 
 // the data may come in missing any of these values
 export interface AgentTypeVisDataPreProcessing {
@@ -43,7 +43,7 @@ export const makeMissingDisplayTypeErrorMessage = (
 
 export const makeMissingUrlErrorMessage = (
     key: string,
-    displayType: GeometryDisplayType.PDB | GeometryDisplayType.OBJ
+    displayType: GeometryDisplayType
 ): string => {
     return `DisplayType was ${displayType} but missing typeMapping[${key}].geometry.url, so we couldn't request the file. Geometry will default to spheres`;
 };
@@ -75,7 +75,7 @@ export const sanitizeAgentMapGeometryData = (
                     displayType = GeometryDisplayType.SPHERE;
                 } else if (
                     !url &&
-                    (displayType === GeometryDisplayType.PDB ||
+                    (isPDBLike(displayType) ||
                         displayType === GeometryDisplayType.OBJ)
                 ) {
                     const message = makeMissingUrlErrorMessage(

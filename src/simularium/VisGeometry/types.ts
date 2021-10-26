@@ -8,24 +8,27 @@ export interface MeshLoadRequest {
     instances: InstancedMesh;
 }
 
-export enum GeometryDisplayType {
+export const enum GeometryDisplayType {
     PDB = "PDB",
+    CIF = "CIF",
     OBJ = "OBJ",
     SPHERE = "SPHERE",
     CUBE = "CUBE",
     GIZMO = "GIZMO",
 }
 
+export type MolecularDisplayType =
+    | GeometryDisplayType.PDB
+    | GeometryDisplayType.CIF;
+export interface PDBGeometry {
+    geometry: PDBModel;
+    displayType: MolecularDisplayType;
+}
+
 export type PrimitiveDisplayType =
     | GeometryDisplayType.SPHERE
     | GeometryDisplayType.CUBE
     | GeometryDisplayType.GIZMO;
-
-export interface PDBGeometry {
-    geometry: PDBModel;
-    displayType: GeometryDisplayType.PDB;
-}
-
 export interface MeshGeometry {
     geometry: MeshLoadRequest;
     displayType: GeometryDisplayType.OBJ | PrimitiveDisplayType;
@@ -37,4 +40,19 @@ export interface GeometryStoreLoadResponse {
     displayType?: GeometryDisplayType;
     geometry: MeshLoadRequest | PDBModel;
     errorMessage?: string;
+}
+
+export function isPDBLike(displayType: GeometryDisplayType): boolean {
+    return (
+        displayType === GeometryDisplayType.PDB ||
+        displayType === GeometryDisplayType.CIF
+    );
+}
+
+export function isPrimitiveLike(displayType: GeometryDisplayType): boolean {
+    return (
+        displayType === GeometryDisplayType.SPHERE ||
+        displayType === GeometryDisplayType.CUBE ||
+        displayType === GeometryDisplayType.GIZMO
+    );
 }
