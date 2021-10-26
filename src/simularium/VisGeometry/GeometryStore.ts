@@ -174,12 +174,10 @@ class GeometryStore {
         let actualUrl = url.slice();
         // TODO make sure this is re-entrant with setting these vars in the
         let pdbID = "";
-        let isPDBfile = actualUrl.endsWith(".pdb");
         if (!actualUrl.startsWith("http")) {
             // assume this is a PDB ID to be loaded from the actual PDB
             pdbID = actualUrl;
             // prefer mmCIF first
-            isPDBfile = false;
             actualUrl = `https://files.rcsb.org/download/${pdbID}.cif`;
         }
         return fetch(actualUrl)
@@ -195,7 +193,6 @@ class GeometryStore {
                                 `Failed to fetch ${pdbModel.filePath} from ${actualUrl}`
                             );
                         }
-                        isPDBfile = true;
                         return response.text();
                     });
                 } else {
@@ -215,7 +212,13 @@ class GeometryStore {
                     this.mlogger.info("Finished downloading pdb: ", url);
                     return pdbModel;
                 } else {
-                    // TODO: what should happen here?
+                    // This seems like some kind of terrible error if we get here.
+                    // Alternatively, we could try re-adding the registry entry.
+                    // Or reject.
+                    this.mlogger.warn(
+                        `After download, GeometryStore PDB entry not found for ${url}`
+                    );
+                    return Promise.resolve(undefined);
                 }
             });
     }
