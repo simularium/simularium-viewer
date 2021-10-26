@@ -8,7 +8,7 @@ export interface MeshLoadRequest {
     instances: InstancedMesh;
 }
 
-export const enum GeometryDisplayType {
+export enum GeometryDisplayType {
     PDB = "PDB",
     OBJ = "OBJ",
     SPHERE = "SPHERE",
@@ -16,15 +16,16 @@ export const enum GeometryDisplayType {
     GIZMO = "GIZMO",
 }
 
+export type PrimitiveDisplayType =
+    | GeometryDisplayType.SPHERE
+    | GeometryDisplayType.CUBE
+    | GeometryDisplayType.GIZMO;
+
 export interface PDBGeometry {
     geometry: PDBModel;
     displayType: GeometryDisplayType.PDB;
 }
 
-export type PrimitiveDisplayType =
-    | GeometryDisplayType.SPHERE
-    | GeometryDisplayType.CUBE
-    | GeometryDisplayType.GIZMO;
 export interface MeshGeometry {
     geometry: MeshLoadRequest;
     displayType: GeometryDisplayType.OBJ | PrimitiveDisplayType;

@@ -93,7 +93,7 @@ class GeometryStore {
         // forEach method for manipulating ThreeJs Mesh objects
         this._registry.forEach((value) => {
             const { displayType } = value;
-            if (!(displayType === GeometryDisplayType.PDB)) {
+            if (displayType !== GeometryDisplayType.PDB) {
                 const agentGeo = value as MeshGeometry;
                 iteratee(agentGeo);
             }
