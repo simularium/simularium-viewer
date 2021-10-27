@@ -2,6 +2,7 @@ import "regenerator-runtime/runtime";
 
 import * as Comlink from "comlink";
 import parsePdb from "parse-pdb";
+import parseMmcif from "parse-mmcif";
 import {
     Box3,
     BufferGeometry,
@@ -98,7 +99,34 @@ class PDBModel {
         return this.pdb ? this.pdb.atoms.length : 0;
     }
 
-    public parsePDBData(data: string): void {
+    public parse(data: string, fileExtension: string): void {
+        // It would be great if we could distinguish the formats only from the data content.
+        // Files from the PDB seem to follow this convention:
+        // .pdb files start with "HEADER"
+        // .cif files start with "data_"
+        // but we have encountered other .pdb files that do not begin with "HEADER".
+        if (fileExtension === "pdb") {
+            this.parsePDBData(data);
+        } else if (fileExtension === "cif") {
+            this.parseCIFData(data);
+        } else {
+            throw new Error(
+                `Expected .cif or .pdb file extension to parse PDB data, but got ${fileExtension}`
+            );
+        }
+    }
+
+    private parseCIFData(data: string): void {
+        this.pdb = parseMmcif(data) as PDBType;
+        if (this.pdb.atoms.length > 0) {
+            this.fixupCoordinates();
+            console.log(`PDB ${this.name} has ${this.pdb.atoms.length} atoms`);
+            this.checkChains();
+            return this.initializeLOD();
+        }
+    }
+
+    private parsePDBData(data: string): void {
         // NOTE: pdb atom coordinates are in angstroms
         // 1 nm is 10 angstroms
         this.pdb = parsePdb(data) as PDBType;

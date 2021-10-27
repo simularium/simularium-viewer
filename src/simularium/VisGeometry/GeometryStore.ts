@@ -3,7 +3,7 @@ import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import jsLogger, { ILogger, ILogLevel } from "js-logger";
 import { BufferGeometry, Object3D, Mesh } from "three";
 
-import { checkAndSanitizePath } from "../../util";
+import { checkAndSanitizePath, getFileExtension } from "../../util";
 import PDBModel from "./PDBModel";
 import { InstancedMesh, InstanceType } from "./rendering/InstancedMesh";
 import VisAgent from "./VisAgent";
@@ -165,30 +165,60 @@ class GeometryStore {
 
     private fetchPdb(url: string): Promise<PDBModel | undefined> {
         /** Downloads a PDB from an external source */
+
         const pdbModel = new PDBModel(url);
         this.setGeometryInRegistry(url, pdbModel, GeometryDisplayType.PDB);
-        return fetch(url)
+        let actualUrl = url.slice();
+        let pdbID = "";
+        if (!actualUrl.startsWith("http")) {
+            // assume this is a PDB ID to be loaded from the actual PDB
+            // if not a valid ID, then download will fail.
+            pdbID = actualUrl;
+            // prefer mmCIF first. If this fails, we will try .pdb.
+            // TODO:
+            // Can we confirm that the rcsb.org servers have every id as a cif file?
+            // If so, then we don't need to do this second try and we can always use .cif.
+            actualUrl = `https://files.rcsb.org/download/${pdbID}.cif`;
+        }
+        return fetch(actualUrl)
             .then((response) => {
-                if (!response.ok) {
+                if (response.ok) {
+                    return response.text();
+                } else if (pdbID) {
+                    // try again as pdb
+                    actualUrl = `https://files.rcsb.org/download/${pdbID}.pdb`;
+                    return fetch(actualUrl).then((response) => {
+                        if (!response.ok) {
+                            throw new Error(
+                                `Failed to fetch ${pdbModel.filePath} from ${actualUrl}`
+                            );
+                        }
+                        return response.text();
+                    });
+                } else {
                     throw new Error(
                         `Failed to fetch ${pdbModel.filePath} from ${url}`
                     );
                 }
-                return response.text();
             })
             .then((data) => {
                 if (pdbModel.cancelled) {
                     this._registry.delete(url);
                     return Promise.resolve(undefined);
                 }
-                pdbModel.parsePDBData(data);
+                pdbModel.parse(data, getFileExtension(actualUrl));
                 const pdbEntry = this._registry.get(url);
                 if (pdbEntry && pdbEntry.geometry === pdbModel) {
                     this.mlogger.info("Finished downloading pdb: ", url);
-
                     return pdbModel;
                 } else {
-                    // TODO: what should happen here?
+                    // This seems like some kind of terrible error if we get here.
+                    // Alternatively, we could try re-adding the registry entry.
+                    // Or reject.
+                    this.mlogger.warn(
+                        `After download, GeometryStore PDB entry not found for ${url}`
+                    );
+                    return Promise.resolve(undefined);
                 }
             });
     }
@@ -309,7 +339,7 @@ class GeometryStore {
             let geometry;
             if (file && displayType === GeometryDisplayType.PDB) {
                 const pdbModel = new PDBModel(urlOrPath);
-                pdbModel.parsePDBData(file);
+                pdbModel.parse(file, getFileExtension(urlOrPath));
                 this.setGeometryInRegistry(urlOrPath, pdbModel, displayType);
                 geometry = pdbModel;
             } else if (file && displayType === GeometryDisplayType.OBJ) {

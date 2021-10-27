@@ -39,3 +39,11 @@ export const checkAndSanitizePath = (pathOrUrl: string): string => {
     }
     return `/${pathOrUrl}`;
 };
+
+export function getFileExtension(pathOrUrl: string): string {
+    // the file extension is considered to be all string contents after the last "."
+    return (
+        pathOrUrl.substring(pathOrUrl.lastIndexOf(".") + 1, pathOrUrl.length) ||
+        pathOrUrl
+    );
+}
