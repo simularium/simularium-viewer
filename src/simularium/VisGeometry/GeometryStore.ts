@@ -3,7 +3,7 @@ import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import jsLogger, { ILogger, ILogLevel } from "js-logger";
 import { BufferGeometry, Object3D, Mesh } from "three";
 
-import { checkAndSanitizePath } from "../../util";
+import { checkAndSanitizePath, getFileExtension } from "../../util";
 import PDBModel from "./PDBModel";
 import { InstancedMesh, InstanceType } from "./rendering/InstancedMesh";
 import VisAgent from "./VisAgent";
@@ -206,7 +206,7 @@ class GeometryStore {
                     this._registry.delete(url);
                     return Promise.resolve(undefined);
                 }
-                pdbModel.parseFileFormat(data, actualUrl);
+                pdbModel.parseFileFormat(data, getFileExtension(actualUrl));
                 const pdbEntry = this._registry.get(url);
                 if (pdbEntry && pdbEntry.geometry === pdbModel) {
                     this.mlogger.info("Finished downloading pdb: ", url);
@@ -339,7 +339,7 @@ class GeometryStore {
             let geometry;
             if (file && displayType === GeometryDisplayType.PDB) {
                 const pdbModel = new PDBModel(urlOrPath);
-                pdbModel.parseFileFormat(file, urlOrPath);
+                pdbModel.parseFileFormat(file, getFileExtension(urlOrPath));
                 this.setGeometryInRegistry(urlOrPath, pdbModel, displayType);
                 geometry = pdbModel;
             } else if (file && displayType === GeometryDisplayType.OBJ) {

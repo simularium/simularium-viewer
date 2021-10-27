@@ -99,19 +99,19 @@ class PDBModel {
         return this.pdb ? this.pdb.atoms.length : 0;
     }
 
-    public parseFileFormat(data: string, fileName: string): void {
+    public parseFileFormat(data: string, fileExtension: string): void {
         // It would be great if we could distinguish the formats only from the data content.
         // Files from the PDB seem to follow this convention:
         // .pdb files start with "HEADER"
         // .cif files start with "data_"
         // but we have encountered other .pdb files that do not begin with "HEADER".
-        if (fileName.endsWith(".pdb")) {
+        if (fileExtension === "pdb") {
             this.parsePDBData(data);
-        } else if (fileName.endsWith(".cif")) {
+        } else if (fileExtension === "cif") {
             this.parseCIFData(data);
         } else {
             throw new Error(
-                `Expected .cif or .pdb file extension to parse PDB data, but got ${fileName}`
+                `Expected .cif or .pdb file extension to parse PDB data, but got ${fileExtension}`
             );
         }
     }
