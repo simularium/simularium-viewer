@@ -206,7 +206,7 @@ class GeometryStore {
                     this._registry.delete(url);
                     return Promise.resolve(undefined);
                 }
-                pdbModel.parseFileFormat(data, getFileExtension(actualUrl));
+                pdbModel.parse(data, getFileExtension(actualUrl));
                 const pdbEntry = this._registry.get(url);
                 if (pdbEntry && pdbEntry.geometry === pdbModel) {
                     this.mlogger.info("Finished downloading pdb: ", url);
@@ -339,7 +339,7 @@ class GeometryStore {
             let geometry;
             if (file && displayType === GeometryDisplayType.PDB) {
                 const pdbModel = new PDBModel(urlOrPath);
-                pdbModel.parseFileFormat(file, getFileExtension(urlOrPath));
+                pdbModel.parse(file, getFileExtension(urlOrPath));
                 this.setGeometryInRegistry(urlOrPath, pdbModel, displayType);
                 geometry = pdbModel;
             } else if (file && displayType === GeometryDisplayType.OBJ) {

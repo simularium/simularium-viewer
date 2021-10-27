@@ -99,7 +99,7 @@ class PDBModel {
         return this.pdb ? this.pdb.atoms.length : 0;
     }
 
-    public parseFileFormat(data: string, fileExtension: string): void {
+    public parse(data: string, fileExtension: string): void {
         // It would be great if we could distinguish the formats only from the data content.
         // Files from the PDB seem to follow this convention:
         // .pdb files start with "HEADER"
