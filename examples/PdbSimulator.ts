@@ -149,16 +149,18 @@ export default class PdbSim implements IClientSimulatorImpl {
             "ffff00",
             "ff00ff",
             "00ffff",
+            "ffffff",
+            "888888",
         ];
 
         const typeMapping: EncodedTypeMapping = {};
         for (let i = 0; i < this.nTypes; ++i) {
             typeMapping[i] = {
-                name: names[i],
+                name: names[i % names.length],
                 geometry: {
                     displayType: GeometryDisplayType.PDB,
                     url: urls[i % urls.length],
-                    color: colors[i],
+                    color: colors[i % colors.length],
                 },
             };
         }
