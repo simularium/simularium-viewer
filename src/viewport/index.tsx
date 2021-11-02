@@ -18,6 +18,7 @@ import {
 import { TrajectoryFileInfoAny } from "../simularium/types";
 import { RenderStyle } from "../simularium";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
+import FrontEndError, { ErrorLevel } from "../simularium/FrontEndError";
 
 export type PropColor = string | number | [number, number, number];
 
@@ -41,7 +42,7 @@ type ViewportProps = {
     showBounds: boolean;
     selectionStateInfo: SelectionStateInfo;
     showCameraControls: boolean;
-    onError?: (errorMessage: string) => void;
+    onError?: (errorMessage: FrontEndError) => void;
 } & Partial<DefaultProps>
 
 const defaultProps = {
@@ -219,7 +220,13 @@ class Viewport extends React.Component<ViewportProps & DefaultProps, ViewportSta
                 this.selectionInterface.parse(trajectoryFileInfo.typeMapping);
             } catch (e) {
                 if (onError) {
-                    onError(`error parsing 'typeMapping' data, ${e.message}`);
+                    const error = e as Error
+                    onError(
+                        new FrontEndError(
+                            `error parsing 'typeMapping' data, ${error.message}`,
+                            ErrorLevel.ERROR
+                        )
+                    );
                 } else {
                     console.log("error parsing 'typeMapping' data", e);
                 }

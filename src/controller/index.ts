@@ -19,6 +19,7 @@ import { ClientSimulator } from "../simularium/ClientSimulator";
 import { IClientSimulatorImpl } from "../simularium/localSimulators/IClientSimulatorImpl";
 import { ISimulator } from "../simularium/ISimulator";
 import { LocalFileSimulator } from "../simularium/LocalFileSimulator";
+import FrontEndError from "../simularium/FrontEndError";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
@@ -46,7 +47,7 @@ export default class SimulariumController {
     public tickIntervalLength: number;
     public handleTrajectoryInfo: (TrajectoryFileInfo) => void;
     public postConnect: () => void;
-    public onError?: (errorMessage: string) => void;
+    public onError?: (errorMessage: FrontEndError) => void;
 
     private networkEnabled: boolean;
     private isPaused: boolean;
@@ -299,9 +300,10 @@ export default class SimulariumController {
                 throw new Error("incomplete simulator config provided");
             }
         } catch (e) {
+            const error = e as Error;
             this.simulator = undefined;
 
-            console.warn(e.message);
+            console.warn(error.message);
 
             this.networkEnabled = false;
             this.isPaused = false;

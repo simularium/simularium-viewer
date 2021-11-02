@@ -2,6 +2,7 @@ import { mapValues } from "lodash";
 import * as si from "si-prefix";
 
 import { DEFAULT_CAMERA_SPEC } from "../constants";
+import FrontEndError, { ErrorLevel } from "./FrontEndError";
 import {
     AgentDisplayDataWithGeometry,
     TrajectoryFileInfo,
@@ -50,7 +51,7 @@ export const makeMissingUrlErrorMessage = (
 
 export const sanitizeAgentMapGeometryData = (
     typeMapping: EncodedTypeMappingPreProcessing,
-    onError?: (msg: string) => void
+    onError?: (error: FrontEndError) => void
 ): { [key: number]: AgentDisplayDataWithGeometry } => {
     return mapValues(
         typeMapping,
@@ -67,7 +68,7 @@ export const sanitizeAgentMapGeometryData = (
                         url
                     );
                     if (onError) {
-                        onError(message);
+                        onError(new FrontEndError(message, ErrorLevel.WARNING));
                     } else {
                         console.log(message);
                     }
@@ -83,7 +84,7 @@ export const sanitizeAgentMapGeometryData = (
                         displayType
                     );
                     if (onError) {
-                        onError(message);
+                        onError(new FrontEndError(message, ErrorLevel.WARNING));
                     } else {
                         console.log(message);
                     }
@@ -113,7 +114,7 @@ export const sanitizeAgentMapGeometryData = (
 
 export const updateTrajectoryFileInfoFormat = (
     msg: TrajectoryFileInfoAny,
-    onError?: (msg: string) => void
+    onError?: (msg: FrontEndError) => void
 ): TrajectoryFileInfo => {
     let output = {
         ...msg,

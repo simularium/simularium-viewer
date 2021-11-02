@@ -76,11 +76,11 @@ export class RemoteSimulator implements ISimulator {
     protected lastRequestedFile: string;
     public connectionTimeWaited: number;
     public connectionRetries: number;
-    public handleError: (errorMessage: string) => void | (() => void);
+    public handleError: (errorMessage: FrontEndError) => void | (() => void);
 
     public constructor(
         opts?: NetConnectionParams,
-        errorHandler?: (error: string) => void
+        errorHandler?: (error: FrontEndError) => void
     ) {
         this.webSocket = null;
         this.serverIp = opts && opts.serverIp ? opts.serverIp : "localhost";
@@ -350,7 +350,9 @@ export class RemoteSimulator implements ISimulator {
                 "Request to server cannot be made with a closed Websocket connection."
             );
             this.handleError(
-                "Connection to server is closed; please try reloading. If the problem persists, the server may be too busy. Please try again at another time."
+                new FrontEndError(
+                    "Connection to server is closed; please try reloading. If the problem persists, the server may be too busy. Please try again at another time."
+                )
             );
         }
     }
@@ -434,7 +436,7 @@ export class RemoteSimulator implements ISimulator {
                 );
             })
             .catch((error) => {
-                throw new FrontEndError(error);
+                throw new FrontEndError(error.message);
             });
     }
 
