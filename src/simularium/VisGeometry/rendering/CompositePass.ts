@@ -148,7 +148,8 @@ class CompositePass {
                     discard;
             
                 // Subtracting 1 because we added 1 before setting this, to account for id 0 being highlighted.
-                int agentColorIndex = int(abs(col0.x)-1.0);
+                // rounding because on some platforms (at least one nvidia+windows) int(abs(...)) is returning values that fluctuate
+                int agentColorIndex = int(round(abs(col0.x))-1.0);
                 // future: can use this value to do other rendering
                 //float highlighted = (sign(col0.x) + 1.0) * 0.5;
 
