@@ -131,7 +131,8 @@ class VisData {
                     );
                     // passed up in controller.handleLocalFileChange
                     throw new FrontEndError(
-                        `Your data is malformed, there are too few entries. Example attempt to parse your data: <pre>${attemptedMapping.join(
+                        "Your data is malformed, there are too few entries.",
+                        `Example attempt to parse your data: <pre>${attemptedMapping.join(
                             ""
                         )}</pre>`,
                         ErrorLevel.ERROR
@@ -146,7 +147,8 @@ class VisData {
                     );
                     // passed up in controller.handleLocalFileChange
                     throw new FrontEndError(
-                        `Your data is malformed, there are less entries than expected for this agent. Example attempt to parse your data: <pre>${attemptedMapping.join(
+                        "Your data is malformed, there are less entries than expected for this agent. ",
+                        `Example attempt to parse your data: <pre>${attemptedMapping.join(
                             ""
                         )}</pre>`,
                         ErrorLevel.ERROR
@@ -262,7 +264,8 @@ class VisData {
                     !Number.isInteger(dataIter)
                 ) {
                     throw new FrontEndError(
-                        `Your data is malformed, non-integer value found for num-subpoints . Number of Subpoints: <pre>${nSubPoints}</pre>`,
+                        "Your data is malformed, non-integer value found for num-subpoints.",
+                        `Number of Subpoints: <pre>${nSubPoints}</pre>`,
                         ErrorLevel.ERROR
                     );
                     break;
@@ -278,7 +281,8 @@ class VisData {
                     );
                     // passed up in controller.handleLocalFileChange
                     throw new FrontEndError(
-                        `Your data is malformed, non-integer value found for num-subpoints. Example attempt to parse your data: <pre>${attemptedMapping.join(
+                        "Your data is malformed, non-integer value found for num-subpoints.",
+                        `Example attempt to parse your data: <pre>${attemptedMapping.join(
                             ""
                         )}</pre>`,
                         ErrorLevel.ERROR
@@ -296,7 +300,8 @@ class VisData {
                     );
                     // passed up in controller.handleLocalFileChange
                     throw new FrontEndError(
-                        `Your data is malformed, there are less entries than expected for this agent. Example attempt to parse your data: <pre>${attemptedMapping.join(
+                        "Your data is malformed, there are less entries than expected for this agent.",
+                        `Example attempt to parse your data: <pre>${attemptedMapping.join(
                             ""
                         )}</pre>`,
                         ErrorLevel.ERROR

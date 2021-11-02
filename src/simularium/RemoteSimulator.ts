@@ -1,6 +1,6 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
-import FrontEndError from "./FrontEndError";
+import FrontEndError, { ErrorLevel } from "./FrontEndError";
 
 import { ISimulator } from "./ISimulator";
 import { TrajectoryFileInfoV2, VisDataMessage } from "./types";
@@ -13,7 +13,7 @@ interface NetMessage {
 // TODO: proposed new NetMessage data type:
 // This factors the raw data structure away from the networking and transmission info.
 // This allows the data structure to make a bit more sense with respect to typescript typing,
-// and also for raw file drag n drop it doesn't need conection info or msgtype.
+// and also for raw file drag n drop it doesn't need connection info or msgtype.
 // interface NetMessage {
 //     connId: string; // unique connection to server
 //     msgType: number; // identifies the data structure of the message
@@ -351,7 +351,8 @@ export class RemoteSimulator implements ISimulator {
             );
             this.handleError(
                 new FrontEndError(
-                    "Connection to server is closed; please try reloading. If the problem persists, the server may be too busy. Please try again at another time."
+                    "Connection to server is closed; please try reloading. If the problem persists, the server may be too busy. Please try again at another time.",
+                    ErrorLevel.ERROR
                 )
             );
         }
@@ -436,7 +437,7 @@ export class RemoteSimulator implements ISimulator {
                 );
             })
             .catch((error) => {
-                throw new FrontEndError(error.message);
+                throw new FrontEndError(error.message, ErrorLevel.ERROR);
             });
     }
 

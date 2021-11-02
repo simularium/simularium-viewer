@@ -1,3 +1,4 @@
+import FrontEndError from "../simularium/FrontEndError";
 import {
     makeMissingDisplayTypeErrorMessage,
     makeMissingUrlErrorMessage,
@@ -232,7 +233,7 @@ describe("Version handlers", () => {
         });
         test("it will pass up an error message if there is a url but no displayType", () => {
             let message = "";
-            const onError = (msg: string) => (message = msg);
+            const onError = (error: FrontEndError) => (message = error.message);
             sanitizeAgentMapGeometryData(
                 typeMappingMissingDisplayType,
                 onError
@@ -245,7 +246,7 @@ describe("Version handlers", () => {
         });
         test("it will pass up an error message if there is a url but displayType is OBJ or PDB ", () => {
             let message = "";
-            const onError = (msg: string) => (message = msg);
+            const onError = (error: FrontEndError) => (message = error.message);
             sanitizeAgentMapGeometryData(typeMappingMissingUrl, onError);
             expect(message).toContain("Geometry will default to spheres");
         });
