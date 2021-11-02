@@ -46,6 +46,7 @@ class ContourPass {
               // (TODO: dump buffer after read to inspec?)
               // Straight equality works on MacOS and Intel/Windows gpu 
               // This should be tested periodically with new nvidia drivers on windows
+              // TODO: try "round(abs(x-y)) == 0" here
               return abs(x-y) < 0.1;
             }
             bool isAdjacentToSame(float x, float l, float r, float b, float t) {
