@@ -8,6 +8,7 @@
     "types": "type-declarations",
     "scripts": {
         "start": "webpack serve --config webpack.dev.js",
+        "gh-build": "webpack --config webpack.dev.js",
         "lint": "eslint src/**/*.ts src/**/*.tsx",
         "test": "jest src/**/*.test.ts --coverage",
         "typeCheck": "tsc -p tsconfig.json --noEmit",
