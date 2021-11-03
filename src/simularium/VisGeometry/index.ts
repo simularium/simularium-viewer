@@ -1067,7 +1067,7 @@ class VisGeometry {
                     }
                 })
                 .catch((reason) => {
-                    this.onError(reason);
+                    this.onError(new FrontEndError(reason));
                     this.logger.info(reason);
                 });
         });

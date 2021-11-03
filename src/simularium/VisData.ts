@@ -132,10 +132,10 @@ class VisData {
                     // passed up in controller.handleLocalFileChange
                     throw new FrontEndError(
                         "Your data is malformed, there are too few entries.",
+                        ErrorLevel.ERROR,
                         `Example attempt to parse your data: <pre>${attemptedMapping.join(
                             ""
-                        )}</pre>`,
-                        ErrorLevel.ERROR
+                        )}</pre>`
                     );
                 }
 
@@ -148,10 +148,10 @@ class VisData {
                     // passed up in controller.handleLocalFileChange
                     throw new FrontEndError(
                         "Your data is malformed, there are less entries than expected for this agent. ",
+                        ErrorLevel.ERROR,
                         `Example attempt to parse your data: <pre>${attemptedMapping.join(
                             ""
-                        )}</pre>`,
-                        ErrorLevel.ERROR
+                        )}</pre>`
                     );
                 }
 
@@ -265,8 +265,8 @@ class VisData {
                 ) {
                     throw new FrontEndError(
                         "Your data is malformed, non-integer value found for num-subpoints.",
-                        `Number of Subpoints: <pre>${nSubPoints}</pre>`,
-                        ErrorLevel.ERROR
+                        ErrorLevel.ERROR,
+                        `Number of Subpoints: <pre>${nSubPoints}</pre>`
                     );
                     break;
                 }
@@ -282,10 +282,10 @@ class VisData {
                     // passed up in controller.handleLocalFileChange
                     throw new FrontEndError(
                         "Your data is malformed, non-integer value found for num-subpoints.",
+                        ErrorLevel.ERROR,
                         `Example attempt to parse your data: <pre>${attemptedMapping.join(
                             ""
-                        )}</pre>`,
-                        ErrorLevel.ERROR
+                        )}</pre>`
                     );
                 }
 
@@ -301,10 +301,10 @@ class VisData {
                     // passed up in controller.handleLocalFileChange
                     throw new FrontEndError(
                         "Your data is malformed, there are less entries than expected for this agent.",
+                        ErrorLevel.ERROR,
                         `Example attempt to parse your data: <pre>${attemptedMapping.join(
                             ""
-                        )}</pre>`,
-                        ErrorLevel.ERROR
+                        )}</pre>`
                     );
                 }
 

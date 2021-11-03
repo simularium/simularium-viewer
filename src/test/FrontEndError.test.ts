@@ -10,11 +10,11 @@ describe("FrontEndError", () => {
         expect(error.level).toEqual(ErrorLevel.ERROR);
     });
     test("It can have optional htmlData", () => {
-        const error = new FrontEndError("", "htmlData");
+        const error = new FrontEndError("", ErrorLevel.ERROR, "htmlData");
         expect(error.htmlData).toEqual("htmlData");
     });
     test("It takes in an optional level", () => {
-        const error = new FrontEndError("message", "", ErrorLevel.WARNING);
+        const error = new FrontEndError("message", ErrorLevel.WARNING);
         expect(error.level).toEqual(ErrorLevel.WARNING);
     });
 });

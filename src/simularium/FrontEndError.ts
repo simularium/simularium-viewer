@@ -9,8 +9,8 @@ class FrontEndError extends Error {
     public level: ErrorLevel;
     constructor(
         message: string,
-        htmlData = "",
         level = ErrorLevel.ERROR,
+        htmlData = "",
         ...params: string[]
     ) {
         // Pass remaining arguments (including vendor specific ones) to parent constructor
