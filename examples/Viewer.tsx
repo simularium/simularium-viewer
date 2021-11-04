@@ -138,13 +138,15 @@ class Viewer extends React.Component<{}, ViewerState> {
 
     public onError = (error: FrontEndError) => {
         if (error.level === ErrorLevel.ERROR) {
-            window.alert(`ALERT, something is broken: ${error.message} ${error.htmlData}`);
+            window.alert(`ERROR, something is broken: ${error.message} ${error.htmlData}`);
         } else if (error.level === ErrorLevel.WARNING) {
             window.alert(
                 `User warning, but not terrible:  ${error.message} ${error.htmlData}`
             );
+        } else if (error.level === ErrorLevel.INFO) {
+            console.log(`Just for your info. ${error.message}`);
         } else {
-            console.log(`Just for your info: ${error.message}`);
+            console.warn(`This error didn't have a level sent with it: ${error.message}. Should probably be converted to a FrontEndError`)
         }
     };
 
@@ -180,7 +182,7 @@ class Viewer extends React.Component<{}, ViewerState> {
             simulariumController
                 .changeFile({ simulariumFile, geoAssets }, fileName)
                 .catch((error) => {
-                    this.onError(new FrontEndError(`Error loading file: ${error.message}`))
+                    this.onError(error)
                 });
         });
     };
