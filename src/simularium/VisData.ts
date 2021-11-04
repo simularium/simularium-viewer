@@ -129,7 +129,7 @@ class VisData {
                     const attemptedMapping = agentObjectKeys.map(
                         (name, index) => `${name}: ${visData[index]}<br />`
                     );
-                    // passed up in controller.handleLocalFileChange
+                    // will be caught by controller.changeFile(...).catch()
                     throw new FrontEndError(
                         "Your data is malformed, there are too few entries.",
                         ErrorLevel.ERROR,
@@ -145,7 +145,7 @@ class VisData {
                         (name, index) =>
                             `${name}: ${agentSubSetArray[index]}<br />`
                     );
-                    // passed up in controller.handleLocalFileChange
+                    // will be caught by controller.changeFile(...).catch()
                     throw new FrontEndError(
                         "Your data is malformed, there are less entries than expected for this agent. ",
                         ErrorLevel.ERROR,
@@ -279,7 +279,7 @@ class VisData {
                         (name, index) =>
                             `${name}: ${agentDataView[dataIter + index]}<br />`
                     );
-                    // passed up in controller.handleLocalFileChange
+                    // will be caught by controller.changeFile(...).catch()
                     throw new FrontEndError(
                         "Your data is malformed, non-integer value found for num-subpoints.",
                         ErrorLevel.ERROR,
@@ -298,7 +298,7 @@ class VisData {
                         (name, index) =>
                             `${name}: ${agentSubSetArray[index]}<br />`
                     );
-                    // passed up in controller.handleLocalFileChange
+                    // will be caught by controller.changeFile(...).catch()
                     throw new FrontEndError(
                         "Your data is malformed, there are less entries than expected for this agent.",
                         ErrorLevel.ERROR,
@@ -591,7 +591,7 @@ class VisData {
 
     // for use w/ a drag-and-drop trajectory file
     //  save a file for playback
-    // errors passed up in controller.handleLocalFileChange
+    // will be caught by controller.changeFile(...).catch()
     public cacheJSON(visDataMsg: VisDataMessage): void {
         if (this.frameCache.length > 0) {
             throw new Error(
@@ -632,7 +632,7 @@ class VisData {
         return this._dragAndDropFileInfo;
     }
 
-    // error passed up in controller.handleLocalFileChange
+    // will be caught by controller.changeFile(...).catch()
     // TODO: check if this code is still used
     public checkTypeMapping(typeMappingFromFile: EncodedTypeMapping): number[] {
         if (!typeMappingFromFile) {
