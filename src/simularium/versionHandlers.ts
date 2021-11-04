@@ -114,7 +114,7 @@ export const sanitizeAgentMapGeometryData = (
 
 export const updateTrajectoryFileInfoFormat = (
     msg: TrajectoryFileInfoAny,
-    onError?: (msg: FrontEndError) => void
+    onError?: (error: FrontEndError) => void
 ): TrajectoryFileInfo => {
     let output = {
         ...msg,

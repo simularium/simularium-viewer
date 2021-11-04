@@ -76,7 +76,7 @@ export class RemoteSimulator implements ISimulator {
     protected lastRequestedFile: string;
     public connectionTimeWaited: number;
     public connectionRetries: number;
-    public handleError: (errorMessage: FrontEndError) => void | (() => void);
+    public handleError: (error: FrontEndError) => void | (() => void);
 
     public constructor(
         opts?: NetConnectionParams,

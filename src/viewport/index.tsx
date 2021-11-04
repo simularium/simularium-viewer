@@ -42,7 +42,7 @@ type ViewportProps = {
     showBounds: boolean;
     selectionStateInfo: SelectionStateInfo;
     showCameraControls: boolean;
-    onError?: (errorMessage: FrontEndError) => void;
+    onError?: (error: FrontEndError) => void;
 } & Partial<DefaultProps>
 
 const defaultProps = {

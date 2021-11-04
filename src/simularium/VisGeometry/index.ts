@@ -109,7 +109,7 @@ interface PathData {
 type Bounds = readonly [number, number, number, number, number, number];
 
 class VisGeometry {
-    public onError: (errorMessage: FrontEndError) => void;
+    public onError: (error: FrontEndError) => void;
     public renderStyle: RenderStyle;
     public backgroundColor: Color;
     public pathEndColor: Color;
@@ -248,7 +248,7 @@ class VisGeometry {
         }
     }
 
-    public setOnErrorCallBack(onError: (msg: FrontEndError) => void): void {
+    public setOnErrorCallBack(onError: (error: FrontEndError) => void): void {
         this.onError = onError;
     }
 

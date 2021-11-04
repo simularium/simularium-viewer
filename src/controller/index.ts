@@ -47,7 +47,7 @@ export default class SimulariumController {
     public tickIntervalLength: number;
     public handleTrajectoryInfo: (TrajectoryFileInfo) => void;
     public postConnect: () => void;
-    public onError?: (errorMessage: FrontEndError) => void;
+    public onError?: (error: FrontEndError) => void;
 
     private networkEnabled: boolean;
     private isPaused: boolean;
