@@ -300,7 +300,7 @@ export default class SimulariumController {
                 this.networkEnabled = true; // This confuses me, because local files also go through this code path
                 this.isPaused = true;
             } else {
-                // caught in following block, not sent ot front end
+                // caught in following block, not sent to front end
                 throw new Error("incomplete simulator config provided");
             }
         } catch (e) {
