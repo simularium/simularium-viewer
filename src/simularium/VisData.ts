@@ -8,7 +8,7 @@ import {
     EncodedTypeMapping,
     VisDataMessage,
 } from "./types";
-import FrontEndError from "./FrontEndError";
+import FrontEndError, { ErrorLevel } from "./FrontEndError";
 
 /**
  * Parse Agents from Net Data
@@ -129,12 +129,13 @@ class VisData {
                     const attemptedMapping = agentObjectKeys.map(
                         (name, index) => `${name}: ${visData[index]}<br />`
                     );
-                    // passed up in controller.handleLocalFileChange
+                    // will be caught by controller.changeFile(...).catch()
                     throw new FrontEndError(
+                        "Your data is malformed, there are too few entries.",
+                        ErrorLevel.ERROR,
                         `Example attempt to parse your data: <pre>${attemptedMapping.join(
                             ""
-                        )}</pre>`,
-                        "your data is malformed, there are too few entries."
+                        )}</pre>`
                     );
                 }
 
@@ -144,12 +145,13 @@ class VisData {
                         (name, index) =>
                             `${name}: ${agentSubSetArray[index]}<br />`
                     );
-                    // passed up in controller.handleLocalFileChange
+                    // will be caught by controller.changeFile(...).catch()
                     throw new FrontEndError(
+                        "Your data is malformed, there are less entries than expected for this agent. ",
+                        ErrorLevel.ERROR,
                         `Example attempt to parse your data: <pre>${attemptedMapping.join(
                             ""
-                        )}</pre>`,
-                        "your data is malformed, there are less entries than expected for this agent"
+                        )}</pre>`
                     );
                 }
 
@@ -262,8 +264,9 @@ class VisData {
                     !Number.isInteger(dataIter)
                 ) {
                     throw new FrontEndError(
-                        `Number of Subpoints: <pre>${nSubPoints}</pre>`,
-                        "Your data is malformed, non-integer value found for num-subpoints "
+                        "Your data is malformed, non-integer value found for num-subpoints.",
+                        ErrorLevel.ERROR,
+                        `Number of Subpoints: <pre>${nSubPoints}</pre>`
                     );
                     break;
                 }
@@ -276,12 +279,13 @@ class VisData {
                         (name, index) =>
                             `${name}: ${agentDataView[dataIter + index]}<br />`
                     );
-                    // passed up in controller.handleLocalFileChange
+                    // will be caught by controller.changeFile(...).catch()
                     throw new FrontEndError(
+                        "Your data is malformed, non-integer value found for num-subpoints.",
+                        ErrorLevel.ERROR,
                         `Example attempt to parse your data: <pre>${attemptedMapping.join(
                             ""
-                        )}</pre>`,
-                        "your data is malformed, there are too few entries."
+                        )}</pre>`
                     );
                 }
 
@@ -294,12 +298,13 @@ class VisData {
                         (name, index) =>
                             `${name}: ${agentSubSetArray[index]}<br />`
                     );
-                    // passed up in controller.handleLocalFileChange
+                    // will be caught by controller.changeFile(...).catch()
                     throw new FrontEndError(
+                        "Your data is malformed, there are less entries than expected for this agent.",
+                        ErrorLevel.ERROR,
                         `Example attempt to parse your data: <pre>${attemptedMapping.join(
                             ""
-                        )}</pre>`,
-                        "your data is malformed, there are less entries than expected for this agent"
+                        )}</pre>`
                     );
                 }
 
@@ -384,9 +389,8 @@ class VisData {
         }
 
         const firstFrameTime = this.frameDataCache[0].time;
-        const lastFrameTime = this.frameDataCache[
-            this.frameDataCache.length - 1
-        ].time;
+        const lastFrameTime =
+            this.frameDataCache[this.frameDataCache.length - 1].time;
 
         const notLessThanFirstFrameTime =
             compareTimes(time, firstFrameTime, this.timeStepSize) !== -1;
@@ -587,7 +591,7 @@ class VisData {
 
     // for use w/ a drag-and-drop trajectory file
     //  save a file for playback
-    // errors passed up in controller.handleLocalFileChange
+    // will be caught by controller.changeFile(...).catch()
     public cacheJSON(visDataMsg: VisDataMessage): void {
         if (this.frameCache.length > 0) {
             throw new Error(
@@ -628,7 +632,8 @@ class VisData {
         return this._dragAndDropFileInfo;
     }
 
-    // error passed up in controller.handleLocalFileChange
+    // will be caught by controller.changeFile(...).catch()
+    // TODO: check if this code is still used
     public checkTypeMapping(typeMappingFromFile: EncodedTypeMapping): number[] {
         if (!typeMappingFromFile) {
             throw new Error(

@@ -10,6 +10,7 @@ import {
     SimulariumFileFormat,
 } from "./types";
 import { ISimulator } from "./ISimulator";
+import FrontEndError from "./FrontEndError";
 
 // a LocalFileSimulator is a ISimulator that plays back the contents of
 // a drag-n-drop trajectory file (a SimulariumFileFormat object)
@@ -103,7 +104,7 @@ export class LocalFileSimulator implements ISimulator {
         const { spatialData, trajectoryInfo } = this.simulariumFile;
 
         if (!spatialData) {
-            const newError = new Error(
+            const newError = new FrontEndError(
                 "Simularium files need 'spatialData' array"
             );
             return Promise.reject(newError);

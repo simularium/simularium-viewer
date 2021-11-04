@@ -189,6 +189,7 @@ class GeometryStore {
                     actualUrl = `https://files.rcsb.org/download/${pdbID}.pdb`;
                     return fetch(actualUrl).then((response) => {
                         if (!response.ok) {
+                            // error will be caught by the function that calls this
                             throw new Error(
                                 `Failed to fetch ${pdbModel.filePath} from ${actualUrl}`
                             );
@@ -196,6 +197,7 @@ class GeometryStore {
                         return response.text();
                     });
                 } else {
+                    // error will be caught by function that calls this
                     throw new Error(
                         `Failed to fetch ${pdbModel.filePath} from ${url}`
                     );

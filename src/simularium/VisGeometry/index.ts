@@ -32,7 +32,7 @@ import { cloneDeep, noop } from "lodash";
 import VisAgent from "./VisAgent";
 import VisTypes from "../VisTypes";
 import PDBModel from "./PDBModel";
-import FrontEndError from "../FrontEndError";
+import FrontEndError, { ErrorLevel } from "../FrontEndError";
 
 import {
     DEFAULT_CAMERA_Z_POSITION,
@@ -109,7 +109,7 @@ interface PathData {
 type Bounds = readonly [number, number, number, number, number, number];
 
 class VisGeometry {
-    public onError: (errorMessage: string) => void;
+    public onError: (error: FrontEndError) => void;
     public renderStyle: RenderStyle;
     public backgroundColor: Color;
     public pathEndColor: Color;
@@ -248,7 +248,7 @@ class VisGeometry {
         }
     }
 
-    public setOnErrorCallBack(onError: (msg: string) => void): void {
+    public setOnErrorCallBack(onError: (error: FrontEndError) => void): void {
         this.onError = onError;
     }
 
@@ -1060,12 +1060,14 @@ class VisGeometry {
                     // the error was handled, and the geometry was replaced with a sphere
                     // but still good to tell the user about it.
                     if (errorMessage) {
-                        this.onError(errorMessage);
+                        this.onError(
+                            new FrontEndError(errorMessage, ErrorLevel.WARNING)
+                        );
                         this.logger.info(errorMessage);
                     }
                 })
                 .catch((reason) => {
-                    this.onError(reason);
+                    this.onError(new FrontEndError(reason));
                     this.logger.info(reason);
                 });
         });

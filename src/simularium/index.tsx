@@ -12,7 +12,9 @@ export type {
     SelectionStateInfo,
     UIDisplayData
 } from "./SelectionInterface";
-
+export {
+    ErrorLevel
+} from "./FrontEndError"
 export {
     RemoteSimulator,
     NetMessageEnum

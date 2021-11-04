@@ -1,6 +1,6 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
-import FrontEndError from "./FrontEndError";
+import FrontEndError, { ErrorLevel } from "./FrontEndError";
 
 import { ISimulator } from "./ISimulator";
 import { TrajectoryFileInfoV2, VisDataMessage } from "./types";
@@ -13,7 +13,7 @@ interface NetMessage {
 // TODO: proposed new NetMessage data type:
 // This factors the raw data structure away from the networking and transmission info.
 // This allows the data structure to make a bit more sense with respect to typescript typing,
-// and also for raw file drag n drop it doesn't need conection info or msgtype.
+// and also for raw file drag n drop it doesn't need connection info or msgtype.
 // interface NetMessage {
 //     connId: string; // unique connection to server
 //     msgType: number; // identifies the data structure of the message
@@ -76,11 +76,11 @@ export class RemoteSimulator implements ISimulator {
     protected lastRequestedFile: string;
     public connectionTimeWaited: number;
     public connectionRetries: number;
-    public handleError: (errorMessage: string) => void | (() => void);
+    public handleError: (error: FrontEndError) => void | (() => void);
 
     public constructor(
         opts?: NetConnectionParams,
-        errorHandler?: (error: string) => void
+        errorHandler?: (error: FrontEndError) => void
     ) {
         this.webSocket = null;
         this.serverIp = opts && opts.serverIp ? opts.serverIp : "localhost";
@@ -328,6 +328,7 @@ export class RemoteSimulator implements ISimulator {
         if (isConnectionSuccessful) {
             return CONNECTION_SUCCESS_MSG;
         } else {
+            // caught by functions that call this
             throw new Error(CONNECTION_FAIL_MSG);
         }
     }
@@ -350,7 +351,10 @@ export class RemoteSimulator implements ISimulator {
                 "Request to server cannot be made with a closed Websocket connection."
             );
             this.handleError(
-                "Connection to server is closed; please try reloading. If the problem persists, the server may be too busy. Please try again at another time."
+                new FrontEndError(
+                    "Connection to server is closed; please try reloading. If the problem persists, the server may be too busy. Please try again at another time.",
+                    ErrorLevel.ERROR
+                )
             );
         }
     }
@@ -392,7 +396,10 @@ export class RemoteSimulator implements ISimulator {
      *  Trajectory File: No simulation run, stream a result file piecemeal
      *
      */
-    public startRemoteSimPreRun(timeStep: number, numTimeSteps: number): void {
+    public startRemoteSimPreRun(
+        timeStep: number,
+        numTimeSteps: number
+    ): Promise<void> {
         const jsonData = {
             msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
             mode: PlayBackType.ID_PRE_RUN_SIMULATION,
@@ -400,20 +407,28 @@ export class RemoteSimulator implements ISimulator {
             numTimeSteps: numTimeSteps,
         };
 
-        this.connectToRemoteServer(this.getIp()).then(() => {
-            this.sendWebSocketRequest(jsonData, "Start Simulation Pre-Run");
-        });
+        return this.connectToRemoteServer(this.getIp())
+            .then(() => {
+                this.sendWebSocketRequest(jsonData, "Start Simulation Pre-Run");
+            })
+            .catch((e) => {
+                throw new FrontEndError(e.message, ErrorLevel.ERROR);
+            });
     }
 
-    public startRemoteSimLive(): void {
+    public startRemoteSimLive(): Promise<void> {
         const jsonData = {
             msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
             mode: PlayBackType.ID_LIVE_SIMULATION,
         };
 
-        this.connectToRemoteServer(this.getIp()).then(() => {
-            this.sendWebSocketRequest(jsonData, "Start Simulation Live");
-        });
+        return this.connectToRemoteServer(this.getIp())
+            .then(() => {
+                this.sendWebSocketRequest(jsonData, "Start Simulation Live");
+            })
+            .catch((e) => {
+                throw new FrontEndError(e.message, ErrorLevel.ERROR);
+            });
     }
 
     public startRemoteTrajectoryPlayback(fileName: string): Promise<void> {
@@ -434,7 +449,7 @@ export class RemoteSimulator implements ISimulator {
                 );
             })
             .catch((error) => {
-                throw new FrontEndError(error);
+                throw new FrontEndError(error.message, ErrorLevel.ERROR);
             });
     }
 

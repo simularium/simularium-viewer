@@ -110,6 +110,7 @@ class PDBModel {
         } else if (fileExtension === "cif") {
             this.parseCIFData(data);
         } else {
+            // Error will be caught by the Geometry store handling
             throw new Error(
                 `Expected .cif or .pdb file extension to parse PDB data, but got ${fileExtension}`
             );

@@ -7,6 +7,7 @@ import type {
 import SimulariumViewer, {
     SimulariumController,
     RenderStyle,
+    ErrorLevel,
 } from "../src";
 import "./style.css";
 import { isEqual, findIndex } from "lodash";
@@ -14,6 +15,7 @@ import { isEqual, findIndex } from "lodash";
 import PointSimulator from "./PointSimulator";
 import PdbSimulator from "./PdbSimulator";
 import CurveSimulator from "./CurveSimulator";
+import FrontEndError from "../src/simularium/FrontEndError";
 
 const netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
@@ -134,6 +136,20 @@ class Viewer extends React.Component<{}, ViewerState> {
         e.preventDefault();
     };
 
+    public onError = (error: FrontEndError) => {
+        if (error.level === ErrorLevel.ERROR) {
+            window.alert(`ERROR, something is broken: ${error.message} ${error.htmlData}`);
+        } else if (error.level === ErrorLevel.WARNING) {
+            window.alert(
+                `User warning, but not terrible:  ${error.message} ${error.htmlData}`
+            );
+        } else if (error.level === ErrorLevel.INFO) {
+            console.log(`Just for your info. ${error.message}`);
+        } else {
+            console.warn(`This error didn't have a level sent with it: ${error.message}. Should probably be converted to a FrontEndError`)
+        }
+    };
+
     public onDrop = (e: Event): void => {
         this.onDragOver(e);
         const event = e as DragEvent;
@@ -150,7 +166,12 @@ class Viewer extends React.Component<{}, ViewerState> {
             const simulariumFileIndex = findIndex(filesArr, (file) =>
                 file.name.includes(".simularium")
             );
-            const simulariumFile = JSON.parse(parsedFiles[simulariumFileIndex]);
+            let simulariumFile;
+            try {
+                simulariumFile = JSON.parse(parsedFiles[simulariumFileIndex]);
+            } catch (error) {
+                return this.onError(new FrontEndError(error.message));
+            }
             const fileName = filesArr[simulariumFileIndex].name;
             const geoAssets = filesArr.reduce((acc, cur, index) => {
                 if (index !== simulariumFileIndex) {
@@ -161,8 +182,7 @@ class Viewer extends React.Component<{}, ViewerState> {
             simulariumController
                 .changeFile({ simulariumFile, geoAssets }, fileName)
                 .catch((error) => {
-                    console.log("Error loading file", error);
-                    window.alert(`Error loading file: ${error.message}`);
+                    this.onError(error)
                 });
         });
     };
@@ -413,13 +433,21 @@ class Viewer extends React.Component<{}, ViewerState> {
                             <label htmlFor={id}>{id}</label>
                             <input
                                 type="checkbox"
-                                onClick={(event) => this.turnAgentsOnOff((event.target as HTMLInputElement).value)}
+                                onClick={(event) =>
+                                    this.turnAgentsOnOff(
+                                        (event.target as HTMLInputElement).value
+                                    )
+                                }
                                 value={id}
                                 defaultChecked={true}
                             />
                             <input
                                 type="checkbox"
-                                onClick={(event) => this.turnAgentHighlightsOnOff((event.target as HTMLInputElement).value)}
+                                onClick={(event) =>
+                                    this.turnAgentHighlightsOnOff(
+                                        (event.target as HTMLInputElement).value
+                                    )
+                                }
                                 value={id}
                                 defaultChecked={false}
                             />
@@ -511,7 +539,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                         agentColors={this.state.agentColors}
                         hideAllAgents={this.state.hideAllAgents}
                         showPaths={this.state.showPaths}
-                        onError={(error) => window.alert(error)}
+                        onError={this.onError}
                         backgroundColor={[0, 0, 0]}
                     />
                 </div>
