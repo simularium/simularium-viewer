@@ -53,7 +53,9 @@ class SelectionInterface {
         });
     }
 
-    // errors can be caught by onError prop to viewer
+    // errors will be caught in a try/catch block in the viewport
+    // If an onError can be caught by onError prop to viewer, will be
+    // sent to the parent app
     public parse(idNameMapping: EncodedTypeMapping): void {
         this.clear();
         if (!idNameMapping) {

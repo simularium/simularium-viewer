@@ -633,6 +633,7 @@ class VisData {
     }
 
     // error passed up in controller.handleLocalFileChange
+    // TODO: check if this code is still used
     public checkTypeMapping(typeMappingFromFile: EncodedTypeMapping): number[] {
         if (!typeMappingFromFile) {
             throw new Error(

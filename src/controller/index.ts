@@ -132,6 +132,7 @@ export default class SimulariumController {
                 this.onError
             );
         } else {
+            // caught in try/catch block, not sent to front end
             throw new Error(
                 "Insufficient data to determine and configure simulator connection"
             );
@@ -159,6 +160,8 @@ export default class SimulariumController {
         return this.isFileChanging;
     }
 
+    // Not called by viewer, but could be called by
+    // parent app
     public connect(): Promise<string> {
         if (!this.simulator) {
             return Promise.reject(
@@ -297,14 +300,13 @@ export default class SimulariumController {
                 this.networkEnabled = true; // This confuses me, because local files also go through this code path
                 this.isPaused = true;
             } else {
+                // caught in following block, not sent ot front end
                 throw new Error("incomplete simulator config provided");
             }
         } catch (e) {
             const error = e as Error;
             this.simulator = undefined;
-
             console.warn(error.message);
-
             this.networkEnabled = false;
             this.isPaused = false;
         }

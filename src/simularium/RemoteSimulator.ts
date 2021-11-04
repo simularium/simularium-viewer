@@ -328,6 +328,7 @@ export class RemoteSimulator implements ISimulator {
         if (isConnectionSuccessful) {
             return CONNECTION_SUCCESS_MSG;
         } else {
+            // caught by functions that call this
             throw new Error(CONNECTION_FAIL_MSG);
         }
     }
@@ -395,7 +396,10 @@ export class RemoteSimulator implements ISimulator {
      *  Trajectory File: No simulation run, stream a result file piecemeal
      *
      */
-    public startRemoteSimPreRun(timeStep: number, numTimeSteps: number): void {
+    public startRemoteSimPreRun(
+        timeStep: number,
+        numTimeSteps: number
+    ): Promise<void> {
         const jsonData = {
             msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
             mode: PlayBackType.ID_PRE_RUN_SIMULATION,
@@ -403,20 +407,28 @@ export class RemoteSimulator implements ISimulator {
             numTimeSteps: numTimeSteps,
         };
 
-        this.connectToRemoteServer(this.getIp()).then(() => {
-            this.sendWebSocketRequest(jsonData, "Start Simulation Pre-Run");
-        });
+        return this.connectToRemoteServer(this.getIp())
+            .then(() => {
+                this.sendWebSocketRequest(jsonData, "Start Simulation Pre-Run");
+            })
+            .catch((e) => {
+                throw new FrontEndError(e.message, ErrorLevel.ERROR);
+            });
     }
 
-    public startRemoteSimLive(): void {
+    public startRemoteSimLive(): Promise<void> {
         const jsonData = {
             msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
             mode: PlayBackType.ID_LIVE_SIMULATION,
         };
 
-        this.connectToRemoteServer(this.getIp()).then(() => {
-            this.sendWebSocketRequest(jsonData, "Start Simulation Live");
-        });
+        return this.connectToRemoteServer(this.getIp())
+            .then(() => {
+                this.sendWebSocketRequest(jsonData, "Start Simulation Live");
+            })
+            .catch((e) => {
+                throw new FrontEndError(e.message, ErrorLevel.ERROR);
+            });
     }
 
     public startRemoteTrajectoryPlayback(fileName: string): Promise<void> {
