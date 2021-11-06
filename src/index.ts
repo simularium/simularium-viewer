@@ -12,6 +12,7 @@ export {
     RemoteSimulator,
     DummyRemoteSimulator,
     ErrorLevel,
+    FrontEndError,
 } from "./simularium";
 export { compareTimes } from "./util";
 

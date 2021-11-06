@@ -19,7 +19,7 @@ import { ClientSimulator } from "../simularium/ClientSimulator";
 import { IClientSimulatorImpl } from "../simularium/localSimulators/IClientSimulatorImpl";
 import { ISimulator } from "../simularium/ISimulator";
 import { LocalFileSimulator } from "../simularium/LocalFileSimulator";
-import FrontEndError from "../simularium/FrontEndError";
+import { FrontEndError } from "../simularium/FrontEndError";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 

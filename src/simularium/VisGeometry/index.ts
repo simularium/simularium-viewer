@@ -32,7 +32,7 @@ import { cloneDeep, noop } from "lodash";
 import VisAgent from "./VisAgent";
 import VisTypes from "../VisTypes";
 import PDBModel from "./PDBModel";
-import FrontEndError, { ErrorLevel } from "../FrontEndError";
+import { FrontEndError, ErrorLevel } from "../FrontEndError";
 
 import {
     DEFAULT_CAMERA_Z_POSITION,

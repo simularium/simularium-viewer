@@ -10,7 +10,7 @@ import {
     SimulariumFileFormat,
 } from "./types";
 import { ISimulator } from "./ISimulator";
-import FrontEndError from "./FrontEndError";
+import { FrontEndError } from "./FrontEndError";
 
 // a LocalFileSimulator is a ISimulator that plays back the contents of
 // a drag-n-drop trajectory file (a SimulariumFileFormat object)

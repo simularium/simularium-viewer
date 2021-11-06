@@ -1,4 +1,4 @@
-import FrontEndError, { ErrorLevel } from "../simularium/FrontEndError";
+import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
 
 describe("FrontEndError", () => {
     test("it creates an error object with a message", () => {

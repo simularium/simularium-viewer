@@ -1,4 +1,4 @@
-import FrontEndError from "../simularium/FrontEndError";
+import { FrontEndError } from "../simularium/FrontEndError";
 import {
     makeMissingDisplayTypeErrorMessage,
     makeMissingUrlErrorMessage,

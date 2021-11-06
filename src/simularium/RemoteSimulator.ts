@@ -1,6 +1,6 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
-import FrontEndError, { ErrorLevel } from "./FrontEndError";
+import { FrontEndError, ErrorLevel } from "./FrontEndError";
 
 import { ISimulator } from "./ISimulator";
 import { TrajectoryFileInfoV2, VisDataMessage } from "./types";

@@ -4,7 +4,7 @@ export enum ErrorLevel {
     WARNING = "warning",
 }
 
-class FrontEndError extends Error {
+export class FrontEndError extends Error {
     public htmlData: string;
     public level: ErrorLevel;
     constructor(
@@ -21,5 +21,3 @@ class FrontEndError extends Error {
         this.level = level;
     }
 }
-
-export default FrontEndError;

@@ -2,7 +2,7 @@ import { mapValues } from "lodash";
 import * as si from "si-prefix";
 
 import { DEFAULT_CAMERA_SPEC } from "../constants";
-import FrontEndError, { ErrorLevel } from "./FrontEndError";
+import { FrontEndError, ErrorLevel } from "./FrontEndError";
 import {
     AgentDisplayDataWithGeometry,
     TrajectoryFileInfo,
