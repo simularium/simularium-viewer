@@ -11,5 +11,5 @@ export function convertColorNumberToString(color: number | string): string {
     if (typeof color === "string") {
         return color;
     }
-    return "#" + Color(color).getHexString();
+    return "#" + new Color(color).getHexString();
 }
