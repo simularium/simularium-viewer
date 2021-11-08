@@ -13,8 +13,8 @@ export type {
     UIDisplayData
 } from "./SelectionInterface";
 export {
-    ErrorLevel
-} from "./FrontEndError"
+    ErrorLevel, FrontEndError
+} from "./FrontEndError";
 export {
     RemoteSimulator,
     NetMessageEnum

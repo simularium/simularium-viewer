@@ -8,7 +8,7 @@ import {
     EncodedTypeMapping,
     VisDataMessage,
 } from "./types";
-import FrontEndError, { ErrorLevel } from "./FrontEndError";
+import { FrontEndError, ErrorLevel } from "./FrontEndError";
 
 /**
  * Parse Agents from Net Data

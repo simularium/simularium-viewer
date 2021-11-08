@@ -15,7 +15,7 @@ import { isEqual, findIndex } from "lodash";
 import PointSimulator from "./PointSimulator";
 import PdbSimulator from "./PdbSimulator";
 import CurveSimulator from "./CurveSimulator";
-import FrontEndError from "../src/simularium/FrontEndError";
+import { FrontEndError } from "../src/simularium/FrontEndError";
 
 const netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",

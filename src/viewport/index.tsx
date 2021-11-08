@@ -18,7 +18,7 @@ import {
 import { TrajectoryFileInfoAny } from "../simularium/types";
 import { RenderStyle } from "../simularium";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
-import FrontEndError, { ErrorLevel } from "../simularium/FrontEndError";
+import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
 
 export type PropColor = string | number | [number, number, number];
 

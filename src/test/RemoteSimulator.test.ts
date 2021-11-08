@@ -2,7 +2,7 @@ import {
     CONNECTION_SUCCESS_MSG,
     CONNECTION_FAIL_MSG,
 } from "../simularium/RemoteSimulator";
-import FrontEndError from "../simularium/FrontEndError";
+import { FrontEndError } from "../simularium/FrontEndError";
 import { RemoteSimulator } from "..";
 
 describe("RemoteSimulator", () => {
