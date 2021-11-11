@@ -1,9 +1,11 @@
 ## Simularium repositories
+
 This repository is part of the Simularium project ([simularium.allencell.org](https://simularium.allencell.org)), which includes repositories:
-- [simulariumIO](https://github.com/allen-cell-animated/simulariumio) - Python package that converts simulation outputs to the format consumed by the Simularium viewer website
-- [simularium-engine](https://github.com/allen-cell-animated/simularium-engine) - C++ backend application that interfaces with biological simulation engines and serves simulation data to the front end website
-- [simularium-viewer](https://github.com/allen-cell-animated/simularium-viewer) - NPM package to view Simularium trajectories in 3D
-- [simularium-website](https://github.com/allen-cell-animated/simularium-website) - Front end website for the Simularium project, includes the Simularium viewer
+
+-   [simulariumIO](https://github.com/allen-cell-animated/simulariumio) - Python package that converts simulation outputs to the format consumed by the Simularium viewer website
+-   [simularium-engine](https://github.com/allen-cell-animated/simularium-engine) - C++ backend application that interfaces with biological simulation engines and serves simulation data to the front end website
+-   [simularium-viewer](https://github.com/allen-cell-animated/simularium-viewer) - NPM package to view Simularium trajectories in 3D
+-   [simularium-website](https://github.com/allen-cell-animated/simularium-website) - Front end website for the Simularium project, includes the Simularium viewer
 
 ---
 
@@ -18,6 +20,7 @@ https://www.npmjs.com/package/@aics/simularium-viewer
 ---
 
 ## Description
+
 This viewer can visualize trajectories that are in Simularium format (see the file format documentation [here](https://github.com/allen-cell-animated/simulariumio/blob/main/file_format.md)). The viewer can operate in the following modes:
 
 **drag-and-drop**  
@@ -26,11 +29,13 @@ Drag a Simularium file into the window (WebGL) area of the viewer.
 **remote-streaming**  
 Connect to a [simularium-engine](https://github.com/allen-cell-animated/simularium-engine) instance, and stream data through a web-socket connection.
 
-___
+---
 
 ## Installation in your project
+
 1. `npm i @aics/simularium-viewer`
-2. In Viewer.jsx/tsx 
+2. In Viewer.jsx/tsx
+
 ```javascript
 import SimulariumViewer, { SimulariumController } from "@aics/simularium-viewer";
 import "@aics/simularium-viewer/style/style.css";
@@ -104,23 +109,22 @@ This will run the example in `/examples/Viewer.tsx`, demonstrating the viewer's 
 
 ## Quick Start
 
-| script | comments |
-| ------ | -------- |
-| build  | create CommonJS, ES module, and UMD builds |
-| bundle | run Webpack to create a UMD bundle |
-| clean | remove generated artifacts |
-| format | run prettier on `src` directory |
-| generateTypes | generate type declarations |
-| lint | run eslint on `src` directory |
-| transpileCommonJs | run babel on `src` directory; transpile `import/export` statements for a CommonJS compatible build |
-| transpileES |  run babel on `src` directory; *do not* transpile `import/export` statements for an ES module compatible build (used by bundlers for tree-shaking) |
-| test | run `mocha`; searches for any files matching the pattern "src/**/*.test.js" |
-| typeCheck | run `tsc` in type-check only mode |
-| start  | runs an example app from `examples` for testing. Runs at `localhost:8080/public/`. Run ./gradlew build to see new changes from `src` |
+| script            | comments                                                                                                                                          |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| build             | create CommonJS, ES module, and UMD builds                                                                                                        |
+| bundle            | run Webpack to create a UMD bundle                                                                                                                |
+| clean             | remove generated artifacts                                                                                                                        |
+| format            | run prettier on `src` directory                                                                                                                   |
+| generateTypes     | generate type declarations                                                                                                                        |
+| lint              | run eslint on `src` directory                                                                                                                     |
+| transpileCommonJs | run babel on `src` directory; transpile `import/export` statements for a CommonJS compatible build                                                |
+| transpileES       | run babel on `src` directory; _do not_ transpile `import/export` statements for an ES module compatible build (used by bundlers for tree-shaking) |
+| test              | run `mocha`; searches for any files matching the pattern "src/\*_/_.test.js"                                                                      |
+| typeCheck         | run `tsc` in type-check only mode                                                                                                                 |
+| start             | runs an example app from `examples` for testing. Runs at `localhost:8080/public/`.                                                                |
 
-___
+---
 
 ## Development
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for information related to developing the code.
-
