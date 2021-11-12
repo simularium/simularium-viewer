@@ -358,12 +358,13 @@ class Viewport extends React.Component<
     };
 
     public handleKeyDown = (e: Event): void => {
-        // no impl
+        // the viewer canvas must have focus for the key press to work.
         if (e.target !== this.vdomRef.current) {
             return;
         }
 
         const event = e as KeyboardEvent;
+        // control-option-1 (mac) or ctrl-alt-1 (windows)
         if (event.key === "1" && event.altKey && event.ctrlKey) {
             const s = this.state.showRenderParamsGUI;
             this.setState({ showRenderParamsGUI: !s });
