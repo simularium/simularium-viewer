@@ -266,7 +266,10 @@ class VisGeometry {
     }
 
     public setupGui(container?: HTMLElement): void {
-        this.gui = new Pane({ title: "RenderParams", container: container });
+        this.gui = new Pane({
+            title: "AdvancedSettings",
+            container: container,
+        });
         this.gui.registerPlugin(EssentialsPlugin);
 
         const fcam = this.gui.addFolder({ title: "Camera" });
@@ -293,6 +296,15 @@ class VisGeometry {
                 event.value.g / 255.0,
                 event.value.b / 255.0,
             ]);
+        });
+        this.gui.addButton({ title: "Capture" }).on("click", () => {
+            this.render(0);
+            const dataUrl =
+                this.threejsrenderer.domElement.toDataURL("image/png");
+            const anchor = document.createElement("a");
+            anchor.href = dataUrl;
+            anchor.download = "screenshot.png";
+            anchor.click();
         });
         this.gui.addSeparator();
         this.renderer.setupGui(this.gui);

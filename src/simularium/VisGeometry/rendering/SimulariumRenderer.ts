@@ -183,69 +183,70 @@ class SimulariumRenderer {
 
     public setupGui(gui: Pane): void {
         const settings = this.parameters;
-
-        gui.addInput(settings, "aoradius1", { min: 0.01, max: 10.0 }).on(
+        const ao = gui.addFolder({ title: "AO passes", expanded: false });
+        ao.addInput(settings, "aoradius1", { min: 0.01, max: 10.0 }).on(
             "change",
             (event) => {
                 this.ssao1Pass.setRadius(event.value);
             }
         );
-        gui.addInput(settings, "blurradius1", { min: 0.01, max: 10.0 }).on(
+        ao.addInput(settings, "blurradius1", { min: 0.01, max: 10.0 }).on(
             "change",
             (event) => {
                 this.blur1Pass.setRadius(event.value);
             }
         );
-        gui.addInput(settings, "aothreshold1", { min: 0.01, max: 300.0 });
-        gui.addInput(settings, "aofalloff1", { min: 0.01, max: 300.0 });
-        gui.addSeparator();
+        ao.addInput(settings, "aothreshold1", { min: 0.01, max: 300.0 });
+        ao.addInput(settings, "aofalloff1", { min: 0.01, max: 300.0 });
+        ao.addSeparator();
 
-        gui.addInput(settings, "aoradius2", { min: 0.01, max: 10.0 }).on(
+        ao.addInput(settings, "aoradius2", { min: 0.01, max: 10.0 }).on(
             "change",
             (event) => {
                 this.ssao2Pass.setRadius(event.value);
             }
         );
-        gui.addInput(settings, "blurradius2", { min: 0.01, max: 10.0 }).on(
+        ao.addInput(settings, "blurradius2", { min: 0.01, max: 10.0 }).on(
             "change",
             (event) => {
                 this.blur2Pass.setRadius(event.value);
             }
         );
-        gui.addInput(settings, "aothreshold2", { min: 0.01, max: 300.0 });
-        gui.addInput(settings, "aofalloff2", { min: 0.01, max: 300.0 });
-        gui.addSeparator();
-
-        gui.addInput(settings, "atomBeginDistance", { min: 0.0, max: 300.0 });
-        gui.addInput(settings, "chainBeginDistance", { min: 0.0, max: 300.0 });
-
-        gui.addInput(settings, "bghueoffset", { min: 0.0, max: 1.0 }).on(
-            "change",
-            (event) => {
-                this.compositePass.setBgHueOffset(event.value);
-            }
-        );
-        gui.addInput(settings, "bgchromaoffset", { min: 0.0, max: 1.0 }).on(
-            "change",
-            (event) => {
-                this.compositePass.setBgChromaOffset(event.value);
-            }
-        );
-        gui.addInput(settings, "bgluminanceoffset", { min: 0.0, max: 1.0 }).on(
-            "change",
-            (event) => {
-                this.compositePass.setBgLuminanceOffset(event.value);
-            }
-        );
-        gui.addSeparator();
-        gui.addInput(settings, "outlineThickness", {
-            min: 1.0,
-            max: 8.0,
-            step: 1,
-        }).on("change", (event) => {
-            this.contourPass.setOutlineThickness(event.value);
+        ao.addInput(settings, "aothreshold2", { min: 0.01, max: 300.0 });
+        ao.addInput(settings, "aofalloff2", { min: 0.01, max: 300.0 });
+        const depth = gui.addFolder({ title: "DepthCueing", expanded: false });
+        depth.addInput(settings, "atomBeginDistance", { min: 0.0, max: 300.0 });
+        depth.addInput(settings, "chainBeginDistance", {
+            min: 0.0,
+            max: 300.0,
         });
-        gui.addInput(settings, "outlineColor").on("change", (event) => {
+
+        depth
+            .addInput(settings, "bghueoffset", { min: 0.0, max: 1.0 })
+            .on("change", (event) => {
+                this.compositePass.setBgHueOffset(event.value);
+            });
+        depth
+            .addInput(settings, "bgchromaoffset", { min: 0.0, max: 1.0 })
+            .on("change", (event) => {
+                this.compositePass.setBgChromaOffset(event.value);
+            });
+        depth
+            .addInput(settings, "bgluminanceoffset", { min: 0.0, max: 1.0 })
+            .on("change", (event) => {
+                this.compositePass.setBgLuminanceOffset(event.value);
+            });
+        const outlines = gui.addFolder({ title: "Outlines", expanded: false });
+        outlines
+            .addInput(settings, "outlineThickness", {
+                min: 1.0,
+                max: 8.0,
+                step: 1,
+            })
+            .on("change", (event) => {
+                this.contourPass.setOutlineThickness(event.value);
+            });
+        outlines.addInput(settings, "outlineColor").on("change", (event) => {
             this.contourPass.setOutlineColor([
                 event.value.r,
                 event.value.g,
@@ -253,32 +254,32 @@ class SimulariumRenderer {
             ]);
         });
 
-        gui.addInput(settings, "outlineAlpha", { min: 0.0, max: 1.0 }).on(
-            "change",
-            (event) => {
+        outlines
+            .addInput(settings, "outlineAlpha", { min: 0.0, max: 1.0 })
+            .on("change", (event) => {
                 this.contourPass.setOutlineAlpha(event.value);
-            }
-        );
-        gui.addInput(settings, "followThickness", {
-            min: 1.0,
-            max: 8.0,
-            step: 1,
-        }).on("change", (event) => {
-            this.contourPass.setFollowOutlineThickness(event.value);
-        });
-        gui.addInput(settings, "followColor").on("change", (event) => {
+            });
+        outlines
+            .addInput(settings, "followThickness", {
+                min: 1.0,
+                max: 8.0,
+                step: 1,
+            })
+            .on("change", (event) => {
+                this.contourPass.setFollowOutlineThickness(event.value);
+            });
+        outlines.addInput(settings, "followColor").on("change", (event) => {
             this.contourPass.setFollowColor([
                 event.value.r,
                 event.value.g,
                 event.value.b,
             ]);
         });
-        gui.addInput(settings, "followAlpha", { min: 0.0, max: 1.0 }).on(
-            "change",
-            (event) => {
+        outlines
+            .addInput(settings, "followAlpha", { min: 0.0, max: 1.0 })
+            .on("change", (event) => {
                 this.contourPass.setFollowAlpha(event.value);
-            }
-        );
+            });
     }
 
     public setBackgroundColor(color: Color): void {

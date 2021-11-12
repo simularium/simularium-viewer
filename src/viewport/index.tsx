@@ -362,7 +362,7 @@ class Viewport extends React.Component<
         }
 
         const event = e as KeyboardEvent;
-        if (event.key === "g" && event.altKey && event.ctrlKey) {
+        if (event.key === "1" && event.altKey && event.ctrlKey) {
             const s = this.state.showRenderParamsGUI;
             this.setState({ showRenderParamsGUI: !s });
         }
