@@ -94,12 +94,14 @@
         "@fortawesome/fontawesome-svg-core": "^1.2.34",
         "@fortawesome/free-solid-svg-icons": "^5.15.2",
         "@fortawesome/react-fontawesome": "^0.1.14",
+        "@tweakpane/core": "^1.0.6",
+        "@tweakpane/plugin-essentials": "^0.1.4",
         "comlink": "^4.3.1",
-        "dat.gui": "^0.7.6",
         "js-logger": "^1.6.1",
         "parse-mmcif": "^0.0.1",
         "parse-pdb": "^1.0.0",
         "si-prefix": "^0.2.0",
-        "three": "^0.131.3"
+        "three": "^0.131.3",
+        "tweakpane": "^3.0.5"
     }
 }

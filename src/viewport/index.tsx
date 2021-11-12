@@ -25,7 +25,7 @@ export type PropColor = string | number | [number, number, number];
 type ViewportProps = {
     renderStyle: RenderStyle;
     backgroundColor?: PropColor;
-    agentColors?: (number[] | string[]); //TODO: accept all Color formats
+    agentColors?: number[] | string[]; //TODO: accept all Color formats
     height: number;
     width: number;
     loggerLevel: string;
@@ -43,56 +43,27 @@ type ViewportProps = {
     selectionStateInfo: SelectionStateInfo;
     showCameraControls: boolean;
     onError?: (error: FrontEndError) => void;
-} & Partial<DefaultProps>
+} & Partial<DefaultProps>;
 
 const defaultProps = {
-        renderStyle: RenderStyle.WEBGL2_PREFERRED,
-        backgroundColor: [0, 0, 0],
-        height: 800,
-        width: 800,
-        loadInitialData: true,
-        hideAllAgents: false,
-        showPaths: true,
-        showBounds: true,
-        agentColors: [
-            0x6ac1e5,
-            0xff2200,
-            0xee7967,
-            0xff6600,
-            0xd94d49,
-            0xffaa00,
-            0xffcc00,
-            0x00ccff,
-            0x00aaff,
-            0x8048f3,
-            0x07f4ec,
-            0x79bd8f,
-            0x8800ff,
-            0xaa00ff,
-            0xcc00ff,
-            0xff00cc,
-            0xff00aa,
-            0xff0088,
-            0xff0066,
-            0xff0044,
-            0xff0022,
-            0xff0000,
-            0xccff00,
-            0xaaff00,
-            0x88ff00,
-            0x00ffcc,
-            0x66ff00,
-            0x44ff00,
-            0x22ff00,
-            0x00ffaa,
-            0x00ff88,
-            0x00ffaa,
-            0x00ffff,
-            0x0066ff,
-        ] as (string[] | number[])
-    };
+    renderStyle: RenderStyle.WEBGL2_PREFERRED,
+    backgroundColor: [0, 0, 0],
+    height: 800,
+    width: 800,
+    loadInitialData: true,
+    hideAllAgents: false,
+    showPaths: true,
+    showBounds: true,
+    agentColors: [
+        0x6ac1e5, 0xff2200, 0xee7967, 0xff6600, 0xd94d49, 0xffaa00, 0xffcc00,
+        0x00ccff, 0x00aaff, 0x8048f3, 0x07f4ec, 0x79bd8f, 0x8800ff, 0xaa00ff,
+        0xcc00ff, 0xff00cc, 0xff00aa, 0xff0088, 0xff0066, 0xff0044, 0xff0022,
+        0xff0000, 0xccff00, 0xaaff00, 0x88ff00, 0x00ffcc, 0x66ff00, 0x44ff00,
+        0x22ff00, 0x00ffaa, 0x00ff88, 0x00ffaa, 0x00ffff, 0x0066ff,
+    ] as string[] | number[],
+};
 
-type DefaultProps = typeof defaultProps
+type DefaultProps = typeof defaultProps;
 
 interface Click {
     x: number;
@@ -102,6 +73,7 @@ interface Click {
 
 interface ViewportState {
     lastClick: Click;
+    showRenderParamsGUI: boolean;
 }
 
 export interface TimeData {
@@ -114,20 +86,23 @@ const MAX_CLICK_TIME = 300;
 // for float errors
 const CLICK_TOLERANCE = 1e-4;
 
-class Viewport extends React.Component<ViewportProps & DefaultProps, ViewportState> {
+class Viewport extends React.Component<
+    ViewportProps & DefaultProps,
+    ViewportState
+> {
     private visGeometry: VisGeometry;
     private selectionInterface: SelectionInterface;
     private lastRenderTime: number;
     private startTime: number;
     private vdomRef: React.RefObject<HTMLInputElement>;
     private handlers: { [key: string]: (e: Event) => void };
-    
+
     private hit: boolean;
     private animationRequestID: number;
     private lastRenderedAgentTime: number;
 
     private stats: Stats;
-    public static defaultProps = defaultProps
+    public static defaultProps = defaultProps;
 
     private static isCustomEvent(event: Event): event is CustomEvent {
         return "detail" in event;
@@ -172,7 +147,8 @@ class Viewport extends React.Component<ViewportProps & DefaultProps, ViewportSta
                 x: 0,
                 y: 0,
                 time: 0,
-            }
+            },
+            showRenderParamsGUI: false,
         };
     }
 
@@ -184,7 +160,7 @@ class Viewport extends React.Component<ViewportProps & DefaultProps, ViewportSta
             onUIDisplayDataChanged,
             loadInitialData,
             onError,
-            agentColors
+            agentColors,
         } = this.props;
         this.visGeometry.reparent(this.vdomRef.current);
         if (backgroundColor !== undefined) {
@@ -198,7 +174,7 @@ class Viewport extends React.Component<ViewportProps & DefaultProps, ViewportSta
         }
         if (onError) {
             simulariumController.onError = onError;
-            this.visGeometry.setOnErrorCallBack(onError)
+            this.visGeometry.setOnErrorCallBack(onError);
         }
 
         simulariumController.visGeometry = this.visGeometry;
@@ -206,21 +182,21 @@ class Viewport extends React.Component<ViewportProps & DefaultProps, ViewportSta
             msg: TrajectoryFileInfoAny
         ) => {
             // Update TrajectoryFileInfo format to latest version
-            const trajectoryFileInfo: TrajectoryFileInfo = updateTrajectoryFileInfoFormat(
-                msg, onError
-            );
+            const trajectoryFileInfo: TrajectoryFileInfo =
+                updateTrajectoryFileInfoFormat(msg, onError);
 
             simulariumController.visData.timeStepSize =
                 trajectoryFileInfo.timeStepSize;
 
             this.visGeometry.handleTrajectoryFileInfo(trajectoryFileInfo);
-            simulariumController.tickIntervalLength = this.visGeometry.tickIntervalLength;
+            simulariumController.tickIntervalLength =
+                this.visGeometry.tickIntervalLength;
 
             try {
                 this.selectionInterface.parse(trajectoryFileInfo.typeMapping);
             } catch (e) {
                 if (onError) {
-                    const error = e as Error
+                    const error = e as Error;
                     onError(
                         new FrontEndError(
                             `error parsing 'typeMapping' data, ${error.message}`,
@@ -234,7 +210,11 @@ class Viewport extends React.Component<ViewportProps & DefaultProps, ViewportSta
             onTrajectoryFileInfoChanged(trajectoryFileInfo);
             this.visGeometry.clearColorMapping();
             const uiDisplayData = this.selectionInterface.getUIDisplayData();
-            const updatedColors = this.selectionInterface.setAgentColors(uiDisplayData, agentColors, this.visGeometry.setColorForIds.bind(this.visGeometry));
+            const updatedColors = this.selectionInterface.setAgentColors(
+                uiDisplayData,
+                agentColors,
+                this.visGeometry.setColorForIds.bind(this.visGeometry)
+            );
             if (!isEqual(updatedColors, agentColors)) {
                 this.visGeometry.createMaterials(updatedColors);
             }
@@ -272,7 +252,10 @@ class Viewport extends React.Component<ViewportProps & DefaultProps, ViewportSta
         this.stopAnimate();
     }
 
-    public componentDidUpdate(prevProps: ViewportProps): void {
+    public componentDidUpdate(
+        prevProps: ViewportProps,
+        prevState: ViewportState
+    ): void {
         const {
             backgroundColor,
             agentColors,
@@ -292,9 +275,10 @@ class Viewport extends React.Component<ViewportProps & DefaultProps, ViewportSta
                     prevProps.selectionStateInfo.highlightedAgents
                 )
             ) {
-                const highlightedIds = this.selectionInterface.getHighlightedIds(
-                    selectionStateInfo
-                );
+                const highlightedIds =
+                    this.selectionInterface.getHighlightedIds(
+                        selectionStateInfo
+                    );
                 this.visGeometry.setHighlightByIds(highlightedIds);
             }
             if (
@@ -303,9 +287,8 @@ class Viewport extends React.Component<ViewportProps & DefaultProps, ViewportSta
                     prevProps.selectionStateInfo.hiddenAgents
                 )
             ) {
-                const hiddenIds = this.selectionInterface.getHiddenIds(
-                    selectionStateInfo
-                );
+                const hiddenIds =
+                    this.selectionInterface.getHiddenIds(selectionStateInfo);
                 this.visGeometry.setVisibleByIds(hiddenIds);
             }
         }
@@ -332,6 +315,13 @@ class Viewport extends React.Component<ViewportProps & DefaultProps, ViewportSta
         }
         if (prevProps.height !== height || prevProps.width !== width) {
             this.visGeometry.resize(width, height);
+        }
+        if (prevState.showRenderParamsGUI !== this.state.showRenderParamsGUI) {
+            if (this.state.showRenderParamsGUI) {
+                this.visGeometry.setupGui();
+            } else {
+                this.visGeometry.destroyGui();
+            }
         }
     }
 
@@ -363,6 +353,19 @@ class Viewport extends React.Component<ViewportProps & DefaultProps, ViewportSta
                 time: Date.now(),
             },
         });
+    };
+
+    public handleKeyDown = (e: Event): void => {
+        // no impl
+        if (e.target !== this.vdomRef.current) {
+            return;
+        }
+
+        const event = e as KeyboardEvent;
+        if (event.key === "f") {
+            const s = this.state.showRenderParamsGUI;
+            this.setState({ showRenderParamsGUI: !s });
+        }
     };
 
     public handleTouchEnd = (e: Event): void => {
@@ -457,6 +460,7 @@ class Viewport extends React.Component<ViewportProps & DefaultProps, ViewportSta
                 false
             )
         );
+        document.addEventListener("keydown", this.handleKeyDown, false);
     }
 
     public removeEventHandlersFromCanvas(): void {
@@ -467,6 +471,7 @@ class Viewport extends React.Component<ViewportProps & DefaultProps, ViewportSta
                 false
             )
         );
+        document.removeEventListener("keydown", this.handleKeyDown, false);
     }
 
     public onPickObject(posX: number, posY: number): void {
@@ -533,10 +538,8 @@ class Viewport extends React.Component<ViewportProps & DefaultProps, ViewportSta
                 this.lastRenderTime = Date.now();
                 this.lastRenderedAgentTime = -1;
                 simulariumController.markFileChangeAsHandled();
-           
-                this.animationRequestID = requestAnimationFrame(
-                    this.animate
-                );
+
+                this.animationRequestID = requestAnimationFrame(this.animate);
 
                 return;
             }
@@ -566,17 +569,26 @@ class Viewport extends React.Component<ViewportProps & DefaultProps, ViewportSta
         const { simulariumController } = this.props;
         return (
             <div className="view-controls">
-                <button onClick={simulariumController.resetCamera} className="btn">
+                <button
+                    onClick={simulariumController.resetCamera}
+                    className="btn"
+                >
                     <FontAwesomeIcon
                         icon={faSyncAlt}
                         transform="flip-h"
                         style={{ color: "#737373" }}
                     />
                 </button>
-                <button onClick={simulariumController.centerCamera} className="btn-work">
+                <button
+                    onClick={simulariumController.centerCamera}
+                    className="btn-work"
+                >
                     Re-center
                 </button>
-                <button onClick={simulariumController.reOrientCamera} className="btn-word">
+                <button
+                    onClick={simulariumController.reOrientCamera}
+                    className="btn-word"
+                >
                     Starting orientation
                 </button>
             </div>
@@ -598,6 +610,7 @@ class Viewport extends React.Component<ViewportProps & DefaultProps, ViewportSta
                         position: "relative",
                     }}
                     ref={this.vdomRef}
+                    tabIndex={0}
                 >
                     {showCameraControls && this.renderViewControls()}
                 </div>
