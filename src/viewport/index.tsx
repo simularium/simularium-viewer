@@ -242,6 +242,8 @@ class Viewport extends React.Component<
     }
 
     public componentWillUnmount(): void {
+        this.visGeometry.destroyGui();
+
         if (this.vdomRef.current) {
             this.vdomRef.current.removeEventListener(
                 "timeChange",
