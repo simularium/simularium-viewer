@@ -119,7 +119,7 @@ This will run the example in `/examples/Viewer.tsx`, demonstrating the viewer's 
 | lint              | run eslint on `src` directory                                                                                                                     |
 | transpileCommonJs | run babel on `src` directory; transpile `import/export` statements for a CommonJS compatible build                                                |
 | transpileES       | run babel on `src` directory; _do not_ transpile `import/export` statements for an ES module compatible build (used by bundlers for tree-shaking) |
-| test              | run `mocha`; searches for any files matching the pattern "src/\*_/_.test.js"                                                                      |
+| test              | run `jest`; searches for any files matching the pattern "src/\*_/_.test.js"                                                                      |
 | typeCheck         | run `tsc` in type-check only mode                                                                                                                 |
 | start             | runs an example app from `examples` for testing. Runs at `localhost:8080/public/`.                                                                |
 
