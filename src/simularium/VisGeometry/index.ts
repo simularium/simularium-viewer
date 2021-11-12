@@ -269,6 +269,10 @@ class VisGeometry {
         this.gui = new Pane({ title: "RenderParams", container: container });
         this.gui.registerPlugin(EssentialsPlugin);
 
+        const fcam = this.gui.addFolder({ title: "Camera" });
+        fcam.addInput(this.camera, "position");
+        fcam.addInput(this.controls, "target");
+
         const settings = {
             lodBias: this.lodBias,
             bgcolor: {
@@ -581,6 +585,12 @@ class VisGeometry {
 
     public setUpControls(element: HTMLElement): void {
         this.controls = new OrbitControls(this.camera, element);
+        this.controls.addEventListener("change", () => {
+            if (this.gui) {
+                this.gui.refresh();
+            }
+        });
+
         this.controls.maxDistance = 750;
         this.controls.minDistance = 5;
         this.controls.zoomSpeed = 1.0;
