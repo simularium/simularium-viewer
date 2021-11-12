@@ -267,7 +267,7 @@ class VisGeometry {
 
     public setupGui(container?: HTMLElement): void {
         this.gui = new Pane({
-            title: "AdvancedSettings",
+            title: "Advanced Settings",
             container: container,
         });
         this.gui.registerPlugin(EssentialsPlugin);

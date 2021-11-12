@@ -20,10 +20,16 @@
     border: solid 1px #979797;
 }
 
+/* 
+** To make the tweakpane controls show up properly, we needed to manipulate the z-index.
+** We also need to make sure that when it is a child of our 3d view, it is positioned 
+** properly.
+** There is no documented api on tweakpane to control this, so we are just using what we
+** know are the currently named classes to modify it.
+*/
 .tp-dfwv {
     z-index: 1000;
 }
-
 .tp-rotv {
     z-index: 1000;
     position: absolute;
