@@ -19,3 +19,7 @@
     background-color: white;
     border: solid 1px #979797;
 }
+
+.tp-dfwv {
+    z-index: 1000;
+}
