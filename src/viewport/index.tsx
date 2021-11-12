@@ -320,7 +320,7 @@ class Viewport extends React.Component<
         }
         if (prevState.showRenderParamsGUI !== this.state.showRenderParamsGUI) {
             if (this.state.showRenderParamsGUI) {
-                this.visGeometry.setupGui();
+                this.visGeometry.setupGui(this.vdomRef.current as HTMLElement);
             } else {
                 this.visGeometry.destroyGui();
             }

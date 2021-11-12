@@ -9,7 +9,7 @@ import SimulariumViewer, {
     RenderStyle,
     ErrorLevel,
 } from "../src";
-import "./style.css";
+import "../style/style.css";
 import { isEqual, findIndex } from "lodash";
 
 import PointSimulator from "./PointSimulator";
@@ -68,7 +68,7 @@ interface ViewerState {
     width: number;
     selectionStateInfo: SelectionStateInfo;
     hideAllAgents: boolean;
-    agentColors: (number[] | string[]);
+    agentColors: number[] | string[];
     showPaths: boolean;
     timeStep: number;
     totalDuration: number;
@@ -138,7 +138,9 @@ class Viewer extends React.Component<{}, ViewerState> {
 
     public onError = (error: FrontEndError) => {
         if (error.level === ErrorLevel.ERROR) {
-            window.alert(`ERROR, something is broken: ${error.message} ${error.htmlData}`);
+            window.alert(
+                `ERROR, something is broken: ${error.message} ${error.htmlData}`
+            );
         } else if (error.level === ErrorLevel.WARNING) {
             window.alert(
                 `User warning, but not terrible:  ${error.message} ${error.htmlData}`
@@ -146,7 +148,9 @@ class Viewer extends React.Component<{}, ViewerState> {
         } else if (error.level === ErrorLevel.INFO) {
             console.log(`Just for your info. ${error.message}`);
         } else {
-            console.warn(`This error didn't have a level sent with it: ${error.message}. Should probably be converted to a FrontEndError`)
+            console.warn(
+                `This error didn't have a level sent with it: ${error.message}. Should probably be converted to a FrontEndError`
+            );
         }
     };
 
@@ -182,7 +186,7 @@ class Viewer extends React.Component<{}, ViewerState> {
             simulariumController
                 .changeFile({ simulariumFile, geoAssets }, fileName)
                 .catch((error) => {
-                    this.onError(error)
+                    this.onError(error);
                 });
         });
     };

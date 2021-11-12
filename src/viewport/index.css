@@ -23,3 +23,10 @@
 .tp-dfwv {
     z-index: 1000;
 }
+
+.tp-rotv {
+    z-index: 1000;
+    position: absolute;
+    top: 0px;
+    right: 0px;
+}
