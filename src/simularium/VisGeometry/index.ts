@@ -23,7 +23,8 @@ import {
     MOUSE,
 } from "three";
 
-import * as dat from "dat.gui";
+import { Pane } from "tweakpane";
+import * as EssentialsPlugin from "@tweakpane/plugin-essentials";
 
 import jsLogger from "js-logger";
 import { ILogger, ILogLevel } from "js-logger";
@@ -142,8 +143,6 @@ class VisGeometry {
     public hemiLight: HemisphereLight;
     public renderer: SimulariumRenderer;
     public legacyRenderer: LegacyRenderer;
-    public atomSpread = 3.0;
-    public numAtomsPerAgent = 8;
     public currentSceneAgents: AgentData[];
     public colorsData: Float32Array;
     public lightsGroup: Group;
@@ -161,6 +160,7 @@ class VisGeometry {
     private cameraDefault: CameraSpec;
     private fibers: InstancedFiberGroup;
     private focusMode: boolean;
+    public gui?: Pane;
 
     // Scene update will populate these lists of visible pdb agents.
     // These lists are iterated at render time to detemine LOD.
@@ -243,9 +243,6 @@ class VisGeometry {
         this.agentPdbsToDraw = [];
 
         this.onError = (/*errorMessage*/) => noop;
-        if (loggerLevel === jsLogger.DEBUG) {
-            this.setupGui();
-        }
     }
 
     public setOnErrorCallBack(onError: (error: FrontEndError) => void): void {
@@ -268,43 +265,57 @@ class VisGeometry {
         this.threejsrenderer.setClearColor(this.backgroundColor, 1);
     }
 
-    public setupGui(): void {
-        const gui = new dat.GUI();
+    public setupGui(container?: HTMLElement): void {
+        this.gui = new Pane({
+            title: "Advanced Settings",
+            container: container,
+        });
+        this.gui.registerPlugin(EssentialsPlugin);
+
+        const fcam = this.gui.addFolder({ title: "Camera" });
+        fcam.addInput(this.camera, "position");
+        fcam.addInput(this.controls, "target");
+
         const settings = {
             lodBias: this.lodBias,
-            atomSpread: this.atomSpread,
-            numAtoms: this.numAtomsPerAgent,
             bgcolor: {
                 r: this.backgroundColor.r * 255,
                 g: this.backgroundColor.g * 255,
                 b: this.backgroundColor.b * 255,
             },
         };
-        gui.add(settings, "lodBias", 0, 4)
-            .step(1)
-            .onChange((value) => {
-                this.lodBias = value;
+        this.gui
+            .addInput(settings, "lodBias", { min: 0, max: 4, step: 1 })
+            .on("change", (event) => {
+                this.lodBias = event.value;
                 this.updateScene(this.currentSceneAgents);
             });
-        gui.addColor(settings, "bgcolor").onChange((value) => {
+        this.gui.addInput(settings, "bgcolor").on("change", (event) => {
             this.setBackgroundColor([
-                value.r / 255.0,
-                value.g / 255.0,
-                value.b / 255.0,
+                event.value.r / 255.0,
+                event.value.g / 255.0,
+                event.value.b / 255.0,
             ]);
         });
-        gui.add(settings, "atomSpread", 0.01, 8.0).onChange((value) => {
-            this.atomSpread = value;
-            this.updateScene(this.currentSceneAgents);
+        this.gui.addButton({ title: "Capture" }).on("click", () => {
+            this.render(0);
+            const dataUrl =
+                this.threejsrenderer.domElement.toDataURL("image/png");
+            const anchor = document.createElement("a");
+            anchor.href = dataUrl;
+            anchor.download = "screenshot.png";
+            anchor.click();
         });
-        gui.add(settings, "numAtoms", 1, 400)
-            .step(1)
-            .onChange((value) => {
-                this.numAtomsPerAgent = Math.floor(value);
-                this.updateScene(this.currentSceneAgents);
-            });
+        this.gui.addSeparator();
+        this.renderer.setupGui(this.gui);
+    }
 
-        this.renderer.setupGui(gui);
+    public destroyGui(): void {
+        if (this.gui) {
+            this.gui.hidden = true;
+            this.gui.dispose();
+            this.gui = undefined;
+        }
     }
 
     public setRenderStyle(renderStyle: RenderStyle): void {
@@ -586,6 +597,12 @@ class VisGeometry {
 
     public setUpControls(element: HTMLElement): void {
         this.controls = new OrbitControls(this.camera, element);
+        this.controls.addEventListener("change", () => {
+            if (this.gui) {
+                this.gui.refresh();
+            }
+        });
+
         this.controls.maxDistance = 750;
         this.controls.minDistance = 5;
         this.controls.zoomSpeed = 1.0;

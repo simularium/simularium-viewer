@@ -45,7 +45,7 @@ module.exports = {
             },
             {
                 test: /\.css/,
-                include: [path.resolve(__dirname, "examples")],
+                include: [path.resolve(__dirname, "style")],
                 use: [
                     {
                         loader: MiniCssExtractPlugin.loader,

@@ -4,6 +4,7 @@ import BlurPass from "./GaussianBlur";
 import CompositePass from "./CompositePass";
 import ContourPass from "./ContourPass";
 import DrawBufferPass from "./DrawBufferPass";
+import HitTestHelper from "./HitTestHelper";
 import { InstancedFiberGroup } from "./InstancedFiber";
 import { InstancedMesh } from "./InstancedMesh";
 
@@ -19,8 +20,7 @@ import {
     WebGLRenderTarget,
     PerspectiveCamera,
 } from "three";
-import * as dat from "dat.gui";
-import HitTestHelper from "./HitTestHelper";
+import { Pane } from "tweakpane";
 
 const AGENTBUFFER = 0;
 const NORMALBUFFER = 1;
@@ -44,8 +44,8 @@ interface SimulariumRenderParameters {
     followThickness: number;
     outlineAlpha: number;
     followAlpha: number;
-    followColor: [number, number, number];
-    outlineColor: [number, number, number];
+    followColor: { r: number; g: number; b: number };
+    outlineColor: { r: number; g: number; b: number };
 }
 
 class SimulariumRenderer {
@@ -87,8 +87,8 @@ class SimulariumRenderer {
             followThickness: 3.0,
             outlineAlpha: 0.8,
             followAlpha: 0.8,
-            followColor: [35, 255, 0],
-            outlineColor: [255, 255, 255],
+            followColor: { r: 35, g: 255, b: 0 },
+            outlineColor: { r: 255, g: 255, b: 255 },
         };
         this.boundsNear = 0.0;
         this.boundsFar = 100.0;
@@ -181,63 +181,105 @@ class SimulariumRenderer {
         this.ssaoBufferBlurred2.texture.generateMipmaps = false;
     }
 
-    public setupGui(gui: dat.GUI): void {
+    public setupGui(gui: Pane): void {
         const settings = this.parameters;
-
-        gui.add(settings, "aoradius1", 0.01, 10.0).onChange((value) => {
-            this.ssao1Pass.setRadius(value);
-        });
-        gui.add(settings, "blurradius1", 0.01, 10.0).onChange((value) => {
-            this.blur1Pass.setRadius(value);
-        });
-        gui.add(settings, "aothreshold1", 0.01, 300.0);
-        gui.add(settings, "aofalloff1", 0.01, 300.0);
-        gui.add(settings, "aoradius2", 0.01, 10.0).onChange((value) => {
-            this.ssao2Pass.setRadius(value);
-        });
-        gui.add(settings, "blurradius2", 0.01, 10.0).onChange((value) => {
-            this.blur2Pass.setRadius(value);
-        });
-        gui.add(settings, "aothreshold2", 0.01, 300.0);
-        gui.add(settings, "aofalloff2", 0.01, 300.0);
-
-        gui.add(settings, "atomBeginDistance", 0.0, 300.0);
-        gui.add(settings, "chainBeginDistance", 0.0, 300.0);
-
-        gui.add(settings, "bghueoffset", 0.0, 1.0).onChange((value) => {
-            this.compositePass.setBgHueOffset(value);
-        });
-        gui.add(settings, "bgchromaoffset", 0.0, 1.0).onChange((value) => {
-            this.compositePass.setBgChromaOffset(value);
-        });
-        gui.add(settings, "bgluminanceoffset", 0.0, 1.0).onChange((value) => {
-            this.compositePass.setBgLuminanceOffset(value);
-        });
-        gui.add(settings, "outlineThickness", 1.0, 8.0)
-            .step(1)
-            .onChange((value: number) => {
-                this.contourPass.setOutlineThickness(value);
-            });
-        gui.addColor(settings, "outlineColor").onChange((value: number[]) => {
-            this.contourPass.setOutlineColor(value);
-        });
-
-        gui.add(settings, "outlineAlpha", 0.0, 1.0).onChange(
-            (value: number) => {
-                this.contourPass.setOutlineAlpha(value);
+        const ao = gui.addFolder({ title: "AO passes", expanded: false });
+        ao.addInput(settings, "aoradius1", { min: 0.01, max: 10.0 }).on(
+            "change",
+            (event) => {
+                this.ssao1Pass.setRadius(event.value);
             }
         );
-        gui.add(settings, "followThickness", 1.0, 8.0)
-            .step(1)
-            .onChange((value: number) => {
-                this.contourPass.setFollowOutlineThickness(value);
+        ao.addInput(settings, "blurradius1", { min: 0.01, max: 10.0 }).on(
+            "change",
+            (event) => {
+                this.blur1Pass.setRadius(event.value);
+            }
+        );
+        ao.addInput(settings, "aothreshold1", { min: 0.01, max: 300.0 });
+        ao.addInput(settings, "aofalloff1", { min: 0.01, max: 300.0 });
+        ao.addSeparator();
+
+        ao.addInput(settings, "aoradius2", { min: 0.01, max: 10.0 }).on(
+            "change",
+            (event) => {
+                this.ssao2Pass.setRadius(event.value);
+            }
+        );
+        ao.addInput(settings, "blurradius2", { min: 0.01, max: 10.0 }).on(
+            "change",
+            (event) => {
+                this.blur2Pass.setRadius(event.value);
+            }
+        );
+        ao.addInput(settings, "aothreshold2", { min: 0.01, max: 300.0 });
+        ao.addInput(settings, "aofalloff2", { min: 0.01, max: 300.0 });
+        const depth = gui.addFolder({ title: "DepthCueing", expanded: false });
+        depth.addInput(settings, "atomBeginDistance", { min: 0.0, max: 300.0 });
+        depth.addInput(settings, "chainBeginDistance", {
+            min: 0.0,
+            max: 300.0,
+        });
+
+        depth
+            .addInput(settings, "bghueoffset", { min: 0.0, max: 1.0 })
+            .on("change", (event) => {
+                this.compositePass.setBgHueOffset(event.value);
             });
-        gui.addColor(settings, "followColor").onChange((value: number[]) => {
-            this.contourPass.setFollowColor(value);
+        depth
+            .addInput(settings, "bgchromaoffset", { min: 0.0, max: 1.0 })
+            .on("change", (event) => {
+                this.compositePass.setBgChromaOffset(event.value);
+            });
+        depth
+            .addInput(settings, "bgluminanceoffset", { min: 0.0, max: 1.0 })
+            .on("change", (event) => {
+                this.compositePass.setBgLuminanceOffset(event.value);
+            });
+        const outlines = gui.addFolder({ title: "Outlines", expanded: false });
+        outlines
+            .addInput(settings, "outlineThickness", {
+                min: 1.0,
+                max: 8.0,
+                step: 1,
+            })
+            .on("change", (event) => {
+                this.contourPass.setOutlineThickness(event.value);
+            });
+        outlines.addInput(settings, "outlineColor").on("change", (event) => {
+            this.contourPass.setOutlineColor([
+                event.value.r,
+                event.value.g,
+                event.value.b,
+            ]);
         });
-        gui.add(settings, "followAlpha", 0.0, 1.0).onChange((value: number) => {
-            this.contourPass.setFollowAlpha(value);
+
+        outlines
+            .addInput(settings, "outlineAlpha", { min: 0.0, max: 1.0 })
+            .on("change", (event) => {
+                this.contourPass.setOutlineAlpha(event.value);
+            });
+        outlines
+            .addInput(settings, "followThickness", {
+                min: 1.0,
+                max: 8.0,
+                step: 1,
+            })
+            .on("change", (event) => {
+                this.contourPass.setFollowOutlineThickness(event.value);
+            });
+        outlines.addInput(settings, "followColor").on("change", (event) => {
+            this.contourPass.setFollowColor([
+                event.value.r,
+                event.value.g,
+                event.value.b,
+            ]);
         });
+        outlines
+            .addInput(settings, "followAlpha", { min: 0.0, max: 1.0 })
+            .on("change", (event) => {
+                this.contourPass.setFollowAlpha(event.value);
+            });
     }
 
     public setBackgroundColor(color: Color): void {
