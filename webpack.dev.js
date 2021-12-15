@@ -28,9 +28,11 @@ module.exports = {
         }),
     ],
     devServer: {
-        publicPath: "/public/",
-        openPage: "public/",
-        disableHostCheck: true,
+        devMiddleware:{
+            publicPath: "/public/",
+        },
+        open: ["public/"],
+        allowedHosts: "all",
     },
     module: {
         rules: [
