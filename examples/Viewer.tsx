@@ -17,6 +17,31 @@ import PdbSimulator from "./PdbSimulator";
 import CurveSimulator from "./CurveSimulator";
 import { FrontEndError } from "../src/simularium/FrontEndError";
 
+function extractJSON(str): null | [Object, number, number] {
+    let firstOpen, firstClose, candidate;
+    firstOpen = str.indexOf("{", firstOpen + 1);
+    do {
+        firstClose = str.lastIndexOf("}");
+        //console.log("firstOpen: " + firstOpen, "firstClose: " + firstClose);
+        if (firstClose <= firstOpen) {
+            return null;
+        }
+        do {
+            candidate = str.substring(firstOpen, firstClose + 1);
+            //console.log("candidate: " + candidate);
+            try {
+                const res = JSON.parse(candidate);
+                //console.log("...found");
+                return [res, firstOpen, firstClose + 1];
+            } catch (e) {
+                //console.log("...failed");
+            }
+            firstClose = str.substr(0, firstClose).lastIndexOf("}");
+        } while (firstClose > firstOpen);
+        firstOpen = str.indexOf("{", firstOpen + 1);
+    } while (firstOpen != -1);
+}
+
 const netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
     serverPort: 9002,
@@ -164,6 +189,7 @@ class Viewer extends React.Component<{}, ViewerState> {
         const filesArr: FileHTML[] = Array.from(files) as FileHTML[];
         Promise.all(
             filesArr.map((item) => {
+                console.log(item.type);
                 return item.text();
             })
         ).then((parsedFiles) => {
@@ -172,7 +198,14 @@ class Viewer extends React.Component<{}, ViewerState> {
             );
             let simulariumFile;
             try {
-                simulariumFile = JSON.parse(parsedFiles[simulariumFileIndex]);
+                const json = extractJSON(parsedFiles[simulariumFileIndex]);
+                if (json.length === parsedFiles[simulariumFileIndex].length) {
+                    simulariumFile = JSON.parse(
+                        parsedFiles[simulariumFileIndex]
+                    );
+                } else {
+                    console.log("SUSPECT BINARY FILE");
+                }
             } catch (error) {
                 return this.onError(new FrontEndError(error.message));
             }
