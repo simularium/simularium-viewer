@@ -230,9 +230,14 @@ export default class SimulariumController {
                 // else reset the local cache,
                 //  and play remotely from the desired simulation time
                 this.visData.clearCache();
-                this.simulator.gotoRemoteSimulationTime(
-                    time - this.visData.firstFrameTime
-                );
+                let firstFrameTime = this.visData.firstFrameTime;
+                if (firstFrameTime === -1) {
+                    console.error(
+                        "VisData does not contain firstFrameTime, defaulting to 0"
+                    );
+                    firstFrameTime = 0;
+                }
+                this.simulator.gotoRemoteSimulationTime(time - firstFrameTime);
             }
         }
     }
