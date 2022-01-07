@@ -41,6 +41,7 @@ class VisData {
     private frameCache: AgentData[][];
     private frameDataCache: FrameData[];
     private webWorker: Worker | null;
+    public firstFrameTime: number;
 
     private frameToWaitFor: number;
     private lockedForFrame: boolean;
@@ -357,6 +358,7 @@ class VisData {
         }
         this.frameCache = [];
         this.frameDataCache = [];
+        this.firstFrameTime = -1;
         this.cacheFrame = -1;
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
@@ -519,6 +521,9 @@ class VisData {
                 this.frameCache,
                 frames.parsedAgentDataArray
             );
+            if (this.firstFrameTime === -1) {
+                this.firstFrameTime = frames.frameDataArray[0].time;
+            }
         }
     }
 
@@ -569,6 +574,10 @@ class VisData {
                 frames.parsedAgentDataArray
             );
 
+            if (this.firstFrameTime === -1) {
+                this.firstFrameTime = frames.frameDataArray[0].time;
+            }
+
             // Save remaining data for later processing
             const remainder = data.slice(eof + eofPhrase.length);
             this.netBuffer = new ArrayBuffer(remainder.byteLength);
@@ -605,6 +614,9 @@ class VisData {
             this.frameCache,
             frames.parsedAgentDataArray
         );
+        if (this.firstFrameTime === -1) {
+            this.firstFrameTime = frames.frameDataArray[0].time;
+        }
     }
 
     public set dragAndDropFileInfo(fileInfo: TrajectoryFileInfo | null) {

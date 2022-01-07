@@ -236,7 +236,11 @@ export default class SimulariumController {
                 // Revert the 2 lines of code below to:
                 // this.simulator.gotoRemoteSimulationTime(time);
                 const roundedTime = parseFloat(time.toPrecision(4));
-                this.simulator.gotoRemoteSimulationTime(roundedTime);
+                console.log({ roundedTime });
+                console.log("firstFrameTime:", this.visData.firstFrameTime);
+                this.simulator.gotoRemoteSimulationTime(
+                    roundedTime - this.visData.firstFrameTime
+                );
             }
         }
     }
