@@ -230,16 +230,8 @@ export default class SimulariumController {
                 // else reset the local cache,
                 //  and play remotely from the desired simulation time
                 this.visData.clearCache();
-
-                // NOTE: This arbitrary rounding of time is a temporary fix until
-                // simularium-engine is updated to work with imprecise float time values.
-                // Revert the 2 lines of code below to:
-                // this.simulator.gotoRemoteSimulationTime(time);
-                const roundedTime = parseFloat(time.toPrecision(4));
-                console.log({ roundedTime });
-                console.log("firstFrameTime:", this.visData.firstFrameTime);
                 this.simulator.gotoRemoteSimulationTime(
-                    roundedTime - this.visData.firstFrameTime
+                    time - this.visData.firstFrameTime
                 );
             }
         }
