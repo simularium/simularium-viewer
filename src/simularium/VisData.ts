@@ -471,6 +471,18 @@ class VisData {
         }
     }
 
+    // Add parsed frames to the cache and save the timestamp of the first frame
+    private addFramesToCache(frames: ParsedBundle): void {
+        Array.prototype.push.apply(this.frameDataCache, frames.frameDataArray);
+        Array.prototype.push.apply(
+            this.frameCache,
+            frames.parsedAgentDataArray
+        );
+        if (this.firstFrameTime === -1) {
+            this.firstFrameTime = frames.frameDataArray[0].time;
+        }
+    }
+
     public parseAgentsFromNetData(msg: VisDataMessage | ArrayBuffer): void {
         if (msg instanceof ArrayBuffer) {
             const floatView = new Float32Array(msg);
@@ -513,17 +525,7 @@ class VisData {
             this.webWorker.postMessage(visDataMsg);
         } else {
             const frames = VisData.parse(visDataMsg);
-            Array.prototype.push.apply(
-                this.frameDataCache,
-                frames.frameDataArray
-            );
-            Array.prototype.push.apply(
-                this.frameCache,
-                frames.parsedAgentDataArray
-            );
-            if (this.firstFrameTime === -1) {
-                this.firstFrameTime = frames.frameDataArray[0].time;
-            }
+            this.addFramesToCache(frames);
         }
     }
 
@@ -564,19 +566,7 @@ class VisData {
             ) {
                 this.clearCache(); // new data has arrived
             }
-
-            Array.prototype.push.apply(
-                this.frameDataCache,
-                frames.frameDataArray
-            );
-            Array.prototype.push.apply(
-                this.frameCache,
-                frames.parsedAgentDataArray
-            );
-
-            if (this.firstFrameTime === -1) {
-                this.firstFrameTime = frames.frameDataArray[0].time;
-            }
+            this.addFramesToCache(frames);
 
             // Save remaining data for later processing
             const remainder = data.slice(eof + eofPhrase.length);
@@ -609,14 +599,7 @@ class VisData {
         }
 
         const frames = VisData.parse(visDataMsg);
-        Array.prototype.push.apply(this.frameDataCache, frames.frameDataArray);
-        Array.prototype.push.apply(
-            this.frameCache,
-            frames.parsedAgentDataArray
-        );
-        if (this.firstFrameTime === -1) {
-            this.firstFrameTime = frames.frameDataArray[0].time;
-        }
+        this.addFramesToCache(frames);
     }
 
     public set dragAndDropFileInfo(fileInfo: TrajectoryFileInfo | null) {
