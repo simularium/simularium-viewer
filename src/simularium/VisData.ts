@@ -41,7 +41,6 @@ class VisData {
     private frameCache: AgentData[][];
     private frameDataCache: FrameData[];
     private webWorker: Worker | null;
-    public firstFrameTime: number;
 
     private frameToWaitFor: number;
     private lockedForFrame: boolean;
@@ -51,6 +50,7 @@ class VisData {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     private _dragAndDropFileInfo: TrajectoryFileInfo | null;
 
+    public firstFrameTime: number;
     public timeStepSize: number;
 
     /**
