@@ -267,8 +267,7 @@ export default class SimulariumController {
     public clearFile(): void {
         this.isFileChanging = false;
         this.playBackFile = "";
-        this.visData.clearCache();
-        this.visData.firstFrameTime = null;
+        this.visData.clearForNewTrajectory();
         this.disableNetworkCommands();
         this.pause();
         if (this.visGeometry) {
@@ -284,14 +283,13 @@ export default class SimulariumController {
     ): Promise<FileReturn> {
         this.isFileChanging = true;
         this.playBackFile = newFileName;
-        this.visData.firstFrameTime = null;
 
         if (this.simulator instanceof RemoteSimulator) {
             this.simulator.handleError = () => noop;
         }
 
         this.visData.WaitForFrame(0);
-        this.visData.clearCache();
+        this.visData.clearForNewTrajectory();
         this.visData.cancelAllWorkers();
 
         this.stop();

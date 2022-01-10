@@ -460,6 +460,11 @@ class VisData {
         this.netBuffer = new ArrayBuffer(0);
     }
 
+    public clearForNewTrajectory(): void {
+        this.clearCache();
+        this.firstFrameTime = null;
+    }
+
     public cancelAllWorkers(): void {
         // we need to be able to terminate any queued work in the worker during trajectory changeovers
         if (
