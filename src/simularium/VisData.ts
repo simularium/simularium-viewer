@@ -358,7 +358,7 @@ class VisData {
         }
         this.frameCache = [];
         this.frameDataCache = [];
-        this.firstFrameTime = -1;
+        this.firstFrameTime = -1; // Assumes negative timestamps don't exist
         this.cacheFrame = -1;
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
