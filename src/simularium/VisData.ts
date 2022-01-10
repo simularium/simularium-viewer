@@ -50,7 +50,7 @@ class VisData {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     private _dragAndDropFileInfo: TrajectoryFileInfo | null;
 
-    public firstFrameTime: number;
+    public firstFrameTime: number | null;
     public timeStepSize: number;
 
     /**
@@ -358,7 +358,7 @@ class VisData {
         }
         this.frameCache = [];
         this.frameDataCache = [];
-        this.firstFrameTime = -1; // Assumes negative timestamps don't exist
+        this.firstFrameTime = null;
         this.cacheFrame = -1;
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
@@ -478,7 +478,7 @@ class VisData {
             this.frameCache,
             frames.parsedAgentDataArray
         );
-        if (this.firstFrameTime === -1) {
+        if (this.firstFrameTime === null) {
             this.firstFrameTime = frames.frameDataArray[0].time;
         }
     }

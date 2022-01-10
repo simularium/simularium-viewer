@@ -240,7 +240,7 @@ export default class SimulariumController {
                 // in simulariumio, or something else? One way might be to require making
                 // firstFrameTime a part of TrajectoryFileInfo.
                 let firstFrameTime = this.visData.firstFrameTime;
-                if (firstFrameTime === -1) {
+                if (firstFrameTime === null) {
                     console.error(
                         "VisData does not contain firstFrameTime, defaulting to 0"
                     );
@@ -268,7 +268,7 @@ export default class SimulariumController {
         this.isFileChanging = false;
         this.playBackFile = "";
         this.visData.clearCache();
-        this.visData.firstFrameTime = -1;
+        this.visData.firstFrameTime = null;
         this.disableNetworkCommands();
         this.pause();
         if (this.visGeometry) {
@@ -284,7 +284,7 @@ export default class SimulariumController {
     ): Promise<FileReturn> {
         this.isFileChanging = true;
         this.playBackFile = newFileName;
-        this.visData.firstFrameTime = -1;
+        this.visData.firstFrameTime = null;
 
         if (this.simulator instanceof RemoteSimulator) {
             this.simulator.handleError = () => noop;
