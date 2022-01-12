@@ -7,8 +7,10 @@
     "browser": "dist/index.js",
     "types": "type-declarations",
     "scripts": {
-        "start": "webpack serve --config webpack.dev.js",
-        "gh-build": "webpack --config webpack.dev.js",
+        "serve-example": "webpack serve --config webpack.dev.js",
+        "build-example": "webpack --config webpack.dev.js",
+        "start": "npm-run-all processCSS serve-example",
+        "gh-build": "npm-run-all processCSS build-example",
         "lint": "eslint src/**/*.ts src/**/*.tsx",
         "test": "jest src/**/*.test.ts --coverage",
         "typeCheck": "tsc -p tsconfig.json --noEmit",
