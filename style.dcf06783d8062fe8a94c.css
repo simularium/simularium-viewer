@@ -1,0 +1,41 @@
+/*!*******************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./style/style.css ***!
+  \*******************************************************************/
+.view-controls {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+}
+
+.view-controls .btn {
+    height: 28px;
+    cursor: pointer;
+}
+
+.view-controls svg {
+    font-size: 22px;
+}
+
+.view-controls button {
+    -webkit-appearance: none;
+    padding: 0;
+    background-color: white;
+    border: solid 1px #979797;
+}
+
+/* 
+** To make the tweakpane controls show up properly, we needed to manipulate the z-index.
+** We also need to make sure that when it is a child of our 3d view, it is positioned 
+** properly.
+** There is no documented api on tweakpane to control this, so we are just using what we
+** know are the currently named classes to modify it.
+*/
+.tp-dfwv {
+    z-index: 1000;
+}
+.tp-rotv {
+    z-index: 1000;
+    position: absolute;
+    top: 0px;
+    right: 0px;
+}
