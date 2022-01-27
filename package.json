@@ -106,7 +106,7 @@
         "parse-mmcif": "^0.0.1",
         "parse-pdb": "^1.0.0",
         "si-prefix": "^0.2.0",
-        "three": "^0.131.3",
+        "three": "^0.137.0",
         "tweakpane": "^3.0.5"
     }
 }
