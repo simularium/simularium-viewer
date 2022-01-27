@@ -11,7 +11,7 @@
         "build-example": "webpack --config webpack.dev.js",
         "start": "npm-run-all processCSS serve-example",
         "gh-build": "npm-run-all processCSS build-example",
-        "lint": "eslint 'src/**/*.ts' 'src/**/*.tsx'",
+        "lint": "eslint src --ext .ts,.tsx",
         "test": "jest src/**/*.test.ts --coverage",
         "typeCheck": "tsc -p tsconfig.json --noEmit",
         "all-checks": "npm-run-all lint test typeCheck",
