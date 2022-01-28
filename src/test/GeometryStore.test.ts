@@ -149,6 +149,9 @@ describe("GeometryStore module", () => {
         });
         test("if a request fails, returns a sphere with an error message", async () => {
             const store = new GeometryStore();
+            // TODO threejs' OBJLoader now uses the Request api under the hood, and Request is
+            // not available in nodejs (the environment our tests run in) without a polyfill
+            // such as node-fetch. I tried to add node-fetch here but I couldn't get it to work.
             const returned = await store.mapKeyToGeom(1, {
                 displayType: GeometryDisplayType.OBJ,
                 url: "test",
