@@ -6,7 +6,7 @@ import {
     InstancedBufferGeometry,
     Mesh,
     DataTexture,
-    RGBAFormat,
+    RGBFormat,
     FloatType,
     Vector2,
     Vector3,
@@ -195,7 +195,7 @@ class InstancedFiber {
         // one row per curve, number of colums = num of curve control pts
         // TODO: consolidate space better.
 
-        const newData = new Float32Array(n * this.nCurvePoints * 4);
+        const newData = new Float32Array(n * this.nCurvePoints * 3);
         // start by copying the old data into the new array
         // ASSUMES THERE IS SPACE. This depends on reallocate only growing the array.
         // Otherwise an exception is thrown.
@@ -205,7 +205,7 @@ class InstancedFiber {
             newData,
             this.nCurvePoints,
             n,
-            RGBAFormat,
+            RGBFormat,
             FloatType
         );
 
@@ -300,13 +300,15 @@ class InstancedFiber {
             typeId,
             this.currentInstance
         );
-        const npts = Math.min(curvePts.length / 3, this.nCurvePoints);
-        for (let i = 0; i < npts; ++i) {
-            const offset = this.currentInstance * this.nCurvePoints * 4 + i * 4;
+        for (
+            let i = 0;
+            i < Math.min(curvePts.length / 3, this.nCurvePoints);
+            ++i
+        ) {
+            const offset = this.currentInstance * this.nCurvePoints * 3 + i * 3;
             this.curveData.image.data[offset + 0] = curvePts[i * 3 + 0];
             this.curveData.image.data[offset + 1] = curvePts[i * 3 + 1];
             this.curveData.image.data[offset + 2] = curvePts[i * 3 + 2];
-            this.curveData.image.data[offset + 3] = 0.0;
         }
 
         this.currentInstance++;
