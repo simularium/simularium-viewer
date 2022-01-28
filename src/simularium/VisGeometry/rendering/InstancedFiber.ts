@@ -307,6 +307,7 @@ class InstancedFiber {
             this.curveData.image.data[offset + 0] = curvePts[i * 3 + 0];
             this.curveData.image.data[offset + 1] = curvePts[i * 3 + 1];
             this.curveData.image.data[offset + 2] = curvePts[i * 3 + 2];
+            this.curveData.image.data[offset + 3] = 1.0;
         }
 
         this.currentInstance++;
