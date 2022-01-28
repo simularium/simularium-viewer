@@ -1,8 +1,3 @@
-interface Extent {
-    min: number;
-    max: number;
-}
-
 interface KMeansOptions {
     k: number;
     data: Float32Array;

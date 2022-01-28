@@ -1,10 +1,4 @@
-import {
-    CatmullRomCurve3,
-    Color,
-    Object3D,
-    SphereBufferGeometry,
-    Vector3,
-} from "three";
+import { CatmullRomCurve3, Color, SphereBufferGeometry, Vector3 } from "three";
 
 import VisTypes from "../VisTypes";
 import { AgentData } from "../VisData";
