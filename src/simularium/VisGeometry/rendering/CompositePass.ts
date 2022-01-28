@@ -223,6 +223,7 @@ class CompositePass {
             RGBAFormat,
             FloatType
         );
+        this.pass.material.uniforms.colorsBuffer.value.needsUpdate = true;
     }
 
     public setBgHueOffset(value: number): void {

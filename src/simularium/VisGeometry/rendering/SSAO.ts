@@ -146,7 +146,9 @@ class SSAO1Pass {
             noisedata[i * 4 + 3] = 0;
         }
         // TODO half float type?
-        return new DataTexture(noisedata, 4, 4, RGBAFormat, FloatType);
+        const tex = new DataTexture(noisedata, 4, 4, RGBAFormat, FloatType);
+        tex.needsUpdate = true;
+        return tex;
     }
 
     public createSSAOSamples(): Vector3[] {
