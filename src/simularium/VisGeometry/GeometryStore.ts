@@ -297,25 +297,29 @@ class GeometryStore {
         const objLoader = new OBJLoader();
         this.prepMeshRegistryForNewObj(url);
         return new Promise((resolve, reject) => {
-            objLoader.load(
-                url,
-                (object: Object3D) => {
-                    this.handleObjResponse(url, object);
-                    resolve(object);
-                },
-                (xhr) => {
-                    this.mlogger.info(
-                        url,
-                        " ",
-                        `${(xhr.loaded / xhr.total) * 100}% loaded`
-                    );
-                },
-                (error) => {
-                    // if the request fails, leave agent as a sphere by default
-                    this.mlogger.warn("Failed to load mesh: ", error, url);
-                    return reject(`Failed to load mesh: ${url}`);
-                }
-            );
+            try {
+                objLoader.load(
+                    url,
+                    (object: Object3D) => {
+                        this.handleObjResponse(url, object);
+                        resolve(object);
+                    },
+                    (xhr) => {
+                        this.mlogger.info(
+                            url,
+                            " ",
+                            `${(xhr.loaded / xhr.total) * 100}% loaded`
+                        );
+                    },
+                    (error) => {
+                        // if the request fails, leave agent as a sphere by default
+                        this.mlogger.warn("Failed to load mesh: ", error, url);
+                        return reject(`Failed to load mesh: ${url}`);
+                    }
+                );
+            } catch {
+                return reject(`Failed to load mesh: ${url}`);
+            }
         });
     }
 
