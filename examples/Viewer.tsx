@@ -175,10 +175,9 @@ class Viewer extends React.Component<{}, ViewerState> {
             const simulariumFileIndex = findIndex(filesArr, (file) =>
                 file.name.includes(".simularium")
             );
-            // if parsedFiles[simulariumFileIndex] is a string then it's json
-            // else it's binary
             let simulariumFile;
             try {
+                // if parsedFiles[simulariumFileIndex] is a string then it's json
                 if (typeof parsedFiles[simulariumFileIndex] === "string") {
                     console.log("TEXT JSON FILE");
                     simulariumFile = JSON.parse(
