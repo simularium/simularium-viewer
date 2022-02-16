@@ -66,8 +66,13 @@ export default class BinaryFileReader {
 
     private getBlock(block: BlockInfo): DataView {
         // first validate the block with what we expect.
+
+        // TAKE NOTE OF ENDIANNESS. IS SIMULARIUMBINARY ALWAYS LITTLE ENDIAN?
+        // ERROR size, type IN WRONG ORDER
+        // ERROR BLOCK OFFSET WAS STORED HERE, NOT SIZE
         const blockSize = this.dataView.getInt32(block.offset, true);
         const blockType = this.dataView.getInt32(block.offset + 4, true);
+
         if (blockType !== block.type) {
             throw new Error(
                 "Block type mismatch.  Header says " +
