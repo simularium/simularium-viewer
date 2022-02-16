@@ -11,6 +11,7 @@ import SimulariumViewer, {
 } from "../src";
 import { FrontEndError } from "../src/simularium/FrontEndError";
 import { isBinarySimulariumFile } from "../src/util";
+import BinaryFileParser from "../src/simularium/BinaryFileParser";
 
 import "../style/style.css";
 import { isEqual, findIndex } from "lodash";
@@ -180,7 +181,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                     );
                 } else {
                     // better be arraybuffer
-                    simulariumFile = new BinaryFileReader(
+                    simulariumFile = new BinaryFileParser(
                         parsedFiles[simulariumFileIndex] as ArrayBuffer
                     );
                 }
