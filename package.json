@@ -11,7 +11,7 @@
         "build-example": "webpack --config webpack.dev.js",
         "start": "npm-run-all processCSS serve-example",
         "gh-build": "npm-run-all processCSS build-example",
-        "lint": "eslint src/**/*.ts src/**/*.tsx",
+        "lint": "eslint src --ext .ts,.tsx",
         "test": "jest src/**/*.test.ts --coverage",
         "typeCheck": "tsc -p tsconfig.json --noEmit",
         "all-checks": "npm-run-all lint test typeCheck",
@@ -106,7 +106,7 @@
         "parse-mmcif": "^0.0.1",
         "parse-pdb": "^1.0.0",
         "si-prefix": "^0.2.0",
-        "three": "^0.131.3",
+        "three": "^0.137.4",
         "tweakpane": "^3.0.5"
     }
 }
