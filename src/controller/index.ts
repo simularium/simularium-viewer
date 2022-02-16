@@ -231,12 +231,22 @@ export default class SimulariumController {
                 //  and play remotely from the desired simulation time
                 this.visData.clearCache();
 
-                // NOTE: This arbitrary rounding of time is a temporary fix until
-                // simularium-engine is updated to work with imprecise float time values.
-                // Revert the 2 lines of code below to:
-                // this.simulator.gotoRemoteSimulationTime(time);
-                const roundedTime = parseFloat(time.toPrecision(4));
-                this.simulator.gotoRemoteSimulationTime(roundedTime);
+                // Instead of requesting from the backend the `time` passed into this
+                // function, we request (time - firstFrameTime) because the backend
+                // currently assumes the first frame of every trajectory is at time 0.
+                //
+                // TODO: Long term, we should decide on a better way to deal with this
+                // assumption: remove assumption from backend, perform this normalization
+                // in simulariumio, or something else? One way might be to require making
+                // firstFrameTime a part of TrajectoryFileInfo.
+                let firstFrameTime = this.visData.firstFrameTime;
+                if (firstFrameTime === null) {
+                    console.error(
+                        "VisData does not contain firstFrameTime, defaulting to 0"
+                    );
+                    firstFrameTime = 0;
+                }
+                this.simulator.gotoRemoteSimulationTime(time - firstFrameTime);
             }
         }
     }
@@ -257,7 +267,7 @@ export default class SimulariumController {
     public clearFile(): void {
         this.isFileChanging = false;
         this.playBackFile = "";
-        this.visData.clearCache();
+        this.visData.clearForNewTrajectory();
         this.disableNetworkCommands();
         this.pause();
         if (this.visGeometry) {
@@ -279,7 +289,7 @@ export default class SimulariumController {
         }
 
         this.visData.WaitForFrame(0);
-        this.visData.clearCache();
+        this.visData.clearForNewTrajectory();
         this.visData.cancelAllWorkers();
 
         this.stop();

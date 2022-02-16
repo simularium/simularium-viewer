@@ -1,14 +1,16 @@
 {
     "name": "@aics/simularium-viewer",
-    "version": "3.2.2",
+    "version": "3.3.1",
     "description": "An npm package to view simulations.",
     "main": "lib/index.js",
     "module": "es/index.js",
     "browser": "dist/index.js",
     "types": "type-declarations",
     "scripts": {
-        "start": "webpack serve --config webpack.dev.js",
-        "gh-build": "webpack --config webpack.dev.js",
+        "serve-example": "webpack serve --config webpack.dev.js",
+        "build-example": "webpack --config webpack.dev.js",
+        "start": "npm-run-all processCSS serve-example",
+        "gh-build": "npm-run-all processCSS build-example",
         "lint": "eslint src/**/*.ts src/**/*.tsx",
         "test": "jest src/**/*.test.ts --coverage",
         "typeCheck": "tsc -p tsconfig.json --noEmit",
@@ -35,6 +37,10 @@
     "publishConfig": {
         "registry": "https://registry.npmjs.org/",
         "access": "public"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/simularium/simularium-viewer.git"
     },
     "author": "",
     "license": "MIT",
