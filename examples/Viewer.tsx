@@ -9,38 +9,15 @@ import SimulariumViewer, {
     RenderStyle,
     ErrorLevel,
 } from "../src";
+import { FrontEndError } from "../src/simularium/FrontEndError";
+import { isBinarySimulariumFile } from "../src/util";
+
 import "../style/style.css";
 import { isEqual, findIndex } from "lodash";
 
 import PointSimulator from "./PointSimulator";
 import PdbSimulator from "./PdbSimulator";
 import CurveSimulator from "./CurveSimulator";
-import { FrontEndError } from "../src/simularium/FrontEndError";
-
-function extractJSON(str): null | [Object, number, number] {
-    let firstOpen, firstClose, candidate;
-    firstOpen = str.indexOf("{", firstOpen + 1);
-    do {
-        firstClose = str.lastIndexOf("}");
-        //console.log("firstOpen: " + firstOpen, "firstClose: " + firstClose);
-        if (firstClose <= firstOpen) {
-            return null;
-        }
-        do {
-            candidate = str.substring(firstOpen, firstClose + 1);
-            //console.log("candidate: " + candidate);
-            try {
-                const res = JSON.parse(candidate);
-                //console.log("...found");
-                return [res, firstOpen, firstClose + 1];
-            } catch (e) {
-                //console.log("...failed");
-            }
-            firstClose = str.substr(0, firstClose).lastIndexOf("}");
-        } while (firstClose > firstOpen);
-        firstOpen = str.indexOf("{", firstOpen + 1);
-    } while (firstOpen != -1);
-}
 
 const netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
@@ -53,13 +30,6 @@ const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.has("file")) {
     queryStringFile = urlParams.get("file");
     playbackFile = queryStringFile;
-}
-
-// Typescript's File definition is missing this function
-//  which is part of the HTML standard on all browsers
-//  and needed below
-interface FileHTML extends File {
-    text(): Promise<string>;
 }
 
 const agentColors = [
@@ -186,25 +156,33 @@ class Viewer extends React.Component<{}, ViewerState> {
         const data: DataTransfer = event.dataTransfer as DataTransfer;
 
         const files: FileList = input.files || data.files;
-        const filesArr: FileHTML[] = Array.from(files) as FileHTML[];
+        const filesArr: File[] = Array.from(files) as File[];
         Promise.all(
             filesArr.map((item) => {
-                console.log(item.type);
-                return item.text();
+                // determine if binary or not.
+                if (isBinarySimulariumFile(item)) {
+                    return item.arrayBuffer();
+                } else {
+                    return item.text();
+                }
             })
         ).then((parsedFiles) => {
             const simulariumFileIndex = findIndex(filesArr, (file) =>
                 file.name.includes(".simularium")
             );
+            // if parsedFiles[simulariumFileIndex] is a string then it's json
+            // else it's binary
             let simulariumFile;
             try {
-                const json = extractJSON(parsedFiles[simulariumFileIndex]);
-                if (json.length === parsedFiles[simulariumFileIndex].length) {
+                if (typeof parsedFiles[simulariumFileIndex] === "string") {
                     simulariumFile = JSON.parse(
-                        parsedFiles[simulariumFileIndex]
+                        parsedFiles[simulariumFileIndex] as string
                     );
                 } else {
-                    console.log("SUSPECT BINARY FILE");
+                    // better be arraybuffer
+                    simulariumFile = new BinaryFileReader(
+                        parsedFiles[simulariumFileIndex] as ArrayBuffer
+                    );
                 }
             } catch (error) {
                 return this.onError(new FrontEndError(error.message));
