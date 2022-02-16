@@ -66,8 +66,8 @@ export default class BinaryFileReader {
 
     private getBlock(block: BlockInfo): DataView {
         // first validate the block with what we expect.
-        const blockType = this.dataView.getInt32(block.offset);
-        const blockSize = this.dataView.getInt32(block.offset + 4);
+        const blockSize = this.dataView.getInt32(block.offset, true);
+        const blockType = this.dataView.getInt32(block.offset + 4, true);
         if (blockType !== block.type) {
             throw new Error(
                 "Block type mismatch.  Header says " +
