@@ -29,10 +29,12 @@ export default class BinaryFileReader {
     fileContents: ArrayBuffer;
     dataView: DataView;
     header: Header;
+    tfi: TrajectoryFileInfo;
     constructor(fileContents: ArrayBuffer) {
         this.fileContents = fileContents;
         this.dataView = new DataView(fileContents);
         this.header = this.readHeader();
+        this.tfi = this.getTrajectoryFileInfo();
     }
 
     private readHeader(): Header {
@@ -42,6 +44,9 @@ export default class BinaryFileReader {
         const headerLength = asints[0];
         const headerVersion = asints[1];
         const nBlocks = asints[2];
+        if (nBlocks < 1) {
+            throw new Error("No blocks found in file");
+        }
         const blocks: BlockInfo[] = [];
         for (let i = 0; i < nBlocks; i++) {
             blocks.push({
@@ -49,6 +54,9 @@ export default class BinaryFileReader {
                 type: asints[3 + i * 3 + 1],
                 size: asints[3 + i * 3 + 2],
             });
+        }
+        if (blocks[0].offset !== headerLength) {
+            throw new Error("First block offset does not match header length");
         }
         return {
             version: headerVersion,
