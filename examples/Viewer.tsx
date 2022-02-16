@@ -159,15 +159,19 @@ class Viewer extends React.Component<{}, ViewerState> {
         const files: FileList = input.files || data.files;
         const filesArr: File[] = Array.from(files) as File[];
         Promise.all(
-            filesArr.map((item) => {
+            filesArr.map((item): Promise<ArrayBuffer | string> => {
                 // determine if binary or not.
-                if (isBinarySimulariumFile(item)) {
-                    return item.arrayBuffer();
-                } else {
-                    return item.text();
-                }
+                return isBinarySimulariumFile(item).then(
+                    (isBinary): Promise<ArrayBuffer | string> => {
+                        if (isBinary) {
+                            return item.arrayBuffer();
+                        } else {
+                            return item.text();
+                        }
+                    }
+                );
             })
-        ).then((parsedFiles) => {
+        ).then((parsedFiles: (string | ArrayBuffer)[]) => {
             const simulariumFileIndex = findIndex(filesArr, (file) =>
                 file.name.includes(".simularium")
             );
@@ -176,10 +180,12 @@ class Viewer extends React.Component<{}, ViewerState> {
             let simulariumFile;
             try {
                 if (typeof parsedFiles[simulariumFileIndex] === "string") {
+                    console.log("TEXT JSON FILE");
                     simulariumFile = JSON.parse(
                         parsedFiles[simulariumFileIndex] as string
                     );
                 } else {
+                    console.log("BINARY FILE");
                     // better be arraybuffer
                     simulariumFile = new BinaryFileParser(
                         parsedFiles[simulariumFileIndex] as ArrayBuffer
