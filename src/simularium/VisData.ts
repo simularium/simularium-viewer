@@ -10,6 +10,11 @@ import {
 } from "./types";
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
 
+// must be utf-8 encoded
+const EOF_PHRASE: Uint8Array = new TextEncoder().encode(
+    "\\EOFTHEFRAMEENDSHERE"
+);
+
 /**
  * Parse Agents from Net Data
  * */
@@ -179,12 +184,9 @@ class VisData {
         const parsedAgentDataArray: AgentData[][] = [];
         const frameDataArray: FrameData[] = [];
 
-        const enc = new TextEncoder(); // always utf-8
-        const eofPhrase = enc.encode("\\EOFTHEFRAMEENDSHERE");
-
         const byteView = new Uint8Array(data);
         const length = byteView.length;
-        const lastEOF = length - eofPhrase.length;
+        const lastEOF = length - EOF_PHRASE.length;
         let end = 0;
         let start = 0;
 
@@ -193,8 +195,8 @@ class VisData {
         while (end < lastEOF) {
             // Find the next End of Frame signal
             for (; end < length; end = end + 4) {
-                const curr = byteView.subarray(end, end + eofPhrase.length);
-                if (curr.every((val, i) => val === eofPhrase[i])) {
+                const curr = byteView.subarray(end, end + EOF_PHRASE.length);
+                if (curr.every((val, i) => val === EOF_PHRASE[i])) {
                     break;
                 }
             }
@@ -323,7 +325,7 @@ class VisData {
 
             parsedAgentDataArray.push(parsedAgentData);
 
-            start = end + eofPhrase.length;
+            start = end + EOF_PHRASE.length;
             end = start;
         }
 
@@ -540,13 +542,11 @@ class VisData {
         // find last '/eof' signal in new data
         const byteView = new Uint8Array(data);
 
-        const enc = new TextEncoder(); // always utf-8
-        const eofPhrase = enc.encode("\\EOFTHEFRAMEENDSHERE");
-
-        let index = byteView.length - eofPhrase.length;
+        // walk backwards in order to find the last eofPhrase in the data
+        let index = byteView.length - EOF_PHRASE.length;
         for (; index > 0; index = index - 4) {
-            const curr = byteView.subarray(index, index + eofPhrase.length);
-            if (curr.every((val, i) => val === eofPhrase[i])) {
+            const curr = byteView.subarray(index, index + EOF_PHRASE.length);
+            if (curr.every((val, i) => val === EOF_PHRASE[i])) {
                 eof = index;
                 break;
             }
@@ -574,7 +574,7 @@ class VisData {
             this.addFramesToCache(frames);
 
             // Save remaining data for later processing
-            const remainder = data.slice(eof + eofPhrase.length);
+            const remainder = data.slice(eof + EOF_PHRASE.length);
             this.netBuffer = new ArrayBuffer(remainder.byteLength);
             new Uint8Array(this.netBuffer).set(new Uint8Array(remainder));
         } else {
