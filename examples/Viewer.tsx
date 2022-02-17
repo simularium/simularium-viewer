@@ -103,12 +103,14 @@ const initialState = {
 
 class Viewer extends React.Component<{}, ViewerState> {
     private viewerRef: React.RefObject<SimulariumViewer>;
+    private mediaRecorder: MediaRecorder;
     private panMode = false;
     private focusMode = true;
 
     public constructor(props) {
         super(props);
         this.viewerRef = React.createRef();
+        this.mediaRecorder = undefined;
         this.handleJsonMeshData = this.handleJsonMeshData.bind(this);
         this.handleTimeChange = this.handleTimeChange.bind(this);
         this.state = initialState;
@@ -126,6 +128,24 @@ class Viewer extends React.Component<{}, ViewerState> {
         if (viewerContainer) {
             viewerContainer.addEventListener("drop", this.onDrop);
             viewerContainer.addEventListener("dragover", this.onDragOver);
+        }
+
+        const canvasEl = document.querySelector("canvas");
+        const stream = canvasEl.captureStream();
+        this.mediaRecorder = new MediaRecorder(stream, {
+            mimeType: "video/webm"
+        });
+        this.mediaRecorder.ondataavailable = (event) => {
+            console.log("data available:", event.data)
+            const blob = new Blob([event.data], { type: "video/webm"});
+            const url = URL.createObjectURL(blob);
+            let a = document.createElement("a");
+            document.body.appendChild(a);
+            a.style = "display: none";
+            a.href = url;
+            a.download = "test.webm";
+            a.click();
+            window.URL.revokeObjectURL(url);
         }
     }
 
@@ -319,6 +339,14 @@ class Viewer extends React.Component<{}, ViewerState> {
         );
     }
 
+    private startRecording(): void {
+        this.mediaRecorder.start();
+    }
+
+    private stopRecording(): void {
+        this.mediaRecorder.stop();
+    }
+
     private configureAndLoad() {
         simulariumController.configureNetwork(netConnectionSettings);
         if (playbackFile.startsWith("http")) {
@@ -430,6 +458,12 @@ class Viewer extends React.Component<{}, ViewerState> {
                 <label htmlFor="slider">
                     {this.state.currentTime} / {this.state.totalDuration}
                 </label>
+                <button onClick={this.startRecording.bind(this)}>
+                    Start Recording
+                </button>
+                <button onClick={this.stopRecording.bind(this)}>
+                    Stop Recording
+                </button>
                 <br />
                 {this.state.particleTypeNames.map((id, i) => {
                     return (
