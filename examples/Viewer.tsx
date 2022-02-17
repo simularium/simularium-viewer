@@ -130,6 +130,7 @@ class Viewer extends React.Component<{}, ViewerState> {
             viewerContainer.addEventListener("dragover", this.onDragOver);
         }
 
+        // https://developer.mozilla.org/en-US/docs/Web/API/MediaStream_Recording_API#overview_of_the_recording_process
         const canvasEl = document.querySelector("canvas");
         const stream = canvasEl.captureStream();
         this.mediaRecorder = new MediaRecorder(stream, {
