@@ -12,6 +12,7 @@ import SimulariumViewer, {
 import { FrontEndError } from "../src/simularium/FrontEndError";
 import { isBinarySimulariumFile } from "../src/util";
 import BinaryFileParser from "../src/simularium/BinaryFileParser";
+import JsonFileParser from "../src/simularium/JsonFileParser";
 
 import "../style/style.css";
 import { isEqual, findIndex } from "lodash";
@@ -180,8 +181,8 @@ class Viewer extends React.Component<{}, ViewerState> {
                 // if parsedFiles[simulariumFileIndex] is a string then it's json
                 if (typeof parsedFiles[simulariumFileIndex] === "string") {
                     console.log("TEXT JSON FILE");
-                    simulariumFile = JSON.parse(
-                        parsedFiles[simulariumFileIndex] as string
+                    simulariumFile = new JsonFileParser(
+                        JSON.parse(parsedFiles[simulariumFileIndex] as string)
                     );
                 } else {
                     console.log("BINARY FILE");

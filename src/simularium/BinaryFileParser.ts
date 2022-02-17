@@ -1,4 +1,5 @@
-import type { TrajectoryFileInfo } from "./types";
+import type ISimulariumFile from "./ISimulariumFile";
+import type { TrajectoryFileInfo, VisDataFrame } from "./types";
 
 const enum BlockTypeEnum {
     // type = 0 : spatial data block in JSON
@@ -25,7 +26,7 @@ const SECRET = "SIMULARIUMBINARY";
 // each block has a type and a size
 const BLOCK_HEADER_SIZE = 8;
 
-export default class BinaryFileReader {
+export default class BinaryFileReader implements ISimulariumFile {
     fileContents: ArrayBuffer;
     dataView: DataView;
     header: Header;
@@ -113,5 +114,15 @@ export default class BinaryFileReader {
             }
         }
         throw new Error("No trajectory info block found");
+    }
+
+    getNumFrames(): number {
+        return 0;
+    }
+    getFrameIndexAtTime(time: number): number {
+        return 0;
+    }
+    getFrame(theFrameNumber: number): VisDataFrame | ArrayBuffer {
+        return {} as VisDataFrame;
     }
 }

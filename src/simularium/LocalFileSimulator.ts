@@ -1,30 +1,23 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
 
-import { compareTimes } from "../util";
-
-import {
-    VisDataMessage,
-    VisDataFrame,
-    TrajectoryFileInfoV2,
-    SimulariumFileFormat,
-} from "./types";
+import { VisDataFrame, VisDataMessage, TrajectoryFileInfoV2 } from "./types";
 import { ISimulator } from "./ISimulator";
-import { FrontEndError } from "./FrontEndError";
+import ISimulariumFile from "./ISimulariumFile";
 
 // a LocalFileSimulator is a ISimulator that plays back the contents of
 // a drag-n-drop trajectory file (a SimulariumFileFormat object)
 export class LocalFileSimulator implements ISimulator {
     protected fileName: string;
-    protected simulariumFile: SimulariumFileFormat;
+    protected simulariumFile: ISimulariumFile;
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfoV2) => void;
-    public onTrajectoryDataArrive: (msg: VisDataMessage) => void;
+    public onTrajectoryDataArrive: (msg: VisDataMessage | ArrayBuffer) => void;
     // setInterval is the playback engine for now
     private playbackIntervalId = 0;
     private currentPlaybackFrameIndex = 0;
 
-    public constructor(fileName: string, simulariumFile: SimulariumFileFormat) {
+    public constructor(fileName: string, simulariumFile: ISimulariumFile) {
         this.fileName = fileName;
         this.simulariumFile = simulariumFile;
         this.logger = jsLogger.get("netconnection");
@@ -44,7 +37,7 @@ export class LocalFileSimulator implements ISimulator {
         this.onTrajectoryFileInfoArrive = handler;
     }
     public setTrajectoryDataHandler(
-        handler: (msg: VisDataMessage) => void
+        handler: (msg: VisDataMessage | ArrayBuffer) => void
     ): void {
         this.onTrajectoryDataArrive = handler;
     }
@@ -101,19 +94,8 @@ export class LocalFileSimulator implements ISimulator {
     }
 
     public startRemoteTrajectoryPlayback(_fileName: string): Promise<void> {
-        const { spatialData, trajectoryInfo } = this.simulariumFile;
-
-        if (!spatialData) {
-            const newError = new FrontEndError(
-                "Simularium files need 'spatialData' array"
-            );
-            return Promise.reject(newError);
-        }
-        spatialData.bundleData.sort(
-            (a: VisDataFrame, b: VisDataFrame): number =>
-                a.frameNumber - b.frameNumber
-        );
         try {
+            const trajectoryInfo = this.simulariumFile.getTrajectoryFileInfo();
             this.onTrajectoryFileInfoArrive(trajectoryInfo);
         } catch (e) {
             return Promise.reject(e);
@@ -128,12 +110,9 @@ export class LocalFileSimulator implements ISimulator {
 
     public resumeRemoteSim(): void {
         this.playbackIntervalId = window.setInterval(() => {
-            if (
-                this.currentPlaybackFrameIndex >=
-                this.simulariumFile.spatialData.bundleSize
-            ) {
-                this.currentPlaybackFrameIndex =
-                    this.simulariumFile.spatialData.bundleSize - 1;
+            const numFrames = this.simulariumFile.getNumFrames();
+            if (this.currentPlaybackFrameIndex >= numFrames) {
+                this.currentPlaybackFrameIndex = numFrames - 1;
                 this.pauseRemoteSim();
                 return;
             }
@@ -155,13 +134,7 @@ export class LocalFileSimulator implements ISimulator {
     }
 
     public gotoRemoteSimulationTime(time: number): void {
-        const { bundleData } = this.simulariumFile.spatialData;
-        const { timeStepSize } = this.simulariumFile.trajectoryInfo;
-
-        // Find the index of the frame that has the time matching our target time
-        const frameNumber = bundleData.findIndex((bundleData) => {
-            return compareTimes(bundleData.time, time, timeStepSize) === 0;
-        });
+        const frameNumber = this.simulariumFile.getFrameIndexAtTime(time);
 
         // frameNumber is -1 if findIndex() above doesn't find a match
         if (frameNumber !== -1) {
@@ -171,25 +144,29 @@ export class LocalFileSimulator implements ISimulator {
     }
 
     public requestTrajectoryFileInfo(_fileName: string): void {
-        this.onTrajectoryFileInfoArrive(this.simulariumFile.trajectoryInfo);
+        this.onTrajectoryFileInfoArrive(
+            this.simulariumFile.getTrajectoryFileInfo()
+        );
     }
 
-    private getFrame(theFrameNumber: number): VisDataMessage {
-        // thoretically we could return all frames here, and as a result the Controller would precache the entire file in VisData
-        //        return this.getAllFrames();
+    private getFrame(theFrameNumber: number): VisDataMessage | ArrayBuffer {
+        // Possible TODO:
+        // Theoretically we could return all frames here, and as a result
+        // the Controller would precache the entire file in VisData.
+        // Then subsequent frame requests would only hit the VisData cache.
 
-        return {
-            msgType: 0,
-            bundleStart: theFrameNumber,
-            bundleSize: 1,
-            bundleData: [
-                this.simulariumFile.spatialData.bundleData[theFrameNumber],
-            ],
-            fileName: this.fileName,
-        };
-    }
-
-    private getAllFrames(): VisDataMessage {
-        return this.simulariumFile.spatialData;
+        const data = this.simulariumFile.getFrame(theFrameNumber);
+        if (data instanceof ArrayBuffer) {
+            return data as ArrayBuffer;
+        } else {
+            //return this.simulariumFile.getFrame(theFrameNumber);
+            return {
+                msgType: 0,
+                bundleStart: theFrameNumber,
+                bundleSize: 1,
+                bundleData: [data as VisDataFrame],
+                fileName: this.fileName,
+            };
+        }
     }
 }
