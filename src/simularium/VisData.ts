@@ -182,6 +182,69 @@ class VisData {
         };
     }
 
+    private static parseOneBinaryFrame(data: ArrayBuffer): ParsedBundle {
+        const parsedAgentDataArray: AgentData[][] = [];
+        const frameDataArray: FrameData[] = [];
+        const floatView = new Float32Array(data);
+        const intView = new Int32Array(data);
+        const parsedFrameData = {
+            time: floatView[1],
+            frameNumber: floatView[0],
+        };
+        const expectedNumAgents = intView[2];
+        frameDataArray.push(parsedFrameData);
+
+        const AGENTS_OFFSET = 3;
+
+        const parsedAgentData: AgentData[] = [];
+        let j = AGENTS_OFFSET;
+        for (let i = 0; i < expectedNumAgents; i++) {
+            const agentData: AgentData = {
+                visType: -1,
+                instanceId: -1,
+                type: -1,
+                x: 0,
+                y: 0,
+                z: 0,
+                xrot: 0,
+                yrot: 0,
+                zrot: 0,
+                cr: 0,
+                subpoints: [],
+            };
+            agentData.visType = floatView[j++];
+            agentData.instanceId = floatView[j++];
+            agentData.type = floatView[j++];
+            agentData.x = floatView[j++];
+            agentData.y = floatView[j++];
+            agentData.z = floatView[j++];
+            agentData.xrot = floatView[j++];
+            agentData.yrot = floatView[j++];
+            agentData.zrot = floatView[j++];
+            agentData.cr = floatView[j++];
+            const nSubPoints = floatView[j++];
+            if (!Number.isInteger(nSubPoints)) {
+                throw new FrontEndError(
+                    "Your data is malformed, non-integer value found for num-subpoints.",
+                    ErrorLevel.ERROR,
+                    `Number of Subpoints: <pre>${nSubPoints}</pre>`
+                );
+                break;
+            }
+            // now read sub points.
+            for (let k = 0; k < nSubPoints * 3; k++) {
+                agentData.subpoints.push(floatView[j++]);
+            }
+            parsedAgentData.push(agentData);
+        }
+        parsedAgentDataArray.push(parsedAgentData);
+
+        return {
+            parsedAgentDataArray,
+            frameDataArray,
+        };
+    }
+
     public static parseBinary(data: ArrayBuffer): ParsedBundle {
         const parsedAgentDataArray: AgentData[][] = [];
         const frameDataArray: FrameData[] = [];
@@ -492,17 +555,7 @@ class VisData {
         }
     }
 
-    public parseAgentsFromNetData(msg: VisDataMessage | ArrayBuffer): void {
-        if (msg instanceof ArrayBuffer) {
-            const floatView = new Float32Array(msg);
-
-            const fileNameSize = Math.ceil(floatView[1] / 4);
-            const dataStart = (2 + fileNameSize) * 4;
-
-            this.parseBinaryNetData(msg as ArrayBuffer, dataStart);
-            return;
-        }
-
+    private parseAgentsFromVisDataMessage(msg: VisDataMessage): void {
         /**
          *   visDataMsg = {
          *       ...
@@ -536,6 +589,39 @@ class VisData {
             const frames = VisData.parse(visDataMsg);
             this.addFramesToCache(frames);
         }
+    }
+
+    public parseAgentsFromLocalFileData(
+        msg: VisDataMessage | ArrayBuffer
+    ): void {
+        if (msg instanceof ArrayBuffer) {
+            const frames = VisData.parseOneBinaryFrame(msg);
+            if (
+                frames.frameDataArray.length > 0 &&
+                frames.frameDataArray[0].frameNumber === 0
+            ) {
+                this.clearCache(); // new data has arrived
+            }
+            this.addFramesToCache(frames);
+            return;
+        }
+
+        // handle VisDataMessage
+        this.parseAgentsFromVisDataMessage(msg);
+    }
+
+    public parseAgentsFromNetData(msg: VisDataMessage | ArrayBuffer): void {
+        if (msg instanceof ArrayBuffer) {
+            const floatView = new Float32Array(msg);
+
+            const fileNameSize = Math.ceil(floatView[1] / 4);
+            const dataStart = (2 + fileNameSize) * 4;
+
+            this.parseBinaryNetData(msg as ArrayBuffer, dataStart);
+            return;
+        }
+
+        this.parseAgentsFromVisDataMessage(msg);
     }
 
     private parseBinaryNetData(data: ArrayBuffer, dataStart: number) {

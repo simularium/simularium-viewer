@@ -118,6 +118,9 @@ export default class SimulariumController {
     ): void {
         if (clientSimulator) {
             this.simulator = new ClientSimulator(clientSimulator);
+            this.simulator.setTrajectoryDataHandler(
+                this.visData.parseAgentsFromNetData.bind(this.visData)
+            );
         } else if (localFile) {
             this.simulator = new LocalFileSimulator(
                 this.playBackFile,
@@ -126,10 +129,16 @@ export default class SimulariumController {
             if (this.visGeometry && geoAssets && !isEmpty(geoAssets)) {
                 this.visGeometry.geometryStore.cacheLocalAssets(geoAssets);
             }
+            this.simulator.setTrajectoryDataHandler(
+                this.visData.parseAgentsFromLocalFileData.bind(this.visData)
+            );
         } else if (netConnectionConfig) {
             this.simulator = new RemoteSimulator(
                 netConnectionConfig,
                 this.onError
+            );
+            this.simulator.setTrajectoryDataHandler(
+                this.visData.parseAgentsFromNetData.bind(this.visData)
             );
         } else {
             // caught in try/catch block, not sent to front end
@@ -142,9 +151,6 @@ export default class SimulariumController {
             (trajFileInfo: TrajectoryFileInfo) => {
                 this.handleTrajectoryInfo(trajFileInfo);
             }
-        );
-        this.simulator.setTrajectoryDataHandler(
-            this.visData.parseAgentsFromNetData.bind(this.visData)
         );
     }
 

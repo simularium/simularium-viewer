@@ -34,35 +34,45 @@ export default class BinaryFileReader implements ISimulariumFile {
     tfi: TrajectoryFileInfo;
     nFrames: number;
     frameOffsets: number[];
-    spatialData: Float32Array;
+    frameLengths: number[];
+    spatialDataBlock: DataView; // ideally this is really a Float32Array but alignment is not guaranteed yet
     constructor(fileContents: ArrayBuffer) {
         this.nFrames = 0;
         this.frameOffsets = [];
+        this.frameLengths = [];
         this.fileContents = fileContents;
         this.dataView = new DataView(fileContents);
         this.header = this.readHeader();
-        this.tfi = this.getTrajectoryFileInfo();
-        this.spatialData = this.readSpatialDataInfo();
+        this.tfi = this.readTrajectoryFileInfo();
+        this.spatialDataBlock = this.readSpatialDataInfo();
     }
 
-    private readSpatialDataInfo(): Float32Array {
+    private readSpatialDataInfo(): DataView {
         // find spatial data block and load frame offsets
         for (const block of this.header.blocks) {
             if (block.type === BlockTypeEnum.SPATIAL_DATA_BINARY) {
                 const blockData = this.getBlock(block);
                 // Spatial data version (4-byte int)
-                const version = blockData.getInt32(0, true);
+                const version = blockData.getInt32(0 + BLOCK_HEADER_SIZE, true);
                 // Number of frames (4-byte int)
-                this.nFrames = blockData.getInt32(4, true);
-                // Frame offsets (Number of frames * 4-byte int)
+                this.nFrames = blockData.getInt32(4 + BLOCK_HEADER_SIZE, true);
+                // Frame offsets,sizes (Number of frames * two 4-byte ints)
                 for (let i = 0; i < this.nFrames; i++) {
-                    this.frameOffsets.push(blockData.getInt32(8 + i * 4, true));
+                    this.frameOffsets.push(
+                        blockData.getInt32(
+                            BLOCK_HEADER_SIZE + 8 + i * 2 * 4,
+                            true
+                        )
+                    );
+                    this.frameLengths.push(
+                        blockData.getInt32(
+                            BLOCK_HEADER_SIZE + 8 + (i * 2 + 1) * 4,
+                            true
+                        )
+                    );
                 }
-                return new Float32Array(
-                    blockData.buffer,
-                    blockData.byteOffset,
-                    blockData.byteLength
-                );
+
+                return blockData;
             }
         }
         throw new Error("No spatial data block found");
@@ -95,14 +105,64 @@ export default class BinaryFileReader implements ISimulariumFile {
         };
     }
 
+    private readTrajectoryFileInfo(): TrajectoryFileInfo {
+        // find the first block that is a trajectory info block
+        for (const block of this.header.blocks) {
+            if (block.type === BlockTypeEnum.TRAJECTORY_INFO_JSON) {
+                const blockData = this.getBlockContent(block);
+                // get the bits past the block header
+                const enc = new TextDecoder("utf-8");
+                const text = enc.decode(blockData);
+                const json = JSON.parse(text);
+                // TODO ???
+                // const trajectoryFileInfo: TrajectoryFileInfo =
+                //     updateTrajectoryFileInfoFormat(json, onError);
+                return json as TrajectoryFileInfo;
+            }
+        }
+        throw new Error("No trajectory info block found");
+    }
+
     private getBlock(block: BlockInfo): DataView {
         // first validate the block with what we expect.
 
         // TAKE NOTE OF ENDIANNESS. IS SIMULARIUMBINARY ALWAYS LITTLE ENDIAN?
         // ERROR size, type IN WRONG ORDER
         // ERROR BLOCK OFFSET WAS STORED HERE, NOT SIZE
-        const blockSize = this.dataView.getInt32(block.offset, true);
-        const blockType = this.dataView.getInt32(block.offset + 4, true);
+        const blockType = this.dataView.getInt32(block.offset, true);
+        const blockSize = this.dataView.getInt32(block.offset + 4, true);
+
+        if (blockType !== block.type) {
+            throw new Error(
+                "Block type mismatch.  Header says " +
+                    block.type +
+                    " but block says " +
+                    blockType
+            );
+        }
+        if (blockSize !== block.size) {
+            throw new Error(
+                "Block size mismatch.  Header says " +
+                    block.size +
+                    " but block says " +
+                    blockSize
+            );
+        }
+        // note: NOT a copy.
+        // never produce copies internally. let callers make a copy if they need it.
+        // also note: return the contents of the block NOT INCLUDING the block header
+        return new DataView(this.fileContents, block.offset, block.size);
+    }
+
+    private getBlockContent(block: BlockInfo): DataView {
+        // return the block portion after the block header
+        // first validate the block with what we expect.
+
+        // TAKE NOTE OF ENDIANNESS. IS SIMULARIUMBINARY ALWAYS LITTLE ENDIAN?
+        // ERROR size, type IN WRONG ORDER
+        // ERROR BLOCK OFFSET WAS STORED HERE, NOT SIZE
+        const blockType = this.dataView.getInt32(block.offset, true);
+        const blockSize = this.dataView.getInt32(block.offset + 4, true);
 
         if (blockType !== block.type) {
             throw new Error(
@@ -131,20 +191,7 @@ export default class BinaryFileReader implements ISimulariumFile {
     }
 
     getTrajectoryFileInfo(): TrajectoryFileInfo {
-        // find the first block that is a trajectory info block
-        for (const block of this.header.blocks) {
-            if (block.type === BlockTypeEnum.TRAJECTORY_INFO_JSON) {
-                const blockData = this.getBlock(block);
-                const enc = new TextDecoder("utf-8");
-                const text = enc.decode(blockData);
-                const json = JSON.parse(text);
-                // TODO ???
-                // const trajectoryFileInfo: TrajectoryFileInfo =
-                //     updateTrajectoryFileInfoFormat(json, onError);
-                return json as TrajectoryFileInfo;
-            }
-        }
-        throw new Error("No trajectory info block found");
+        return this.tfi;
     }
 
     getNumFrames(): number {
@@ -172,10 +219,13 @@ export default class BinaryFileReader implements ISimulariumFile {
 
     getFrame(theFrameNumber: number): VisDataFrame | ArrayBuffer {
         const frameOffset = this.frameOffsets[theFrameNumber];
-        const totalOffset = this.spatialData.byteOffset + frameOffset;
-        const frameSize = this.spatialData[totalOffset / 4 + 0];
+        const frameSize = this.frameLengths[theFrameNumber];
+        const totalOffset = this.spatialDataBlock.byteOffset + frameOffset;
         // return an arraybuffer copy?
-        const frameContents = this.fileContents.slice(totalOffset, frameSize);
+        const frameContents = this.fileContents.slice(
+            totalOffset,
+            totalOffset + frameSize
+        );
         return frameContents;
     }
 }
