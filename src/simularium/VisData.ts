@@ -14,6 +14,20 @@ import { FrontEndError, ErrorLevel } from "./FrontEndError";
 const EOF_PHRASE: Uint8Array = new TextEncoder().encode(
     "\\EOFTHEFRAMEENDSHERE"
 );
+// IMPORTANT: Order of this array needs to perfectly match the incoming data.
+const AGENT_OBJECT_KEYS = [
+    "vis-type",
+    "instanceId",
+    "type",
+    "x",
+    "y",
+    "z",
+    "xrot",
+    "yrot",
+    "zrot",
+    "cr",
+    "nSubPoints",
+];
 
 /**
  * Parse Agents from Net Data
@@ -89,23 +103,9 @@ class VisData {
         const parsedAgentDataArray: AgentData[][] = [];
         const frameDataArray: FrameData[] = [];
         visDataMsg.bundleData.forEach((frame) => {
-            // IMPORTANT: Order of this array needs to perfectly match the incoming data.
-            const agentObjectKeys = [
-                "vis-type",
-                "instanceId",
-                "type",
-                "x",
-                "y",
-                "z",
-                "xrot",
-                "yrot",
-                "zrot",
-                "cr",
-                "nSubPoints",
-            ];
             const visData = frame.data;
             const parsedAgentData: AgentData[] = [];
-            const nSubPointsIndex = agentObjectKeys.findIndex(
+            const nSubPointsIndex = AGENT_OBJECT_KEYS.findIndex(
                 (ele) => ele === "nSubPoints"
             );
 
@@ -113,8 +113,8 @@ class VisData {
                 return agentArray.reduce(
                     (agentData, cur, i) => {
                         let key;
-                        if (agentObjectKeys[i]) {
-                            key = agentObjectKeys[i];
+                        if (AGENT_OBJECT_KEYS[i]) {
+                            key = AGENT_OBJECT_KEYS[i];
                             agentData[key] = cur;
                         } else if (
                             i <
@@ -130,9 +130,9 @@ class VisData {
 
             while (visData.length) {
                 const nSubPoints = visData[nSubPointsIndex];
-                const chunkLength = agentObjectKeys.length + nSubPoints; // each array length is variable based on how many subpoints the agent has
+                const chunkLength = AGENT_OBJECT_KEYS.length + nSubPoints; // each array length is variable based on how many subpoints the agent has
                 if (visData.length < chunkLength) {
-                    const attemptedMapping = agentObjectKeys.map(
+                    const attemptedMapping = AGENT_OBJECT_KEYS.map(
                         (name, index) => `${name}: ${visData[index]}<br />`
                     );
                     // will be caught by controller.changeFile(...).catch()
@@ -146,8 +146,8 @@ class VisData {
                 }
 
                 const agentSubSetArray = visData.splice(0, chunkLength); // cut off the array of 1 agent data from front of the array;
-                if (agentSubSetArray.length < agentObjectKeys.length) {
-                    const attemptedMapping = agentObjectKeys.map(
+                if (agentSubSetArray.length < AGENT_OBJECT_KEYS.length) {
+                    const attemptedMapping = AGENT_OBJECT_KEYS.map(
                         (name, index) =>
                             `${name}: ${agentSubSetArray[index]}<br />`
                     );
@@ -210,18 +210,11 @@ class VisData {
                 cr: 0,
                 subpoints: [],
             };
-            agentData["vis-type"] = floatView[j++];
-            // agentData.visType =
-            agentData.instanceId = floatView[j++];
-            agentData.type = floatView[j++];
-            agentData.x = floatView[j++];
-            agentData.y = floatView[j++];
-            agentData.z = floatView[j++];
-            agentData.xrot = floatView[j++];
-            agentData.yrot = floatView[j++];
-            agentData.zrot = floatView[j++];
-            agentData.cr = floatView[j++];
-            const nSubPoints = floatView[j++];
+
+            for (let k = 0; k < AGENT_OBJECT_KEYS.length; ++k) {
+                agentData[AGENT_OBJECT_KEYS[k]] = floatView[j++];
+            }
+            const nSubPoints = agentData["nSubPoints"];
             if (!Number.isInteger(nSubPoints)) {
                 throw new FrontEndError(
                     "Your data is malformed, non-integer value found for num-subpoints.",
@@ -285,22 +278,8 @@ class VisData {
             frameDataArray.push(parsedFrameData);
 
             // Parse the frameData
-            // IMPORTANT: Order of this array needs to perfectly match the incoming data.
-            const agentObjectKeys = [
-                "vis-type",
-                "instanceId",
-                "type",
-                "x",
-                "y",
-                "z",
-                "xrot",
-                "yrot",
-                "zrot",
-                "cr",
-                "nSubPoints",
-            ];
             const parsedAgentData: AgentData[] = [];
-            const nSubPointsIndex = agentObjectKeys.findIndex(
+            const nSubPointsIndex = AGENT_OBJECT_KEYS.findIndex(
                 (ele) => ele === "nSubPoints"
             );
 
@@ -308,8 +287,8 @@ class VisData {
                 return agentArray.reduce(
                     (agentData, cur, i) => {
                         let key;
-                        if (agentObjectKeys[i]) {
-                            key = agentObjectKeys[i];
+                        if (AGENT_OBJECT_KEYS[i]) {
+                            key = AGENT_OBJECT_KEYS[i];
                             agentData[key] = cur;
                         } else if (
                             i <
@@ -339,10 +318,10 @@ class VisData {
                 }
 
                 // each array length is variable based on how many subpoints the agent has
-                const chunkLength = agentObjectKeys.length + nSubPoints;
+                const chunkLength = AGENT_OBJECT_KEYS.length + nSubPoints;
                 const remaining = agentDataView.length - dataIter;
                 if (remaining < chunkLength - 1) {
-                    const attemptedMapping = agentObjectKeys.map(
+                    const attemptedMapping = AGENT_OBJECT_KEYS.map(
                         (name, index) =>
                             `${name}: ${agentDataView[dataIter + index]}<br />`
                     );
@@ -360,8 +339,8 @@ class VisData {
                     dataIter,
                     dataIter + chunkLength
                 );
-                if (agentSubSetArray.length < agentObjectKeys.length) {
-                    const attemptedMapping = agentObjectKeys.map(
+                if (agentSubSetArray.length < AGENT_OBJECT_KEYS.length) {
+                    const attemptedMapping = AGENT_OBJECT_KEYS.map(
                         (name, index) =>
                             `${name}: ${agentSubSetArray[index]}<br />`
                     );
@@ -745,6 +724,7 @@ class VisData {
     public convertVisDataWorkFunctionToString(): string {
         // e.data is of type VisDataMessage
         return `function visDataWorkerFunc() {
+        const AGENT_OBJECT_KEYS=["${AGENT_OBJECT_KEYS.join('","')}"];
         self.addEventListener('message', (e) => {
             const visDataMsg = e.data;
             const {
