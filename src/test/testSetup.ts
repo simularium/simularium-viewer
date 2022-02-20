@@ -1,3 +1,3 @@
 // to be loaded by jest config's setupFiles
-const { TextEncoder } = require("util");
+import { TextEncoder } from "util";
 global.TextEncoder = TextEncoder;
