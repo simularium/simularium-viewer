@@ -53,7 +53,7 @@ export default class BinaryFileReader implements ISimulariumFile {
             if (block.type === BlockTypeEnum.SPATIAL_DATA_BINARY) {
                 const blockData = this.getBlock(block);
                 // Spatial data version (4-byte int)
-                const version = blockData.getInt32(0 + BLOCK_HEADER_SIZE, true);
+                // const version = blockData.getInt32(0 + BLOCK_HEADER_SIZE, true);
                 // Number of frames (4-byte int)
                 this.nFrames = blockData.getInt32(4 + BLOCK_HEADER_SIZE, true);
                 // Frame offsets,sizes (Number of frames * two 4-byte ints)
@@ -206,10 +206,11 @@ export default class BinaryFileReader implements ISimulariumFile {
         for (let i = 0; i < this.nFrames; i++) {
             // get time of frame.
             const frameFloatOffset = this.frameOffsets[i] / 4;
-            const frameNumber = this.spatialData[frameFloatOffset + 0];
-            const frameTime = this.spatialData[frameFloatOffset + 1];
+            // const frameNumber = this.spatialDataBlock[frameFloatOffset + 0];
+            const frameTime = this.spatialDataBlock[frameFloatOffset + 1];
             // check time
             if (compareTimes(frameTime, time, timeStepSize) === 0) {
+                // TODO check frameNumber === i ?
                 return i;
             }
         }

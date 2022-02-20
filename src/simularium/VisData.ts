@@ -11,8 +11,6 @@ import {
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
 
 // must be utf-8 encoded
-// import { TextEncoder } from "util";
-// global.TextEncoder = TextEncoder;
 const EOF_PHRASE: Uint8Array = new TextEncoder().encode(
     "\\EOFTHEFRAMEENDSHERE"
 );
