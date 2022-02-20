@@ -212,7 +212,8 @@ class VisData {
                 cr: 0,
                 subpoints: [],
             };
-            agentData.visType = floatView[j++];
+            agentData["vis-type"] = floatView[j++];
+            // agentData.visType =
             agentData.instanceId = floatView[j++];
             agentData.type = floatView[j++];
             agentData.x = floatView[j++];
