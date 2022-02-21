@@ -126,9 +126,11 @@ export default class BinaryFileReader implements ISimulariumFile {
     private getBlock(block: BlockInfo): DataView {
         // first validate the block with what we expect.
 
-        // TAKE NOTE OF ENDIANNESS. IS SIMULARIUMBINARY ALWAYS LITTLE ENDIAN?
-        // ERROR size, type IN WRONG ORDER
-        // ERROR BLOCK OFFSET WAS STORED HERE, NOT SIZE
+        // TAKE NOTE OF ENDIANNESS.
+        // Data transferred via HTTP is generally big endian.
+        // Local file should have been written as little endian.
+        // All use of DataViews requires explicit endianness but default to big endian.
+        // TypedArrays use the underlying system endianness (usually little).
         const blockType = this.dataView.getInt32(block.offset, true);
         const blockSize = this.dataView.getInt32(block.offset + 4, true);
 
@@ -210,7 +212,7 @@ export default class BinaryFileReader implements ISimulariumFile {
             const frameTime = this.spatialDataBlock[frameFloatOffset + 1];
             // check time
             if (compareTimes(frameTime, time, timeStepSize) === 0) {
-                // TODO check frameNumber === i ?
+                // TODO possible sanity check frameNumber === i ?
                 return i;
             }
         }
@@ -223,6 +225,8 @@ export default class BinaryFileReader implements ISimulariumFile {
         const frameSize = this.frameLengths[theFrameNumber];
         const totalOffset = this.spatialDataBlock.byteOffset + frameOffset;
         // return an arraybuffer copy?
+        // TODO when the file format can have blocks aligned to 4-byte boundaries,
+        // this can return a TypedArray or DataView without making a copy
         const frameContents = this.fileContents.slice(
             totalOffset,
             totalOffset + frameSize
