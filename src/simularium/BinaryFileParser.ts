@@ -80,8 +80,8 @@ export default class BinaryFileReader implements ISimulariumFile {
 
     private readHeader(): Header {
         // could use DataView here but I know every header field is int32
+        // note I set the offset to move past the secret string
         const asints = new Int32Array(this.fileContents, SECRET.length);
-        // TODO validate header length
         const headerLength = asints[0];
         const headerVersion = asints[1];
         const nBlocks = asints[2];
@@ -89,11 +89,13 @@ export default class BinaryFileReader implements ISimulariumFile {
             throw new Error("No blocks found in file");
         }
         const blocks: BlockInfo[] = [];
+        // the number of 32-bit ints after the SECRET and before the toc
+        const OFFSET_TO_TABLE_OF_CONTENTS = 3;
         for (let i = 0; i < nBlocks; i++) {
             blocks.push({
-                offset: asints[3 + i * 3 + 0],
-                type: asints[3 + i * 3 + 1],
-                size: asints[3 + i * 3 + 2],
+                offset: asints[OFFSET_TO_TABLE_OF_CONTENTS + i * 3 + 0],
+                type: asints[OFFSET_TO_TABLE_OF_CONTENTS + i * 3 + 1],
+                size: asints[OFFSET_TO_TABLE_OF_CONTENTS + i * 3 + 2],
             });
         }
         if (blocks[0].offset !== headerLength) {
@@ -110,13 +112,9 @@ export default class BinaryFileReader implements ISimulariumFile {
         for (const block of this.header.blocks) {
             if (block.type === BlockTypeEnum.TRAJECTORY_INFO_JSON) {
                 const blockData = this.getBlockContent(block);
-                // get the bits past the block header
                 const enc = new TextDecoder("utf-8");
                 const text = enc.decode(blockData);
                 const json = JSON.parse(text);
-                // TODO ???
-                // const trajectoryFileInfo: TrajectoryFileInfo =
-                //     updateTrajectoryFileInfoFormat(json, onError);
                 return json as TrajectoryFileInfo;
             }
         }
@@ -207,9 +205,11 @@ export default class BinaryFileReader implements ISimulariumFile {
         // assumes frames are in ascending order by time!
         for (let i = 0; i < this.nFrames; i++) {
             // get time of frame.
-            const frameFloatOffset = this.frameOffsets[i] / 4;
             // const frameNumber = this.spatialDataBlock[frameFloatOffset + 0];
-            const frameTime = this.spatialDataBlock[frameFloatOffset + 1];
+            const frameTime = this.spatialDataBlock.getFloat32(
+                this.frameOffsets[i] + 4,
+                true
+            );
             // check time
             if (compareTimes(frameTime, time, timeStepSize) === 0) {
                 // TODO possible sanity check frameNumber === i ?

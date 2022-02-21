@@ -1,3 +1,7 @@
+import ISimulariumFile from "./simularium/ISimulariumFile";
+import JsonFileReader from "./simularium/JsonFileParser";
+import BinaryFileReader from "./simularium/BinaryFileParser";
+
 export const compareTimes = (
     time1: number,
     time2: number,
@@ -54,4 +58,25 @@ export function isBinarySimulariumFile(fileContents: Blob): Promise<boolean> {
     return first16blob.text().then((text) => {
         return text === "SIMULARIUMBINARY";
     });
+}
+
+export function loadSimulariumFile(file: File): Promise<ISimulariumFile> {
+    return isBinarySimulariumFile(file)
+        .then((isBinary): Promise<ArrayBuffer | string> => {
+            if (isBinary) {
+                return file.arrayBuffer();
+            } else {
+                return file.text();
+            }
+        })
+        .then((fileContents: ArrayBuffer | string) => {
+            if (typeof fileContents === "string") {
+                console.log("TEXT JSON FILE");
+                return new JsonFileReader(JSON.parse(fileContents as string));
+            } else {
+                console.log("BINARY FILE");
+                // better be arraybuffer
+                return new BinaryFileReader(fileContents as ArrayBuffer);
+            }
+        });
 }

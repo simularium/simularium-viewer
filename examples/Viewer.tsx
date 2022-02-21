@@ -10,9 +10,7 @@ import SimulariumViewer, {
     ErrorLevel,
 } from "../src";
 import { FrontEndError } from "../src/simularium/FrontEndError";
-import { isBinarySimulariumFile } from "../src/util";
-import BinaryFileParser from "../src/simularium/BinaryFileParser";
-import JsonFileParser from "../src/simularium/JsonFileParser";
+import { loadSimulariumFile } from "../src/util";
 
 import "../style/style.css";
 import { isEqual, findIndex } from "lodash";
@@ -20,6 +18,7 @@ import { isEqual, findIndex } from "lodash";
 import PointSimulator from "./PointSimulator";
 import PdbSimulator from "./PdbSimulator";
 import CurveSimulator from "./CurveSimulator";
+import ISimulariumFile from "../src/simularium/ISimulariumFile";
 
 const netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
@@ -159,54 +158,50 @@ class Viewer extends React.Component<{}, ViewerState> {
 
         const files: FileList = input.files || data.files;
         const filesArr: File[] = Array.from(files) as File[];
-        Promise.all(
-            filesArr.map((item): Promise<ArrayBuffer | string> => {
-                // determine if binary or not.
-                return isBinarySimulariumFile(item).then(
-                    (isBinary): Promise<ArrayBuffer | string> => {
-                        if (isBinary) {
-                            return item.arrayBuffer();
-                        } else {
-                            return item.text();
+
+        // try to find the simularium file first, then read it.
+        // then put all the other files as geoAssets.
+        const simulariumFileIndex = findIndex(filesArr, (file) =>
+            file.name.includes(".simularium")
+        );
+        try {
+            loadSimulariumFile(filesArr[simulariumFileIndex])
+                .then((simulariumFile: ISimulariumFile) =>
+                    // textify every file that was not the simularium file:
+                    Promise.all(
+                        filesArr.map((element, index) => {
+                            if (index !== simulariumFileIndex) {
+                                // is async call
+                                return element.text();
+                            } else {
+                                return simulariumFile;
+                            }
+                        })
+                    )
+                )
+                .then((parsedFiles) => {
+                    const simulariumFile = parsedFiles[
+                        simulariumFileIndex
+                    ] as ISimulariumFile;
+                    // build the geoAssets as mapping name-value pairs:
+                    const geoAssets = filesArr.reduce((acc, cur, index) => {
+                        if (index !== simulariumFileIndex) {
+                            acc[cur.name] = parsedFiles[index];
+                            return acc;
                         }
-                    }
-                );
-            })
-        ).then((parsedFiles: (string | ArrayBuffer)[]) => {
-            const simulariumFileIndex = findIndex(filesArr, (file) =>
-                file.name.includes(".simularium")
-            );
-            let simulariumFile;
-            try {
-                // if parsedFiles[simulariumFileIndex] is a string then it's json
-                if (typeof parsedFiles[simulariumFileIndex] === "string") {
-                    console.log("TEXT JSON FILE");
-                    simulariumFile = new JsonFileParser(
-                        JSON.parse(parsedFiles[simulariumFileIndex] as string)
+                    }, {});
+                    const fileName = filesArr[simulariumFileIndex].name;
+                    simulariumController.changeFile(
+                        { simulariumFile, geoAssets },
+                        fileName
                     );
-                } else {
-                    console.log("BINARY FILE");
-                    // better be arraybuffer
-                    simulariumFile = new BinaryFileParser(
-                        parsedFiles[simulariumFileIndex] as ArrayBuffer
-                    );
-                }
-            } catch (error) {
-                return this.onError(new FrontEndError(error.message));
-            }
-            const fileName = filesArr[simulariumFileIndex].name;
-            const geoAssets = filesArr.reduce((acc, cur, index) => {
-                if (index !== simulariumFileIndex) {
-                    acc[cur.name] = parsedFiles[index];
-                }
-                return acc;
-            }, {});
-            simulariumController
-                .changeFile({ simulariumFile, geoAssets }, fileName)
+                })
                 .catch((error) => {
                     this.onError(error);
                 });
-        });
+        } catch (error) {
+            return this.onError(new FrontEndError(error.message));
+        }
     };
 
     public loadFromUrl(url): void {
