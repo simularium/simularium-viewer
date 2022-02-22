@@ -114,7 +114,9 @@ export default class BinaryFileReader implements ISimulariumFile {
                 const blockData = this.getBlockContent(block);
                 const enc = new TextDecoder("utf-8");
                 const text = enc.decode(blockData);
-                const json = JSON.parse(text);
+                // trim any trailing null bytes
+                const trimmed = text.replace(/\0+$/, "");
+                const json = JSON.parse(trimmed);
                 return json as TrajectoryFileInfo;
             }
         }

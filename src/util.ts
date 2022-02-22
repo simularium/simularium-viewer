@@ -53,7 +53,7 @@ export function getFileExtension(pathOrUrl: string): string {
 }
 
 export function isBinarySimulariumFile(fileContents: Blob): Promise<boolean> {
-    const first16blob = fileContents.slice(0, 16);
+    const first16blob: Blob = fileContents.slice(0, 16);
     // compare this with "SIMULARIUMBINARY"
     return first16blob.text().then((text) => {
         return text === "SIMULARIUMBINARY";
