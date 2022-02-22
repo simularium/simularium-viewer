@@ -2,5 +2,5 @@
 import { Blob } from "blob-polyfill";
 global.Blob = Blob;
 import { TextDecoder, TextEncoder } from "util";
-global.TextDecoder = TextDecoder;
+(global as any).TextDecoder = TextDecoder;
 global.TextEncoder = TextEncoder;
