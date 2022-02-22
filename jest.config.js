@@ -12,5 +12,5 @@ module.exports = {
         "\\.(css|less)$": "identity-obj-proxy",
     },
     transformIgnorePatterns: ["<rootDir>/node_modules/three/examples/(?!jsm/)"],
-    setupFiles: ['<rootDir>/src/test/testSetup.ts'],
+    setupFiles: ["<rootDir>/src/test/testSetup.ts"],
 };
