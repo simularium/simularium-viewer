@@ -96,10 +96,10 @@
         "react-dom": "^16.9.0"
     },
     "dependencies": {
-        "@fortawesome/fontawesome-free": "^5.15.2",
-        "@fortawesome/fontawesome-svg-core": "^1.2.34",
-        "@fortawesome/free-solid-svg-icons": "^5.15.2",
-        "@fortawesome/react-fontawesome": "^0.1.14",
+        "@fortawesome/fontawesome-free": "5.15.4",
+        "@fortawesome/fontawesome-svg-core": "1.2.36",
+        "@fortawesome/free-solid-svg-icons": "5.15.4",
+        "@fortawesome/react-fontawesome": "0.1.16",
         "@tweakpane/core": "^1.0.6",
         "@tweakpane/plugin-essentials": "^0.1.4",
         "comlink": "^4.3.1",
