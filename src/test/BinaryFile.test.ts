@@ -26,7 +26,7 @@ function makeBinary(blocks: ArrayBuffer[], blockTypes: number[]): ArrayBuffer {
     for (let i = 1; i < numBlocks; i++) {
         blockOffsets.push(blockOffsets[i - 1] + blocks[i - 1].byteLength);
     }
-
+    // enough space for the whole thing
     const buffer = new ArrayBuffer(headerfixedLen + tocLen + blockDataLen);
     const view = new Uint8Array(buffer);
     const view32 = new Uint32Array(buffer);
@@ -90,20 +90,20 @@ describe("binary simularium files", () => {
             });
         });
     });
-    // test("it correctly reads a file with one json block and one spatial block", () => {
-    //     const json = '{"foo":"bar"}';
-    //     const buffer = makeBinary(
-    //         [pad(new TextEncoder().encode(json)), pad(new ArrayBuffer(8))],
-    //         [1, 3]
-    //     );
-    //     const file = new Blob([buffer]);
-    //     return isBinarySimulariumFile(file).then((isBinary) => {
-    //         expect(isBinary).toBe(true);
-    //         file.arrayBuffer().then((buffer) => {
-    //             expect(() => {
-    //                 new BinaryFileReader(buffer);
-    //             }).not.toThrow();
-    //         });
-    //     });
-    // });
+    test("it correctly initializes a file with one json block and one spatial block", () => {
+        const json = '{"foo":"bar"}';
+        const buffer = makeBinary(
+            [pad(new TextEncoder().encode(json)), pad(new ArrayBuffer(8))],
+            [1, 3]
+        );
+        const file = new Blob([buffer]);
+        return isBinarySimulariumFile(file).then((isBinary) => {
+            expect(isBinary).toBe(true);
+            file.arrayBuffer().then((buffer) => {
+                expect(() => {
+                    new BinaryFileReader(buffer);
+                }).not.toThrow();
+            });
+        });
+    });
 });
