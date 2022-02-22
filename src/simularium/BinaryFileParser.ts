@@ -1,5 +1,5 @@
 import type ISimulariumFile from "./ISimulariumFile";
-import type { TrajectoryFileInfo, VisDataFrame } from "./types";
+import type { Plot, TrajectoryFileInfo, VisDataFrame } from "./types";
 import { compareTimes } from "../util";
 
 const enum BlockTypeEnum {
@@ -32,6 +32,7 @@ export default class BinaryFileReader implements ISimulariumFile {
     dataView: DataView;
     header: Header;
     tfi: TrajectoryFileInfo;
+    plotData: Plot[];
     nFrames: number;
     frameOffsets: number[];
     frameLengths: number[];
@@ -44,6 +45,7 @@ export default class BinaryFileReader implements ISimulariumFile {
         this.dataView = new DataView(fileContents);
         this.header = this.readHeader();
         this.tfi = this.readTrajectoryFileInfo();
+        this.plotData = this.readPlotData();
         this.spatialDataBlock = this.readSpatialDataInfo();
     }
 
@@ -111,16 +113,22 @@ export default class BinaryFileReader implements ISimulariumFile {
         // find the first block that is a trajectory info block
         for (const block of this.header.blocks) {
             if (block.type === BlockTypeEnum.TRAJECTORY_INFO_JSON) {
-                const blockData = this.getBlockContent(block);
-                const enc = new TextDecoder("utf-8");
-                const text = enc.decode(blockData);
-                // trim any trailing null bytes
-                const trimmed = text.replace(/\0+$/, "");
-                const json = JSON.parse(trimmed);
+                const json = this.parseJsonBlock(block);
                 return json as TrajectoryFileInfo;
             }
         }
         throw new Error("No trajectory info block found");
+    }
+
+    private readPlotData(): Plot[] {
+        // find the first block that is a trajectory info block
+        for (const block of this.header.blocks) {
+            if (block.type === BlockTypeEnum.PLOT_DATA_JSON) {
+                const json = this.parseJsonBlock(block);
+                return json as Plot[];
+            }
+        }
+        return [];
     }
 
     private getBlock(block: BlockInfo): DataView {
@@ -192,6 +200,17 @@ export default class BinaryFileReader implements ISimulariumFile {
         );
     }
 
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+    private parseJsonBlock(block: BlockInfo): any {
+        const blockData = this.getBlockContent(block);
+        const enc = new TextDecoder("utf-8");
+        const text = enc.decode(blockData);
+        // trim any trailing null bytes
+        const trimmed = text.replace(/\0+$/, "");
+        const json = JSON.parse(trimmed);
+        return json;
+    }
+
     getTrajectoryFileInfo(): TrajectoryFileInfo {
         return this.tfi;
     }
@@ -234,5 +253,9 @@ export default class BinaryFileReader implements ISimulariumFile {
             totalOffset + frameSize
         );
         return frameContents;
+    }
+
+    getPlotData(): Plot[] {
+        return this.plotData;
     }
 }

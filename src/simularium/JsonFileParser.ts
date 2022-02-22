@@ -1,5 +1,6 @@
 import type ISimulariumFile from "./ISimulariumFile";
 import type {
+    Plot,
     SimulariumFileFormat,
     TrajectoryFileInfo,
     VisDataFrame,
@@ -44,5 +45,9 @@ export default class JsonFileReader implements ISimulariumFile {
 
     getFrame(theFrameNumber: number): VisDataFrame {
         return this.simulariumFile.spatialData.bundleData[theFrameNumber];
+    }
+
+    getPlotData(): Plot[] {
+        return this.simulariumFile.plotData;
     }
 }
