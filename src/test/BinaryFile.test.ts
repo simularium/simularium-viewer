@@ -19,12 +19,14 @@ function makeBinary(blocks: ArrayBuffer[], blockTypes: number[]): ArrayBuffer {
     const headerLen = headerfixedLen + tocLen;
     // extra 4 for block size and 4 for type
     const blockDataLen = blocks.reduce(
-        (acc, block) => acc + block.byteLength + 4 + 4,
+        (acc, block) => acc + (block.byteLength + 4 + 4),
         0
     );
     const blockOffsets = [headerLen];
     for (let i = 1; i < numBlocks; i++) {
-        blockOffsets.push(blockOffsets[i - 1] + blocks[i - 1].byteLength);
+        blockOffsets.push(
+            blockOffsets[i - 1] + (blocks[i - 1].byteLength + 4 + 4)
+        );
     }
     // enough space for the whole thing
     const buffer = new ArrayBuffer(headerfixedLen + tocLen + blockDataLen);
@@ -90,18 +92,37 @@ describe("binary simularium files", () => {
             });
         });
     });
-    test("it correctly initializes a file with one json block and one spatial block", () => {
-        const json = '{"foo":"bar"}';
+    test("it correctly initializes a file with one json block, one spatial block, and one plotdata block", () => {
+        const tjijson = {
+            msgType: 0,
+            version: 2,
+            timeStepSize: 1,
+            totalSteps: 1,
+            size: [7, 7, 7],
+            typeMapping: {},
+        };
+
+        const json2 = '{"baz":"bat"}';
         const buffer = makeBinary(
-            [pad(new TextEncoder().encode(json)), pad(new ArrayBuffer(8))],
-            [1, 3]
+            [
+                pad(new TextEncoder().encode(JSON.stringify(tjijson))),
+                pad(new ArrayBuffer(8)),
+                pad(new TextEncoder().encode(json2)),
+            ],
+            [1, 3, 2]
         );
         const file = new Blob([buffer]);
         return isBinarySimulariumFile(file).then((isBinary) => {
             expect(isBinary).toBe(true);
             file.arrayBuffer().then((buffer) => {
                 expect(() => {
-                    new BinaryFileReader(buffer);
+                    const reader = new BinaryFileReader(buffer);
+                    const tji = reader.getTrajectoryFileInfo();
+                    expect(tji).toHaveProperty("totalSteps", 1);
+                    const plotData = reader.getPlotData();
+                    expect(plotData).toHaveProperty("baz", "bat");
+                    const nframes = reader.getNumFrames();
+                    expect(nframes).toBe(0);
                 }).not.toThrow();
             });
         });
