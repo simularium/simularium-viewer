@@ -162,6 +162,10 @@ class VisGeometry {
     private focusMode: boolean;
     public gui?: Pane;
 
+    private cam1: CameraSpec;
+    private cam2: CameraSpec;
+    private cam3: CameraSpec;
+
     // Scene update will populate these lists of visible pdb agents.
     // These lists are iterated at render time to detemine LOD.
     // This is because camera updates happen at a different frequency than scene updates.
@@ -169,6 +173,10 @@ class VisGeometry {
     private agentPdbsToDraw: PDBModel[];
 
     public constructor(loggerLevel: ILogLevel) {
+        this.cam1 = cloneDeep(DEFAULT_CAMERA_SPEC);
+        this.cam2 = cloneDeep(DEFAULT_CAMERA_SPEC);
+        this.cam3 = cloneDeep(DEFAULT_CAMERA_SPEC);
+
         this.renderStyle = RenderStyle.WEBGL1_FALLBACK;
         this.supportsWebGL2Rendering = false;
 
@@ -275,6 +283,81 @@ class VisGeometry {
         const fcam = this.gui.addFolder({ title: "Camera" });
         fcam.addInput(this.camera, "position");
         fcam.addInput(this.controls, "target");
+        this.gui.addButton({ title: "Save Cam 1" }).on("click", () => {
+            // TODO fix types
+            this.cam1.position = this.camera.position.clone();
+            this.cam1.lookAtPosition = this.controls.target.clone();
+        });
+        this.gui.addButton({ title: "Save Cam 2" }).on("click", () => {
+            // TODO fix types
+            this.cam2.position = this.camera.position.clone();
+            this.cam2.lookAtPosition = this.controls.target.clone();
+        });
+        this.gui.addButton({ title: "Save Cam 3" }).on("click", () => {
+            // TODO fix types
+            this.cam3.position = this.camera.position.clone();
+            this.cam3.lookAtPosition = this.controls.target.clone();
+        });
+        this.gui.addButton({ title: "Show Cam 1" }).on("click", () => {
+            // TODO fix types
+            this.camera.position.copy(this.cam1.position);
+            this.controls.target.copy(this.cam1.lookAtPosition);
+        });
+        this.gui.addButton({ title: "Show Cam 2" }).on("click", () => {
+            // TODO fix types
+            this.camera.position.copy(this.cam2.position);
+            this.controls.target.copy(this.cam2.lookAtPosition);
+        });
+        this.gui.addButton({ title: "Show Cam 3" }).on("click", () => {
+            // TODO fix types
+            this.camera.position.copy(this.cam3.position);
+            this.controls.target.copy(this.cam3.lookAtPosition);
+        });
+        this.gui.addButton({ title: "Export Cam" }).on("click", () => {
+            // save to json, load from json
+            const preset = this.gui?.exportPreset();
+            const cam = {
+                position: preset.position,
+                target: preset.target,
+            };
+            const anchor = document.createElement("a");
+            anchor.href = URL.createObjectURL(
+                new Blob([JSON.stringify(cam, null, 2)], {
+                    type: "text/plain",
+                })
+            );
+            anchor.download = "camera.json";
+            anchor.click();
+        });
+        this.gui.addButton({ title: "Import Cam" }).on("click", () => {
+            const fileinput = document.createElement("input");
+            fileinput.type = "file";
+            fileinput.style = "display:none";
+            fileinput.addEventListener("change", (e: Event) => {
+                const reader = new FileReader();
+                reader.onload = (event: Event) => {
+                    //console.log(event.target.result);
+                    const obj = JSON.parse(event?.target.result);
+                    this.camera.position.copy(obj.position);
+                    this.controls.target.copy(obj.target);
+                };
+                reader.readAsText(e.target?.files[0]);
+            });
+            fileinput.click();
+
+            // this.gui.importPreset(preset);
+        });
+        // save to camera 1
+        // show camera 1
+        // save to camera 2
+        // show camera 2
+        // save to camera 3
+        // show camera 3
+
+        // save to json, load from json
+        // const preset = this.gui.exportPreset();
+        // console.log(preset);
+        // this.gui.importPreset(preset);
 
         const settings = {
             lodBias: this.lodBias,
@@ -297,7 +380,7 @@ class VisGeometry {
                 event.value.b / 255.0,
             ]);
         });
-        this.gui.addButton({ title: "Capture" }).on("click", () => {
+        this.gui.addButton({ title: "Capture Frame" }).on("click", () => {
             this.render(0);
             const dataUrl =
                 this.threejsrenderer.domElement.toDataURL("image/png");
