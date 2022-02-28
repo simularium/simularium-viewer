@@ -224,7 +224,7 @@ class VisData {
                 break;
             }
             // now read sub points.
-            for (let k = 0; k < nSubPoints * 3; k++) {
+            for (let k = 0; k < nSubPoints; k++) {
                 agentData.subpoints.push(floatView[j++]);
             }
             parsedAgentData.push(agentData);
