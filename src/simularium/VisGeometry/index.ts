@@ -283,36 +283,65 @@ class VisGeometry {
         const fcam = this.gui.addFolder({ title: "Camera" });
         fcam.addInput(this.camera, "position");
         fcam.addInput(this.controls, "target");
-        this.gui.addButton({ title: "Save Cam 1" }).on("click", () => {
-            // TODO fix types
-            this.cam1.position = this.camera.position.clone();
-            this.cam1.lookAtPosition = this.controls.target.clone();
-        });
-        this.gui.addButton({ title: "Save Cam 2" }).on("click", () => {
-            // TODO fix types
-            this.cam2.position = this.camera.position.clone();
-            this.cam2.lookAtPosition = this.controls.target.clone();
-        });
-        this.gui.addButton({ title: "Save Cam 3" }).on("click", () => {
-            // TODO fix types
-            this.cam3.position = this.camera.position.clone();
-            this.cam3.lookAtPosition = this.controls.target.clone();
-        });
-        this.gui.addButton({ title: "Show Cam 1" }).on("click", () => {
-            // TODO fix types
-            this.camera.position.copy(this.cam1.position);
-            this.controls.target.copy(this.cam1.lookAtPosition);
-        });
-        this.gui.addButton({ title: "Show Cam 2" }).on("click", () => {
-            // TODO fix types
-            this.camera.position.copy(this.cam2.position);
-            this.controls.target.copy(this.cam2.lookAtPosition);
-        });
-        this.gui.addButton({ title: "Show Cam 3" }).on("click", () => {
-            // TODO fix types
-            this.camera.position.copy(this.cam3.position);
-            this.controls.target.copy(this.cam3.lookAtPosition);
-        });
+
+        this.gui
+            .addBlade({
+                view: "buttongrid",
+                size: [2, 1],
+                cells: (x, y) => ({
+                    title: [["View", "Save"]][y][x],
+                }),
+                label: "Cam 1",
+            })
+            .on("click", (ev) => {
+                if (ev.index[0] === 0) {
+                    // TODO fix types
+                    this.camera.position.copy(this.cam1.position);
+                    this.controls.target.copy(this.cam1.lookAtPosition);
+                } else if (ev.index[0] === 1) {
+                    this.cam1.position = this.camera.position.clone();
+                    this.cam1.lookAtPosition = this.controls.target.clone();
+                }
+            });
+        this.gui
+            .addBlade({
+                view: "buttongrid",
+                size: [2, 1],
+                cells: (x, y) => ({
+                    title: [["View", "Save"]][y][x],
+                }),
+                label: "Cam 2",
+            })
+            .on("click", (ev) => {
+                if (ev.index[0] === 0) {
+                    // TODO fix types
+                    this.camera.position.copy(this.cam2.position);
+                    this.controls.target.copy(this.cam2.lookAtPosition);
+                } else if (ev.index[0] === 1) {
+                    this.cam2.position = this.camera.position.clone();
+                    this.cam2.lookAtPosition = this.controls.target.clone();
+                }
+            });
+        this.gui
+            .addBlade({
+                view: "buttongrid",
+                size: [2, 1],
+                cells: (x, y) => ({
+                    title: [["View", "Save"]][y][x],
+                }),
+                label: "Cam 3",
+            })
+            .on("click", (ev) => {
+                if (ev.index[0] === 0) {
+                    // TODO fix types
+                    this.camera.position.copy(this.cam3.position);
+                    this.controls.target.copy(this.cam3.lookAtPosition);
+                } else if (ev.index[0] === 1) {
+                    this.cam3.position = this.camera.position.clone();
+                    this.cam3.lookAtPosition = this.controls.target.clone();
+                }
+            });
+
         this.gui.addButton({ title: "Export Cam" }).on("click", () => {
             // save to json, load from json
             const preset = this.gui?.exportPreset();
