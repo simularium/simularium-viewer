@@ -25,7 +25,7 @@ import {
 
 import { Pane } from "tweakpane";
 import * as EssentialsPlugin from "@tweakpane/plugin-essentials";
-
+import { ButtonGridApi } from "@tweakpane/plugin-essentials/dist/types/button-grid/api/button-grid";
 import jsLogger from "js-logger";
 import { ILogger, ILogLevel } from "js-logger";
 import { cloneDeep, noop } from "lodash";
@@ -284,63 +284,60 @@ class VisGeometry {
         fcam.addInput(this.camera, "position");
         fcam.addInput(this.controls, "target");
 
-        this.gui
-            .addBlade({
-                view: "buttongrid",
-                size: [2, 1],
-                cells: (x, y) => ({
-                    title: [["View", "Save"]][y][x],
-                }),
-                label: "Cam 1",
-            })
-            .on("click", (ev) => {
-                if (ev.index[0] === 0) {
-                    // TODO fix types
-                    this.camera.position.copy(this.cam1.position);
-                    this.controls.target.copy(this.cam1.lookAtPosition);
-                } else if (ev.index[0] === 1) {
-                    this.cam1.position = this.camera.position.clone();
-                    this.cam1.lookAtPosition = this.controls.target.clone();
-                }
-            });
-        this.gui
-            .addBlade({
-                view: "buttongrid",
-                size: [2, 1],
-                cells: (x, y) => ({
-                    title: [["View", "Save"]][y][x],
-                }),
-                label: "Cam 2",
-            })
-            .on("click", (ev) => {
-                if (ev.index[0] === 0) {
-                    // TODO fix types
-                    this.camera.position.copy(this.cam2.position);
-                    this.controls.target.copy(this.cam2.lookAtPosition);
-                } else if (ev.index[0] === 1) {
-                    this.cam2.position = this.camera.position.clone();
-                    this.cam2.lookAtPosition = this.controls.target.clone();
-                }
-            });
-        this.gui
-            .addBlade({
-                view: "buttongrid",
-                size: [2, 1],
-                cells: (x, y) => ({
-                    title: [["View", "Save"]][y][x],
-                }),
-                label: "Cam 3",
-            })
-            .on("click", (ev) => {
-                if (ev.index[0] === 0) {
-                    // TODO fix types
-                    this.camera.position.copy(this.cam3.position);
-                    this.controls.target.copy(this.cam3.lookAtPosition);
-                } else if (ev.index[0] === 1) {
-                    this.cam3.position = this.camera.position.clone();
-                    this.cam3.lookAtPosition = this.controls.target.clone();
-                }
-            });
+        const grid1: ButtonGridApi = this.gui.addBlade({
+            view: "buttongrid",
+            size: [2, 1],
+            cells: (x, y) => ({
+                title: [["View", "Save"]][y][x],
+            }),
+            label: "Cam 1",
+        }) as ButtonGridApi;
+        grid1.on("click", (ev) => {
+            if (ev.index[0] === 0) {
+                // TODO fix types
+                this.camera.position.copy(this.cam1.position);
+                this.controls.target.copy(this.cam1.lookAtPosition);
+            } else if (ev.index[0] === 1) {
+                this.cam1.position = this.camera.position.clone();
+                this.cam1.lookAtPosition = this.controls.target.clone();
+            }
+        });
+        const grid2: ButtonGridApi = this.gui.addBlade({
+            view: "buttongrid",
+            size: [2, 1],
+            cells: (x, y) => ({
+                title: [["View", "Save"]][y][x],
+            }),
+            label: "Cam 2",
+        }) as ButtonGridApi;
+        grid2.on("click", (ev) => {
+            if (ev.index[0] === 0) {
+                // TODO fix types
+                this.camera.position.copy(this.cam2.position);
+                this.controls.target.copy(this.cam2.lookAtPosition);
+            } else if (ev.index[0] === 1) {
+                this.cam2.position = this.camera.position.clone();
+                this.cam2.lookAtPosition = this.controls.target.clone();
+            }
+        });
+        const grid3: ButtonGridApi = this.gui.addBlade({
+            view: "buttongrid",
+            size: [2, 1],
+            cells: (x, y) => ({
+                title: [["View", "Save"]][y][x],
+            }),
+            label: "Cam 3",
+        }) as ButtonGridApi;
+        grid3.on("click", (ev) => {
+            if (ev.index[0] === 0) {
+                // TODO fix types
+                this.camera.position.copy(this.cam3.position);
+                this.controls.target.copy(this.cam3.lookAtPosition);
+            } else if (ev.index[0] === 1) {
+                this.cam3.position = this.camera.position.clone();
+                this.cam3.lookAtPosition = this.controls.target.clone();
+            }
+        });
 
         this.gui.addButton({ title: "Export Cam" }).on("click", () => {
             // save to json, load from json
