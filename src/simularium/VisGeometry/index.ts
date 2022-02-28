@@ -317,8 +317,8 @@ class VisGeometry {
             // save to json, load from json
             const preset = this.gui?.exportPreset();
             const cam = {
-                position: preset.position,
-                target: preset.target,
+                position: preset?.position,
+                target: preset?.target,
             };
             const anchor = document.createElement("a");
             anchor.href = URL.createObjectURL(
@@ -330,18 +330,21 @@ class VisGeometry {
             anchor.click();
         });
         this.gui.addButton({ title: "Import Cam" }).on("click", () => {
-            const fileinput = document.createElement("input");
+            const fileinput: HTMLInputElement = document.createElement("input");
             fileinput.type = "file";
-            fileinput.style = "display:none";
+            fileinput.style.display = "none";
             fileinput.addEventListener("change", (e: Event) => {
                 const reader = new FileReader();
-                reader.onload = (event: Event) => {
+                reader.onload = (event: ProgressEvent<FileReader>) => {
                     //console.log(event.target.result);
-                    const obj = JSON.parse(event?.target.result);
+                    const obj = JSON.parse(event?.target?.result as string);
                     this.camera.position.copy(obj.position);
                     this.controls.target.copy(obj.target);
                 };
-                reader.readAsText(e.target?.files[0]);
+                const files = (e.target as HTMLInputElement).files;
+                if (files !== null) {
+                    reader.readAsText(files[0]);
+                }
             });
             fileinput.click();
 
