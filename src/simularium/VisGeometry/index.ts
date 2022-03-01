@@ -294,12 +294,23 @@ class VisGeometry {
         }) as ButtonGridApi;
         grid1.on("click", (ev) => {
             if (ev.index[0] === 0) {
-                // TODO fix types
-                this.camera.position.copy(this.cam1.position);
-                this.controls.target.copy(this.cam1.lookAtPosition);
+                this.camera.position.set(
+                    this.cam1.position.x,
+                    this.cam1.position.y,
+                    this.cam1.position.z
+                );
+                this.controls.target.set(
+                    this.cam1.lookAtPosition.x,
+                    this.cam1.lookAtPosition.y,
+                    this.cam1.lookAtPosition.z
+                );
             } else if (ev.index[0] === 1) {
-                this.cam1.position = this.camera.position.clone();
-                this.cam1.lookAtPosition = this.controls.target.clone();
+                this.cam1.position.x = this.camera.position.x;
+                this.cam1.position.y = this.camera.position.y;
+                this.cam1.position.z = this.camera.position.z;
+                this.cam1.lookAtPosition.x = this.controls.target.x;
+                this.cam1.lookAtPosition.y = this.controls.target.y;
+                this.cam1.lookAtPosition.z = this.controls.target.z;
             }
         });
         const grid2: ButtonGridApi = this.gui.addBlade({
@@ -312,12 +323,23 @@ class VisGeometry {
         }) as ButtonGridApi;
         grid2.on("click", (ev) => {
             if (ev.index[0] === 0) {
-                // TODO fix types
-                this.camera.position.copy(this.cam2.position);
-                this.controls.target.copy(this.cam2.lookAtPosition);
+                this.camera.position.set(
+                    this.cam2.position.x,
+                    this.cam2.position.y,
+                    this.cam2.position.z
+                );
+                this.controls.target.set(
+                    this.cam2.lookAtPosition.x,
+                    this.cam2.lookAtPosition.y,
+                    this.cam2.lookAtPosition.z
+                );
             } else if (ev.index[0] === 1) {
-                this.cam2.position = this.camera.position.clone();
-                this.cam2.lookAtPosition = this.controls.target.clone();
+                this.cam2.position.x = this.camera.position.x;
+                this.cam2.position.y = this.camera.position.y;
+                this.cam2.position.z = this.camera.position.z;
+                this.cam2.lookAtPosition.x = this.controls.target.x;
+                this.cam2.lookAtPosition.y = this.controls.target.y;
+                this.cam2.lookAtPosition.z = this.controls.target.z;
             }
         });
         const grid3: ButtonGridApi = this.gui.addBlade({
@@ -330,17 +352,27 @@ class VisGeometry {
         }) as ButtonGridApi;
         grid3.on("click", (ev) => {
             if (ev.index[0] === 0) {
-                // TODO fix types
-                this.camera.position.copy(this.cam3.position);
-                this.controls.target.copy(this.cam3.lookAtPosition);
+                this.camera.position.set(
+                    this.cam3.position.x,
+                    this.cam3.position.y,
+                    this.cam3.position.z
+                );
+                this.controls.target.set(
+                    this.cam3.lookAtPosition.x,
+                    this.cam3.lookAtPosition.y,
+                    this.cam3.lookAtPosition.z
+                );
             } else if (ev.index[0] === 1) {
-                this.cam3.position = this.camera.position.clone();
-                this.cam3.lookAtPosition = this.controls.target.clone();
+                this.cam3.position.x = this.camera.position.x;
+                this.cam3.position.y = this.camera.position.y;
+                this.cam3.position.z = this.camera.position.z;
+                this.cam3.lookAtPosition.x = this.controls.target.x;
+                this.cam3.lookAtPosition.y = this.controls.target.y;
+                this.cam3.lookAtPosition.z = this.controls.target.z;
             }
         });
 
         this.gui.addButton({ title: "Export Cam" }).on("click", () => {
-            // save to json, load from json
             const preset = this.gui?.exportPreset();
             const cam = {
                 position: preset?.position,
@@ -362,10 +394,17 @@ class VisGeometry {
             fileinput.addEventListener("change", (e: Event) => {
                 const reader = new FileReader();
                 reader.onload = (event: ProgressEvent<FileReader>) => {
-                    //console.log(event.target.result);
                     const obj = JSON.parse(event?.target?.result as string);
-                    this.camera.position.copy(obj.position);
-                    this.controls.target.copy(obj.target);
+                    this.camera.position.set(
+                        obj.position.x,
+                        obj.position.y,
+                        obj.position.z
+                    );
+                    this.controls.target.set(
+                        obj.target.x,
+                        obj.target.y,
+                        obj.target.z
+                    );
                 };
                 const files = (e.target as HTMLInputElement).files;
                 if (files !== null) {
@@ -373,20 +412,7 @@ class VisGeometry {
                 }
             });
             fileinput.click();
-
-            // this.gui.importPreset(preset);
         });
-        // save to camera 1
-        // show camera 1
-        // save to camera 2
-        // show camera 2
-        // save to camera 3
-        // show camera 3
-
-        // save to json, load from json
-        // const preset = this.gui.exportPreset();
-        // console.log(preset);
-        // this.gui.importPreset(preset);
 
         const settings = {
             lodBias: this.lodBias,
