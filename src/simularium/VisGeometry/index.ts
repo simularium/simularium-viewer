@@ -273,6 +273,28 @@ class VisGeometry {
         this.threejsrenderer.setClearColor(this.backgroundColor, 1);
     }
 
+    private loadCamera(cameraSpec: CameraSpec): void {
+        // TODO add other parameters from CameraSpec?
+        this.camera.position.set(
+            cameraSpec.position.x,
+            cameraSpec.position.y,
+            cameraSpec.position.z
+        );
+        this.controls.target.set(
+            cameraSpec.lookAtPosition.x,
+            cameraSpec.lookAtPosition.y,
+            cameraSpec.lookAtPosition.z
+        );
+    }
+    private storeCamera(cameraSpec: CameraSpec): void {
+        cameraSpec.position.x = this.camera.position.x;
+        cameraSpec.position.y = this.camera.position.y;
+        cameraSpec.position.z = this.camera.position.z;
+        cameraSpec.lookAtPosition.x = this.controls.target.x;
+        cameraSpec.lookAtPosition.y = this.controls.target.y;
+        cameraSpec.lookAtPosition.z = this.controls.target.z;
+    }
+
     public setupGui(container?: HTMLElement): void {
         this.gui = new Pane({
             title: "Advanced Settings",
@@ -294,23 +316,9 @@ class VisGeometry {
         }) as ButtonGridApi;
         grid1.on("click", (ev) => {
             if (ev.index[0] === 0) {
-                this.camera.position.set(
-                    this.cam1.position.x,
-                    this.cam1.position.y,
-                    this.cam1.position.z
-                );
-                this.controls.target.set(
-                    this.cam1.lookAtPosition.x,
-                    this.cam1.lookAtPosition.y,
-                    this.cam1.lookAtPosition.z
-                );
+                this.loadCamera(this.cam1);
             } else if (ev.index[0] === 1) {
-                this.cam1.position.x = this.camera.position.x;
-                this.cam1.position.y = this.camera.position.y;
-                this.cam1.position.z = this.camera.position.z;
-                this.cam1.lookAtPosition.x = this.controls.target.x;
-                this.cam1.lookAtPosition.y = this.controls.target.y;
-                this.cam1.lookAtPosition.z = this.controls.target.z;
+                this.storeCamera(this.cam1);
             }
         });
         const grid2: ButtonGridApi = this.gui.addBlade({
@@ -323,23 +331,9 @@ class VisGeometry {
         }) as ButtonGridApi;
         grid2.on("click", (ev) => {
             if (ev.index[0] === 0) {
-                this.camera.position.set(
-                    this.cam2.position.x,
-                    this.cam2.position.y,
-                    this.cam2.position.z
-                );
-                this.controls.target.set(
-                    this.cam2.lookAtPosition.x,
-                    this.cam2.lookAtPosition.y,
-                    this.cam2.lookAtPosition.z
-                );
+                this.loadCamera(this.cam2);
             } else if (ev.index[0] === 1) {
-                this.cam2.position.x = this.camera.position.x;
-                this.cam2.position.y = this.camera.position.y;
-                this.cam2.position.z = this.camera.position.z;
-                this.cam2.lookAtPosition.x = this.controls.target.x;
-                this.cam2.lookAtPosition.y = this.controls.target.y;
-                this.cam2.lookAtPosition.z = this.controls.target.z;
+                this.storeCamera(this.cam2);
             }
         });
         const grid3: ButtonGridApi = this.gui.addBlade({
@@ -352,23 +346,9 @@ class VisGeometry {
         }) as ButtonGridApi;
         grid3.on("click", (ev) => {
             if (ev.index[0] === 0) {
-                this.camera.position.set(
-                    this.cam3.position.x,
-                    this.cam3.position.y,
-                    this.cam3.position.z
-                );
-                this.controls.target.set(
-                    this.cam3.lookAtPosition.x,
-                    this.cam3.lookAtPosition.y,
-                    this.cam3.lookAtPosition.z
-                );
+                this.loadCamera(this.cam3);
             } else if (ev.index[0] === 1) {
-                this.cam3.position.x = this.camera.position.x;
-                this.cam3.position.y = this.camera.position.y;
-                this.cam3.position.z = this.camera.position.z;
-                this.cam3.lookAtPosition.x = this.controls.target.x;
-                this.cam3.lookAtPosition.y = this.controls.target.y;
-                this.cam3.lookAtPosition.z = this.controls.target.z;
+                this.storeCamera(this.cam3);
             }
         });
 
