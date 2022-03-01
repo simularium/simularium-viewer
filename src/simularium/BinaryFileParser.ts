@@ -53,28 +53,28 @@ export default class BinaryFileReader implements ISimulariumFile {
         // find spatial data block and load frame offsets
         for (const block of this.header.blocks) {
             if (block.type === BlockTypeEnum.SPATIAL_DATA_BINARY) {
-                const blockData = this.getBlock(block);
+                const blockData = this.getBlockContent(block);
+                let byteOffset = 0;
                 // Spatial data version (4-byte int)
-                // const version = blockData.getInt32(0 + BLOCK_HEADER_SIZE, true);
+                // const version = blockData.getUint32(byteOffset, true);
+                byteOffset += 4;
                 // Number of frames (4-byte int)
-                this.nFrames = blockData.getInt32(4 + BLOCK_HEADER_SIZE, true);
+                this.nFrames = blockData.getUint32(byteOffset, true);
+                byteOffset += 4;
+
                 // Frame offsets,sizes (Number of frames * two 4-byte ints)
                 for (let i = 0; i < this.nFrames; i++) {
                     this.frameOffsets.push(
-                        blockData.getInt32(
-                            BLOCK_HEADER_SIZE + 8 + i * 2 * 4,
-                            true
-                        )
+                        blockData.getUint32(byteOffset, true)
                     );
+                    byteOffset += 4;
                     this.frameLengths.push(
-                        blockData.getInt32(
-                            BLOCK_HEADER_SIZE + 8 + (i * 2 + 1) * 4,
-                            true
-                        )
+                        blockData.getUint32(byteOffset, true)
                     );
+                    byteOffset += 4;
                 }
 
-                return blockData;
+                return this.getBlock(block);
             }
         }
         throw new Error("No spatial data block found");
@@ -83,7 +83,7 @@ export default class BinaryFileReader implements ISimulariumFile {
     private readHeader(): Header {
         // could use DataView here but I know every header field is int32
         // note I set the offset to move past the secret string
-        const asints = new Int32Array(this.fileContents, SECRET.length);
+        const asints = new Uint32Array(this.fileContents, SECRET.length);
         const headerLength = asints[0];
         const headerVersion = asints[1];
         const nBlocks = asints[2];
@@ -139,8 +139,8 @@ export default class BinaryFileReader implements ISimulariumFile {
         // Local file should have been written as little endian.
         // All use of DataViews requires explicit endianness but default to big endian.
         // TypedArrays use the underlying system endianness (usually little).
-        const blockType = this.dataView.getInt32(block.offset, true);
-        const blockSize = this.dataView.getInt32(block.offset + 4, true);
+        const blockType = this.dataView.getUint32(block.offset, true);
+        const blockSize = this.dataView.getUint32(block.offset + 4, true);
 
         if (blockType !== block.type) {
             throw new Error(
@@ -171,8 +171,8 @@ export default class BinaryFileReader implements ISimulariumFile {
         // TAKE NOTE OF ENDIANNESS. IS SIMULARIUMBINARY ALWAYS LITTLE ENDIAN?
         // ERROR size, type IN WRONG ORDER
         // ERROR BLOCK OFFSET WAS STORED HERE, NOT SIZE
-        const blockType = this.dataView.getInt32(block.offset, true);
-        const blockSize = this.dataView.getInt32(block.offset + 4, true);
+        const blockType = this.dataView.getUint32(block.offset, true);
+        const blockSize = this.dataView.getUint32(block.offset + 4, true);
 
         if (blockType !== block.type) {
             throw new Error(

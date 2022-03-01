@@ -184,7 +184,7 @@ class VisData {
         const parsedAgentDataArray: AgentData[][] = [];
         const frameDataArray: FrameData[] = [];
         const floatView = new Float32Array(data);
-        const intView = new Int32Array(data);
+        const intView = new Uint32Array(data);
         const parsedFrameData = {
             time: floatView[1],
             frameNumber: floatView[0],
