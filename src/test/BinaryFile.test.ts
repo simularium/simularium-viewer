@@ -1,4 +1,4 @@
-import BinaryFileReader from "../simularium/BinaryFileParser";
+import BinaryFileReader from "../simularium/BinaryFileReader";
 import { isBinarySimulariumFile } from "../util";
 
 function pad(buf: ArrayBuffer): ArrayBuffer {
