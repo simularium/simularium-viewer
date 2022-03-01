@@ -160,7 +160,7 @@ export default class BinaryFileReader implements ISimulariumFile {
         }
         // note: NOT a copy.
         // never produce copies internally. let callers make a copy if they need it.
-        // also note: return the contents of the block NOT INCLUDING the block header
+        // also note: return the contents of the block INCLUDING the block header
         return new DataView(this.fileContents, block.offset, block.size);
     }
 
@@ -168,9 +168,11 @@ export default class BinaryFileReader implements ISimulariumFile {
         // return the block portion after the block header
         // first validate the block with what we expect.
 
-        // TAKE NOTE OF ENDIANNESS. IS SIMULARIUMBINARY ALWAYS LITTLE ENDIAN?
-        // ERROR size, type IN WRONG ORDER
-        // ERROR BLOCK OFFSET WAS STORED HERE, NOT SIZE
+        // TAKE NOTE OF ENDIANNESS.
+        // Data transferred via HTTP is generally big endian.
+        // Local file should have been written as little endian.
+        // All use of DataViews requires explicit endianness but default to big endian.
+        // TypedArrays use the underlying system endianness (usually little).
         const blockType = this.dataView.getUint32(block.offset, true);
         const blockSize = this.dataView.getUint32(block.offset + 4, true);
 
@@ -192,7 +194,7 @@ export default class BinaryFileReader implements ISimulariumFile {
         }
         // note: NOT a copy.
         // never produce copies internally. let callers make a copy if they need it.
-        // also note: return the contents of the block NOT INCLUDING the block header
+        // also note: return the contents of the block NOT including the block header
         return new DataView(
             this.fileContents,
             block.offset + BLOCK_HEADER_SIZE,
@@ -245,9 +247,8 @@ export default class BinaryFileReader implements ISimulariumFile {
         const frameOffset = this.frameOffsets[theFrameNumber];
         const frameSize = this.frameLengths[theFrameNumber];
         const totalOffset = this.spatialDataBlock.byteOffset + frameOffset;
-        // return an arraybuffer copy?
-        // TODO when the file format can have blocks aligned to 4-byte boundaries,
-        // this can return a TypedArray or DataView without making a copy
+        // TODO possibly this can return a TypedArray or DataView without making a copy
+        // but requires a guarantee on 4-byte alignment. Leaving it as a future optimization.
         const frameContents = this.fileContents.slice(
             totalOffset,
             totalOffset + frameSize

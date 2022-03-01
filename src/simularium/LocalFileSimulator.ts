@@ -159,7 +159,6 @@ export class LocalFileSimulator implements ISimulator {
         if (data instanceof ArrayBuffer) {
             return data as ArrayBuffer;
         } else {
-            //return this.simulariumFile.getFrame(theFrameNumber);
             return {
                 msgType: 0,
                 bundleStart: theFrameNumber,
