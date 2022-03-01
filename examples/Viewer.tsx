@@ -206,11 +206,13 @@ class Viewer extends React.Component<{}, ViewerState> {
 
     public loadFromUrl(url): void {
         fetch(url)
-            .then((item) => {
-                return item.text();
+            .then((item: Response) => {
+                return item.blob();
             })
-            .then((parsedFile) => {
-                const simulariumFile = JSON.parse(parsedFile);
+            .then((blob: Blob) => {
+                return loadSimulariumFile(blob);
+            })
+            .then((simulariumFile) => {
                 const fileName = url;
                 simulariumController
                     .changeFile({ simulariumFile }, fileName)

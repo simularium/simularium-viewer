@@ -60,7 +60,7 @@ export function isBinarySimulariumFile(fileContents: Blob): Promise<boolean> {
     });
 }
 
-export function loadSimulariumFile(file: File): Promise<ISimulariumFile> {
+export function loadSimulariumFile(file: Blob): Promise<ISimulariumFile> {
     return isBinarySimulariumFile(file)
         .then((isBinary): Promise<ArrayBuffer | string> => {
             if (isBinary) {
