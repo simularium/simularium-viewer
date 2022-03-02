@@ -94,7 +94,7 @@ class Viewport extends React.Component<
     private selectionInterface: SelectionInterface;
     private lastRenderTime: number;
     private startTime: number;
-    private vdomRef: React.RefObject<HTMLInputElement>;
+    private vdomRef: React.RefObject<HTMLDivElement>;
     private handlers: { [key: string]: (e: Event) => void };
 
     private hit: boolean;
@@ -188,7 +188,28 @@ class Viewport extends React.Component<
             simulariumController.visData.timeStepSize =
                 trajectoryFileInfo.timeStepSize;
 
-            this.visGeometry.handleTrajectoryFileInfo(trajectoryFileInfo);
+            if (trajectoryFileInfo.hasOwnProperty("size")) {
+                const bx = trajectoryFileInfo.size.x;
+                const by = trajectoryFileInfo.size.y;
+                const bz = trajectoryFileInfo.size.z;
+                const epsilon = 0.000001;
+                if (
+                    Math.abs(bx) < epsilon ||
+                    Math.abs(by) < epsilon ||
+                    Math.abs(bz) < epsilon
+                ) {
+                    this.visGeometry.resetBounds();
+                } else {
+                    this.visGeometry.resetBounds([bx, by, bz]);
+                }
+            } else {
+                this.visGeometry.resetBounds();
+            }
+            this.visGeometry.handleCameraData(trajectoryFileInfo.cameraDefault);
+            this.visGeometry.handleAgentGeometry(
+                trajectoryFileInfo.typeMapping
+            );
+
             simulariumController.tickIntervalLength =
                 this.visGeometry.tickIntervalLength;
 

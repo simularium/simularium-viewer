@@ -40,7 +40,6 @@ import {
     DEFAULT_CAMERA_SPEC,
 } from "../../constants";
 import {
-    TrajectoryFileInfo,
     CameraSpec,
     EncodedTypeMapping,
     AgentDisplayDataWithGeometry,
@@ -446,40 +445,7 @@ class VisGeometry {
         return this.threejsrenderer.domElement;
     }
 
-    public handleTrajectoryFileInfo(
-        trajectoryFileInfo: TrajectoryFileInfo
-    ): void {
-        this.handleBoundingBoxData(trajectoryFileInfo);
-        this.handleCameraData(trajectoryFileInfo.cameraDefault);
-        this.handleAgentGeometry(trajectoryFileInfo.typeMapping);
-    }
-
-    private handleBoundingBoxData(trajectoryFileInfo: TrajectoryFileInfo) {
-        // Create a new bounding box and tick marks and set this.tickIntervalLength (via resetBounds()),
-        // to make it available for use as the length of the scale bar in the UI
-        if (trajectoryFileInfo.hasOwnProperty("size")) {
-            const bx = trajectoryFileInfo.size.x;
-            const by = trajectoryFileInfo.size.y;
-            const bz = trajectoryFileInfo.size.z;
-            const epsilon = 0.000001;
-            if (
-                Math.abs(bx) < epsilon ||
-                Math.abs(by) < epsilon ||
-                Math.abs(bz) < epsilon
-            ) {
-                this.logger.warn(
-                    "WARNING: Bounding box: at least one bound is zero; using default bounds"
-                );
-                this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
-            } else {
-                this.resetBounds([bx, by, bz]);
-            }
-        } else {
-            this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
-        }
-    }
-
-    private handleCameraData(cameraDefault: CameraSpec) {
+    public handleCameraData(cameraDefault: CameraSpec): void {
         // Get default camera transform values from data
         if (cameraDefault) {
             this.cameraDefault = cameraDefault;
@@ -1342,8 +1308,10 @@ class VisGeometry {
     public resetBounds(volumeDimensions?: number[]): void {
         this.scene.remove(this.boundingBoxMesh, this.tickMarksMesh);
         if (!volumeDimensions) {
-            this.logger.warn("invalid volume dimensions received");
-            return;
+            this.logger.warn(
+                `Invalid volume dimensions received: ${volumeDimensions}; using defaults.`
+            );
+            volumeDimensions = DEFAULT_VOLUME_DIMENSIONS;
         }
         const [bx, by, bz] = volumeDimensions;
         const boundsAsTuple: Bounds = [
