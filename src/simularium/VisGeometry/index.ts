@@ -375,7 +375,10 @@ class VisGeometry {
                 const reader = new FileReader();
                 reader.onload = (event: ProgressEvent<FileReader>) => {
                     const obj = JSON.parse(event?.target?.result as string);
-                    this.loadCamera(obj);
+                    const cam = cloneDeep(DEFAULT_CAMERA_SPEC);
+                    cam.position = obj.position;
+                    cam.lookAtPosition = obj.target;
+                    this.loadCamera(cam);
                 };
                 const files = (e.target as HTMLInputElement).files;
                 if (files !== null) {
