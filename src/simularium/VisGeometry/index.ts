@@ -33,6 +33,7 @@ import { cloneDeep, noop } from "lodash";
 import VisAgent from "./VisAgent";
 import VisTypes from "../VisTypes";
 import PDBModel from "./PDBModel";
+import AgentPath from "./agentPath";
 import { FrontEndError, ErrorLevel } from "../FrontEndError";
 
 import {
@@ -78,10 +79,6 @@ export enum RenderStyle {
     WEBGL2_PREFERRED,
 }
 
-function lerp(x0: number, x1: number, alpha: number): number {
-    return x0 + (x1 - x0) * alpha;
-}
-
 function removeByName(group: Group, name: string): void {
     const childrenToRemove: Object3D[] = [];
     group.traverse((child) => {
@@ -92,18 +89,6 @@ function removeByName(group: Group, name: string): void {
     childrenToRemove.forEach(function (child) {
         group.remove(child);
     });
-}
-
-interface PathData {
-    agentId: number;
-    numSegments: number;
-    maxSegments: number;
-    color: Color;
-    points: Float32Array;
-    colors: Float32Array;
-    geometry: BufferGeometry;
-    material: LineBasicMaterial;
-    line: LineSegments;
 }
 
 type Bounds = readonly [number, number, number, number, number, number];
@@ -123,7 +108,7 @@ class VisGeometry {
     public fixLightsToCamera: boolean;
     public highlightedIds: number[];
     public hiddenIds: number[];
-    public paths: PathData[];
+    public agentPaths: Map<number, AgentPath>;
     public mlogger: ILogger;
     // this is the threejs object that issues all the webgl calls
     public threejsrenderer: WebGLRenderer;
@@ -194,7 +179,7 @@ class VisGeometry {
         this.needToReOrientCamera = false;
         this.rotateDistance = DEFAULT_CAMERA_Z_POSITION;
         // will store data for all agents that are drawing paths
-        this.paths = [];
+        this.agentPaths = new Map<number, AgentPath>();
 
         this.fibers = new InstancedFiberGroup();
 
@@ -1567,7 +1552,7 @@ class VisGeometry {
                 dy = agentData.y - lasty;
                 dz = agentData.z - lastz;
 
-                if (path && path.line) {
+                if (path) {
                     this.addPointToPath(
                         path,
                         agentData.x,
@@ -1671,11 +1656,8 @@ class VisGeometry {
         }
     }
 
-    public findPathForAgent(id: number): PathData | null {
-        const path = this.paths.find((path) => {
-            return path.agentId === id;
-        });
-
+    public findPathForAgent(id: number): AgentPath | null {
+        const path = this.agentPaths.get(id);
         if (path) {
             return path;
         }
@@ -1687,15 +1669,13 @@ class VisGeometry {
         id: number,
         maxSegments?: number,
         color?: Color
-    ): PathData {
+    ): AgentPath {
         // make sure the idx is not already in our list.
         // could be optimized...
         const foundpath = this.findPathForAgent(id);
         if (foundpath) {
-            if (foundpath.line) {
-                foundpath.line.visible = true;
-                return foundpath;
-            }
+            foundpath.show(true);
+            return foundpath;
         }
 
         if (!maxSegments) {
@@ -1712,73 +1692,28 @@ class VisGeometry {
             }
         }
 
-        const pointsArray = new Float32Array(maxSegments * 3 * 2);
-        const colorsArray = new Float32Array(maxSegments * 3 * 2);
-        const lineGeometry = new BufferGeometry();
-        lineGeometry.setAttribute(
-            "position",
-            new BufferAttribute(pointsArray, 3)
-        );
-        lineGeometry.setAttribute("color", new BufferAttribute(colorsArray, 3));
-        // path starts empty: draw range spans nothing
-        lineGeometry.setDrawRange(0, 0);
-
-        // the line will be colored per-vertex
-        const lineMaterial = new LineBasicMaterial({
-            vertexColors: true,
-        });
-
-        const lineObject = new LineSegments(lineGeometry, lineMaterial);
-        lineObject.frustumCulled = false;
-
-        const pathdata: PathData = {
-            agentId: id,
-            numSegments: 0,
-            maxSegments: maxSegments,
-            color: color || new Color(0xffffff),
-            points: pointsArray,
-            colors: colorsArray,
-            geometry: lineGeometry,
-            material: lineMaterial,
-            line: lineObject,
-        };
-
+        const pathdata = new AgentPath(color, maxSegments);
         this.agentPathGroup.add(pathdata.line);
-
-        this.paths.push(pathdata);
+        this.agentPaths.set(id, pathdata);
         return pathdata;
     }
 
     public removePathForAgent(id: number): void {
-        const pathindex = this.paths.findIndex((path) => {
-            return path.agentId === id;
-        });
-        if (pathindex === -1) {
+        if (!this.agentPaths.delete(id)) {
             this.logger.warn(
                 "attempted to remove path for agent " +
                     id +
                     " that doesn't exist."
             );
-            return;
         }
-        this.removeOnePath(pathindex);
-    }
-
-    private removeOnePath(pathindex) {
-        const path = this.paths[pathindex];
-        this.agentPathGroup.remove(path.line);
-
-        this.paths.splice(pathindex, 1);
     }
 
     private removeAllPaths() {
-        while (this.paths.length > 0) {
-            this.removeOnePath(0);
-        }
+        this.agentPaths.clear();
     }
 
     public addPointToPath(
-        path: PathData,
+        path: AgentPath,
         x: number,
         y: number,
         z: number,
@@ -1808,75 +1743,13 @@ class VisGeometry {
             dz = 0;
         }
 
-        // check for paths at max length
-        if (path.numSegments === path.maxSegments) {
-            // because we append to the end, we can copyWithin to move points up to the beginning
-            // as a means of removing the first point in the path.
-            // shift the points:
-            path.points.copyWithin(0, 3 * 2, path.maxSegments * 3 * 2);
-            path.numSegments = path.maxSegments - 1;
-        } else {
-            // rewrite all the colors. this might be prohibitive for lots of long paths.
-            for (let ic = 0; ic < path.numSegments + 1; ++ic) {
-                // the very first point should be a=1
-                const a = 1.0 - ic / (path.numSegments + 1);
-                path.colors[ic * 6 + 0] = lerp(
-                    path.color.r,
-                    this.pathEndColor.r,
-                    a
-                );
-                path.colors[ic * 6 + 1] = lerp(
-                    path.color.g,
-                    this.pathEndColor.g,
-                    a
-                );
-                path.colors[ic * 6 + 2] = lerp(
-                    path.color.b,
-                    this.pathEndColor.b,
-                    a
-                );
-
-                // the very last point should be b=0
-                const b = 1.0 - (ic + 1) / (path.numSegments + 1);
-                path.colors[ic * 6 + 3] = lerp(
-                    path.color.r,
-                    this.pathEndColor.r,
-                    b
-                );
-                path.colors[ic * 6 + 4] = lerp(
-                    path.color.g,
-                    this.pathEndColor.g,
-                    b
-                );
-                path.colors[ic * 6 + 5] = lerp(
-                    path.color.b,
-                    this.pathEndColor.b,
-                    b
-                );
-            }
-            path.line.geometry.attributes.color.needsUpdate = true;
-        }
-        // add a segment to this line
-        path.points[path.numSegments * 2 * 3 + 0] = x - dx;
-        path.points[path.numSegments * 2 * 3 + 1] = y - dy;
-        path.points[path.numSegments * 2 * 3 + 2] = z - dz;
-        path.points[path.numSegments * 2 * 3 + 3] = x;
-        path.points[path.numSegments * 2 * 3 + 4] = y;
-        path.points[path.numSegments * 2 * 3 + 5] = z;
-
-        path.numSegments++;
-
-        path.line.geometry.setDrawRange(0, path.numSegments * 2);
-        path.line.geometry.attributes.position.needsUpdate = true; // required after the first render
+        path.addPointToPath(x, y, z, dx, dy, dz, this.pathEndColor);
     }
 
     public setShowPaths(showPaths: boolean): void {
-        for (let i = 0; i < this.paths.length; ++i) {
-            const line = this.paths[i].line;
-            if (line) {
-                line.visible = showPaths;
-            }
-        }
+        this.agentPaths.forEach((path: AgentPath) => {
+            path.show(showPaths);
+        });
     }
 
     public toggleAllAgentsHidden(hideAllAgents: boolean): void {
@@ -1898,9 +1771,7 @@ class VisGeometry {
     public showPathForAgent(id: number, visible: boolean): void {
         const path = this.findPathForAgent(id);
         if (path) {
-            if (path.line) {
-                path.line.visible = visible;
-            }
+            path.show(visible);
         }
     }
 

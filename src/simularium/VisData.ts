@@ -40,7 +40,7 @@ export interface AgentData {
     yrot: number;
     zrot: number;
     instanceId: number;
-    visType: number;
+    ["vis-type"]: number;
     type: number;
     cr: number;
     subpoints: number[];
@@ -198,7 +198,7 @@ class VisData {
         let j = AGENTS_OFFSET;
         for (let i = 0; i < expectedNumAgents; i++) {
             const agentData: AgentData = {
-                visType: -1,
+                "vis-type": -1,
                 instanceId: -1,
                 type: -1,
                 x: 0,
