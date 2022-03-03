@@ -159,26 +159,22 @@ class Viewer extends React.Component<{}, ViewerState> {
         const files: FileList = input.files || data.files;
         const filesArr: File[] = Array.from(files) as File[];
 
-        // try to find the simularium file first, then read it.
-        // then put all the other files as geoAssets.
-        const simulariumFileIndex = findIndex(filesArr, (file) =>
-            file.name.includes(".simularium")
-        );
         try {
-            loadSimulariumFile(filesArr[simulariumFileIndex])
-                .then((simulariumFile: ISimulariumFile) =>
-                    // textify every file that was not the simularium file:
-                    Promise.all(
-                        filesArr.map((element, index) => {
-                            if (index !== simulariumFileIndex) {
-                                // is async call
-                                return element.text();
-                            } else {
-                                return simulariumFile;
-                            }
-                        })
-                    )
-                )
+            // Try to identify the simularium file.
+            // Put all the other files as text based geoAssets.
+            const simulariumFileIndex = findIndex(filesArr, (file) =>
+                file.name.includes(".simularium")
+            );
+            Promise.all(
+                filesArr.map((element, index) => {
+                    if (index !== simulariumFileIndex) {
+                        // is async call
+                        return element.text();
+                    } else {
+                        return loadSimulariumFile(element);
+                    }
+                })
+            )
                 .then((parsedFiles) => {
                     const simulariumFile = parsedFiles[
                         simulariumFileIndex
