@@ -63,10 +63,8 @@ export function loadSimulariumFile(file: Blob): Promise<ISimulariumFile> {
         })
         .then((fileContents: ArrayBuffer | string) => {
             if (typeof fileContents === "string") {
-                console.log("TEXT JSON FILE");
                 return new JsonFileReader(JSON.parse(fileContents as string));
             } else {
-                console.log("BINARY FILE");
                 // better be arraybuffer
                 return new BinaryFileReader(fileContents as ArrayBuffer);
             }
