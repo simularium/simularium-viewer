@@ -52,16 +52,8 @@ export function getFileExtension(pathOrUrl: string): string {
     );
 }
 
-export function isBinarySimulariumFile(fileContents: Blob): Promise<boolean> {
-    const first16blob: Blob = fileContents.slice(0, 16);
-    // compare this with "SIMULARIUMBINARY"
-    return first16blob.text().then((text) => {
-        return text === "SIMULARIUMBINARY";
-    });
-}
-
 export function loadSimulariumFile(file: Blob): Promise<ISimulariumFile> {
-    return isBinarySimulariumFile(file)
+    return BinaryFileReader.isBinarySimulariumFile(file)
         .then((isBinary): Promise<ArrayBuffer | string> => {
             if (isBinary) {
                 return file.arrayBuffer();

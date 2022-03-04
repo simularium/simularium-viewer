@@ -49,6 +49,13 @@ export default class BinaryFileReader implements ISimulariumFile {
         this.spatialDataBlock = this.readSpatialDataInfo();
     }
 
+    static isBinarySimulariumFile(fileContents: Blob): Promise<boolean> {
+        const first16blob: Blob = fileContents.slice(0, 16);
+        return first16blob.text().then((text) => {
+            return text === SECRET;
+        });
+    }
+
     private readSpatialDataInfo(): DataView {
         // find spatial data block and load frame offsets
         for (const block of this.header.blocks) {
