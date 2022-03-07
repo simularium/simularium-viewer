@@ -362,6 +362,7 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     private stopRecording(): void {
+        simulariumController.pause();
         this.mediaRecorder.stop();
     }
 
