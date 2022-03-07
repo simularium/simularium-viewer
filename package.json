@@ -95,8 +95,8 @@
         "react-dom": "^16.9.0"
     },
     "dependencies": {
-        "@ffmpeg/core": "^0.10.0",
-        "@ffmpeg/ffmpeg": "^0.10.1",
+        "@ffmpeg/core": "^0.8.3",
+        "@ffmpeg/ffmpeg": "^0.9.4",
         "@fortawesome/fontawesome-free": "^5.15.2",
         "@fortawesome/fontawesome-svg-core": "^1.2.34",
         "@fortawesome/free-solid-svg-icons": "^5.15.2",

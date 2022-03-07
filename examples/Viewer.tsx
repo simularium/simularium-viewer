@@ -3,6 +3,7 @@ import type {
     UIDisplayData,
     SelectionStateInfo,
 } from "../src/simularium/SelectionInterface";
+import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
 
 import SimulariumViewer, {
     SimulariumController,
@@ -135,20 +136,35 @@ class Viewer extends React.Component<{}, ViewerState> {
         const stream = canvasEl.captureStream();
         this.mediaRecorder = new MediaRecorder(stream, {
             mimeType: "video/webm; codecs=vp9",
+            // Default of 2.5 Mbps is unsatisfactory
             videoBitsPerSecond: 5000000
         });
-        this.mediaRecorder.ondataavailable = (event) => {
-            console.log("data available:", event.data)
-            const blob = new Blob([event.data], { type: "video/webm"});
-            const url = URL.createObjectURL(blob);
-            let a = document.createElement("a");
-            document.body.appendChild(a);
-            a.style = "display: none";
-            a.href = url;
-            a.download = "test.webm";
-            a.click();
-            window.URL.revokeObjectURL(url);
+        this.mediaRecorder.ondataavailable = (event: BlobEvent) => {
+            this.handleVideoDataAvailable(event);
         }
+    }
+
+    private handleVideoDataAvailable = async (event: BlobEvent) => {
+        console.log("data available:", event.data)
+        const blob = new Blob([event.data], { type: "video/webm" });
+        const transcode = async (file: Blob) => {
+            const ffmpeg = createFFmpeg({
+                log: true,
+            });
+            await ffmpeg.load();
+            ffmpeg.FS('writeFile', "video.webm", await fetchFile(file));
+            await ffmpeg.run('-i', "video.webm", "video.mp4");
+            return ffmpeg.FS('readFile', "video.mp4");
+        }
+        const mp4Data = await transcode(blob);
+        const url = URL.createObjectURL(new Blob([mp4Data.buffer], { type: 'video/mp4' }));
+        let a = document.createElement("a");
+        document.body.appendChild(a);
+        a.style = "display: none";
+        a.href = url;
+        a.download = "video.mp4";
+        a.click();
+        window.URL.revokeObjectURL(url);
     }
 
     public onDragOver = (e: Event): void => {
