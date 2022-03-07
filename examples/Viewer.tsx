@@ -134,7 +134,8 @@ class Viewer extends React.Component<{}, ViewerState> {
         const canvasEl = document.querySelector("canvas");
         const stream = canvasEl.captureStream();
         this.mediaRecorder = new MediaRecorder(stream, {
-            mimeType: "video/webm"
+            mimeType: "video/webm; codecs=vp9",
+            videoBitsPerSecond: 5000000
         });
         this.mediaRecorder.ondataavailable = (event) => {
             console.log("data available:", event.data)
@@ -459,6 +460,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                 <label htmlFor="slider">
                     {this.state.currentTime} / {this.state.totalDuration}
                 </label>
+                <br/>
                 <button onClick={this.startRecording.bind(this)}>
                     Start Recording
                 </button>
