@@ -75,6 +75,7 @@ interface ViewerState {
     totalDuration: number;
     uiDisplayData: UIDisplayData;
     recordingTime: number; // in seconds
+    videoOutputStatus: string;
 }
 
 const simulariumController = new SimulariumController({});
@@ -102,6 +103,7 @@ const initialState = {
         hiddenAgents: [],
     },
     recordingTime: 0,
+    videoOutputStatus: "",
 };
 
 class Viewer extends React.Component<{}, ViewerState> {
@@ -150,6 +152,9 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     private handleVideoDataAvailable = async (event: BlobEvent) => {
+        this.setState({
+            videoOutputStatus: "Processing..."
+        });
         console.log("Video data available:", event.data)
         // Following example from:
         // https://github.com/ffmpegwasm/react-app/blob/master/src/App.js
@@ -165,7 +170,9 @@ class Viewer extends React.Component<{}, ViewerState> {
         }
         const mp4Data = await transcodeToMp4(webmBlob);
         const mp4Blob = new Blob([mp4Data.buffer], { type: "video/mp4" });
-        console.log(`Size of output video: ${mp4Blob.size / 1000} KB`);
+        this.setState({
+            videoOutputStatus: `Video file size: ${mp4Blob.size / 1000} KB`
+        });
         const url = URL.createObjectURL(mp4Blob);
         let a = document.createElement("a");
         document.body.appendChild(a);
@@ -374,7 +381,10 @@ class Viewer extends React.Component<{}, ViewerState> {
         // this.mediaRecorder.start() completes.
 
         // simulariumController.pause();
-        this.setState({ recordingTime: 0 });
+        this.setState({ 
+            recordingTime: 0,
+            videoOutputStatus: ""
+        });
         this.mediaRecorder.start();
         this.recordingTimerId = setInterval(() => this.setState({
             recordingTime: this.state.recordingTime + 1
@@ -506,9 +516,12 @@ class Viewer extends React.Component<{}, ViewerState> {
                 <button onClick={this.stopRecording.bind(this)}>
                     Stop Recording
                 </button>
-                <span>
-                    {this.state.recordingTime ? `Recording length: ${this.state.recordingTime} s` : ""}
-                </span>
+                {this.state.recordingTime > 0 &&
+                    <span>Recording length: {this.state.recordingTime} s</span>
+                }
+                {this.state.videoOutputStatus &&
+                    <span>{" "}|{" "}{this.state.videoOutputStatus}</span>
+                }
                 <br />
                 {this.state.particleTypeNames.map((id, i) => {
                     return (
