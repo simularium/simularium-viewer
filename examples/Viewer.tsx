@@ -358,7 +358,15 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     private startRecording(): void {
+        // FIXME: The viewer breaks if recording begins while trajectory is playing.
+        // One possible workaround is to pause before recording start, then resume
+        // after recording starts, but it results in a slo-mo part in the middle
+        // of the exported video. It might be because we need to wait until 
+        // this.mediaRecorder.start() completes.
+
+        // simulariumController.pause();
         this.mediaRecorder.start();
+        // simulariumController.resume();
     }
 
     private stopRecording(): void {
