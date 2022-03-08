@@ -141,7 +141,7 @@ class Viewer extends React.Component<{}, ViewerState> {
         const canvasEl = document.querySelector("canvas");
         const stream = canvasEl.captureStream();
         this.mediaRecorder = new MediaRecorder(stream, {
-            mimeType: "video/webm; codecs=vp9",
+            mimeType: "video/webm",
             // Default of 2.5 Mbps is unsatisfactory
             videoBitsPerSecond: 5000000
         });
