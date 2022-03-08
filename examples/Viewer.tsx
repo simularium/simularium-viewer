@@ -139,25 +139,28 @@ class Viewer extends React.Component<{}, ViewerState> {
             // Default of 2.5 Mbps is unsatisfactory
             videoBitsPerSecond: 5000000
         });
+        // Data becomes available on mediaRecorder.stop()
         this.mediaRecorder.ondataavailable = (event: BlobEvent) => {
             this.handleVideoDataAvailable(event);
         }
     }
 
     private handleVideoDataAvailable = async (event: BlobEvent) => {
-        console.log("data available:", event.data)
-        const blob = new Blob([event.data], { type: "video/webm" });
-        const transcode = async (file: Blob) => {
+        console.log("Video data available:", event.data)
+        // Following example from:
+        // https://github.com/ffmpegwasm/react-app/blob/master/src/App.js
+        const webmBlob = new Blob([event.data], { type: "video/webm" });
+        const transcodeToMp4 = async (webmBlob: Blob) => {
             const ffmpeg = createFFmpeg({
                 log: true,
             });
             await ffmpeg.load();
-            ffmpeg.FS('writeFile', "video.webm", await fetchFile(file));
-            await ffmpeg.run('-i', "video.webm", "video.mp4");
-            return ffmpeg.FS('readFile', "video.mp4");
+            ffmpeg.FS("writeFile", "video.webm", await fetchFile(webmBlob));
+            await ffmpeg.run("-i", "video.webm", "video.mp4");
+            return ffmpeg.FS("readFile", "video.mp4");
         }
-        const mp4Data = await transcode(blob);
-        const url = URL.createObjectURL(new Blob([mp4Data.buffer], { type: 'video/mp4' }));
+        const mp4Data = await transcodeToMp4(webmBlob);
+        const url = URL.createObjectURL(new Blob([mp4Data.buffer], { type: "video/mp4" }));
         let a = document.createElement("a");
         document.body.appendChild(a);
         a.style = "display: none";

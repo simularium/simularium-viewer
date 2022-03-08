@@ -33,6 +33,8 @@ module.exports = {
         },
         open: ["public/"],
         allowedHosts: "all",
+        // See note about SharedArrayBuffer under "Browser":
+        // https://github.com/ffmpegwasm/ffmpeg.wasm#installation
         headers: {
             'Cross-Origin-Embedder-Policy': 'require-corp',
             "Cross-Origin-Opener-Policy": "same-origin"
