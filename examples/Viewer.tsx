@@ -74,6 +74,7 @@ interface ViewerState {
     timeStep: number;
     totalDuration: number;
     uiDisplayData: UIDisplayData;
+    recordingTime: number; // in seconds
 }
 
 const simulariumController = new SimulariumController({});
@@ -100,6 +101,7 @@ const initialState = {
         highlightedAgents: [],
         hiddenAgents: [],
     },
+    recordingTime: 0,
 };
 
 class Viewer extends React.Component<{}, ViewerState> {
@@ -107,11 +109,13 @@ class Viewer extends React.Component<{}, ViewerState> {
     private mediaRecorder: MediaRecorder;
     private panMode = false;
     private focusMode = true;
+    private recordingTimerId: NodeJS.Timer;
 
     public constructor(props) {
         super(props);
         this.viewerRef = React.createRef();
         this.mediaRecorder = undefined;
+        this.recordingTimerId = undefined;
         this.handleJsonMeshData = this.handleJsonMeshData.bind(this);
         this.handleTimeChange = this.handleTimeChange.bind(this);
         this.state = initialState;
@@ -160,7 +164,9 @@ class Viewer extends React.Component<{}, ViewerState> {
             return ffmpeg.FS("readFile", "video.mp4");
         }
         const mp4Data = await transcodeToMp4(webmBlob);
-        const url = URL.createObjectURL(new Blob([mp4Data.buffer], { type: "video/mp4" }));
+        const mp4Blob = new Blob([mp4Data.buffer], { type: "video/mp4" });
+        console.log(`Size of output video: ${mp4Blob.size / 1000} KB`);
+        const url = URL.createObjectURL(mp4Blob);
         let a = document.createElement("a");
         document.body.appendChild(a);
         a.style = "display: none";
@@ -368,12 +374,17 @@ class Viewer extends React.Component<{}, ViewerState> {
         // this.mediaRecorder.start() completes.
 
         // simulariumController.pause();
+        this.setState({ recordingTime: 0 });
         this.mediaRecorder.start();
+        this.recordingTimerId = setInterval(() => this.setState({
+            recordingTime: this.state.recordingTime + 1
+        }), 1000);
         // simulariumController.resume();
     }
 
     private stopRecording(): void {
         simulariumController.pause();
+        clearInterval(this.recordingTimerId);
         this.mediaRecorder.stop();
     }
 
@@ -495,6 +506,9 @@ class Viewer extends React.Component<{}, ViewerState> {
                 <button onClick={this.stopRecording.bind(this)}>
                     Stop Recording
                 </button>
+                <span>
+                    {this.state.recordingTime ? `Recording length: ${this.state.recordingTime} s` : ""}
+                </span>
                 <br />
                 {this.state.particleTypeNames.map((id, i) => {
                     return (
