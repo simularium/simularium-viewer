@@ -158,7 +158,7 @@ export default class VisAgent {
 
     public getFollowPosition(): Vector3 {
         if (
-            this.agentData.visType === VisTypes.ID_VIS_TYPE_FIBER &&
+            this.agentData["vis-type"] === VisTypes.ID_VIS_TYPE_FIBER &&
             this.fiberCurve
         ) {
             return this.fiberCurve.getPoint(0.5);
