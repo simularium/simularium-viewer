@@ -573,6 +573,8 @@ class VisData {
         msg: VisDataMessage | ArrayBuffer
     ): void {
         if (msg instanceof ArrayBuffer) {
+            // Streamed binary data can have partial frames but
+            // drag and drop is assumed to provide whole frames.
             const frames = VisData.parseOneBinaryFrame(msg);
             if (
                 frames.frameDataArray.length > 0 &&
