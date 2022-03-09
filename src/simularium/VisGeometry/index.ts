@@ -306,50 +306,26 @@ class VisGeometry {
         fcam.addInput(this.camera, "position");
         fcam.addInput(this.controls, "target");
 
-        const grid1: ButtonGridApi = this.gui.addBlade({
-            view: "buttongrid",
-            size: [2, 1],
-            cells: (x, y) => ({
-                title: [["View", "Save"]][y][x],
-            }),
-            label: "Cam 1",
-        }) as ButtonGridApi;
-        grid1.on("click", (ev) => {
-            if (ev.index[0] === 0) {
-                this.loadCamera(this.cam1);
-            } else if (ev.index[0] === 1) {
-                this.storeCamera(this.cam1);
-            }
-        });
-        const grid2: ButtonGridApi = this.gui.addBlade({
-            view: "buttongrid",
-            size: [2, 1],
-            cells: (x, y) => ({
-                title: [["View", "Save"]][y][x],
-            }),
-            label: "Cam 2",
-        }) as ButtonGridApi;
-        grid2.on("click", (ev) => {
-            if (ev.index[0] === 0) {
-                this.loadCamera(this.cam2);
-            } else if (ev.index[0] === 1) {
-                this.storeCamera(this.cam2);
-            }
-        });
-        const grid3: ButtonGridApi = this.gui.addBlade({
-            view: "buttongrid",
-            size: [2, 1],
-            cells: (x, y) => ({
-                title: [["View", "Save"]][y][x],
-            }),
-            label: "Cam 3",
-        }) as ButtonGridApi;
-        grid3.on("click", (ev) => {
-            if (ev.index[0] === 0) {
-                this.loadCamera(this.cam3);
-            } else if (ev.index[0] === 1) {
-                this.storeCamera(this.cam3);
-            }
+        [
+            { camera: this.cam1, label: "Cam 1" },
+            { camera: this.cam2, label: "Cam 2" },
+            { camera: this.cam3, label: "Cam 3" },
+        ].forEach(({ camera, label }) => {
+            const grid: ButtonGridApi = this.gui?.addBlade({
+                view: "buttongrid",
+                size: [2, 1],
+                cells: (x, y) => ({
+                    title: [["Activate", "Save"]][y][x],
+                }),
+                label: label,
+            }) as ButtonGridApi;
+            grid.on("click", (ev) => {
+                if (ev.index[0] === 0) {
+                    this.loadCamera(camera);
+                } else if (ev.index[0] === 1) {
+                    this.storeCamera(camera);
+                }
+            });
         });
 
         this.gui.addButton({ title: "Export Cam" }).on("click", () => {
