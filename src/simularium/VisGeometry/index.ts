@@ -25,7 +25,7 @@ import {
 
 import { Pane } from "tweakpane";
 import * as EssentialsPlugin from "@tweakpane/plugin-essentials";
-
+import { ButtonGridApi } from "@tweakpane/plugin-essentials/dist/types/button-grid/api/button-grid";
 import jsLogger from "js-logger";
 import { ILogger, ILogLevel } from "js-logger";
 import { cloneDeep, noop } from "lodash";
@@ -162,6 +162,10 @@ class VisGeometry {
     private focusMode: boolean;
     public gui?: Pane;
 
+    private cam1: CameraSpec;
+    private cam2: CameraSpec;
+    private cam3: CameraSpec;
+
     // Scene update will populate these lists of visible pdb agents.
     // These lists are iterated at render time to detemine LOD.
     // This is because camera updates happen at a different frequency than scene updates.
@@ -169,6 +173,10 @@ class VisGeometry {
     private agentPdbsToDraw: PDBModel[];
 
     public constructor(loggerLevel: ILogLevel) {
+        this.cam1 = cloneDeep(DEFAULT_CAMERA_SPEC);
+        this.cam2 = cloneDeep(DEFAULT_CAMERA_SPEC);
+        this.cam3 = cloneDeep(DEFAULT_CAMERA_SPEC);
+
         this.renderStyle = RenderStyle.WEBGL1_FALLBACK;
         this.supportsWebGL2Rendering = false;
 
@@ -265,6 +273,28 @@ class VisGeometry {
         this.threejsrenderer.setClearColor(this.backgroundColor, 1);
     }
 
+    private loadCamera(cameraSpec: CameraSpec): void {
+        // TODO add other parameters from CameraSpec?
+        this.camera.position.set(
+            cameraSpec.position.x,
+            cameraSpec.position.y,
+            cameraSpec.position.z
+        );
+        this.controls.target.set(
+            cameraSpec.lookAtPosition.x,
+            cameraSpec.lookAtPosition.y,
+            cameraSpec.lookAtPosition.z
+        );
+    }
+    private storeCamera(cameraSpec: CameraSpec): void {
+        cameraSpec.position.x = this.camera.position.x;
+        cameraSpec.position.y = this.camera.position.y;
+        cameraSpec.position.z = this.camera.position.z;
+        cameraSpec.lookAtPosition.x = this.controls.target.x;
+        cameraSpec.lookAtPosition.y = this.controls.target.y;
+        cameraSpec.lookAtPosition.z = this.controls.target.z;
+    }
+
     public setupGui(container?: HTMLElement): void {
         this.gui = new Pane({
             title: "Advanced Settings",
@@ -275,6 +305,64 @@ class VisGeometry {
         const fcam = this.gui.addFolder({ title: "Camera" });
         fcam.addInput(this.camera, "position");
         fcam.addInput(this.controls, "target");
+
+        [
+            { camera: this.cam1, label: "Cam 1" },
+            { camera: this.cam2, label: "Cam 2" },
+            { camera: this.cam3, label: "Cam 3" },
+        ].forEach(({ camera, label }) => {
+            const grid: ButtonGridApi = this.gui?.addBlade({
+                view: "buttongrid",
+                size: [2, 1],
+                cells: (x, y) => ({
+                    title: [["Activate", "Save"]][y][x],
+                }),
+                label: label,
+            }) as ButtonGridApi;
+            grid.on("click", (ev) => {
+                if (ev.index[0] === 0) {
+                    this.loadCamera(camera);
+                } else if (ev.index[0] === 1) {
+                    this.storeCamera(camera);
+                }
+            });
+        });
+
+        this.gui.addButton({ title: "Export Cam" }).on("click", () => {
+            const preset = this.gui?.exportPreset();
+            const cam = {
+                position: preset?.position,
+                target: preset?.target,
+            };
+            const anchor = document.createElement("a");
+            anchor.href = URL.createObjectURL(
+                new Blob([JSON.stringify(cam, null, 2)], {
+                    type: "text/plain",
+                })
+            );
+            anchor.download = "camera.json";
+            anchor.click();
+        });
+        this.gui.addButton({ title: "Import Cam" }).on("click", () => {
+            const fileinput: HTMLInputElement = document.createElement("input");
+            fileinput.type = "file";
+            fileinput.style.display = "none";
+            fileinput.addEventListener("change", (e: Event) => {
+                const reader = new FileReader();
+                reader.onload = (event: ProgressEvent<FileReader>) => {
+                    const obj = JSON.parse(event?.target?.result as string);
+                    const cam = cloneDeep(DEFAULT_CAMERA_SPEC);
+                    cam.position = obj.position;
+                    cam.lookAtPosition = obj.target;
+                    this.loadCamera(cam);
+                };
+                const files = (e.target as HTMLInputElement).files;
+                if (files !== null) {
+                    reader.readAsText(files[0]);
+                }
+            });
+            fileinput.click();
+        });
 
         const settings = {
             lodBias: this.lodBias,
@@ -297,7 +385,7 @@ class VisGeometry {
                 event.value.b / 255.0,
             ]);
         });
-        this.gui.addButton({ title: "Capture" }).on("click", () => {
+        this.gui.addButton({ title: "Capture Frame" }).on("click", () => {
             this.render(0);
             const dataUrl =
                 this.threejsrenderer.domElement.toDataURL("image/png");

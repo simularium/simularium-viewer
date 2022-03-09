@@ -365,7 +365,7 @@ class Viewport extends React.Component<
 
         const event = e as KeyboardEvent;
         // control-option-1 (mac) or ctrl-alt-1 (windows)
-        if (event.key === "1" && event.altKey && event.ctrlKey) {
+        if (event.code === "Digit1" && event.altKey && event.ctrlKey) {
             const s = this.state.showRenderParamsGUI;
             this.setState({ showRenderParamsGUI: !s });
         }
