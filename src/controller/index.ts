@@ -9,7 +9,6 @@ import {
     VisGeometry,
 } from "../simularium";
 import {
-    SimulariumFileFormat,
     FileReturn,
     FILE_STATUS_SUCCESS,
     FILE_STATUS_FAIL,
@@ -20,6 +19,7 @@ import { IClientSimulatorImpl } from "../simularium/localSimulators/IClientSimul
 import { ISimulator } from "../simularium/ISimulator";
 import { LocalFileSimulator } from "../simularium/LocalFileSimulator";
 import { FrontEndError } from "../simularium/FrontEndError";
+import ISimulariumFile from "../simularium/ISimulariumFile";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
@@ -36,7 +36,7 @@ interface SimulariumControllerParams {
 interface SimulatorConnectionParams {
     netConnectionSettings?: NetConnectionParams;
     clientSimulator?: IClientSimulatorImpl;
-    simulariumFile?: SimulariumFileFormat;
+    simulariumFile?: ISimulariumFile;
     geoAssets?: { [key: string]: string };
 }
 
@@ -113,11 +113,14 @@ export default class SimulariumController {
     private createSimulatorConnection(
         netConnectionConfig?: NetConnectionParams,
         clientSimulator?: IClientSimulatorImpl,
-        localFile?: SimulariumFileFormat,
+        localFile?: ISimulariumFile,
         geoAssets?: { [key: string]: string }
     ): void {
         if (clientSimulator) {
             this.simulator = new ClientSimulator(clientSimulator);
+            this.simulator.setTrajectoryDataHandler(
+                this.visData.parseAgentsFromNetData.bind(this.visData)
+            );
         } else if (localFile) {
             this.simulator = new LocalFileSimulator(
                 this.playBackFile,
@@ -126,10 +129,16 @@ export default class SimulariumController {
             if (this.visGeometry && geoAssets && !isEmpty(geoAssets)) {
                 this.visGeometry.geometryStore.cacheLocalAssets(geoAssets);
             }
+            this.simulator.setTrajectoryDataHandler(
+                this.visData.parseAgentsFromLocalFileData.bind(this.visData)
+            );
         } else if (netConnectionConfig) {
             this.simulator = new RemoteSimulator(
                 netConnectionConfig,
                 this.onError
+            );
+            this.simulator.setTrajectoryDataHandler(
+                this.visData.parseAgentsFromNetData.bind(this.visData)
             );
         } else {
             // caught in try/catch block, not sent to front end
@@ -142,9 +151,6 @@ export default class SimulariumController {
             (trajFileInfo: TrajectoryFileInfo) => {
                 this.handleTrajectoryInfo(trajFileInfo);
             }
-        );
-        this.simulator.setTrajectoryDataHandler(
-            this.visData.parseAgentsFromNetData.bind(this.visData)
         );
     }
 

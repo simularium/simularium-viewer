@@ -10,6 +10,25 @@ import {
 } from "./types";
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
 
+// must be utf-8 encoded
+const EOF_PHRASE: Uint8Array = new TextEncoder().encode(
+    "\\EOFTHEFRAMEENDSHERE"
+);
+// IMPORTANT: Order of this array needs to perfectly match the incoming data.
+const AGENT_OBJECT_KEYS = [
+    "vis-type",
+    "instanceId",
+    "type",
+    "x",
+    "y",
+    "z",
+    "xrot",
+    "yrot",
+    "zrot",
+    "cr",
+    "nSubPoints",
+];
+
 /**
  * Parse Agents from Net Data
  * */
@@ -84,23 +103,9 @@ class VisData {
         const parsedAgentDataArray: AgentData[][] = [];
         const frameDataArray: FrameData[] = [];
         visDataMsg.bundleData.forEach((frame) => {
-            // IMPORTANT: Order of this array needs to perfectly match the incoming data.
-            const agentObjectKeys = [
-                "vis-type",
-                "instanceId",
-                "type",
-                "x",
-                "y",
-                "z",
-                "xrot",
-                "yrot",
-                "zrot",
-                "cr",
-                "nSubPoints",
-            ];
             const visData = frame.data;
             const parsedAgentData: AgentData[] = [];
-            const nSubPointsIndex = agentObjectKeys.findIndex(
+            const nSubPointsIndex = AGENT_OBJECT_KEYS.findIndex(
                 (ele) => ele === "nSubPoints"
             );
 
@@ -108,8 +113,8 @@ class VisData {
                 return agentArray.reduce(
                     (agentData, cur, i) => {
                         let key;
-                        if (agentObjectKeys[i]) {
-                            key = agentObjectKeys[i];
+                        if (AGENT_OBJECT_KEYS[i]) {
+                            key = AGENT_OBJECT_KEYS[i];
                             agentData[key] = cur;
                         } else if (
                             i <
@@ -125,9 +130,9 @@ class VisData {
 
             while (visData.length) {
                 const nSubPoints = visData[nSubPointsIndex];
-                const chunkLength = agentObjectKeys.length + nSubPoints; // each array length is variable based on how many subpoints the agent has
+                const chunkLength = AGENT_OBJECT_KEYS.length + nSubPoints; // each array length is variable based on how many subpoints the agent has
                 if (visData.length < chunkLength) {
-                    const attemptedMapping = agentObjectKeys.map(
+                    const attemptedMapping = AGENT_OBJECT_KEYS.map(
                         (name, index) => `${name}: ${visData[index]}<br />`
                     );
                     // will be caught by controller.changeFile(...).catch()
@@ -141,8 +146,8 @@ class VisData {
                 }
 
                 const agentSubSetArray = visData.splice(0, chunkLength); // cut off the array of 1 agent data from front of the array;
-                if (agentSubSetArray.length < agentObjectKeys.length) {
-                    const attemptedMapping = agentObjectKeys.map(
+                if (agentSubSetArray.length < AGENT_OBJECT_KEYS.length) {
+                    const attemptedMapping = AGENT_OBJECT_KEYS.map(
                         (name, index) =>
                             `${name}: ${agentSubSetArray[index]}<br />`
                     );
@@ -175,16 +180,70 @@ class VisData {
         };
     }
 
+    private static parseOneBinaryFrame(data: ArrayBuffer): ParsedBundle {
+        const parsedAgentDataArray: AgentData[][] = [];
+        const frameDataArray: FrameData[] = [];
+        const floatView = new Float32Array(data);
+        const intView = new Uint32Array(data);
+        const parsedFrameData = {
+            time: floatView[1],
+            frameNumber: floatView[0],
+        };
+        const expectedNumAgents = intView[2];
+        frameDataArray.push(parsedFrameData);
+
+        const AGENTS_OFFSET = 3;
+
+        const parsedAgentData: AgentData[] = [];
+        let j = AGENTS_OFFSET;
+        for (let i = 0; i < expectedNumAgents; i++) {
+            const agentData: AgentData = {
+                visType: -1,
+                instanceId: -1,
+                type: -1,
+                x: 0,
+                y: 0,
+                z: 0,
+                xrot: 0,
+                yrot: 0,
+                zrot: 0,
+                cr: 0,
+                subpoints: [],
+            };
+
+            for (let k = 0; k < AGENT_OBJECT_KEYS.length; ++k) {
+                agentData[AGENT_OBJECT_KEYS[k]] = floatView[j++];
+            }
+            const nSubPoints = agentData["nSubPoints"];
+            if (!Number.isInteger(nSubPoints)) {
+                throw new FrontEndError(
+                    "Your data is malformed, non-integer value found for num-subpoints.",
+                    ErrorLevel.ERROR,
+                    `Number of Subpoints: <pre>${nSubPoints}</pre>`
+                );
+                break;
+            }
+            // now read sub points.
+            for (let k = 0; k < nSubPoints; k++) {
+                agentData.subpoints.push(floatView[j++]);
+            }
+            parsedAgentData.push(agentData);
+        }
+        parsedAgentDataArray.push(parsedAgentData);
+
+        return {
+            parsedAgentDataArray,
+            frameDataArray,
+        };
+    }
+
     public static parseBinary(data: ArrayBuffer): ParsedBundle {
         const parsedAgentDataArray: AgentData[][] = [];
         const frameDataArray: FrameData[] = [];
 
-        const enc = new TextEncoder(); // always utf-8
-        const eofPhrase = enc.encode("\\EOFTHEFRAMEENDSHERE");
-
         const byteView = new Uint8Array(data);
         const length = byteView.length;
-        const lastEOF = length - eofPhrase.length;
+        const lastEOF = length - EOF_PHRASE.length;
         let end = 0;
         let start = 0;
 
@@ -193,8 +252,8 @@ class VisData {
         while (end < lastEOF) {
             // Find the next End of Frame signal
             for (; end < length; end = end + 4) {
-                const curr = byteView.subarray(end, end + eofPhrase.length);
-                if (curr.every((val, i) => val === eofPhrase[i])) {
+                const curr = byteView.subarray(end, end + EOF_PHRASE.length);
+                if (curr.every((val, i) => val === EOF_PHRASE[i])) {
                     break;
                 }
             }
@@ -219,22 +278,8 @@ class VisData {
             frameDataArray.push(parsedFrameData);
 
             // Parse the frameData
-            // IMPORTANT: Order of this array needs to perfectly match the incoming data.
-            const agentObjectKeys = [
-                "vis-type",
-                "instanceId",
-                "type",
-                "x",
-                "y",
-                "z",
-                "xrot",
-                "yrot",
-                "zrot",
-                "cr",
-                "nSubPoints",
-            ];
             const parsedAgentData: AgentData[] = [];
-            const nSubPointsIndex = agentObjectKeys.findIndex(
+            const nSubPointsIndex = AGENT_OBJECT_KEYS.findIndex(
                 (ele) => ele === "nSubPoints"
             );
 
@@ -242,8 +287,8 @@ class VisData {
                 return agentArray.reduce(
                     (agentData, cur, i) => {
                         let key;
-                        if (agentObjectKeys[i]) {
-                            key = agentObjectKeys[i];
+                        if (AGENT_OBJECT_KEYS[i]) {
+                            key = AGENT_OBJECT_KEYS[i];
                             agentData[key] = cur;
                         } else if (
                             i <
@@ -273,10 +318,10 @@ class VisData {
                 }
 
                 // each array length is variable based on how many subpoints the agent has
-                const chunkLength = agentObjectKeys.length + nSubPoints;
+                const chunkLength = AGENT_OBJECT_KEYS.length + nSubPoints;
                 const remaining = agentDataView.length - dataIter;
                 if (remaining < chunkLength - 1) {
-                    const attemptedMapping = agentObjectKeys.map(
+                    const attemptedMapping = AGENT_OBJECT_KEYS.map(
                         (name, index) =>
                             `${name}: ${agentDataView[dataIter + index]}<br />`
                     );
@@ -294,8 +339,8 @@ class VisData {
                     dataIter,
                     dataIter + chunkLength
                 );
-                if (agentSubSetArray.length < agentObjectKeys.length) {
-                    const attemptedMapping = agentObjectKeys.map(
+                if (agentSubSetArray.length < AGENT_OBJECT_KEYS.length) {
+                    const attemptedMapping = AGENT_OBJECT_KEYS.map(
                         (name, index) =>
                             `${name}: ${agentSubSetArray[index]}<br />`
                     );
@@ -323,7 +368,7 @@ class VisData {
 
             parsedAgentDataArray.push(parsedAgentData);
 
-            start = end + eofPhrase.length;
+            start = end + EOF_PHRASE.length;
             end = start;
         }
 
@@ -488,17 +533,7 @@ class VisData {
         }
     }
 
-    public parseAgentsFromNetData(msg: VisDataMessage | ArrayBuffer): void {
-        if (msg instanceof ArrayBuffer) {
-            const floatView = new Float32Array(msg);
-
-            const fileNameSize = Math.ceil(floatView[1] / 4);
-            const dataStart = (2 + fileNameSize) * 4;
-
-            this.parseBinaryNetData(msg as ArrayBuffer, dataStart);
-            return;
-        }
-
+    private parseAgentsFromVisDataMessage(msg: VisDataMessage): void {
         /**
          *   visDataMsg = {
          *       ...
@@ -534,19 +569,52 @@ class VisData {
         }
     }
 
+    public parseAgentsFromLocalFileData(
+        msg: VisDataMessage | ArrayBuffer
+    ): void {
+        if (msg instanceof ArrayBuffer) {
+            // Streamed binary data can have partial frames but
+            // drag and drop is assumed to provide whole frames.
+            const frames = VisData.parseOneBinaryFrame(msg);
+            if (
+                frames.frameDataArray.length > 0 &&
+                frames.frameDataArray[0].frameNumber === 0
+            ) {
+                this.clearCache(); // new data has arrived
+            }
+            this.addFramesToCache(frames);
+            return;
+        }
+
+        // handle VisDataMessage
+        this.parseAgentsFromVisDataMessage(msg);
+    }
+
+    public parseAgentsFromNetData(msg: VisDataMessage | ArrayBuffer): void {
+        if (msg instanceof ArrayBuffer) {
+            const floatView = new Float32Array(msg);
+
+            const fileNameSize = Math.ceil(floatView[1] / 4);
+            const dataStart = (2 + fileNameSize) * 4;
+
+            this.parseBinaryNetData(msg as ArrayBuffer, dataStart);
+            return;
+        }
+
+        this.parseAgentsFromVisDataMessage(msg);
+    }
+
     private parseBinaryNetData(data: ArrayBuffer, dataStart: number) {
         let eof = -1;
 
         // find last '/eof' signal in new data
         const byteView = new Uint8Array(data);
 
-        const enc = new TextEncoder(); // always utf-8
-        const eofPhrase = enc.encode("\\EOFTHEFRAMEENDSHERE");
-
-        let index = byteView.length - eofPhrase.length;
+        // walk backwards in order to find the last eofPhrase in the data
+        let index = byteView.length - EOF_PHRASE.length;
         for (; index > 0; index = index - 4) {
-            const curr = byteView.subarray(index, index + eofPhrase.length);
-            if (curr.every((val, i) => val === eofPhrase[i])) {
+            const curr = byteView.subarray(index, index + EOF_PHRASE.length);
+            if (curr.every((val, i) => val === EOF_PHRASE[i])) {
                 eof = index;
                 break;
             }
@@ -574,7 +642,7 @@ class VisData {
             this.addFramesToCache(frames);
 
             // Save remaining data for later processing
-            const remainder = data.slice(eof + eofPhrase.length);
+            const remainder = data.slice(eof + EOF_PHRASE.length);
             this.netBuffer = new ArrayBuffer(remainder.byteLength);
             new Uint8Array(this.netBuffer).set(new Uint8Array(remainder));
         } else {
@@ -658,6 +726,7 @@ class VisData {
     public convertVisDataWorkFunctionToString(): string {
         // e.data is of type VisDataMessage
         return `function visDataWorkerFunc() {
+        const AGENT_OBJECT_KEYS=["${AGENT_OBJECT_KEYS.join('","')}"];
         self.addEventListener('message', (e) => {
             const visDataMsg = e.data;
             const {

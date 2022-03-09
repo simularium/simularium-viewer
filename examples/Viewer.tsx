@@ -9,13 +9,16 @@ import SimulariumViewer, {
     RenderStyle,
     ErrorLevel,
 } from "../src";
+import { FrontEndError } from "../src/simularium/FrontEndError";
+import { loadSimulariumFile } from "../src/util";
+
 import "../style/style.css";
 import { isEqual, findIndex } from "lodash";
 
 import PointSimulator from "./PointSimulator";
 import PdbSimulator from "./PdbSimulator";
 import CurveSimulator from "./CurveSimulator";
-import { FrontEndError } from "../src/simularium/FrontEndError";
+import ISimulariumFile from "../src/simularium/ISimulariumFile";
 
 const netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
@@ -28,13 +31,6 @@ const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.has("file")) {
     queryStringFile = urlParams.get("file");
     playbackFile = queryStringFile;
-}
-
-// Typescript's File definition is missing this function
-//  which is part of the HTML standard on all browsers
-//  and needed below
-interface FileHTML extends File {
-    text(): Promise<string>;
 }
 
 const agentColors = [
@@ -161,43 +157,58 @@ class Viewer extends React.Component<{}, ViewerState> {
         const data: DataTransfer = event.dataTransfer as DataTransfer;
 
         const files: FileList = input.files || data.files;
-        const filesArr: FileHTML[] = Array.from(files) as FileHTML[];
-        Promise.all(
-            filesArr.map((item) => {
-                return item.text();
-            })
-        ).then((parsedFiles) => {
+        const filesArr: File[] = Array.from(files) as File[];
+
+        try {
+            // Try to identify the simularium file.
+            // Put all the other files as text based geoAssets.
             const simulariumFileIndex = findIndex(filesArr, (file) =>
                 file.name.includes(".simularium")
             );
-            let simulariumFile;
-            try {
-                simulariumFile = JSON.parse(parsedFiles[simulariumFileIndex]);
-            } catch (error) {
-                return this.onError(new FrontEndError(error.message));
-            }
-            const fileName = filesArr[simulariumFileIndex].name;
-            const geoAssets = filesArr.reduce((acc, cur, index) => {
-                if (index !== simulariumFileIndex) {
-                    acc[cur.name] = parsedFiles[index];
-                }
-                return acc;
-            }, {});
-            simulariumController
-                .changeFile({ simulariumFile, geoAssets }, fileName)
+            Promise.all(
+                filesArr.map((element, index) => {
+                    if (index !== simulariumFileIndex) {
+                        // is async call
+                        return element.text();
+                    } else {
+                        return loadSimulariumFile(element);
+                    }
+                })
+            )
+                .then((parsedFiles) => {
+                    const simulariumFile = parsedFiles[
+                        simulariumFileIndex
+                    ] as ISimulariumFile;
+                    // build the geoAssets as mapping name-value pairs:
+                    const geoAssets = filesArr.reduce((acc, cur, index) => {
+                        if (index !== simulariumFileIndex) {
+                            acc[cur.name] = parsedFiles[index];
+                            return acc;
+                        }
+                    }, {});
+                    const fileName = filesArr[simulariumFileIndex].name;
+                    simulariumController.changeFile(
+                        { simulariumFile, geoAssets },
+                        fileName
+                    );
+                })
                 .catch((error) => {
                     this.onError(error);
                 });
-        });
+        } catch (error) {
+            return this.onError(new FrontEndError(error.message));
+        }
     };
 
     public loadFromUrl(url): void {
         fetch(url)
-            .then((item) => {
-                return item.text();
+            .then((item: Response) => {
+                return item.blob();
             })
-            .then((parsedFile) => {
-                const simulariumFile = JSON.parse(parsedFile);
+            .then((blob: Blob) => {
+                return loadSimulariumFile(blob);
+            })
+            .then((simulariumFile) => {
                 const fileName = url;
                 simulariumController
                     .changeFile({ simulariumFile }, fileName)

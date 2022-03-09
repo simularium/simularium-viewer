@@ -11,7 +11,9 @@ export interface ISimulator {
     ): void;
 
     // a callback to notify when VisDataMessage is ready (the agent data)
-    setTrajectoryDataHandler(handler: (msg: VisDataMessage) => void): void;
+    setTrajectoryDataHandler(
+        handler: (msg: VisDataMessage | ArrayBuffer) => void
+    ): void;
 
     socketIsValid(): boolean;
 

@@ -50,7 +50,7 @@ interface Layout {
     yaxis: { title: string };
 }
 
-interface Plot {
+export interface Plot {
     data: ScatterTrace[] | HistogramTrace[];
     layout?: Layout;
 }
