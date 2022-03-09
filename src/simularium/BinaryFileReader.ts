@@ -22,7 +22,7 @@ interface Header {
     version: number;
     blocks: BlockInfo[];
 }
-const SECRET = "SIMULARIUMBINARY";
+const SIGNATURE = "SIMULARIUMBINARY";
 
 // each block has a type and a size
 const BLOCK_HEADER_SIZE = 8;
@@ -52,7 +52,7 @@ export default class BinaryFileReader implements ISimulariumFile {
     static isBinarySimulariumFile(fileContents: Blob): Promise<boolean> {
         const first16blob: Blob = fileContents.slice(0, 16);
         return first16blob.text().then((text) => {
-            return text === SECRET;
+            return text === SIGNATURE;
         });
     }
 
@@ -89,8 +89,8 @@ export default class BinaryFileReader implements ISimulariumFile {
 
     private readHeader(): Header {
         // could use DataView here but I know every header field is int32
-        // note I set the offset to move past the secret string
-        const asints = new Uint32Array(this.fileContents, SECRET.length);
+        // note I set the offset to move past the signature string
+        const asints = new Uint32Array(this.fileContents, SIGNATURE.length);
         const headerLength = asints[0];
         const headerVersion = asints[1];
         const nBlocks = asints[2];
@@ -98,7 +98,7 @@ export default class BinaryFileReader implements ISimulariumFile {
             throw new Error("No blocks found in file");
         }
         const blocks: BlockInfo[] = [];
-        // the number of 32-bit ints after the SECRET and before the toc
+        // the number of 32-bit ints after the SIGNATURE and before the toc
         const OFFSET_TO_TABLE_OF_CONTENTS = 3;
         for (let i = 0; i < nBlocks; i++) {
             blocks.push({
