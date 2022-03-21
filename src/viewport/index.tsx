@@ -8,6 +8,7 @@ import SimulariumController from "../controller";
 import { forOwn, isEqual } from "lodash";
 
 import {
+    RenderStyle,
     VisGeometry,
     TrajectoryFileInfo,
     SelectionInterface,
@@ -16,7 +17,6 @@ import {
     NO_AGENT,
 } from "../simularium";
 import { TrajectoryFileInfoAny } from "../simularium/types";
-import { RenderStyle } from "../simularium";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
 
@@ -152,15 +152,78 @@ class Viewport extends React.Component<
         };
     }
 
+    private onTrajectoryFileInfo(msg: TrajectoryFileInfoAny): void {
+        const {
+            simulariumController,
+            onTrajectoryFileInfoChanged,
+            onUIDisplayDataChanged,
+            onError,
+            agentColors,
+        } = this.props;
+
+        // Update TrajectoryFileInfo format to latest version
+        const trajectoryFileInfo: TrajectoryFileInfo =
+            updateTrajectoryFileInfoFormat(msg, onError);
+
+        simulariumController.visData.timeStepSize =
+            trajectoryFileInfo.timeStepSize;
+
+        const bx = trajectoryFileInfo.size.x;
+        const by = trajectoryFileInfo.size.y;
+        const bz = trajectoryFileInfo.size.z;
+        const epsilon = 0.000001;
+        if (
+            Math.abs(bx) < epsilon ||
+            Math.abs(by) < epsilon ||
+            Math.abs(bz) < epsilon
+        ) {
+            this.visGeometry.resetBounds();
+        } else {
+            this.visGeometry.resetBounds([bx, by, bz]);
+        }
+        // this can only happen right after resetBounds
+        simulariumController.tickIntervalLength =
+            this.visGeometry.tickIntervalLength;
+
+        this.visGeometry.handleCameraData(trajectoryFileInfo.cameraDefault);
+        this.visGeometry.handleAgentGeometry(trajectoryFileInfo.typeMapping);
+
+        try {
+            this.selectionInterface.parse(trajectoryFileInfo.typeMapping);
+        } catch (e) {
+            if (onError) {
+                const error = e as Error;
+                onError(
+                    new FrontEndError(
+                        `error parsing 'typeMapping' data, ${error.message}`,
+                        ErrorLevel.ERROR
+                    )
+                );
+            } else {
+                console.log("error parsing 'typeMapping' data", e);
+            }
+        }
+        onTrajectoryFileInfoChanged(trajectoryFileInfo);
+        this.visGeometry.clearColorMapping();
+        const uiDisplayData = this.selectionInterface.getUIDisplayData();
+        const updatedColors = this.selectionInterface.setAgentColors(
+            uiDisplayData,
+            agentColors,
+            this.visGeometry.setColorForIds.bind(this.visGeometry)
+        );
+        if (!isEqual(updatedColors, agentColors)) {
+            this.visGeometry.createMaterials(updatedColors);
+        }
+        this.visGeometry.finalizeIdColorMapping();
+        onUIDisplayDataChanged(uiDisplayData);
+    }
+
     public componentDidMount(): void {
         const {
             backgroundColor,
             simulariumController,
-            onTrajectoryFileInfoChanged,
-            onUIDisplayDataChanged,
             loadInitialData,
             onError,
-            agentColors,
         } = this.props;
         this.visGeometry.reparent(this.vdomRef.current);
         if (backgroundColor !== undefined) {
@@ -181,66 +244,7 @@ class Viewport extends React.Component<
         simulariumController.trajFileInfoCallback = (
             msg: TrajectoryFileInfoAny
         ) => {
-            // Update TrajectoryFileInfo format to latest version
-            const trajectoryFileInfo: TrajectoryFileInfo =
-                updateTrajectoryFileInfoFormat(msg, onError);
-
-            simulariumController.visData.timeStepSize =
-                trajectoryFileInfo.timeStepSize;
-
-            if (trajectoryFileInfo.hasOwnProperty("size")) {
-                const bx = trajectoryFileInfo.size.x;
-                const by = trajectoryFileInfo.size.y;
-                const bz = trajectoryFileInfo.size.z;
-                const epsilon = 0.000001;
-                if (
-                    Math.abs(bx) < epsilon ||
-                    Math.abs(by) < epsilon ||
-                    Math.abs(bz) < epsilon
-                ) {
-                    this.visGeometry.resetBounds();
-                } else {
-                    this.visGeometry.resetBounds([bx, by, bz]);
-                }
-            } else {
-                this.visGeometry.resetBounds();
-            }
-            this.visGeometry.handleCameraData(trajectoryFileInfo.cameraDefault);
-            this.visGeometry.handleAgentGeometry(
-                trajectoryFileInfo.typeMapping
-            );
-
-            simulariumController.tickIntervalLength =
-                this.visGeometry.tickIntervalLength;
-
-            try {
-                this.selectionInterface.parse(trajectoryFileInfo.typeMapping);
-            } catch (e) {
-                if (onError) {
-                    const error = e as Error;
-                    onError(
-                        new FrontEndError(
-                            `error parsing 'typeMapping' data, ${error.message}`,
-                            ErrorLevel.ERROR
-                        )
-                    );
-                } else {
-                    console.log("error parsing 'typeMapping' data", e);
-                }
-            }
-            onTrajectoryFileInfoChanged(trajectoryFileInfo);
-            this.visGeometry.clearColorMapping();
-            const uiDisplayData = this.selectionInterface.getUIDisplayData();
-            const updatedColors = this.selectionInterface.setAgentColors(
-                uiDisplayData,
-                agentColors,
-                this.visGeometry.setColorForIds.bind(this.visGeometry)
-            );
-            if (!isEqual(updatedColors, agentColors)) {
-                this.visGeometry.createMaterials(updatedColors);
-            }
-            this.visGeometry.finalizeIdColorMapping();
-            onUIDisplayDataChanged(uiDisplayData);
+            this.onTrajectoryFileInfo(msg);
         };
 
         simulariumController.postConnect = () => {
