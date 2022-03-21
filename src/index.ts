@@ -8,12 +8,7 @@ export type {
     VisDataFrame,
 } from "./simularium";
 export { Orchestrator, RenderStyle, SimulariumController };
-export {
-    RemoteSimulator,
-    DummyRemoteSimulator,
-    ErrorLevel,
-    FrontEndError,
-} from "./simularium";
+export { RemoteSimulator, ErrorLevel, FrontEndError } from "./simularium";
 export { compareTimes } from "./util";
 
 export default Viewport;

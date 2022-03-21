@@ -1,7 +1,9 @@
-import { RemoteSimulator } from "..";
-import { NetConnectionParams, NetMessageEnum } from "../RemoteSimulator";
-
-import { VisDataFrame, VisDataMessage } from "../types";
+import {
+    NetConnectionParams,
+    NetMessageEnum,
+    RemoteSimulator,
+} from "../simularium/RemoteSimulator";
+import { VisDataFrame, VisDataMessage } from "../simularium/types";
 
 interface TestDataBundle {
     bundleSize: number;
