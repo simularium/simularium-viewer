@@ -3,12 +3,12 @@ import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import jsLogger, { ILogger, ILogLevel } from "js-logger";
 import { BufferGeometry, Object3D, Mesh } from "three";
 
-import { checkAndSanitizePath, getFileExtension } from "../../util";
+import { checkAndSanitizePath, getFileExtension } from "../util";
 import PDBModel from "./PDBModel";
 import { InstancedMesh, InstanceType } from "./rendering/InstancedMesh";
 import VisAgent from "./VisAgent";
-import TaskQueue from "../TaskQueue";
-import { AgentTypeVisData } from "../types";
+import TaskQueue from "../simularium/TaskQueue";
+import { AgentTypeVisData } from "../simularium/types";
 
 import {
     AgentGeometry,

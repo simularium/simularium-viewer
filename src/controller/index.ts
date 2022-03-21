@@ -6,8 +6,8 @@ import {
     VisData,
     VisDataMessage,
     TrajectoryFileInfo,
-    VisGeometry,
 } from "../simularium";
+import { VisGeometry } from "../visGeometry";
 import {
     FileReturn,
     FILE_STATUS_SUCCESS,

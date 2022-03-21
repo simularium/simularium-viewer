@@ -8,17 +8,15 @@ import SimulariumController from "../controller";
 import { forOwn, isEqual } from "lodash";
 
 import {
-    RenderStyle,
-    VisGeometry,
     TrajectoryFileInfo,
     SelectionInterface,
     SelectionStateInfo,
     UIDisplayData,
-    NO_AGENT,
 } from "../simularium";
 import { TrajectoryFileInfoAny } from "../simularium/types";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
+import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry";
 
 export type PropColor = string | number | [number, number, number];
 

@@ -14,7 +14,7 @@ import {
 import { KMeansWorkerType } from "./KMeansWorker";
 
 import KMeans from "./rendering/KMeans3d";
-import TaskQueue from "../TaskQueue";
+import TaskQueue from "../simularium/TaskQueue";
 import { InstancedMesh, InstanceType } from "./rendering/InstancedMesh";
 
 interface PDBAtom {

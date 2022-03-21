@@ -31,21 +31,18 @@ import { ILogger, ILogLevel } from "js-logger";
 import { cloneDeep, noop } from "lodash";
 
 import VisAgent from "./VisAgent";
-import VisTypes from "../VisTypes";
+import VisTypes from "../simularium/VisTypes";
 import PDBModel from "./PDBModel";
 import AgentPath from "./agentPath";
-import { FrontEndError, ErrorLevel } from "../FrontEndError";
+import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
 
-import {
-    DEFAULT_CAMERA_Z_POSITION,
-    DEFAULT_CAMERA_SPEC,
-} from "../../constants";
+import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC } from "../constants";
 import {
     CameraSpec,
     EncodedTypeMapping,
     AgentDisplayDataWithGeometry,
-} from "../types";
-import { AgentData } from "../VisData";
+} from "../simularium/types";
+import { AgentData } from "../simularium/VisData";
 
 import SimulariumRenderer from "./rendering/SimulariumRenderer";
 import { InstancedFiberGroup } from "./rendering/InstancedFiber";
@@ -59,7 +56,7 @@ import {
     MeshLoadRequest,
     PDBGeometry,
 } from "./types";
-import { checkAndSanitizePath } from "../../util";
+import { checkAndSanitizePath } from "../util";
 import { convertColorStringToNumber } from "./color-utils";
 
 const MAX_PATH_LEN = 32;
