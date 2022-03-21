@@ -16,6 +16,7 @@ const EOF_PHRASE: Uint8Array = new TextEncoder().encode(
 );
 // IMPORTANT: Order of this array needs to perfectly match the incoming data.
 const AGENT_OBJECT_KEYS = [
+    // TODO: convert "vis-type" to visType at parse time
     "vis-type",
     "instanceId",
     "type",
@@ -198,6 +199,7 @@ class VisData {
         let j = AGENTS_OFFSET;
         for (let i = 0; i < expectedNumAgents; i++) {
             const agentData: AgentData = {
+                //TODO use visType in AgentData and convert from "vis-type" here at parse time
                 "vis-type": -1,
                 instanceId: -1,
                 type: -1,
