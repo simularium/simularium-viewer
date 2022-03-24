@@ -1,34 +1,105 @@
-import { Color, Mesh, MeshBasicMaterial } from "three";
+import { Color, Euler, Group, Mesh, Quaternion, Vector3, Vector4 } from "three";
 import { MarchingCubes } from "three/examples/jsm/objects/MarchingCubes";
 
-import { AgentData } from "../../simularium/VisData";
+import MetaballMeshShaders from "./MetaballMeshShader";
+import { MRTShaders } from "./MultipassMaterials";
 
-export default class MetaballMesh {
-    static generateMesh(agentData: AgentData): Mesh {
-        const subpts = agentData.subpoints;
+class MetaballMesh {
+    private drawable: Group;
+    private shaderSet: MRTShaders;
+
+    // to act like an instancedmesh for GeometryStore purposes
+    // but each instance is a whole MarchingCubes object
+    constructor(name: string) {
+        this.drawable = new Group();
+        this.drawable.name = name;
+        this.shaderSet = MetaballMeshShaders.shaderSet;
+    }
+
+    public getMesh(): Group {
+        return this.drawable;
+    }
+
+    public getShaders(): MRTShaders {
+        return this.shaderSet;
+    }
+
+    public instanceCount(): number {
+        return this.drawable.children.length;
+    }
+
+    public beginUpdate(): void {
+        // remove all from group!
+        for (let i = this.drawable.children.length - 1; i >= 0; i--) {
+            this.drawable.remove(this.drawable.children[i]);
+        }
+    }
+
+    public endUpdate(): void {
+        // no op
+    }
+
+    public replaceGeometry(newGeom: Mesh, meshName: string): void {
+        // no op
+    }
+
+    public addInstance(
+        x: number,
+        y: number,
+        z: number,
+        scale: number,
+        rx: number,
+        ry: number,
+        rz: number,
+        uniqueAgentId: number,
+        typeId: number,
+        lodScale = 1,
+        subPoints: number[] = []
+    ): Mesh {
         // MARCHING CUBES
 
+        const mat = this.shaderSet.mat.clone();
+        mat.uniforms.translateAndScale.value = new Vector4(x, y, z, scale);
+        mat.uniforms.rotation.value = new Quaternion().setFromEuler(
+            new Euler(rx, ry, rz)
+        );
+        mat.uniforms.instanceAndTypeId.value = new Vector3(
+            uniqueAgentId,
+            typeId,
+            lodScale
+        );
+
         const resolution = 28;
-        const mat = new MeshBasicMaterial();
-        const effect = new MarchingCubes(resolution, mat, true, true, 100000);
+        const enableNormals = true;
+        const enableColors = false;
+        const maxPolyCount = 100000;
+        const effect = new MarchingCubes(
+            resolution,
+            mat,
+            enableNormals,
+            enableColors,
+            maxPolyCount
+        );
         effect.position.set(0, 0, 0);
         effect.scale.set(1, 1, 1);
 
         effect.enableUvs = false;
         effect.enableColors = false;
 
-        for (let i = 0; i < subpts.length; i += 4) {
+        for (let i = 0; i < subPoints.length; i += 4) {
             effect.addBall(
-                subpts[i + 0],
-                subpts[i + 1],
-                subpts[i + 2],
-                subpts[i + 3] * subpts[i + 3],
+                subPoints[i + 0],
+                subPoints[i + 1],
+                subPoints[i + 2],
+                subPoints[i + 3] * subPoints[i + 3],
                 1.0,
                 new Color(0xffffff)
             );
         }
-        //scene.add( effect );
+        this.drawable.add(effect);
 
         return effect;
     }
 }
+
+export { MetaballMesh };

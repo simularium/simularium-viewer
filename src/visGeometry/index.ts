@@ -58,7 +58,7 @@ import {
 } from "./types";
 import { checkAndSanitizePath } from "../util";
 import { convertColorStringToNumber } from "./color-utils";
-import MetaballMesh from "./rendering/MetaballMesh";
+import { MetaballMesh } from "./rendering/MetaballMesh";
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 100000;
@@ -846,7 +846,7 @@ class VisGeometry {
             this.scene.autoUpdate = false;
 
             // collect up the meshes that have > 0 instances
-            const meshTypes: InstancedMesh[] = [];
+            const meshTypes: (InstancedMesh | MetaballMesh)[] = [];
             for (const entry of this.geometryStore.registry.values()) {
                 const { displayType } = entry;
                 if (displayType !== GeometryDisplayType.PDB) {
@@ -1394,7 +1394,9 @@ class VisGeometry {
                     agentData.yrot,
                     agentData.zrot,
                     visAgent.agentData.instanceId,
-                    visAgent.signedTypeId()
+                    visAgent.signedTypeId(),
+                    1,
+                    agentData.subpoints
                 );
             }
         }
@@ -1533,14 +1535,7 @@ class VisGeometry {
                     return;
                 }
                 const { geometry, displayType } = response;
-                if (displayType === GeometryDisplayType.METABALLS) {
-                    // generate metaballs from subpoints
-                    const mesh = MetaballMesh.generateMesh(agentData);
-                    // add to render list.
-                } else if (
-                    geometry &&
-                    displayType === GeometryDisplayType.PDB
-                ) {
+                if (geometry && displayType === GeometryDisplayType.PDB) {
                     const pdbEntry = geometry as PDBModel;
                     this.addPdbToDrawList(typeId, visAgent, pdbEntry);
                 } else {

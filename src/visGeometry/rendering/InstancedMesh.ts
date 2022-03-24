@@ -187,7 +187,8 @@ class InstancedMesh {
         rz: number,
         uniqueAgentId: number,
         typeId: number,
-        lodScale = 1
+        lodScale = 1,
+        subPoints: number[] = []
     ): void {
         const offset = this.currentInstance;
         this.checkRealloc(this.currentInstance + 1);

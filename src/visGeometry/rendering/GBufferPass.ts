@@ -1,7 +1,7 @@
 import PDBGBufferShaders from "./PDBGBufferShaders";
 import { InstancedFiberGroup } from "./InstancedFiber";
 import { InstancedMesh } from "./InstancedMesh";
-
+import { MetaballMesh } from "./MetaballMesh";
 import {
     MRTShaders,
     setRenderPass,
@@ -39,7 +39,7 @@ class GBufferPass {
     public instancedMeshGroup: Group;
     // instancedMeshGroup consists of fibers and meshes:
     public fibers: InstancedFiberGroup;
-    public meshTypes: InstancedMesh[];
+    public meshTypes: (InstancedMesh | MetaballMesh)[];
 
     public constructor() {
         this.instancedMeshGroup = new Group();
@@ -54,7 +54,7 @@ class GBufferPass {
     public setMeshGroups(
         instancedMeshGroup: Group,
         fibers: InstancedFiberGroup,
-        meshes: InstancedMesh[]
+        meshes: (InstancedMesh | MetaballMesh)[]
     ): void {
         this.instancedMeshGroup = instancedMeshGroup;
         this.fibers = fibers;

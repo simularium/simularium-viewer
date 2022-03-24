@@ -413,6 +413,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                     <option value="TEST_PDB">TEST PDB</option>
                     <option value="TEST_FIBERS">TEST FIBERS</option>
                     <option value="TEST_POINTS">TEST POINTS</option>
+                    <option value="TEST_METABALLS">TEST METABALLS</option>
                 </select>
                 <button onClick={() => this.configureAndLoad()}>
                     Load model

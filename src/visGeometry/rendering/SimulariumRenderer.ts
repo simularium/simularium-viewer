@@ -21,6 +21,7 @@ import {
     PerspectiveCamera,
 } from "three";
 import { Pane } from "tweakpane";
+import { MetaballMesh } from "./MetaballMesh";
 
 const AGENTBUFFER = 0;
 const NORMALBUFFER = 1;
@@ -317,7 +318,7 @@ class SimulariumRenderer {
     public setMeshGroups(
         instancedMeshGroup: Group,
         fibers: InstancedFiberGroup,
-        meshTypes: InstancedMesh[]
+        meshTypes: (InstancedMesh | MetaballMesh)[]
     ): void {
         this.gbufferPass.setMeshGroups(instancedMeshGroup, fibers, meshTypes);
     }

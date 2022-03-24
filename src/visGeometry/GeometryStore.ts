@@ -17,7 +17,7 @@ import {
     MeshGeometry,
     MeshLoadRequest,
 } from "./types";
-import MetaballMesh from "./rendering/MetaballMesh";
+import { MetaballMesh } from "./rendering/MetaballMesh";
 
 export const DEFAULT_MESH_NAME = "SPHERE";
 
@@ -234,7 +234,11 @@ class GeometryStore {
                 return; // should be unreachable, but needed for TypeScript
             }
             const { geometry, displayType } = entry;
-            if (geometry && displayType !== GeometryDisplayType.PDB) {
+            if (
+                geometry &&
+                displayType !== GeometryDisplayType.PDB &&
+                displayType !== GeometryDisplayType.METABALLS
+            ) {
                 const meshRequest = geometry as MeshLoadRequest;
                 // there is already a mesh registered but we are going to load a new one.
                 // start by resetting this entry to a sphere. we will replace when the new mesh arrives
@@ -412,15 +416,22 @@ class GeometryStore {
         if (!url) {
             // displayType not either pdb or obj
             // TODO: handle CUBE, GIZMO etc
-            const lookupKey = `${id}-${displayType}`;
             if (displayType === GeometryDisplayType.METABALLS) {
+                const lookupKey = `${displayType}`;
+                // instances in this case will be a simple array of MarchingCubes objects.
+                // clear in between redraws?
+                // on updatescene, add instances
+                // on render, pass the group of marchingcubes objects
                 const geometry = {
-                    mesh: new Mesh(),
+                    mesh: null,
                     cancelled: false,
+                    instances: new MetaballMesh(lookupKey),
                 } as MeshLoadRequest;
+
                 this.setGeometryInRegistry(lookupKey, geometry, displayType);
                 return Promise.resolve({ geometry });
             } else {
+                const lookupKey = `${id}-${displayType}`;
                 const geometry = this.createNewSphereGeometry(lookupKey);
                 this.setGeometryInRegistry(
                     lookupKey,

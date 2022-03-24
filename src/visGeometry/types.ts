@@ -1,11 +1,12 @@
 import { Object3D } from "three";
 import PDBModel from "./PDBModel";
 import { InstancedMesh } from "./rendering/InstancedMesh";
+import { MetaballMesh } from "./rendering/MetaballMesh";
 
 export interface MeshLoadRequest {
     mesh: Object3D;
     cancelled: boolean;
-    instances: InstancedMesh;
+    instances: InstancedMesh | MetaballMesh;
 }
 
 export enum GeometryDisplayType {
