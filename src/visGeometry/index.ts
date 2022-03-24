@@ -58,6 +58,7 @@ import {
 } from "./types";
 import { checkAndSanitizePath } from "../util";
 import { convertColorStringToNumber } from "./color-utils";
+import MetaballMesh from "./rendering/MetaballMesh";
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 100000;
@@ -1532,7 +1533,14 @@ class VisGeometry {
                     return;
                 }
                 const { geometry, displayType } = response;
-                if (geometry && displayType === GeometryDisplayType.PDB) {
+                if (displayType === GeometryDisplayType.METABALLS) {
+                    // generate metaballs from subpoints
+                    const mesh = MetaballMesh.generateMesh(agentData);
+                    // add to render list.
+                } else if (
+                    geometry &&
+                    displayType === GeometryDisplayType.PDB
+                ) {
                     const pdbEntry = geometry as PDBModel;
                     this.addPdbToDrawList(typeId, visAgent, pdbEntry);
                 } else {

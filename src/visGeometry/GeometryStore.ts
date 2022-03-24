@@ -17,6 +17,7 @@ import {
     MeshGeometry,
     MeshLoadRequest,
 } from "./types";
+import MetaballMesh from "./rendering/MetaballMesh";
 
 export const DEFAULT_MESH_NAME = "SPHERE";
 
@@ -409,16 +410,25 @@ class GeometryStore {
         const isMesh = displayType === GeometryDisplayType.OBJ;
         const isPDB = displayType === GeometryDisplayType.PDB;
         if (!url) {
-            // displayType not either pdb or obj, will show a sphere
+            // displayType not either pdb or obj
             // TODO: handle CUBE, GIZMO etc
             const lookupKey = `${id}-${displayType}`;
-            const geometry = this.createNewSphereGeometry(lookupKey);
-            this.setGeometryInRegistry(
-                lookupKey,
-                geometry,
-                GeometryDisplayType.SPHERE
-            );
-            return Promise.resolve({ geometry });
+            if (displayType === GeometryDisplayType.METABALLS) {
+                const geometry = {
+                    mesh: new Mesh(),
+                    cancelled: false,
+                } as MeshLoadRequest;
+                this.setGeometryInRegistry(lookupKey, geometry, displayType);
+                return Promise.resolve({ geometry });
+            } else {
+                const geometry = this.createNewSphereGeometry(lookupKey);
+                this.setGeometryInRegistry(
+                    lookupKey,
+                    geometry,
+                    GeometryDisplayType.SPHERE
+                );
+                return Promise.resolve({ geometry });
+            }
         }
         const lookupKey = checkAndSanitizePath(url);
 
