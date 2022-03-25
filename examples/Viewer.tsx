@@ -1,9 +1,10 @@
 import React from "react";
+import { isEqual, findIndex } from "lodash";
+
 import type {
     UIDisplayData,
     SelectionStateInfo,
 } from "../src/simularium/SelectionInterface";
-
 import SimulariumViewer, {
     SimulariumController,
     RenderStyle,
@@ -11,14 +12,12 @@ import SimulariumViewer, {
 } from "../src";
 import { FrontEndError } from "../src/simularium/FrontEndError";
 import { loadSimulariumFile } from "../src/util";
-
+import ISimulariumFile from "../src/simularium/ISimulariumFile";
 import "../style/style.css";
-import { isEqual, findIndex } from "lodash";
 
 import PointSimulator from "./PointSimulator";
 import PdbSimulator from "./PdbSimulator";
 import CurveSimulator from "./CurveSimulator";
-import ISimulariumFile from "../src/simularium/ISimulariumFile";
 
 const netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",

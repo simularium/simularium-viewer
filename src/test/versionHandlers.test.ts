@@ -5,7 +5,7 @@ import {
     sanitizeAgentMapGeometryData,
     updateTrajectoryFileInfoFormat,
 } from "../simularium/versionHandlers";
-import { GeometryDisplayType } from "../simularium/VisGeometry/types";
+import { GeometryDisplayType } from "../visGeometry/types";
 
 const invalidVersionData = {
     connId: "7496831076a233f0-2c337fed-4493-ad92-79f194744174ba05635426fd",

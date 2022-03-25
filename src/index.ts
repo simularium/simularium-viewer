@@ -1,16 +1,17 @@
-import Viewport, { RenderStyle } from "./viewport";
-import Orchestrator from "./orchestrator";
-import SimulariumController from "./controller";
+import Viewport from "./viewport";
+
 export type {
     SelectionStateInfo,
     UIDisplayData,
     SimulariumFileFormat,
     VisDataFrame,
 } from "./simularium";
-export { Orchestrator, RenderStyle, SimulariumController };
+
+export { RenderStyle } from "./viewport";
+export { SimulariumController } from "./controller";
 export {
+    Orchestrator,
     RemoteSimulator,
-    DummyRemoteSimulator,
     ErrorLevel,
     FrontEndError,
 } from "./simularium";

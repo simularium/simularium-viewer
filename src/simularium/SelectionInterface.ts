@@ -1,6 +1,6 @@
 import { filter, find, uniq } from "lodash";
 import { EncodedTypeMapping } from "./types";
-import { convertColorNumberToString } from "./VisGeometry/color-utils";
+import { convertColorNumberToString } from "../visGeometry/color-utils";
 
 // An individual entry parsed from an encoded name
 interface DecodedTypeEntry {

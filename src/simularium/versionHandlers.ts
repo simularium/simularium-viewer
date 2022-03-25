@@ -9,7 +9,7 @@ import {
     TrajectoryFileInfoAny,
     TrajectoryFileInfoV1,
 } from "./types";
-import { GeometryDisplayType } from "./VisGeometry/types";
+import { GeometryDisplayType } from "../visGeometry/types";
 
 // the data may come in missing any of these values
 export interface AgentTypeVisDataPreProcessing {

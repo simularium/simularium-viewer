@@ -1,4 +1,4 @@
-import { GeometryDisplayType } from "./VisGeometry/types";
+import { GeometryDisplayType } from "../visGeometry/types";
 
 export interface VisDataFrame {
     data: number[];

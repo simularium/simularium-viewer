@@ -8,7 +8,7 @@ import {
     VisDataMessage,
 } from "../src/simularium/types";
 import VisTypes from "../src/simularium/VisTypes";
-import { GeometryDisplayType } from "../src/simularium/VisGeometry/types";
+import { GeometryDisplayType } from "../src/visGeometry/types";
 
 export default class PdbSim implements IClientSimulatorImpl {
     nPoints: number;

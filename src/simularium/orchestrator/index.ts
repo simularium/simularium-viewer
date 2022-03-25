@@ -23,16 +23,16 @@ export default class Orchestrator {
         const nodeFetch = fetch(this.serviceAddr + "/get?" + params);
 
         return nodeFetch
-            .then(response => {
+            .then((response) => {
                 if (response.ok) {
-                    return response.json().then(data => {
+                    return response.json().then((data) => {
                         return Object.keys(data).length > 0 ? data : undefined;
                     });
                 } else {
                     return undefined;
                 }
             })
-            .catch(function() {
+            .catch(function () {
                 return undefined;
             });
     }
@@ -71,3 +71,5 @@ export default class Orchestrator {
         );
     }
 }
+
+export { Orchestrator };

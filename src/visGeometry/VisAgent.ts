@@ -1,7 +1,7 @@
 import { CatmullRomCurve3, Color, SphereBufferGeometry, Vector3 } from "three";
 
-import VisTypes from "../VisTypes";
-import { AgentData } from "../VisData";
+import VisTypes from "../simularium/VisTypes";
+import { AgentData } from "../simularium/VisData";
 
 const NO_AGENT = -1;
 
@@ -32,7 +32,7 @@ export default class VisAgent {
             yrot: 0,
             zrot: 0,
             instanceId: NO_AGENT,
-            visType: VisTypes.ID_VIS_TYPE_DEFAULT,
+            "vis-type": VisTypes.ID_VIS_TYPE_DEFAULT,
             type: 0,
             cr: 1.0,
             subpoints: [],
@@ -60,7 +60,7 @@ export default class VisAgent {
             yrot: 0,
             zrot: 0,
             instanceId: NO_AGENT,
-            visType: VisTypes.ID_VIS_TYPE_DEFAULT,
+            "vis-type": VisTypes.ID_VIS_TYPE_DEFAULT,
             type: 0,
             cr: 1.0,
             subpoints: [],
