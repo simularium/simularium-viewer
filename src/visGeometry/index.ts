@@ -641,7 +641,7 @@ class VisGeometry {
         });
 
         this.controls.maxDistance = 750;
-        this.controls.minDistance = 5;
+        this.controls.minDistance = 1;
         this.controls.zoomSpeed = 1.0;
         this.setPanningMode(false);
         this.controls.saveState();

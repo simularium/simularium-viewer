@@ -100,7 +100,11 @@ export default class MetaballSimulator implements IClientSimulatorImpl {
             const subpts = [];
             for (let i = 0; i < 8; ++i) {
                 // position
-                subpts.push(...this.randomPtInBox(-2, 2, -2, 2, -2, 2));
+                // coordinates in object space???
+                // world space??
+                // they will have to be converted to 0-1 space for metaball creation/voxelization
+                subpts.push(...this.randomPtInBox(0, 1, 0, 1, 0, 1));
+                //                subpts.push(...this.randomPtInBox(-2, 2, -2, 2, -2, 2));
                 // radius
                 subpts.push(this.randomFloat(0, 0.5));
             }
@@ -113,7 +117,7 @@ export default class MetaballSimulator implements IClientSimulatorImpl {
             agentData.push(0); // rx
             agentData.push(0); // ry
             agentData.push(0); // rz
-            agentData.push(0.1); // collision radius
+            agentData.push(1.0); // collision radius
             agentData.push(subpts.length);
             agentData.push(...subpts);
         }
@@ -156,11 +160,28 @@ export default class MetaballSimulator implements IClientSimulatorImpl {
             totalSteps: 1,
             // bounding volume dimensions
             size: {
-                x: 8,
-                y: 8,
-                z: 8,
+                x: 2,
+                y: 2,
+                z: 2,
             },
-            cameraDefault: DEFAULT_CAMERA_SPEC,
+            cameraDefault: {
+                position: {
+                    x: 0,
+                    y: 0,
+                    z: -3.6,
+                },
+                lookAtPosition: {
+                    x: 0,
+                    y: 0,
+                    z: 0,
+                },
+                upVector: {
+                    x: 0,
+                    y: 1,
+                    z: 0,
+                },
+                fovDegrees: 75,
+            },
             typeMapping: typeMapping,
             spatialUnits: {
                 magnitude: 1,

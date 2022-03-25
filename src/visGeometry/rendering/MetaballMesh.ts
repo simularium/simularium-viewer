@@ -72,7 +72,9 @@ class MetaballMesh {
         const resolution = 28;
         const enableNormals = true;
         const enableColors = false;
-        const maxPolyCount = 100000;
+        const enableUvs = false;
+        // buffer will be this size * 3 floats (?)
+        const maxPolyCount = 65535;
         const effect = new MarchingCubes(
             resolution,
             mat,
@@ -83,17 +85,20 @@ class MetaballMesh {
         effect.position.set(0, 0, 0);
         effect.scale.set(1, 1, 1);
 
-        effect.enableUvs = false;
-        effect.enableColors = false;
+        effect.enableUvs = enableUvs;
+        effect.enableColors = enableColors;
 
         for (let i = 0; i < subPoints.length; i += 4) {
+            // radius = sqrt(strenght/subtract)
+            const strength = 1.0; //(subPoints[i + 3]*subPoints[i+3]);
+            const subtract = 1.0;
+
             effect.addBall(
                 subPoints[i + 0],
                 subPoints[i + 1],
                 subPoints[i + 2],
-                subPoints[i + 3] * subPoints[i + 3],
-                1.0,
-                new Color(0xffffff)
+                strength,
+                subtract
             );
         }
         this.drawable.add(effect);
