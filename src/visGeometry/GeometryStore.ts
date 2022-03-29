@@ -164,7 +164,6 @@ class GeometryStore {
     }
 
     private createNewCubeGeometry(meshName: string): MeshLoadRequest {
-        /** create new default geometry */
         return {
             mesh: new Mesh(GeometryStore.cubeGeometry),
             cancelled: false,
