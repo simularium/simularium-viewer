@@ -4,7 +4,6 @@ import {
     InstancedMesh,
     InstanceType,
 } from "../visGeometry/rendering/InstancedMesh";
-import VisAgent from "../visGeometry/VisAgent";
 import GeometryStore, { DEFAULT_MESH_NAME } from "../visGeometry/GeometryStore";
 import { GeometryDisplayType } from "../visGeometry/types";
 import PDBModel from "../visGeometry/PDBModel";
@@ -24,11 +23,11 @@ describe("GeometryStore module", () => {
             registry.set(addedItem, {
                 displayType: GeometryDisplayType.OBJ,
                 geometry: {
-                    mesh: new Mesh(VisAgent.sphereGeometry),
+                    mesh: new Mesh(GeometryStore.sphereGeometry),
                     cancelled: false,
                     instances: new InstancedMesh(
                         InstanceType.MESH,
-                        VisAgent.sphereGeometry,
+                        GeometryStore.sphereGeometry,
                         addedItem,
                         1
                     ),
@@ -103,11 +102,11 @@ describe("GeometryStore module", () => {
             registry.set(addedItem, {
                 displayType: GeometryDisplayType.OBJ,
                 geometry: {
-                    mesh: new Mesh(VisAgent.sphereGeometry),
+                    mesh: new Mesh(GeometryStore.sphereGeometry),
                     cancelled: false,
                     instances: new InstancedMesh(
                         InstanceType.MESH,
-                        VisAgent.sphereGeometry,
+                        GeometryStore.sphereGeometry,
                         addedItem,
                         1
                     ),
