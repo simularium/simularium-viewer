@@ -12,7 +12,6 @@ import {
 import { checkAndSanitizePath, getFileExtension } from "../util";
 import PDBModel from "./PDBModel";
 import { InstancedMesh, InstanceType } from "./rendering/InstancedMesh";
-import VisAgent from "./VisAgent";
 import TaskQueue from "../simularium/TaskQueue";
 import { AgentTypeVisData } from "../simularium/types";
 
