@@ -48,9 +48,9 @@ class GeometryStore {
     private _cachedAssets: Map<string, string>;
     private _registry: Registry;
     public mlogger: ILogger;
-    private static sphereGeometry: SphereBufferGeometry =
+    public static sphereGeometry: SphereBufferGeometry =
         new SphereBufferGeometry(1, 32, 32);
-    private static cubeGeometry: BoxBufferGeometry = new BoxBufferGeometry(
+    public static cubeGeometry: BoxBufferGeometry = new BoxBufferGeometry(
         1,
         1,
         1
