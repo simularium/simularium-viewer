@@ -434,8 +434,8 @@ class GeometryStore {
         const isPDB = displayType === GeometryDisplayType.PDB;
         if (!url || (!isMesh && !isPDB)) {
             const lookupKey = displayType;
-            let geometry;
-            // displayType not either pdb or obj, will show a sphere
+            let geometry: MeshLoadRequest;
+            // TODO: handle gizmo here
             if (displayType === GeometryDisplayType.CUBE) {
                 geometry = this.createNewCubeGeometry(lookupKey);
                 this.setGeometryInRegistry(
@@ -444,6 +444,7 @@ class GeometryStore {
                     GeometryDisplayType.CUBE
                 );
             } else {
+                // default to a sphere
                 geometry = this.createNewSphereGeometry(lookupKey);
                 this.setGeometryInRegistry(
                     lookupKey,
@@ -453,33 +454,31 @@ class GeometryStore {
             }
             return Promise.resolve({ geometry });
         }
-        const lookupKey = checkAndSanitizePath(url);
 
-        if (isMesh || isPDB) {
-            return this.attemptToLoadGeometry(lookupKey, displayType)
-                .then((geometry) => {
-                    if (geometry) {
-                        return {
-                            geometry,
-                        };
-                    }
-                })
-                .catch((e) => {
-                    // if anything goes wrong, add a new sphere to the registry
-                    // using this same lookup key
-                    const geometry = this.createNewSphereGeometry(lookupKey);
-                    this.setGeometryInRegistry(
-                        lookupKey,
+        const lookupKey = checkAndSanitizePath(url);
+        return this.attemptToLoadGeometry(lookupKey, displayType)
+            .then((geometry) => {
+                if (geometry) {
+                    return {
                         geometry,
-                        GeometryDisplayType.SPHERE
-                    );
-                    return Promise.resolve({
-                        geometry,
-                        displayType: GeometryDisplayType.SPHERE,
-                        errorMessage: e,
-                    });
+                    };
+                }
+            })
+            .catch((e) => {
+                // if anything goes wrong, add a new sphere to the registry
+                // using this same lookup key
+                const geometry = this.createNewSphereGeometry(lookupKey);
+                this.setGeometryInRegistry(
+                    lookupKey,
+                    geometry,
+                    GeometryDisplayType.SPHERE
+                );
+                return Promise.resolve({
+                    geometry,
+                    displayType: GeometryDisplayType.SPHERE,
+                    errorMessage: e,
                 });
-        }
+            });
     }
 }
 
