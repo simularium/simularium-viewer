@@ -48,13 +48,32 @@ class GeometryStore {
     private _cachedAssets: Map<string, string>;
     private _registry: Registry;
     public mlogger: ILogger;
-    public static sphereGeometry: SphereBufferGeometry =
+    private static sphereGeometry: SphereBufferGeometry =
         new SphereBufferGeometry(1, 32, 32);
-    public static cubeGeometry: BoxBufferGeometry = new BoxBufferGeometry(
+    private static cubeGeometry: BoxBufferGeometry = new BoxBufferGeometry(
         1,
         1,
         1
     );
+
+    private static loadPrimitive = (
+        displayType: GeometryDisplayType,
+        url?: string
+    ) => {
+        if (!url) {
+            // if there isn't an url to load, even if they selected PDB or OBJ
+            // we have to default to a sphere. May change depending on how we handle the gizmo
+            return true;
+        }
+        if (
+            displayType === GeometryDisplayType.PDB ||
+            displayType === GeometryDisplayType.OBJ
+        ) {
+            return false;
+        }
+        return true;
+    };
+
     constructor(loggerLevel?: ILogLevel) {
         this._geoLoadAttempted = new Map<string, boolean>();
         this._cachedAssets = new Map<string, string>();
@@ -430,9 +449,8 @@ class GeometryStore {
          */
         const { displayType, url } = agentVisData;
         this.mlogger.debug(`Geo for id ${id} set to '${url}'`);
-        const isMesh = displayType === GeometryDisplayType.OBJ;
-        const isPDB = displayType === GeometryDisplayType.PDB;
-        if (!url || (!isMesh && !isPDB)) {
+
+        if (GeometryStore.loadPrimitive(displayType, url)) {
             const lookupKey = displayType;
             let geometry: MeshLoadRequest;
             // TODO: handle gizmo here
@@ -453,32 +471,33 @@ class GeometryStore {
                 );
             }
             return Promise.resolve({ geometry });
-        }
-
-        const lookupKey = checkAndSanitizePath(url);
-        return this.attemptToLoadGeometry(lookupKey, displayType)
-            .then((geometry) => {
-                if (geometry) {
-                    return {
+        } else {
+            // Handle request for non primitive geometry
+            const lookupKey = checkAndSanitizePath(url);
+            return this.attemptToLoadGeometry(lookupKey, displayType)
+                .then((geometry) => {
+                    if (geometry) {
+                        return {
+                            geometry,
+                        };
+                    }
+                })
+                .catch((e) => {
+                    // if anything goes wrong, add a new sphere to the registry
+                    // using this same lookup key
+                    const geometry = this.createNewSphereGeometry(lookupKey);
+                    this.setGeometryInRegistry(
+                        lookupKey,
                         geometry,
-                    };
-                }
-            })
-            .catch((e) => {
-                // if anything goes wrong, add a new sphere to the registry
-                // using this same lookup key
-                const geometry = this.createNewSphereGeometry(lookupKey);
-                this.setGeometryInRegistry(
-                    lookupKey,
-                    geometry,
-                    GeometryDisplayType.SPHERE
-                );
-                return Promise.resolve({
-                    geometry,
-                    displayType: GeometryDisplayType.SPHERE,
-                    errorMessage: e,
+                        GeometryDisplayType.SPHERE
+                    );
+                    return Promise.resolve({
+                        geometry,
+                        displayType: GeometryDisplayType.SPHERE,
+                        errorMessage: e,
+                    });
                 });
-            });
+        }
     }
 }
 
