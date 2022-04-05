@@ -88,7 +88,7 @@ export default class MetaballSimulator implements IClientSimulatorImpl {
                 subpts[i * 4 + 1] += this.randomFloat(-0.01, 0.01);
                 subpts[i * 4 + 2] += this.randomFloat(-0.01, 0.01);
                 // radius update
-                subpts[i * 4 + 3] += this.randomFloat(-0.01, 0.01);
+                subpts[i * 4 + 3] += this.randomFloat(-0.02, 0.02);
             }
             agentData.push(VisTypes.ID_VIS_TYPE_DEFAULT); // vis type
             agentData.push(ii); // instance id
