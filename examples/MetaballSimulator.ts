@@ -45,55 +45,15 @@ export default class MetaballSimulator implements IClientSimulatorImpl {
         ];
     }
 
-    private makeCurveBundle(nCurves, nPts) {
-        const curves: number[] = [];
-        let p: number[];
-        if (nPts === 3) {
-            for (let i = 0; i < nCurves; ++i) {
-                p = this.randomSpherePoint(0, 0, 0, 4.0);
-                curves.push(p[0]);
-                curves.push(p[1]);
-                curves.push(p[2]);
-                p = this.randomSpherePoint(0, 0, 0, 0.25);
-                curves.push(p[0]);
-                curves.push(p[1]);
-                curves.push(p[2]);
-                p = this.randomSpherePoint(0, 0, 0, 2.0);
-                curves.push(p[0]);
-                curves.push(p[1]);
-                curves.push(p[2]);
-            }
-        } else if (nPts === 5) {
-            for (let i = 0; i < nCurves; ++i) {
-                p = this.randomPtInBox(-4, -3, -2, 2, -2, 2);
-                curves.push(p[0]);
-                curves.push(p[1]);
-                curves.push(p[2]);
-                p = this.randomPtInBox(-2.5, -2, -1, 1, -1, 1);
-                curves.push(p[0]);
-                curves.push(p[1]);
-                curves.push(p[2]);
-                p = this.randomPtInBox(-1, 1, -0.5, 0.5, -0.5, 0.5);
-                curves.push(p[0]);
-                curves.push(p[1]);
-                curves.push(p[2]);
-                p = this.randomPtInBox(2, 2.5, -1, 1, -1, 1);
-                curves.push(p[0]);
-                curves.push(p[1]);
-                curves.push(p[2]);
-                p = this.randomPtInBox(3, 4, -2, 2, -2, 2);
-                curves.push(p[0]);
-                curves.push(p[1]);
-                curves.push(p[2]);
-            }
-        }
-        return curves;
-    }
-
     public update(_dt: number): VisDataMessage {
         // fill agent data.
         const agentData: number[] = [];
-        const nAgents = 1;
+        const nAgents = 3;
+        const positions = [
+            [-0.5, 0, 0],
+            [0, 0, 0],
+            [0.5, 0, 0],
+        ];
         for (let ii = 0; ii < nAgents; ++ii) {
             // one agent:
             // make 8 points within a certain box with given radii
@@ -103,17 +63,15 @@ export default class MetaballSimulator implements IClientSimulatorImpl {
                 // coordinates in object space???
                 // world space??
                 // they will have to be converted to 0-1 space for metaball creation/voxelization
-                subpts.push(...this.randomPtInBox(0, 1, 0, 1, 0, 1));
+                subpts.push(...this.randomPtInBox(0, 0.25, 0, 0.25, 0, 0.25));
                 //                subpts.push(...this.randomPtInBox(-2, 2, -2, 2, -2, 2));
                 // radius
-                subpts.push(this.randomFloat(0, 0.5));
+                subpts.push(this.randomFloat(0.06, 0.09));
             }
             agentData.push(VisTypes.ID_VIS_TYPE_DEFAULT); // vis type
             agentData.push(ii); // instance id
             agentData.push(ii); // type
-            agentData.push(0); // x
-            agentData.push(0); // y
-            agentData.push(0); // z
+            agentData.push(...positions[ii]); // x,y,z
             agentData.push(0); // rx
             agentData.push(0); // ry
             agentData.push(0); // rz
@@ -141,13 +99,14 @@ export default class MetaballSimulator implements IClientSimulatorImpl {
 
     public getInfo(): TrajectoryFileInfo {
         const typeMapping: EncodedTypeMapping = {};
-        for (let i = 0; i < 1; ++i) {
+        const colors = ["ffffff", "ff0000", "00aaff"];
+        for (let i = 0; i < colors.length; ++i) {
             typeMapping[i] = {
                 name: `metaball${i}`,
                 geometry: {
                     url: "",
                     displayType: GeometryDisplayType.METABALLS,
-                    color: "ffffff",
+                    color: colors[i],
                 },
             };
         }
@@ -168,7 +127,7 @@ export default class MetaballSimulator implements IClientSimulatorImpl {
                 position: {
                     x: 0,
                     y: 0,
-                    z: -3.6,
+                    z: -3.4,
                 },
                 lookAtPosition: {
                     x: 0,

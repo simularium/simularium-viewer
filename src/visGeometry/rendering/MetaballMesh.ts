@@ -1,4 +1,13 @@
-import { Color, Euler, Group, Mesh, Quaternion, Vector3, Vector4 } from "three";
+import {
+    Box3,
+    Color,
+    Euler,
+    Group,
+    Mesh,
+    Quaternion,
+    Vector3,
+    Vector4,
+} from "three";
 import { MarchingCubes } from "three/examples/jsm/objects/MarchingCubes";
 
 import MetaballMeshShaders from "./MetaballMeshShader";
@@ -69,11 +78,13 @@ class MetaballMesh {
             lodScale
         );
 
+        // what is a good value here?
         const resolution = 28;
         const enableNormals = true;
         const enableColors = false;
         const enableUvs = false;
         // buffer will be this size * 3 floats (?)
+        // maybe can figure this out from number of balls
         const maxPolyCount = 65535;
         const effect = new MarchingCubes(
             resolution,
@@ -88,18 +99,40 @@ class MetaballMesh {
         effect.enableUvs = enableUvs;
         effect.enableColors = enableColors;
 
+        const bound = new Box3();
+        let maxRadius = 0;
+        for (let i = 0; i < subPoints.length; i += 4) {
+            bound.expandByPoint(
+                new Vector3(subPoints[i], subPoints[i + 1], subPoints[i + 2])
+            );
+            if (subPoints[i + 3] > maxRadius) {
+                maxRadius = subPoints[i + 3];
+            }
+        }
+        bound.expandByScalar(maxRadius);
+        // now we have bounds and we can normalize the coordinates to size of box
+        const boundSize = new Vector3();
+        bound.getSize(boundSize);
+        const maxSize = Math.max(boundSize.x, boundSize.y, boundSize.z);
+        const center = new Vector3();
+        bound.getCenter(center);
+
         for (let i = 0; i < subPoints.length; i += 4) {
             // radius = sqrt(strenght/subtract)
-            const strength = 1.0; //(subPoints[i + 3]*subPoints[i+3]);
+            const strength = subPoints[i + 3];
             const subtract = 1.0;
 
-            effect.addBall(
-                subPoints[i + 0],
-                subPoints[i + 1],
-                subPoints[i + 2],
-                strength,
-                subtract
-            );
+            // xyz must be 0..1 coordinates within the volume of the metaballs object.
+            // therefore we need to take the object space coordinates and radii,
+            // figure out max bounds, and compute relative positioning.
+            // TODO allow space around axes that are not the longest
+            const x = (subPoints[i + 0] - bound.min.x) / boundSize.x;
+            const y = (subPoints[i + 1] - bound.min.y) / boundSize.y;
+            const z = (subPoints[i + 2] - bound.min.z) / boundSize.z;
+            // could put bounds in subpoints to preprocess?
+            // metaball volume resolution will be a uniform resolution^3 grid
+            // so the grid will not be tightly fit to the bounds if the bounds are not a cube
+            effect.addBall(x, y, z, strength, subtract);
         }
         this.drawable.add(effect);
 
