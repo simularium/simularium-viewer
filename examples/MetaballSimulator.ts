@@ -13,9 +13,13 @@ import { GeometryDisplayType } from "../src/visGeometry/types";
 
 export default class MetaballSimulator implements IClientSimulatorImpl {
     currentFrame: number;
+    nAgents = 3;
+    agentSubpoints: number[][] = [];
+    agentPositions: number[][] = [];
 
     constructor() {
         this.currentFrame = 0;
+        this.setupAgents();
     }
 
     private randomFloat(min, max) {
@@ -45,16 +49,15 @@ export default class MetaballSimulator implements IClientSimulatorImpl {
         ];
     }
 
-    public update(_dt: number): VisDataMessage {
-        // fill agent data.
-        const agentData: number[] = [];
-        const nAgents = 3;
-        const positions = [
+    private setupAgents() {
+        this.nAgents = 3;
+        this.agentSubpoints = [];
+        this.agentPositions = [
             [-0.5, 0, 0],
             [0, 0, 0],
             [0.5, 0, 0],
         ];
-        for (let ii = 0; ii < nAgents; ++ii) {
+        for (let i = 0; i < this.nAgents; ++i) {
             // one agent:
             // make 8 points within a certain box with given radii
             const subpts = [];
@@ -66,12 +69,31 @@ export default class MetaballSimulator implements IClientSimulatorImpl {
                 subpts.push(...this.randomPtInBox(0, 0.25, 0, 0.25, 0, 0.25));
                 //                subpts.push(...this.randomPtInBox(-2, 2, -2, 2, -2, 2));
                 // radius
-                subpts.push(this.randomFloat(0.06, 0.09));
+                subpts.push(this.randomFloat(0.2, 0.25));
+            }
+            this.agentSubpoints.push(subpts);
+        }
+    }
+
+    public update(_dt: number): VisDataMessage {
+        // fill agent data.
+        const agentData: number[] = [];
+        const nAgents = 3;
+        for (let ii = 0; ii < nAgents; ++ii) {
+            const subpts = this.agentSubpoints[ii];
+            for (let i = 0; i < 8; ++i) {
+                // give some small delta to the position and radius of each subpoint
+                // xyz position
+                subpts[i * 4 + 0] += this.randomFloat(-0.01, 0.01);
+                subpts[i * 4 + 1] += this.randomFloat(-0.01, 0.01);
+                subpts[i * 4 + 2] += this.randomFloat(-0.01, 0.01);
+                // radius update
+                subpts[i * 4 + 3] += this.randomFloat(-0.01, 0.01);
             }
             agentData.push(VisTypes.ID_VIS_TYPE_DEFAULT); // vis type
             agentData.push(ii); // instance id
             agentData.push(ii); // type
-            agentData.push(...positions[ii]); // x,y,z
+            agentData.push(...this.agentPositions[ii]); // x,y,z
             agentData.push(0); // rx
             agentData.push(0); // ry
             agentData.push(0); // rz
@@ -116,7 +138,7 @@ export default class MetaballSimulator implements IClientSimulatorImpl {
             msgType: ClientMessageEnum.ID_TRAJECTORY_FILE_INFO,
             version: 2,
             timeStepSize: 1,
-            totalSteps: 1,
+            totalSteps: 1000,
             // bounding volume dimensions
             size: {
                 x: 2,

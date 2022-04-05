@@ -14,7 +14,7 @@ import { ISimulator } from "./ISimulator";
 export class ClientSimulator implements ISimulator {
     private localSimulator: IClientSimulatorImpl;
     private simulatorIntervalId = 0;
-    private dataInterval = 1;
+    private dataInterval = 100;
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfo) => void;
     public onTrajectoryDataArrive: (msg: VisDataMessage) => void;
