@@ -13,7 +13,7 @@ import { GeometryDisplayType } from "../src/visGeometry/types";
 
 export default class MetaballSimulator implements IClientSimulatorImpl {
     currentFrame: number;
-    nAgents = 3;
+    nAgents = 6;
     agentSubpoints: number[][] = [];
     agentPositions: number[][] = [];
 
@@ -50,14 +50,22 @@ export default class MetaballSimulator implements IClientSimulatorImpl {
     }
 
     private setupAgents() {
-        this.nAgents = 3;
         this.agentSubpoints = [];
-        this.agentPositions = [
-            [-0.5, 0, 0],
-            [0, 0, 0],
-            [0.5, 0, 0],
-        ];
+
+        const dim = 2;
+
+        const mindim = dim * 0.5 - dim;
+        const maxdim = mindim + dim;
+
+        const agentspacing = (1 / (this.nAgents + 1)) * dim;
+        const agentdim = agentspacing / 2.0;
         for (let i = 0; i < this.nAgents; ++i) {
+            // distribute positions in the box along x
+            this.agentPositions.push([
+                mindim + ((i + 1) / (this.nAgents + 1)) * dim,
+                0,
+                0,
+            ]);
             // one agent:
             // make 8 points within a certain box with given radii
             const subpts = [];
@@ -66,10 +74,12 @@ export default class MetaballSimulator implements IClientSimulatorImpl {
                 // coordinates in object space???
                 // world space??
                 // they will have to be converted to 0-1 space for metaball creation/voxelization
-                subpts.push(...this.randomPtInBox(0, 0.25, 0, 0.25, 0, 0.25));
+                subpts.push(
+                    ...this.randomPtInBox(0, agentdim, 0, agentdim, 0, agentdim)
+                );
                 //                subpts.push(...this.randomPtInBox(-2, 2, -2, 2, -2, 2));
                 // radius
-                subpts.push(this.randomFloat(0.2, 0.25));
+                subpts.push(this.randomFloat(agentdim * 0.8, agentdim));
             }
             this.agentSubpoints.push(subpts);
         }
@@ -78,8 +88,7 @@ export default class MetaballSimulator implements IClientSimulatorImpl {
     public update(_dt: number): VisDataMessage {
         // fill agent data.
         const agentData: number[] = [];
-        const nAgents = 3;
-        for (let ii = 0; ii < nAgents; ++ii) {
+        for (let ii = 0; ii < this.nAgents; ++ii) {
             const subpts = this.agentSubpoints[ii];
             for (let i = 0; i < 8; ++i) {
                 // give some small delta to the position and radius of each subpoint
@@ -88,11 +97,11 @@ export default class MetaballSimulator implements IClientSimulatorImpl {
                 subpts[i * 4 + 1] += this.randomFloat(-0.01, 0.01);
                 subpts[i * 4 + 2] += this.randomFloat(-0.01, 0.01);
                 // radius update
-                subpts[i * 4 + 3] += this.randomFloat(-0.02, 0.02);
+                subpts[i * 4 + 3] *= this.randomFloat(0.9, 1.1);
             }
             agentData.push(VisTypes.ID_VIS_TYPE_DEFAULT); // vis type
             agentData.push(ii); // instance id
-            agentData.push(ii); // type
+            agentData.push(ii % 3); // type
             agentData.push(...this.agentPositions[ii]); // x,y,z
             agentData.push(0); // rx
             agentData.push(0); // ry
