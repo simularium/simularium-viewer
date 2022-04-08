@@ -56,7 +56,7 @@ class GeometryStore {
         1
     );
 
-    private static loadPrimitive = (
+    private static shouldLoadPrimitive = (
         displayType: GeometryDisplayType,
         url?: string
     ) => {
@@ -450,7 +450,7 @@ class GeometryStore {
         const { displayType, url } = agentVisData;
         this.mlogger.debug(`Geo for id ${id} set to '${url}'`);
 
-        if (GeometryStore.loadPrimitive(displayType, url)) {
+        if (GeometryStore.shouldLoadPrimitive(displayType, url)) {
             const lookupKey = displayType;
             let geometry: MeshLoadRequest;
             // TODO: handle gizmo here
