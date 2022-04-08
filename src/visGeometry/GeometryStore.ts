@@ -1,12 +1,17 @@
 import { forEach } from "lodash";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import jsLogger, { ILogger, ILogLevel } from "js-logger";
-import { BufferGeometry, Object3D, Mesh } from "three";
+import {
+    BufferGeometry,
+    Object3D,
+    Mesh,
+    SphereBufferGeometry,
+    BoxBufferGeometry,
+} from "three";
 
 import { checkAndSanitizePath, getFileExtension } from "../util";
 import PDBModel from "./PDBModel";
 import { InstancedMesh, InstanceType } from "./rendering/InstancedMesh";
-import VisAgent from "./VisAgent";
 import TaskQueue from "../simularium/TaskQueue";
 import { AgentTypeVisData } from "../simularium/types";
 
@@ -43,6 +48,31 @@ class GeometryStore {
     private _cachedAssets: Map<string, string>;
     private _registry: Registry;
     public mlogger: ILogger;
+    public static sphereGeometry: SphereBufferGeometry =
+        new SphereBufferGeometry(1, 32, 32);
+    public static cubeGeometry: BoxBufferGeometry = new BoxBufferGeometry(
+        1,
+        1,
+        1
+    );
+
+    private static shouldLoadPrimitive = (
+        displayType: GeometryDisplayType,
+        url?: string
+    ) => {
+        if (!url) {
+            // if there isn't an url to load, even if they selected PDB or OBJ
+            // we have to default to a sphere. May change depending on how we handle the gizmo
+            return true;
+        }
+        if (
+            displayType === GeometryDisplayType.PDB ||
+            displayType === GeometryDisplayType.OBJ
+        ) {
+            return false;
+        }
+        return true;
+    };
 
     constructor(loggerLevel?: ILogLevel) {
         this._geoLoadAttempted = new Map<string, boolean>();
@@ -52,11 +82,11 @@ class GeometryStore {
         this._registry.set(DEFAULT_MESH_NAME, {
             displayType: GeometryDisplayType.SPHERE,
             geometry: {
-                mesh: new Mesh(VisAgent.sphereGeometry),
+                mesh: new Mesh(GeometryStore.sphereGeometry),
                 cancelled: false,
                 instances: new InstancedMesh(
                     InstanceType.MESH,
-                    VisAgent.sphereGeometry,
+                    GeometryStore.sphereGeometry,
                     DEFAULT_MESH_NAME,
                     1
                 ),
@@ -73,11 +103,11 @@ class GeometryStore {
         this._registry.set(DEFAULT_MESH_NAME, {
             displayType: GeometryDisplayType.SPHERE,
             geometry: {
-                mesh: new Mesh(VisAgent.sphereGeometry),
+                mesh: new Mesh(GeometryStore.sphereGeometry),
                 cancelled: false,
                 instances: new InstancedMesh(
                     InstanceType.MESH,
-                    VisAgent.sphereGeometry,
+                    GeometryStore.sphereGeometry,
                     DEFAULT_MESH_NAME,
                     1
                 ),
@@ -141,11 +171,24 @@ class GeometryStore {
     private createNewSphereGeometry(meshName: string): MeshLoadRequest {
         /** create new default geometry */
         return {
-            mesh: new Mesh(VisAgent.sphereGeometry),
+            mesh: new Mesh(GeometryStore.sphereGeometry),
             cancelled: false,
             instances: new InstancedMesh(
                 InstanceType.MESH,
-                VisAgent.sphereGeometry,
+                GeometryStore.sphereGeometry,
+                meshName,
+                1
+            ),
+        };
+    }
+
+    private createNewCubeGeometry(meshName: string): MeshLoadRequest {
+        return {
+            mesh: new Mesh(GeometryStore.cubeGeometry),
+            cancelled: false,
+            instances: new InstancedMesh(
+                InstanceType.MESH,
+                GeometryStore.cubeGeometry,
                 meshName,
                 1
             ),
@@ -237,9 +280,9 @@ class GeometryStore {
                 const meshRequest = geometry as MeshLoadRequest;
                 // there is already a mesh registered but we are going to load a new one.
                 // start by resetting this entry to a sphere. we will replace when the new mesh arrives
-                meshRequest.mesh = new Mesh(VisAgent.sphereGeometry);
+                meshRequest.mesh = new Mesh(GeometryStore.sphereGeometry);
                 meshRequest.instances.replaceGeometry(
-                    VisAgent.sphereGeometry,
+                    GeometryStore.sphereGeometry,
                     meshName
                 );
             }
@@ -406,23 +449,31 @@ class GeometryStore {
          */
         const { displayType, url } = agentVisData;
         this.mlogger.debug(`Geo for id ${id} set to '${url}'`);
-        const isMesh = displayType === GeometryDisplayType.OBJ;
-        const isPDB = displayType === GeometryDisplayType.PDB;
-        if (!url) {
-            // displayType not either pdb or obj, will show a sphere
-            // TODO: handle CUBE, GIZMO etc
-            const lookupKey = `${id}-${displayType}`;
-            const geometry = this.createNewSphereGeometry(lookupKey);
-            this.setGeometryInRegistry(
-                lookupKey,
-                geometry,
-                GeometryDisplayType.SPHERE
-            );
-            return Promise.resolve({ geometry });
-        }
-        const lookupKey = checkAndSanitizePath(url);
 
-        if (isMesh || isPDB) {
+        if (GeometryStore.shouldLoadPrimitive(displayType, url)) {
+            const lookupKey = displayType;
+            let geometry: MeshLoadRequest;
+            // TODO: handle gizmo here
+            if (displayType === GeometryDisplayType.CUBE) {
+                geometry = this.createNewCubeGeometry(lookupKey);
+                this.setGeometryInRegistry(
+                    lookupKey,
+                    geometry,
+                    GeometryDisplayType.CUBE
+                );
+            } else {
+                // default to a sphere
+                geometry = this.createNewSphereGeometry(lookupKey);
+                this.setGeometryInRegistry(
+                    lookupKey,
+                    geometry,
+                    GeometryDisplayType.SPHERE
+                );
+            }
+            return Promise.resolve({ geometry });
+        } else {
+            // Handle request for non primitive geometry
+            const lookupKey = checkAndSanitizePath(url);
             return this.attemptToLoadGeometry(lookupKey, displayType)
                 .then((geometry) => {
                     if (geometry) {
