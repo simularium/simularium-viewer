@@ -8,7 +8,6 @@ import {
     VisDataMessage,
 } from "../src/simularium/types";
 import VisTypes from "../src/simularium/VisTypes";
-import { DEFAULT_CAMERA_SPEC } from "../src/constants";
 import { GeometryDisplayType } from "../src/visGeometry/types";
 
 export default class MetaballSimulator implements IClientSimulatorImpl {
