@@ -1,4 +1,4 @@
-import { CatmullRomCurve3, Color, SphereBufferGeometry, Vector3 } from "three";
+import { CatmullRomCurve3, Color, Vector3 } from "three";
 
 import VisTypes from "../simularium/VisTypes";
 import { AgentData } from "../simularium/VisData";
@@ -8,8 +8,6 @@ const NO_AGENT = -1;
 export default class VisAgent {
     private static readonly UNASSIGNED_MESH_COLOR = 0xff00ff;
     public static readonly UNASSIGNED_NAME_PREFIX = "Unassigned";
-    public static sphereGeometry: SphereBufferGeometry =
-        new SphereBufferGeometry(1, 32, 32);
 
     public agentData: AgentData;
 

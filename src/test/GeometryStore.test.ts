@@ -4,7 +4,6 @@ import {
     InstancedMesh,
     InstanceType,
 } from "../visGeometry/rendering/InstancedMesh";
-import VisAgent from "../visGeometry/VisAgent";
 import GeometryStore, { DEFAULT_MESH_NAME } from "../visGeometry/GeometryStore";
 import { GeometryDisplayType } from "../visGeometry/types";
 import PDBModel from "../visGeometry/PDBModel";
@@ -24,11 +23,11 @@ describe("GeometryStore module", () => {
             registry.set(addedItem, {
                 displayType: GeometryDisplayType.OBJ,
                 geometry: {
-                    mesh: new Mesh(VisAgent.sphereGeometry),
+                    mesh: new Mesh(GeometryStore.sphereGeometry),
                     cancelled: false,
                     instances: new InstancedMesh(
                         InstanceType.MESH,
-                        VisAgent.sphereGeometry,
+                        GeometryStore.sphereGeometry,
                         addedItem,
                         1
                     ),
@@ -103,11 +102,11 @@ describe("GeometryStore module", () => {
             registry.set(addedItem, {
                 displayType: GeometryDisplayType.OBJ,
                 geometry: {
-                    mesh: new Mesh(VisAgent.sphereGeometry),
+                    mesh: new Mesh(GeometryStore.sphereGeometry),
                     cancelled: false,
                     instances: new InstancedMesh(
                         InstanceType.MESH,
-                        VisAgent.sphereGeometry,
+                        GeometryStore.sphereGeometry,
                         addedItem,
                         1
                     ),
@@ -134,9 +133,27 @@ describe("GeometryStore module", () => {
             const registry = store.registry;
 
             expect(returned).toBeTruthy();
-            const savedMesh = registry.get(
-                `${id}-${GeometryDisplayType.SPHERE}`
-            );
+            const savedMesh = registry.get(GeometryDisplayType.SPHERE);
+            // returned and saveMesh will always exist, but typeScript is uncertain
+            // hence this if statement
+            if (returned && savedMesh) {
+                expect(returned.geometry).toEqual(savedMesh.geometry);
+                expect(returned.displayType).toBeFalsy();
+                expect(returned.errorMessage).toBeFalsy();
+            }
+        });
+        test("it returns a cube geometry after storing it in the registry", async () => {
+            const store = new GeometryStore();
+            const id = 1;
+            const returned = await store.mapKeyToGeom(id, {
+                displayType: GeometryDisplayType.CUBE,
+                url: "",
+                color: "",
+            });
+            const registry = store.registry;
+
+            expect(returned).toBeTruthy();
+            const savedMesh = registry.get(GeometryDisplayType.CUBE);
             // returned and saveMesh will always exist, but typeScript is uncertain
             // hence this if statement
             if (returned && savedMesh) {
