@@ -464,7 +464,7 @@ class GeometryStore {
                 // clear in between redraws?
                 // on updatescene, add instances
                 // on render, pass the group of marchingcubes objects
-                const geometry = {
+                geometry = {
                     mesh: null,
                     cancelled: false,
                     instances: new MetaballMesh(lookupKey),
