@@ -46,19 +46,18 @@ import { AgentData } from "../simularium/VisData";
 
 import SimulariumRenderer from "./rendering/SimulariumRenderer";
 import { InstancedFiberGroup } from "./rendering/InstancedFiber";
-import { InstancedMesh } from "./rendering/InstancedMesh";
 import { LegacyRenderer } from "./rendering/LegacyRenderer";
 import GeometryStore, { DEFAULT_MESH_NAME } from "./GeometryStore";
 import {
     AgentGeometry,
     GeometryDisplayType,
+    GeometryInstanceContainer,
     MeshGeometry,
     MeshLoadRequest,
     PDBGeometry,
 } from "./types";
 import { checkAndSanitizePath } from "../util";
 import { convertColorStringToNumber } from "./color-utils";
-import { MetaballMesh } from "./rendering/MetaballMesh";
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 100000;
@@ -846,7 +845,7 @@ class VisGeometry {
             this.scene.autoUpdate = false;
 
             // collect up the meshes that have > 0 instances
-            const meshTypes: (InstancedMesh | MetaballMesh)[] = [];
+            const meshTypes: GeometryInstanceContainer[] = [];
             for (const entry of this.geometryStore.registry.values()) {
                 const { displayType } = entry;
                 if (displayType !== GeometryDisplayType.PDB) {

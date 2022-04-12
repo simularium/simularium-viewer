@@ -1,12 +1,33 @@
-import { Object3D } from "three";
+import { BufferGeometry, Object3D } from "three";
 import PDBModel from "./PDBModel";
-import { InstancedMesh } from "./rendering/InstancedMesh";
-import { MetaballMesh } from "./rendering/MetaballMesh";
+import { MRTShaders } from "./rendering/MultipassMaterials";
+
+export interface GeometryInstanceContainer {
+    replaceGeometry: (newGeometry: BufferGeometry, name: string) => void;
+    getMesh: () => Object3D;
+    beginUpdate: () => void;
+    endUpdate: () => void;
+    addInstance: (
+        x: number,
+        y: number,
+        z: number,
+        scale: number,
+        rx: number,
+        ry: number,
+        rz: number,
+        uniqueAgentId: number,
+        typeId: number,
+        lodScale: number,
+        subPoints: number[]
+    ) => Object3D;
+    instanceCount: () => number;
+    getShaders: () => MRTShaders;
+}
 
 export interface MeshLoadRequest {
     mesh: Object3D;
     cancelled: boolean;
-    instances: InstancedMesh | MetaballMesh;
+    instances: GeometryInstanceContainer;
 }
 
 export enum GeometryDisplayType {

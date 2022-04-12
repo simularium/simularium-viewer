@@ -1,6 +1,6 @@
 import {
     Box3,
-    Color,
+    BufferGeometry,
     Euler,
     Group,
     Mesh,
@@ -13,7 +13,9 @@ import { MarchingCubes } from "three/examples/jsm/objects/MarchingCubes";
 import MetaballMeshShaders from "./MetaballMeshShader";
 import { MRTShaders } from "./MultipassMaterials";
 
-class MetaballMesh {
+import { GeometryInstanceContainer } from "../types";
+
+class MetaballMesh implements GeometryInstanceContainer {
     private drawable: Group;
     private shaderSet: MRTShaders;
 
@@ -48,7 +50,7 @@ class MetaballMesh {
         // no op
     }
 
-    public replaceGeometry(newGeom: Mesh, meshName: string): void {
+    public replaceGeometry(_newGeom: BufferGeometry, _meshName: string): void {
         // no op
     }
 
@@ -117,7 +119,6 @@ class MetaballMesh {
         // now we have bounds and we can normalize the coordinates to size of box
         const boundSize = new Vector3();
         bound.getSize(boundSize);
-        const maxSize = Math.max(boundSize.x, boundSize.y, boundSize.z);
         const center = new Vector3();
         bound.getCenter(center);
 

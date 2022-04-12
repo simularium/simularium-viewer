@@ -6,7 +6,7 @@ import ContourPass from "./ContourPass";
 import DrawBufferPass from "./DrawBufferPass";
 import HitTestHelper from "./HitTestHelper";
 import { InstancedFiberGroup } from "./InstancedFiber";
-import { InstancedMesh } from "./InstancedMesh";
+import { GeometryInstanceContainer } from "../types";
 
 import {
     Color,
@@ -21,7 +21,6 @@ import {
     PerspectiveCamera,
 } from "three";
 import { Pane } from "tweakpane";
-import { MetaballMesh } from "./MetaballMesh";
 
 const AGENTBUFFER = 0;
 const NORMALBUFFER = 1;
@@ -318,7 +317,7 @@ class SimulariumRenderer {
     public setMeshGroups(
         instancedMeshGroup: Group,
         fibers: InstancedFiberGroup,
-        meshTypes: (InstancedMesh | MetaballMesh)[]
+        meshTypes: GeometryInstanceContainer[]
     ): void {
         this.gbufferPass.setMeshGroups(instancedMeshGroup, fibers, meshTypes);
     }
