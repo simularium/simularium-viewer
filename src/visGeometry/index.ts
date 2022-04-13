@@ -276,6 +276,10 @@ class VisGeometry {
         cameraSpec.lookAtPosition.z = this.controls.target.z;
     }
 
+    public applyAO(ao: AOSettings): void {
+        this.renderer.applyAO(ao);
+    }
+
     public setupGui(container?: HTMLElement): void {
         this.gui = new Pane({
             title: "Advanced Settings",

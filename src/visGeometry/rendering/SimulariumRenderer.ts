@@ -26,6 +26,17 @@ const AGENTBUFFER = 0;
 const NORMALBUFFER = 1;
 const POSITIONBUFFER = 2;
 
+export interface AOSettings {
+    aoradius1: number;
+    blurradius1: number;
+    aothreshold1: number;
+    aofalloff1: number;
+    aoradius2: number;
+    blurradius2: number;
+    aothreshold2: number;
+    aofalloff2: number;
+}
+
 interface SimulariumRenderParameters {
     aoradius1: number;
     aoradius2: number;
@@ -179,6 +190,21 @@ class SimulariumRenderer {
             stencilBuffer: false,
         });
         this.ssaoBufferBlurred2.texture.generateMipmaps = false;
+    }
+
+    public applyAO(ao: AOSettings): void {
+        this.parameters.aoradius1 = ao.aoradius1;
+        this.parameters.aoradius2 = ao.aoradius2;
+        this.parameters.aothreshold1 = ao.aothreshold1;
+        this.parameters.aothreshold2 = ao.aothreshold2;
+        this.parameters.aofalloff1 = ao.aofalloff1;
+        this.parameters.aofalloff2 = ao.aofalloff2;
+        this.parameters.blurradius1 = ao.blurradius1;
+        this.parameters.blurradius2 = ao.blurradius2;
+        this.ssao1Pass.setRadius(this.parameters.aoradius1);
+        this.blur1Pass.setRadius(this.parameters.blurradius1);
+        this.ssao2Pass.setRadius(this.parameters.aoradius2);
+        this.blur2Pass.setRadius(this.parameters.blurradius2);
     }
 
     public setupGui(gui: Pane): void {

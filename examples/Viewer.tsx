@@ -52,6 +52,17 @@ const agentColors = [
     "#00aabf",
 ];
 
+const aopreset = {
+    aoradius1: 10.0,
+    blurradius1: 10.0,
+    aothreshold1: 300.0,
+    aofalloff1: 208.7,
+    aoradius2: 3.16,
+    blurradius2: 1.42,
+    aothreshold2: 176.09,
+    aofalloff2: 228.26,
+};
+
 interface ViewerState {
     renderStyle: RenderStyle;
     pauseOn: number;
@@ -190,6 +201,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                         { simulariumFile, geoAssets },
                         fileName
                     );
+                    simulariumController.visGeometry.applyAO(aopreset);
                 })
                 .catch((error) => {
                     this.onError(error);
