@@ -318,7 +318,8 @@ class GeometryStore {
 
         this.mlogger.debug("Finished loading mesh: ", meshName);
         // insert new mesh into meshRegistry
-        // get its geometry first:
+        // get its geometry first
+        // (note that we are only returning the first geometry found):
         let geom: BufferGeometry | null = null;
         object.traverse((obj) => {
             if (!geom && obj instanceof Mesh) {
