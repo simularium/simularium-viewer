@@ -3,9 +3,9 @@ import Viewport from "./viewport";
 export type {
     SelectionStateInfo,
     UIDisplayData,
-    SimulariumFileFormat,
     VisDataFrame,
 } from "./simularium";
+export type { ISimulariumFile } from "./simularium/ISimulariumFile";
 
 export { RenderStyle } from "./viewport";
 export { SimulariumController } from "./controller";
