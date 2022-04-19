@@ -15,6 +15,6 @@ export {
     ErrorLevel,
     FrontEndError,
 } from "./simularium";
-export { compareTimes } from "./util";
+export { compareTimes, loadSimulariumFile } from "./util";
 
 export default Viewport;
