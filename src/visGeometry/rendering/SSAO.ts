@@ -13,6 +13,10 @@ import {
     WebGLRenderTarget,
 } from "three";
 
+// function lerp(x0: number, x1: number, alpha: number): number {
+//     return x0 + (x1 - x0) * alpha;
+// }
+
 class SSAO1Pass {
     public pass: RenderToBuffer;
 
@@ -162,6 +166,12 @@ class SSAO1Pass {
             );
             sample.normalize();
             sample.multiplyScalar(Math.random());
+
+            // const iRelative = i / 64.0;
+            // // scale samples s.t. they're more aligned to center of kernel
+            // const scale = lerp(0.1, 1.0, iRelative * iRelative);
+            // sample.multiplyScalar(scale);
+
             samples.push(sample);
         }
         return samples;
