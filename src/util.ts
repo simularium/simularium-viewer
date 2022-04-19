@@ -1,4 +1,4 @@
-import ISimulariumFile from "./simularium/ISimulariumFile";
+import type { ISimulariumFile } from "./simularium/ISimulariumFile";
 import JsonFileReader from "./simularium/JsonFileReader";
 import BinaryFileReader from "./simularium/BinaryFileReader";
 
