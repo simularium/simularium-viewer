@@ -1,6 +1,6 @@
 import type { Plot, TrajectoryFileInfo, VisDataFrame } from "./types";
 
-export default interface ISimulariumFile {
+export interface ISimulariumFile {
     getTrajectoryFileInfo(): TrajectoryFileInfo;
     getPlotData(): Plot[];
     getNumFrames(): number;

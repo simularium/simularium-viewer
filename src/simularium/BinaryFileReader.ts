@@ -1,4 +1,4 @@
-import type ISimulariumFile from "./ISimulariumFile";
+import type { ISimulariumFile } from "./ISimulariumFile";
 import type { Plot, TrajectoryFileInfo, VisDataFrame } from "./types";
 import { compareTimes } from "../util";
 

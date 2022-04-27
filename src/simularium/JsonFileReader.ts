@@ -1,4 +1,4 @@
-import type ISimulariumFile from "./ISimulariumFile";
+import type { ISimulariumFile } from "./ISimulariumFile";
 import type {
     Plot,
     SimulariumFileFormat,
