@@ -13,10 +13,6 @@ import {
     WebGLRenderTarget,
 } from "three";
 
-// function lerp(x0: number, x1: number, alpha: number): number {
-//     return x0 + (x1 - x0) * alpha;
-// }
-
 class SSAO1Pass {
     public pass: RenderToBuffer;
 
@@ -56,7 +52,6 @@ class SSAO1Pass {
             //layout(location = 0) out vec4 ssao_output;
             
             int kernelSize = 64;
-            float zbias = 0.0;
 
             void main(void)
             {
@@ -95,7 +90,7 @@ class SSAO1Pass {
                 vec4 sampleViewPos = texture(viewPosTex, offset.xy);
                 float sampleDepth = sampleViewPos.z;
                 float rangeCheck = smoothstep(0.0, 1.0, radius / abs(viewPos.z - sampleDepth));
-                occlusion += (sampleDepth >= posSample.z + zbias ? 1.0 : 0.0) * rangeCheck;
+                occlusion += (sampleDepth >= posSample.z ? 1.0 : 0.0) * rangeCheck;
               }
             
               //gl_FragColor = vec4(1.0 - occlusion/ float(kernelSize), 1.0 - occlusion / float(kernelSize), 1.0 - occlusion / float(kernelSize), 1.0);
@@ -167,6 +162,10 @@ class SSAO1Pass {
             sample.normalize();
             sample.multiplyScalar(Math.random());
 
+            // Uncomment all this to try to get better samples
+            // function lerp(x0: number, x1: number, alpha: number): number {
+            //     return x0 + (x1 - x0) * alpha;
+            // }
             // const iRelative = i / 64.0;
             // // scale samples s.t. they're more aligned to center of kernel
             // const scale = lerp(0.1, 1.0, iRelative * iRelative);
