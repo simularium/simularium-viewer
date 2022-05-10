@@ -3,10 +3,10 @@ import { ILogger } from "js-logger";
 
 import { VisDataFrame, VisDataMessage, TrajectoryFileInfoV2 } from "./types";
 import { ISimulator } from "./ISimulator";
-import ISimulariumFile from "./ISimulariumFile";
+import type { ISimulariumFile } from "./ISimulariumFile";
 
 // a LocalFileSimulator is a ISimulator that plays back the contents of
-// a drag-n-drop trajectory file (a SimulariumFileFormat object)
+// a drag-n-drop trajectory file (a ISimulariumFile object)
 export class LocalFileSimulator implements ISimulator {
     protected fileName: string;
     protected simulariumFile: ISimulariumFile;

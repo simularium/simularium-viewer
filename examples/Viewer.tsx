@@ -12,7 +12,7 @@ import SimulariumViewer, {
 } from "../src";
 import { FrontEndError } from "../src/simularium/FrontEndError";
 import { loadSimulariumFile } from "../src/util";
-import ISimulariumFile from "../src/simularium/ISimulariumFile";
+import type { ISimulariumFile } from "../src/simularium/ISimulariumFile";
 import "../style/style.css";
 
 import PointSimulator from "./PointSimulator";
