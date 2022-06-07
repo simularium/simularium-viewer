@@ -333,7 +333,6 @@ export default class SimulariumController {
                 .then(() => {
                     if (this.simulator) {
                         this.simulator.requestSingleFrame(0);
-                        this.hackApplyHardcodedAOSettings(newFileName);
                     }
                 })
                 .then(() => ({
@@ -344,42 +343,6 @@ export default class SimulariumController {
         return Promise.reject({
             status: FILE_STATUS_FAIL,
         });
-    }
-
-    private hackApplyHardcodedAOSettings(fileName: string): void {
-        if (fileName.includes("BloodPlasma")) {
-            const aopreset = {
-                // aoradius1: 10.0,
-                // blurradius1: 10.0,
-                // aothreshold1: 300.0,
-                // aofalloff1: 208.7,
-                // aoradius2: 3.16,
-                // blurradius2: 1.42,
-                // aothreshold2: 176.09,
-                // aofalloff2: 228.26,
-                aoradius1: 1.2,
-                blurradius1: 1.5,
-                aothreshold1: 127.0,
-                aofalloff1: 300.0,
-                aoradius2: 5.77,
-                blurradius2: 1.94,
-                aothreshold2: 300.0,
-                aofalloff2: 208.0,
-            };
-            this.visGeometry?.applyAO(aopreset);
-        } else {
-            const aopreset = {
-                aoradius1: 1.2,
-                blurradius1: 1.5,
-                aothreshold1: 127.0,
-                aofalloff1: 300.0,
-                aoradius2: 5.77,
-                blurradius2: 1.94,
-                aothreshold2: 300.0,
-                aofalloff2: 208.0,
-            };
-            this.visGeometry?.applyAO(aopreset);
-        }
     }
 
     public markFileChangeAsHandled(): void {

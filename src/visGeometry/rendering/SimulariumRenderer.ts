@@ -81,14 +81,16 @@ class SimulariumRenderer {
 
     public constructor() {
         this.parameters = {
+            // AO defaults
             aoradius1: 1.2,
-            aoradius2: 0.6,
-            aothreshold1: 139,
-            aothreshold2: 181,
-            aofalloff1: 16,
-            aofalloff2: 35,
             blurradius1: 1.5,
+            aothreshold1: 127.0,
+            aofalloff1: 300.0,
+            aoradius2: 5.77,
             blurradius2: 1.94,
+            aothreshold2: 300.0,
+            aofalloff2: 208.0,
+            // end AO defaults
             atomBeginDistance: 50.0,
             chainBeginDistance: 100.0,
             bghueoffset: 1,
