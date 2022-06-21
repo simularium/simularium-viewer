@@ -18,7 +18,14 @@ import "../style/style.css";
 import PointSimulator from "./PointSimulator";
 import PdbSimulator from "./PdbSimulator";
 import CurveSimulator from "./CurveSimulator";
-import { SMOLDYN_TEMPLATE, UI_BASE_TYPES, UI_CUSTOM_TYPES, UI_TEMPLATE_DOWNLOAD_URL_ROOT, UI_TEMPLATE_URL_ROOT } from "./api-settings";
+import {
+    SMOLDYN_TEMPLATE,
+    UI_BASE_TYPES,
+    UI_CUSTOM_TYPES,
+    UI_TEMPLATE_DOWNLOAD_URL_ROOT,
+    UI_TEMPLATE_URL_ROOT,
+} from "./api-settings";
+import InputForm from "./FileInfoInput";
 
 const netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
@@ -69,6 +76,12 @@ interface ViewerState {
     timeStep: number;
     totalDuration: number;
     uiDisplayData: UIDisplayData;
+    filePending: {
+        type: string;
+        trajectory: string;
+        template: { [key: string]: any };
+        templateData: { [key: string]: any };
+    };
 }
 
 const simulariumController = new SimulariumController({});
@@ -95,6 +108,7 @@ const initialState = {
         highlightedAgents: [],
         hiddenAgents: [],
     },
+    filePending: null
 };
 
 class Viewer extends React.Component<{}, ViewerState> {
@@ -218,32 +232,52 @@ class Viewer extends React.Component<{}, ViewerState> {
         const baseTypes = await fetch(
             `${UI_TEMPLATE_DOWNLOAD_URL_ROOT}/${UI_BASE_TYPES}`
         ).then((data) => data.json());
-        const customTypes = await fetch(`${UI_TEMPLATE_URL_ROOT}/${UI_CUSTOM_TYPES}`).then((data) => data.json())
-            .then((fileRefs) => 
-                Promise.all(map(fileRefs, 
-                    ref => fetch(ref.download_url).then(data => data.json()))
+        const customTypes = await fetch(
+            `${UI_TEMPLATE_URL_ROOT}/${UI_CUSTOM_TYPES}`
+        )
+            .then((data) => data.json())
+            .then((fileRefs) =>
+                Promise.all(
+                    map(fileRefs, (ref) =>
+                        fetch(ref.download_url).then((data) => data.json())
+                    )
                 )
-            )
-        const customTypeMap = reduce(customTypes, (acc, cur) => {
-            const key = Object.keys(cur)[0]
-            acc[key] = cur[key]
-            return acc
-        }, {})
-        console.log(customTypeMap);
+            );
+        const typeMap = reduce(
+            customTypes,
+            (acc, cur) => {
+                const key = Object.keys(cur)[0];
+                acc[key] = cur[key];
+                return acc;
+            },
+            {}
+        );
+        baseTypes["base_types"].forEach((type) => {
+            typeMap[type.id] = { ...type, isBaseType: true };
+        });
+        return typeMap;
     }
 
-    public async loadSmoldynFile() {
-        const uiTemplate = await fetch(
+    public async loadSmoldynFile(file) {
+        const smoldynTrajectory = await file.text()
+        console.log(smoldynTrajectory)
+        const smoldynTemplate = await fetch(
             `${UI_TEMPLATE_DOWNLOAD_URL_ROOT}/${SMOLDYN_TEMPLATE}`
         ).then((data) => data.json());
-        this.loadUiTemplates();
-        console.log(uiTemplate);
-        map(uiTemplate.smoldyn_data.parameters, async (value, key) => {
-            console.log(value, key)
-            // const template = await fetch(`${UI_TEMPLATE_URL_ROOT}/${key}.json`).then((data) => data.json())
-            // uiTemplate.smoldyn_data.parameters[key] = template.key
-        })
-        console.log(uiTemplate)
+        const templateMap = await this.loadUiTemplates();
+        map(smoldynTemplate.smoldyn_data.parameters, (parameter) => {
+            const key = parameter.data_type;
+            if (templateMap[key]) {
+                console.log(templateMap[key]);
+                smoldynTemplate.smoldyn_data.parameters[key] = templateMap[key];
+            }
+        });
+        this.setState({ filePending: {
+            type: "smoldyn",
+            trajectory: smoldynTrajectory,
+            template: smoldynTemplate,
+            templateData: templateMap
+        }})
     }
 
     public loadFile(trajectoryFile, fileName, geoAssets?) {
@@ -411,6 +445,9 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public render(): JSX.Element {
+        if (this.state.filePending) {
+            return <InputForm {...this.state.filePending} />
+        }
         return (
             <div className="container" style={{ height: "90%", width: "75%" }}>
                 <select
@@ -457,9 +494,14 @@ class Viewer extends React.Component<{}, ViewerState> {
                 <button onClick={() => simulariumController.clearFile()}>
                     Clear
                 </button>
-                <button onClick={() => this.loadSmoldynFile()}>
-                    Load a smoldyn trajectory
-                </button>
+                <input
+                    type="file"
+                    accept=".txt"
+                    onChange={(e) =>
+                        this.loadSmoldynFile(e.target.files[0])
+                    }
+                />
+                Load a smoldyn trajectory
                 <br />
                 <button onClick={() => simulariumController.resume()}>
                     Play
