@@ -1,5 +1,5 @@
 import React from "react";
-import { isEqual, findIndex } from "lodash";
+import { isEqual, findIndex, map, template, reduce } from "lodash";
 
 import type {
     UIDisplayData,
@@ -18,6 +18,7 @@ import "../style/style.css";
 import PointSimulator from "./PointSimulator";
 import PdbSimulator from "./PdbSimulator";
 import CurveSimulator from "./CurveSimulator";
+import { SMOLDYN_TEMPLATE, UI_BASE_TYPES, UI_CUSTOM_TYPES, UI_TEMPLATE_DOWNLOAD_URL_ROOT, UI_TEMPLATE_URL_ROOT } from "./api-settings";
 
 const netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
@@ -186,10 +187,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                         }
                     }, {});
                     const fileName = filesArr[simulariumFileIndex].name;
-                    simulariumController.changeFile(
-                        { simulariumFile, geoAssets },
-                        fileName
-                    );
+                    return this.loadFile(simulariumFile, fileName, geoAssets);
                 })
                 .catch((error) => {
                     this.onError(error);
@@ -207,15 +205,62 @@ class Viewer extends React.Component<{}, ViewerState> {
             .then((blob: Blob) => {
                 return loadSimulariumFile(blob);
             })
-            .then((simulariumFile) => {
+            .then((trajectoryFile) => {
                 const fileName = url;
-                simulariumController
-                    .changeFile({ simulariumFile }, fileName)
-                    .catch((error) => {
-                        console.log("Error loading file", error);
-                        window.alert(`Error loading file: ${error.message}`);
-                    });
+                this.loadFile(trajectoryFile, fileName).catch((error) => {
+                    console.log("Error loading file", error);
+                    window.alert(`Error loading file: ${error.message}`);
+                });
             });
+    }
+
+    public async loadUiTemplates() {
+        const baseTypes = await fetch(
+            `${UI_TEMPLATE_DOWNLOAD_URL_ROOT}/${UI_BASE_TYPES}`
+        ).then((data) => data.json());
+        const customTypes = await fetch(`${UI_TEMPLATE_URL_ROOT}/${UI_CUSTOM_TYPES}`).then((data) => data.json())
+            .then((fileRefs) => 
+                Promise.all(map(fileRefs, 
+                    ref => fetch(ref.download_url).then(data => data.json()))
+                )
+            )
+        const customTypeMap = reduce(customTypes, (acc, cur) => {
+            const key = Object.keys(cur)[0]
+            acc[key] = cur[key]
+            return acc
+        }, {})
+        console.log(customTypeMap);
+    }
+
+    public async loadSmoldynFile() {
+        const uiTemplate = await fetch(
+            `${UI_TEMPLATE_DOWNLOAD_URL_ROOT}/${SMOLDYN_TEMPLATE}`
+        ).then((data) => data.json());
+        this.loadUiTemplates();
+        console.log(uiTemplate);
+        map(uiTemplate.smoldyn_data.parameters, async (value, key) => {
+            console.log(value, key)
+            // const template = await fetch(`${UI_TEMPLATE_URL_ROOT}/${key}.json`).then((data) => data.json())
+            // uiTemplate.smoldyn_data.parameters[key] = template.key
+        })
+        console.log(uiTemplate)
+    }
+
+    public loadFile(trajectoryFile, fileName, geoAssets?) {
+        const simulariumFile = fileName.includes(".simularium")
+            ? trajectoryFile
+            : null;
+        if (geoAssets && geoAssets.length) {
+            return simulariumController.changeFile(
+                { simulariumFile, geoAssets },
+                fileName
+            );
+        } else {
+            return simulariumController.changeFile(
+                { simulariumFile },
+                fileName
+            );
+        }
     }
 
     public handleJsonMeshData(jsonData): void {
@@ -411,6 +456,9 @@ class Viewer extends React.Component<{}, ViewerState> {
                 </button>
                 <button onClick={() => simulariumController.clearFile()}>
                     Clear
+                </button>
+                <button onClick={() => this.loadSmoldynFile()}>
+                    Load a smoldyn trajectory
                 </button>
                 <br />
                 <button onClick={() => simulariumController.resume()}>
