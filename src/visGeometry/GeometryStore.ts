@@ -280,7 +280,7 @@ class GeometryStore {
             if (
                 geometry &&
                 displayType !== GeometryDisplayType.PDB &&
-                displayType !== GeometryDisplayType.METABALLS
+                displayType !== GeometryDisplayType.SPHERE_GROUP
             ) {
                 const meshRequest = geometry as MeshLoadRequest;
                 // there is already a mesh registered but we are going to load a new one.
@@ -460,7 +460,7 @@ class GeometryStore {
             const lookupKey = displayType;
             let geometry: MeshLoadRequest;
             // TODO: handle gizmo here
-            if (displayType === GeometryDisplayType.METABALLS) {
+            if (displayType === GeometryDisplayType.SPHERE_GROUP) {
                 // instances in this case will be a simple array of MarchingCubes objects.
                 // clear in between redraws?
                 // on updatescene, add instances

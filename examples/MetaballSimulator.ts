@@ -135,7 +135,7 @@ export default class MetaballSimulator implements IClientSimulatorImpl {
                 name: `metaball${i}`,
                 geometry: {
                     url: "",
-                    displayType: GeometryDisplayType.METABALLS,
+                    displayType: GeometryDisplayType.SPHERE_GROUP,
                     color: colors[i],
                 },
             };

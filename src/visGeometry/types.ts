@@ -36,7 +36,7 @@ export enum GeometryDisplayType {
     SPHERE = "SPHERE",
     CUBE = "CUBE",
     GIZMO = "GIZMO",
-    METABALLS = "METABALLS",
+    SPHERE_GROUP = "SPHERE_GROUP",
 }
 
 export type PrimitiveDisplayType =
@@ -52,7 +52,7 @@ export interface PDBGeometry {
 export interface MeshGeometry {
     geometry: MeshLoadRequest;
     displayType:
-        | GeometryDisplayType.METABALLS
+        | GeometryDisplayType.SPHERE_GROUP
         | GeometryDisplayType.OBJ
         | PrimitiveDisplayType;
 }
