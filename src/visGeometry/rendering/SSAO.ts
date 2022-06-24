@@ -20,11 +20,9 @@ class SSAO1Pass {
         this.pass = new RenderToBuffer({
             uniforms: {
                 iResolution: { value: new Vector2(2, 2) },
-                iTime: { value: 0.0 },
                 normalTex: { value: null },
                 viewPosTex: { value: null },
                 noiseTex: { value: this.createNoiseTex() },
-                iChannelResolution0: { value: new Vector2(2, 2) },
                 projectionMatrix: { value: new Matrix4() },
                 width: { value: 2 },
                 height: { value: 2 },
@@ -34,9 +32,7 @@ class SSAO1Pass {
                 samples: { value: this.createSSAOSamples() },
             },
             fragmentShader: `
-            uniform float iTime;
             uniform vec2 iResolution;
-            uniform vec2 iChannelResolution0;
             varying vec2 vUv;
 
             uniform sampler2D normalTex;
@@ -56,7 +52,7 @@ class SSAO1Pass {
             //layout(location = 0) out vec4 ssao_output;
             
             int kernelSize = 64;
-            
+
             void main(void)
             {
                 vec2 texCoords = vUv;
@@ -83,9 +79,12 @@ class SSAO1Pass {
                 vec3 posSample = TBN * samples[i];
                 posSample = viewPos + posSample * radius;
             
+                // transform sample to clip space
                 vec4 offset = vec4(posSample, 1.0);
                 offset = projectionMatrix * offset;
+                // perspective divide to get to ndc
                 offset.xy /= offset.w;
+                // and back to the (0,0)-(1,1) range
                 offset.xy = offset.xy * 0.5 + 0.5;
             
                 vec4 sampleViewPos = texture(viewPosTex, offset.xy);
@@ -154,13 +153,24 @@ class SSAO1Pass {
     public createSSAOSamples(): Vector3[] {
         const samples: Vector3[] = [];
         for (let i = 0; i < 64; i++) {
-            const sample = new Vector3(
-                Math.random() * 2.0 - 1.0,
-                Math.random() * 2.0 - 1.0,
-                Math.random()
+            // hemisphere kernel in tangent space
+            const sample: Vector3 = new Vector3(
+                Math.random() * 2.0 - 1.0, // -1..1
+                Math.random() * 2.0 - 1.0, // -1..1
+                Math.random() // 0..1
             );
             sample.normalize();
             sample.multiplyScalar(Math.random());
+
+            // Uncomment all this to try to get better samples
+            // function lerp(x0: number, x1: number, alpha: number): number {
+            //     return x0 + (x1 - x0) * alpha;
+            // }
+            // const iRelative = i / 64.0;
+            // // scale samples s.t. they're more aligned to center of kernel
+            // const scale = lerp(0.1, 1.0, iRelative * iRelative);
+            // sample.multiplyScalar(scale);
+
             samples.push(sample);
         }
         return samples;
