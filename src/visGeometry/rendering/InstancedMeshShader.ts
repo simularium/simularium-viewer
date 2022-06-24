@@ -71,8 +71,7 @@ void main() {
 
     vec3 normal = IN_viewNormal;
     normal = normalize(normal);
-    vec3 normalOut = normal * 0.5 + 0.5;
-    gNormal = vec4(normalOut, 1.0);
+    gNormal = vec4(normal * 0.5 + 0.5, 1.0);
 
     gPos = vec4(fragViewPos.x, fragViewPos.y, fragViewPos.z, 1.0);
 

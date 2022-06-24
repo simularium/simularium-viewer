@@ -64,13 +64,14 @@ layout(location = 2) out vec4 gPos;
     uniform mat4 projectionMatrix;
     
     void main()	{
+        // gl_PointCoord spans (0,0)..(1,1)
+        // uv spans (-1,-1)..(1,1)
         vec2 uv = (gl_PointCoord - vec2(.5, .5)) * 2.0;
         float lensqr = dot(uv, uv);
         if (lensqr > 1.0) discard;
 
         vec3 normal = vec3(uv.x, uv.y, sqrt(1.0 - lensqr));
         normal = normalize(normal);
-        vec3 normalOut = normal * 0.5 + 0.5;
 
         vec3 fragViewPos = IN_viewPos;
         // adding pushes Z back. so "center" of sphere is "frontmost"
@@ -87,7 +88,7 @@ layout(location = 2) out vec4 gPos;
         // uncomment the following line to test LOD.  IN_radius is a measure of lod.
         //gAgentInfo = vec4(IN_radius*4.0, IN_instanceAndTypeId.x, fragViewPos.z, fragPosDepth);
         gAgentInfo = vec4(IN_instanceAndTypeId.y, IN_instanceAndTypeId.x, fragViewPos.z, fragPosDepth);
-        gNormal = vec4(normalOut, 1.0);
+        gNormal = vec4(normal * 0.5 + 0.5, 1.0);
         gPos = vec4(fragViewPos.x, fragViewPos.y, fragViewPos.z, 1.0);
     }
 
