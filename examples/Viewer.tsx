@@ -265,13 +265,7 @@ class Viewer extends React.Component<{}, ViewerState> {
             `${UI_TEMPLATE_DOWNLOAD_URL_ROOT}/${SMOLDYN_TEMPLATE}`
         ).then((data) => data.json());
         const templateMap = await this.loadUiTemplates();
-        map(smoldynTemplate.smoldyn_data.parameters, (parameter) => {
-            const key = parameter.data_type;
-            if (templateMap[key]) {
-                console.log(templateMap[key]);
-                smoldynTemplate.smoldyn_data.parameters[key] = templateMap[key];
-            }
-        });
+
         this.setState({ filePending: {
             type: "smoldyn",
             trajectory: smoldynTrajectory,
