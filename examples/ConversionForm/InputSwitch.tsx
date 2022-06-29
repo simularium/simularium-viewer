@@ -8,7 +8,7 @@ const InputSwitch = (props) => {
     const renderParameter = (currentDataType, key, parameter, recursive) => {
         const data = templateData[currentDataType];
         if (currentDataType === "collection") {
-
+            console.log("RENDERING", path);
             return (
                 <CollectionInput
                     parameter={parameter}
@@ -16,9 +16,9 @@ const InputSwitch = (props) => {
                     dataType={currentDataType}
                     name={parameter.name}
                     handler={handler}
-                    path={[...path, key]}
+                    path={path}
+                    id={key}
                 />
-             
             );
         } else if (data.isBaseType) {
             return (
@@ -56,7 +56,12 @@ const InputSwitch = (props) => {
             {renderParameter(dataType, id, parameter, false)}
             {map(templateData[dataType].parameters, (childParameter, key) => {
                 const currentDataType = childParameter.data_type;
-                return renderParameter(currentDataType, key, childParameter, true);
+                return renderParameter(
+                    currentDataType,
+                    key,
+                    childParameter,
+                    true
+                );
             })}
         </div>
     );
