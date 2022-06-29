@@ -1,7 +1,12 @@
 import React from "react";
 
-const BaseInput =  (props) => {
-
+interface BaseInputProps {
+    dataType: string;
+    handler: (event) => void;
+    options?: [];
+    name: string;
+}
+const BaseInput = (props: BaseInputProps) => {
     switch (props.dataType) {
         case "string":
             return (
@@ -27,8 +32,7 @@ const BaseInput =  (props) => {
                     ))}
                 </select>
             );
-   
-            
+
         default:
             return (
                 <label>

@@ -1,9 +1,21 @@
 import { map } from "lodash";
 import React from "react";
+import JsonFileReader from "../../src/simularium/JsonFileReader";
+import { FileReturn } from "../../src/simularium/types";
+import { loadSimulariumFile } from "../../src/util";
 import InputSwitch from "./InputSwitch";
 
-class InputForm extends React.Component {
-    constructor(props) {
+interface InputFormProps {
+    template: { [key: string]: any };
+    templateData: { [key: string]: any };
+    type: string;
+    trajectory: string;
+    loadFile: (file, fileName, geoAssets?) => Promise<FileReturn | void>;
+    onReturned: () => void;
+}
+
+class InputForm extends React.Component<InputFormProps> {
+    constructor(props: InputFormProps) {
         super(props);
         this.state = {};
         this.handleChange = this.handleChange.bind(this);
@@ -30,17 +42,17 @@ class InputForm extends React.Component {
 
             tempObject = tempObject[nestedKey] = thisValue;
         });
-        console.log(newState)
+        console.log(newState);
         this.setState(newState);
     }
 
     handleSubmit(event) {
         event.preventDefault();
-        console.log("submitting", this.state);
         const payload = {
             ...this.state,
             file_contents: this.props.trajectory,
         };
+        console.log("submitting", payload);
         fetch(
             "https://fm4o7gwkdd.execute-api.us-west-2.amazonaws.com/v1/smoldyn",
             {
@@ -49,15 +61,17 @@ class InputForm extends React.Component {
             }
         )
             .then((result) => {
-                return result.json()
+                this.props.onReturned();
+                return result.json();
             })
-            .then((data) => {
-                console.log("Completed with result:", data);
+            .then((file) => {
+                console.log("Completed with result:", file);
+                const simulariumFile = new JsonFileReader(file);
+                this.props.loadFile(simulariumFile, "test.simularium").then();
             })
             .catch((err) => {
                 console.error(err);
             });
-
     }
 
     render() {
@@ -70,11 +84,11 @@ class InputForm extends React.Component {
                     if (templateData[dataType]) {
                         return (
                             <InputSwitch
-                                id={key}
-                                parameter={parameter}
-                                templateData={templateData}
-                                dataType={dataType}
                                 handler={this.handleChange}
+                                id={key}
+                                templateData={templateData}
+                                parameter={parameter}
+                                dataType={dataType}
                                 path={[key]}
                             />
                         );

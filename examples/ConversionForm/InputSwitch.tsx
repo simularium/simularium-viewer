@@ -3,17 +3,31 @@ import React from "react";
 import BaseInput from "./BaseInput";
 import CollectionInput from "./CollectionInput";
 
-const InputSwitch = (props) => {
+interface InputSwitchProps {
+    handler: (path: string[], key: string, value: any) => void;
+    id: string;
+    templateData: { [key: string]: any };
+    path: string[];
+    parameter: { [key: string]: any };
+    dataType: string;
+}
+
+const InputSwitch = (props: InputSwitchProps) => {
     const { dataType, templateData, parameter, handler, path, id } = props;
-    const renderParameter = (currentDataType, key, parameter, recursive) => {
+    const renderParameter = (
+        currentDataType: string,
+        key: string,
+        currentParameter,
+        recursive: boolean
+    ) => {
         const data = templateData[currentDataType];
         if (currentDataType === "collection") {
             return (
                 <CollectionInput
-                    parameter={parameter}
+                    parameter={currentParameter}
                     templateData={templateData}
                     dataType={currentDataType}
-                    name={parameter.name}
+                    name={currentParameter.name}
                     handler={handler}
                     path={path}
                     id={key}
@@ -23,15 +37,16 @@ const InputSwitch = (props) => {
             return (
                 <BaseInput
                     dataType={currentDataType}
-                    options={parameter.options || []}
-                    name={parameter.name}
+                    options={currentParameter.options || []}
+                    name={currentParameter.name}
                     handler={(event) => handler(path, key, event.target.value)}
                 />
             );
         } else if (recursive) {
             return (
                 <InputSwitch
-                    parameter={parameter}
+                    id={key}
+                    parameter={currentParameter}
                     templateData={templateData}
                     dataType={currentDataType}
                     handler={handler}
@@ -40,28 +55,41 @@ const InputSwitch = (props) => {
             );
         }
     };
-
+    const hasChildren = templateData[dataType].parameters!!;
     return (
         <div>
             {path.length == 1 ? (
                 <h3>
-                    {parameter.name} <small>({parameter.description})</small>
+                    {parameter.name}{" "}
+                    <small>
+                        ({parameter.description})
+                        {parameter.required && <span>*</span>}
+                    </small>
                 </h3>
             ) : (
                 <h4>
-                    {parameter.name} <small>({parameter.description})</small>
+                    {parameter.name}{" "}
+                    <small>
+                        ({parameter.description}){" "}
+                        {parameter.required && <span>*</span>}
+                    </small>
                 </h4>
             )}
-            {renderParameter(dataType, id, parameter, false)}
-            {map(templateData[dataType].parameters, (childParameter, key) => {
-                const currentDataType = childParameter.data_type;
-                return renderParameter(
-                    currentDataType,
-                    key,
-                    childParameter,
-                    true
-                );
-            })}
+
+            {hasChildren
+                ? map(
+                      templateData[dataType].parameters,
+                      (childParameter, key) => {
+                          const currentDataType = childParameter.data_type;
+                          return renderParameter(
+                              currentDataType,
+                              key,
+                              childParameter,
+                              true
+                          );
+                      }
+                  )
+                : renderParameter(dataType, id, parameter, false)}
         </div>
     );
 };

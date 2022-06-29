@@ -121,6 +121,8 @@ class Viewer extends React.Component<{}, ViewerState> {
         this.viewerRef = React.createRef();
         this.handleJsonMeshData = this.handleJsonMeshData.bind(this);
         this.handleTimeChange = this.handleTimeChange.bind(this);
+        this.loadFile = this.loadFile.bind(this);
+        this.clearPendingFile = this.clearPendingFile.bind(this)
         this.state = initialState;
     }
 
@@ -201,7 +203,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                         }
                     }, {});
                     const fileName = filesArr[simulariumFileIndex].name;
-                    return this.loadFile(simulariumFile, fileName, geoAssets);
+                    this.loadFile(simulariumFile, fileName, geoAssets);
                 })
                 .catch((error) => {
                     this.onError(error);
@@ -275,6 +277,10 @@ class Viewer extends React.Component<{}, ViewerState> {
         });
     }
 
+    public clearPendingFile() {
+        this.setState({filePending: null})
+    }
+
     public loadFile(trajectoryFile, fileName, geoAssets?) {
         const simulariumFile = fileName.includes(".simularium")
             ? trajectoryFile
@@ -288,7 +294,7 @@ class Viewer extends React.Component<{}, ViewerState> {
             return simulariumController.changeFile(
                 { simulariumFile },
                 fileName
-            );
+            ).catch(console.log)
         }
     }
 
@@ -441,7 +447,13 @@ class Viewer extends React.Component<{}, ViewerState> {
 
     public render(): JSX.Element {
         if (this.state.filePending) {
-            return <ConversionForm {...this.state.filePending}  />
+            return (
+                <ConversionForm
+                    {...this.state.filePending}
+                    loadFile={this.loadFile}
+                    onReturned={this.clearPendingFile}
+                />
+            );
         }
         return (
             <div className="container" style={{ height: "90%", width: "75%" }}>

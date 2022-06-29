@@ -2,8 +2,18 @@ import { map, reduce } from "lodash";
 import React from "react";
 import BaseInput from "./BaseInput";
 
-class CollectionInput extends React.Component {
-    constructor(props) {
+interface CollectionInputProps {
+    handler: (path: string[], key: string, value: any) => void;
+    id: string;
+    templateData: { [key: string]: any };
+    name: string;
+    path: string[];
+    parameter: { [key: string]: any };
+    dataType: string;
+}
+
+class CollectionInput extends React.Component<CollectionInputProps> {
+    constructor(props: CollectionInputProps) {
         super(props);
         this.state = {};
         this.handleChange = this.handleChange.bind(this);
@@ -36,7 +46,7 @@ class CollectionInput extends React.Component {
         this.setState(newState);
         const newValues = reduce(
             newState,
-            (acc, cur) => {
+            (acc, cur: {key: any, value: any}) => {
                 const key = cur.key;
                 const value = cur.value;
                 acc[key] = value;
@@ -55,7 +65,6 @@ class CollectionInput extends React.Component {
         if (data.isBaseType) {
             return (
                 <BaseInput
-                    parameter={childItem}
                     options={childItem.options || []}
                     dataType={currentDataType}
                     name={childItem.name}
@@ -86,7 +95,9 @@ class CollectionInput extends React.Component {
         for (let index = 0; index < parameter.length; index++) {
             return (
                 <div>
-                    <h4>{name} collection</h4>
+                    <h4>
+                        {name} collection {parameter.required && <span>*</span>}
+                    </h4>
                     <div>
                         Key:
                         {this.renderValueItem(
