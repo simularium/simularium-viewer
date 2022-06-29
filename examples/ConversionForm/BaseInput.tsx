@@ -21,7 +21,7 @@ const BaseInput =  (props) => {
             );
         case "enum":
             return (
-                <select>
+                <select onChange={props.handler}>
                     {props.options.map((id) => (
                         <option value={id}>{id}</option>
                     ))}

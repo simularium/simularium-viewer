@@ -11,9 +11,10 @@ class InputForm extends React.Component {
     }
 
     handleChange(path, key, value) {
+        // convert the paths into a nested object
+        // make sure to copy any existing state at each level
         let newState = {};
         let tempObject = newState;
-
         let currentState = this.state[path[0]] || {};
         path.map((nestedKey: string, i: number, array: string[]) => {
             let thisValue;
@@ -29,6 +30,7 @@ class InputForm extends React.Component {
 
             tempObject = tempObject[nestedKey] = thisValue;
         });
+        console.log(newState)
         this.setState(newState);
     }
 
