@@ -501,14 +501,16 @@ class Viewer extends React.Component<{}, ViewerState> {
                 <button onClick={() => simulariumController.clearFile()}>
                     Clear
                 </button>
-                <input
-                    type="file"
-                    accept=".txt"
-                    onChange={(e) =>
-                        this.loadSmoldynFile(e.target.files[0])
-                    }
-                />
-                Load a smoldyn trajectory
+                <label>
+                    Load a smoldyn trajectory:
+                    <input
+                        type="file"
+                        accept=".txt"
+                        onChange={(e) =>
+                            this.loadSmoldynFile(e.target.files[0])
+                        }
+                    />
+                </label>
                 <br />
                 <button onClick={() => simulariumController.resume()}>
                     Play
