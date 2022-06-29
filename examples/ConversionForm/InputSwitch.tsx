@@ -8,7 +8,6 @@ const InputSwitch = (props) => {
     const renderParameter = (currentDataType, key, parameter, recursive) => {
         const data = templateData[currentDataType];
         if (currentDataType === "collection") {
-            console.log("RENDERING", path);
             return (
                 <CollectionInput
                     parameter={parameter}

@@ -9,8 +9,8 @@ class CollectionInput extends React.Component {
         this.handleChange = this.handleChange.bind(this);
     }
 
-    handleChange(path, key, index, type, targetValue) {
-        const { handler } = this.props;
+    handleChange(key, index, type, targetValue) {
+        const { handler, id} = this.props;
         const newState = { ...this.state };
         if (!newState[index]) {
             newState[index] = {
@@ -33,19 +33,22 @@ class CollectionInput extends React.Component {
             };
         }
 
-        console.log("new state", newState);
         this.setState(newState);
-        const newValues = reduce(newState, (acc, cur) => {
-            const key = cur.key;
-            const value = cur.value;
-            acc[key] = value 
-            return acc
-        }, {})
-        handler(path, key, newValues);
+        const newValues = reduce(
+            newState,
+            (acc, cur) => {
+                const key = cur.key;
+                const value = cur.value;
+                acc[key] = value;
+                return acc;
+            },
+            {}
+        );
+        handler([id], index, newValues);
     }
 
     renderValueItem = (childItem, newPath, index, type) => {
-        const { templateData, id } = this.props;
+        const { templateData } = this.props;
         const currentDataType = childItem.data_type;
         const data = templateData[childItem.data_type];
 
@@ -58,7 +61,6 @@ class CollectionInput extends React.Component {
                     name={childItem.name}
                     handler={(event) =>
                         this.handleChange(
-                            newPath,
                             newPath[newPath.length - 1],
                             index,
                             type,
