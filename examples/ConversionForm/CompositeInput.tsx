@@ -3,21 +3,31 @@ import React from "react";
 import BaseInput from "./BaseInput";
 
 const CompositeInput = (props) => {
-    const { dataType, templateData, parameter, handler } = props;
+    const {
+        dataType,
+        templateData,
+        parameter,
+        handler,
+        parentGroup,
+        path,
+    } = props;
     return (
         <div>
             <h4>{parameter.name}</h4>
             {map(templateData[dataType].parameters, (parameter, key) => {
-                const nextDataType = parameter.data_type;
-                if (templateData[nextDataType]) {
-                    const data = templateData[nextDataType];
+                const currentDataType = parameter.data_type;
+                if (templateData[currentDataType]) {
+                    const data = templateData[currentDataType];
                     if (data.isBaseType) {
-                        console.log(`${key}-${parameter.name}`);
+                 
                         return (
                             <BaseInput
                                 name={parameter.name}
+                                data={data}
                                 key={`${key}-${parameter.name}`}
-                                handler={handler}
+                                handler={(event) =>
+                                    handler(path, key, event.target.value)
+                                }
                             />
                         );
                     } else {
@@ -25,8 +35,11 @@ const CompositeInput = (props) => {
                             <CompositeInput
                                 parameter={parameter}
                                 templateData={templateData}
-                                dataType={nextDataType}
+                                dataType={currentDataType}
+                                previousDataType={dataType}
                                 handler={handler}
+                                parentGroup={parentGroup}
+                                path={[...path, key]}
                             />
                         );
                     }

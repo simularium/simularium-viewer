@@ -1,45 +1,66 @@
-import { map } from "lodash";
+import { map, reduce } from "lodash";
 import React from "react";
-import BaseInput from "./ConversionForm/BaseInput";
-import CompositeInput from "./ConversionForm/CompositeInput";
+import BaseInput from "./BaseInput";
+import CompositeInput from "./CompositeInput";
 
 class InputForm extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { value: "" };
+        this.state = {};
         this.handleChange = this.handleChange.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
     }
 
-    handleChange(key, value) {
-        this.setState({ [key]: value });
+    handleChange(path, key, value) {
+   
+        let newState = {}
+        let tempObject = newState
+        
+        let currentState = this.state[path[0]] || {};
+        path.map((nestedKey: string, i: number, array: string[]) => {
+            let thisValue;
+            if (i == array.length - 1) {
+                thisValue = {
+                    ...currentState,
+                    [key]: value
+                }
+            } else {
+                thisValue = {...currentState} 
+                currentState = currentState[array[i + 1]] || {}
+            }
+        
+            tempObject = tempObject[nestedKey] = thisValue
+        });
+        this.setState(newState);
     }
 
     handleSubmit(event) {
         event.preventDefault();
+        console.log("submitting", this.state)
     }
 
     render() {
-        const { template, templateData } = this.props;
+        const { template, templateData, type } = this.props;
         return (
             <div>
                 <h3>
-                    Enter display data for your {template["python::object"]}{" "}
+                    Enter display data for your {type}{" "}
                     trajectory
                 </h3>
-                {map(template.smoldyn_data.parameters, (parameter, key) => {
+                {map(template.parameters, (parameter, key) => {
                     const dataType = parameter.data_type;
                     if (templateData[dataType]) {
                         const data = templateData[dataType];
                         if (data.isBaseType) {
-                            console.log(`${key}-${parameter.name}`);
                             return (
                                 <BaseInput
                                     name={parameter.name}
                                     key={key}
+                                    data={data}
                                     handler={(event) =>
                                         this.handleChange(
-                                            parameter.name,
+                                            [],
+                                            key,
                                             event.target.value
                                         )
                                     }
@@ -51,17 +72,15 @@ class InputForm extends React.Component {
                                     parameter={parameter}
                                     templateData={templateData}
                                     dataType={dataType}
-                                    handler={(event) =>
-                                        this.handleChange(
-                                            parameter.name,
-                                            event.target.value
-                                        )
-                                    }
+                                    handler={this.handleChange}
+                                    parentGroup={dataType}
+                                    path={[key]}
                                 />
                             );
                         }
                     }
                 })}
+            <button type="submit" onClick={this.handleSubmit}>Submit</button>/>
             </div>
         );
     }

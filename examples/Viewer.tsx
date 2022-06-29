@@ -25,7 +25,7 @@ import {
     UI_TEMPLATE_DOWNLOAD_URL_ROOT,
     UI_TEMPLATE_URL_ROOT,
 } from "./api-settings";
-import InputForm from "./FileInfoInput";
+import ConversionForm from "./ConversionForm";
 
 const netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
@@ -260,18 +260,19 @@ class Viewer extends React.Component<{}, ViewerState> {
 
     public async loadSmoldynFile(file) {
         const smoldynTrajectory = await file.text()
-        console.log(smoldynTrajectory)
         const smoldynTemplate = await fetch(
             `${UI_TEMPLATE_DOWNLOAD_URL_ROOT}/${SMOLDYN_TEMPLATE}`
         ).then((data) => data.json());
         const templateMap = await this.loadUiTemplates();
 
-        this.setState({ filePending: {
-            type: "smoldyn",
-            trajectory: smoldynTrajectory,
-            template: smoldynTemplate,
-            templateData: templateMap
-        }})
+        this.setState({
+            filePending: {
+                type: "Smoldyn",
+                trajectory: smoldynTrajectory,
+                template: smoldynTemplate.smoldyn_data,
+                templateData: templateMap,
+            },
+        });
     }
 
     public loadFile(trajectoryFile, fileName, geoAssets?) {
@@ -440,7 +441,7 @@ class Viewer extends React.Component<{}, ViewerState> {
 
     public render(): JSX.Element {
         if (this.state.filePending) {
-            return <InputForm {...this.state.filePending} />
+            return <ConversionForm {...this.state.filePending}  />
         }
         return (
             <div className="container" style={{ height: "90%", width: "75%" }}>
