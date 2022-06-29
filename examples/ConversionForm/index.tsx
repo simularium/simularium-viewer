@@ -35,6 +35,27 @@ class InputForm extends React.Component {
     handleSubmit(event) {
         event.preventDefault();
         console.log("submitting", this.state);
+        const payload = {
+            ...this.state,
+            file_contents: this.props.trajectory,
+        };
+        fetch(
+            "https://fm4o7gwkdd.execute-api.us-west-2.amazonaws.com/v1/smoldyn",
+            {
+                method: "POST",
+                body: JSON.stringify(payload),
+            }
+        )
+            .then((result) => {
+                return result.json()
+            })
+            .then((data) => {
+                console.log("Completed with result:", data);
+            })
+            .catch((err) => {
+                console.error(err);
+            });
+
     }
 
     render() {
