@@ -1,13 +1,13 @@
 import PDBGBufferShaders from "./PDBGBufferShaders";
 import { InstancedFiberGroup } from "./InstancedFiber";
-import { InstancedMesh } from "./InstancedMesh";
-
 import {
     MRTShaders,
     setRenderPass,
     updateProjectionMatrix,
     updateResolution,
 } from "./MultipassMaterials";
+
+import { GeometryInstanceContainer } from "../types";
 
 import {
     Color,
@@ -39,7 +39,7 @@ class GBufferPass {
     public instancedMeshGroup: Group;
     // instancedMeshGroup consists of fibers and meshes:
     public fibers: InstancedFiberGroup;
-    public meshTypes: InstancedMesh[];
+    public meshTypes: GeometryInstanceContainer[];
 
     public constructor() {
         this.instancedMeshGroup = new Group();
@@ -54,7 +54,7 @@ class GBufferPass {
     public setMeshGroups(
         instancedMeshGroup: Group,
         fibers: InstancedFiberGroup,
-        meshes: InstancedMesh[]
+        meshes: GeometryInstanceContainer[]
     ): void {
         this.instancedMeshGroup = instancedMeshGroup;
         this.fibers = fibers;

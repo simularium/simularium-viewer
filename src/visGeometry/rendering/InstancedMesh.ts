@@ -12,6 +12,8 @@ import InstancedMeshShader from "./InstancedMeshShader";
 import { MRTShaders } from "./MultipassMaterials";
 import PDBGBufferShaders from "./PDBGBufferShaders";
 
+import { GeometryInstanceContainer } from "../types";
+
 const tmpQuaternion = new Quaternion();
 const tmpEuler = new Euler();
 
@@ -20,7 +22,7 @@ export enum InstanceType {
     POINTS,
 }
 
-class InstancedMesh {
+class InstancedMesh implements GeometryInstanceContainer {
     private baseGeometry: BufferGeometry;
     private drawable: Mesh | Points;
     private shaderSet: MRTShaders;
@@ -187,7 +189,8 @@ class InstancedMesh {
         rz: number,
         uniqueAgentId: number,
         typeId: number,
-        lodScale = 1
+        lodScale = 1,
+        _subPoints: number[] = []
     ): void {
         const offset = this.currentInstance;
         this.checkRealloc(this.currentInstance + 1);

@@ -47,12 +47,12 @@ import { AgentData } from "../simularium/VisData";
 
 import SimulariumRenderer from "./rendering/SimulariumRenderer";
 import { InstancedFiberGroup } from "./rendering/InstancedFiber";
-import { InstancedMesh } from "./rendering/InstancedMesh";
 import { LegacyRenderer } from "./rendering/LegacyRenderer";
 import GeometryStore, { DEFAULT_MESH_NAME } from "./GeometryStore";
 import {
     AgentGeometry,
     GeometryDisplayType,
+    GeometryInstanceContainer,
     MeshGeometry,
     MeshLoadRequest,
     PDBGeometry,
@@ -652,7 +652,7 @@ class VisGeometry {
         });
 
         this.controls.maxDistance = 750;
-        this.controls.minDistance = 5;
+        this.controls.minDistance = 1;
         this.controls.zoomSpeed = 1.0;
         this.setPanningMode(false);
         this.controls.saveState();
@@ -862,7 +862,7 @@ class VisGeometry {
             this.scene.autoUpdate = false;
 
             // collect up the meshes that have > 0 instances
-            const meshTypes: InstancedMesh[] = [];
+            const meshTypes: GeometryInstanceContainer[] = [];
             for (const entry of this.geometryStore.registry.values()) {
                 const { displayType } = entry;
                 if (displayType !== GeometryDisplayType.PDB) {
@@ -1410,7 +1410,9 @@ class VisGeometry {
                     agentData.yrot,
                     agentData.zrot,
                     visAgent.agentData.instanceId,
-                    visAgent.signedTypeId()
+                    visAgent.signedTypeId(),
+                    1,
+                    agentData.subpoints
                 );
             }
         }

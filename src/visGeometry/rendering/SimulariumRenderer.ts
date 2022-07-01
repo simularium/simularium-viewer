@@ -6,7 +6,7 @@ import ContourPass from "./ContourPass";
 import DrawBufferPass from "./DrawBufferPass";
 import HitTestHelper from "./HitTestHelper";
 import { InstancedFiberGroup } from "./InstancedFiber";
-import { InstancedMesh } from "./InstancedMesh";
+import { GeometryInstanceContainer } from "../types";
 
 import {
     Color,
@@ -345,7 +345,7 @@ class SimulariumRenderer {
     public setMeshGroups(
         instancedMeshGroup: Group,
         fibers: InstancedFiberGroup,
-        meshTypes: InstancedMesh[]
+        meshTypes: GeometryInstanceContainer[]
     ): void {
         this.gbufferPass.setMeshGroups(instancedMeshGroup, fibers, meshTypes);
     }
