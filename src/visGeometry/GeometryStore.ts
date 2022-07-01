@@ -22,6 +22,7 @@ import {
     MeshGeometry,
     MeshLoadRequest,
 } from "./types";
+import { MetaballMesh } from "./rendering/MetaballMesh";
 
 export const DEFAULT_MESH_NAME = "SPHERE";
 
@@ -276,7 +277,11 @@ class GeometryStore {
                 return; // should be unreachable, but needed for TypeScript
             }
             const { geometry, displayType } = entry;
-            if (geometry && displayType !== GeometryDisplayType.PDB) {
+            if (
+                geometry &&
+                displayType !== GeometryDisplayType.PDB &&
+                displayType !== GeometryDisplayType.SPHERE_GROUP
+            ) {
                 const meshRequest = geometry as MeshLoadRequest;
                 // there is already a mesh registered but we are going to load a new one.
                 // start by resetting this entry to a sphere. we will replace when the new mesh arrives
@@ -313,7 +318,8 @@ class GeometryStore {
 
         this.mlogger.debug("Finished loading mesh: ", meshName);
         // insert new mesh into meshRegistry
-        // get its geometry first:
+        // get its geometry first
+        // (note that we are only returning the first geometry found):
         let geom: BufferGeometry | null = null;
         object.traverse((obj) => {
             if (!geom && obj instanceof Mesh) {
@@ -454,7 +460,19 @@ class GeometryStore {
             const lookupKey = displayType;
             let geometry: MeshLoadRequest;
             // TODO: handle gizmo here
-            if (displayType === GeometryDisplayType.CUBE) {
+            if (displayType === GeometryDisplayType.SPHERE_GROUP) {
+                // instances in this case will be a simple array of MarchingCubes objects.
+                // clear in between redraws?
+                // on updatescene, add instances
+                // on render, pass the group of marchingcubes objects
+                geometry = {
+                    mesh: null,
+                    cancelled: false,
+                    instances: new MetaballMesh(lookupKey),
+                } as MeshLoadRequest;
+
+                this.setGeometryInRegistry(lookupKey, geometry, displayType);
+            } else if (displayType === GeometryDisplayType.CUBE) {
                 geometry = this.createNewCubeGeometry(lookupKey);
                 this.setGeometryInRegistry(
                     lookupKey,

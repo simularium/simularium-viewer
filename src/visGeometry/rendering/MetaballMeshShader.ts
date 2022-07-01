@@ -1,4 +1,12 @@
-import { FrontSide, GLSL3, Matrix3, Matrix4, RawShaderMaterial } from "three";
+import {
+    FrontSide,
+    GLSL3,
+    Matrix3,
+    Matrix4,
+    RawShaderMaterial,
+    Vector3,
+    Vector4,
+} from "three";
 
 import { MRTShaders } from "./MultipassMaterials";
 
@@ -13,10 +21,10 @@ in vec4 position;
 in vec3 normal;
 
 // per instance attributes
-in vec4 translateAndScale; // xyz trans, w scale
-in vec4 rotation; // quaternion
+uniform vec4 translateAndScale; // xyz trans, w scale
+uniform vec4 rotation; // quaternion
 // instanceID, typeId
-in vec3 instanceAndTypeId;
+uniform vec3 instanceAndTypeId;
 
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
@@ -71,7 +79,8 @@ void main() {
 
     vec3 normal = IN_viewNormal;
     normal = normalize(normal);
-    gNormal = vec4(normal * 0.5 + 0.5, 1.0);
+    vec3 normalOut = normal * 0.5 + 0.5;
+    gNormal = vec4(normalOut, 1.0);
 
     gPos = vec4(fragViewPos.x, fragViewPos.y, fragViewPos.z, 1.0);
 
@@ -89,6 +98,10 @@ const multiMaterial = new RawShaderMaterial({
         modelViewMatrix: { value: new Matrix4() },
         normalMatrix: { value: new Matrix3() },
         projectionMatrix: { value: new Matrix4() },
+        translateAndScale: { value: new Vector4(0, 0, 0, 1) }, // xyz trans, w scale
+        rotation: { value: new Vector4(0, 0, 0, 0) }, // quaternion
+        // instanceID, typeId
+        instanceAndTypeId: { value: new Vector3(0, 0, 0) },
     },
 });
 

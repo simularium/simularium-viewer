@@ -35,6 +35,7 @@ import VisTypes from "../simularium/VisTypes";
 import PDBModel from "./PDBModel";
 import AgentPath from "./agentPath";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
+import { AOSettings } from "./rendering/SimulariumRenderer";
 
 import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC } from "../constants";
 import {
@@ -46,12 +47,12 @@ import { AgentData } from "../simularium/VisData";
 
 import SimulariumRenderer from "./rendering/SimulariumRenderer";
 import { InstancedFiberGroup } from "./rendering/InstancedFiber";
-import { InstancedMesh } from "./rendering/InstancedMesh";
 import { LegacyRenderer } from "./rendering/LegacyRenderer";
 import GeometryStore, { DEFAULT_MESH_NAME } from "./GeometryStore";
 import {
     AgentGeometry,
     GeometryDisplayType,
+    GeometryInstanceContainer,
     MeshGeometry,
     MeshLoadRequest,
     PDBGeometry,
@@ -70,6 +71,8 @@ const TICK_LENGTH_FACTOR = 100;
 const BOUNDING_BOX_COLOR = new Color(0x6e6e6e);
 const NO_AGENT = -1;
 const CAMERA_DOLLY_STEP_SIZE = 10;
+const CAMERA_INITIAL_ZNEAR = 1.0;
+const CAMERA_INITIAL_ZFAR = 1000.0;
 
 export enum RenderStyle {
     WEBGL1_FALLBACK,
@@ -197,7 +200,12 @@ class VisGeometry {
         this.mlogger = jsLogger.get("visgeometry");
         this.mlogger.setLevel(loggerLevel);
 
-        this.camera = new PerspectiveCamera(75, 100 / 100, 0.1, 10000);
+        this.camera = new PerspectiveCamera(
+            75,
+            100 / 100,
+            CAMERA_INITIAL_ZNEAR,
+            CAMERA_INITIAL_ZFAR
+        );
 
         this.initCameraPosition = this.camera.position.clone();
         this.cameraDefault = cloneDeep(DEFAULT_CAMERA_SPEC);
@@ -274,6 +282,10 @@ class VisGeometry {
         cameraSpec.lookAtPosition.x = this.controls.target.x;
         cameraSpec.lookAtPosition.y = this.controls.target.y;
         cameraSpec.lookAtPosition.z = this.controls.target.z;
+    }
+
+    public applyAO(ao: AOSettings): void {
+        this.renderer.applyAO(ao);
     }
 
     public setupGui(container?: HTMLElement): void {
@@ -640,7 +652,7 @@ class VisGeometry {
         });
 
         this.controls.maxDistance = 750;
-        this.controls.minDistance = 5;
+        this.controls.minDistance = 1;
         this.controls.zoomSpeed = 1.0;
         this.setPanningMode(false);
         this.controls.saveState();
@@ -666,8 +678,8 @@ class VisGeometry {
         this.camera = new PerspectiveCamera(
             75,
             initWidth / initHeight,
-            0.1,
-            1000
+            CAMERA_INITIAL_ZNEAR,
+            CAMERA_INITIAL_ZFAR
         );
 
         this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
@@ -813,6 +825,11 @@ class VisGeometry {
 
         this.camera.updateMatrixWorld();
         this.transformBoundingBox();
+        // Tight bounds with fudge factor because the bounding box is not really
+        // bounding.  Also allow for camera to be inside of box.
+        this.camera.near = Math.max(this.boxNearZ * 0.66, CAMERA_INITIAL_ZNEAR);
+        this.camera.far = Math.min(this.boxFarZ * 1.33, CAMERA_INITIAL_ZFAR);
+        this.camera.updateProjectionMatrix();
 
         // update light sources due to camera moves
         if (this.dl && this.fixLightsToCamera) {
@@ -845,7 +862,7 @@ class VisGeometry {
             this.scene.autoUpdate = false;
 
             // collect up the meshes that have > 0 instances
-            const meshTypes: InstancedMesh[] = [];
+            const meshTypes: GeometryInstanceContainer[] = [];
             for (const entry of this.geometryStore.registry.values()) {
                 const { displayType } = entry;
                 if (displayType !== GeometryDisplayType.PDB) {
@@ -1393,7 +1410,9 @@ class VisGeometry {
                     agentData.yrot,
                     agentData.zrot,
                     visAgent.agentData.instanceId,
-                    visAgent.signedTypeId()
+                    visAgent.signedTypeId(),
+                    1,
+                    agentData.subpoints
                 );
             }
         }

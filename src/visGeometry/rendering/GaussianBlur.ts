@@ -18,6 +18,7 @@ class BlurXPass {
             
             uniform sampler2D colorTex;
             uniform sampler2D viewPosTex;
+            // "radius" in framebuffer pixels
             uniform float amount;
             uniform vec2 size;
             
@@ -89,6 +90,7 @@ class BlurYPass {
             
             uniform sampler2D colorTex;
             uniform sampler2D viewPosTex;
+            // "radius" in framebuffer pixels
             uniform float amount;
             uniform vec2 size;
             
