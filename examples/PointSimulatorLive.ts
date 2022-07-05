@@ -65,9 +65,9 @@ export default class PointSimLive implements IClientSimulatorImpl {
         // const agents = data["agents"];
         //        for (const agent of agents) {
         for (let ii = 0; ii < this.nPoints; ++ii) {
-            this.pointsData[ii * 3 + 0] += 5; //agentpos[0];
-            this.pointsData[ii * 3 + 1] += 5; //agentpos[1];
-            this.pointsData[ii * 3 + 2] += 5; //agentpos[2];
+            this.pointsData[ii * 3 + 0] += 0.1; //agentpos[0];
+            this.pointsData[ii * 3 + 1] += 0; //agentpos[1];
+            this.pointsData[ii * 3 + 2] += 0; //agentpos[2];
         }
         //     _updater: "accumulate",
         //     position: [0.1, 0, 0],
@@ -75,7 +75,7 @@ export default class PointSimLive implements IClientSimulatorImpl {
     }
     public update(_dt: number): VisDataMessage {
         //const dt_adjusted = dt / 1000;
-        const amplitude = 0.0;
+        const amplitude = 0.05;
         for (let ii = 0; ii < this.nPoints; ++ii) {
             this.pointsData[ii * 3 + 0] += this.randomFloat(
                 -amplitude,
