@@ -16,6 +16,7 @@ import type { ISimulariumFile } from "../src/simularium/ISimulariumFile";
 import "../style/style.css";
 
 import PointSimulator from "./PointSimulator";
+import PointSimulatorLive from "./PointSimulatorLive";
 import PdbSimulator from "./PdbSimulator";
 import CurveSimulator from "./CurveSimulator";
 import MetaballSimulator from "./MetaballSimulator";
@@ -25,11 +26,11 @@ const netConnectionSettings = {
     serverPort: 9002,
 };
 
-let playbackFile = "medyan_paper_M:A_0.675.simularium";
+let playbackFile = "TEST_LIVEMODE_API"; //"medyan_paper_M:A_0.675.simularium";
 let queryStringFile = "";
 const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.has("file")) {
-    queryStringFile = urlParams.get("file");
+    queryStringFile = urlParams.get("file") || "";
     playbackFile = queryStringFile;
 }
 
@@ -330,12 +331,41 @@ class Viewer extends React.Component<{}, ViewerState> {
         );
     }
 
+    private translateAgent() {
+        // simulator previously told us the keys for simulation parameters
+
+        // simulator_schema {
+        //   keyname:{properties: data ranges, etc},
+        //   keyname:{properties: data ranges, etc},
+        //   keyname:{properties: data ranges, etc},
+        //   "concentration_x": {"units":"molar", "range":[0,1], "default":0.5},
+        // }
+
+        simulariumController.sendUpdate({
+            data: {
+                agents: {
+                    "1": {
+                        _updater: "accumulate",
+                        position: [0.1, 0, 0],
+                    },
+                },
+            },
+        });
+    }
+
     private configureAndLoad() {
         simulariumController.configureNetwork(netConnectionSettings);
         if (playbackFile.startsWith("http")) {
             return this.loadFromUrl(playbackFile);
         }
-        if (playbackFile === "TEST_POINTS") {
+        if (playbackFile === "TEST_LIVEMODE_API") {
+            simulariumController.changeFile(
+                {
+                    clientSimulator: new PointSimulatorLive(4, 4),
+                },
+                playbackFile
+            );
+        } else if (playbackFile === "TEST_POINTS") {
             simulariumController.changeFile(
                 {
                     clientSimulator: new PointSimulator(8000, 4),
@@ -383,6 +413,9 @@ class Viewer extends React.Component<{}, ViewerState> {
                     defaultValue={playbackFile}
                 >
                     <option value={queryStringFile}>{queryStringFile}</option>
+                    <option value="TEST_LIVEMODE_API">
+                        TEST LIVE MODE API
+                    </option>
                     <option value="medyan_paper_M:A_0.675.simularium">
                         medyan test
                     </option>
@@ -417,6 +450,9 @@ class Viewer extends React.Component<{}, ViewerState> {
                 </select>
                 <button onClick={() => this.configureAndLoad()}>
                     Load model
+                </button>
+                <button onClick={() => this.translateAgent()}>
+                    TranslateAgent
                 </button>
                 <button onClick={() => simulariumController.clearFile()}>
                     Clear

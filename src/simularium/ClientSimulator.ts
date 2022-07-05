@@ -79,6 +79,11 @@ export class ClientSimulator implements ISimulator {
                 break;
             case ClientMessageEnum.ID_MODEL_DEFINITION:
                 break;
+            case ClientMessageEnum.ID_UPDATE_SIMULATION_STATE:
+                {
+                    this.localSimulator.updateSimulationState(jsonData["data"]);
+                }
+                break;
             case ClientMessageEnum.ID_VIS_DATA_REQUEST:
                 {
                     if (jsonData["frameNumber"] !== undefined) {
@@ -143,17 +148,12 @@ export class ClientSimulator implements ISimulator {
         this.sendSimulationRequest(jsonData, "Update Time-Step");
     }
 
-    public sendParameterUpdate(paramName: string, paramValue: number): void {
+    public sendUpdate(obj: Record<string, unknown>): void {
         if (!this.socketIsValid()) {
             return;
         }
-
-        const jsonData = {
-            msgType: ClientMessageEnum.ID_UPDATE_RATE_PARAM,
-            paramName: paramName,
-            paramValue: paramValue,
-        };
-        this.sendSimulationRequest(jsonData, "Rate Parameter Update");
+        obj.msgType = ClientMessageEnum.ID_UPDATE_SIMULATION_STATE;
+        this.sendSimulationRequest(obj, "Simulation State Update");
     }
 
     public sendModelDefinition(model: string): void {

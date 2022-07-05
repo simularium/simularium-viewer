@@ -28,7 +28,17 @@ export interface ISimulator {
 
     sendTimeStepUpdate(newTimeStep: number): void;
 
-    sendParameterUpdate(paramName: string, paramValue: number): void;
+    // what are the things we want to change?
+    // rates?
+    // state vs parameter
+
+    // distinguish between construction only parameters ("parameters") and
+    // params you can change DURING the run ("state")
+
+    // some things require a restart if you change them.
+    // total number of agents
+
+    sendUpdate(data: Record<string, unknown>): void;
 
     sendModelDefinition(model: string): void;
 
@@ -41,10 +51,9 @@ export interface ISimulator {
      *  Trajectory File: No simulation run, stream a result file piecemeal
      *
      */
+    // this should probably be abstracted to just "start"
     startRemoteSimPreRun(timeStep: number, numTimeSteps: number): void;
-
     startRemoteSimLive(): void;
-
     startRemoteTrajectoryPlayback(fileName: string): Promise<void>;
 
     pauseRemoteSim(): void;
@@ -55,6 +64,7 @@ export interface ISimulator {
 
     requestSingleFrame(startFrameNumber: number): void;
 
+    // what do these mean for live mode?? can go backward but not forward
     gotoRemoteSimulationTime(time: number): void;
 
     requestTrajectoryFileInfo(fileName: string): void;
