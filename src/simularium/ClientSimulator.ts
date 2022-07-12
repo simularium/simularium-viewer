@@ -81,7 +81,9 @@ export class ClientSimulator implements ISimulator {
                 break;
             case ClientMessageEnum.ID_UPDATE_SIMULATION_STATE:
                 {
-                    this.localSimulator.updateSimulationState(jsonData["data"]);
+                    this.localSimulator.updateSimulationState(
+                        jsonData["data"] as Record<string, unknown>
+                    );
                 }
                 break;
             case ClientMessageEnum.ID_VIS_DATA_REQUEST:
