@@ -346,7 +346,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                 agents: {
                     "1": {
                         _updater: "accumulate",
-                        position: [0.1, 0, 0],
+                        position: [0.45, 0, 0],
                     },
                 },
             },

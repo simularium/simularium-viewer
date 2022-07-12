@@ -62,20 +62,36 @@ export default class PointSimLive implements IClientSimulatorImpl {
     }
 
     public updateSimulationState(data: Record<string, unknown>) {
-        // const agents = data["agents"];
-        //        for (const agent of agents) {
-        for (let ii = 0; ii < this.nPoints; ++ii) {
-            this.pointsData[ii * 3 + 0] += 0.1; //agentpos[0];
-            this.pointsData[ii * 3 + 1] += 0; //agentpos[1];
-            this.pointsData[ii * 3 + 2] += 0; //agentpos[2];
+        // TODO a type definition to show the possible fields
+        // data: {
+        //     agents: {
+        //         "1": {
+        //             _updater: "accumulate",
+        //             position: [0.1, 0, 0],
+        //         },
+        //     },
+        // },
+
+        const agents = data["agents"] as Record<string, unknown>;
+        for (const agentid in agents) {
+            const agent = agents[agentid] as Record<string, unknown>;
+            const position = agent["position"] as number[];
+            const id = parseInt(agentid);
+            if (agent["_updater"] === "accumulate") {
+                this.pointsData[id * 3 + 0] += position[0];
+                this.pointsData[id * 3 + 1] += position[1];
+                this.pointsData[id * 3 + 2] += position[2];
+            } else {
+                this.pointsData[id * 3 + 0] = position[0];
+                this.pointsData[id * 3 + 1] = position[1];
+                this.pointsData[id * 3 + 2] = position[2];
+            }
         }
-        //     _updater: "accumulate",
-        //     position: [0.1, 0, 0],
-        // }
     }
+
     public update(_dt: number): VisDataMessage {
         //const dt_adjusted = dt / 1000;
-        const amplitude = 0.05;
+        const amplitude = 0.15;
         for (let ii = 0; ii < this.nPoints; ++ii) {
             this.pointsData[ii * 3 + 0] += this.randomFloat(
                 -amplitude,
@@ -102,7 +118,7 @@ export default class PointSimLive implements IClientSimulatorImpl {
             agentData.push(0); // rx
             agentData.push(0); // ry
             agentData.push(0); // rz
-            agentData.push(0.1); // collision radius
+            agentData.push(0.4); // collision radius
             agentData.push(0); // subpoints
         }
         const frameData: VisDataMessage = {
