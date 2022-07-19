@@ -39,7 +39,13 @@ const InputSwitch = (props: InputSwitchProps) => {
                     dataType={currentDataType}
                     options={currentParameter.options || []}
                     name={currentParameter.name}
-                    handler={(event) => handler(path, key, event.target.value)}
+                    handler={(event) => {
+                        const value =
+                            currentDataType === "number"
+                                ? Number(event.target.value)
+                                : event.target.value;
+                        return handler(path, key, value);
+                    }}
                 />
             );
         } else if (recursive) {

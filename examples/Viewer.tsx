@@ -285,17 +285,19 @@ class Viewer extends React.Component<{}, ViewerState> {
         const simulariumFile = fileName.includes(".simularium")
             ? trajectoryFile
             : null;
-        if (geoAssets && geoAssets.length) {
-            return simulariumController.changeFile(
-                { simulariumFile, geoAssets },
-                fileName
-            );
-        } else {
-            return simulariumController.changeFile(
-                { simulariumFile },
-                fileName
-            ).catch(console.log)
-        }
+        // if (!fileName.includes(".simularium")) {
+        //     return new 
+        // }
+            if (geoAssets && geoAssets.length) {
+                return simulariumController.changeFile(
+                    { simulariumFile, geoAssets },
+                    fileName
+                );
+            } else {
+                return simulariumController
+                    .changeFile({ simulariumFile }, fileName)
+                    .catch(console.log);
+            }
     }
 
     public handleJsonMeshData(jsonData): void {

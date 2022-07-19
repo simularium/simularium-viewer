@@ -42,7 +42,6 @@ class CollectionInput extends React.Component<CollectionInputProps> {
                 },
             };
         }
-
         this.setState(newState);
         const newValues = reduce(
             newState,
