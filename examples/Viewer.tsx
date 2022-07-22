@@ -348,6 +348,10 @@ class Viewer extends React.Component<{}, ViewerState> {
                         _updater: "accumulate",
                         position: [0.45, 0, 0],
                     },
+                    "2": {
+                        _updater: "accumulate",
+                        position: [0, 0.45, 0],
+                    },
                 },
             },
         });
