@@ -22,6 +22,9 @@ import CurveSimulator from "./CurveSimulator";
 import MetaballSimulator from "./MetaballSimulator";
 
 const netConnectionSettings = {
+    // to test local server: (also may have to change wss to ws in the url)
+    // serverIp: "0.0.0.0",
+    // serverPort: 8765,
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
     serverPort: 9002,
 };
