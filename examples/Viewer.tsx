@@ -335,15 +335,6 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     private translateAgent() {
-        // simulator previously told us the keys for simulation parameters
-
-        // simulator_schema {
-        //   keyname:{properties: data ranges, etc},
-        //   keyname:{properties: data ranges, etc},
-        //   keyname:{properties: data ranges, etc},
-        //   "concentration_x": {"units":"molar", "range":[0,1], "default":0.5},
-        // }
-
         simulariumController.sendUpdate({
             data: {
                 agents: {

@@ -14,6 +14,8 @@ import { ISimulator } from "./ISimulator";
 export class ClientSimulator implements ISimulator {
     private localSimulator: IClientSimulatorImpl;
     private simulatorIntervalId = 0;
+    // throttle the data interval so that the local client can keep up
+    // ideally the client (VisData) needs to be able to handle the data rate
     private dataInterval = 66;
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfo) => void;
