@@ -32,7 +32,8 @@ ___
 
 1. Make a new version: `npm version [patch/minor/major]` -- this will give you the new tag, e.g., `2.7.1`
 2. Push the new package.json version: `git push origin main`
-3. Push the new tag: `git push origin v[NEW_TAG]` -- e.g. `git push origin v2.7.1`
+3. Push the new tag: `git push origin [NEW_TAG]` -- e.g. `git push origin v2.7.1`
+4. Write up [release notes](https://github.com/simularium/simularium-viewer/releases).
 
 ___
 

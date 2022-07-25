@@ -12,7 +12,7 @@ import SimulariumViewer, {
 } from "../src";
 import { FrontEndError } from "../src/simularium/FrontEndError";
 import { loadSimulariumFile } from "../src/util";
-import ISimulariumFile from "../src/simularium/ISimulariumFile";
+import type { ISimulariumFile } from "../src/simularium/ISimulariumFile";
 import "../style/style.css";
 
 import PointSimulator from "./PointSimulator";
@@ -26,6 +26,7 @@ import {
     UI_TEMPLATE_URL_ROOT,
 } from "./api-settings";
 import ConversionForm from "./ConversionForm";
+import MetaballSimulator from "./MetaballSimulator";
 
 const netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
@@ -454,6 +455,13 @@ class Viewer extends React.Component<{}, ViewerState> {
                 },
                 playbackFile
             );
+        } else if (playbackFile === "TEST_METABALLS") {
+            simulariumController.changeFile(
+                {
+                    clientSimulator: new MetaballSimulator(),
+                },
+                playbackFile
+            );
         } else {
             simulariumController.changeFile(
                 {
@@ -513,6 +521,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                     <option value="TEST_PDB">TEST PDB</option>
                     <option value="TEST_FIBERS">TEST FIBERS</option>
                     <option value="TEST_POINTS">TEST POINTS</option>
+                    <option value="TEST_METABALLS">TEST METABALLS</option>
                 </select>
                 <button onClick={() => this.configureAndLoad()}>
                     Load model
