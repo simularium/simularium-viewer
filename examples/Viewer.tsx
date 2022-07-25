@@ -84,6 +84,21 @@ interface ViewerState {
     };
 }
 
+interface BaseType {
+    isBaseType: true;
+    id: string;
+    data: string;
+    match: string;
+}
+
+interface CustomType {
+    [key: string]: {
+        "python::module": string;
+        "python::object": string;
+        parameters: { [key: string]: any };
+    };
+}
+
 const simulariumController = new SimulariumController({});
 
 let currentFrame = 0;
@@ -108,7 +123,7 @@ const initialState = {
         highlightedAgents: [],
         hiddenAgents: [],
     },
-    filePending: null
+    filePending: null,
 };
 
 class Viewer extends React.Component<{}, ViewerState> {
@@ -122,7 +137,7 @@ class Viewer extends React.Component<{}, ViewerState> {
         this.handleJsonMeshData = this.handleJsonMeshData.bind(this);
         this.handleTimeChange = this.handleTimeChange.bind(this);
         this.loadFile = this.loadFile.bind(this);
-        this.clearPendingFile = this.clearPendingFile.bind(this)
+        this.clearPendingFile = this.clearPendingFile.bind(this);
         this.state = initialState;
     }
 
@@ -230,7 +245,9 @@ class Viewer extends React.Component<{}, ViewerState> {
             });
     }
 
-    public async loadUiTemplates() {
+    public async loadUiTemplates(): Promise<{
+        [key: string]: BaseType | CustomType;
+    }> {
         const baseTypes = await fetch(
             `${UI_TEMPLATE_DOWNLOAD_URL_ROOT}/${UI_BASE_TYPES}`
         ).then((data) => data.json());
@@ -247,7 +264,7 @@ class Viewer extends React.Component<{}, ViewerState> {
             );
         const typeMap = reduce(
             customTypes,
-            (acc, cur) => {
+            (acc, cur: CustomType) => {
                 const key = Object.keys(cur)[0];
                 acc[key] = cur[key];
                 return acc;
@@ -261,7 +278,7 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public async loadSmoldynFile(file) {
-        const smoldynTrajectory = await file.text()
+        const smoldynTrajectory = await file.text();
         const smoldynTemplate = await fetch(
             `${UI_TEMPLATE_DOWNLOAD_URL_ROOT}/${SMOLDYN_TEMPLATE}`
         ).then((data) => data.json());
@@ -278,7 +295,7 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public clearPendingFile() {
-        this.setState({filePending: null})
+        this.setState({ filePending: null });
     }
 
     public loadFile(trajectoryFile, fileName, geoAssets?) {
@@ -286,18 +303,18 @@ class Viewer extends React.Component<{}, ViewerState> {
             ? trajectoryFile
             : null;
         // if (!fileName.includes(".simularium")) {
-        //     return new 
+        //     return new
         // }
-            if (geoAssets && geoAssets.length) {
-                return simulariumController.changeFile(
-                    { simulariumFile, geoAssets },
-                    fileName
-                );
-            } else {
-                return simulariumController
-                    .changeFile({ simulariumFile }, fileName)
-                    .catch(console.log);
-            }
+        if (geoAssets && geoAssets.length) {
+            return simulariumController.changeFile(
+                { simulariumFile, geoAssets },
+                fileName
+            );
+        } else {
+            return simulariumController
+                .changeFile({ simulariumFile }, fileName)
+                .catch(console.log);
+        }
     }
 
     public handleJsonMeshData(jsonData): void {
