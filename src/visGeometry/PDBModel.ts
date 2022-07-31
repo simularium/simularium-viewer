@@ -2,7 +2,6 @@ import "regenerator-runtime/runtime";
 
 import * as Comlink from "comlink";
 import parsePdb from "parse-pdb";
-import parseMmcif from "parse-mmcif";
 import { getObject } from "./cifparser";
 import {
     Box3,
@@ -119,10 +118,18 @@ class PDBModel {
     }
 
     private parseCIFData(data: string): void {
-        const parsedpdb = getObject(data) as PDBType;
+        interface AtomSite {
+            ["Cartn_x"]: number;
+            ["Cartn_y"]: number;
+            ["Cartn_z"]: number;
+        }
+        const parsedpdb: Record<string, unknown> = getObject(data);
         for (const obj in parsedpdb) {
             const mypdb = parsedpdb[obj];
-            if (mypdb._atom_site.length > 0) {
+            const atomSites = (mypdb as Record<string, unknown>)[
+                "_atom_site"
+            ] as AtomSite[];
+            if (atomSites.length > 0) {
                 this.pdb = {
                     atoms: [] as PDBAtom[],
                     seqRes: [],
@@ -130,11 +137,11 @@ class PDBModel {
                     chains: new Map(),
                 };
                 this.pdb.atoms = [];
-                for (let i = 0; i < mypdb._atom_site.length; ++i) {
+                for (let i = 0; i < atomSites.length; ++i) {
                     this.pdb?.atoms.push({
-                        x: mypdb._atom_site[i].Cartn_x,
-                        y: mypdb._atom_site[i].Cartn_y,
-                        z: mypdb._atom_site[i].Cartn_z,
+                        x: atomSites[i].Cartn_x,
+                        y: atomSites[i].Cartn_y,
+                        z: atomSites[i].Cartn_z,
                     });
                 }
                 this.fixupCoordinates();

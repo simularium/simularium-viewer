@@ -3,17 +3,17 @@
  * file informations.
  * @param {String} str - file contents
  */
-function getObject(str) {
+function getObject(str: string): Record<string, unknown> {
     //DELETE COMMENTS AND VOID
-    var fileArray = str
+    let fileArray = str
         .split("\n")
         .map((str) => str.trim())
         .filter((v) => v != "")
         .filter((v) => !v.startsWith("#"));
 
     //MERGE SEMICOLON LINES IN A UNIQUE ONE
-    var semicolon = false;
-    var sentence = "";
+    let semicolon = false;
+    let sentence = "";
 
     for (let index = 0; index < fileArray.length; index++) {
         if (fileArray[index].startsWith(";") && semicolon === false) {
@@ -36,17 +36,17 @@ function getObject(str) {
 
     fileArray = fileArray.filter((v) => v != "");
 
-    var fileObj = {};
+    const fileObj = {};
 
-    var datablockObj = {};
-    var firstBlock = true;
+    let datablockObj: Record<string, unknown> = {};
+    let firstBlock = true;
 
-    var isLoop = false;
-    var dataname = "";
-    var precArray = new Array();
+    let isLoop = false;
+    let dataname = "";
+    let precArray: string[] = [];
 
     //THIS FOREACH DIVIDES THE SINGLE BLOCKS AND ELABORATE THEM ONE AFTER ONE
-    fileArray.forEach((line) => {
+    fileArray.forEach((line: string) => {
         line = line.trim();
 
         if (line.startsWith("data_") && firstBlock) {
@@ -54,7 +54,7 @@ function getObject(str) {
             datablockObj["datablock"] = line.split("data_").join("");
             firstBlock = false;
         } else if (line.startsWith("data_") && !firstBlock) {
-            fileObj[datablockObj.datablock] = datablockObj;
+            fileObj[datablockObj.datablock as string] = datablockObj;
             datablockObj = {};
             datablockObj["datablock"] = line.split("data_").join("");
         } else {
@@ -67,13 +67,13 @@ function getObject(str) {
                         ...datablockObj,
                         ...elaborate(precArray, isLoop),
                     };
-                precArray = new Array();
+                precArray = [];
                 isLoop = true;
             } else if (dataname === "" && line.startsWith("_")) {
                 //NEW DATANAME IN LOOP OR FIRST DATANAME
 
                 dataname = line.split(".")[0];
-                precArray = new Array();
+                precArray = [];
                 precArray.push(line);
             } else if (
                 dataname !== "" &&
@@ -87,7 +87,7 @@ function getObject(str) {
                     ...datablockObj,
                     ...elaborate(precArray, isLoop),
                 };
-                precArray = new Array();
+                precArray = [];
                 precArray.push(line);
                 isLoop = false;
             } else {
@@ -98,7 +98,7 @@ function getObject(str) {
         }
     });
 
-    fileObj[datablockObj.datablock] = datablockObj;
+    fileObj[datablockObj.datablock as string] = datablockObj;
 
     return fileObj;
 }
@@ -109,17 +109,17 @@ function getObject(str) {
  * @param {boolean} isLoop - is it a loop block?
  */
 function elaborate(dataArray, isLoop) {
-    var valueArray = new Array();
-    var nameArray = new Array();
+    const valueArray: string[] = [];
+    const nameArray: string[] = [];
 
-    var dataName = "";
+    let dataName = "";
 
-    var JSONObj = {};
+    const jsonObj = {};
 
     if (isLoop) {
         //BLOCK IS LOOP
 
-        var contArray = new Array();
+        const contArray: Record<string, unknown>[] = [];
 
         dataArray.forEach((line) => {
             line = line.trim();
@@ -131,9 +131,9 @@ function elaborate(dataArray, isLoop) {
             } else {
                 //VALUES LINES
 
-                var field = "";
-                var controlChar = " ";
-                var pushed = false;
+                let field = "";
+                let controlChar = " ";
+                let pushed = false;
 
                 for (let index = 0; index < line.length; index++) {
                     //SPLIT BY WHITE SPACES EXEPT BETWEEN "" AND ''. P.S. I HATE REGEX.
@@ -188,8 +188,8 @@ function elaborate(dataArray, isLoop) {
             }
         });
 
-        var i = 0;
-        var obj = {};
+        let i = 0;
+        let obj = {};
         for (let increment = 0; increment < valueArray.length; increment++) {
             if (i === nameArray.length) {
                 i = 0;
@@ -203,11 +203,11 @@ function elaborate(dataArray, isLoop) {
 
         contArray.push(obj);
 
-        JSONObj[dataName] = contArray;
+        jsonObj[dataName] = contArray;
     } else {
         //NOT LOOP DATA
 
-        var dataName = dataArray.join("").trim().split(".")[0];
+        const dataName: string = dataArray.join("").trim().split(".")[0];
 
         dataArray = dataArray
             .join(" ")
@@ -215,20 +215,20 @@ function elaborate(dataArray, isLoop) {
             .split(dataName + ".")
             .filter((v) => v != "");
 
-        var subObj = {};
+        const subObj = {};
 
         dataArray.forEach((line) => {
             line = line.trim();
-            var id = line.split(" ")[0];
+            const id = line.split(" ")[0];
             line = line.replace(id, "").trim();
             line = line.split("'").join("");
             subObj[id] = line;
         });
 
-        JSONObj[dataName] = subObj;
+        jsonObj[dataName] = subObj;
     }
 
-    return JSONObj;
+    return jsonObj;
 }
 
 export { getObject };
