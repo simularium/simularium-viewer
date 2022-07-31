@@ -3,6 +3,7 @@ import "regenerator-runtime/runtime";
 import * as Comlink from "comlink";
 import parsePdb from "parse-pdb";
 import parseMmcif from "parse-mmcif";
+import { getObject } from "./cifparser";
 import {
     Box3,
     BufferGeometry,
@@ -118,12 +119,32 @@ class PDBModel {
     }
 
     private parseCIFData(data: string): void {
-        this.pdb = parseMmcif(data) as PDBType;
-        if (this.pdb.atoms.length > 0) {
-            this.fixupCoordinates();
-            console.log(`PDB ${this.name} has ${this.pdb.atoms.length} atoms`);
-            this.checkChains();
-            return this.initializeLOD();
+        const parsedpdb = getObject(data) as PDBType;
+        for (const obj in parsedpdb) {
+            const mypdb = parsedpdb[obj];
+            if (mypdb._atom_site.length > 0) {
+                this.pdb = {
+                    atoms: [] as PDBAtom[],
+                    seqRes: [],
+                    residues: [],
+                    chains: new Map(),
+                };
+                this.pdb.atoms = [];
+                for (let i = 0; i < mypdb._atom_site.length; ++i) {
+                    this.pdb?.atoms.push({
+                        x: mypdb._atom_site[i].Cartn_x,
+                        y: mypdb._atom_site[i].Cartn_y,
+                        z: mypdb._atom_site[i].Cartn_z,
+                    });
+                }
+                this.fixupCoordinates();
+                console.log(
+                    `PDB ${this.name} has ${this.pdb.atoms.length} atoms`
+                );
+                this.checkChains();
+                return this.initializeLOD();
+            }
+            break;
         }
     }
 
