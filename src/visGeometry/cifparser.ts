@@ -98,6 +98,14 @@ function getObject(str: string): Record<string, unknown> {
         }
     });
 
+    // handle last block
+    if (precArray.length > 0) {
+        datablockObj = {
+            ...datablockObj,
+            ...elaborate(precArray, isLoop),
+        };
+    }
+
     fileObj[datablockObj.datablock as string] = datablockObj;
 
     return fileObj;
