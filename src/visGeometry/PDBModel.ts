@@ -2,7 +2,6 @@ import "regenerator-runtime/runtime";
 
 import * as Comlink from "comlink";
 import parsePdb from "parse-pdb";
-import { getObject } from "./cifparser";
 import {
     Box3,
     BufferGeometry,
@@ -12,6 +11,7 @@ import {
 } from "three";
 
 import { KMeansWorkerType } from "./KMeansWorker";
+import { getObject } from "./cifparser";
 
 import KMeans from "./rendering/KMeans3d";
 import TaskQueue from "../simularium/TaskQueue";
