@@ -263,9 +263,12 @@ class Viewer extends React.Component<{}, ViewerState> {
                     )
                 )
             );
-        const typeMap = reduce(
+        const typeMap: {
+            [key: string]: BaseType | CustomType;
+        } = reduce(
             customTypes,
             (acc, cur: CustomType) => {
+                //CustomType always has just one
                 const key = Object.keys(cur)[0];
                 acc[key] = cur[key];
                 return acc;
