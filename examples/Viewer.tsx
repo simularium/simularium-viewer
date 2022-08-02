@@ -506,6 +506,11 @@ class Viewer extends React.Component<{}, ViewerState> {
                                 }
                                 value={id}
                                 defaultChecked={true}
+                                checked={
+                                    this.state.selectionStateInfo.hiddenAgents.find(
+                                        (element) => element.name === id
+                                    ) === undefined
+                                }
                             />
                             <input
                                 type="checkbox"
@@ -521,11 +526,25 @@ class Viewer extends React.Component<{}, ViewerState> {
                     );
                 })}
                 <button
-                    onClick={() =>
+                    onClick={() => {
+                        let hiddenAgents: { name: string; tags: string[] }[] =
+                            [];
+                        if (!this.state.hideAllAgents) {
+                            hiddenAgents = this.state.particleTypeNames.map(
+                                (name) => {
+                                    return { name: name, tags: [] };
+                                }
+                            );
+                        }
                         this.setState({
+                            ...this.state,
                             hideAllAgents: !this.state.hideAllAgents,
-                        })
-                    }
+                            selectionStateInfo: {
+                                ...this.state.selectionStateInfo,
+                                hiddenAgents: hiddenAgents,
+                            },
+                        });
+                    }}
                 >
                     {this.state.hideAllAgents ? "Show all" : "Hide all"}
                 </button>
@@ -603,7 +622,6 @@ class Viewer extends React.Component<{}, ViewerState> {
                         )}
                         loadInitialData={true}
                         agentColors={this.state.agentColors}
-                        hideAllAgents={this.state.hideAllAgents}
                         showPaths={this.state.showPaths}
                         onError={this.onError}
                         backgroundColor={[0, 0, 0]}
