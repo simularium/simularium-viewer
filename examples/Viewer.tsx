@@ -91,17 +91,19 @@ interface BaseType {
     match: string;
 }
 
+export interface CustomParameters {
+    name: string;
+    data_type: string;
+    description: string;
+    required: boolean;
+    help: string;
+}
+
 interface CustomType {
     [key: string]: {
         "python::module": string;
         "python::object": string;
-        parameters: {
-            name: string;
-            data_type: string;
-            description: string;
-            required: boolean;
-            help: string;
-        };
+        parameters: CustomParameters;
     };
 }
 
@@ -150,7 +152,9 @@ class Viewer extends React.Component<{}, ViewerState> {
     public componentDidMount(): void {
         window.addEventListener("resize", () => {
             const container = document.querySelector(".container");
-
+            if (!container) {
+                return
+            }
             const height = container.clientHeight;
             const width = container.clientWidth;
             this.setState({ height, width });

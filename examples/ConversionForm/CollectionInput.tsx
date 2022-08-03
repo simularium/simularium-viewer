@@ -1,6 +1,14 @@
 import { map, reduce } from "lodash";
 import React from "react";
 import BaseInput from "./BaseInput";
+import { CustomParameters } from "../Viewer";
+
+interface CollectionParameters extends CustomParameters {
+    length: number;
+    extendible: boolean;
+    key_item: CustomParameters;
+    value_item: CustomParameters;
+}
 
 interface CollectionInputProps {
     handler: (path: string[], key: string, value: any) => void;
@@ -8,19 +16,29 @@ interface CollectionInputProps {
     templateData: { [key: string]: any };
     name: string;
     path: string[];
-    parameter: { [key: string]: any };
+    parameter: CollectionParameters;
     dataType: string;
 }
 
-class CollectionInput extends React.Component<CollectionInputProps> {
+interface CollectionState {
+    length: number;
+}
+
+class CollectionInput extends React.Component<
+    CollectionInputProps,
+    CollectionState
+> {
     constructor(props: CollectionInputProps) {
         super(props);
-        this.state = {};
+        this.state = {
+            length: props.parameter.length,
+        };
         this.handleChange = this.handleChange.bind(this);
+        this.addItem = this.addItem.bind(this);
     }
 
     handleChange(key, index, type, targetValue) {
-        const { handler, id} = this.props;
+        const { handler, id } = this.props;
         const newState = { ...this.state };
         if (!newState[index]) {
             newState[index] = {
@@ -45,7 +63,7 @@ class CollectionInput extends React.Component<CollectionInputProps> {
         this.setState(newState);
         const newValues = reduce(
             newState,
-            (acc, cur: {key: any, value: any}) => {
+            (acc, cur: { key: any; value: any }) => {
                 const key = cur.key;
                 const value = cur.value;
                 acc[key] = value;
@@ -89,13 +107,19 @@ class CollectionInput extends React.Component<CollectionInputProps> {
         }
     };
 
+    addItem() {
+        const index = this.state.length + 1;
+        this.setState({ length: index });
+    }
+
     render() {
         const { name, path, parameter } = this.props;
-        for (let index = 0; index < parameter.length; index++) {
-            return (
+        const jsx = [] as JSX.Element[];
+        for (let index = 0; index < this.state.length; index++) {
+            jsx.push(
                 <div>
                     <h4>
-                        {name} collection {parameter.required && <span>*</span>}
+                        {index}:
                     </h4>
                     <div>
                         Key:
@@ -118,6 +142,11 @@ class CollectionInput extends React.Component<CollectionInputProps> {
                 </div>
             );
         }
+        if (parameter.extendible) {
+            jsx.push(<button onClick={this.addItem}>Add another {name} item</button>);
+        }
+        return jsx;
+        
     }
 }
 

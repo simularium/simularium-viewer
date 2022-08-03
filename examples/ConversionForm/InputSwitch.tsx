@@ -60,8 +60,8 @@ const InputSwitch = (props: InputSwitchProps) => {
     };
     const hasChildren = templateData[dataType].parameters!!;
     return (
-        <div>
-            {path.length == 1 ? (
+        <div style={{ borderTop: "1px solid black", padding: 20}}>
+            {path.length <= 1 ? (
                 <h3>
                     {parameter.name}{" "}
                     <small>
