@@ -14,6 +14,7 @@ interface InputSwitchProps {
 
 const InputSwitch = (props: InputSwitchProps) => {
     const { dataType, templateData, parameter, handler, path, id } = props;
+
     const renderParameter = (
         currentDataType: string,
         key: string,
@@ -39,11 +40,7 @@ const InputSwitch = (props: InputSwitchProps) => {
                     dataType={currentDataType}
                     options={currentParameter.options || []}
                     name={currentParameter.name}
-                    handler={(event) => {
-                        const value =
-                            currentDataType === "number"
-                                ? Number(event.target.value)
-                                : event.target.value;
+                    handler={(value) => {                
                         return handler(path, key, value);
                     }}
                 />

@@ -79,10 +79,9 @@ interface ViewerState {
     uiDisplayData: UIDisplayData;
     filePending: {
         type: string;
-        trajectory: string;
         template: { [key: string]: any };
         templateData: { [key: string]: any };
-    };
+    } | null;
 }
 
 interface BaseType {
@@ -96,7 +95,13 @@ interface CustomType {
     [key: string]: {
         "python::module": string;
         "python::object": string;
-        parameters: { [key: string]: any };
+        parameters: {
+            name: string;
+            data_type: string;
+            description: string;
+            required: boolean;
+            help: string;
+        };
     };
 }
 
@@ -281,8 +286,7 @@ class Viewer extends React.Component<{}, ViewerState> {
         return typeMap;
     }
 
-    public async loadSmoldynFile(file) {
-        const smoldynTrajectory = await file.text();
+    public async loadSmoldynFile() {
         const smoldynTemplate = await fetch(
             `${UI_TEMPLATE_DOWNLOAD_URL_ROOT}/${SMOLDYN_TEMPLATE}`
         ).then((data) => data.json());
@@ -291,7 +295,6 @@ class Viewer extends React.Component<{}, ViewerState> {
         this.setState({
             filePending: {
                 type: "Smoldyn",
-                trajectory: smoldynTrajectory,
                 template: smoldynTemplate.smoldyn_data,
                 templateData: templateMap,
             },
@@ -532,16 +535,11 @@ class Viewer extends React.Component<{}, ViewerState> {
                 <button onClick={() => simulariumController.clearFile()}>
                     Clear
                 </button>
-                <label>
+
+                <button onClick={() => this.loadSmoldynFile()}>
+                    {" "}
                     Load a smoldyn trajectory:
-                    <input
-                        type="file"
-                        accept=".txt"
-                        onChange={(e) =>
-                            this.loadSmoldynFile(e.target.files[0])
-                        }
-                    />
-                </label>
+                </button>
                 <br />
                 <button onClick={() => simulariumController.resume()}>
                     Play

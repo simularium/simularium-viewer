@@ -3,17 +3,25 @@ import React from "react";
 interface BaseInputProps {
     dataType: string;
     handler: (event) => void;
-    options?: [];
     name: string;
 }
-const BaseInput = (props: BaseInputProps) => {
+
+interface EnumProps extends BaseInputProps {
+    dataType: "enum";
+    options: string[];
+}
+
+const BaseInput = (props: BaseInputProps | EnumProps) => {
     switch (props.dataType) {
         case "string":
             return (
                 <label>
                     {" "}
                     {props.name}
-                    <input type="text" onChange={props.handler} />
+                    <input
+                        type="text"
+                        onChange={(e) => props.handler(e.target.value)}
+                    />
                 </label>
             );
         case "number":
@@ -21,24 +29,48 @@ const BaseInput = (props: BaseInputProps) => {
                 <label>
                     {" "}
                     {props.name}
-                    <input type="number" onChange={props.handler} />
+                    <input
+                        type="number"
+                        onChange={(e) => props.handler(Number(e.target.value))}
+                    />
                 </label>
             );
         case "enum":
+            const { options } = props as EnumProps
             return (
-                <select onChange={props.handler}>
-                    {props.options.map((id) => (
+                <select onChange={(e) => props.handler(e.target.value)}>
+                    {options.map((id) => (
                         <option value={id}>{id}</option>
                     ))}
                 </select>
             );
-
+        case "file":
+            return (
+                <label>
+                    {" "}
+                    {props.name}
+                    <input
+                        type="file"
+                        onChange={async (e) => {
+                            if (!e.target.files) {
+                                return
+                            }
+                            const file = e.target.files[0];
+                            const trajectory = await file.text();
+                            return props.handler(trajectory);
+                        }}
+                    />
+                </label>
+            );
         default:
             return (
                 <label>
                     {" "}
                     {props.name}
-                    <input type="text" onChange={props.handler} />
+                    <input
+                        type="text"
+                        onChange={(e) => props.handler(e.target.value)}
+                    />
                 </label>
             );
     }

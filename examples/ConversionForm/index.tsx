@@ -9,7 +9,6 @@ interface InputFormProps {
     template: { [key: string]: any };
     templateData: { [key: string]: any };
     type: string;
-    trajectory: string;
     loadFile: (file, fileName, geoAssets?) => Promise<FileReturn | void>;
     onReturned: () => void;
 }
@@ -22,27 +21,34 @@ class InputForm extends React.Component<InputFormProps> {
         this.handleSubmit = this.handleSubmit.bind(this);
     }
 
-    handleChange(path, key, value) {
-        // convert the paths into a nested object
-        // make sure to copy any existing state at each level
+    handleChange(path: string[], key: string, value: any) {
         let newState = {};
-        let tempObject = newState;
-        let currentState = this.state[path[0]] || {};
-        path.map((nestedKey: string, i: number, array: string[]) => {
-            let thisValue;
-            if (i == array.length - 1) {
-                thisValue = {
-                    ...currentState,
-                    [key]: value,
-                };
-            } else {
-                thisValue = { ...currentState };
-                currentState = currentState[array[i + 1]] || {};
+        if (path.length == 0) {
+            newState = {
+                ...this.state[key],
+                [key] : value
             }
-
-            tempObject = tempObject[nestedKey] = thisValue;
-        });
-        console.log(newState);
+        } else {
+            
+            // convert the paths into a nested object
+            // make sure to copy any existing state at each level
+            let tempObject = newState;
+            let currentState = this.state[path[0]] || {};
+            path.map((nestedKey: string, i: number, array: string[]) => {
+                let thisValue;
+                if (i == array.length - 1) {
+                    thisValue = {
+                        ...currentState,
+                        [key]: value,
+                    };
+                } else {
+                    thisValue = { ...currentState };
+                    currentState = currentState[array[i + 1]] || {};
+                }
+    
+                tempObject = tempObject[nestedKey] = thisValue;
+            });
+        }
         this.setState(newState);
     }
 
@@ -50,7 +56,6 @@ class InputForm extends React.Component<InputFormProps> {
         event.preventDefault();
         const payload = {
             ...this.state,
-            file_contents: this.props.trajectory,
         };
         console.log("submitting", payload);
         fetch(
@@ -89,7 +94,7 @@ class InputForm extends React.Component<InputFormProps> {
                                 templateData={templateData}
                                 parameter={parameter}
                                 dataType={dataType}
-                                path={[key]}
+                                path={[]}
                             />
                         );
                     }

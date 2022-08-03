@@ -67,12 +67,12 @@ class CollectionInput extends React.Component<CollectionInputProps> {
                     options={childItem.options || []}
                     dataType={currentDataType}
                     name={childItem.name}
-                    handler={(event) =>
+                    handler={(value) =>
                         this.handleChange(
                             newPath[newPath.length - 1],
                             index,
                             type,
-                            event.target.value
+                            value
                         )
                     }
                 />
