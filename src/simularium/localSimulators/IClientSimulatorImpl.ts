@@ -3,6 +3,7 @@ import { TrajectoryFileInfo, VisDataMessage } from "../types";
 export interface IClientSimulatorImpl {
     update(dt: number): VisDataMessage;
     getInfo(): TrajectoryFileInfo;
+    updateSimulationState(data: Record<string, unknown>);
 }
 
 // TODO these should not be needed anywhere except ClientSimulatorConnection
@@ -22,6 +23,7 @@ export const enum ClientMessageEnum {
     ID_TRAJECTORY_FILE_INFO = 12,
     ID_GOTO_SIMULATION_TIME = 13,
     ID_INIT_TRAJECTORY_FILE = 14,
+    ID_UPDATE_SIMULATION_STATE = 15,
     // insert new values here before LENGTH
     LENGTH,
 }

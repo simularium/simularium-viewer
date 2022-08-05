@@ -14,7 +14,9 @@ import { ISimulator } from "./ISimulator";
 export class ClientSimulator implements ISimulator {
     private localSimulator: IClientSimulatorImpl;
     private simulatorIntervalId = 0;
-    private dataInterval = 1;
+    // throttle the data interval so that the local client can keep up
+    // ideally the client (VisData) needs to be able to handle the data rate
+    private dataInterval = 66;
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfo) => void;
     public onTrajectoryDataArrive: (msg: VisDataMessage) => void;
@@ -78,6 +80,13 @@ export class ClientSimulator implements ISimulator {
             case ClientMessageEnum.ID_UPDATE_RATE_PARAM:
                 break;
             case ClientMessageEnum.ID_MODEL_DEFINITION:
+                break;
+            case ClientMessageEnum.ID_UPDATE_SIMULATION_STATE:
+                {
+                    this.localSimulator.updateSimulationState(
+                        jsonData["data"] as Record<string, unknown>
+                    );
+                }
                 break;
             case ClientMessageEnum.ID_VIS_DATA_REQUEST:
                 {
@@ -143,17 +152,12 @@ export class ClientSimulator implements ISimulator {
         this.sendSimulationRequest(jsonData, "Update Time-Step");
     }
 
-    public sendParameterUpdate(paramName: string, paramValue: number): void {
+    public sendUpdate(obj: Record<string, unknown>): void {
         if (!this.socketIsValid()) {
             return;
         }
-
-        const jsonData = {
-            msgType: ClientMessageEnum.ID_UPDATE_RATE_PARAM,
-            paramName: paramName,
-            paramValue: paramValue,
-        };
-        this.sendSimulationRequest(jsonData, "Rate Parameter Update");
+        obj.msgType = ClientMessageEnum.ID_UPDATE_SIMULATION_STATE;
+        this.sendSimulationRequest(obj, "Simulation State Update");
     }
 
     public sendModelDefinition(model: string): void {

@@ -208,6 +208,12 @@ export default class SimulariumController {
         }
     }
 
+    public sendUpdate(obj: Record<string, unknown>): void {
+        if (this.simulator) {
+            this.simulator.sendUpdate(obj);
+        }
+    }
+
     public pause(): void {
         if (this.networkEnabled && this.simulator) {
             this.simulator.pauseRemoteSim();
