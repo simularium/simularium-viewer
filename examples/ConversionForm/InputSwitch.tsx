@@ -58,7 +58,7 @@ const InputSwitch = (props: InputSwitchProps) => {
             );
         }
     };
-    const hasChildren = templateData[dataType].parameters!!;
+    const hasChildren = !!templateData[dataType].parameters;
     return (
         <div style={{ borderTop: "1px solid black", padding: 20}}>
             {path.length <= 1 ? (
