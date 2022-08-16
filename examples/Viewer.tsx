@@ -539,10 +539,8 @@ class Viewer extends React.Component<{}, ViewerState> {
                 <button onClick={() => simulariumController.clearFile()}>
                     Clear
                 </button>
-
                 <button onClick={() => this.loadSmoldynFile()}>
-                    {" "}
-                    Load a smoldyn trajectory:
+                    Load a smoldyn trajectory
                 </button>
                 <br />
                 <button onClick={() => simulariumController.resume()}>
