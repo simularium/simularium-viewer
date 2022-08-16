@@ -37,7 +37,12 @@ class CollectionInput extends React.Component<
         this.addItem = this.addItem.bind(this);
     }
 
-    handleChange(key, index, type, targetValue) {
+    handleChange(
+        key: string,
+        index: number,
+        type: "key" | "value",
+        targetValue: any
+    ) {
         const { handler, id } = this.props;
         const newState = { ...this.state };
         if (!newState[index]) {
@@ -71,10 +76,10 @@ class CollectionInput extends React.Component<
             },
             {}
         );
-        handler([id], index, newValues);
+        handler([id], index.toString(), newValues);
     }
 
-    renderValueItem = (childItem, newPath, index, type) => {
+    renderValueItem = (childItem: CustomParameters, newPath, index, type) => {
         const { templateData } = this.props;
         const currentDataType = childItem.data_type;
         const data = templateData[childItem.data_type];
@@ -117,10 +122,8 @@ class CollectionInput extends React.Component<
         const jsx = [] as JSX.Element[];
         for (let index = 0; index < this.state.length; index++) {
             jsx.push(
-                <div>
-                    <h4>
-                        {index}:
-                    </h4>
+                <div key={index}>
+                    <h4>{index}:</h4>
                     <div>
                         Key:
                         {this.renderValueItem(
@@ -143,10 +146,11 @@ class CollectionInput extends React.Component<
             );
         }
         if (parameter.extendible) {
-            jsx.push(<button onClick={this.addItem}>Add another {name} item</button>);
+            jsx.push(
+                <button key={name} onClick={this.addItem}>Add another {name} item</button>
+            );
         }
         return jsx;
-        
     }
 }
 

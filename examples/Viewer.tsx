@@ -97,6 +97,7 @@ export interface CustomParameters {
     description: string;
     required: boolean;
     help: string;
+    options?: string[];
 }
 
 interface CustomType {

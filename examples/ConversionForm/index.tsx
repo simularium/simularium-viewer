@@ -2,7 +2,6 @@ import { map } from "lodash";
 import React from "react";
 import JsonFileReader from "../../src/simularium/JsonFileReader";
 import { FileReturn } from "../../src/simularium/types";
-import { loadSimulariumFile } from "../../src/util";
 import InputSwitch from "./InputSwitch";
 
 interface InputFormProps {

@@ -4,14 +4,10 @@ interface BaseInputProps {
     dataType: string;
     handler: (event) => void;
     name: string;
-}
-
-interface EnumProps extends BaseInputProps {
-    dataType: "enum";
     options: string[];
 }
 
-const BaseInput = (props: BaseInputProps | EnumProps) => {
+const BaseInput = (props: BaseInputProps) => {
     switch (props.dataType) {
         case "string":
             return (
@@ -36,7 +32,7 @@ const BaseInput = (props: BaseInputProps | EnumProps) => {
                 </label>
             );
         case "enum":
-            const { options } = props as EnumProps
+            const { options } = props;
             return (
                 <select onChange={(e) => props.handler(e.target.value)}>
                     {options.map((id) => (
@@ -53,7 +49,7 @@ const BaseInput = (props: BaseInputProps | EnumProps) => {
                         type="file"
                         onChange={async (e) => {
                             if (!e.target.files) {
-                                return
+                                return;
                             }
                             const file = e.target.files[0];
                             const trajectory = await file.text();
