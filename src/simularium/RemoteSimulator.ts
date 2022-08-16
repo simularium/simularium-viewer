@@ -42,6 +42,7 @@ export const enum NetMessageEnum {
     ID_TRAJECTORY_FILE_INFO = 12,
     ID_GOTO_SIMULATION_TIME = 13,
     ID_INIT_TRAJECTORY_FILE = 14,
+    ID_UPDATE_SIMULATION_STATE = 15,
     // insert new values here before LENGTH
     LENGTH,
 }
@@ -505,6 +506,16 @@ export class RemoteSimulator implements ISimulator {
                 fileName: fileName,
             },
             "Initialize trajectory file info"
+        );
+    }
+
+    public sendUpdate(obj: Record<string, unknown>): void {
+        this.sendWebSocketRequest(
+            {
+                msgType: NetMessageEnum.ID_UPDATE_SIMULATION_STATE,
+                data: obj,
+            },
+            "Send update instructions to simulation server"
         );
     }
 }

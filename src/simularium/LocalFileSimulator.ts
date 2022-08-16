@@ -149,6 +149,10 @@ export class LocalFileSimulator implements ISimulator {
         );
     }
 
+    public sendUpdate(_obj: Record<string, unknown>): void {
+        // not implemented
+    }
+
     private getFrame(theFrameNumber: number): VisDataMessage | ArrayBuffer {
         // Possible TODO:
         // Theoretically we could return all frames here, and as a result

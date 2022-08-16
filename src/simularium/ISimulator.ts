@@ -15,22 +15,17 @@ export interface ISimulator {
         handler: (msg: VisDataMessage | ArrayBuffer) => void
     ): void;
 
-    socketIsValid(): boolean;
-
     /**
      * Connect
      * */
+    connectToRemoteServer(address: string): Promise<string>;
+    socketIsValid(): boolean;
+    getIp(): string;
     disconnect(): void;
 
-    getIp(): string;
-
-    connectToRemoteServer(address: string): Promise<string>;
-
+    // TODO Fold into sendUpdate
     sendTimeStepUpdate(newTimeStep: number): void;
-
-    sendParameterUpdate(paramName: string, paramValue: number): void;
-
-    sendModelDefinition(model: string): void;
+    sendUpdate(data: Record<string, unknown>): void;
 
     /**
      * Simulation Control
@@ -41,11 +36,15 @@ export interface ISimulator {
      *  Trajectory File: No simulation run, stream a result file piecemeal
      *
      */
+    // these should probably be abstracted to just "start"
+    // and have a separate interface for initialization?
+    // For example, "start" = initialize, and "resume" = play
     startRemoteSimPreRun(timeStep: number, numTimeSteps: number): void;
-
     startRemoteSimLive(): void;
-
     startRemoteTrajectoryPlayback(fileName: string): Promise<void>;
+    sendModelDefinition(model: string): void;
+
+    requestTrajectoryFileInfo(fileName: string): void;
 
     pauseRemoteSim(): void;
 
@@ -55,7 +54,6 @@ export interface ISimulator {
 
     requestSingleFrame(startFrameNumber: number): void;
 
+    // what do these mean for live mode?? can go backward but not forward
     gotoRemoteSimulationTime(time: number): void;
-
-    requestTrajectoryFileInfo(fileName: string): void;
 }
