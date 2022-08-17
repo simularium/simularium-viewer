@@ -2,7 +2,6 @@ import "regenerator-runtime/runtime";
 
 import * as Comlink from "comlink";
 import parsePdb from "parse-pdb";
-import parseMmcif from "parse-mmcif";
 import {
     Box3,
     BufferGeometry,
@@ -12,6 +11,7 @@ import {
 } from "three";
 
 import { KMeansWorkerType } from "./KMeansWorker";
+import { getObject } from "./cifparser";
 
 import KMeans from "./rendering/KMeans3d";
 import TaskQueue from "../simularium/TaskQueue";
@@ -118,12 +118,40 @@ class PDBModel {
     }
 
     private parseCIFData(data: string): void {
-        this.pdb = parseMmcif(data) as PDBType;
-        if (this.pdb.atoms.length > 0) {
-            this.fixupCoordinates();
-            console.log(`PDB ${this.name} has ${this.pdb.atoms.length} atoms`);
-            this.checkChains();
-            return this.initializeLOD();
+        interface AtomSite {
+            ["Cartn_x"]: number;
+            ["Cartn_y"]: number;
+            ["Cartn_z"]: number;
+        }
+        const parsedpdb: Record<string, unknown> = getObject(data);
+        for (const obj in parsedpdb) {
+            const mypdb = parsedpdb[obj];
+            const atomSites = (mypdb as Record<string, unknown>)[
+                "_atom_site"
+            ] as AtomSite[];
+            if (atomSites.length > 0) {
+                this.pdb = {
+                    atoms: [] as PDBAtom[],
+                    seqRes: [],
+                    residues: [],
+                    chains: new Map(),
+                };
+                this.pdb.atoms = [];
+                for (let i = 0; i < atomSites.length; ++i) {
+                    this.pdb?.atoms.push({
+                        x: atomSites[i].Cartn_x,
+                        y: atomSites[i].Cartn_y,
+                        z: atomSites[i].Cartn_z,
+                    });
+                }
+                this.fixupCoordinates();
+                console.log(
+                    `PDB ${this.name} has ${this.pdb.atoms.length} atoms`
+                );
+                this.checkChains();
+                return this.initializeLOD();
+            }
+            break;
         }
     }
 

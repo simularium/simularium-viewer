@@ -18,6 +18,7 @@ import "../style/style.css";
 import PointSimulator from "./PointSimulator";
 import PointSimulatorLive from "./PointSimulatorLive";
 import PdbSimulator from "./PdbSimulator";
+import SinglePdbSimulator from "./SinglePdbSimulator";
 import CurveSimulator from "./CurveSimulator";
 import MetaballSimulator from "./MetaballSimulator";
 
@@ -384,6 +385,13 @@ class Viewer extends React.Component<{}, ViewerState> {
                 },
                 playbackFile
             );
+        } else if (playbackFile === "TEST_SINGLE_PDB") {
+            simulariumController.changeFile(
+                {
+                    clientSimulator: new SinglePdbSimulator("3IRL"),
+                },
+                playbackFile
+            );
         } else if (playbackFile === "TEST_METABALLS") {
             simulariumController.changeFile(
                 {
@@ -441,6 +449,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                     <option value="ATPsynthase_8.h5">ATP 8</option>
                     <option value="ATPsynthase_9.h5">ATP 9</option>
                     <option value="ATPsynthase_10.h5">ATP 10</option>
+                    <option value="TEST_SINGLE_PDB">TEST SINGLE PDB</option>
                     <option value="TEST_PDB">TEST PDB</option>
                     <option value="TEST_FIBERS">TEST FIBERS</option>
                     <option value="TEST_POINTS">TEST POINTS</option>
