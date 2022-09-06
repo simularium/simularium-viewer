@@ -1,5 +1,5 @@
 import React from "react";
-import { isEqual, findIndex } from "lodash";
+import { isEqual, findIndex, map, template, reduce } from "lodash";
 
 import type {
     UIDisplayData,
@@ -20,6 +20,14 @@ import PointSimulatorLive from "./PointSimulatorLive";
 import PdbSimulator from "./PdbSimulator";
 import SinglePdbSimulator from "./SinglePdbSimulator";
 import CurveSimulator from "./CurveSimulator";
+import {
+    SMOLDYN_TEMPLATE,
+    UI_BASE_TYPES,
+    UI_CUSTOM_TYPES,
+    UI_TEMPLATE_DOWNLOAD_URL_ROOT,
+    UI_TEMPLATE_URL_ROOT,
+} from "./api-settings";
+import ConversionForm from "./ConversionForm";
 import MetaballSimulator from "./MetaballSimulator";
 
 const netConnectionSettings = {
@@ -74,6 +82,35 @@ interface ViewerState {
     timeStep: number;
     totalDuration: number;
     uiDisplayData: UIDisplayData;
+    filePending: {
+        type: string;
+        template: { [key: string]: any };
+        templateData: { [key: string]: any };
+    } | null;
+}
+
+interface BaseType {
+    isBaseType: true;
+    id: string;
+    data: string;
+    match: string;
+}
+
+export interface CustomParameters {
+    name: string;
+    data_type: string;
+    description: string;
+    required: boolean;
+    help: string;
+    options?: string[];
+}
+
+interface CustomType {
+    [key: string]: {
+        "python::module": string;
+        "python::object": string;
+        parameters: CustomParameters;
+    };
 }
 
 const simulariumController = new SimulariumController({});
@@ -100,6 +137,7 @@ const initialState = {
         highlightedAgents: [],
         hiddenAgents: [],
     },
+    filePending: null,
 };
 
 class Viewer extends React.Component<{}, ViewerState> {
@@ -112,13 +150,17 @@ class Viewer extends React.Component<{}, ViewerState> {
         this.viewerRef = React.createRef();
         this.handleJsonMeshData = this.handleJsonMeshData.bind(this);
         this.handleTimeChange = this.handleTimeChange.bind(this);
+        this.loadFile = this.loadFile.bind(this);
+        this.clearPendingFile = this.clearPendingFile.bind(this);
         this.state = initialState;
     }
 
     public componentDidMount(): void {
         window.addEventListener("resize", () => {
             const container = document.querySelector(".container");
-
+            if (!container) {
+                return
+            }
             const height = container.clientHeight;
             const width = container.clientWidth;
             this.setState({ height, width });
@@ -192,10 +234,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                         }
                     }, {});
                     const fileName = filesArr[simulariumFileIndex].name;
-                    simulariumController.changeFile(
-                        { simulariumFile, geoAssets },
-                        fileName
-                    );
+                    this.loadFile(simulariumFile, fileName, geoAssets);
                 })
                 .catch((error) => {
                     this.onError(error);
@@ -213,15 +252,86 @@ class Viewer extends React.Component<{}, ViewerState> {
             .then((blob: Blob) => {
                 return loadSimulariumFile(blob);
             })
-            .then((simulariumFile) => {
+            .then((trajectoryFile) => {
                 const fileName = url;
-                simulariumController
-                    .changeFile({ simulariumFile }, fileName)
-                    .catch((error) => {
-                        console.log("Error loading file", error);
-                        window.alert(`Error loading file: ${error.message}`);
-                    });
+                this.loadFile(trajectoryFile, fileName).catch((error) => {
+                    console.log("Error loading file", error);
+                    window.alert(`Error loading file: ${error.message}`);
+                });
             });
+    }
+
+    public async loadUiTemplates(): Promise<{
+        [key: string]: BaseType | CustomType;
+    }> {
+        const baseTypes = await fetch(
+            `${UI_TEMPLATE_DOWNLOAD_URL_ROOT}/${UI_BASE_TYPES}`
+        ).then((data) => data.json());
+        const customTypes = await fetch(
+            `${UI_TEMPLATE_URL_ROOT}/${UI_CUSTOM_TYPES}`
+        )
+            .then((data) => data.json())
+            .then((fileRefs) =>
+                Promise.all(
+                    map(fileRefs, (ref) =>
+                        fetch(ref.download_url).then((data) => data.json())
+                    )
+                )
+            );
+        const typeMap: {
+            [key: string]: BaseType | CustomType;
+        } = reduce(
+            customTypes,
+            (acc, cur: CustomType) => {
+                //CustomType always has just one
+                const key = Object.keys(cur)[0];
+                acc[key] = cur[key];
+                return acc;
+            },
+            {}
+        );
+        baseTypes["base_types"].forEach((type) => {
+            typeMap[type.id] = { ...type, isBaseType: true };
+        });
+        return typeMap;
+    }
+
+    public async loadSmoldynFile() {
+        const smoldynTemplate = await fetch(
+            `${UI_TEMPLATE_DOWNLOAD_URL_ROOT}/${SMOLDYN_TEMPLATE}`
+        ).then((data) => data.json());
+        const templateMap = await this.loadUiTemplates();
+
+        this.setState({
+            filePending: {
+                type: "Smoldyn",
+                template: smoldynTemplate.smoldyn_data,
+                templateData: templateMap,
+            },
+        });
+    }
+
+    public clearPendingFile() {
+        this.setState({ filePending: null });
+    }
+
+    public loadFile(trajectoryFile, fileName, geoAssets?) {
+        const simulariumFile = fileName.includes(".simularium")
+            ? trajectoryFile
+            : null;
+        // if (!fileName.includes(".simularium")) {
+        //     return new
+        // }
+        if (geoAssets && geoAssets.length) {
+            return simulariumController.changeFile(
+                { simulariumFile, geoAssets },
+                fileName
+            );
+        } else {
+            return simulariumController
+                .changeFile({ simulariumFile }, fileName)
+                .catch(console.log);
+        }
     }
 
     public handleJsonMeshData(jsonData): void {
@@ -410,6 +520,15 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public render(): JSX.Element {
+        if (this.state.filePending) {
+            return (
+                <ConversionForm
+                    {...this.state.filePending}
+                    loadFile={this.loadFile}
+                    onReturned={this.clearPendingFile}
+                />
+            );
+        }
         return (
             <div className="container" style={{ height: "90%", width: "75%" }}>
                 <select
@@ -463,6 +582,9 @@ class Viewer extends React.Component<{}, ViewerState> {
                 </button>
                 <button onClick={() => simulariumController.clearFile()}>
                     Clear
+                </button>
+                <button onClick={() => this.loadSmoldynFile()}>
+                    Load a smoldyn trajectory
                 </button>
                 <br />
                 <button onClick={() => simulariumController.resume()}>
