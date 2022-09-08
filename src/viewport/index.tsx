@@ -515,6 +515,7 @@ class Viewport extends React.Component<
             ) {
                 this.visGeometry.removePathForAgent(oldFollowObject);
             }
+            console.log("*** following ", intersectedObject)
             this.visGeometry.setFollowObject(intersectedObject);
             this.visGeometry.addPathForAgent(intersectedObject);
         } else {
