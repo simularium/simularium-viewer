@@ -802,7 +802,7 @@ class VisGeometry {
                         visAgent.agentData.instanceId,
                         visAgent.signedTypeId(),
                         // a scale value for LODs
-                        (index + 1) * 0.25
+                        0.25 + index * 0.25
                     );
                     break;
                 }
