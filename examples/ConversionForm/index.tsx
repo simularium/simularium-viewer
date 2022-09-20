@@ -93,7 +93,7 @@ class InputForm extends React.Component<InputFormProps> {
                                 templateData={templateData}
                                 parameter={parameter}
                                 dataType={dataType}
-                                path={[]}
+                                path={[key]}
                             />
                         );
                     }
