@@ -1,6 +1,5 @@
 .idea
 node_modules
 public
-type-declarations
 .vscode
 coverage
