@@ -42,7 +42,7 @@ jobs:
             - run: npm ci
             - run: npm run typeCheck --if-present
     build:
-        if: github.ref == 'refs/heads/main' or startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v')
         needs: [lint, typeCheck, test]
         runs-on: ubuntu-latest
         steps:
@@ -52,14 +52,23 @@ jobs:
                   node-version: ${{env.NODE_VERSION}}
             - run: npm ci
             - run: npm run build
-            - name: push
-            uses: colmose/push-bot@v1.0.0
-                with:
-                    token: ${{secrets.PERSONAL_ACCESS_TOKEN}}
-                    branch_name: 'build'
-                    bot_name: 'admin-machine'
-
-    publish-npm:
+    
+    publish-dev:
+        if: github.ref == 'refs/heads/main'
+        needs: build
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+            - uses: actions/setup-node@v1
+              with:
+                  node-version: ${{env.NODE_VERSION}}
+                  registry-url: https://registry.npmjs.org/
+            - run: npm ci
+            - run: npm run build
+            - run: npm publish --tag dev
+              env:
+                  NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+    publish-stable:
         if: startsWith(github.ref, 'refs/tags/v')
         needs: build
         runs-on: ubuntu-latest
