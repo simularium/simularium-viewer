@@ -1,7 +1,5 @@
 .idea
 node_modules
-es
-dist
 public
 type-declarations
 .vscode
