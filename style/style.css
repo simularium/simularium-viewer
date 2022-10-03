@@ -1,0 +1,40 @@
+.view-controls {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+}
+
+.view-controls .btn {
+    height: 28px;
+    cursor: pointer;
+}
+
+.view-controls svg {
+    font-size: 22px;
+}
+
+.view-controls button {
+    -webkit-appearance: none;
+    padding: 0;
+    background-color: white;
+    border: solid 1px #979797;
+}
+
+/* 
+** To make the tweakpane controls show up properly, we needed to manipulate the z-index.
+** We also need to make sure that when it is a child of our 3d view, it is positioned 
+** properly.
+** There is no documented api on tweakpane to control this, so we are just using what we
+** know are the currently named classes to modify it.
+*/
+.tp-dfwv {
+    z-index: 1000;
+}
+.tp-rotv {
+    z-index: 1000;
+    position: absolute;
+    top: 0px;
+    right: 0px;
+}
+
+/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uL3NyYy92aWV3cG9ydC9pbmRleC5jc3MiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQUEiLCJmaWxlIjoic3R5bGUuY3NzIiwic291cmNlc0NvbnRlbnQiOlsiLnZpZXctY29udHJvbHMge1xuICAgIHBvc2l0aW9uOiBhYnNvbHV0ZTtcbiAgICBib3R0b206IDEwcHg7XG4gICAgcmlnaHQ6IDEwcHg7XG59XG5cbi52aWV3LWNvbnRyb2xzIC5idG4ge1xuICAgIGhlaWdodDogMjhweDtcbiAgICBjdXJzb3I6IHBvaW50ZXI7XG59XG5cbi52aWV3LWNvbnRyb2xzIHN2ZyB7XG4gICAgZm9udC1zaXplOiAyMnB4O1xufVxuXG4udmlldy1jb250cm9scyBidXR0b24ge1xuICAgIC13ZWJraXQtYXBwZWFyYW5jZTogbm9uZTtcbiAgICBwYWRkaW5nOiAwO1xuICAgIGJhY2tncm91bmQtY29sb3I6IHdoaXRlO1xuICAgIGJvcmRlcjogc29saWQgMXB4ICM5Nzk3OTc7XG59XG5cbi8qIFxuKiogVG8gbWFrZSB0aGUgdHdlYWtwYW5lIGNvbnRyb2xzIHNob3cgdXAgcHJvcGVybHksIHdlIG5lZWRlZCB0byBtYW5pcHVsYXRlIHRoZSB6LWluZGV4LlxuKiogV2UgYWxzbyBuZWVkIHRvIG1ha2Ugc3VyZSB0aGF0IHdoZW4gaXQgaXMgYSBjaGlsZCBvZiBvdXIgM2QgdmlldywgaXQgaXMgcG9zaXRpb25lZCBcbioqIHByb3Blcmx5LlxuKiogVGhlcmUgaXMgbm8gZG9jdW1lbnRlZCBhcGkgb24gdHdlYWtwYW5lIHRvIGNvbnRyb2wgdGhpcywgc28gd2UgYXJlIGp1c3QgdXNpbmcgd2hhdCB3ZVxuKioga25vdyBhcmUgdGhlIGN1cnJlbnRseSBuYW1lZCBjbGFzc2VzIHRvIG1vZGlmeSBpdC5cbiovXG4udHAtZGZ3diB7XG4gICAgei1pbmRleDogMTAwMDtcbn1cbi50cC1yb3R2IHtcbiAgICB6LWluZGV4OiAxMDAwO1xuICAgIHBvc2l0aW9uOiBhYnNvbHV0ZTtcbiAgICB0b3A6IDBweDtcbiAgICByaWdodDogMHB4O1xufVxuIl19 */
