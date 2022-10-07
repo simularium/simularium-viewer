@@ -2,17 +2,17 @@ import React from "react";
 import { isEqual, findIndex, map, template, reduce } from "lodash";
 
 import type {
+    ISimulariumFile,
     UIDisplayData,
     SelectionStateInfo,
-} from "../src/simularium/SelectionInterface";
+} from "../type-declarations";
 import SimulariumViewer, {
     SimulariumController,
     RenderStyle,
     ErrorLevel,
+    FrontEndError,
+    loadSimulariumFile,
 } from "../es";
-import { FrontEndError } from "../es/simularium/FrontEndError";
-import { loadSimulariumFile } from "../es/util";
-import type { ISimulariumFile } from "../src/simularium/ISimulariumFile";
 import "../style/style.css";
 
 import PointSimulator from "./PointSimulator";
