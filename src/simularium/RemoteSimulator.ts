@@ -43,6 +43,10 @@ export const enum NetMessageEnum {
     ID_GOTO_SIMULATION_TIME = 13,
     ID_INIT_TRAJECTORY_FILE = 14,
     ID_UPDATE_SIMULATION_STATE = 15,
+    ID_CONVERT_TRAJECTORY_FILE = 16,
+    ID_CONVERTED_TRAJECTORY = 17,
+    ID_CALCULATE_METRICS = 18,
+    ID_METRICS_PLOT_DATA = 19,
     // insert new values here before LENGTH
     LENGTH,
 }
@@ -148,6 +152,7 @@ export class RemoteSimulator implements ISimulator {
      *   Websocket Message Handler
      * */
     protected onMessage(event: MessageEvent | MessageEventLike): void {
+        // where we receive websocket messages
         if (!this.socketIsValid()) {
             return;
         }
@@ -229,6 +234,9 @@ export class RemoteSimulator implements ISimulator {
                 this.logger.debug("Trajectory file info Arrived");
                 this.onTrajectoryFileInfoArrive(msg);
                 break;
+            case NetMessageEnum.ID_CONVERTED_TRAJECTORY:
+                this.logger.debug("Converted file arrived");
+            // handle incoming data (something like this.loadFile)
             default:
                 this.logger.debug("Web request recieved", msg.msgType);
                 break;
@@ -516,6 +524,17 @@ export class RemoteSimulator implements ISimulator {
                 data: obj,
             },
             "Send update instructions to simulation server"
+        );
+    }
+
+    public convertSmoldyn(obj: Record<string, unknown>): void {
+        this.sendWebSocketRequest(
+            {
+                msgType: NetMessageEnum.ID_CONVERT_TRAJECTORY_FILE,
+                trajType: "smoldyn",
+                data: obj,
+            },
+            "Convert smoldyn output to simularium file format"
         );
     }
 }
