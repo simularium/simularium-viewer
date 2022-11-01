@@ -235,7 +235,7 @@ class VisGeometry {
         this.currentSceneAgents = [];
         this.colorsData = new Float32Array(0);
         this.lodBias = 0;
-        this.lodDistanceStops = [40, 100, 150, Number.MAX_VALUE];
+        this.lodDistanceStops = [100, 200, 400, Number.MAX_VALUE];
         this.agentsWithPdbsToDraw = [];
         this.agentPdbsToDraw = [];
 
@@ -359,18 +359,16 @@ class VisGeometry {
 
         const settings = {
             lodBias: this.lodBias,
+            lod0: this.lodDistanceStops[0],
+            lod1: this.lodDistanceStops[1],
+            lod2: this.lodDistanceStops[2],
             bgcolor: {
                 r: this.backgroundColor.r * 255,
                 g: this.backgroundColor.g * 255,
                 b: this.backgroundColor.b * 255,
             },
         };
-        this.gui
-            .addInput(settings, "lodBias", { min: 0, max: 4, step: 1 })
-            .on("change", (event) => {
-                this.lodBias = event.value;
-                this.updateScene(this.currentSceneAgents);
-            });
+
         this.gui.addInput(settings, "bgcolor").on("change", (event) => {
             this.setBackgroundColor([
                 event.value.r / 255.0,
@@ -388,6 +386,25 @@ class VisGeometry {
             anchor.click();
         });
         this.gui.addSeparator();
+        const lodFolder = this.gui.addFolder({ title: "LoD", expanded: false });
+        lodFolder
+            .addInput(settings, "lodBias", { min: 0, max: 4, step: 1 })
+            .on("change", (event) => {
+                this.lodBias = event.value;
+                this.updateScene(this.currentSceneAgents);
+            });
+        lodFolder.addInput(settings, "lod0").on("change", (event) => {
+            this.lodDistanceStops[0] = event.value;
+            this.updateScene(this.currentSceneAgents);
+        });
+        lodFolder.addInput(settings, "lod1").on("change", (event) => {
+            this.lodDistanceStops[1] = event.value;
+            this.updateScene(this.currentSceneAgents);
+        });
+        lodFolder.addInput(settings, "lod2").on("change", (event) => {
+            this.lodDistanceStops[2] = event.value;
+            this.updateScene(this.currentSceneAgents);
+        });
         this.renderer.setupGui(this.gui);
     }
 
@@ -802,7 +819,7 @@ class VisGeometry {
                         visAgent.agentData.instanceId,
                         visAgent.signedTypeId(),
                         // a scale value for LODs
-                        (index + 1) * 0.25
+                        0.25 + index * 0.25
                     );
                     break;
                 }
