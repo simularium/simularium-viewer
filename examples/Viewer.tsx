@@ -152,6 +152,7 @@ class Viewer extends React.Component<{}, ViewerState> {
         this.handleTimeChange = this.handleTimeChange.bind(this);
         this.loadFile = this.loadFile.bind(this);
         this.clearPendingFile = this.clearPendingFile.bind(this);
+        this.convertFile = this.convertFile.bind(this);
         this.state = initialState;
     }
 
@@ -309,6 +310,17 @@ class Viewer extends React.Component<{}, ViewerState> {
                 templateData: templateMap,
             },
         });
+    }
+
+    public convertFile(obj: Record<string, any>, fileType: string) {
+        simulariumController.configureNetwork(netConnectionSettings);
+        simulariumController.convertTrajectory(obj, fileType)
+            .then(() => {
+                this.clearPendingFile();
+            })
+            .catch((err) => {
+                console.error(err);
+            });
     }
 
     public clearPendingFile() {
@@ -521,10 +533,11 @@ class Viewer extends React.Component<{}, ViewerState> {
 
     public render(): JSX.Element {
         if (this.state.filePending) {
+            const fileType = this.state.filePending.type
             return (
                 <ConversionForm
                     {...this.state.filePending}
-                    loadFile={this.loadFile}
+                    submitFile={(obj) => this.convertFile(obj, fileType)}
                     onReturned={this.clearPendingFile}
                 />
             );

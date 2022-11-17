@@ -17,9 +17,11 @@ import {
 import { ClientSimulator } from "../simularium/ClientSimulator";
 import { IClientSimulatorImpl } from "../simularium/localSimulators/IClientSimulatorImpl";
 import { ISimulator } from "../simularium/ISimulator";
+import { IConverter } from "../simularium/IConverter";
 import { LocalFileSimulator } from "../simularium/LocalFileSimulator";
 import { FrontEndError } from "../simularium/FrontEndError";
 import type { ISimulariumFile } from "../simularium/ISimulariumFile";
+import JsonFileReader from "../simularium/JsonFileReader";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
@@ -42,6 +44,7 @@ interface SimulatorConnectionParams {
 
 export default class SimulariumController {
     public simulator?: ISimulator;
+    public converter?: IConverter;
     public visData: VisData;
     public visGeometry: VisGeometry | undefined;
     public tickIntervalLength: number;
@@ -74,7 +77,12 @@ export default class SimulariumController {
             this.simulator.setTrajectoryDataHandler(
                 this.visData.parseAgentsFromNetData.bind(this.visData)
             );
-
+            this.converter = params.remoteSimulator;
+            this.converter.setLoadFileHandler((result: Record<string, any>) => {
+                const file = JSON.parse(result["simulariumData"]);
+                const simulariumFile = new JsonFileReader(file);
+                this.handleFileChange(simulariumFile, "test.simularium");
+            });
             // TODO: probably remove this? We're never initalizing the controller
             // with any settings on the website.
         } else if (params.netConnectionSettings) {
@@ -108,6 +116,7 @@ export default class SimulariumController {
         this.reOrientCamera = this.reOrientCamera.bind(this);
         this.setPanningMode = this.setPanningMode.bind(this);
         this.setFocusMode = this.setFocusMode.bind(this);
+        this.convertTrajectory = this.convertTrajectory.bind(this);
     }
 
     private createSimulatorConnection(
@@ -133,13 +142,21 @@ export default class SimulariumController {
                 this.visData.parseAgentsFromLocalFileData.bind(this.visData)
             );
         } else if (netConnectionConfig) {
-            this.simulator = new RemoteSimulator(
+            const remoteSimulator = new RemoteSimulator(
                 netConnectionConfig,
                 this.onError
             );
+            this.simulator = remoteSimulator;
             this.simulator.setTrajectoryDataHandler(
                 this.visData.parseAgentsFromNetData.bind(this.visData)
             );
+            this.converter = remoteSimulator;
+            this.converter.setLoadFileHandler((result: Record<string, any>) => {
+                const file = JSON.parse(result["simulariumData"]);
+                const simulariumFile = new JsonFileReader(file);
+                // TODO: make file name more informative
+                this.handleFileChange(simulariumFile, "test.simularium");
+            });
         } else {
             // caught in try/catch block, not sent to front end
             throw new Error(
@@ -214,6 +231,16 @@ export default class SimulariumController {
         }
     }
 
+    public convertTrajectory(
+        obj: Record<string, unknown>,
+        fileType: string
+    ): Promise<void> {
+        if (!this.converter) {
+            return Promise.reject();
+        }
+        return this.converter.convertTrajectory(obj, fileType);
+    }
+
     public pause(): void {
         if (this.networkEnabled && this.simulator) {
             this.simulator.pauseRemoteSim();
@@ -285,6 +312,20 @@ export default class SimulariumController {
         if (this.visGeometry) {
             this.visGeometry.clearForNewTrajectory();
             this.visGeometry.resetCamera();
+        }
+    }
+
+    public handleFileChange(trajectoryFile, fileName, geoAssets?) {
+        const simulariumFile = fileName.includes(".simularium")
+            ? trajectoryFile
+            : null;
+
+        if (geoAssets && geoAssets.length) {
+            return this.changeFile({ simulariumFile, geoAssets }, fileName);
+        } else {
+            return this.changeFile({ simulariumFile }, fileName).catch(
+                console.log
+            );
         }
     }
 

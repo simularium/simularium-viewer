@@ -1,6 +1,7 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
+import { IConverter } from "./IConverter";
 
 import { ISimulator } from "./ISimulator";
 import { TrajectoryFileInfoV2, VisDataMessage } from "./types";
@@ -71,13 +72,14 @@ export interface NetConnectionParams {
 
 // a RemoteSimulator is a ISimulator that connects to the Simularium Engine
 // back end server and plays back a trajectory specified in the NetConnectionParams
-export class RemoteSimulator implements ISimulator {
+export class RemoteSimulator implements ISimulator, IConverter {
     private webSocket: WebSocket | null;
     private serverIp: string;
     private serverPort: number;
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (NetMessage) => void;
     public onTrajectoryDataArrive: (NetMessage) => void;
+    public loadFile: (NetMessage) => void;
     protected lastRequestedFile: string;
     public connectionTimeWaited: number;
     public connectionRetries: number;
@@ -108,6 +110,9 @@ export class RemoteSimulator implements ISimulator {
         this.onTrajectoryDataArrive = () => {
             /* do nothing */
         };
+        this.loadFile = () => {
+            /* do nothing */
+        };
 
         // Frees the reserved backend in the event that the window closes w/o disconnecting
         window.addEventListener("beforeunload", this.onClose.bind(this));
@@ -122,6 +127,14 @@ export class RemoteSimulator implements ISimulator {
         handler: (msg: VisDataMessage) => void
     ): void {
         this.onTrajectoryDataArrive = handler;
+    }
+
+    // Sets callback to notify when file conversion is finished and
+    // .simularium file is available
+    public setLoadFileHandler(
+        handler: (msg: Record<string, unknown>) => void
+    ): void {
+        this.loadFile = handler;
     }
 
     /**
@@ -235,8 +248,8 @@ export class RemoteSimulator implements ISimulator {
                 this.onTrajectoryFileInfoArrive(msg);
                 break;
             case NetMessageEnum.ID_CONVERTED_TRAJECTORY:
-                this.logger.debug("Converted file arrived");
-            // handle incoming data (something like this.loadFile)
+                this.loadFile(msg);
+                break;
             default:
                 this.logger.debug("Web request recieved", msg.msgType);
                 break;
@@ -281,7 +294,7 @@ export class RemoteSimulator implements ISimulator {
     }
 
     public getIp(): string {
-        return `wss://${this.serverIp}:${this.serverPort}/`;
+        return `ws://${this.serverIp}:${this.serverPort}/`;
     }
 
     public async waitForWebSocket(timeout: number): Promise<boolean> {
@@ -527,14 +540,30 @@ export class RemoteSimulator implements ISimulator {
         );
     }
 
-    public convertSmoldyn(obj: Record<string, unknown>): void {
+    public convertTrajectory(
+        obj: Record<string, unknown>,
+        fileType: string
+    ): Promise<void> {
+        return this.connectToRemoteServer(this.getIp())
+            .then(() => {
+                this.sendTrajectory(obj, fileType);
+            })
+            .catch((e) => {
+                throw new FrontEndError(e.message, ErrorLevel.ERROR);
+            });
+    }
+
+    public sendTrajectory(
+        obj: Record<string, unknown>,
+        fileType: string
+    ): void {
         this.sendWebSocketRequest(
             {
                 msgType: NetMessageEnum.ID_CONVERT_TRAJECTORY_FILE,
-                trajType: "smoldyn",
+                trajType: fileType.toLowerCase(),
                 data: obj,
             },
-            "Convert smoldyn output to simularium file format"
+            "Convert trajectory output to simularium file format"
         );
     }
 }
