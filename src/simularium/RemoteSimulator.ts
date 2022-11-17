@@ -294,7 +294,7 @@ export class RemoteSimulator implements ISimulator, IConverter {
     }
 
     public getIp(): string {
-        return `ws://${this.serverIp}:${this.serverPort}/`;
+        return `wss://${this.serverIp}:${this.serverPort}/`;
     }
 
     public async waitForWebSocket(timeout: number): Promise<boolean> {
