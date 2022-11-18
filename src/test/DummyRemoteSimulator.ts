@@ -1,8 +1,10 @@
 import {
     NetConnectionParams,
+    NetMessage,
     NetMessageEnum,
-    RemoteSimulator,
-} from "../simularium/RemoteSimulator";
+    WebsocketClient,
+} from "../simularium/WebsocketClient";
+import { RemoteSimulator } from "../simularium/RemoteSimulator";
 import { VisDataFrame, VisDataMessage } from "../simularium/types";
 
 interface TestDataBundle {
@@ -20,15 +22,18 @@ export class DummyRemoteSimulator extends RemoteSimulator {
     public totalDuration: number;
     public timeStep: number;
     private fileName: string;
+    public webSocketClient: WebsocketClient;
 
     public constructor(opts: NetConnectionParams) {
-        super(opts);
+        const webSocketClient = new WebsocketClient(opts);
+        super(webSocketClient);
+        this.webSocketClient = webSocketClient;
 
         this.isStreamingData = false;
         this.isConnected = false;
         this.frameCounter = 0;
 
-        this.commandLatencyMS = 200;
+        this.commandLatencyMS = 20;
         this.connectLatencyMS = 1000;
 
         this.timeStep = 1;
@@ -38,10 +43,7 @@ export class DummyRemoteSimulator extends RemoteSimulator {
         setInterval(this.broadcast.bind(this), 200);
     }
 
-    private getDataBundle(
-        frameNumber: number,
-        bundleSize: number
-    ): TestDataBundle {
+    private getDataBundle(frameNumber: number, bundleSize: number): string {
         const msg: VisDataMessage = {
             msgType: NetMessageEnum.ID_VIS_DATA_ARRIVE,
             bundleStart: frameNumber,
@@ -74,7 +76,7 @@ export class DummyRemoteSimulator extends RemoteSimulator {
         }
 
         msg.bundleData = bundleData;
-        return msg;
+        return JSON.stringify(msg);
     }
 
     private broadcast(): void {
@@ -88,9 +90,9 @@ export class DummyRemoteSimulator extends RemoteSimulator {
         }
 
         const bundleSize = 5;
-        const msg = this.getDataBundle(this.frameCounter, bundleSize);
+        const msg: NetMessage = JSON.parse(this.getDataBundle(0, 1));
         this.frameCounter += bundleSize;
-        this.onMessage({ data: JSON.stringify(msg) });
+        this.onJsonIdVisDataArrive(msg);
     }
 
     public getIp(): string {
@@ -101,11 +103,11 @@ export class DummyRemoteSimulator extends RemoteSimulator {
         return this.isConnected;
     }
 
-    public connectToRemoteServer(uri: string): Promise<string> {
+    public connectToRemoteServer(): Promise<string> {
         return new Promise((resolve) => {
             setTimeout(() => {
                 this.isConnected = true;
-                resolve(uri);
+                resolve(this.getIp());
             }, this.connectLatencyMS);
         });
     }
@@ -128,7 +130,7 @@ export class DummyRemoteSimulator extends RemoteSimulator {
     }
 
     public startRemoteTrajectoryPlayback(fileName: string): Promise<void> {
-        return this.connectToRemoteServer(this.getIp()).then(() => {
+        return this.connectToRemoteServer().then(() => {
             this.fileName = fileName;
             this.isStreamingData = true;
             this.lastRequestedFile = fileName;
@@ -147,12 +149,12 @@ export class DummyRemoteSimulator extends RemoteSimulator {
                 fileName: fileName,
             };
 
-            this.onMessage({ data: JSON.stringify(tfi) });
+            this.onTrajectoryFileInfoArrive({ data: JSON.stringify(tfi) });
 
             // Send the first frame of data
-            const msg = this.getDataBundle(0, 1);
+            const msg: NetMessage = JSON.parse(this.getDataBundle(0, 1));
             this.frameCounter++;
-            this.onMessage({ data: JSON.stringify(msg) });
+            this.onJsonIdVisDataArrive(msg);
         }, this.commandLatencyMS);
     }
 
@@ -160,9 +162,9 @@ export class DummyRemoteSimulator extends RemoteSimulator {
         setTimeout(() => {
             this.frameCounter = frameNumber;
 
-            const msg = this.getDataBundle(this.frameCounter, 1);
+            const msg: NetMessage = JSON.parse(this.getDataBundle(0, 1));
             this.frameCounter;
-            this.onMessage({ data: JSON.stringify(msg) });
+            this.onJsonIdVisDataArrive(msg);
         }, this.commandLatencyMS);
     }
 
@@ -170,9 +172,11 @@ export class DummyRemoteSimulator extends RemoteSimulator {
         setTimeout(() => {
             this.frameCounter = time / this.timeStep;
 
-            const msg = this.getDataBundle(this.frameCounter, 1);
+            const msg: NetMessage = JSON.parse(
+                this.getDataBundle(this.frameCounter, 1)
+            );
             this.frameCounter++;
-            this.onMessage({ data: JSON.stringify(msg) });
+            this.onJsonIdVisDataArrive(msg);
         }, this.commandLatencyMS);
     }
 }
