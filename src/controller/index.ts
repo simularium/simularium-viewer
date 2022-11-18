@@ -79,7 +79,8 @@ export default class SimulariumController {
             );
             this.converter = params.remoteSimulator;
             this.converter.setLoadFileHandler((result: Record<string, any>) => {
-                const file = JSON.parse(result["simulariumData"]);
+                const data = JSON.parse(result["data"]);
+                const file = JSON.parse(data["simulariumData"]);
                 const simulariumFile = new JsonFileReader(file);
                 this.handleFileChange(simulariumFile, "test.simularium");
             });
@@ -152,7 +153,8 @@ export default class SimulariumController {
             );
             this.converter = remoteSimulator;
             this.converter.setLoadFileHandler((result: Record<string, any>) => {
-                const file = JSON.parse(result["simulariumData"]);
+                const data = JSON.parse(result["data"]);
+                const file = JSON.parse(data["simulariumData"]);
                 const simulariumFile = new JsonFileReader(file);
                 // TODO: make file name more informative
                 this.handleFileChange(simulariumFile, "test.simularium");

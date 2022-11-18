@@ -1,58 +1,16 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
-import { IConverter } from "./IConverter";
-
+import {
+    WebsocketClient,
+    NetConnectionParams,
+    NetMessageEnum,
+    MessageEventLike,
+    NetMessage,
+} from "./WebsocketClient";
 import { ISimulator } from "./ISimulator";
 import { TrajectoryFileInfoV2, VisDataMessage } from "./types";
 
-interface NetMessage {
-    connId: string;
-    msgType: number;
-    fileName: string;
-}
-// TODO: proposed new NetMessage data type:
-// This factors the raw data structure away from the networking and transmission info.
-// This allows the data structure to make a bit more sense with respect to typescript typing,
-// and also for raw file drag n drop it doesn't need connection info or msgtype.
-// interface NetMessage {
-//     connId: string; // unique connection to server
-//     msgType: number; // identifies the data structure of the message
-//     fileName: string; // identifies the trajectory this connection is dealing with
-//     payload: Object; // the JS object with the message data itself
-// }
-
-interface MessageEventLike {
-    data: string;
-}
-
-// these have been set to correspond to backend values
-export const enum NetMessageEnum {
-    ID_UNDEFINED_WEB_REQUEST = 0,
-    ID_VIS_DATA_ARRIVE = 1,
-    ID_VIS_DATA_REQUEST = 2,
-    ID_VIS_DATA_FINISH = 3,
-    ID_VIS_DATA_PAUSE = 4,
-    ID_VIS_DATA_RESUME = 5,
-    ID_VIS_DATA_ABORT = 6,
-    ID_UPDATE_TIME_STEP = 7,
-    ID_UPDATE_RATE_PARAM = 8,
-    ID_MODEL_DEFINITION = 9,
-    ID_HEARTBEAT_PING = 10,
-    ID_HEARTBEAT_PONG = 11,
-    ID_TRAJECTORY_FILE_INFO = 12,
-    ID_GOTO_SIMULATION_TIME = 13,
-    ID_INIT_TRAJECTORY_FILE = 14,
-    ID_UPDATE_SIMULATION_STATE = 15,
-    ID_CONVERT_TRAJECTORY_FILE = 16,
-    ID_CONVERTED_TRAJECTORY = 17,
-    ID_CALCULATE_METRICS = 18,
-    ID_METRICS_PLOT_DATA = 19,
-    // insert new values here before LENGTH
-    LENGTH,
-}
-
-// these have been set to correspond to backend values
 const enum PlayBackType {
     ID_LIVE_SIMULATION = 0,
     ID_PRE_RUN_SIMULATION = 1,
@@ -60,22 +18,10 @@ const enum PlayBackType {
     // insert new values here before LENGTH
     LENGTH,
 }
-
-export const CONNECTION_SUCCESS_MSG = "Remote sim successfully started";
-export const CONNECTION_FAIL_MSG =
-    "Failed to connect to server; try reloading. If the problem persists, there may be a problem with your connection speed or the server might be too busy.";
-
-export interface NetConnectionParams {
-    serverIp?: string;
-    serverPort?: number;
-}
-
 // a RemoteSimulator is a ISimulator that connects to the Simularium Engine
 // back end server and plays back a trajectory specified in the NetConnectionParams
-export class RemoteSimulator implements ISimulator, IConverter {
-    private webSocket: WebSocket | null;
-    private serverIp: string;
-    private serverPort: number;
+export class RemoteSimulator implements ISimulator {
+    private webSocketClient: WebsocketClient;
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (NetMessage) => void;
     public onTrajectoryDataArrive: (NetMessage) => void;
@@ -89,12 +35,12 @@ export class RemoteSimulator implements ISimulator, IConverter {
         opts?: NetConnectionParams,
         errorHandler?: (error: FrontEndError) => void
     ) {
-        this.webSocket = null;
-        this.serverIp = opts && opts.serverIp ? opts.serverIp : "localhost";
-        this.serverPort = opts && opts.serverPort ? opts.serverPort : 9002;
         this.connectionTimeWaited = 0;
         this.connectionRetries = 0;
+        this.webSocketClient = new WebsocketClient(opts, errorHandler);
         this.lastRequestedFile = "";
+        this.onBinaryIdVisDataArrive.bind(this);
+        this.onJsonIdVisDataArrive.bind(this);
         this.handleError =
             errorHandler ||
             (() => {
@@ -103,6 +49,8 @@ export class RemoteSimulator implements ISimulator, IConverter {
 
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
+        this.registerBinaryMessageHandlers();
+        this.registerJsonMessageHandlers();
 
         this.onTrajectoryFileInfoArrive = () => {
             /* do nothing */
@@ -113,9 +61,6 @@ export class RemoteSimulator implements ISimulator, IConverter {
         this.loadFile = () => {
             /* do nothing */
         };
-
-        // Frees the reserved backend in the event that the window closes w/o disconnecting
-        window.addEventListener("beforeunload", this.onClose.bind(this));
     }
 
     public setTrajectoryFileInfoHandler(
@@ -137,222 +82,129 @@ export class RemoteSimulator implements ISimulator, IConverter {
         this.loadFile = handler;
     }
 
-    /**
-     * WebSocket State
-     */
-    private socketIsConnecting(): boolean {
-        return (
-            this.webSocket !== null &&
-            this.webSocket.readyState === this.webSocket.CONNECTING
-        );
-    }
-
     public socketIsValid(): boolean {
-        return !(
-            this.webSocket === null ||
-            this.webSocket.readyState === this.webSocket.CLOSED
-        );
-    }
-
-    private socketIsConnected(): boolean {
-        return (
-            this.webSocket !== null &&
-            this.webSocket.readyState === this.webSocket.OPEN
-        );
+        return this.webSocketClient.socketIsValid();
     }
 
     /**
-     *   Websocket Message Handler
+     *   Websocket Message Handlers
      * */
-    protected onMessage(event: MessageEvent | MessageEventLike): void {
-        // where we receive websocket messages
-        if (!this.socketIsValid()) {
-            return;
-        }
 
-        if (event.data instanceof ArrayBuffer) {
-            const floatView = new Float32Array(event.data);
-            const binaryMsgType = floatView[0];
+    public onBinaryIdVisDataArrive(
+        event: MessageEvent | MessageEventLike
+    ): void {
+        const OFFSET_TO_NAME_LENGTH = 8;
+        const floatView = new Float32Array(event.data);
+        const nameLength = floatView[1];
+        const byteView = new Uint8Array(event.data);
+        const fileBytes = byteView.subarray(
+            OFFSET_TO_NAME_LENGTH,
+            OFFSET_TO_NAME_LENGTH + nameLength
+        );
+        const fileName = new TextDecoder("utf-8").decode(fileBytes);
 
-            if (binaryMsgType === NetMessageEnum.ID_VIS_DATA_ARRIVE) {
-                const OFFSET_TO_NAME_LENGTH = 8;
-                const nameLength = floatView[1];
-                const byteView = new Uint8Array(event.data);
-                const fileBytes = byteView.subarray(
-                    OFFSET_TO_NAME_LENGTH,
-                    OFFSET_TO_NAME_LENGTH + nameLength
-                );
-                const fileName = new TextDecoder("utf-8").decode(fileBytes);
-
-                if (fileName == this.lastRequestedFile) {
-                    this.onTrajectoryDataArrive(event.data);
-                } else {
-                    this.logger.error(
-                        "File arrived ",
-                        fileName,
-                        " is not file ",
-                        this.lastRequestedFile
-                    );
-                }
-            } else {
-                this.logger.error(
-                    "Unexpected binary message arrived of type ",
-                    binaryMsgType
-                );
-            }
-            return;
-        }
-
-        const msg: NetMessage = JSON.parse(event.data);
-        const msgType = msg.msgType;
-        const numMsgTypes = NetMessageEnum.LENGTH;
-
-        if (msgType > numMsgTypes || msgType < 1) {
-            // this suggests either the back-end is out of sync, or a connection to an unknown back-end
-            //  either would be very bad
+        if (fileName == this.lastRequestedFile) {
+            this.onTrajectoryDataArrive(event.data);
+        } else {
             this.logger.error(
-                "Unrecognized web message of type ",
-                msg.msgType,
-                " arrived"
+                "File arrived ",
+                fileName,
+                " is not file ",
+                this.lastRequestedFile
             );
-            return;
-        }
-
-        switch (msgType) {
-            case NetMessageEnum.ID_VIS_DATA_ARRIVE:
-                if (msg.fileName === this.lastRequestedFile) {
-                    this.onTrajectoryDataArrive(msg);
-                }
-                break;
-            case NetMessageEnum.ID_UPDATE_TIME_STEP:
-                // TODO: callback to handle time step update
-                break;
-            case NetMessageEnum.ID_UPDATE_RATE_PARAM:
-                // TODO: callback to handle rate param
-                break;
-            case NetMessageEnum.ID_HEARTBEAT_PING:
-                this.sendWebSocketRequest(
-                    {
-                        connId: msg.connId,
-                        msgType: NetMessageEnum.ID_HEARTBEAT_PONG,
-                    },
-                    "Heartbeat pong"
-                );
-                break;
-            case NetMessageEnum.ID_MODEL_DEFINITION:
-                this.logger.debug("Model Definition Arrived");
-                // TODO: callback to handle model definition
-                break;
-            case NetMessageEnum.ID_TRAJECTORY_FILE_INFO:
-                this.logger.debug("Trajectory file info Arrived");
-                this.onTrajectoryFileInfoArrive(msg);
-                break;
-            case NetMessageEnum.ID_CONVERTED_TRAJECTORY:
-                this.loadFile(msg);
-                break;
-            default:
-                this.logger.debug("Web request recieved", msg.msgType);
-                break;
         }
     }
 
-    private onOpen(): void {
-        /* do nothing */
+    public onHeartbeatPing(msg: NetMessage): void {
+        this.sendWebSocketRequest(
+            {
+                connId: msg.connId,
+                msgType: NetMessageEnum.ID_HEARTBEAT_PONG,
+            },
+            "Heartbeat pong"
+        );
     }
-    private onClose(): void {
-        /* do nothing */
+
+    public onJsonIdVisDataArrive(msg: NetMessage): void {
+        if (msg.fileName === this.lastRequestedFile) {
+            this.onTrajectoryDataArrive(msg);
+        }
+    }
+
+    public updateTimestep(msg: NetMessage): void {
+        this.logger.debug("Update Timestep Message Arrived");
+        // TODO: implement callback
+    }
+
+    public updateRateParam(msg: NetMessage): void {
+        this.logger.debug("Update Rate Param Message Arrived");
+        // TODO: implement callback
+    }
+
+    public onModelDefinitionArrive(msg: NetMessage): void {
+        this.logger.debug("Model Definition Arrived");
+        // TODO: implement callback
+    }
+
+    private registerBinaryMessageHandlers(): void {
+        this.webSocketClient.addBinaryMessageHandler(
+            NetMessageEnum.ID_VIS_DATA_ARRIVE,
+            this.onBinaryIdVisDataArrive
+        );
+    }
+
+    private registerJsonMessageHandlers(): void {
+        this.webSocketClient.addJsonMessageHandler(
+            NetMessageEnum.ID_CONVERTED_TRAJECTORY,
+            this.loadFile
+        );
+
+        this.webSocketClient.addJsonMessageHandler(
+            NetMessageEnum.ID_TRAJECTORY_FILE_INFO,
+            this.onTrajectoryFileInfoArrive
+        );
+
+        this.webSocketClient.addJsonMessageHandler(
+            NetMessageEnum.ID_HEARTBEAT_PING,
+            this.onHeartbeatPing
+        );
+
+        this.webSocketClient.addJsonMessageHandler(
+            NetMessageEnum.ID_VIS_DATA_ARRIVE,
+            this.onJsonIdVisDataArrive
+        );
+
+        this.webSocketClient.addJsonMessageHandler(
+            NetMessageEnum.ID_UPDATE_TIME_STEP,
+            this.updateTimestep
+        );
+
+        this.webSocketClient.addJsonMessageHandler(
+            NetMessageEnum.ID_UPDATE_RATE_PARAM,
+            this.updateRateParam
+        );
+
+        this.webSocketClient.addJsonMessageHandler(
+            NetMessageEnum.ID_MODEL_DEFINITION,
+            this.onModelDefinitionArrive
+        );
     }
 
     /**
      * WebSocket Connect
      * */
-    public createWebSocket(uri: string): void {
-        // Create and initialize a WebSocket object
-
-        if (this.socketIsValid()) {
-            this.disconnect();
-        }
-        this.webSocket = new WebSocket(uri);
-        this.webSocket.binaryType = "arraybuffer";
-        this.logger.debug("WS Connection Request Sent: ", uri);
-
-        // message handler
-        this.webSocket.onopen = this.onOpen.bind(this);
-        this.webSocket.onclose = this.onClose.bind(this);
-        this.webSocket.onmessage = this.onMessage.bind(this);
-    }
-
     public disconnect(): void {
-        if (!this.socketIsValid()) {
-            this.logger.warn("disconnect failed, client is not connected");
-            return;
-        }
-
-        if (this.webSocket !== null) {
-            this.webSocket.close();
-        }
+        this.webSocketClient.disconnect();
     }
 
     public getIp(): string {
-        return `wss://${this.serverIp}:${this.serverPort}/`;
+        return this.webSocketClient.getIp();
     }
 
-    public async waitForWebSocket(timeout: number): Promise<boolean> {
-        // Wait a specified time then check WebSocket status
-        return new Promise((resolve) =>
-            setTimeout(() => {
-                resolve(this.socketIsConnected());
-            }, timeout)
-        );
-    }
-
-    public async checkConnection(
-        address: string,
-        timeout = 1000,
-        maxRetries = 1
-    ): Promise<boolean> {
-        // Check if the WebSocket becomes connected within an allotted amount
-        // of time and number of retries.
-
-        // Initially wait for a max wait time of maxWaitTime, then retry
-        // connecting <maxRetries> time(s). In a retry, only wait for the
-        // amount of time specified as timeout.
-
-        const maxWaitTime = 4 * timeout;
-
-        const isConnected = await this.waitForWebSocket(timeout);
-        this.connectionTimeWaited += timeout;
-
-        if (isConnected) {
-            return true;
-        } else if (this.connectionTimeWaited < maxWaitTime) {
-            return this.checkConnection(address, timeout);
-        } else if (this.connectionRetries < maxRetries) {
-            this.createWebSocket(address);
-            this.connectionRetries++;
-            return this.checkConnection(address, timeout);
-        } else {
-            return false;
-        }
-    }
-
-    public async connectToRemoteServer(address: string): Promise<string> {
-        this.connectionTimeWaited = 0;
-        this.connectionRetries = 0;
-
-        if (this.socketIsConnected()) {
-            return CONNECTION_SUCCESS_MSG;
-        }
-
-        this.createWebSocket(address);
-        const isConnectionSuccessful = await this.checkConnection(address);
-
-        if (isConnectionSuccessful) {
-            return CONNECTION_SUCCESS_MSG;
-        } else {
-            // caught by functions that call this
-            throw new Error(CONNECTION_FAIL_MSG);
-        }
+    public async connectToRemoteServer(): Promise<string> {
+        this.registerBinaryMessageHandlers();
+        this.registerJsonMessageHandlers();
+        return this.webSocketClient.connectToRemoteServer();
     }
 
     /**
@@ -363,21 +215,12 @@ export class RemoteSimulator implements ISimulator, IConverter {
     }
 
     private sendWebSocketRequest(jsonData, requestDescription: string): void {
-        if (this.socketIsValid()) {
-            if (this.webSocket !== null) {
-                this.webSocket.send(JSON.stringify(jsonData));
-            }
+        if (this.webSocketClient && this.socketIsValid()) {
+            this.webSocketClient.sendWebSocketRequest(
+                jsonData,
+                requestDescription
+            );
             this.logWebSocketRequest(requestDescription, jsonData);
-        } else {
-            console.error(
-                "Request to server cannot be made with a closed Websocket connection."
-            );
-            this.handleError(
-                new FrontEndError(
-                    "Connection to server is closed; please try reloading. If the problem persists, the server may be too busy. Please try again at another time.",
-                    ErrorLevel.ERROR
-                )
-            );
         }
     }
 
@@ -429,7 +272,7 @@ export class RemoteSimulator implements ISimulator, IConverter {
             numTimeSteps: numTimeSteps,
         };
 
-        return this.connectToRemoteServer(this.getIp())
+        return this.connectToRemoteServer()
             .then(() => {
                 this.sendWebSocketRequest(jsonData, "Start Simulation Pre-Run");
             })
@@ -444,7 +287,7 @@ export class RemoteSimulator implements ISimulator, IConverter {
             mode: PlayBackType.ID_LIVE_SIMULATION,
         };
 
-        return this.connectToRemoteServer(this.getIp())
+        return this.connectToRemoteServer()
             .then(() => {
                 this.sendWebSocketRequest(jsonData, "Start Simulation Live");
             })
@@ -463,7 +306,7 @@ export class RemoteSimulator implements ISimulator, IConverter {
 
         // begins a stream which will include a TrajectoryFileInfo and a series of VisDataMessages
         // Note that it is possible for the first vis data to arrive before the TrajectoryFileInfo...
-        return this.connectToRemoteServer(this.getIp())
+        return this.connectToRemoteServer()
             .then(() => {
                 this.sendWebSocketRequest(
                     jsonData,
@@ -544,7 +387,7 @@ export class RemoteSimulator implements ISimulator, IConverter {
         obj: Record<string, unknown>,
         fileType: string
     ): Promise<void> {
-        return this.connectToRemoteServer(this.getIp())
+        return this.connectToRemoteServer()
             .then(() => {
                 this.sendTrajectory(obj, fileType);
             })
