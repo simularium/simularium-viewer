@@ -312,17 +312,19 @@ export default class SimulariumController {
         }
     }
 
-    public handleFileChange(trajectoryFile, fileName, geoAssets?) {
-        const simulariumFile = fileName.includes(".simularium")
-            ? trajectoryFile
-            : null;
+    public handleFileChange(
+        simulariumFile: ISimulariumFile,
+        fileName: string,
+        geoAssets?: { [key: string]: string }
+    ): Promise<FileReturn> {
+        if (!fileName.includes(".simularium")) {
+            throw new Error("File must be a .simularium file");
+        }
 
         if (geoAssets && geoAssets.length) {
             return this.changeFile({ simulariumFile, geoAssets }, fileName);
         } else {
-            return this.changeFile({ simulariumFile }, fileName).catch(
-                console.log
-            );
+            return this.changeFile({ simulariumFile }, fileName);
         }
     }
 
