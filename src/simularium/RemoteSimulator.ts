@@ -20,21 +20,17 @@ const enum PlayBackType {
 // a RemoteSimulator is a ISimulator that connects to the Simularium Engine
 // back end server and plays back a trajectory specified in the NetConnectionParams
 export class RemoteSimulator implements ISimulator {
-    private webSocketClient: WebsocketClient;
+    public webSocketClient: WebsocketClient;
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (NetMessage) => void;
     public onTrajectoryDataArrive: (NetMessage) => void;
     protected lastRequestedFile: string;
-    public connectionTimeWaited: number;
-    public connectionRetries: number;
     public handleError: (error: FrontEndError) => void | (() => void);
 
     public constructor(
         webSocketClient: WebsocketClient,
         errorHandler?: (error: FrontEndError) => void
     ) {
-        this.connectionTimeWaited = 0;
-        this.connectionRetries = 0;
         this.webSocketClient = webSocketClient;
         this.lastRequestedFile = "";
         this.onBinaryIdVisDataArrive.bind(this);
@@ -141,11 +137,6 @@ export class RemoteSimulator implements ISimulator {
     }
 
     private registerJsonMessageHandlers(): void {
-        this.webSocketClient.addJsonMessageHandler(
-            NetMessageEnum.ID_CONVERTED_TRAJECTORY,
-            this.loadFile
-        );
-
         this.webSocketClient.addJsonMessageHandler(
             NetMessageEnum.ID_TRAJECTORY_FILE_INFO,
             this.onTrajectoryFileInfoArrive

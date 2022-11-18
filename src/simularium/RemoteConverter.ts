@@ -32,7 +32,7 @@ export class RemoteConverter implements IConverter {
     // Sets callback to notify when file conversion is finished and
     // .simularium file is available
     public setLoadFileHandler(
-        handler: (msg: Record<string, unknown>) => void
+        handler: (msg: Record<string, any>) => void
     ): void {
         this.loadFile = handler;
     }
