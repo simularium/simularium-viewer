@@ -3,7 +3,6 @@ import { ILogger } from "js-logger";
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
 import {
     WebsocketClient,
-    NetConnectionParams,
     NetMessageEnum,
     MessageEventLike,
     NetMessage,
@@ -25,19 +24,18 @@ export class RemoteSimulator implements ISimulator {
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (NetMessage) => void;
     public onTrajectoryDataArrive: (NetMessage) => void;
-    public loadFile: (NetMessage) => void;
     protected lastRequestedFile: string;
     public connectionTimeWaited: number;
     public connectionRetries: number;
     public handleError: (error: FrontEndError) => void | (() => void);
 
     public constructor(
-        opts?: NetConnectionParams,
+        webSocketClient: WebsocketClient,
         errorHandler?: (error: FrontEndError) => void
     ) {
         this.connectionTimeWaited = 0;
         this.connectionRetries = 0;
-        this.webSocketClient = new WebsocketClient(opts, errorHandler);
+        this.webSocketClient = webSocketClient;
         this.lastRequestedFile = "";
         this.onBinaryIdVisDataArrive.bind(this);
         this.onJsonIdVisDataArrive.bind(this);
@@ -58,9 +56,6 @@ export class RemoteSimulator implements ISimulator {
         this.onTrajectoryDataArrive = () => {
             /* do nothing */
         };
-        this.loadFile = () => {
-            /* do nothing */
-        };
     }
 
     public setTrajectoryFileInfoHandler(
@@ -72,14 +67,6 @@ export class RemoteSimulator implements ISimulator {
         handler: (msg: VisDataMessage) => void
     ): void {
         this.onTrajectoryDataArrive = handler;
-    }
-
-    // Sets callback to notify when file conversion is finished and
-    // .simularium file is available
-    public setLoadFileHandler(
-        handler: (msg: Record<string, unknown>) => void
-    ): void {
-        this.loadFile = handler;
     }
 
     public socketIsValid(): boolean {
@@ -116,7 +103,7 @@ export class RemoteSimulator implements ISimulator {
     }
 
     public onHeartbeatPing(msg: NetMessage): void {
-        this.sendWebSocketRequest(
+        this.webSocketClient.sendWebSocketRequest(
             {
                 connId: msg.connId,
                 msgType: NetMessageEnum.ID_HEARTBEAT_PONG,
@@ -208,23 +195,6 @@ export class RemoteSimulator implements ISimulator {
     }
 
     /**
-     * Websocket Send Helper Functions
-     */
-    private logWebSocketRequest(whatRequest, jsonData): void {
-        this.logger.debug("Web Socket Request Sent: ", whatRequest, jsonData);
-    }
-
-    private sendWebSocketRequest(jsonData, requestDescription: string): void {
-        if (this.webSocketClient && this.socketIsValid()) {
-            this.webSocketClient.sendWebSocketRequest(
-                jsonData,
-                requestDescription
-            );
-            this.logWebSocketRequest(requestDescription, jsonData);
-        }
-    }
-
-    /**
      * Websocket Update Parameters
      */
     public sendTimeStepUpdate(newTimeStep: number): void {
@@ -232,7 +202,7 @@ export class RemoteSimulator implements ISimulator {
             msgType: NetMessageEnum.ID_UPDATE_TIME_STEP,
             timeStep: newTimeStep,
         };
-        this.sendWebSocketRequest(jsonData, "Update Time-Step");
+        this.webSocketClient.sendWebSocketRequest(jsonData, "Update Time-Step");
     }
 
     public sendParameterUpdate(paramName: string, paramValue: number): void {
@@ -241,7 +211,10 @@ export class RemoteSimulator implements ISimulator {
             paramName: paramName,
             paramValue: paramValue,
         };
-        this.sendWebSocketRequest(jsonData, "Rate Parameter Update");
+        this.webSocketClient.sendWebSocketRequest(
+            jsonData,
+            "Rate Parameter Update"
+        );
     }
 
     public sendModelDefinition(model: string): void {
@@ -249,7 +222,10 @@ export class RemoteSimulator implements ISimulator {
             model: model,
             msgType: NetMessageEnum.ID_MODEL_DEFINITION,
         };
-        this.sendWebSocketRequest(dataToSend, "Model Definition");
+        this.webSocketClient.sendWebSocketRequest(
+            dataToSend,
+            "Model Definition"
+        );
     }
 
     /**
@@ -274,7 +250,10 @@ export class RemoteSimulator implements ISimulator {
 
         return this.connectToRemoteServer()
             .then(() => {
-                this.sendWebSocketRequest(jsonData, "Start Simulation Pre-Run");
+                this.webSocketClient.sendWebSocketRequest(
+                    jsonData,
+                    "Start Simulation Pre-Run"
+                );
             })
             .catch((e) => {
                 throw new FrontEndError(e.message, ErrorLevel.ERROR);
@@ -289,7 +268,10 @@ export class RemoteSimulator implements ISimulator {
 
         return this.connectToRemoteServer()
             .then(() => {
-                this.sendWebSocketRequest(jsonData, "Start Simulation Live");
+                this.webSocketClient.sendWebSocketRequest(
+                    jsonData,
+                    "Start Simulation Live"
+                );
             })
             .catch((e) => {
                 throw new FrontEndError(e.message, ErrorLevel.ERROR);
@@ -308,7 +290,7 @@ export class RemoteSimulator implements ISimulator {
         // Note that it is possible for the first vis data to arrive before the TrajectoryFileInfo...
         return this.connectToRemoteServer()
             .then(() => {
-                this.sendWebSocketRequest(
+                this.webSocketClient.sendWebSocketRequest(
                     jsonData,
                     "Start Trajectory File Playback"
                 );
@@ -319,14 +301,14 @@ export class RemoteSimulator implements ISimulator {
     }
 
     public pauseRemoteSim(): void {
-        this.sendWebSocketRequest(
+        this.webSocketClient.sendWebSocketRequest(
             { msgType: NetMessageEnum.ID_VIS_DATA_PAUSE },
             "Pause Simulation"
         );
     }
 
     public resumeRemoteSim(): void {
-        this.sendWebSocketRequest(
+        this.webSocketClient.sendWebSocketRequest(
             { msgType: NetMessageEnum.ID_VIS_DATA_RESUME },
             "Resume Simulation"
         );
@@ -336,14 +318,14 @@ export class RemoteSimulator implements ISimulator {
         if (!this.socketIsValid()) {
             return;
         }
-        this.sendWebSocketRequest(
+        this.webSocketClient.sendWebSocketRequest(
             { msgType: NetMessageEnum.ID_VIS_DATA_ABORT },
             "Abort Simulation"
         );
     }
 
     public requestSingleFrame(startFrameNumber: number): void {
-        this.sendWebSocketRequest(
+        this.webSocketClient.sendWebSocketRequest(
             {
                 msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
                 mode: PlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
@@ -354,7 +336,7 @@ export class RemoteSimulator implements ISimulator {
     }
 
     public gotoRemoteSimulationTime(time: number): void {
-        this.sendWebSocketRequest(
+        this.webSocketClient.sendWebSocketRequest(
             {
                 msgType: NetMessageEnum.ID_GOTO_SIMULATION_TIME,
                 time: time,
@@ -364,7 +346,7 @@ export class RemoteSimulator implements ISimulator {
     }
 
     public requestTrajectoryFileInfo(fileName: string): void {
-        this.sendWebSocketRequest(
+        this.webSocketClient.sendWebSocketRequest(
             {
                 msgType: NetMessageEnum.ID_INIT_TRAJECTORY_FILE,
                 fileName: fileName,
@@ -374,39 +356,12 @@ export class RemoteSimulator implements ISimulator {
     }
 
     public sendUpdate(obj: Record<string, unknown>): void {
-        this.sendWebSocketRequest(
+        this.webSocketClient.sendWebSocketRequest(
             {
                 msgType: NetMessageEnum.ID_UPDATE_SIMULATION_STATE,
                 data: obj,
             },
             "Send update instructions to simulation server"
-        );
-    }
-
-    public convertTrajectory(
-        obj: Record<string, unknown>,
-        fileType: string
-    ): Promise<void> {
-        return this.connectToRemoteServer()
-            .then(() => {
-                this.sendTrajectory(obj, fileType);
-            })
-            .catch((e) => {
-                throw new FrontEndError(e.message, ErrorLevel.ERROR);
-            });
-    }
-
-    public sendTrajectory(
-        obj: Record<string, unknown>,
-        fileType: string
-    ): void {
-        this.sendWebSocketRequest(
-            {
-                msgType: NetMessageEnum.ID_CONVERT_TRAJECTORY_FILE,
-                trajType: fileType.toLowerCase(),
-                data: obj,
-            },
-            "Convert trajectory output to simularium file format"
         );
     }
 }

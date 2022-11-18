@@ -22,6 +22,8 @@ import { LocalFileSimulator } from "../simularium/LocalFileSimulator";
 import { FrontEndError } from "../simularium/FrontEndError";
 import type { ISimulariumFile } from "../simularium/ISimulariumFile";
 import JsonFileReader from "../simularium/JsonFileReader";
+import { WebsocketClient } from "../simularium/WebsocketClient";
+import { RemoteConverter } from "../simularium/RemoteConverter";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
@@ -77,13 +79,6 @@ export default class SimulariumController {
             this.simulator.setTrajectoryDataHandler(
                 this.visData.parseAgentsFromNetData.bind(this.visData)
             );
-            this.converter = params.remoteSimulator;
-            this.converter.setLoadFileHandler((result: Record<string, any>) => {
-                const data = JSON.parse(result["data"]);
-                const file = JSON.parse(data["simulariumData"]);
-                const simulariumFile = new JsonFileReader(file);
-                this.handleFileChange(simulariumFile, "test.simularium");
-            });
             // TODO: probably remove this? We're never initalizing the controller
             // with any settings on the website.
         } else if (params.netConnectionSettings) {
@@ -143,15 +138,15 @@ export default class SimulariumController {
                 this.visData.parseAgentsFromLocalFileData.bind(this.visData)
             );
         } else if (netConnectionConfig) {
-            const remoteSimulator = new RemoteSimulator(
+            const webSocketClient = new WebsocketClient(
                 netConnectionConfig,
                 this.onError
             );
-            this.simulator = remoteSimulator;
+            this.simulator = new RemoteSimulator(webSocketClient, this.onError);
             this.simulator.setTrajectoryDataHandler(
                 this.visData.parseAgentsFromNetData.bind(this.visData)
             );
-            this.converter = remoteSimulator;
+            this.converter = new RemoteConverter(webSocketClient, this.onError);
             this.converter.setLoadFileHandler((result: Record<string, any>) => {
                 const data = JSON.parse(result["data"]);
                 const file = JSON.parse(data["simulariumData"]);
