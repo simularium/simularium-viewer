@@ -33,7 +33,7 @@ export class DummyRemoteSimulator extends RemoteSimulator {
         this.isConnected = false;
         this.frameCounter = 0;
 
-        this.commandLatencyMS = 20;
+        this.commandLatencyMS = 200;
         this.connectLatencyMS = 1000;
 
         this.timeStep = 1;
@@ -90,7 +90,9 @@ export class DummyRemoteSimulator extends RemoteSimulator {
         }
 
         const bundleSize = 5;
-        const msg: NetMessage = JSON.parse(this.getDataBundle(0, 1));
+        const msg: NetMessage = JSON.parse(
+            this.getDataBundle(this.frameCounter, bundleSize)
+        );
         this.frameCounter += bundleSize;
         this.onJsonIdVisDataArrive(msg);
     }
