@@ -64,7 +64,7 @@ jobs:
                   node-version: ${{env.NODE_VERSION}}
             - run: npm ci
             - run: npm run build
-            - uses: actions/upload-artifact@v3
+            - uses: actions/upload-artifact@v2
               with:
                   name: current-build
                   path: |
