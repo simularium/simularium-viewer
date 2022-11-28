@@ -10,7 +10,7 @@ import {
     Vector3,
 } from "three";
 
-import type { KMeansWorkerType } from "./KMeansWorker";
+import type { KMeansWorkerType } from "./workers/KMeansWorker";
 import { getObject } from "./cifparser";
 
 import KMeans from "./rendering/KMeans3d";
@@ -416,7 +416,7 @@ class PDBModel {
     private async processPdbLod(n, sizes, allData) {
         // https://webpack.js.org/guides/web-workers/#syntax
         const worker = new Worker(
-            new URL("./KMeansWorker.ts", import.meta.url)
+            new URL("./workers/KMeansWorker", import.meta.url)
         );
         const kMeansWorkerClass = Comlink.wrap<KMeansWorkerType>(worker);
         const workerobj = await new kMeansWorkerClass();

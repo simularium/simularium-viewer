@@ -111,13 +111,10 @@ This will run the example in `/examples/Viewer.tsx`, demonstrating the viewer's 
 
 | script            | comments                                                                                                                                          |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| build             | create CommonJS, ES module, and UMD builds                                                                                                        |
-| bundle            | run Webpack to create a UMD bundle                                                                                                                |
+| build             | create ES module build                                                                                                        |
 | clean             | remove generated artifacts                                                                                                                        |
-| format            | run prettier on `src` directory                                                                                                                   |
 | generateTypes     | generate type declarations                                                                                                                        |
 | lint              | run eslint on `src` directory                                                                                                                     |
-| transpileCommonJs | run babel on `src` directory; transpile `import/export` statements for a CommonJS compatible build                                                |
 | transpileES       | run babel on `src` directory; _do not_ transpile `import/export` statements for an ES module compatible build (used by bundlers for tree-shaking) |
 | test              | run `jest`; searches for any files matching the pattern "src/\*_/_.test.js"                                                                      |
 | typeCheck         | run `tsc` in type-check only mode                                                                                                                 |
