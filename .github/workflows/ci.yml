@@ -54,7 +54,7 @@ jobs:
             - run: npm run build
     
     publish-dev:
-        if: github.ref == 'refs/heads/main'
+        # if: github.ref == 'refs/heads/main'
         needs: build
         runs-on: ubuntu-latest
         steps:
@@ -62,16 +62,19 @@ jobs:
             - uses: actions/setup-node@v1
               with:
                   node-version: ${{env.NODE_VERSION}}
-                  registry-url: https://registry.npmjs.org/
             - run: npm ci
             - run: npm run build
-            - name: Push to branch
-            uses: moodiest/push-to-branch-action@develop
-            env:
-                REPO: self
-                BRANCH: build
-                FOLDER: es
-                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            - uses: actions/upload-artifact@v3
+              with:
+                  name: current-build
+                  path: |
+                    "es",
+                    "lib",
+                    "dist",
+                    "style",
+                    "type-declarations",
+                    "README.md",
+                    "package.json"
     publish-stable:
         if: startsWith(github.ref, 'refs/tags/v')
         needs: build
