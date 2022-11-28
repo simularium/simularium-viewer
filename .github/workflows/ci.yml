@@ -68,13 +68,8 @@ jobs:
               with:
                   name: current-build
                   path: |
-                    "/es",
-                    "/lib",
-                    "/dist",
-                    "/style",
-                    "/type-declarations",
-                    "/README.md",
-                    "/package.json"
+                    "README.md",
+                    "package.json"
     publish-stable:
         if: startsWith(github.ref, 'refs/tags/v')
         needs: build
