@@ -66,6 +66,16 @@ jobs:
               with:
                   name: dev-build
                   path: dev-build
+            - name: Push to branch
+              uses: moodiest/push-to-branch-action@develop
+              env:
+                 REPO: self
+                 BRANCH: build
+                 FOLDER: dev-build
+                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+- name: Display structure of downloaded files
+  run: ls -R
 
     publish-stable:
         if: startsWith(github.ref, 'refs/tags/v')
