@@ -73,9 +73,7 @@ export class RemoteSimulator implements ISimulator {
      *   Websocket Message Handlers
      * */
 
-    public onBinaryIdVisDataArrive(
-        event: MessageEvent | MessageEventLike
-    ): void {
+    public onBinaryIdVisDataArrive(event: MessageEventLike): void {
         const OFFSET_TO_NAME_LENGTH = 8;
         const floatView = new Float32Array(event.data);
         const nameLength = floatView[1];

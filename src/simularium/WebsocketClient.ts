@@ -18,9 +18,11 @@ export interface NetMessage {
 //     payload: Object; // the JS object with the message data itself
 // }
 
-export interface MessageEventLike {
+interface SimulariumEvent {
     data: string;
 }
+
+export type MessageEventLike = SimulariumEvent | MessageEvent;
 
 // these have been set to correspond to backend values
 export const enum NetMessageEnum {
@@ -66,7 +68,7 @@ export class WebsocketClient {
     protected jsonMessageHandlers: Map<NetMessageEnum, (NetMessage) => void>;
     protected binaryMessageHandlers: Map<
         NetMessageEnum,
-        (MessageEvent) => void | ((MessageEventLike) => void)
+        (MessageEventLike) => void
     >;
     protected logger: ILogger;
     public handleError: (error: FrontEndError) => void | (() => void);
@@ -126,7 +128,7 @@ export class WebsocketClient {
      * */
     public addBinaryMessageHandler(
         messageType: NetMessageEnum,
-        handler: (msg: MessageEvent | MessageEventLike) => void
+        handler: (msg: MessageEventLike) => void
     ): void {
         this.binaryMessageHandlers[messageType.valueOf()] = handler;
     }
@@ -138,7 +140,7 @@ export class WebsocketClient {
         this.jsonMessageHandlers[messageType] = handler;
     }
 
-    protected onMessage(event: MessageEvent | MessageEventLike): void {
+    protected onMessage(event: MessageEventLike): void {
         // where we receive websocket messages
         if (!this.socketIsValid()) {
             return;
