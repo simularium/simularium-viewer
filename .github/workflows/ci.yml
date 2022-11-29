@@ -53,26 +53,20 @@ jobs:
                   node-version: ${{env.NODE_VERSION}}
             - run: npm ci
             - run: npm run build
+            - run: mkdir dev-build
+            - run: |
+                cp -r es dev-build | 
+                cp -r lib dev-build | 
+                cp -r dist dev-build |
+                cp -r style dev-build |
+                cp -r type-declarations dev-build |
+                cp README.md dev-build |
+                cp package.json dev-build
             - uses: actions/upload-artifact@v3
               with:
-                name: dev-build
-                path: "package.json"
-            - uses: actions/upload-artifact@v3
-              with:
-                name: dev-build
-                path: "README.md"
-            - uses: actions/upload-artifact@v3
-              with:
-                name: dev-build
-                path: "type-declarations"
-            - uses: actions/upload-artifact@v3
-              with:
-                name: dev-build
-                path: "style"
-            - uses: actions/upload-artifact@v3
-              with:
-                name: dev-build
-                path: "es"
+                  name: dev-build
+                  path: dev-build
+
     publish-stable:
         if: startsWith(github.ref, 'refs/tags/v')
         needs: [lint, typeCheck, test]
