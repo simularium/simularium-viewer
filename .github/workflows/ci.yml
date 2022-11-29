@@ -64,10 +64,11 @@ jobs:
                   node-version: ${{env.NODE_VERSION}}
             - run: npm ci
             - run: npm run build
-            - uses: actions/upload-artifact@v2
-              with:
-                  name: current-build
-                  path:  "README.md"
+          - name: Upload
+            uses: actions/upload-artifact@v3
+            with:
+                name: dev-build
+                path: .
     publish-stable:
         if: startsWith(github.ref, 'refs/tags/v')
         needs: build
