@@ -67,9 +67,7 @@ jobs:
             - uses: actions/upload-artifact@v2
               with:
                   name: current-build
-                  path: |
-                    "README.md",
-                    "package.json"
+                  path:  "README.md"
     publish-stable:
         if: startsWith(github.ref, 'refs/tags/v')
         needs: build
