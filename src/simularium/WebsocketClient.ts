@@ -150,18 +150,15 @@ export class WebsocketClient {
             // Handle binary message
             const floatView = new Float32Array(event.data);
             const binaryMsgType = floatView[0];
-            for (let msgType in this.binaryMessageHandlers) {
-                if (binaryMsgType == Number(msgType)) {
-                    this.binaryMessageHandlers[msgType](event);
-                    // TODO: is it ok if we have multiple handlers for the same
-                    // message type? should we return here? for now, we will
-                    return;
-                }
+            if (binaryMsgType in this.binaryMessageHandlers) {
+                this.binaryMessageHandlers[binaryMsgType](event);
+            } else {
+                this.logger.error(
+                    "Unexpected binary message arrived of type ",
+                    binaryMsgType
+                );
             }
-            this.logger.error(
-                "Unexpected binary message arrived of type ",
-                binaryMsgType
-            );
+            return;
         }
 
         // Handle json message
@@ -180,13 +177,13 @@ export class WebsocketClient {
             return;
         }
 
-        for (let msgType in this.jsonMessageHandlers) {
-            if (jsonMsgType == Number(msgType)) {
-                this.jsonMessageHandlers[msgType](event);
-                // TODO: is it ok if we have multiple handlers for the same
-                // message type? should we return here? for now, we will
-                return;
-            }
+        if (jsonMsgType in this.jsonMessageHandlers) {
+            this.jsonMessageHandlers[jsonMsgType](event);
+        } else {
+            this.logger.error(
+                "Unexpected json message arrived of type ",
+                jsonMsgType
+            );
         }
         this.logger.debug("Web request recieved", msg.msgType);
     }
