@@ -10,7 +10,7 @@ import {
     Vector3,
 } from "three";
 
-import { KMeansWorkerType } from "./KMeansWorker";
+import type { KMeansWorkerType } from "./workers/KMeansWorker";
 import { getObject } from "./cifparser";
 
 import KMeans from "./rendering/KMeans3d";
@@ -296,9 +296,9 @@ class PDBModel {
         // levels of detail go from most detailed to least
         this.lodSizes = [
             n,
-            Math.max(Math.floor(n / 8), 1),
-            Math.max(Math.floor(n / 32), 1),
-            Math.max(Math.floor(n / 128), 1),
+            Math.max(Math.floor(n / 4), 1),
+            Math.max(Math.floor(n / 16), 1),
+            Math.max(Math.floor(n / 64), 1),
         ];
 
         // select random points for the initial quick LOD guess.
@@ -416,7 +416,7 @@ class PDBModel {
     private async processPdbLod(n, sizes, allData) {
         // https://webpack.js.org/guides/web-workers/#syntax
         const worker = new Worker(
-            new URL("./KMeansWorker.ts", import.meta.url)
+            new URL("./workers/KMeansWorker", import.meta.url)
         );
         const kMeansWorkerClass = Comlink.wrap<KMeansWorkerType>(worker);
         const workerobj = await new kMeansWorkerClass();

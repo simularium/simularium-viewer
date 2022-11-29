@@ -87,7 +87,9 @@ layout(location = 2) out vec4 gPos;
 
         // uncomment the following line to test LOD.  IN_radius is a measure of lod.
         //gAgentInfo = vec4(IN_radius*4.0, IN_instanceAndTypeId.x, fragViewPos.z, fragPosDepth);
+
         gAgentInfo = vec4(IN_instanceAndTypeId.y, IN_instanceAndTypeId.x, fragViewPos.z, fragPosDepth);
+        
         gNormal = vec4(normal * 0.5 + 0.5, 1.0);
         gPos = vec4(fragViewPos.x, fragViewPos.y, fragViewPos.z, 1.0);
     }

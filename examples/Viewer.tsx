@@ -2,17 +2,17 @@ import React from "react";
 import { isEqual, findIndex, map, reduce } from "lodash";
 
 import type {
+    ISimulariumFile,
     UIDisplayData,
     SelectionStateInfo,
-} from "../src/simularium/SelectionInterface";
+} from "../type-declarations";
 import SimulariumViewer, {
     SimulariumController,
     RenderStyle,
     ErrorLevel,
-} from "../src";
-import { FrontEndError } from "../src/simularium/FrontEndError";
-import { loadSimulariumFile } from "../src/util";
-import type { ISimulariumFile } from "../src/simularium/ISimulariumFile";
+    FrontEndError,
+    loadSimulariumFile,
+} from "../es";
 import "../style/style.css";
 
 import PointSimulator from "./PointSimulator";
@@ -159,7 +159,7 @@ class Viewer extends React.Component<{}, ViewerState> {
         window.addEventListener("resize", () => {
             const container = document.querySelector(".container");
             if (!container) {
-                return
+                return;
             }
             const height = container.clientHeight;
             const width = container.clientWidth;
