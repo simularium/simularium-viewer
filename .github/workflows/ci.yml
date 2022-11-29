@@ -73,9 +73,6 @@ jobs:
                  BRANCH: build
                  FOLDER: dev-build
                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    
-- name: Display structure of downloaded files
-  run: ls -R
 
     publish-stable:
         if: startsWith(github.ref, 'refs/tags/v')
