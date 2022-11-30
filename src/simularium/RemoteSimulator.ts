@@ -110,17 +110,17 @@ export class RemoteSimulator implements ISimulator {
         }
     }
 
-    public updateTimestep(msg: NetMessage): void {
+    public updateTimestep(): void {
         this.logger.debug("Update Timestep Message Arrived");
         // TODO: implement callback
     }
 
-    public updateRateParam(msg: NetMessage): void {
+    public updateRateParam(): void {
         this.logger.debug("Update Rate Param Message Arrived");
         // TODO: implement callback
     }
 
-    public onModelDefinitionArrive(msg: NetMessage): void {
+    public onModelDefinitionArrive(): void {
         this.logger.debug("Model Definition Arrived");
         // TODO: implement callback
     }
