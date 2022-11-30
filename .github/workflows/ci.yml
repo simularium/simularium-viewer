@@ -62,10 +62,6 @@ jobs:
                 cp -r type-declarations dev-build |
                 cp README.md dev-build |
                 cp package.json dev-build
-            - uses: actions/upload-artifact@v3
-              with:
-                  name: dev-build
-                  path: dev-build
             - name: Push to branch
               uses: moodiest/push-to-branch-action@develop
               env:
