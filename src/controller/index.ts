@@ -148,8 +148,7 @@ export default class SimulariumController {
             );
             this.converter = new RemoteConverter(webSocketClient, this.onError);
             this.converter.setLoadFileHandler((result: Record<string, any>) => {
-                const data = JSON.parse(result["data"]);
-                const file = JSON.parse(data["simulariumData"]);
+                const file = JSON.parse(result["simulariumData"]);
                 const simulariumFile = new JsonFileReader(file);
                 // TODO: make file name more informative
                 this.handleFileChange(simulariumFile, "test.simularium");
