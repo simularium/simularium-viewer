@@ -1,5 +1,7 @@
+import { ConvertedFileData } from "./types";
+
 export interface IConverter {
-    setLoadFileHandler(handler: (msg: Record<string, any>) => void): void;
+    setLoadFileHandler(handler: (msg: ConvertedFileData) => void): void;
 
     convertTrajectory(
         data: Record<string, unknown>,

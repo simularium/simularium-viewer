@@ -12,6 +12,7 @@ import {
     FileReturn,
     FILE_STATUS_SUCCESS,
     FILE_STATUS_FAIL,
+    ConvertedFileData,
 } from "../simularium/types";
 
 import { ClientSimulator } from "../simularium/ClientSimulator";
@@ -147,7 +148,7 @@ export default class SimulariumController {
                 this.visData.parseAgentsFromNetData.bind(this.visData)
             );
             this.converter = new RemoteConverter(webSocketClient, this.onError);
-            this.converter.setLoadFileHandler((result: Record<string, any>) => {
+            this.converter.setLoadFileHandler((result: ConvertedFileData) => {
                 const file = JSON.parse(result["simulariumData"]);
                 const simulariumFile = new JsonFileReader(file);
                 // TODO: make file name more informative

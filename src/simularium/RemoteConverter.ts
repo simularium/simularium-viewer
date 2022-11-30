@@ -2,6 +2,7 @@ import { IConverter } from "./IConverter";
 import { ILogger } from "js-logger";
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
 import { NetMessageEnum, WebsocketClient } from "./WebsocketClient";
+import { ConvertedFileData } from "./types";
 
 import jsLogger from "js-logger";
 
@@ -31,9 +32,7 @@ export class RemoteConverter implements IConverter {
 
     // Sets callback to notify when file conversion is finished and
     // .simularium file is available
-    public setLoadFileHandler(
-        handler: (msg: Record<string, any>) => void
-    ): void {
+    public setLoadFileHandler(handler: (msg: ConvertedFileData) => void): void {
         this.loadFile = handler;
     }
 
