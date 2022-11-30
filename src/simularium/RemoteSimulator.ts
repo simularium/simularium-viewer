@@ -33,8 +33,6 @@ export class RemoteSimulator implements ISimulator {
     ) {
         this.webSocketClient = webSocketClient;
         this.lastRequestedFile = "";
-        this.onBinaryIdVisDataArrive.bind(this);
-        this.onJsonIdVisDataArrive.bind(this);
         this.handleError =
             errorHandler ||
             (() => {
@@ -130,7 +128,7 @@ export class RemoteSimulator implements ISimulator {
     private registerBinaryMessageHandlers(): void {
         this.webSocketClient.addBinaryMessageHandler(
             NetMessageEnum.ID_VIS_DATA_ARRIVE,
-            this.onBinaryIdVisDataArrive
+            (msg) => this.onBinaryIdVisDataArrive(msg)
         );
     }
 
@@ -147,7 +145,7 @@ export class RemoteSimulator implements ISimulator {
 
         this.webSocketClient.addJsonMessageHandler(
             NetMessageEnum.ID_VIS_DATA_ARRIVE,
-            this.onJsonIdVisDataArrive
+            (msg) => this.onJsonIdVisDataArrive(msg)
         );
 
         this.webSocketClient.addJsonMessageHandler(
