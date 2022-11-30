@@ -178,7 +178,7 @@ export class WebsocketClient {
         }
 
         if (jsonMsgType in this.jsonMessageHandlers) {
-            this.jsonMessageHandlers[jsonMsgType](event);
+            this.jsonMessageHandlers[jsonMsgType](msg);
         } else {
             this.logger.error(
                 "Unexpected json message arrived of type ",
@@ -295,7 +295,10 @@ export class WebsocketClient {
         this.logger.debug("Web Socket Request Sent: ", whatRequest, jsonData);
     }
 
-    public sendWebSocketRequest(jsonData, requestDescription: string): void {
+    public sendWebSocketRequest(
+        jsonData: Record<string, unknown>,
+        requestDescription: string
+    ): void {
         if (this.socketIsValid()) {
             if (this.webSocket !== null) {
                 this.webSocket.send(JSON.stringify(jsonData));
