@@ -90,7 +90,11 @@ export class WebsocketClient {
         this.serverPort = opts && opts.serverPort ? opts.serverPort : 9002;
         this.connectionTimeWaited = 0;
         this.connectionRetries = 0;
-        this.handleError = errorHandler || (() => {});
+        this.handleError =
+            errorHandler ||
+            (() => {
+                /* do nothing */
+            });
 
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
