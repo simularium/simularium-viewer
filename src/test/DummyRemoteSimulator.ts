@@ -7,11 +7,6 @@ import {
 import { RemoteSimulator } from "../simularium/RemoteSimulator";
 import { VisDataFrame, VisDataMessage } from "../simularium/types";
 
-interface TestDataBundle {
-    bundleSize: number;
-    bundleStart: number;
-}
-
 // Mocks the simularium simulation back-end, w/ latency
 export class DummyRemoteSimulator extends RemoteSimulator {
     private isStreamingData: boolean;
