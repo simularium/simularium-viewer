@@ -54,7 +54,14 @@ jobs:
             - run: npm ci
             - run: npm run build
             - run: mkdir dev-build
-            - run: npm run copy-build
+            - run: |
+                cp -r es dev-build | 
+                cp -r lib dev-build | 
+                cp -r dist dev-build |
+                cp -r style dev-build |
+                cp -r type-declarations dev-build |
+                cp README.md dev-build |
+                cp package.json dev-build
             - name: Push to branch
               uses: moodiest/push-to-branch-action@develop
               env:
