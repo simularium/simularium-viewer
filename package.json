@@ -18,7 +18,7 @@
         "transpileES": "cross-env TS_NODE_PROJECT=tsconfig.es.json BABEL_ENV=es babel src --out-dir es --extensions .ts,.tsx,.js,.jsx --ignore src/**/*.test.ts",
         "processCSS": "postcss src/viewport/index.css --output style/style.css",
         "build": "npm-run-all generateTypes transpileES processCSS",
-        "copy-build": "copyfiles es/* lib/* dist/* style/* type-declarations/* package.json README.md dev-build",
+        "copy-build": "copyfiles -a es/* lib/* dist/* style/* type-declarations/* package.json README.md dev-build",
         "publish-patch": "npm version patch | xargs -I {} sh -c 'git push origin {}'",
         "postpublish-patch": "git push origin main",
         "version": "auto-changelog -p --tag-pattern v.+ && git add CHANGELOG.md"
