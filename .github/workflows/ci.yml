@@ -43,7 +43,7 @@ jobs:
             - run: npm run typeCheck --if-present
 
     publish-dev:
-        if: github.ref == 'refs/heads/main'
+        # if: github.ref == 'refs/heads/main'
         needs: [lint, typeCheck, test]
         runs-on: ubuntu-latest
         steps:
