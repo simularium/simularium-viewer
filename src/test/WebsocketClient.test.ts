@@ -1,4 +1,15 @@
-import { WebsocketClient, NetMessageEnum } from "../simularium/WebsocketClient";
+import {
+    WebsocketClient,
+    NetMessageEnum,
+    MessageEventLike,
+} from "../simularium/WebsocketClient";
+
+class TestWebsocketClient extends WebsocketClient {
+    // exposing the protected onMessage() method for testing purposes
+    public exposedOnMessage(event: MessageEventLike) {
+        return this.onMessage(event);
+    }
+}
 
 describe("WebsocketClient", () => {
     const CONNECTION_SETTINGS = {
@@ -7,7 +18,7 @@ describe("WebsocketClient", () => {
     };
 
     describe("addJsonMessageHandler", () => {
-        const websocketClient = new WebsocketClient(CONNECTION_SETTINGS);
+        const websocketClient = new TestWebsocketClient(CONNECTION_SETTINGS);
         websocketClient.socketIsValid = jest.fn().mockReturnValue(true);
 
         test("handles defined websocket event", () => {
@@ -22,7 +33,7 @@ describe("WebsocketClient", () => {
                     data: "test_data",
                 }),
             };
-            websocketClient.onMessage(definedEvent);
+            websocketClient.exposedOnMessage(definedEvent);
 
             expect(mockCallback.mock.calls.length).toBe(1);
             expect(mockCallback.mock.results[0].value).toBe("test_data");
@@ -47,8 +58,8 @@ describe("WebsocketClient", () => {
                     data: "ignore_this_data_too",
                 }),
             };
-            websocketClient.onMessage(randomEvent0);
-            websocketClient.onMessage(randomEvent1);
+            websocketClient.exposedOnMessage(randomEvent0);
+            websocketClient.exposedOnMessage(randomEvent1);
 
             expect(mockCallback.mock.calls.length).toBe(0);
         });
@@ -78,14 +89,14 @@ describe("WebsocketClient", () => {
                 }),
             };
             // just send one message, should result in callback 0 being called once
-            websocketClient.onMessage(definedEvent0);
+            websocketClient.exposedOnMessage(definedEvent0);
             expect(mockCallback0.mock.calls.length).toBe(1);
             expect(mockCallback1.mock.calls.length).toBe(0);
             expect(mockCallback0.mock.results[0].value).toBe("data_0");
 
             // send 2 messages, one for each type of callback
-            websocketClient.onMessage(definedEvent1);
-            websocketClient.onMessage(definedEvent0);
+            websocketClient.exposedOnMessage(definedEvent1);
+            websocketClient.exposedOnMessage(definedEvent0);
             expect(mockCallback0.mock.calls.length).toBe(2);
             expect(mockCallback1.mock.calls.length).toBe(1);
             expect(mockCallback0.mock.results[0].value).toBe("data_0");
