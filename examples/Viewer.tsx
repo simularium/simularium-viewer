@@ -334,16 +334,9 @@ class Viewer extends React.Component<{}, ViewerState> {
         // if (!fileName.includes(".simularium")) {
         //     return new
         // }
-        if (geoAssets && geoAssets.length) {
-            return simulariumController.changeFile(
-                { simulariumFile, geoAssets },
-                fileName
-            );
-        } else {
-            return simulariumController
-                .changeFile({ simulariumFile }, fileName)
-                .catch(console.log);
-        }
+        return simulariumController
+            .handleFileChange(simulariumFile, fileName, geoAssets)
+            .catch(console.log)
     }
 
     public handleJsonMeshData(jsonData): void {
