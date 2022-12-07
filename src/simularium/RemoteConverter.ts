@@ -1,7 +1,11 @@
 import { IConverter } from "./IConverter";
 import { ILogger } from "js-logger";
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
-import { NetMessageEnum, WebsocketClient } from "./WebsocketClient";
+import {
+    NetConnectionParams,
+    NetMessageEnum,
+    WebsocketClient,
+} from "./WebsocketClient";
 import { ConvertedFileData } from "./types";
 
 import jsLogger from "js-logger";
@@ -13,7 +17,7 @@ export class RemoteConverter implements IConverter {
     private webSocketClient: WebsocketClient;
 
     public constructor(
-        webSocketClient: WebsocketClient,
+        netConnectionConfig: NetConnectionParams,
         errorHandler?: (error: FrontEndError) => void
     ) {
         this.handleError =
@@ -23,7 +27,10 @@ export class RemoteConverter implements IConverter {
             });
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
-        this.webSocketClient = webSocketClient;
+        this.webSocketClient = new WebsocketClient(
+            netConnectionConfig,
+            errorHandler
+        );
 
         this.loadFile = () => {
             /* do nothing */

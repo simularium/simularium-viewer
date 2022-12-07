@@ -174,18 +174,9 @@ export default class SimulariumController {
     }
 
     public setUpRemoteConverter(
-        netConnectionConfig?: NetConnectionParams
+        netConnectionConfig: NetConnectionParams
     ): void {
-        let websocketClient;
-        if (this.simulator && this.simulator instanceof RemoteSimulator) {
-            websocketClient = this.simulator.webSocketClient;
-        } else {
-            websocketClient = new WebsocketClient(
-                netConnectionConfig,
-                this.onError
-            );
-        }
-        this.converter = new RemoteConverter(websocketClient, this.onError);
+        this.converter = new RemoteConverter(netConnectionConfig, this.onError);
         this.converter.setLoadFileHandler((result: ConvertedFileData) => {
             const file = JSON.parse(result["simulariumData"]);
             const simulariumFile = new JsonFileReader(file);
