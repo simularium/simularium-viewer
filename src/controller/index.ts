@@ -147,13 +147,6 @@ export default class SimulariumController {
             this.simulator.setTrajectoryDataHandler(
                 this.visData.parseAgentsFromNetData.bind(this.visData)
             );
-            this.converter = new RemoteConverter(webSocketClient, this.onError);
-            this.converter.setLoadFileHandler((result: ConvertedFileData) => {
-                const file = JSON.parse(result["simulariumData"]);
-                const simulariumFile = new JsonFileReader(file);
-                // TODO: make file name more informative
-                this.handleFileChange(simulariumFile, "test.simularium");
-            });
         } else {
             // caught in try/catch block, not sent to front end
             throw new Error(
@@ -178,6 +171,27 @@ export default class SimulariumController {
 
     public get isChangingFile(): boolean {
         return this.isFileChanging;
+    }
+
+    public setUpRemoteConverter(
+        netConnectionConfig?: NetConnectionParams
+    ): void {
+        let websocketClient;
+        if (this.simulator && this.simulator instanceof RemoteSimulator) {
+            websocketClient = this.simulator.webSocketClient;
+        } else {
+            websocketClient = new WebsocketClient(
+                netConnectionConfig,
+                this.onError
+            );
+        }
+        this.converter = new RemoteConverter(websocketClient, this.onError);
+        this.converter.setLoadFileHandler((result: ConvertedFileData) => {
+            const file = JSON.parse(result["simulariumData"]);
+            const simulariumFile = new JsonFileReader(file);
+            // TODO: make file name more informative
+            this.handleFileChange(simulariumFile, "test.simularium");
+        });
     }
 
     // Not called by viewer, but could be called by
