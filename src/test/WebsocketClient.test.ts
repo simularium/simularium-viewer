@@ -24,12 +24,12 @@ describe("WebsocketClient", () => {
         test("handles defined websocket event", () => {
             const mockCallback = jest.fn((x) => x["data"]);
             websocketClient.addJsonMessageHandler(
-                NetMessageEnum.ID_CALCULATE_METRICS,
+                NetMessageEnum.ID_CONVERT_TRAJECTORY_FILE,
                 mockCallback
             );
             const definedEvent = {
                 data: JSON.stringify({
-                    msgType: NetMessageEnum.ID_CALCULATE_METRICS,
+                    msgType: NetMessageEnum.ID_CONVERT_TRAJECTORY_FILE,
                     data: "test_data",
                 }),
             };
@@ -43,7 +43,7 @@ describe("WebsocketClient", () => {
             const mockCallback = jest.fn((x) => x["data"]);
 
             websocketClient.addJsonMessageHandler(
-                NetMessageEnum.ID_CALCULATE_METRICS,
+                NetMessageEnum.ID_CONVERT_TRAJECTORY_FILE,
                 mockCallback
             );
             const randomEvent0 = {
@@ -69,7 +69,7 @@ describe("WebsocketClient", () => {
             const mockCallback1 = jest.fn((x) => x["data"]);
 
             websocketClient.addJsonMessageHandler(
-                NetMessageEnum.ID_CALCULATE_METRICS,
+                NetMessageEnum.ID_CONVERT_TRAJECTORY_FILE,
                 mockCallback0
             );
             websocketClient.addJsonMessageHandler(
@@ -78,7 +78,7 @@ describe("WebsocketClient", () => {
             );
             const definedEvent0 = {
                 data: JSON.stringify({
-                    msgType: NetMessageEnum.ID_CALCULATE_METRICS,
+                    msgType: NetMessageEnum.ID_CONVERT_TRAJECTORY_FILE,
                     data: "data_0",
                 }),
             };
