@@ -1,5 +1,5 @@
 import React from "react";
-import { isEqual, findIndex, map, template, reduce } from "lodash";
+import { isEqual, findIndex, map, reduce } from "lodash";
 
 import type {
     ISimulariumFile,
