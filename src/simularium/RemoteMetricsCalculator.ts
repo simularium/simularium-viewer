@@ -27,6 +27,10 @@ export class RemoteMetricsCalculator {
         return this.webSocketClient.connectToRemoteServer();
     }
 
+    public socketIsValid(): boolean {
+        return this.webSocketClient.socketIsValid();
+    }
+
     public getAvailableMetrics(): void {
         this.webSocketClient.sendWebSocketRequest(
             {

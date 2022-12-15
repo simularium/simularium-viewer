@@ -408,8 +408,10 @@ export default class SimulariumController {
     }
 
     public async getMetrics(config: NetConnectionParams): Promise<void> {
-        if (!this.metricsCalculator) {
-            // const webSocketClient = (this.remoteWebsocketClient) ? this.remoteWebsocketClient : new WebsocketClient(config, this.onError);
+        if (
+            !this.metricsCalculator ||
+            !this.metricsCalculator.socketIsValid()
+        ) {
             const webSocketClient = new WebsocketClient(config, this.onError);
             this.metricsCalculator = new RemoteMetricsCalculator(
                 webSocketClient,
@@ -428,10 +430,15 @@ export default class SimulariumController {
             return;
         }
 
-        if (!this.metricsCalculator) {
-            const webSocketClient = this.remoteWebsocketClient
-                ? this.remoteWebsocketClient
-                : new WebsocketClient(config, this.onError);
+        if (
+            !this.metricsCalculator ||
+            !this.metricsCalculator.socketIsValid()
+        ) {
+            const webSocketClient =
+                this.remoteWebsocketClient &&
+                this.remoteWebsocketClient.socketIsValid()
+                    ? this.remoteWebsocketClient
+                    : new WebsocketClient(config, this.onError);
             this.metricsCalculator = new RemoteMetricsCalculator(
                 webSocketClient,
                 this.onError
