@@ -129,3 +129,41 @@ export interface FileReturn {
     status: FileStatus;
     message?: string;
 }
+
+// IMPORTANT: Order of this array needs to perfectly match the incoming data.
+export const AGENT_OBJECT_KEYS = [
+    // TODO: convert "vis-type" to visType at parse time
+    "vis-type",
+    "instanceId",
+    "type",
+    "x",
+    "y",
+    "z",
+    "xrot",
+    "yrot",
+    "zrot",
+    "cr",
+    "nSubPoints",
+];
+
+/**
+ * Parse Agents from Net Data
+ * */
+export interface AgentData {
+    x: number;
+    y: number;
+    z: number;
+    xrot: number;
+    yrot: number;
+    zrot: number;
+    instanceId: number;
+    ["vis-type"]: number;
+    type: number;
+    cr: number;
+    subpoints: number[];
+}
+
+export interface FrameData {
+    frameNumber: number;
+    time: number;
+}

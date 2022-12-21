@@ -42,8 +42,8 @@ import {
     CameraSpec,
     EncodedTypeMapping,
     AgentDisplayDataWithGeometry,
+    AgentData,
 } from "../simularium/types";
-import { AgentData } from "../simularium/VisData";
 
 import SimulariumRenderer from "./rendering/SimulariumRenderer";
 import { InstancedFiberGroup } from "./rendering/InstancedFiber";

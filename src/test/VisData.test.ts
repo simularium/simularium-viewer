@@ -1,4 +1,5 @@
 import { VisData, VisDataMessage, NetMessageEnum } from "../simularium";
+import { parseVisDataMessage } from "../simularium/VisDataParse";
 
 // Sample data of a single agent of type '7'
 //  moving linearly from (0,0,0) to (5,5,5)
@@ -153,7 +154,7 @@ describe("VisData module", () => {
                 bundleStart: 0,
                 fileName: "",
             };
-            const parsedData = VisData.parse(visDataMsg);
+            const parsedData = parseVisDataMessage(visDataMsg);
             expect(parsedData.frameDataArray).toEqual([
                 { frameNumber: 0, time: 0 },
             ]);
@@ -237,11 +238,11 @@ describe("VisData module", () => {
                 fileName: "",
             };
             expect(() => {
-                VisData.parse(visDataMsgTooLong);
+                parseVisDataMessage(visDataMsgTooLong);
             }).toThrowError();
 
             expect(() => {
-                VisData.parse(visDataMsgTooShort);
+                parseVisDataMessage(visDataMsgTooShort);
             }).toThrowError();
         });
         test("currentFrame returns empty frame when cache is empty", () => {
