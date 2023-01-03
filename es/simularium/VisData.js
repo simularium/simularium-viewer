@@ -5,15 +5,11 @@ import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import { difference } from "lodash";
 import { compareTimes } from "../util";
 import * as util from "./ThreadUtil";
-import { FrontEndError, ErrorLevel } from "./FrontEndError"; // must be utf-8 encoded
+import { AGENT_OBJECT_KEYS } from "./types";
+import { FrontEndError, ErrorLevel } from "./FrontEndError";
+import { parseVisDataMessage } from "./VisDataParse"; // must be utf-8 encoded
 
-var EOF_PHRASE = new TextEncoder().encode("\\EOFTHEFRAMEENDSHERE"); // IMPORTANT: Order of this array needs to perfectly match the incoming data.
-
-var AGENT_OBJECT_KEYS = [// TODO: convert "vis-type" to visType at parse time
-"vis-type", "instanceId", "type", "x", "y", "z", "xrot", "yrot", "zrot", "cr", "nSubPoints"];
-/**
- * Parse Agents from Net Data
- * */
+var EOF_PHRASE = new TextEncoder().encode("\\EOFTHEFRAMEENDSHERE");
 
 var VisData = /*#__PURE__*/function () {
   function VisData() {
@@ -62,7 +58,7 @@ var VisData = /*#__PURE__*/function () {
     value: function setupWebWorker() {
       var _this = this;
 
-      this.webWorker = util.ThreadUtil.createWebWorkerFromFunction(this.convertVisDataWorkFunctionToString()); // event.data is of type ParsedBundle
+      this.webWorker = new Worker(new URL("../visGeometry/workers/visDataWorker", import.meta.url)); // event.data is of type ParsedBundle
 
       this.webWorker.onmessage = function (event) {
         Array.prototype.push.apply(_this.frameDataCache, event.data.frameDataArray);
@@ -224,7 +220,7 @@ var VisData = /*#__PURE__*/function () {
       if (util.ThreadUtil.browserSupportsWebWorkers() && this.webWorker !== null) {
         this.webWorker.postMessage(visDataMsg);
       } else {
-        var frames = VisData.parse(visDataMsg);
+        var frames = parseVisDataMessage(visDataMsg);
         this.addFramesToCache(frames);
       }
     }
@@ -317,7 +313,7 @@ var VisData = /*#__PURE__*/function () {
         throw new Error("cache not cleared before cacheing a new drag-and-drop file");
       }
 
-      var frames = VisData.parse(visDataMsg);
+      var frames = parseVisDataMessage(visDataMsg);
       this.addFramesToCache(frames);
     }
   }, {
@@ -375,115 +371,10 @@ var VisData = /*#__PURE__*/function () {
 
       return difference(idsArr, idsInTypeMapping).sort();
     }
-  }, {
-    key: "convertVisDataWorkFunctionToString",
-    value: function convertVisDataWorkFunctionToString() {
-      // e.data is of type VisDataMessage
-      return "function visDataWorkerFunc() {\n        const AGENT_OBJECT_KEYS=[\"".concat(AGENT_OBJECT_KEYS.join('","'), "\"];\n        self.addEventListener('message', (e) => {\n            const visDataMsg = e.data;\n            const {\n                frameDataArray,\n                parsedAgentDataArray,\n            } = ").concat(VisData.parse, "(visDataMsg)\n\n            postMessage({\n                frameDataArray,\n                parsedAgentDataArray,\n            });\n        }, false);\n        }");
-    }
   }], [{
-    key: "parse",
-    value: // eslint-disable-next-line @typescript-eslint/naming-convention
-
-    /**
-     *   Parses a stream of data sent from the backend
-     *
-     *   To minimize bandwidth, traits/objects are not packed
-     *   1-1; what arrives is an array of float values
-     *
-     *   For instance for:
-     *   entity = (
-     *        trait1 : 4,
-     *        trait2 : 5,
-     *        trait3 : 6,
-     *    ) ...
-     *
-     *   what arrives will be:
-     *       [...,4,5,6,...]
-     *
-     *   The traits are assumed to be variable in length,
-     *   and the alorithm to decode them needs to the reverse
-     *   of the algorithm that packed them on the backend
-     *
-     *   This is more convuluted than sending the JSON objects themselves,
-     *   however these frames arrive multiple times per second. Even a naive
-     *   packing reduces the packet size by ~50%, reducing how much needs to
-     *   paid for network bandwith (and improving the quality & responsiveness
-     *   of the application, since network latency is a major bottle-neck)
-     * */
-    function parse(visDataMsg) {
-      var parsedAgentDataArray = [];
-      var frameDataArray = [];
-      visDataMsg.bundleData.forEach(function (frame) {
-        var visData = frame.data;
-        var parsedAgentData = [];
-        var nSubPointsIndex = AGENT_OBJECT_KEYS.findIndex(function (ele) {
-          return ele === "nSubPoints";
-        });
-
-        var parseOneAgent = function parseOneAgent(agentArray) {
-          return agentArray.reduce(function (agentData, cur, i) {
-            var key;
-
-            if (AGENT_OBJECT_KEYS[i]) {
-              key = AGENT_OBJECT_KEYS[i];
-              agentData[key] = cur;
-            } else if (i < agentArray.length + agentData.nSubPoints) {
-              agentData.subpoints.push(cur);
-            }
-
-            return agentData;
-          }, {
-            subpoints: []
-          });
-        };
-
-        var _loop = function _loop() {
-          var nSubPoints = visData[nSubPointsIndex];
-          var chunkLength = AGENT_OBJECT_KEYS.length + nSubPoints; // each array length is variable based on how many subpoints the agent has
-
-          if (visData.length < chunkLength) {
-            var attemptedMapping = AGENT_OBJECT_KEYS.map(function (name, index) {
-              return "".concat(name, ": ").concat(visData[index], "<br />");
-            }); // will be caught by controller.changeFile(...).catch()
-
-            throw new FrontEndError("Your data is malformed, there are too few entries.", ErrorLevel.ERROR, "Example attempt to parse your data: <pre>".concat(attemptedMapping.join(""), "</pre>"));
-          }
-
-          var agentSubSetArray = visData.splice(0, chunkLength); // cut off the array of 1 agent data from front of the array;
-
-          if (agentSubSetArray.length < AGENT_OBJECT_KEYS.length) {
-            var _attemptedMapping = AGENT_OBJECT_KEYS.map(function (name, index) {
-              return "".concat(name, ": ").concat(agentSubSetArray[index], "<br />");
-            }); // will be caught by controller.changeFile(...).catch()
-
-
-            throw new FrontEndError("Your data is malformed, there are less entries than expected for this agent. ", ErrorLevel.ERROR, "Example attempt to parse your data: <pre>".concat(_attemptedMapping.join(""), "</pre>"));
-          }
-
-          var agent = parseOneAgent(agentSubSetArray);
-          parsedAgentData.push(agent);
-        };
-
-        while (visData.length) {
-          _loop();
-        }
-
-        var frameData = {
-          time: frame.time,
-          frameNumber: frame.frameNumber
-        };
-        parsedAgentDataArray.push(parsedAgentData);
-        frameDataArray.push(frameData);
-      });
-      return {
-        parsedAgentDataArray: parsedAgentDataArray,
-        frameDataArray: frameDataArray
-      };
-    }
-  }, {
     key: "parseOneBinaryFrame",
-    value: function parseOneBinaryFrame(data) {
+    value: // eslint-disable-next-line @typescript-eslint/naming-convention
+    function parseOneBinaryFrame(data) {
       var parsedAgentDataArray = [];
       var frameDataArray = [];
       var floatView = new Float32Array(data);
@@ -551,7 +442,7 @@ var VisData = /*#__PURE__*/function () {
       var start = 0;
       var frameDataView = new Float32Array(data);
 
-      var _loop2 = function _loop2() {
+      var _loop = function _loop() {
         // Find the next End of Frame signal
         for (; end < length; end = end + 4) {
           var curr = byteView.subarray(end, end + EOF_PHRASE.length);
@@ -598,7 +489,7 @@ var VisData = /*#__PURE__*/function () {
 
         var dataIter = 0;
 
-        var _loop3 = function _loop3() {
+        var _loop2 = function _loop2() {
           var nSubPoints = agentDataView[dataIter + nSubPointsIndex];
 
           if (!Number.isInteger(nSubPoints) || !Number.isInteger(dataIter)) {
@@ -621,12 +512,12 @@ var VisData = /*#__PURE__*/function () {
           var agentSubSetArray = agentDataView.subarray(dataIter, dataIter + chunkLength);
 
           if (agentSubSetArray.length < AGENT_OBJECT_KEYS.length) {
-            var _attemptedMapping2 = AGENT_OBJECT_KEYS.map(function (name, index) {
+            var _attemptedMapping = AGENT_OBJECT_KEYS.map(function (name, index) {
               return "".concat(name, ": ").concat(agentSubSetArray[index], "<br />");
             }); // will be caught by controller.changeFile(...).catch()
 
 
-            throw new FrontEndError("Your data is malformed, there are less entries than expected for this agent.", ErrorLevel.ERROR, "Example attempt to parse your data: <pre>".concat(_attemptedMapping2.join(""), "</pre>"));
+            throw new FrontEndError("Your data is malformed, there are less entries than expected for this agent.", ErrorLevel.ERROR, "Example attempt to parse your data: <pre>".concat(_attemptedMapping.join(""), "</pre>"));
           }
 
           var agent = parseOneAgent(agentSubSetArray);
@@ -635,7 +526,7 @@ var VisData = /*#__PURE__*/function () {
         };
 
         while (dataIter < agentDataView.length) {
-          var _ret = _loop3();
+          var _ret = _loop2();
 
           if (_ret === "break") break;
         }
@@ -652,7 +543,7 @@ var VisData = /*#__PURE__*/function () {
       };
 
       while (end < lastEOF) {
-        _loop2();
+        _loop();
       }
 
       return {

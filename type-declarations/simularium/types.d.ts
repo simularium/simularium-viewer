@@ -104,4 +104,25 @@ export interface FileReturn {
     status: FileStatus;
     message?: string;
 }
+export declare const AGENT_OBJECT_KEYS: string[];
+/**
+ * Parse Agents from Net Data
+ * */
+export interface AgentData {
+    x: number;
+    y: number;
+    z: number;
+    xrot: number;
+    yrot: number;
+    zrot: number;
+    instanceId: number;
+    ["vis-type"]: number;
+    type: number;
+    cr: number;
+    subpoints: number[];
+}
+export interface FrameData {
+    frameNumber: number;
+    time: number;
+}
 export {};
