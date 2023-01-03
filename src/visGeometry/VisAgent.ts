@@ -1,7 +1,7 @@
 import { CatmullRomCurve3, Color, Vector3 } from "three";
 
 import VisTypes from "../simularium/VisTypes";
-import { AgentData } from "../simularium/VisData";
+import { AgentData } from "../simularium/types";
 
 const NO_AGENT = -1;
 

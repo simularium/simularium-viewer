@@ -4,58 +4,21 @@ import { compareTimes } from "../util";
 
 import * as util from "./ThreadUtil";
 import {
+    AGENT_OBJECT_KEYS,
+    AgentData,
+    FrameData,
     TrajectoryFileInfo,
     EncodedTypeMapping,
     VisDataMessage,
 } from "./types";
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
+import type { ParsedBundle } from "./VisDataParse";
+import { parseVisDataMessage } from "./VisDataParse";
 
 // must be utf-8 encoded
 const EOF_PHRASE: Uint8Array = new TextEncoder().encode(
     "\\EOFTHEFRAMEENDSHERE"
 );
-// IMPORTANT: Order of this array needs to perfectly match the incoming data.
-const AGENT_OBJECT_KEYS = [
-    // TODO: convert "vis-type" to visType at parse time
-    "vis-type",
-    "instanceId",
-    "type",
-    "x",
-    "y",
-    "z",
-    "xrot",
-    "yrot",
-    "zrot",
-    "cr",
-    "nSubPoints",
-];
-
-/**
- * Parse Agents from Net Data
- * */
-export interface AgentData {
-    x: number;
-    y: number;
-    z: number;
-    xrot: number;
-    yrot: number;
-    zrot: number;
-    instanceId: number;
-    ["vis-type"]: number;
-    type: number;
-    cr: number;
-    subpoints: number[];
-}
-
-interface FrameData {
-    frameNumber: number;
-    time: number;
-}
-
-interface ParsedBundle {
-    frameDataArray: FrameData[];
-    parsedAgentDataArray: AgentData[][];
-}
 
 class VisData {
     private frameCache: AgentData[][];
@@ -72,114 +35,6 @@ class VisData {
 
     public firstFrameTime: number | null;
     public timeStepSize: number;
-
-    /**
-     *   Parses a stream of data sent from the backend
-     *
-     *   To minimize bandwidth, traits/objects are not packed
-     *   1-1; what arrives is an array of float values
-     *
-     *   For instance for:
-     *   entity = (
-     *        trait1 : 4,
-     *        trait2 : 5,
-     *        trait3 : 6,
-     *    ) ...
-     *
-     *   what arrives will be:
-     *       [...,4,5,6,...]
-     *
-     *   The traits are assumed to be variable in length,
-     *   and the alorithm to decode them needs to the reverse
-     *   of the algorithm that packed them on the backend
-     *
-     *   This is more convuluted than sending the JSON objects themselves,
-     *   however these frames arrive multiple times per second. Even a naive
-     *   packing reduces the packet size by ~50%, reducing how much needs to
-     *   paid for network bandwith (and improving the quality & responsiveness
-     *   of the application, since network latency is a major bottle-neck)
-     * */
-
-    public static parse(visDataMsg: VisDataMessage): ParsedBundle {
-        const parsedAgentDataArray: AgentData[][] = [];
-        const frameDataArray: FrameData[] = [];
-        visDataMsg.bundleData.forEach((frame) => {
-            const visData = frame.data;
-            const parsedAgentData: AgentData[] = [];
-            const nSubPointsIndex = AGENT_OBJECT_KEYS.findIndex(
-                (ele) => ele === "nSubPoints"
-            );
-
-            const parseOneAgent = (agentArray): AgentData => {
-                return agentArray.reduce(
-                    (agentData, cur, i) => {
-                        let key;
-                        if (AGENT_OBJECT_KEYS[i]) {
-                            key = AGENT_OBJECT_KEYS[i];
-                            agentData[key] = cur;
-                        } else if (
-                            i <
-                            agentArray.length + agentData.nSubPoints
-                        ) {
-                            agentData.subpoints.push(cur);
-                        }
-                        return agentData;
-                    },
-                    { subpoints: [] }
-                );
-            };
-
-            while (visData.length) {
-                const nSubPoints = visData[nSubPointsIndex];
-                const chunkLength = AGENT_OBJECT_KEYS.length + nSubPoints; // each array length is variable based on how many subpoints the agent has
-                if (visData.length < chunkLength) {
-                    const attemptedMapping = AGENT_OBJECT_KEYS.map(
-                        (name, index) => `${name}: ${visData[index]}<br />`
-                    );
-                    // will be caught by controller.changeFile(...).catch()
-                    throw new FrontEndError(
-                        "Your data is malformed, there are too few entries.",
-                        ErrorLevel.ERROR,
-                        `Example attempt to parse your data: <pre>${attemptedMapping.join(
-                            ""
-                        )}</pre>`
-                    );
-                }
-
-                const agentSubSetArray = visData.splice(0, chunkLength); // cut off the array of 1 agent data from front of the array;
-                if (agentSubSetArray.length < AGENT_OBJECT_KEYS.length) {
-                    const attemptedMapping = AGENT_OBJECT_KEYS.map(
-                        (name, index) =>
-                            `${name}: ${agentSubSetArray[index]}<br />`
-                    );
-                    // will be caught by controller.changeFile(...).catch()
-                    throw new FrontEndError(
-                        "Your data is malformed, there are less entries than expected for this agent. ",
-                        ErrorLevel.ERROR,
-                        `Example attempt to parse your data: <pre>${attemptedMapping.join(
-                            ""
-                        )}</pre>`
-                    );
-                }
-
-                const agent = parseOneAgent(agentSubSetArray);
-                parsedAgentData.push(agent);
-            }
-
-            const frameData: FrameData = {
-                time: frame.time,
-                frameNumber: frame.frameNumber,
-            };
-
-            parsedAgentDataArray.push(parsedAgentData);
-            frameDataArray.push(frameData);
-        });
-
-        return {
-            parsedAgentDataArray,
-            frameDataArray,
-        };
-    }
 
     private static parseOneBinaryFrame(data: ArrayBuffer): ParsedBundle {
         const parsedAgentDataArray: AgentData[][] = [];
@@ -381,8 +236,8 @@ class VisData {
     }
 
     private setupWebWorker() {
-        this.webWorker = util.ThreadUtil.createWebWorkerFromFunction(
-            this.convertVisDataWorkFunctionToString()
+        this.webWorker = new Worker(
+            new URL("../visGeometry/workers/visDataWorker", import.meta.url)
         );
 
         // event.data is of type ParsedBundle
@@ -566,7 +421,7 @@ class VisData {
         ) {
             this.webWorker.postMessage(visDataMsg);
         } else {
-            const frames = VisData.parse(visDataMsg);
+            const frames = parseVisDataMessage(visDataMsg);
             this.addFramesToCache(frames);
         }
     }
@@ -673,7 +528,7 @@ class VisData {
             );
         }
 
-        const frames = VisData.parse(visDataMsg);
+        const frames = parseVisDataMessage(visDataMsg);
         this.addFramesToCache(frames);
     }
 
@@ -723,25 +578,6 @@ class VisData {
         });
         const idsArr: number[] = [...idsInFrameData].sort() as number[];
         return difference(idsArr, idsInTypeMapping).sort();
-    }
-
-    public convertVisDataWorkFunctionToString(): string {
-        // e.data is of type VisDataMessage
-        return `function visDataWorkerFunc() {
-        const AGENT_OBJECT_KEYS=["${AGENT_OBJECT_KEYS.join('","')}"];
-        self.addEventListener('message', (e) => {
-            const visDataMsg = e.data;
-            const {
-                frameDataArray,
-                parsedAgentDataArray,
-            } = ${VisData.parse}(visDataMsg)
-
-            postMessage({
-                frameDataArray,
-                parsedAgentDataArray,
-            });
-        }, false);
-        }`;
     }
 }
 
