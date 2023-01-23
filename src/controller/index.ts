@@ -44,6 +44,9 @@ interface SimulatorConnectionParams {
 
 export default class SimulariumController {
     public simulator?: ISimulator;
+    public converter?: IConverter;
+    public remoteWebsocketClient?: WebsocketClient;
+    public metricsCalculator?: RemoteMetricsCalculator;
     public visData: VisData;
     public visGeometry: VisGeometry | undefined;
     public tickIntervalLength: number;
@@ -140,6 +143,7 @@ export default class SimulariumController {
                 netConnectionConfig,
                 this.onError
             );
+            this.remoteWebsocketClient = webSocketClient;
             this.simulator = new RemoteSimulator(webSocketClient, this.onError);
             this.simulator.setTrajectoryDataHandler(
                 this.visData.parseAgentsFromNetData.bind(this.visData)
@@ -400,6 +404,59 @@ export default class SimulariumController {
 
     public getFile(): string {
         return this.playBackFile;
+    }
+
+    public async getMetrics(config: NetConnectionParams): Promise<void> {
+        if (!this.metricsCalculator) {
+            // const webSocketClient = (this.remoteWebsocketClient) ? this.remoteWebsocketClient : new WebsocketClient(config, this.onError);
+            const webSocketClient = new WebsocketClient(config, this.onError);
+            this.metricsCalculator = new RemoteMetricsCalculator(
+                webSocketClient,
+                this.onError
+            );
+            await this.metricsCalculator.connectToRemoteServer();
+        }
+        this.metricsCalculator.getAvailableMetrics();
+    }
+
+    public async getPlotData(config: NetConnectionParams): Promise<void> {
+        if (!this.simulator) {
+            return;
+        }
+
+        if (!this.metricsCalculator) {
+            const webSocketClient = this.remoteWebsocketClient
+                ? this.remoteWebsocketClient
+                : new WebsocketClient(config, this.onError);
+            this.metricsCalculator = new RemoteMetricsCalculator(
+                webSocketClient,
+                this.onError
+            );
+        }
+
+        // Just hardcoding some plots to request for now
+        const plot1 = {
+            plot_type: "scatter",
+            metric_id_x: 0,
+            metric_id_y: 2,
+            scatter_plot_mode: "lines",
+        };
+        const plot2 = {
+            plot_type: "histogram",
+            metric_id_x: 3,
+        };
+
+        if (this.simulator instanceof LocalFileSimulator) {
+            const simulariumFile: ISimulariumFile =
+                this.simulator.getSimulariumFile();
+            this.metricsCalculator.getPlotData(
+                simulariumFile["simulariumFile"],
+                [plot1, plot2]
+            );
+        } else if (this.simulator instanceof RemoteSimulator) {
+            // we don't have the simularium file, so we'll just send an empty data object
+            this.metricsCalculator.getPlotData({}, [plot1, plot2]);
+        }
     }
 
     public disableNetworkCommands(): void {

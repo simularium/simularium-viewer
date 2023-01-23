@@ -726,6 +726,13 @@ class Viewer extends React.Component<{}, ViewerState> {
                 >
                     Focus Mode
                 </button>
+                <br />
+                <button onClick={() => simulariumController.getMetrics(netConnectionSettings)}>
+                    Get available metrics
+                </button>
+                <button onClick={() => simulariumController.getPlotData(netConnectionSettings)}>
+                    Get plot data
+                </button>
                 <span>
                     Tick interval length:{" "}
                     {simulariumController.tickIntervalLength}
