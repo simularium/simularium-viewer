@@ -22,6 +22,7 @@ import { FrontEndError } from "../simularium/FrontEndError";
 import type { ISimulariumFile } from "../simularium/ISimulariumFile";
 import { WebsocketClient } from "../simularium/WebsocketClient";
 import { TrajectoryType } from "../constants";
+import { RemoteMetricsCalculator } from "../simularium/RemoteMetricsCalculator";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
@@ -44,7 +45,6 @@ interface SimulatorConnectionParams {
 
 export default class SimulariumController {
     public simulator?: ISimulator;
-    public converter?: IConverter;
     public remoteWebsocketClient?: WebsocketClient;
     public metricsCalculator?: RemoteMetricsCalculator;
     public visData: VisData;
