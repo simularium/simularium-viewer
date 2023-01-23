@@ -313,8 +313,7 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public convertFile(obj: Record<string, any>, fileType: string) {
-        simulariumController.setUpRemoteConverter(netConnectionSettings);
-        simulariumController.convertTrajectory(obj, fileType)
+        simulariumController.convertAndLoadTrajectory(netConnectionSettings, obj, fileType)
             .then(() => {
                 this.clearPendingFile();
             })

@@ -18,13 +18,10 @@ import {
 import { ClientSimulator } from "../simularium/ClientSimulator";
 import { IClientSimulatorImpl } from "../simularium/localSimulators/IClientSimulatorImpl";
 import { ISimulator } from "../simularium/ISimulator";
-import { IConverter } from "../simularium/IConverter";
 import { LocalFileSimulator } from "../simularium/LocalFileSimulator";
 import { FrontEndError } from "../simularium/FrontEndError";
 import type { ISimulariumFile } from "../simularium/ISimulariumFile";
-import JsonFileReader from "../simularium/JsonFileReader";
 import { WebsocketClient } from "../simularium/WebsocketClient";
-import { RemoteConverter } from "../simularium/RemoteConverter";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
@@ -113,7 +110,8 @@ export default class SimulariumController {
         this.reOrientCamera = this.reOrientCamera.bind(this);
         this.setPanningMode = this.setPanningMode.bind(this);
         this.setFocusMode = this.setFocusMode.bind(this);
-        this.convertTrajectory = this.convertTrajectory.bind(this);
+        this.convertAndLoadTrajectory =
+            this.convertAndLoadTrajectory.bind(this);
     }
 
     private createSimulatorConnection(
@@ -173,18 +171,6 @@ export default class SimulariumController {
         return this.isFileChanging;
     }
 
-    public setUpRemoteConverter(
-        netConnectionConfig: NetConnectionParams
-    ): void {
-        this.converter = new RemoteConverter(netConnectionConfig, this.onError);
-        this.converter.setLoadFileHandler((result: ConvertedFileData) => {
-            const file = JSON.parse(result["simulariumData"]);
-            const simulariumFile = new JsonFileReader(file);
-            // TODO: make file name more informative
-            this.handleFileChange(simulariumFile, "test.simularium");
-        });
-    }
-
     // Not called by viewer, but could be called by
     // parent app
     public connect(): Promise<string> {
@@ -233,14 +219,25 @@ export default class SimulariumController {
         }
     }
 
-    public convertTrajectory(
+    public convertAndLoadTrajectory(
+        netConnectionConfig: NetConnectionParams,
         obj: Record<string, unknown>,
         fileType: string
     ): Promise<void> {
-        if (!this.converter) {
-            return Promise.reject();
+        try {
+            this.configureNetwork(netConnectionConfig);
+            if (!(this.simulator instanceof RemoteSimulator)) {
+                throw new Error("Autoconversion requires a RemoteSimulator");
+            }
+        } catch (e) {
+            return Promise.reject(e);
         }
-        return this.converter.convertTrajectory(obj, fileType);
+
+        return this.simulator.convertTrajectory(obj, fileType).then(() => {
+            if (this.simulator) {
+                this.simulator.requestSingleFrame(0);
+            }
+        });
     }
 
     public pause(): void {

@@ -1,4 +1,5 @@
 import jsLogger from "js-logger";
+import { v4 as uuidv4 } from "uuid";
 import { ILogger } from "js-logger";
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
 import {
@@ -349,6 +350,38 @@ export class RemoteSimulator implements ISimulator {
                 data: obj,
             },
             "Send update instructions to simulation server"
+        );
+    }
+
+    // Start autoconversion and roll right into the simulation
+    public convertTrajectory(
+        obj: Record<string, unknown>,
+        fileType: string
+    ): Promise<void> {
+        return this.connectToRemoteServer()
+            .then(() => {
+                this.sendTrajectory(obj, fileType);
+            })
+            .catch((e) => {
+                throw new FrontEndError(e.message, ErrorLevel.ERROR);
+            });
+    }
+
+    public sendTrajectory(
+        obj: Record<string, unknown>,
+        fileType: string
+    ): void {
+        // Generate random file name for converted file to be stored on the server
+        const fileName = uuidv4() + ".simularium";
+        this.lastRequestedFile = fileName;
+        this.webSocketClient.sendWebSocketRequest(
+            {
+                msgType: NetMessageEnum.ID_CONVERT_TRAJECTORY_FILE,
+                trajType: fileType.toLowerCase(),
+                fileName: fileName,
+                data: obj,
+            },
+            "Convert trajectory output to simularium file format"
         );
     }
 }

@@ -43,7 +43,6 @@ export const enum NetMessageEnum {
     ID_INIT_TRAJECTORY_FILE = 14,
     ID_UPDATE_SIMULATION_STATE = 15,
     ID_CONVERT_TRAJECTORY_FILE = 16,
-    ID_CONVERTED_TRAJECTORY = 17,
     // insert new values here before LENGTH
     LENGTH,
 }
