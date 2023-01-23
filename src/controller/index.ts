@@ -12,6 +12,7 @@ import {
     FileReturn,
     FILE_STATUS_SUCCESS,
     FILE_STATUS_FAIL,
+    PlotConfig,
 } from "../simularium/types";
 
 import { ClientSimulator } from "../simularium/ClientSimulator";
@@ -419,7 +420,10 @@ export default class SimulariumController {
         this.metricsCalculator.getAvailableMetrics();
     }
 
-    public async getPlotData(config: NetConnectionParams): Promise<void> {
+    public async getPlotData(
+        config: NetConnectionParams,
+        requestedPlots: PlotConfig[]
+    ): Promise<void> {
         if (!this.simulator) {
             return;
         }
@@ -434,28 +438,20 @@ export default class SimulariumController {
             );
         }
 
-        // Just hardcoding some plots to request for now
-        const plot1 = {
-            plot_type: "scatter",
-            metric_id_x: 0,
-            metric_id_y: 2,
-            scatter_plot_mode: "lines",
-        };
-        const plot2 = {
-            plot_type: "histogram",
-            metric_id_x: 3,
-        };
-
         if (this.simulator instanceof LocalFileSimulator) {
             const simulariumFile: ISimulariumFile =
                 this.simulator.getSimulariumFile();
             this.metricsCalculator.getPlotData(
                 simulariumFile["simulariumFile"],
-                [plot1, plot2]
+                requestedPlots
             );
         } else if (this.simulator instanceof RemoteSimulator) {
             // we don't have the simularium file, so we'll just send an empty data object
-            this.metricsCalculator.getPlotData({}, [plot1, plot2]);
+            this.metricsCalculator.getPlotData(
+                {},
+                requestedPlots,
+                this.simulator.getLastRequestedFile()
+            );
         }
     }
 

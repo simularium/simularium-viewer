@@ -730,7 +730,23 @@ class Viewer extends React.Component<{}, ViewerState> {
                 <button onClick={() => simulariumController.getMetrics(netConnectionSettings)}>
                     Get available metrics
                 </button>
-                <button onClick={() => simulariumController.getPlotData(netConnectionSettings)}>
+                <button
+                    onClick={() =>
+                        simulariumController.getPlotData(
+                            netConnectionSettings,
+                            [
+                                {
+                                    plotType: "scatter",
+                                    metricsIdx: 0,
+                                    metricsIdy: 2,
+                                    scatterPlotMode: "lines",
+                                }, {
+                                    plotType: "histogram",
+                                    metricsIdx: 3,
+                                }
+                            ]
+                        )}
+                >
                     Get plot data
                 </button>
                 <span>

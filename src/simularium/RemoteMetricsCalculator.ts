@@ -2,6 +2,7 @@
 // simulator and want to calculate metrics anyways
 
 import { FrontEndError } from "./FrontEndError";
+import { PlotConfig } from "./types";
 import { NetMessageEnum, WebsocketClient, NetMessage } from "./WebsocketClient";
 
 export class RemoteMetricsCalculator {
@@ -37,11 +38,13 @@ export class RemoteMetricsCalculator {
 
     public getPlotData(
         data: Record<string, unknown>,
-        plots: Array<Record<string, unknown>>
+        plots: Array<PlotConfig>,
+        fileName?: string
     ): void {
         this.webSocketClient.sendWebSocketRequest(
             {
                 msgType: NetMessageEnum.ID_PLOT_DATA_REQUEST,
+                fileName: fileName,
                 data: data,
                 plots: plots,
             },
