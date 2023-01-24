@@ -12,7 +12,6 @@ import {
     FileReturn,
     FILE_STATUS_SUCCESS,
     FILE_STATUS_FAIL,
-    ConvertedFileData,
 } from "../simularium/types";
 
 import { ClientSimulator } from "../simularium/ClientSimulator";
