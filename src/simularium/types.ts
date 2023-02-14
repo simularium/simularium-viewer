@@ -129,8 +129,3 @@ export interface FileReturn {
     status: FileStatus;
     message?: string;
 }
-
-export interface ConvertedFileData {
-    msgType: number;
-    simulariumData: string;
-}
