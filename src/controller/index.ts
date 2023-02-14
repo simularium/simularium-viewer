@@ -21,6 +21,7 @@ import { LocalFileSimulator } from "../simularium/LocalFileSimulator";
 import { FrontEndError } from "../simularium/FrontEndError";
 import type { ISimulariumFile } from "../simularium/ISimulariumFile";
 import { WebsocketClient } from "../simularium/WebsocketClient";
+import { TrajectoryType } from "../constants";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
@@ -220,7 +221,7 @@ export default class SimulariumController {
     public convertAndLoadTrajectory(
         netConnectionConfig: NetConnectionParams,
         dataToConvert: Record<string, unknown>,
-        fileType: string
+        fileType: TrajectoryType
     ): Promise<void> {
         try {
             this.configureNetwork(netConnectionConfig);

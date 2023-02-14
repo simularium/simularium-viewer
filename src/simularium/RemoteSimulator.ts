@@ -10,6 +10,7 @@ import {
 } from "./WebsocketClient";
 import { ISimulator } from "./ISimulator";
 import { TrajectoryFileInfoV2, VisDataMessage } from "./types";
+import { TrajectoryType } from "../constants";
 
 const enum PlayBackType {
     ID_LIVE_SIMULATION = 0,
@@ -356,7 +357,7 @@ export class RemoteSimulator implements ISimulator {
     // Start autoconversion and roll right into the simulation
     public convertTrajectory(
         dataToConvert: Record<string, unknown>,
-        fileType: string
+        fileType: TrajectoryType
     ): Promise<void> {
         return this.connectToRemoteServer()
             .then(() => {
@@ -369,7 +370,7 @@ export class RemoteSimulator implements ISimulator {
 
     public sendTrajectory(
         dataToConvert: Record<string, unknown>,
-        fileType: string
+        fileType: TrajectoryType
     ): void {
         // Generate random file name for converted file to be stored on the server
         const fileName = uuidv4() + ".simularium";

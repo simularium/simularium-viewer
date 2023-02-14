@@ -29,6 +29,7 @@ import {
 } from "./api-settings";
 import ConversionForm from "./ConversionForm";
 import MetaballSimulator from "./MetaballSimulator";
+import { TrajectoryType } from "../src/constants";
 
 const netConnectionSettings = {
     // to test local server: (also may have to change wss to ws in the url)
@@ -83,7 +84,7 @@ interface ViewerState {
     totalDuration: number;
     uiDisplayData: UIDisplayData;
     filePending: {
-        type: string;
+        type: TrajectoryType;
         template: { [key: string]: any };
         templateData: { [key: string]: any };
     } | null;
@@ -305,14 +306,14 @@ class Viewer extends React.Component<{}, ViewerState> {
 
         this.setState({
             filePending: {
-                type: "Smoldyn",
+                type: TrajectoryType.SMOLDYN,
                 template: smoldynTemplate.smoldyn_data,
                 templateData: templateMap,
             },
         });
     }
 
-    public convertFile(obj: Record<string, any>, fileType: string) {
+    public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
         simulariumController.convertAndLoadTrajectory(netConnectionSettings, obj, fileType)
             .then(() => {
                 this.clearPendingFile();
