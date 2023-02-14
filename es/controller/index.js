@@ -7,6 +7,7 @@ import { RemoteSimulator, VisData, TrajectoryFileInfo } from "../simularium";
 import { FILE_STATUS_SUCCESS, FILE_STATUS_FAIL } from "../simularium/types";
 import { ClientSimulator } from "../simularium/ClientSimulator";
 import { LocalFileSimulator } from "../simularium/LocalFileSimulator";
+import { WebsocketClient } from "../simularium/WebsocketClient";
 jsLogger.setHandler(jsLogger.createDefaultHandler()); // TODO: refine this as part of the public API for initializing the
 // controller (also see SimulatorConnectionParams below)
 
@@ -89,6 +90,7 @@ var SimulariumController = /*#__PURE__*/function () {
     this.reOrientCamera = this.reOrientCamera.bind(this);
     this.setPanningMode = this.setPanningMode.bind(this);
     this.setFocusMode = this.setFocusMode.bind(this);
+    this.convertAndLoadTrajectory = this.convertAndLoadTrajectory.bind(this);
   }
 
   _createClass(SimulariumController, [{
@@ -108,7 +110,8 @@ var SimulariumController = /*#__PURE__*/function () {
 
         this.simulator.setTrajectoryDataHandler(this.visData.parseAgentsFromLocalFileData.bind(this.visData));
       } else if (netConnectionConfig) {
-        this.simulator = new RemoteSimulator(netConnectionConfig, this.onError);
+        var webSocketClient = new WebsocketClient(netConnectionConfig, this.onError);
+        this.simulator = new RemoteSimulator(webSocketClient, this.onError);
         this.simulator.setTrajectoryDataHandler(this.visData.parseAgentsFromNetData.bind(this.visData));
       } else {
         // caught in try/catch block, not sent to front end
@@ -181,6 +184,27 @@ var SimulariumController = /*#__PURE__*/function () {
       if (this.simulator) {
         this.simulator.sendUpdate(obj);
       }
+    }
+  }, {
+    key: "convertAndLoadTrajectory",
+    value: function convertAndLoadTrajectory(netConnectionConfig, dataToConvert, fileType) {
+      var _this4 = this;
+
+      try {
+        this.configureNetwork(netConnectionConfig);
+
+        if (!(this.simulator instanceof RemoteSimulator)) {
+          throw new Error("Autoconversion requires a RemoteSimulator");
+        }
+      } catch (e) {
+        return Promise.reject(e);
+      }
+
+      return this.simulator.convertTrajectory(dataToConvert, fileType).then(function () {
+        if (_this4.simulator) {
+          _this4.simulator.requestSingleFrame(0);
+        }
+      });
     }
   }, {
     key: "pause",
@@ -265,10 +289,28 @@ var SimulariumController = /*#__PURE__*/function () {
       }
     }
   }, {
+    key: "handleFileChange",
+    value: function handleFileChange(simulariumFile, fileName, geoAssets) {
+      if (!fileName.includes(".simularium")) {
+        throw new Error("File must be a .simularium file");
+      }
+
+      if (geoAssets && geoAssets.length) {
+        return this.changeFile({
+          simulariumFile: simulariumFile,
+          geoAssets: geoAssets
+        }, fileName);
+      } else {
+        return this.changeFile({
+          simulariumFile: simulariumFile
+        }, fileName);
+      }
+    }
+  }, {
     key: "changeFile",
     value: function changeFile(connectionParams, // TODO: push newFileName into connectionParams
     newFileName) {
-      var _this4 = this;
+      var _this5 = this;
 
       this.isFileChanging = true;
       this.playBackFile = newFileName;
@@ -308,8 +350,8 @@ var SimulariumController = /*#__PURE__*/function () {
 
       if (this.simulator) {
         return this.start().then(function () {
-          if (_this4.simulator) {
-            _this4.simulator.requestSingleFrame(0);
+          if (_this5.simulator) {
+            _this5.simulator.requestSingleFrame(0);
           }
         }).then(function () {
           return {

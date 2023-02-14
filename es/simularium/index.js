@@ -1,5 +1,6 @@
 export { ErrorLevel, FrontEndError } from "./FrontEndError";
-export { RemoteSimulator, NetMessageEnum } from "./RemoteSimulator";
+export { NetMessageEnum } from "./WebsocketClient";
+export { RemoteSimulator } from "./RemoteSimulator";
 export { VisData } from "./VisData";
 export { ThreadUtil } from "./ThreadUtil";
 export { SelectionInterface } from "./SelectionInterface";

@@ -4,31 +4,11 @@ import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import _regeneratorRuntime from "@babel/runtime/regenerator";
 import jsLogger from "js-logger";
+import { v4 as uuidv4 } from "uuid";
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
-// these have been set to correspond to backend values
-export var NetMessageEnum; // these have been set to correspond to backend values
-
-(function (NetMessageEnum) {
-  NetMessageEnum[NetMessageEnum["ID_UNDEFINED_WEB_REQUEST"] = 0] = "ID_UNDEFINED_WEB_REQUEST";
-  NetMessageEnum[NetMessageEnum["ID_VIS_DATA_ARRIVE"] = 1] = "ID_VIS_DATA_ARRIVE";
-  NetMessageEnum[NetMessageEnum["ID_VIS_DATA_REQUEST"] = 2] = "ID_VIS_DATA_REQUEST";
-  NetMessageEnum[NetMessageEnum["ID_VIS_DATA_FINISH"] = 3] = "ID_VIS_DATA_FINISH";
-  NetMessageEnum[NetMessageEnum["ID_VIS_DATA_PAUSE"] = 4] = "ID_VIS_DATA_PAUSE";
-  NetMessageEnum[NetMessageEnum["ID_VIS_DATA_RESUME"] = 5] = "ID_VIS_DATA_RESUME";
-  NetMessageEnum[NetMessageEnum["ID_VIS_DATA_ABORT"] = 6] = "ID_VIS_DATA_ABORT";
-  NetMessageEnum[NetMessageEnum["ID_UPDATE_TIME_STEP"] = 7] = "ID_UPDATE_TIME_STEP";
-  NetMessageEnum[NetMessageEnum["ID_UPDATE_RATE_PARAM"] = 8] = "ID_UPDATE_RATE_PARAM";
-  NetMessageEnum[NetMessageEnum["ID_MODEL_DEFINITION"] = 9] = "ID_MODEL_DEFINITION";
-  NetMessageEnum[NetMessageEnum["ID_HEARTBEAT_PING"] = 10] = "ID_HEARTBEAT_PING";
-  NetMessageEnum[NetMessageEnum["ID_HEARTBEAT_PONG"] = 11] = "ID_HEARTBEAT_PONG";
-  NetMessageEnum[NetMessageEnum["ID_TRAJECTORY_FILE_INFO"] = 12] = "ID_TRAJECTORY_FILE_INFO";
-  NetMessageEnum[NetMessageEnum["ID_GOTO_SIMULATION_TIME"] = 13] = "ID_GOTO_SIMULATION_TIME";
-  NetMessageEnum[NetMessageEnum["ID_INIT_TRAJECTORY_FILE"] = 14] = "ID_INIT_TRAJECTORY_FILE";
-  NetMessageEnum[NetMessageEnum["ID_UPDATE_SIMULATION_STATE"] = 15] = "ID_UPDATE_SIMULATION_STATE";
-  NetMessageEnum[NetMessageEnum["LENGTH"] = 16] = "LENGTH";
-})(NetMessageEnum || (NetMessageEnum = {}));
-
-var PlayBackType;
+import { NetMessageEnum, NetMessage } from "./WebsocketClient";
+var PlayBackType; // a RemoteSimulator is a ISimulator that connects to the Simularium Engine
+// back end server and plays back a trajectory specified in the NetConnectionParams
 
 (function (PlayBackType) {
   PlayBackType[PlayBackType["ID_LIVE_SIMULATION"] = 0] = "ID_LIVE_SIMULATION";
@@ -37,19 +17,11 @@ var PlayBackType;
   PlayBackType[PlayBackType["LENGTH"] = 3] = "LENGTH";
 })(PlayBackType || (PlayBackType = {}));
 
-export var CONNECTION_SUCCESS_MSG = "Remote sim successfully started";
-export var CONNECTION_FAIL_MSG = "Failed to connect to server; try reloading. If the problem persists, there may be a problem with your connection speed or the server might be too busy.";
-// a RemoteSimulator is a ISimulator that connects to the Simularium Engine
-// back end server and plays back a trajectory specified in the NetConnectionParams
 export var RemoteSimulator = /*#__PURE__*/function () {
-  function RemoteSimulator(opts, errorHandler) {
+  function RemoteSimulator(webSocketClient, errorHandler) {
     _classCallCheck(this, RemoteSimulator);
 
-    _defineProperty(this, "webSocket", void 0);
-
-    _defineProperty(this, "serverIp", void 0);
-
-    _defineProperty(this, "serverPort", void 0);
+    _defineProperty(this, "webSocketClient", void 0);
 
     _defineProperty(this, "logger", void 0);
 
@@ -59,17 +31,9 @@ export var RemoteSimulator = /*#__PURE__*/function () {
 
     _defineProperty(this, "lastRequestedFile", void 0);
 
-    _defineProperty(this, "connectionTimeWaited", void 0);
-
-    _defineProperty(this, "connectionRetries", void 0);
-
     _defineProperty(this, "handleError", void 0);
 
-    this.webSocket = null;
-    this.serverIp = opts && opts.serverIp ? opts.serverIp : "localhost";
-    this.serverPort = opts && opts.serverPort ? opts.serverPort : 9002;
-    this.connectionTimeWaited = 0;
-    this.connectionRetries = 0;
+    this.webSocketClient = webSocketClient;
     this.lastRequestedFile = "";
 
     this.handleError = errorHandler || function () {
@@ -78,6 +42,8 @@ export var RemoteSimulator = /*#__PURE__*/function () {
 
     this.logger = jsLogger.get("netconnection");
     this.logger.setLevel(jsLogger.DEBUG);
+    this.registerBinaryMessageHandlers();
+    this.registerJsonMessageHandlers();
 
     this.onTrajectoryFileInfoArrive = function () {
       /* do nothing */
@@ -85,10 +51,7 @@ export var RemoteSimulator = /*#__PURE__*/function () {
 
     this.onTrajectoryDataArrive = function () {
       /* do nothing */
-    }; // Frees the reserved backend in the event that the window closes w/o disconnecting
-
-
-    window.addEventListener("beforeunload", this.onClose.bind(this));
+    };
   }
 
   _createClass(RemoteSimulator, [{
@@ -101,329 +64,124 @@ export var RemoteSimulator = /*#__PURE__*/function () {
     value: function setTrajectoryDataHandler(handler) {
       this.onTrajectoryDataArrive = handler;
     }
-    /**
-     * WebSocket State
-     */
-
-  }, {
-    key: "socketIsConnecting",
-    value: function socketIsConnecting() {
-      return this.webSocket !== null && this.webSocket.readyState === this.webSocket.CONNECTING;
-    }
   }, {
     key: "socketIsValid",
     value: function socketIsValid() {
-      return !(this.webSocket === null || this.webSocket.readyState === this.webSocket.CLOSED);
-    }
-  }, {
-    key: "socketIsConnected",
-    value: function socketIsConnected() {
-      return this.webSocket !== null && this.webSocket.readyState === this.webSocket.OPEN;
+      return this.webSocketClient.socketIsValid();
     }
     /**
-     *   Websocket Message Handler
+     *   Websocket Message Handlers
      * */
 
   }, {
-    key: "onMessage",
-    value: function onMessage(event) {
-      if (!this.socketIsValid()) {
-        return;
-      }
+    key: "onBinaryIdVisDataArrive",
+    value: function onBinaryIdVisDataArrive(event) {
+      var OFFSET_TO_NAME_LENGTH = 8;
+      var floatView = new Float32Array(event.data);
+      var nameLength = floatView[1];
+      var byteView = new Uint8Array(event.data);
+      var fileBytes = byteView.subarray(OFFSET_TO_NAME_LENGTH, OFFSET_TO_NAME_LENGTH + nameLength);
+      var fileName = new TextDecoder("utf-8").decode(fileBytes);
 
-      if (event.data instanceof ArrayBuffer) {
-        var floatView = new Float32Array(event.data);
-        var binaryMsgType = floatView[0];
-
-        if (binaryMsgType === NetMessageEnum.ID_VIS_DATA_ARRIVE) {
-          var OFFSET_TO_NAME_LENGTH = 8;
-          var nameLength = floatView[1];
-          var byteView = new Uint8Array(event.data);
-          var fileBytes = byteView.subarray(OFFSET_TO_NAME_LENGTH, OFFSET_TO_NAME_LENGTH + nameLength);
-          var fileName = new TextDecoder("utf-8").decode(fileBytes);
-
-          if (fileName == this.lastRequestedFile) {
-            this.onTrajectoryDataArrive(event.data);
-          } else {
-            this.logger.error("File arrived ", fileName, " is not file ", this.lastRequestedFile);
-          }
-        } else {
-          this.logger.error("Unexpected binary message arrived of type ", binaryMsgType);
-        }
-
-        return;
-      }
-
-      var msg = JSON.parse(event.data);
-      var msgType = msg.msgType;
-      var numMsgTypes = NetMessageEnum.LENGTH;
-
-      if (msgType > numMsgTypes || msgType < 1) {
-        // this suggests either the back-end is out of sync, or a connection to an unknown back-end
-        //  either would be very bad
-        this.logger.error("Unrecognized web message of type ", msg.msgType, " arrived");
-        return;
-      }
-
-      switch (msgType) {
-        case NetMessageEnum.ID_VIS_DATA_ARRIVE:
-          if (msg.fileName === this.lastRequestedFile) {
-            this.onTrajectoryDataArrive(msg);
-          }
-
-          break;
-
-        case NetMessageEnum.ID_UPDATE_TIME_STEP:
-          // TODO: callback to handle time step update
-          break;
-
-        case NetMessageEnum.ID_UPDATE_RATE_PARAM:
-          // TODO: callback to handle rate param
-          break;
-
-        case NetMessageEnum.ID_HEARTBEAT_PING:
-          this.sendWebSocketRequest({
-            connId: msg.connId,
-            msgType: NetMessageEnum.ID_HEARTBEAT_PONG
-          }, "Heartbeat pong");
-          break;
-
-        case NetMessageEnum.ID_MODEL_DEFINITION:
-          this.logger.debug("Model Definition Arrived"); // TODO: callback to handle model definition
-
-          break;
-
-        case NetMessageEnum.ID_TRAJECTORY_FILE_INFO:
-          this.logger.debug("Trajectory file info Arrived");
-          this.onTrajectoryFileInfoArrive(msg);
-          break;
-
-        default:
-          this.logger.debug("Web request recieved", msg.msgType);
-          break;
+      if (fileName == this.lastRequestedFile) {
+        this.onTrajectoryDataArrive(event.data);
+      } else {
+        this.logger.error("File arrived ", fileName, " is not file ", this.lastRequestedFile);
       }
     }
   }, {
-    key: "onOpen",
-    value: function onOpen() {
-      /* do nothing */
+    key: "onHeartbeatPing",
+    value: function onHeartbeatPing(msg) {
+      this.webSocketClient.sendWebSocketRequest({
+        connId: msg.connId,
+        msgType: NetMessageEnum.ID_HEARTBEAT_PONG
+      }, "Heartbeat pong");
     }
   }, {
-    key: "onClose",
-    value: function onClose() {
-      /* do nothing */
+    key: "onJsonIdVisDataArrive",
+    value: function onJsonIdVisDataArrive(msg) {
+      if (msg.fileName === this.lastRequestedFile) {
+        this.onTrajectoryDataArrive(msg);
+      }
+    }
+  }, {
+    key: "updateTimestep",
+    value: function updateTimestep() {
+      this.logger.debug("Update Timestep Message Arrived"); // TODO: implement callback
+    }
+  }, {
+    key: "updateRateParam",
+    value: function updateRateParam() {
+      this.logger.debug("Update Rate Param Message Arrived"); // TODO: implement callback
+    }
+  }, {
+    key: "onModelDefinitionArrive",
+    value: function onModelDefinitionArrive() {
+      this.logger.debug("Model Definition Arrived"); // TODO: implement callback
+    }
+  }, {
+    key: "registerBinaryMessageHandlers",
+    value: function registerBinaryMessageHandlers() {
+      var _this = this;
+
+      this.webSocketClient.addBinaryMessageHandler(NetMessageEnum.ID_VIS_DATA_ARRIVE, function (msg) {
+        return _this.onBinaryIdVisDataArrive(msg);
+      });
+    }
+  }, {
+    key: "registerJsonMessageHandlers",
+    value: function registerJsonMessageHandlers() {
+      var _this2 = this;
+
+      this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_TRAJECTORY_FILE_INFO, this.onTrajectoryFileInfoArrive);
+      this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_HEARTBEAT_PING, this.onHeartbeatPing);
+      this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_VIS_DATA_ARRIVE, function (msg) {
+        return _this2.onJsonIdVisDataArrive(msg);
+      });
+      this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_UPDATE_TIME_STEP, this.updateTimestep);
+      this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_UPDATE_RATE_PARAM, this.updateRateParam);
+      this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_MODEL_DEFINITION, this.onModelDefinitionArrive);
     }
     /**
      * WebSocket Connect
      * */
 
   }, {
-    key: "createWebSocket",
-    value: function createWebSocket(uri) {
-      // Create and initialize a WebSocket object
-      if (this.socketIsValid()) {
-        this.disconnect();
-      }
-
-      this.webSocket = new WebSocket(uri);
-      this.webSocket.binaryType = "arraybuffer";
-      this.logger.debug("WS Connection Request Sent: ", uri); // message handler
-
-      this.webSocket.onopen = this.onOpen.bind(this);
-      this.webSocket.onclose = this.onClose.bind(this);
-      this.webSocket.onmessage = this.onMessage.bind(this);
-    }
-  }, {
     key: "disconnect",
     value: function disconnect() {
-      if (!this.socketIsValid()) {
-        this.logger.warn("disconnect failed, client is not connected");
-        return;
-      }
-
-      if (this.webSocket !== null) {
-        this.webSocket.close();
-      }
+      this.webSocketClient.disconnect();
     }
   }, {
     key: "getIp",
     value: function getIp() {
-      return "wss://".concat(this.serverIp, ":").concat(this.serverPort, "/");
+      return this.webSocketClient.getIp();
     }
   }, {
-    key: "waitForWebSocket",
+    key: "connectToRemoteServer",
     value: function () {
-      var _waitForWebSocket = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee(timeout) {
-        var _this = this;
-
+      var _connectToRemoteServer = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee() {
         return _regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                return _context.abrupt("return", new Promise(function (resolve) {
-                  return setTimeout(function () {
-                    resolve(_this.socketIsConnected());
-                  }, timeout);
-                }));
+                this.registerBinaryMessageHandlers();
+                this.registerJsonMessageHandlers();
+                return _context.abrupt("return", this.webSocketClient.connectToRemoteServer());
 
-              case 1:
+              case 3:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee);
+        }, _callee, this);
       }));
 
-      function waitForWebSocket(_x) {
-        return _waitForWebSocket.apply(this, arguments);
-      }
-
-      return waitForWebSocket;
-    }()
-  }, {
-    key: "checkConnection",
-    value: function () {
-      var _checkConnection = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee2(address) {
-        var timeout,
-            maxRetries,
-            maxWaitTime,
-            isConnected,
-            _args2 = arguments;
-        return _regeneratorRuntime.wrap(function _callee2$(_context2) {
-          while (1) {
-            switch (_context2.prev = _context2.next) {
-              case 0:
-                timeout = _args2.length > 1 && _args2[1] !== undefined ? _args2[1] : 1000;
-                maxRetries = _args2.length > 2 && _args2[2] !== undefined ? _args2[2] : 1;
-                // Check if the WebSocket becomes connected within an allotted amount
-                // of time and number of retries.
-                // Initially wait for a max wait time of maxWaitTime, then retry
-                // connecting <maxRetries> time(s). In a retry, only wait for the
-                // amount of time specified as timeout.
-                maxWaitTime = 4 * timeout;
-                _context2.next = 5;
-                return this.waitForWebSocket(timeout);
-
-              case 5:
-                isConnected = _context2.sent;
-                this.connectionTimeWaited += timeout;
-
-                if (!isConnected) {
-                  _context2.next = 11;
-                  break;
-                }
-
-                return _context2.abrupt("return", true);
-
-              case 11:
-                if (!(this.connectionTimeWaited < maxWaitTime)) {
-                  _context2.next = 15;
-                  break;
-                }
-
-                return _context2.abrupt("return", this.checkConnection(address, timeout));
-
-              case 15:
-                if (!(this.connectionRetries < maxRetries)) {
-                  _context2.next = 21;
-                  break;
-                }
-
-                this.createWebSocket(address);
-                this.connectionRetries++;
-                return _context2.abrupt("return", this.checkConnection(address, timeout));
-
-              case 21:
-                return _context2.abrupt("return", false);
-
-              case 22:
-              case "end":
-                return _context2.stop();
-            }
-          }
-        }, _callee2, this);
-      }));
-
-      function checkConnection(_x2) {
-        return _checkConnection.apply(this, arguments);
-      }
-
-      return checkConnection;
-    }()
-  }, {
-    key: "connectToRemoteServer",
-    value: function () {
-      var _connectToRemoteServer = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee3(address) {
-        var isConnectionSuccessful;
-        return _regeneratorRuntime.wrap(function _callee3$(_context3) {
-          while (1) {
-            switch (_context3.prev = _context3.next) {
-              case 0:
-                this.connectionTimeWaited = 0;
-                this.connectionRetries = 0;
-
-                if (!this.socketIsConnected()) {
-                  _context3.next = 4;
-                  break;
-                }
-
-                return _context3.abrupt("return", CONNECTION_SUCCESS_MSG);
-
-              case 4:
-                this.createWebSocket(address);
-                _context3.next = 7;
-                return this.checkConnection(address);
-
-              case 7:
-                isConnectionSuccessful = _context3.sent;
-
-                if (!isConnectionSuccessful) {
-                  _context3.next = 12;
-                  break;
-                }
-
-                return _context3.abrupt("return", CONNECTION_SUCCESS_MSG);
-
-              case 12:
-                throw new Error(CONNECTION_FAIL_MSG);
-
-              case 13:
-              case "end":
-                return _context3.stop();
-            }
-          }
-        }, _callee3, this);
-      }));
-
-      function connectToRemoteServer(_x3) {
+      function connectToRemoteServer() {
         return _connectToRemoteServer.apply(this, arguments);
       }
 
       return connectToRemoteServer;
     }()
-    /**
-     * Websocket Send Helper Functions
-     */
-
-  }, {
-    key: "logWebSocketRequest",
-    value: function logWebSocketRequest(whatRequest, jsonData) {
-      this.logger.debug("Web Socket Request Sent: ", whatRequest, jsonData);
-    }
-  }, {
-    key: "sendWebSocketRequest",
-    value: function sendWebSocketRequest(jsonData, requestDescription) {
-      if (this.socketIsValid()) {
-        if (this.webSocket !== null) {
-          this.webSocket.send(JSON.stringify(jsonData));
-        }
-
-        this.logWebSocketRequest(requestDescription, jsonData);
-      } else {
-        console.error("Request to server cannot be made with a closed Websocket connection.");
-        this.handleError(new FrontEndError("Connection to server is closed; please try reloading. If the problem persists, the server may be too busy. Please try again at another time.", ErrorLevel.ERROR));
-      }
-    }
     /**
      * Websocket Update Parameters
      */
@@ -435,7 +193,7 @@ export var RemoteSimulator = /*#__PURE__*/function () {
         msgType: NetMessageEnum.ID_UPDATE_TIME_STEP,
         timeStep: newTimeStep
       };
-      this.sendWebSocketRequest(jsonData, "Update Time-Step");
+      this.webSocketClient.sendWebSocketRequest(jsonData, "Update Time-Step");
     }
   }, {
     key: "sendParameterUpdate",
@@ -445,7 +203,7 @@ export var RemoteSimulator = /*#__PURE__*/function () {
         paramName: paramName,
         paramValue: paramValue
       };
-      this.sendWebSocketRequest(jsonData, "Rate Parameter Update");
+      this.webSocketClient.sendWebSocketRequest(jsonData, "Rate Parameter Update");
     }
   }, {
     key: "sendModelDefinition",
@@ -454,7 +212,7 @@ export var RemoteSimulator = /*#__PURE__*/function () {
         model: model,
         msgType: NetMessageEnum.ID_MODEL_DEFINITION
       };
-      this.sendWebSocketRequest(dataToSend, "Model Definition");
+      this.webSocketClient.sendWebSocketRequest(dataToSend, "Model Definition");
     }
     /**
      * WebSocket Simulation Control
@@ -469,7 +227,7 @@ export var RemoteSimulator = /*#__PURE__*/function () {
   }, {
     key: "startRemoteSimPreRun",
     value: function startRemoteSimPreRun(timeStep, numTimeSteps) {
-      var _this2 = this;
+      var _this3 = this;
 
       var jsonData = {
         msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
@@ -477,8 +235,8 @@ export var RemoteSimulator = /*#__PURE__*/function () {
         timeStep: timeStep,
         numTimeSteps: numTimeSteps
       };
-      return this.connectToRemoteServer(this.getIp()).then(function () {
-        _this2.sendWebSocketRequest(jsonData, "Start Simulation Pre-Run");
+      return this.connectToRemoteServer().then(function () {
+        _this3.webSocketClient.sendWebSocketRequest(jsonData, "Start Simulation Pre-Run");
       })["catch"](function (e) {
         throw new FrontEndError(e.message, ErrorLevel.ERROR);
       });
@@ -486,14 +244,14 @@ export var RemoteSimulator = /*#__PURE__*/function () {
   }, {
     key: "startRemoteSimLive",
     value: function startRemoteSimLive() {
-      var _this3 = this;
+      var _this4 = this;
 
       var jsonData = {
         msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
         mode: PlayBackType.ID_LIVE_SIMULATION
       };
-      return this.connectToRemoteServer(this.getIp()).then(function () {
-        _this3.sendWebSocketRequest(jsonData, "Start Simulation Live");
+      return this.connectToRemoteServer().then(function () {
+        _this4.webSocketClient.sendWebSocketRequest(jsonData, "Start Simulation Live");
       })["catch"](function (e) {
         throw new FrontEndError(e.message, ErrorLevel.ERROR);
       });
@@ -501,7 +259,7 @@ export var RemoteSimulator = /*#__PURE__*/function () {
   }, {
     key: "startRemoteTrajectoryPlayback",
     value: function startRemoteTrajectoryPlayback(fileName) {
-      var _this4 = this;
+      var _this5 = this;
 
       this.lastRequestedFile = fileName;
       var jsonData = {
@@ -511,8 +269,8 @@ export var RemoteSimulator = /*#__PURE__*/function () {
       }; // begins a stream which will include a TrajectoryFileInfo and a series of VisDataMessages
       // Note that it is possible for the first vis data to arrive before the TrajectoryFileInfo...
 
-      return this.connectToRemoteServer(this.getIp()).then(function () {
-        _this4.sendWebSocketRequest(jsonData, "Start Trajectory File Playback");
+      return this.connectToRemoteServer().then(function () {
+        _this5.webSocketClient.sendWebSocketRequest(jsonData, "Start Trajectory File Playback");
       })["catch"](function (error) {
         throw new FrontEndError(error.message, ErrorLevel.ERROR);
       });
@@ -520,14 +278,14 @@ export var RemoteSimulator = /*#__PURE__*/function () {
   }, {
     key: "pauseRemoteSim",
     value: function pauseRemoteSim() {
-      this.sendWebSocketRequest({
+      this.webSocketClient.sendWebSocketRequest({
         msgType: NetMessageEnum.ID_VIS_DATA_PAUSE
       }, "Pause Simulation");
     }
   }, {
     key: "resumeRemoteSim",
     value: function resumeRemoteSim() {
-      this.sendWebSocketRequest({
+      this.webSocketClient.sendWebSocketRequest({
         msgType: NetMessageEnum.ID_VIS_DATA_RESUME
       }, "Resume Simulation");
     }
@@ -538,14 +296,14 @@ export var RemoteSimulator = /*#__PURE__*/function () {
         return;
       }
 
-      this.sendWebSocketRequest({
+      this.webSocketClient.sendWebSocketRequest({
         msgType: NetMessageEnum.ID_VIS_DATA_ABORT
       }, "Abort Simulation");
     }
   }, {
     key: "requestSingleFrame",
     value: function requestSingleFrame(startFrameNumber) {
-      this.sendWebSocketRequest({
+      this.webSocketClient.sendWebSocketRequest({
         msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
         mode: PlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
         frameNumber: startFrameNumber
@@ -554,7 +312,7 @@ export var RemoteSimulator = /*#__PURE__*/function () {
   }, {
     key: "gotoRemoteSimulationTime",
     value: function gotoRemoteSimulationTime(time) {
-      this.sendWebSocketRequest({
+      this.webSocketClient.sendWebSocketRequest({
         msgType: NetMessageEnum.ID_GOTO_SIMULATION_TIME,
         time: time
       }, "Load single frame at specified Time");
@@ -562,7 +320,7 @@ export var RemoteSimulator = /*#__PURE__*/function () {
   }, {
     key: "requestTrajectoryFileInfo",
     value: function requestTrajectoryFileInfo(fileName) {
-      this.sendWebSocketRequest({
+      this.webSocketClient.sendWebSocketRequest({
         msgType: NetMessageEnum.ID_INIT_TRAJECTORY_FILE,
         fileName: fileName
       }, "Initialize trajectory file info");
@@ -570,10 +328,35 @@ export var RemoteSimulator = /*#__PURE__*/function () {
   }, {
     key: "sendUpdate",
     value: function sendUpdate(obj) {
-      this.sendWebSocketRequest({
+      this.webSocketClient.sendWebSocketRequest({
         msgType: NetMessageEnum.ID_UPDATE_SIMULATION_STATE,
         data: obj
       }, "Send update instructions to simulation server");
+    } // Start autoconversion and roll right into the simulation
+
+  }, {
+    key: "convertTrajectory",
+    value: function convertTrajectory(dataToConvert, fileType) {
+      var _this6 = this;
+
+      return this.connectToRemoteServer().then(function () {
+        _this6.sendTrajectory(dataToConvert, fileType);
+      })["catch"](function (e) {
+        throw new FrontEndError(e.message, ErrorLevel.ERROR);
+      });
+    }
+  }, {
+    key: "sendTrajectory",
+    value: function sendTrajectory(dataToConvert, fileType) {
+      // Generate random file name for converted file to be stored on the server
+      var fileName = uuidv4() + ".simularium";
+      this.lastRequestedFile = fileName;
+      this.webSocketClient.sendWebSocketRequest({
+        msgType: NetMessageEnum.ID_CONVERT_TRAJECTORY_FILE,
+        trajType: fileType.toLowerCase(),
+        fileName: fileName,
+        data: dataToConvert
+      }, "Convert trajectory output to simularium file format");
     }
   }]);
 

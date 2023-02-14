@@ -5,6 +5,7 @@ import { IClientSimulatorImpl } from "../simularium/localSimulators/IClientSimul
 import { ISimulator } from "../simularium/ISimulator";
 import { FrontEndError } from "../simularium/FrontEndError";
 import type { ISimulariumFile } from "../simularium/ISimulariumFile";
+import { TrajectoryType } from "../constants";
 interface SimulariumControllerParams {
     remoteSimulator?: RemoteSimulator;
     netConnectionSettings?: NetConnectionParams;
@@ -39,6 +40,7 @@ export default class SimulariumController {
     time(): number;
     stop(): void;
     sendUpdate(obj: Record<string, unknown>): void;
+    convertAndLoadTrajectory(netConnectionConfig: NetConnectionParams, dataToConvert: Record<string, unknown>, fileType: TrajectoryType): Promise<void>;
     pause(): void;
     paused(): boolean;
     initializeTrajectoryFile(): void;
@@ -46,6 +48,9 @@ export default class SimulariumController {
     playFromTime(time: number): void;
     resume(): void;
     clearFile(): void;
+    handleFileChange(simulariumFile: ISimulariumFile, fileName: string, geoAssets?: {
+        [key: string]: string;
+    }): Promise<FileReturn>;
     changeFile(connectionParams: SimulatorConnectionParams, newFileName: string): Promise<FileReturn>;
     markFileChangeAsHandled(): void;
     getFile(): string;

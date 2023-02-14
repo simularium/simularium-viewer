@@ -17,3 +17,8 @@ export var DEFAULT_CAMERA_SPEC = {
   },
   fovDegrees: 75
 };
+export var TrajectoryType;
+
+(function (TrajectoryType) {
+  TrajectoryType["SMOLDYN"] = "Smoldyn";
+})(TrajectoryType || (TrajectoryType = {}));
