@@ -355,12 +355,12 @@ export class RemoteSimulator implements ISimulator {
 
     // Start autoconversion and roll right into the simulation
     public convertTrajectory(
-        obj: Record<string, unknown>,
+        dataToConvert: Record<string, unknown>,
         fileType: string
     ): Promise<void> {
         return this.connectToRemoteServer()
             .then(() => {
-                this.sendTrajectory(obj, fileType);
+                this.sendTrajectory(dataToConvert, fileType);
             })
             .catch((e) => {
                 throw new FrontEndError(e.message, ErrorLevel.ERROR);
@@ -368,7 +368,7 @@ export class RemoteSimulator implements ISimulator {
     }
 
     public sendTrajectory(
-        obj: Record<string, unknown>,
+        dataToConvert: Record<string, unknown>,
         fileType: string
     ): void {
         // Generate random file name for converted file to be stored on the server
@@ -379,7 +379,7 @@ export class RemoteSimulator implements ISimulator {
                 msgType: NetMessageEnum.ID_CONVERT_TRAJECTORY_FILE,
                 trajType: fileType.toLowerCase(),
                 fileName: fileName,
-                data: obj,
+                data: dataToConvert,
             },
             "Convert trajectory output to simularium file format"
         );

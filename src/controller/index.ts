@@ -219,7 +219,7 @@ export default class SimulariumController {
 
     public convertAndLoadTrajectory(
         netConnectionConfig: NetConnectionParams,
-        obj: Record<string, unknown>,
+        dataToConvert: Record<string, unknown>,
         fileType: string
     ): Promise<void> {
         try {
@@ -231,11 +231,13 @@ export default class SimulariumController {
             return Promise.reject(e);
         }
 
-        return this.simulator.convertTrajectory(obj, fileType).then(() => {
-            if (this.simulator) {
-                this.simulator.requestSingleFrame(0);
-            }
-        });
+        return this.simulator
+            .convertTrajectory(dataToConvert, fileType)
+            .then(() => {
+                if (this.simulator) {
+                    this.simulator.requestSingleFrame(0);
+                }
+            });
     }
 
     public pause(): void {
