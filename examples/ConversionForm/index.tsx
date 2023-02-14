@@ -1,14 +1,12 @@
 import { map } from "lodash";
 import React from "react";
-import JsonFileReader from "../../src/simularium/JsonFileReader";
-import { FileReturn } from "../../src/simularium/types";
 import InputSwitch from "./InputSwitch";
 
 interface InputFormProps {
     template: { [key: string]: any };
     templateData: { [key: string]: any };
     type: string;
-    loadFile: (file, fileName, geoAssets?) => Promise<FileReturn | void>;
+    submitFile: (data) => void;
     onReturned: () => void;
 }
 
@@ -57,25 +55,7 @@ class InputForm extends React.Component<InputFormProps> {
             ...this.state,
         };
         console.log("submitting", payload);
-        fetch(
-            "https://fm4o7gwkdd.execute-api.us-west-2.amazonaws.com/v1/smoldyn",
-            {
-                method: "POST",
-                body: JSON.stringify(payload),
-            }
-        )
-            .then((result) => {
-                this.props.onReturned();
-                return result.json();
-            })
-            .then((file) => {
-                console.log("Completed with result:", file);
-                const simulariumFile = new JsonFileReader(file);
-                this.props.loadFile(simulariumFile, "test.simularium").then();
-            })
-            .catch((err) => {
-                console.error(err);
-            });
+        this.props.submitFile(payload)
     }
 
     render() {

@@ -19,3 +19,7 @@ export const DEFAULT_CAMERA_SPEC: CameraSpec = {
     },
     fovDegrees: 75,
 };
+
+export const enum TrajectoryType {
+    SMOLDYN = "Smoldyn",
+}

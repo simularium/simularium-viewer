@@ -20,6 +20,8 @@ import { ISimulator } from "../simularium/ISimulator";
 import { LocalFileSimulator } from "../simularium/LocalFileSimulator";
 import { FrontEndError } from "../simularium/FrontEndError";
 import type { ISimulariumFile } from "../simularium/ISimulariumFile";
+import { WebsocketClient } from "../simularium/WebsocketClient";
+import { TrajectoryType } from "../constants";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
@@ -74,7 +76,6 @@ export default class SimulariumController {
             this.simulator.setTrajectoryDataHandler(
                 this.visData.parseAgentsFromNetData.bind(this.visData)
             );
-
             // TODO: probably remove this? We're never initalizing the controller
             // with any settings on the website.
         } else if (params.netConnectionSettings) {
@@ -108,6 +109,8 @@ export default class SimulariumController {
         this.reOrientCamera = this.reOrientCamera.bind(this);
         this.setPanningMode = this.setPanningMode.bind(this);
         this.setFocusMode = this.setFocusMode.bind(this);
+        this.convertAndLoadTrajectory =
+            this.convertAndLoadTrajectory.bind(this);
     }
 
     private createSimulatorConnection(
@@ -133,10 +136,11 @@ export default class SimulariumController {
                 this.visData.parseAgentsFromLocalFileData.bind(this.visData)
             );
         } else if (netConnectionConfig) {
-            this.simulator = new RemoteSimulator(
+            const webSocketClient = new WebsocketClient(
                 netConnectionConfig,
                 this.onError
             );
+            this.simulator = new RemoteSimulator(webSocketClient, this.onError);
             this.simulator.setTrajectoryDataHandler(
                 this.visData.parseAgentsFromNetData.bind(this.visData)
             );
@@ -214,6 +218,29 @@ export default class SimulariumController {
         }
     }
 
+    public convertAndLoadTrajectory(
+        netConnectionConfig: NetConnectionParams,
+        dataToConvert: Record<string, unknown>,
+        fileType: TrajectoryType
+    ): Promise<void> {
+        try {
+            this.configureNetwork(netConnectionConfig);
+            if (!(this.simulator instanceof RemoteSimulator)) {
+                throw new Error("Autoconversion requires a RemoteSimulator");
+            }
+        } catch (e) {
+            return Promise.reject(e);
+        }
+
+        return this.simulator
+            .convertTrajectory(dataToConvert, fileType)
+            .then(() => {
+                if (this.simulator) {
+                    this.simulator.requestSingleFrame(0);
+                }
+            });
+    }
+
     public pause(): void {
         if (this.networkEnabled && this.simulator) {
             this.simulator.pauseRemoteSim();
@@ -285,6 +312,22 @@ export default class SimulariumController {
         if (this.visGeometry) {
             this.visGeometry.clearForNewTrajectory();
             this.visGeometry.resetCamera();
+        }
+    }
+
+    public handleFileChange(
+        simulariumFile: ISimulariumFile,
+        fileName: string,
+        geoAssets?: { [key: string]: string }
+    ): Promise<FileReturn> {
+        if (!fileName.includes(".simularium")) {
+            throw new Error("File must be a .simularium file");
+        }
+
+        if (geoAssets && geoAssets.length) {
+            return this.changeFile({ simulariumFile, geoAssets }, fileName);
+        } else {
+            return this.changeFile({ simulariumFile }, fileName);
         }
     }
 

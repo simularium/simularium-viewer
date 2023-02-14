@@ -29,6 +29,7 @@ import {
 } from "./api-settings";
 import ConversionForm from "./ConversionForm";
 import MetaballSimulator from "./MetaballSimulator";
+import { TrajectoryType } from "../src/constants";
 
 const netConnectionSettings = {
     // to test local server: (also may have to change wss to ws in the url)
@@ -83,7 +84,7 @@ interface ViewerState {
     totalDuration: number;
     uiDisplayData: UIDisplayData;
     filePending: {
-        type: string;
+        type: TrajectoryType;
         template: { [key: string]: any };
         templateData: { [key: string]: any };
     } | null;
@@ -152,6 +153,7 @@ class Viewer extends React.Component<{}, ViewerState> {
         this.handleTimeChange = this.handleTimeChange.bind(this);
         this.loadFile = this.loadFile.bind(this);
         this.clearPendingFile = this.clearPendingFile.bind(this);
+        this.convertFile = this.convertFile.bind(this);
         this.state = initialState;
     }
 
@@ -304,11 +306,21 @@ class Viewer extends React.Component<{}, ViewerState> {
 
         this.setState({
             filePending: {
-                type: "Smoldyn",
+                type: TrajectoryType.SMOLDYN,
                 template: smoldynTemplate.smoldyn_data,
                 templateData: templateMap,
             },
         });
+    }
+
+    public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
+        simulariumController.convertAndLoadTrajectory(netConnectionSettings, obj, fileType)
+            .then(() => {
+                this.clearPendingFile();
+            })
+            .catch((err) => {
+                console.error(err);
+            });
     }
 
     public clearPendingFile() {
@@ -322,16 +334,9 @@ class Viewer extends React.Component<{}, ViewerState> {
         // if (!fileName.includes(".simularium")) {
         //     return new
         // }
-        if (geoAssets && geoAssets.length) {
-            return simulariumController.changeFile(
-                { simulariumFile, geoAssets },
-                fileName
-            );
-        } else {
-            return simulariumController
-                .changeFile({ simulariumFile }, fileName)
-                .catch(console.log);
-        }
+        return simulariumController
+            .handleFileChange(simulariumFile, fileName, geoAssets)
+            .catch(console.log)
     }
 
     public handleJsonMeshData(jsonData): void {
@@ -521,10 +526,11 @@ class Viewer extends React.Component<{}, ViewerState> {
 
     public render(): JSX.Element {
         if (this.state.filePending) {
+            const fileType = this.state.filePending.type
             return (
                 <ConversionForm
                     {...this.state.filePending}
-                    loadFile={this.loadFile}
+                    submitFile={(obj) => this.convertFile(obj, fileType)}
                     onReturned={this.clearPendingFile}
                 />
             );
