@@ -734,6 +734,8 @@ class Viewer extends React.Component<{}, ViewerState> {
                     onClick={() =>
                         simulariumController.getPlotData(
                             netConnectionSettings,
+                            // TODO: allow user to select metrics based on results from
+                            // the getMetrics() call
                             [
                                 {
                                     plotType: "scatter",
