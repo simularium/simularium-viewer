@@ -96,6 +96,50 @@ layout(location = 2) out vec4 gPos;
 
 `;
 
+const transFragmentShader = `
+precision highp float;
+
+in vec3 IN_viewPos;
+in float IN_radius;
+in vec2 IN_instanceAndTypeId;
+
+layout(location = 0) out vec4 gOutputColor;
+
+    uniform vec2 iResolution;
+    
+    uniform float scale;
+    uniform mat4 projectionMatrix;
+    
+    void main()	{
+        // gl_PointCoord spans (0,0)..(1,1)
+        // uv spans (-1,-1)..(1,1)
+        vec2 uv = (gl_PointCoord - vec2(.5, .5)) * 2.0;
+        float lensqr = dot(uv, uv);
+        if (lensqr > 1.0) discard;
+
+        vec3 normal = vec3(uv.x, uv.y, sqrt(1.0 - lensqr));
+        normal = normalize(normal);
+
+        vec3 fragViewPos = IN_viewPos;
+        // adding pushes Z back. so "center" of sphere is "frontmost"
+        fragViewPos.z += IN_radius * scale * sqrt(1.0 - lensqr);
+      
+        vec4 fragPosClip = projectionMatrix * vec4(fragViewPos, 1.0);
+        vec3 fragPosNDC = fragPosClip.xyz / fragPosClip.w;
+        float n = gl_DepthRange.near;
+        float f = gl_DepthRange.far;
+        float fragPosDepth = (((f - n) * fragPosNDC.z) + n + f) / 2.0;
+
+        gl_FragDepth = fragPosDepth;
+
+        // uncomment the following line to test LOD.  IN_radius is a measure of lod.
+        //gAgentInfo = vec4(IN_radius*4.0, IN_instanceAndTypeId.x, fragViewPos.z, fragPosDepth);
+
+        gOutputColor = vec4(0.0, 1.0, 0.0, 0.1);
+    }
+
+`;
+
 const multiMaterial = new RawShaderMaterial({
     glslVersion: GLSL3,
     uniforms: {
@@ -110,8 +154,23 @@ const multiMaterial = new RawShaderMaterial({
     transparent: false,
 });
 
+const transMultiMaterial = new RawShaderMaterial({
+    glslVersion: GLSL3,
+    uniforms: {
+        iResolution: { value: new Vector2() },
+        scale: { value: 1.0 },
+        modelViewMatrix: { value: new Matrix4() },
+        projectionMatrix: { value: new Matrix4() },
+    },
+    vertexShader: vertexShader,
+    fragmentShader: transFragmentShader,
+    side: FrontSide,
+    transparent: true,
+});
+
 const shaderSet: MRTShaders = {
     mat: multiMaterial,
+    transMat: transMultiMaterial,
 };
 
 export default {

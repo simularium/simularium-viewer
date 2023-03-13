@@ -822,7 +822,10 @@ class VisGeometry {
                 // the first distance less than.
                 if (agentDistance < this.lodDistanceStops[j]) {
                     const index = j + this.lodBias;
-                    const instancedPdb = pdbModel.getLOD(index);
+                    const instancedPdb = pdbModel.getLOD(
+                        index,
+                        visAgent.transparent
+                    );
 
                     instancedPdb.addInstance(
                         agentData.x,
@@ -934,17 +937,19 @@ class VisGeometry {
                     const pdbEntry = entry as PDBGeometry;
                     for (let i = 0; i < pdbEntry.geometry.numLODs(); ++i) {
                         const lod = pdbEntry.geometry.getLOD(i);
+                        const transparentLod = pdbEntry.geometry.getLOD(
+                            i,
+                            true
+                        );
                         if (lod.instanceCount() > 0) {
-                            if (false) {
-                                // TODO figure out transparency
-                                transparentMeshTypes.push(lod);
-                                this.transparentInstancedMeshGroup.add(
-                                    lod.getMesh()
-                                );
-                            } else {
-                                meshTypes.push(lod);
-                                this.instancedMeshGroup.add(lod.getMesh());
-                            }
+                            meshTypes.push(lod);
+                            this.instancedMeshGroup.add(lod.getMesh());
+                        }
+                        if (transparentLod.instanceCount() > 0) {
+                            transparentMeshTypes.push(transparentLod);
+                            this.transparentInstancedMeshGroup.add(
+                                transparentLod.getMesh()
+                            );
                         }
                     }
                 }

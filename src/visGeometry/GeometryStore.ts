@@ -314,6 +314,10 @@ class GeometryStore {
                     GeometryStore.sphereGeometry,
                     meshName
                 );
+                meshRequest.transparentInstances.replaceGeometry(
+                    GeometryStore.sphereGeometry,
+                    meshName
+                );
             }
         } else {
             // if this mesh is not yet registered, then start off as a sphere
@@ -355,6 +359,10 @@ class GeometryStore {
             // now replace the geometry in the existing mesh registry entry
             meshLoadRequest.mesh = object;
             meshLoadRequest.instances.replaceGeometry(geom, meshName);
+            meshLoadRequest.transparentInstances.replaceGeometry(
+                geom,
+                meshName
+            );
         } else {
             console.error(
                 "Mesh loaded but could not find instanceable geometry in it"

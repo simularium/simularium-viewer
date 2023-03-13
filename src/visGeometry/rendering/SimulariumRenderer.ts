@@ -432,8 +432,8 @@ class SimulariumRenderer {
         // depth buffer should be not written to or tested again after this.
 
         // 1 draw molecules into G buffers
-        this.instancedMeshGroup.visibility = false;
-        this.transparentInstancedMeshGroup.visibility = false;
+        this.instancedMeshGroup.visible = false;
+        this.transparentInstancedMeshGroup.visible = false;
         this.gbufferPass.render(renderer, scene, camera, this.gbuffer);
 
         // 2 render ssao
@@ -491,8 +491,8 @@ class SimulariumRenderer {
         );
 
         // TODO make this a full-blown render pass
-        this.instancedMeshGroup.visibility = false;
-        this.transparentInstancedMeshGroup.visibility = true;
+        this.instancedMeshGroup.visible = false;
+        this.transparentInstancedMeshGroup.visible = true;
         for (let i = 0; i < this.transparentMeshTypes.length; ++i) {
             setRenderPass(
                 this.transparentMeshTypes[i].getMesh(),
@@ -500,8 +500,10 @@ class SimulariumRenderer {
                 true
             );
         }
+        renderer.autoClear = false;
         renderer.setRenderTarget(target);
         renderer.render(scene, camera);
+        renderer.autoClear = true;
 
         // DEBUGGING some of the intermediate buffers:
         //this.drawBufferPass.setScale(1.0 / 34.0, 1.0 / 6.0, 0, 1);

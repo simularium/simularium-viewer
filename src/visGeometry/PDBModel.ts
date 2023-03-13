@@ -63,6 +63,7 @@ type LevelOfDetail = {
     geometry: BufferGeometry;
     vertices: Float32Array;
     instances: InstancedMesh;
+    transparentInstances: InstancedMesh;
 };
 
 class PDBModel {
@@ -320,6 +321,12 @@ class PDBModel {
                 this.name + "_LOD0",
                 0
             ),
+            transparentInstances: new InstancedMesh(
+                InstanceType.POINTS,
+                geometry0,
+                this.name + "_LOD0_TRANS",
+                0
+            ),
         });
         // start at 1, and add the rest
         for (let i = 1; i < this.lodSizes.length; ++i) {
@@ -332,6 +339,12 @@ class PDBModel {
                     InstanceType.POINTS,
                     geometry,
                     this.name + "_LOD" + i,
+                    0
+                ),
+                transparentInstances: new InstancedMesh(
+                    InstanceType.POINTS,
+                    geometry,
+                    this.name + "_LOD" + i + "_TRANS",
                     0
                 ),
             });
@@ -365,6 +378,7 @@ class PDBModel {
             // if old LOD existed we can dispose now.
             if (this.lods[lodIndex]) {
                 this.lods[lodIndex].instances.dispose();
+                this.lods[lodIndex].transparentInstances.dispose();
             }
             const geometry = this.createGPUBuffer(retData[i]);
             this.lods[lodIndex] = {
@@ -376,6 +390,12 @@ class PDBModel {
                     this.name + "_LOD" + lodIndex,
                     0
                 ),
+                transparentInstances: new InstancedMesh(
+                    InstanceType.POINTS,
+                    geometry,
+                    this.name + "_LOD" + lodIndex + "_TRANS",
+                    0
+                ),
             };
         }
     }
@@ -384,22 +404,25 @@ class PDBModel {
         return this.lods.length;
     }
 
-    public getLOD(index: number): InstancedMesh {
+    public getLOD(index: number, transparent = false): InstancedMesh {
         if (index < 0 || index >= this.lods.length) {
             index = this.lods.length - 1;
         }
-        return this.lods[index].instances;
+        const lod = this.lods[index];
+        return transparent ? lod.transparentInstances : lod.instances;
     }
 
     public beginUpdate(): void {
         for (let i = 0; i < this.lods.length; ++i) {
             this.lods[i].instances.beginUpdate();
+            this.lods[i].transparentInstances.beginUpdate();
         }
     }
 
     public endUpdate(): void {
         for (let i = 0; i < this.lods.length; ++i) {
             this.lods[i].instances.endUpdate();
+            this.lods[i].transparentInstances.endUpdate();
         }
     }
 

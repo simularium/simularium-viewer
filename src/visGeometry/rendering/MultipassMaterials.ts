@@ -15,9 +15,15 @@ export interface MRTShaders {
 
 export function updateProjectionMatrix(s: MRTShaders, m: Matrix4): void {
     s.mat.uniforms.projectionMatrix.value = m;
+    if (s.transMat) {
+        s.transMat.uniforms.projectionMatrix.value = m;
+    }
 }
 export function updateResolution(s: MRTShaders, x: number, y: number): void {
     s.mat.uniforms.iResolution.value = new Vector2(x, y);
+    if (s.transMat) {
+        s.transMat.uniforms.iResolution.value = new Vector2(x, y);
+    }
 }
 
 export function setRenderPass(
