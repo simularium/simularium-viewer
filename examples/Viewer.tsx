@@ -30,6 +30,7 @@ import {
 import ConversionForm from "./ConversionForm";
 import MetaballSimulator from "./MetaballSimulator";
 import { TrajectoryType } from "../src/constants";
+import { SelectionEntry } from "../type-declarations/simularium/SelectionInterface";
 
 const netConnectionSettings = {
     // to test local server: (also may have to change wss to ws in the url)
@@ -68,7 +69,7 @@ const agentColors = [
 ];
 
 interface ViewerState {
-    renderStyle: RenderStyle;
+    renderStyle: typeof RenderStyle;
     pauseOn: number;
     particleTypeNames: string[];
     particleTypeTags: string[];
@@ -119,7 +120,7 @@ const simulariumController = new SimulariumController({});
 let currentFrame = 0;
 let currentTime = 0;
 
-const initialState = {
+const initialState: ViewerState = {
     renderStyle: RenderStyle.WEBGL2_PREFERRED,
     pauseOn: -1,
     particleTypeNames: [],
@@ -137,6 +138,7 @@ const initialState = {
     selectionStateInfo: {
         highlightedAgents: [],
         hiddenAgents: [],
+        transparentAgents: [],
     },
     filePending: null,
 };
@@ -355,7 +357,7 @@ class Viewer extends React.Component<{}, ViewerState> {
 
     public turnAgentsOnOff(nameToToggle: string) {
         let currentHiddenAgents = this.state.selectionStateInfo.hiddenAgents;
-        let nextHiddenAgents = [];
+        let nextHiddenAgents: SelectionEntry[] = [];
         if (currentHiddenAgents.some((a) => a.name === nameToToggle)) {
             nextHiddenAgents = currentHiddenAgents.filter(
                 (hiddenAgent) => hiddenAgent.name !== nameToToggle
@@ -378,7 +380,7 @@ class Viewer extends React.Component<{}, ViewerState> {
     public turnAgentHighlightsOnOff(nameToToggle: string) {
         let currentHighlightedAgents =
             this.state.selectionStateInfo.highlightedAgents;
-        let nextHighlightedAgents = [];
+        let nextHighlightedAgents: SelectionEntry[] = [];
         if (currentHighlightedAgents.some((a) => a.name === nameToToggle)) {
             nextHighlightedAgents = currentHighlightedAgents.filter(
                 (hiddenAgent) => hiddenAgent.name !== nameToToggle
@@ -394,6 +396,29 @@ class Viewer extends React.Component<{}, ViewerState> {
             selectionStateInfo: {
                 ...this.state.selectionStateInfo,
                 highlightedAgents: nextHighlightedAgents,
+            },
+        });
+    }
+
+    public turnAgentTransparencyOnOff(nameToToggle: string) {
+        let currentTransparentAgents =
+            this.state.selectionStateInfo.transparentAgents;
+        let nextTransparentAgents: SelectionEntry[] = [];
+        if (currentTransparentAgents.some((a) => a.name === nameToToggle)) {
+            nextTransparentAgents = currentTransparentAgents.filter(
+                (hiddenAgent) => hiddenAgent.name !== nameToToggle
+            );
+        } else {
+            nextTransparentAgents = [
+                ...currentTransparentAgents,
+                { name: nameToToggle, tags: [] },
+            ];
+        }
+        this.setState({
+            ...this.state,
+            selectionStateInfo: {
+                ...this.state.selectionStateInfo,
+                transparentAgents: nextTransparentAgents,
             },
         });
     }
@@ -644,6 +669,16 @@ class Viewer extends React.Component<{}, ViewerState> {
                                 type="checkbox"
                                 onClick={(event) =>
                                     this.turnAgentHighlightsOnOff(
+                                        (event.target as HTMLInputElement).value
+                                    )
+                                }
+                                value={id}
+                                defaultChecked={false}
+                            />
+                            <input
+                                type="checkbox"
+                                onClick={(event) =>
+                                    this.turnAgentTransparencyOnOff(
                                         (event.target as HTMLInputElement).value
                                     )
                                 }

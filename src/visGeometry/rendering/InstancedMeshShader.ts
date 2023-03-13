@@ -78,6 +78,22 @@ void main() {
 }
 `;
 
+const transparentFragmentShader = `
+precision highp float;
+
+in vec3 IN_viewPos;
+in vec3 IN_viewNormal;
+in vec2 IN_instanceAndTypeId;
+
+layout(location = 0) out vec4 gOutputColor;
+
+uniform mat4 projectionMatrix;
+
+void main() {
+    gOutputColor = vec4( 0.0, 1.0, 0.0, 0.5);
+}
+`;
+
 const multiMaterial = new RawShaderMaterial({
     glslVersion: GLSL3,
     vertexShader: vertexShader,
@@ -92,8 +108,23 @@ const multiMaterial = new RawShaderMaterial({
     },
 });
 
+const transMultiMaterial = new RawShaderMaterial({
+    glslVersion: GLSL3,
+    vertexShader: vertexShader,
+    fragmentShader: transparentFragmentShader,
+    side: FrontSide,
+    transparent: true,
+    defines: {},
+    uniforms: {
+        modelViewMatrix: { value: new Matrix4() },
+        normalMatrix: { value: new Matrix3() },
+        projectionMatrix: { value: new Matrix4() },
+    },
+});
+
 const shaderSet: MRTShaders = {
     mat: multiMaterial,
+    transMat: transMultiMaterial,
 };
 
 export default {

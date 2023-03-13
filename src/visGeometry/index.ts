@@ -108,6 +108,7 @@ class VisGeometry {
     public fixLightsToCamera: boolean;
     public highlightedIds: number[];
     public hiddenIds: number[];
+    public transparentIds: number[];
     public agentPaths: Map<number, AgentPath>;
     public mlogger: ILogger;
     // this is the threejs object that issues all the webgl calls
@@ -132,6 +133,7 @@ class VisGeometry {
     public lightsGroup: Group;
     public agentPathGroup: Group;
     public instancedMeshGroup: Group;
+    public transparentInstancedMeshGroup: Group;
     public idColorMapping: Map<number, number>;
     private isIdColorMappingSet: boolean;
     private supportsWebGL2Rendering: boolean;
@@ -175,6 +177,7 @@ class VisGeometry {
         this.fixLightsToCamera = true;
         this.highlightedIds = [];
         this.hiddenIds = [];
+        this.transparentIds = [];
         this.needToCenterCamera = false;
         this.needToReOrientCamera = false;
         this.rotateDistance = DEFAULT_CAMERA_Z_POSITION;
@@ -187,6 +190,7 @@ class VisGeometry {
         this.lightsGroup = new Group();
         this.agentPathGroup = new Group();
         this.instancedMeshGroup = new Group();
+        this.transparentInstancedMeshGroup = new Group();
 
         this.setupScene();
 
@@ -439,12 +443,17 @@ class VisGeometry {
     private constructInstancedFibers() {
         this.fibers.clear();
         removeByName(this.instancedMeshGroup, InstancedFiberGroup.GROUP_NAME);
+        removeByName(
+            this.transparentInstancedMeshGroup,
+            InstancedFiberGroup.GROUP_NAME
+        );
 
         // tell instanced geometry what representation to use.
         if (this.renderStyle === RenderStyle.WEBGL2_PREFERRED) {
             this.fibers = new InstancedFiberGroup();
         }
 
+        // TODO how to handle sorting into transparent group?
         this.instancedMeshGroup.add(this.fibers.getGroup());
     }
 
@@ -620,6 +629,11 @@ class VisGeometry {
         this.updateScene(this.currentSceneAgents);
     }
 
+    public setTransparentByIds(ids: number[]): void {
+        this.transparentIds = ids;
+        this.updateScene(this.currentSceneAgents);
+    }
+
     public dehighlight(): void {
         this.setHighlightByIds([]);
     }
@@ -691,6 +705,10 @@ class VisGeometry {
         this.instancedMeshGroup = new Group();
         this.instancedMeshGroup.name = "instanced meshes for agents";
         this.scene.add(this.instancedMeshGroup);
+        this.transparentInstancedMeshGroup = new Group();
+        this.transparentInstancedMeshGroup.name =
+            "instanced meshes for transparent agents";
+        this.scene.add(this.transparentInstancedMeshGroup);
 
         this.camera = new PerspectiveCamera(
             75,
@@ -861,9 +879,19 @@ class VisGeometry {
             );
         }
 
-        // remove all children of instancedMeshGroup.  we will re-add them.
+        // remove all children of instancedMeshGroup and transparentInstancedMeshGroup.
+        // we will re-add them.
         for (let i = this.instancedMeshGroup.children.length - 1; i >= 0; i--) {
             this.instancedMeshGroup.remove(this.instancedMeshGroup.children[i]);
+        }
+        for (
+            let i = this.transparentInstancedMeshGroup.children.length - 1;
+            i >= 0;
+            i--
+        ) {
+            this.transparentInstancedMeshGroup.remove(
+                this.transparentInstancedMeshGroup.children[i]
+            );
         }
 
         // re-add fibers immediately
@@ -880,6 +908,7 @@ class VisGeometry {
 
             // collect up the meshes that have > 0 instances
             const meshTypes: GeometryInstanceContainer[] = [];
+            const transparentMeshTypes: GeometryInstanceContainer[] = [];
             for (const entry of this.geometryStore.registry.values()) {
                 const { displayType } = entry;
                 if (displayType !== GeometryDisplayType.PDB) {
@@ -890,13 +919,32 @@ class VisGeometry {
                             meshEntry.geometry.instances.getMesh()
                         );
                     }
+                    if (
+                        meshEntry.geometry.transparentInstances.instanceCount() >
+                        0
+                    ) {
+                        transparentMeshTypes.push(
+                            meshEntry.geometry.transparentInstances
+                        );
+                        this.transparentInstancedMeshGroup.add(
+                            meshEntry.geometry.transparentInstances.getMesh()
+                        );
+                    }
                 } else {
                     const pdbEntry = entry as PDBGeometry;
                     for (let i = 0; i < pdbEntry.geometry.numLODs(); ++i) {
                         const lod = pdbEntry.geometry.getLOD(i);
                         if (lod.instanceCount() > 0) {
-                            meshTypes.push(lod);
-                            this.instancedMeshGroup.add(lod.getMesh());
+                            if (false) {
+                                // TODO figure out transparency
+                                transparentMeshTypes.push(lod);
+                                this.transparentInstancedMeshGroup.add(
+                                    lod.getMesh()
+                                );
+                            } else {
+                                meshTypes.push(lod);
+                                this.instancedMeshGroup.add(lod.getMesh());
+                            }
                         }
                     }
                 }
@@ -904,8 +952,10 @@ class VisGeometry {
 
             this.renderer.setMeshGroups(
                 this.instancedMeshGroup,
+                this.transparentInstancedMeshGroup,
                 this.fibers,
-                meshTypes
+                meshTypes,
+                transparentMeshTypes
             );
             this.renderer.setFollowedInstance(this.followObjectId);
             this.renderer.setNearFar(this.boxNearZ, this.boxFarZ);
@@ -927,8 +977,10 @@ class VisGeometry {
             this.threejsrenderer.autoClear = false;
             // hide everything except the wireframe and paths, and render with the standard renderer
             this.instancedMeshGroup.visible = false;
+            this.transparentInstancedMeshGroup.visible = false;
             this.threejsrenderer.render(this.scene, this.camera);
             this.instancedMeshGroup.visible = true;
+            this.transparentInstancedMeshGroup.visible = true;
             this.threejsrenderer.autoClear = true;
 
             this.scene.autoUpdate = true;
@@ -1418,19 +1470,35 @@ class VisGeometry {
             );
         } else {
             if (meshEntry && meshEntry.instances) {
-                meshEntry.instances.addInstance(
-                    agentData.x,
-                    agentData.y,
-                    agentData.z,
-                    radius * scale,
-                    agentData.xrot,
-                    agentData.yrot,
-                    agentData.zrot,
-                    visAgent.agentData.instanceId,
-                    visAgent.signedTypeId(),
-                    1,
-                    agentData.subpoints
-                );
+                if (visAgent.transparent) {
+                    meshEntry.transparentInstances.addInstance(
+                        agentData.x,
+                        agentData.y,
+                        agentData.z,
+                        radius * scale,
+                        agentData.xrot,
+                        agentData.yrot,
+                        agentData.zrot,
+                        visAgent.agentData.instanceId,
+                        visAgent.signedTypeId(),
+                        1,
+                        agentData.subpoints
+                    );
+                } else {
+                    meshEntry.instances.addInstance(
+                        agentData.x,
+                        agentData.y,
+                        agentData.z,
+                        radius * scale,
+                        agentData.xrot,
+                        agentData.yrot,
+                        agentData.zrot,
+                        visAgent.agentData.instanceId,
+                        visAgent.signedTypeId(),
+                        1,
+                        agentData.subpoints
+                    );
+                }
             }
         }
     }
@@ -1486,6 +1554,7 @@ class VisGeometry {
         this.fibers.beginUpdate();
         this.geometryStore.forEachMesh((agentGeo) => {
             agentGeo.geometry.instances.beginUpdate();
+            agentGeo.geometry.transparentInstances.beginUpdate();
         });
         // these lists must be emptied on every scene update.
         this.agentsWithPdbsToDraw = [];
@@ -1553,6 +1622,11 @@ class VisGeometry {
                 return;
             }
 
+            const isTransparent = this.transparentIds.includes(
+                visAgent.agentData.type
+            );
+            visAgent.setTransparent(isTransparent);
+
             visAgent.setColor(
                 this.getColorForTypeId(typeId),
                 this.getColorIndexForTypeId(typeId)
@@ -1604,6 +1678,7 @@ class VisGeometry {
         this.fibers.endUpdate();
         this.geometryStore.forEachMesh((agentGeo) => {
             agentGeo.geometry.instances.endUpdate();
+            agentGeo.geometry.transparentInstances.endUpdate();
         });
         this.legacyRenderer.endUpdate(this.scene);
     }

@@ -91,6 +91,12 @@ class GeometryStore {
                     DEFAULT_MESH_NAME,
                     1
                 ),
+                transparentInstances: new InstancedMesh(
+                    InstanceType.MESH,
+                    GeometryStore.sphereGeometry,
+                    DEFAULT_MESH_NAME,
+                    1
+                ),
             },
         });
         if (loggerLevel) {
@@ -107,6 +113,12 @@ class GeometryStore {
                 mesh: new Mesh(GeometryStore.sphereGeometry),
                 cancelled: false,
                 instances: new InstancedMesh(
+                    InstanceType.MESH,
+                    GeometryStore.sphereGeometry,
+                    DEFAULT_MESH_NAME,
+                    1
+                ),
+                transparentInstances: new InstancedMesh(
                     InstanceType.MESH,
                     GeometryStore.sphereGeometry,
                     DEFAULT_MESH_NAME,
@@ -180,6 +192,12 @@ class GeometryStore {
                 meshName,
                 1
             ),
+            transparentInstances: new InstancedMesh(
+                InstanceType.MESH,
+                GeometryStore.sphereGeometry,
+                meshName,
+                1
+            ),
         };
     }
 
@@ -188,6 +206,12 @@ class GeometryStore {
             mesh: new Mesh(GeometryStore.cubeGeometry),
             cancelled: false,
             instances: new InstancedMesh(
+                InstanceType.MESH,
+                GeometryStore.cubeGeometry,
+                meshName,
+                1
+            ),
+            transparentInstances: new InstancedMesh(
                 InstanceType.MESH,
                 GeometryStore.cubeGeometry,
                 meshName,
@@ -469,6 +493,7 @@ class GeometryStore {
                     mesh: null,
                     cancelled: false,
                     instances: new MetaballMesh(lookupKey),
+                    transparentInstances: new MetaballMesh(lookupKey),
                 } as MeshLoadRequest;
 
                 this.setGeometryInRegistry(lookupKey, geometry, displayType);

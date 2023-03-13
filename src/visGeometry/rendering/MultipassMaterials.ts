@@ -10,6 +10,7 @@ import {
 
 export interface MRTShaders {
     mat: RawShaderMaterial;
+    transMat?: RawShaderMaterial;
 }
 
 export function updateProjectionMatrix(s: MRTShaders, m: Matrix4): void {
@@ -21,9 +22,10 @@ export function updateResolution(s: MRTShaders, x: number, y: number): void {
 
 export function setRenderPass(
     obj: Mesh | Points,
-    shaderSet: MRTShaders
+    shaderSet: MRTShaders,
+    transparent = false
 ): Material {
-    obj.material = shaderSet.mat;
+    obj.material = transparent ? shaderSet.transMat : shaderSet.mat;
 }
 
 export function setSceneRenderPass(

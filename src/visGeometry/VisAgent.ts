@@ -20,6 +20,7 @@ export default class VisAgent {
     public followed: boolean;
     public highlighted: boolean;
     public hidden: boolean;
+    public transparent: boolean;
 
     public constructor(name: string) {
         this.agentData = {
@@ -42,6 +43,7 @@ export default class VisAgent {
         this.followed = false;
         this.hidden = false;
         this.highlighted = false;
+        this.transparent = false;
 
         this.fiberCurve = undefined;
     }
@@ -82,6 +84,10 @@ export default class VisAgent {
         if (highlighted !== this.highlighted) {
             this.highlighted = highlighted;
         }
+    }
+
+    public setTransparent(transparent: boolean): void {
+        this.transparent = transparent;
     }
 
     public signedTypeId(): number {

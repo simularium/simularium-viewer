@@ -21,6 +21,7 @@ import {
     PerspectiveCamera,
 } from "three";
 import { Pane } from "tweakpane";
+import { setRenderPass } from "./MultipassMaterials";
 
 const AGENTBUFFER = 0;
 const NORMALBUFFER = 1;
@@ -76,6 +77,9 @@ class SimulariumRenderer {
     public ssaoBufferBlurred: WebGLRenderTarget;
     public ssaoBufferBlurred2: WebGLRenderTarget;
     private parameters: SimulariumRenderParameters;
+    private instancedMeshGroup: Group;
+    private transparentInstancedMeshGroup: Group;
+    private transparentMeshTypes: GeometryInstanceContainer[];
     private boundsNear: number;
     private boundsFar: number;
 
@@ -144,6 +148,8 @@ class SimulariumRenderer {
         this.gbuffer.texture[POSITIONBUFFER].name = "position";
 
         this.hitTestHelper = new HitTestHelper();
+
+        this.transparentMeshTypes = [];
 
         // intermediate blurring buffer
         this.blurIntermediateBuffer = new WebGLRenderTarget(2, 2, {
@@ -344,9 +350,14 @@ class SimulariumRenderer {
 
     public setMeshGroups(
         instancedMeshGroup: Group,
+        transparentInstancedMeshGroup: Group,
         fibers: InstancedFiberGroup,
-        meshTypes: GeometryInstanceContainer[]
+        meshTypes: GeometryInstanceContainer[],
+        transparentMeshTypes: GeometryInstanceContainer[]
     ): void {
+        this.instancedMeshGroup = instancedMeshGroup;
+        this.transparentInstancedMeshGroup = transparentInstancedMeshGroup;
+        this.transparentMeshTypes = transparentMeshTypes;
         this.gbufferPass.setMeshGroups(instancedMeshGroup, fibers, meshTypes);
     }
 
@@ -421,6 +432,8 @@ class SimulariumRenderer {
         // depth buffer should be not written to or tested again after this.
 
         // 1 draw molecules into G buffers
+        this.instancedMeshGroup.visibility = false;
+        this.transparentInstancedMeshGroup.visibility = false;
         this.gbufferPass.render(renderer, scene, camera, this.gbuffer);
 
         // 2 render ssao
@@ -476,6 +489,19 @@ class SimulariumRenderer {
             this.gbuffer.texture[AGENTBUFFER],
             this.gbuffer.texture[NORMALBUFFER]
         );
+
+        // TODO make this a full-blown render pass
+        this.instancedMeshGroup.visibility = false;
+        this.transparentInstancedMeshGroup.visibility = true;
+        for (let i = 0; i < this.transparentMeshTypes.length; ++i) {
+            setRenderPass(
+                this.transparentMeshTypes[i].getMesh(),
+                this.transparentMeshTypes[i].getShaders(),
+                true
+            );
+        }
+        renderer.setRenderTarget(target);
+        renderer.render(scene, camera);
 
         // DEBUGGING some of the intermediate buffers:
         //this.drawBufferPass.setScale(1.0 / 34.0, 1.0 / 6.0, 0, 1);

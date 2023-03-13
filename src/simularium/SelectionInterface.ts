@@ -18,6 +18,7 @@ export interface SelectionEntry {
 export interface SelectionStateInfo {
     highlightedAgents: SelectionEntry[];
     hiddenAgents: SelectionEntry[];
+    transparentAgents: SelectionEntry[];
 }
 
 interface DisplayStateEntry {
@@ -207,6 +208,23 @@ class SelectionInterface {
      */
     public getHiddenIds(info: SelectionStateInfo): number[] {
         const requests = info.hiddenAgents;
+        let indices: number[] = [];
+
+        requests.forEach((r) => {
+            const name = r.name;
+            const tags = r.tags;
+            indices = [...indices, ...this.getIds(name, tags)];
+        });
+
+        return indices;
+    }
+
+    /*
+     * If an entry has a name specified in the selection state info
+     * or a tag specified, it will be considered transparent
+     */
+    public getTransparentIds(info: SelectionStateInfo): number[] {
+        const requests = info.transparentAgents;
         let indices: number[] = [];
 
         requests.forEach((r) => {

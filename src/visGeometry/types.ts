@@ -28,6 +28,7 @@ export interface MeshLoadRequest {
     mesh: Object3D;
     cancelled: boolean;
     instances: GeometryInstanceContainer;
+    transparentInstances: GeometryInstanceContainer;
 }
 
 export enum GeometryDisplayType {

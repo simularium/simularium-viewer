@@ -316,6 +316,17 @@ class Viewport extends React.Component<
                     this.selectionInterface.getHiddenIds(selectionStateInfo);
                 this.visGeometry.setVisibleByIds(hiddenIds);
             }
+            if (
+                !isEqual(
+                    selectionStateInfo.transparentAgents,
+                    prevProps.selectionStateInfo.transparentAgents
+                )
+            ) {
+                const transparentIds = this.selectionInterface.getTransparentIds(
+                    selectionStateInfo
+                );
+                this.visGeometry.setTransparentByIds(transparentIds);
+            }
         }
 
         // note that if the system does not support the molecular render style, then
