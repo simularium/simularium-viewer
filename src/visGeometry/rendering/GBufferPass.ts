@@ -37,12 +37,14 @@ class GBufferPass {
     public scene: Scene;
 
     public instancedMeshGroup: Group;
+    public transparentInstancedMeshGroup: Group;
     // instancedMeshGroup consists of fibers and meshes:
     public fibers: InstancedFiberGroup;
     public meshTypes: GeometryInstanceContainer[];
 
     public constructor() {
         this.instancedMeshGroup = new Group();
+        this.transparentInstancedMeshGroup = new Group();
         this.fibers = new InstancedFiberGroup();
         this.meshTypes = [];
 
@@ -53,10 +55,12 @@ class GBufferPass {
 
     public setMeshGroups(
         instancedMeshGroup: Group,
+        transparentInstancedMeshGroup: Group,
         fibers: InstancedFiberGroup,
         meshes: GeometryInstanceContainer[]
     ): void {
         this.instancedMeshGroup = instancedMeshGroup;
+        this.transparentInstancedMeshGroup = transparentInstancedMeshGroup;
         this.fibers = fibers;
         this.meshTypes = meshes;
     }
@@ -105,6 +109,7 @@ class GBufferPass {
         if (DO_INSTANCED) {
             // draw instanced things
             this.instancedMeshGroup.visible = true;
+            this.transparentInstancedMeshGroup.visible = false;
 
             this.fibers.setRenderPass();
             for (let i = 0; i < this.meshTypes.length; ++i) {

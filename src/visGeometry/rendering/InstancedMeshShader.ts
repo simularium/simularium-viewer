@@ -97,16 +97,16 @@ void main() {
 function makeMultiMaterial(fragmentShader: string, transparent: boolean) {
     return new RawShaderMaterial({
         glslVersion: GLSL3,
-        vertexShader,
-        fragmentShader,
-        side: FrontSide,
-        transparent,
         defines: {},
         uniforms: {
             modelViewMatrix: { value: new Matrix4() },
             normalMatrix: { value: new Matrix3() },
             projectionMatrix: { value: new Matrix4() },
         },
+        side: FrontSide,
+        vertexShader,
+        fragmentShader,
+        transparent,
     });
 }
 

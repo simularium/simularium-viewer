@@ -4,6 +4,7 @@ import BlurPass from "./GaussianBlur";
 import CompositePass from "./CompositePass";
 import ContourPass from "./ContourPass";
 import DrawBufferPass from "./DrawBufferPass";
+import TransparencyPass from "./TransparencyPass";
 import HitTestHelper from "./HitTestHelper";
 import { InstancedFiberGroup } from "./InstancedFiber";
 import { GeometryInstanceContainer } from "../types";
@@ -68,7 +69,8 @@ class SimulariumRenderer {
     public blur2Pass: BlurPass;
     public compositePass: CompositePass;
     public contourPass: ContourPass;
-    public drawBufferPass: DrawBufferPass;
+    public transparencyPass: TransparencyPass;
+    public drawBufferPass: DrawBufferPass; // unused?
     public gbuffer: WebGLMultipleRenderTargets;
     private hitTestHelper: HitTestHelper;
     public blurIntermediateBuffer: WebGLRenderTarget;
@@ -131,6 +133,7 @@ class SimulariumRenderer {
             z: this.parameters.bgluminanceoffset,
         });
         this.contourPass = new ContourPass();
+        this.transparencyPass = new TransparencyPass();
         this.drawBufferPass = new DrawBufferPass();
 
         // buffers:
@@ -358,7 +361,17 @@ class SimulariumRenderer {
         this.instancedMeshGroup = instancedMeshGroup;
         this.transparentInstancedMeshGroup = transparentInstancedMeshGroup;
         this.transparentMeshTypes = transparentMeshTypes;
-        this.gbufferPass.setMeshGroups(instancedMeshGroup, fibers, meshTypes);
+        this.gbufferPass.setMeshGroups(
+            instancedMeshGroup,
+            transparentInstancedMeshGroup,
+            fibers,
+            meshTypes
+        );
+        this.transparencyPass.setMeshGroups(
+            instancedMeshGroup,
+            transparentInstancedMeshGroup,
+            transparentMeshTypes
+        );
     }
 
     public resize(x: number, y: number): void {
@@ -432,8 +445,6 @@ class SimulariumRenderer {
         // depth buffer should be not written to or tested again after this.
 
         // 1 draw molecules into G buffers
-        this.instancedMeshGroup.visible = false;
-        this.transparentInstancedMeshGroup.visible = false;
         this.gbufferPass.render(renderer, scene, camera, this.gbuffer);
 
         // 2 render ssao
@@ -490,20 +501,7 @@ class SimulariumRenderer {
             this.gbuffer.texture[NORMALBUFFER]
         );
 
-        // TODO make this a full-blown render pass
-        this.instancedMeshGroup.visible = false;
-        this.transparentInstancedMeshGroup.visible = true;
-        for (let i = 0; i < this.transparentMeshTypes.length; ++i) {
-            setRenderPass(
-                this.transparentMeshTypes[i].getMesh(),
-                this.transparentMeshTypes[i].getShaders(),
-                true
-            );
-        }
-        renderer.autoClear = false;
-        renderer.setRenderTarget(target);
-        renderer.render(scene, camera);
-        renderer.autoClear = true;
+        this.transparencyPass.render(renderer, scene, camera, target);
 
         // DEBUGGING some of the intermediate buffers:
         //this.drawBufferPass.setScale(1.0 / 34.0, 1.0 / 6.0, 0, 1);
