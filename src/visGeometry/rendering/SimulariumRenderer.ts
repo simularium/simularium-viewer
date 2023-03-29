@@ -22,7 +22,6 @@ import {
     PerspectiveCamera,
 } from "three";
 import { Pane } from "tweakpane";
-import { setRenderPass } from "./MultipassMaterials";
 
 const AGENTBUFFER = 0;
 const NORMALBUFFER = 1;
