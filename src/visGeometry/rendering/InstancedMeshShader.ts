@@ -94,33 +94,24 @@ void main() {
 }
 `;
 
-const multiMaterial = new RawShaderMaterial({
-    glslVersion: GLSL3,
-    vertexShader: vertexShader,
-    fragmentShader: fragmentShader,
-    side: FrontSide,
-    transparent: false,
-    defines: {},
-    uniforms: {
-        modelViewMatrix: { value: new Matrix4() },
-        normalMatrix: { value: new Matrix3() },
-        projectionMatrix: { value: new Matrix4() },
-    },
-});
+function makeMultiMaterial(fragmentShader: string, transparent: boolean) {
+    return new RawShaderMaterial({
+        glslVersion: GLSL3,
+        vertexShader,
+        fragmentShader,
+        side: FrontSide,
+        transparent,
+        defines: {},
+        uniforms: {
+            modelViewMatrix: { value: new Matrix4() },
+            normalMatrix: { value: new Matrix3() },
+            projectionMatrix: { value: new Matrix4() },
+        },
+    });
+}
 
-const transMultiMaterial = new RawShaderMaterial({
-    glslVersion: GLSL3,
-    vertexShader: vertexShader,
-    fragmentShader: transparentFragmentShader,
-    side: FrontSide,
-    transparent: true,
-    defines: {},
-    uniforms: {
-        modelViewMatrix: { value: new Matrix4() },
-        normalMatrix: { value: new Matrix3() },
-        projectionMatrix: { value: new Matrix4() },
-    },
-});
+const multiMaterial = makeMultiMaterial(fragmentShader, false);
+const transMultiMaterial = makeMultiMaterial(transparentFragmentShader, true);
 
 const shaderSet: MRTShaders = {
     mat: multiMaterial,

@@ -40,7 +40,7 @@ class CompositePass {
             },
             fragmentShader: `
             in vec2 vUv;
-            
+
             uniform sampler2D colorTex;
             uniform sampler2D ssaoTex1;
             uniform sampler2D ssaoTex2;
