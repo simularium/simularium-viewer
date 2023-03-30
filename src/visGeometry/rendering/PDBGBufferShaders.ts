@@ -119,9 +119,6 @@ void main()	{
     float lensqr = dot(uv, uv);
     if (lensqr > 1.0) discard;
 
-    vec3 normal = vec3(uv.x, uv.y, sqrt(1.0 - lensqr));
-    normal = normalize(normal);
-
     vec3 fragViewPos = IN_viewPos;
     // adding pushes Z back. so "center" of sphere is "frontmost"
     fragViewPos.z += IN_radius * scale * sqrt(1.0 - lensqr);
