@@ -91,10 +91,10 @@ uniform mat4 projectionMatrix;
 uniform sampler2D colorsBuffer;
 
 void main() {
-    int agentColorIndex = int(round(abs(IN_instanceAndTypeId.x))-1.0);
+    int agentColorIndex = int(round(abs(IN_instanceAndTypeId.y))-1.0);
     ivec2 ncols = textureSize(colorsBuffer, 0);
     vec4 col = texelFetch(colorsBuffer, ivec2(agentColorIndex % ncols.x, 0), 0);
-    gOutputColor = vec4(texelFetch(colorsBuffer, ivec2(0, 0), 0).xyz, 0.5);
+    gOutputColor = vec4(col.xyz, 0.5);
 }
 `;
 

@@ -29,7 +29,7 @@ export function updateResolution(s: MRTShaders, x: number, y: number): void {
 export function updateColors(s: MRTShaders, tex: DataTexture): void {
     s.mat.uniforms.colorsBuffer.value = tex;
     if (s.transMat) {
-        s.transMat.uniforms.colorsBuffer = tex;
+        s.transMat.uniforms.colorsBuffer.value = tex;
     }
 }
 
