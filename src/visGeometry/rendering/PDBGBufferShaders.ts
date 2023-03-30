@@ -109,6 +109,9 @@ uniform vec2 iResolution;
 uniform float scale;
 uniform mat4 projectionMatrix;
 
+uniform sampler2D colorsBuffer;
+uniform float opacity;
+
 void main()	{
     // gl_PointCoord spans (0,0)..(1,1)
     // uv spans (-1,-1)..(1,1)
@@ -133,8 +136,12 @@ void main()	{
 
     // uncomment the following line to test LOD.  IN_radius is a measure of lod.
     //gAgentInfo = vec4(IN_radius*4.0, IN_instanceAndTypeId.x, fragViewPos.z, fragPosDepth);
+    
+    int agentColorIndex = int(round(abs(IN_instanceAndTypeId.y))-1.0);
+    ivec2 ncols = textureSize(colorsBuffer, 0);
+    vec4 col = texelFetch(colorsBuffer, ivec2(agentColorIndex % ncols.x, 0), 0);
 
-    gOutputColor = vec4(0.0, 1.0, 0.0, 0.1);
+    gOutputColor = vec4(col.xyz, opacity);
 }
 `;
 
@@ -146,6 +153,8 @@ function makeMultiMaterial(fragmentShader: string, transparent: boolean) {
             scale: { value: 1.0 },
             modelViewMatrix: { value: new Matrix4() },
             projectionMatrix: { value: new Matrix4() },
+            colorsBuffer: { value: null },
+            opacity: { value: 1 },
         },
         side: FrontSide,
         vertexShader,

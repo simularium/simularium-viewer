@@ -359,7 +359,7 @@ class SimulariumRenderer {
         this.transparencyPass.updateColors(colorsTex);
     }
 
-    public updateOpacity(opacity: number): void {
+    public setOpacity(opacity: number): void {
         this.transparencyPass.updateOpacity(opacity);
     }
 
