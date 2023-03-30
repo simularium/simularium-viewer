@@ -31,6 +31,12 @@ describe("GeometryStore module", () => {
                         addedItem,
                         1
                     ),
+                    transparentInstances: new InstancedMesh(
+                        InstanceType.MESH,
+                        GeometryStore.sphereGeometry,
+                        addedItem,
+                        1
+                    ),
                 },
             });
             expect(registry.get(addedItem)).toBeTruthy();
@@ -105,6 +111,12 @@ describe("GeometryStore module", () => {
                     mesh: new Mesh(GeometryStore.sphereGeometry),
                     cancelled: false,
                     instances: new InstancedMesh(
+                        InstanceType.MESH,
+                        GeometryStore.sphereGeometry,
+                        addedItem,
+                        1
+                    ),
+                    transparentInstances: new InstancedMesh(
                         InstanceType.MESH,
                         GeometryStore.sphereGeometry,
                         addedItem,

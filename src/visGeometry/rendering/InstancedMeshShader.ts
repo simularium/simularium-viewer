@@ -74,7 +74,6 @@ void main() {
     gNormal = vec4(normal * 0.5 + 0.5, 1.0);
 
     gPos = vec4(fragViewPos.x, fragViewPos.y, fragViewPos.z, 1.0);
-
 }
 `;
 

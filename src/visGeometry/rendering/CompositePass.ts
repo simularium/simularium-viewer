@@ -1,9 +1,7 @@
 import {
     Color,
     DataTexture,
-    FloatType,
     PerspectiveCamera,
-    RGBAFormat,
     Vector3,
     WebGLRenderer,
     WebGLRenderTarget,
