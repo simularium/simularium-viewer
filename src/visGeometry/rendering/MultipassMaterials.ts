@@ -1,4 +1,5 @@
 import {
+    DataTexture,
     Material,
     Matrix4,
     Mesh,
@@ -23,6 +24,12 @@ export function updateResolution(s: MRTShaders, x: number, y: number): void {
     s.mat.uniforms.iResolution.value = new Vector2(x, y);
     if (s.transMat) {
         s.transMat.uniforms.iResolution.value = new Vector2(x, y);
+    }
+}
+export function updateColors(s: MRTShaders, tex: DataTexture): void {
+    s.mat.uniforms.colorsBuffer.value = tex;
+    if (s.transMat) {
+        s.transMat.uniforms.colorsBuffer = tex;
     }
 }
 

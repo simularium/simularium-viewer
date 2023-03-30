@@ -215,14 +215,8 @@ class CompositePass {
     }
 
     // colorsData is a Float32Array of rgba
-    public updateColors(numColors: number, colorsData: Float32Array): void {
-        this.pass.material.uniforms.colorsBuffer.value = new DataTexture(
-            colorsData,
-            numColors,
-            1,
-            RGBAFormat,
-            FloatType
-        );
+    public updateColors(colorsTex: DataTexture): void {
+        this.pass.material.uniforms.colorsBuffer.value = colorsTex;
         this.pass.material.uniforms.colorsBuffer.value.needsUpdate = true;
     }
 

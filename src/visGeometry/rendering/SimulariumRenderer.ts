@@ -11,6 +11,7 @@ import { GeometryInstanceContainer } from "../types";
 
 import {
     Color,
+    DataTexture,
     FloatType,
     Group,
     NearestFilter,
@@ -347,7 +348,15 @@ class SimulariumRenderer {
 
     // colorsData is a Float32Array of rgb triples
     public updateColors(numColors: number, colorsData: Float32Array): void {
-        this.compositePass.updateColors(numColors, colorsData);
+        const colorsTex = new DataTexture(
+            colorsData,
+            numColors,
+            1,
+            RGBAFormat,
+            FloatType
+        );
+        this.compositePass.updateColors(colorsTex);
+        this.transparencyPass.updateColors(colorsTex);
     }
 
     public setMeshGroups(

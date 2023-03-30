@@ -1,4 +1,5 @@
 import {
+    DataTexture,
     Group,
     PerspectiveCamera,
     Scene,
@@ -6,7 +7,7 @@ import {
     WebGLRenderTarget,
 } from "three";
 
-import { setRenderPass } from "./MultipassMaterials";
+import { setRenderPass, updateColors } from "./MultipassMaterials";
 import { GeometryInstanceContainer } from "../types";
 
 class TransparencyPass {
@@ -14,6 +15,7 @@ class TransparencyPass {
     public transparentInstancedMeshGroup: Group;
 
     public transparentMeshTypes: GeometryInstanceContainer[];
+    public colorsBuffer: DataTexture;
 
     public constructor() {
         this.instancedMeshGroup = new Group();
@@ -32,6 +34,10 @@ class TransparencyPass {
         this.transparentMeshTypes = transparentMeshTypes;
     }
 
+    public updateColors(colorsTex: DataTexture): void {
+        this.colorsBuffer = colorsTex;
+    }
+
     // TODO resize?
 
     public render(
@@ -45,6 +51,7 @@ class TransparencyPass {
 
         for (const meshType of this.transparentMeshTypes) {
             setRenderPass(meshType.getMesh(), meshType.getShaders(), true);
+            updateColors(meshType.getShaders(), this.colorsBuffer);
         }
 
         renderer.autoClear = false;
