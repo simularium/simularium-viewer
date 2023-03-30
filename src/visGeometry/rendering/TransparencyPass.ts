@@ -7,7 +7,11 @@ import {
     WebGLRenderTarget,
 } from "three";
 
-import { setRenderPass, updateColors } from "./MultipassMaterials";
+import {
+    setRenderPass,
+    updateColors,
+    updateOpacity,
+} from "./MultipassMaterials";
 import { GeometryInstanceContainer } from "../types";
 
 class TransparencyPass {
@@ -15,13 +19,16 @@ class TransparencyPass {
     public transparentInstancedMeshGroup: Group;
 
     public transparentMeshTypes: GeometryInstanceContainer[];
-    public colorsBuffer: DataTexture;
+    public colorsBuffer: DataTexture | null;
+    public opacity: number;
 
     public constructor() {
         this.instancedMeshGroup = new Group();
         this.transparentInstancedMeshGroup = new Group();
 
         this.transparentMeshTypes = [];
+        this.colorsBuffer = null;
+        this.opacity = 0.5;
     }
 
     public setMeshGroups(
@@ -38,6 +45,10 @@ class TransparencyPass {
         this.colorsBuffer = colorsTex;
     }
 
+    public updateOpacity(opacity: number): void {
+        this.opacity = opacity;
+    }
+
     // TODO resize?
 
     public render(
@@ -52,6 +63,7 @@ class TransparencyPass {
         for (const meshType of this.transparentMeshTypes) {
             setRenderPass(meshType.getMesh(), meshType.getShaders(), true);
             updateColors(meshType.getShaders(), this.colorsBuffer);
+            updateOpacity(meshType.getShaders(), this.opacity);
         }
 
         renderer.autoClear = false;

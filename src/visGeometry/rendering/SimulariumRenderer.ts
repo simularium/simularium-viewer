@@ -359,6 +359,10 @@ class SimulariumRenderer {
         this.transparencyPass.updateColors(colorsTex);
     }
 
+    public updateOpacity(opacity: number): void {
+        this.transparencyPass.updateOpacity(opacity);
+    }
+
     public setMeshGroups(
         instancedMeshGroup: Group,
         transparentInstancedMeshGroup: Group,

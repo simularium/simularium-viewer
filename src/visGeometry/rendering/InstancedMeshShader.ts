@@ -88,12 +88,13 @@ layout(location = 0) out vec4 gOutputColor;
 
 uniform mat4 projectionMatrix;
 uniform sampler2D colorsBuffer;
+uniform float opacity;
 
 void main() {
     int agentColorIndex = int(round(abs(IN_instanceAndTypeId.y))-1.0);
     ivec2 ncols = textureSize(colorsBuffer, 0);
     vec4 col = texelFetch(colorsBuffer, ivec2(agentColorIndex % ncols.x, 0), 0);
-    gOutputColor = vec4(col.xyz, 0.5);
+    gOutputColor = vec4(col.xyz, opacity);
 }
 `;
 
@@ -106,6 +107,7 @@ function makeMultiMaterial(fragmentShader: string, transparent: boolean) {
             normalMatrix: { value: new Matrix3() },
             projectionMatrix: { value: new Matrix4() },
             colorsBuffer: { value: null },
+            opacity: { value: 1 },
         },
         side: FrontSide,
         vertexShader,

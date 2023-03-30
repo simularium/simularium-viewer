@@ -26,10 +26,16 @@ export function updateResolution(s: MRTShaders, x: number, y: number): void {
         s.transMat.uniforms.iResolution.value = new Vector2(x, y);
     }
 }
-export function updateColors(s: MRTShaders, tex: DataTexture): void {
+export function updateColors(s: MRTShaders, tex: DataTexture | null): void {
     s.mat.uniforms.colorsBuffer.value = tex;
     if (s.transMat) {
         s.transMat.uniforms.colorsBuffer.value = tex;
+    }
+}
+export function updateOpacity(s: MRTShaders, opacity: number) {
+    s.mat.uniforms.opacity.value = opacity;
+    if (s.transMat) {
+        s.transMat.uniforms.opacity.value = opacity;
     }
 }
 
