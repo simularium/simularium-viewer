@@ -481,6 +481,10 @@ export default class SimulariumController {
             this.visGeometry.setFocusMode(focus);
         }
     }
+
+    public setTransparentAgentOpacity(opacity: number): void {
+        this.visGeometry?.setOpacity(opacity);
+    }
 }
 
 export { SimulariumController };

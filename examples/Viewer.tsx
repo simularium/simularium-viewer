@@ -316,7 +316,8 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
-        simulariumController.convertAndLoadTrajectory(netConnectionSettings, obj, fileType)
+        simulariumController
+            .convertAndLoadTrajectory(netConnectionSettings, obj, fileType)
             .then(() => {
                 this.clearPendingFile();
             })
@@ -338,7 +339,7 @@ class Viewer extends React.Component<{}, ViewerState> {
         // }
         return simulariumController
             .handleFileChange(simulariumFile, fileName, geoAssets)
-            .catch(console.log)
+            .catch(console.log);
     }
 
     public handleJsonMeshData(jsonData): void {
@@ -551,7 +552,7 @@ class Viewer extends React.Component<{}, ViewerState> {
 
     public render(): JSX.Element {
         if (this.state.filePending) {
-            const fileType = this.state.filePending.type
+            const fileType = this.state.filePending.type;
             return (
                 <ConversionForm
                     {...this.state.filePending}
@@ -711,6 +712,20 @@ class Viewer extends React.Component<{}, ViewerState> {
                 >
                     {this.state.hideAllAgents ? "Show all" : "Hide all"}
                 </button>
+                <br />
+                <label htmlFor="opacitySlider">Opacity: </label>
+                <input
+                    name="opacitySlider"
+                    type="range"
+                    min={0}
+                    step={1}
+                    max={100}
+                    onChange={({ target }) =>
+                        simulariumController.setTransparentAgentOpacity(
+                            parseInt(target.value) / 100
+                        )
+                    }
+                />
                 <br />
                 <button
                     onClick={() =>
