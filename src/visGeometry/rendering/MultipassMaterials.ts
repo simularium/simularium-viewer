@@ -32,7 +32,7 @@ export function updateColors(s: MRTShaders, tex: DataTexture | null): void {
         s.transMat.uniforms.colorsBuffer.value = tex;
     }
 }
-export function updateOpacity(s: MRTShaders, opacity: number) {
+export function updateOpacity(s: MRTShaders, opacity: number): void {
     s.mat.uniforms.opacity.value = opacity;
     if (s.transMat) {
         s.transMat.uniforms.opacity.value = opacity;
