@@ -328,13 +328,16 @@ class InstancedFiberGroup {
     private fibers: InstancedFiber[];
     private fibersGroup: Group;
     private isUpdating: boolean;
+    private isTransparent: boolean;
 
     static GROUP_NAME = "fibers";
+    static TRANS_GROUP_NAME = "transparent fibers";
 
-    constructor() {
+    constructor(isTransparent = false) {
         this.fibersGroup = new Group();
         this.fibers = [];
         this.isUpdating = false;
+        this.isTransparent = isTransparent;
     }
 
     getGroup(): Group {
@@ -346,7 +349,12 @@ class InstancedFiberGroup {
             this.fibersGroup.add(fiber.getMesh());
         });
 
-        this.fibersGroup.name = InstancedFiberGroup.GROUP_NAME;
+        if (this.isTransparent) {
+            this.fibersGroup.name = InstancedFiberGroup.TRANS_GROUP_NAME;
+        } else {
+            this.fibersGroup.name = InstancedFiberGroup.GROUP_NAME;
+        }
+
         return this.fibersGroup;
     }
 
@@ -398,9 +406,10 @@ class InstancedFiberGroup {
         this.isUpdating = false;
     }
 
-    setRenderPass(): void {
+    // TODO use `this.transparent`?
+    setRenderPass(transparent = false): void {
         this.fibers.forEach((fiber) => {
-            setRenderPass(fiber.getMesh(), fiber.getShaders());
+            setRenderPass(fiber.getMesh(), fiber.getShaders(), transparent);
         });
     }
 

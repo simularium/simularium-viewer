@@ -374,10 +374,33 @@ void main()	{
 }
 `;
 
-function createShaders(
+const transparentFragmentShader = `
+precision highp float;
+
+in vec3 IN_viewPos;
+in vec3 IN_viewNormal;
+in vec2 IN_instanceAndTypeId;
+
+layout(location = 0) out vec4 gOutputColor;
+
+uniform mat4 projectionMatrix;
+uniform sampler2D colorsBuffer;
+uniform float opacity;
+
+void main()	{
+    int agentColorIndex = int(round(abs(IN_instanceAndTypeId.y))-1.0);
+    ivec2 ncols = textureSize(colorsBuffer, 0);
+    vec4 col = texelFetch(colorsBuffer, ivec2(agentColorIndex % ncols.x, 0), 0);
+    gOutputColor = vec4(col.xyz, opacity);
+}
+`;
+
+function createOneShader(
     lengthSegments: number,
-    nPointsPerCurve: number
-): MRTShaders {
+    nPointsPerCurve: number,
+    fragmentShader: string,
+    transparent: boolean
+): RawShaderMaterial {
     const shaderDefines = {
         lengthSegments: lengthSegments,
         ROBUST: false,
@@ -386,25 +409,42 @@ function createShaders(
         NUM_POINTS: nPointsPerCurve,
     };
 
-    const multiMaterial = new RawShaderMaterial({
-        glslVersion: GLSL3,
-        vertexShader: vertexShader,
-        fragmentShader: fragmentShader,
-        side: FrontSide,
-        transparent: false,
-        defines: {
-            ...shaderDefines,
-        },
+    return new RawShaderMaterial({
         uniforms: {
             curveData: { value: null },
             projectionMatrix: { value: new Matrix4() },
             modelViewMatrix: { value: new Matrix4() },
+            colorsBuffer: { value: null },
+            opacity: { value: 1 },
         },
+        defines: shaderDefines,
+        glslVersion: GLSL3,
+        side: FrontSide,
+        vertexShader,
+        fragmentShader,
+        transparent,
     });
+}
 
-    return {
-        mat: multiMaterial,
-    };
+function createShaders(
+    lengthSegments: number,
+    nPointsPerCurve: number
+): MRTShaders {
+    const mat = createOneShader(
+        lengthSegments,
+        nPointsPerCurve,
+        fragmentShader,
+        false
+    );
+
+    const transMat = createOneShader(
+        lengthSegments,
+        nPointsPerCurve,
+        transparentFragmentShader,
+        true
+    );
+
+    return { mat, transMat };
 }
 
 export { createShaders };

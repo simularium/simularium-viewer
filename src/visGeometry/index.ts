@@ -145,6 +145,7 @@ class VisGeometry {
     private initCameraPosition: Vector3;
     private cameraDefault: CameraSpec;
     private fibers: InstancedFiberGroup;
+    private transparentFibers: InstancedFiberGroup;
     private focusMode: boolean;
     public gui?: Pane;
 
@@ -185,6 +186,7 @@ class VisGeometry {
         this.agentPaths = new Map<number, AgentPath>();
 
         this.fibers = new InstancedFiberGroup();
+        this.transparentFibers = new InstancedFiberGroup(true);
 
         this.scene = new Scene();
         this.lightsGroup = new Group();
@@ -446,19 +448,23 @@ class VisGeometry {
 
     private constructInstancedFibers() {
         this.fibers.clear();
+        this.transparentFibers.clear();
         removeByName(this.instancedMeshGroup, InstancedFiberGroup.GROUP_NAME);
         removeByName(
             this.transparentInstancedMeshGroup,
-            InstancedFiberGroup.GROUP_NAME
+            InstancedFiberGroup.TRANS_GROUP_NAME
         );
 
         // tell instanced geometry what representation to use.
         if (this.renderStyle === RenderStyle.WEBGL2_PREFERRED) {
             this.fibers = new InstancedFiberGroup();
+            this.transparentFibers = new InstancedFiberGroup(true);
         }
 
-        // TODO how to handle sorting into transparent group?
         this.instancedMeshGroup.add(this.fibers.getGroup());
+        this.transparentInstancedMeshGroup.add(
+            this.transparentFibers.getGroup()
+        );
     }
 
     public get logger(): ILogger {
@@ -903,6 +909,9 @@ class VisGeometry {
 
         // re-add fibers immediately
         this.instancedMeshGroup.add(this.fibers.getGroup());
+        this.transparentInstancedMeshGroup.add(
+            this.transparentFibers.getGroup()
+        );
 
         if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
             // meshes only.
@@ -919,22 +928,19 @@ class VisGeometry {
             for (const entry of this.geometryStore.registry.values()) {
                 const { displayType } = entry;
                 if (displayType !== GeometryDisplayType.PDB) {
-                    const meshEntry = entry as MeshGeometry;
-                    if (meshEntry.geometry.instances.instanceCount() > 0) {
-                        meshTypes.push(meshEntry.geometry.instances);
+                    const { geometry } = entry as MeshGeometry;
+                    if (geometry.instances.instanceCount() > 0) {
+                        meshTypes.push(geometry.instances);
                         this.instancedMeshGroup.add(
-                            meshEntry.geometry.instances.getMesh()
+                            geometry.instances.getMesh()
                         );
                     }
-                    if (
-                        meshEntry.geometry.transparentInstances.instanceCount() >
-                        0
-                    ) {
+                    if (geometry.transparentInstances.instanceCount() > 0) {
                         transparentMeshTypes.push(
-                            meshEntry.geometry.transparentInstances
+                            geometry.transparentInstances
                         );
                         this.transparentInstancedMeshGroup.add(
-                            meshEntry.geometry.transparentInstances.getMesh()
+                            geometry.transparentInstances.getMesh()
                         );
                     }
                 } else {
@@ -963,6 +969,7 @@ class VisGeometry {
                 this.instancedMeshGroup,
                 this.transparentInstancedMeshGroup,
                 this.fibers,
+                this.transparentFibers,
                 meshTypes,
                 transparentMeshTypes
             );
@@ -1527,8 +1534,11 @@ class VisGeometry {
                 this.getColorForTypeId(typeId)
             );
         } else {
+            const fiberGroup = visAgent.transparent
+                ? this.transparentFibers
+                : this.fibers;
             // update/add to render list
-            this.fibers.addInstance(
+            fiberGroup.addInstance(
                 agentData.subpoints.length / 3,
                 agentData.subpoints,
                 agentData.x,
@@ -1561,6 +1571,7 @@ class VisGeometry {
         this.legacyRenderer.beginUpdate(this.scene);
 
         this.fibers.beginUpdate();
+        this.transparentFibers.beginUpdate();
         this.geometryStore.forEachMesh((agentGeo) => {
             agentGeo.geometry.instances.beginUpdate();
             agentGeo.geometry.transparentInstances.beginUpdate();
@@ -1685,6 +1696,7 @@ class VisGeometry {
         });
 
         this.fibers.endUpdate();
+        this.transparentFibers.endUpdate();
         this.geometryStore.forEachMesh((agentGeo) => {
             agentGeo.geometry.instances.endUpdate();
             agentGeo.geometry.transparentInstances.endUpdate();

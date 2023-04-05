@@ -367,6 +367,7 @@ class SimulariumRenderer {
         instancedMeshGroup: Group,
         transparentInstancedMeshGroup: Group,
         fibers: InstancedFiberGroup,
+        transparentFibers: InstancedFiberGroup,
         meshTypes: GeometryInstanceContainer[],
         transparentMeshTypes: GeometryInstanceContainer[]
     ): void {
@@ -382,6 +383,7 @@ class SimulariumRenderer {
         this.transparencyPass.setMeshGroups(
             instancedMeshGroup,
             transparentInstancedMeshGroup,
+            transparentFibers,
             transparentMeshTypes
         );
     }
