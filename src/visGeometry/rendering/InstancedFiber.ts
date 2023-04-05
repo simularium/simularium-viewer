@@ -18,6 +18,8 @@ import { createShaders } from "./InstancedFiberShader";
 import {
     MRTShaders,
     setRenderPass,
+    updateOpacity,
+    updateColors,
     updateProjectionMatrix,
 } from "./MultipassMaterials";
 
@@ -228,6 +230,7 @@ class InstancedFiber {
         );
 
         this.shaderSet.mat.uniforms.curveData.value = this.curveData;
+        this.shaderSet.transMat.uniforms.curveData.value = this.curveData;
 
         // make new array,
         // copy old array into it,
@@ -406,10 +409,25 @@ class InstancedFiberGroup {
         this.isUpdating = false;
     }
 
-    // TODO use `this.transparent`?
-    setRenderPass(transparent = false): void {
+    setRenderPass(): void {
         this.fibers.forEach((fiber) => {
-            setRenderPass(fiber.getMesh(), fiber.getShaders(), transparent);
+            setRenderPass(
+                fiber.getMesh(),
+                fiber.getShaders(),
+                this.isTransparent
+            );
+        });
+    }
+
+    setOpacity(opacity: number): void {
+        this.fibers.forEach((fiber) => {
+            updateOpacity(fiber.getShaders(), opacity);
+        });
+    }
+
+    setColors(colorsTex: DataTexture | null): void {
+        this.fibers.forEach((fiber) => {
+            updateColors(fiber.getShaders(), colorsTex);
         });
     }
 

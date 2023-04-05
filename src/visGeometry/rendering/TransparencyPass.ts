@@ -68,7 +68,9 @@ class TransparencyPass {
         // TODO does this pass need to be responsible for updating projection
         //   matrix of other objects?
         this.transparentFibers.updateProjectionMatrix(camera.projectionMatrix);
-        this.transparentFibers.setRenderPass(true);
+        this.transparentFibers.setRenderPass();
+        this.transparentFibers.setColors(this.colorsBuffer);
+        this.transparentFibers.setOpacity(this.opacity);
 
         for (const meshType of this.transparentMeshTypes) {
             setRenderPass(meshType.getMesh(), meshType.getShaders(), true);

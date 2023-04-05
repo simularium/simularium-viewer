@@ -894,14 +894,14 @@ class VisGeometry {
 
         // remove all children of instancedMeshGroup and transparentInstancedMeshGroup.
         // we will re-add them.
-        for (let i = this.instancedMeshGroup.children.length - 1; i >= 0; i--) {
+        const numMeshes = this.instancedMeshGroup.children.length;
+        for (let i = numMeshes - 1; i >= 0; i--) {
             this.instancedMeshGroup.remove(this.instancedMeshGroup.children[i]);
         }
-        for (
-            let i = this.transparentInstancedMeshGroup.children.length - 1;
-            i >= 0;
-            i--
-        ) {
+
+        const numTransMeshes =
+            this.transparentInstancedMeshGroup.children.length;
+        for (let i = numTransMeshes - 1; i >= 0; i--) {
             this.transparentInstancedMeshGroup.remove(
                 this.transparentInstancedMeshGroup.children[i]
             );
