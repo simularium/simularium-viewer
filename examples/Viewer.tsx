@@ -31,10 +31,7 @@ import ConversionForm from "./ConversionForm";
 import MetaballSimulator from "./MetaballSimulator";
 import { TrajectoryType } from "../src/constants";
 
-const netConnectionSettings = {
-    // to test local server: (also may have to change wss to ws in the url)
-    // serverIp: "0.0.0.0",
-    // serverPort: 8765,
+let netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
     serverPort: 9002,
 };
@@ -114,12 +111,17 @@ interface CustomType {
     };
 }
 
-const simulariumController = new SimulariumController({});
+interface InputParams {
+    localBackendServer: boolean;
+    useOctopus: boolean;
+}
+
+let simulariumController;
 
 let currentFrame = 0;
 let currentTime = 0;
 
-const initialState = {
+const initialState: ViewerState = {
     renderStyle: RenderStyle.WEBGL2_PREFERRED,
     pauseOn: -1,
     particleTypeNames: [],
@@ -145,8 +147,10 @@ class Viewer extends React.Component<{}, ViewerState> {
     private viewerRef: React.RefObject<SimulariumViewer>;
     private panMode = false;
     private focusMode = true;
+    private useOctopus = false;
+    private localBackendServer = false;
 
-    public constructor(props) {
+    public constructor(props: ViewerState & InputParams) {
         super(props);
         this.viewerRef = React.createRef();
         this.handleJsonMeshData = this.handleJsonMeshData.bind(this);
@@ -155,6 +159,26 @@ class Viewer extends React.Component<{}, ViewerState> {
         this.clearPendingFile = this.clearPendingFile.bind(this);
         this.convertFile = this.convertFile.bind(this);
         this.state = initialState;
+        console.log("this.useOctopus: " + props.useOctopus);
+        console.log("this.localBackendServer: " + props.localBackendServer);
+        this.localBackendServer = props.localBackendServer;
+        this.useOctopus = props.useOctopus;
+
+        if (this.localBackendServer) {
+            netConnectionSettings = {
+                serverIp: "0.0.0.0",
+                serverPort: 8765,
+            };
+        } else if (this.useOctopus) {
+            netConnectionSettings = {
+                serverIp: "18.223.108.15",
+                serverPort: 8765,
+            };
+        }
+
+        simulariumController = new SimulariumController({
+            useOctopus: this.useOctopus, localBackendServer: this.localBackendServer
+        })
     }
 
     public componentDidMount(): void {

@@ -64,6 +64,7 @@ export class WebsocketClient {
     private webSocket: WebSocket | null;
     private serverIp: string;
     private serverPort: number;
+    private secureConnection: boolean;
     public connectionTimeWaited: number;
     public connectionRetries: number;
     protected jsonMessageHandlers: Map<NetMessageEnum, (NetMessage) => void>;
@@ -75,6 +76,8 @@ export class WebsocketClient {
     public handleError: (error: FrontEndError) => void | (() => void);
 
     public constructor(
+        useOctopus: boolean,
+        localBackendServer: boolean,
         opts?: NetConnectionParams,
         errorHandler?: (error: FrontEndError) => void
     ) {
@@ -99,6 +102,9 @@ export class WebsocketClient {
 
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
+
+        // Use wss when connected to simularium-engine, use ws otherwise
+        this.secureConnection = !(useOctopus || localBackendServer);
 
         // Frees the reserved backend in the event that the window closes w/o disconnecting
         window.addEventListener("beforeunload", this.onClose.bind(this));
@@ -231,7 +237,9 @@ export class WebsocketClient {
     }
 
     public getIp(): string {
-        return `wss://${this.serverIp}:${this.serverPort}/`;
+        return `${this.secureConnection ? "wss" : "ws"}://${this.serverIp}:${
+            this.serverPort
+        }/`;
     }
 
     public async waitForWebSocket(timeout: number): Promise<boolean> {

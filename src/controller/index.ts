@@ -33,6 +33,8 @@ interface SimulariumControllerParams {
     remoteSimulator?: RemoteSimulator;
     netConnectionSettings?: NetConnectionParams;
     trajectoryPlaybackFile?: string;
+    localBackendServer: boolean;
+    useOctopus: boolean;
 }
 
 // TODO: refine this as part of the public API for initializing the
@@ -59,6 +61,8 @@ export default class SimulariumController {
     private isPaused: boolean;
     private isFileChanging: boolean;
     private playBackFile: string;
+    private localBackendServer: boolean;
+    private useOctopus: boolean;
 
     public constructor(params: SimulariumControllerParams) {
         this.visData = new VisData();
@@ -67,6 +71,9 @@ export default class SimulariumController {
 
         this.handleTrajectoryInfo = (/*msg: TrajectoryFileInfo*/) => noop;
         this.onError = (/*errorMessage*/) => noop;
+
+        this.localBackendServer = params.localBackendServer;
+        this.useOctopus = params.useOctopus;
 
         // might only be used in unit testing
         // TODO: change test so controller isn't initialized with a remoteSimulator
@@ -102,6 +109,8 @@ export default class SimulariumController {
             }
         }
 
+        console.log("controller oct: " + this.useOctopus);
+        console.log("controller server: " + this.localBackendServer);
         this.networkEnabled = true;
         this.isPaused = false;
         this.isFileChanging = false;
@@ -141,11 +150,17 @@ export default class SimulariumController {
             );
         } else if (netConnectionConfig) {
             const webSocketClient = new WebsocketClient(
+                this.useOctopus,
+                this.localBackendServer,
                 netConnectionConfig,
                 this.onError
             );
             this.remoteWebsocketClient = webSocketClient;
-            this.simulator = new RemoteSimulator(webSocketClient, this.onError);
+            this.simulator = new RemoteSimulator(
+                webSocketClient,
+                this.useOctopus,
+                this.onError
+            );
             this.simulator.setTrajectoryDataHandler(
                 this.visData.parseAgentsFromNetData.bind(this.visData)
             );
@@ -412,7 +427,12 @@ export default class SimulariumController {
             !this.metricsCalculator ||
             !this.metricsCalculator.socketIsValid()
         ) {
-            const webSocketClient = new WebsocketClient(config, this.onError);
+            const webSocketClient = new WebsocketClient(
+                this.useOctopus,
+                this.localBackendServer,
+                config,
+                this.onError
+            );
             this.metricsCalculator = new RemoteMetricsCalculator(
                 webSocketClient,
                 this.onError
@@ -438,7 +458,12 @@ export default class SimulariumController {
                 this.remoteWebsocketClient &&
                 this.remoteWebsocketClient.socketIsValid()
                     ? this.remoteWebsocketClient
-                    : new WebsocketClient(config, this.onError);
+                    : new WebsocketClient(
+                          this.useOctopus,
+                          this.localBackendServer,
+                          config,
+                          this.onError
+                      );
             this.metricsCalculator = new RemoteMetricsCalculator(
                 webSocketClient,
                 this.onError

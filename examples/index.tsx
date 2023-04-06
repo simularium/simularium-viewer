@@ -4,6 +4,6 @@ import React from "react";
 import Viewer from './Viewer';
 
 ReactDOM.render(
-        <Viewer />,
+        <Viewer useOctopus={SIMULARIUM_USE_OCTOPUS} localBackendServer={SIMULARIUM_USE_LOCAL_BACKEND}/>,
     document.getElementById("root")
 );
