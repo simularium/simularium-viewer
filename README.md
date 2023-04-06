@@ -118,7 +118,8 @@ This will run the example in `/examples/Viewer.tsx`, demonstrating the viewer's 
 | transpileES       | run babel on `src` directory; _do not_ transpile `import/export` statements for an ES module compatible build (used by bundlers for tree-shaking) |
 | test              | run `jest`; searches for any files matching the pattern "src/\*_/_.test.js"                                                                      |
 | typeCheck         | run `tsc` in type-check only mode                                                                                                                 |
-| start             | runs an example app from `examples` for testing. Runs at `localhost:8080/public/`.                                                                |
+| start             | runs an example app from `examples` for testing. Runs at `localhost:8080/public/`. Use `--octopus` to connect to octopus backend and/or           |
+|                   | `--localserver` to run backend locally. With no flags, this script will default to using remote simularium-engine as backend                      |
 
 ---
 
