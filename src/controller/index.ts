@@ -459,9 +459,9 @@ export default class SimulariumController {
                 this.remoteWebsocketClient.socketIsValid()
                     ? this.remoteWebsocketClient
                     : new WebsocketClient(
+                          config,
                           this.useOctopus,
                           this.localBackendServer,
-                          config,
                           this.onError
                       );
             this.metricsCalculator = new RemoteMetricsCalculator(
