@@ -412,7 +412,11 @@ export default class SimulariumController {
             !this.metricsCalculator ||
             !this.metricsCalculator.socketIsValid()
         ) {
-            const webSocketClient = new WebsocketClient(config, this.onError);
+            const webSocketClient =
+                this.remoteWebsocketClient &&
+                this.remoteWebsocketClient.socketIsValid()
+                    ? this.remoteWebsocketClient
+                    : new WebsocketClient(config, this.onError);
             this.metricsCalculator = new RemoteMetricsCalculator(
                 webSocketClient,
                 this.onError
@@ -443,6 +447,7 @@ export default class SimulariumController {
                 webSocketClient,
                 this.onError
             );
+            await this.metricsCalculator.connectToRemoteServer();
         }
 
         if (this.simulator instanceof LocalFileSimulator) {

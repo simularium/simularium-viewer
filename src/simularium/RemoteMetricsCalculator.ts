@@ -19,7 +19,6 @@ export class RemoteMetricsCalculator {
                 /* do nothing */
             });
         this.webSocketClient = webSocketClient;
-        this.connectToRemoteServer();
     }
 
     public async connectToRemoteServer(): Promise<string> {
