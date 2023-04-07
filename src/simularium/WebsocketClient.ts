@@ -76,9 +76,9 @@ export class WebsocketClient {
     public handleError: (error: FrontEndError) => void | (() => void);
 
     public constructor(
-        useOctopus: boolean,
-        localBackendServer: boolean,
         opts?: NetConnectionParams,
+        useOctopus?: boolean,
+        localBackendServer?: boolean,
         errorHandler?: (error: FrontEndError) => void
     ) {
         this.webSocket = null;

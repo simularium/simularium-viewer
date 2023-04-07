@@ -150,9 +150,9 @@ export default class SimulariumController {
             );
         } else if (netConnectionConfig) {
             const webSocketClient = new WebsocketClient(
+                netConnectionConfig,
                 this.useOctopus,
                 this.localBackendServer,
-                netConnectionConfig,
                 this.onError
             );
             this.remoteWebsocketClient = webSocketClient;
@@ -428,9 +428,9 @@ export default class SimulariumController {
             !this.metricsCalculator.socketIsValid()
         ) {
             const webSocketClient = new WebsocketClient(
+                config,
                 this.useOctopus,
                 this.localBackendServer,
-                config,
                 this.onError
             );
             this.metricsCalculator = new RemoteMetricsCalculator(
