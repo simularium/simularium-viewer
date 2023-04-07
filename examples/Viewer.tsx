@@ -726,6 +726,31 @@ class Viewer extends React.Component<{}, ViewerState> {
                 >
                     Focus Mode
                 </button>
+                <br />
+                <button onClick={() => simulariumController.getMetrics(netConnectionSettings)}>
+                    Get available metrics
+                </button>
+                <button
+                    onClick={() =>
+                        simulariumController.getPlotData(
+                            netConnectionSettings,
+                            // TODO: allow user to select metrics based on results from
+                            // the getMetrics() call
+                            [
+                                {
+                                    plotType: "scatter",
+                                    metricsIdx: 0,
+                                    metricsIdy: 2,
+                                    scatterPlotMode: "lines",
+                                }, {
+                                    plotType: "histogram",
+                                    metricsIdx: 3,
+                                }
+                            ]
+                        )}
+                >
+                    Get plot data
+                </button>
                 <span>
                     Tick interval length:{" "}
                     {simulariumController.tickIntervalLength}

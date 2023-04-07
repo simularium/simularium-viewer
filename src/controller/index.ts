@@ -12,6 +12,7 @@ import {
     FileReturn,
     FILE_STATUS_SUCCESS,
     FILE_STATUS_FAIL,
+    PlotConfig,
 } from "../simularium/types";
 
 import { ClientSimulator } from "../simularium/ClientSimulator";
@@ -22,6 +23,7 @@ import { FrontEndError } from "../simularium/FrontEndError";
 import type { ISimulariumFile } from "../simularium/ISimulariumFile";
 import { WebsocketClient } from "../simularium/WebsocketClient";
 import { TrajectoryType } from "../constants";
+import { RemoteMetricsCalculator } from "../simularium/RemoteMetricsCalculator";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
@@ -44,6 +46,8 @@ interface SimulatorConnectionParams {
 
 export default class SimulariumController {
     public simulator?: ISimulator;
+    public remoteWebsocketClient?: WebsocketClient;
+    public metricsCalculator?: RemoteMetricsCalculator;
     public visData: VisData;
     public visGeometry: VisGeometry | undefined;
     public tickIntervalLength: number;
@@ -140,6 +144,7 @@ export default class SimulariumController {
                 netConnectionConfig,
                 this.onError
             );
+            this.remoteWebsocketClient = webSocketClient;
             this.simulator = new RemoteSimulator(webSocketClient, this.onError);
             this.simulator.setTrajectoryDataHandler(
                 this.visData.parseAgentsFromNetData.bind(this.visData)
@@ -400,6 +405,61 @@ export default class SimulariumController {
 
     public getFile(): string {
         return this.playBackFile;
+    }
+
+    private setupMetricsCalculator(
+        config: NetConnectionParams
+    ): RemoteMetricsCalculator {
+        const webSocketClient =
+            this.remoteWebsocketClient &&
+            this.remoteWebsocketClient.socketIsValid()
+                ? this.remoteWebsocketClient
+                : new WebsocketClient(config, this.onError);
+        return new RemoteMetricsCalculator(webSocketClient, this.onError);
+    }
+
+    public async getMetrics(config: NetConnectionParams): Promise<void> {
+        if (
+            !this.metricsCalculator ||
+            !this.metricsCalculator.socketIsValid()
+        ) {
+            this.metricsCalculator = this.setupMetricsCalculator(config);
+            await this.metricsCalculator.connectToRemoteServer();
+        }
+        this.metricsCalculator.getAvailableMetrics();
+    }
+
+    public async getPlotData(
+        config: NetConnectionParams,
+        requestedPlots: PlotConfig[]
+    ): Promise<void> {
+        if (!this.simulator) {
+            return;
+        }
+
+        if (
+            !this.metricsCalculator ||
+            !this.metricsCalculator.socketIsValid()
+        ) {
+            this.metricsCalculator = this.setupMetricsCalculator(config);
+            await this.metricsCalculator.connectToRemoteServer();
+        }
+
+        if (this.simulator instanceof LocalFileSimulator) {
+            const simulariumFile: ISimulariumFile =
+                this.simulator.getSimulariumFile();
+            this.metricsCalculator.getPlotData(
+                simulariumFile["simulariumFile"],
+                requestedPlots
+            );
+        } else if (this.simulator instanceof RemoteSimulator) {
+            // we don't have the simularium file, so we'll just send an empty data object
+            this.metricsCalculator.getPlotData(
+                {},
+                requestedPlots,
+                this.simulator.getLastRequestedFile()
+            );
+        }
     }
 
     public disableNetworkCommands(): void {

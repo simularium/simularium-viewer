@@ -172,4 +172,8 @@ export class LocalFileSimulator implements ISimulator {
             };
         }
     }
+
+    public getSimulariumFile(): ISimulariumFile {
+        return this.simulariumFile;
+    }
 }

@@ -69,6 +69,10 @@ export class RemoteSimulator implements ISimulator {
         return this.webSocketClient.socketIsValid();
     }
 
+    public getLastRequestedFile(): string {
+        return this.lastRequestedFile;
+    }
+
     /**
      *   Websocket Message Handlers
      * */

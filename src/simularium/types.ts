@@ -167,3 +167,10 @@ export interface FrameData {
     frameNumber: number;
     time: number;
 }
+
+export interface PlotConfig {
+    plotType: string;
+    metricsIdx: number;
+    metricsIdy?: number;
+    scatterPlotMode?: string;
+}
