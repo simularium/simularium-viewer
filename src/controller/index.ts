@@ -24,6 +24,7 @@ import type { ISimulariumFile } from "../simularium/ISimulariumFile";
 import { WebsocketClient } from "../simularium/WebsocketClient";
 import { TrajectoryType } from "../constants";
 import { RemoteMetricsCalculator } from "../simularium/RemoteMetricsCalculator";
+import { Remote } from "comlink";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
@@ -407,20 +408,23 @@ export default class SimulariumController {
         return this.playBackFile;
     }
 
+    private setupMetricsCalculator(
+        config: NetConnectionParams
+    ): RemoteMetricsCalculator {
+        const webSocketClient =
+            this.remoteWebsocketClient &&
+            this.remoteWebsocketClient.socketIsValid()
+                ? this.remoteWebsocketClient
+                : new WebsocketClient(config, this.onError);
+        return new RemoteMetricsCalculator(webSocketClient, this.onError);
+    }
+
     public async getMetrics(config: NetConnectionParams): Promise<void> {
         if (
             !this.metricsCalculator ||
             !this.metricsCalculator.socketIsValid()
         ) {
-            const webSocketClient =
-                this.remoteWebsocketClient &&
-                this.remoteWebsocketClient.socketIsValid()
-                    ? this.remoteWebsocketClient
-                    : new WebsocketClient(config, this.onError);
-            this.metricsCalculator = new RemoteMetricsCalculator(
-                webSocketClient,
-                this.onError
-            );
+            this.metricsCalculator = this.setupMetricsCalculator(config);
             await this.metricsCalculator.connectToRemoteServer();
         }
         this.metricsCalculator.getAvailableMetrics();
@@ -438,15 +442,7 @@ export default class SimulariumController {
             !this.metricsCalculator ||
             !this.metricsCalculator.socketIsValid()
         ) {
-            const webSocketClient =
-                this.remoteWebsocketClient &&
-                this.remoteWebsocketClient.socketIsValid()
-                    ? this.remoteWebsocketClient
-                    : new WebsocketClient(config, this.onError);
-            this.metricsCalculator = new RemoteMetricsCalculator(
-                webSocketClient,
-                this.onError
-            );
+            this.metricsCalculator = this.setupMetricsCalculator(config);
             await this.metricsCalculator.connectToRemoteServer();
         }
 
