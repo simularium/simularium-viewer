@@ -26,7 +26,11 @@ export var NetMessageEnum;
   NetMessageEnum[NetMessageEnum["ID_INIT_TRAJECTORY_FILE"] = 14] = "ID_INIT_TRAJECTORY_FILE";
   NetMessageEnum[NetMessageEnum["ID_UPDATE_SIMULATION_STATE"] = 15] = "ID_UPDATE_SIMULATION_STATE";
   NetMessageEnum[NetMessageEnum["ID_CONVERT_TRAJECTORY_FILE"] = 16] = "ID_CONVERT_TRAJECTORY_FILE";
-  NetMessageEnum[NetMessageEnum["LENGTH"] = 17] = "LENGTH";
+  NetMessageEnum[NetMessageEnum["ID_AVAILABLE_METRICS_REQUEST"] = 17] = "ID_AVAILABLE_METRICS_REQUEST";
+  NetMessageEnum[NetMessageEnum["ID_AVAILABLE_METRICS_RESPONSE"] = 18] = "ID_AVAILABLE_METRICS_RESPONSE";
+  NetMessageEnum[NetMessageEnum["ID_PLOT_DATA_REQUEST"] = 19] = "ID_PLOT_DATA_REQUEST";
+  NetMessageEnum[NetMessageEnum["ID_PLOT_DATA_RESPONSE"] = 20] = "ID_PLOT_DATA_RESPONSE";
+  NetMessageEnum[NetMessageEnum["LENGTH"] = 21] = "LENGTH";
 })(NetMessageEnum || (NetMessageEnum = {}));
 
 export var CONNECTION_SUCCESS_MSG = "Remote sim successfully started";

@@ -15,6 +15,7 @@ export declare class RemoteSimulator implements ISimulator {
     setTrajectoryFileInfoHandler(handler: (msg: TrajectoryFileInfoV2) => void): void;
     setTrajectoryDataHandler(handler: (msg: VisDataMessage) => void): void;
     socketIsValid(): boolean;
+    getLastRequestedFile(): string;
     /**
      *   Websocket Message Handlers
      * */

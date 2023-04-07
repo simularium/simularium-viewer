@@ -69,6 +69,11 @@ export var RemoteSimulator = /*#__PURE__*/function () {
     value: function socketIsValid() {
       return this.webSocketClient.socketIsValid();
     }
+  }, {
+    key: "getLastRequestedFile",
+    value: function getLastRequestedFile() {
+      return this.lastRequestedFile;
+    }
     /**
      *   Websocket Message Handlers
      * */

@@ -194,6 +194,11 @@ export var LocalFileSimulator = /*#__PURE__*/function () {
         };
       }
     }
+  }, {
+    key: "getSimulariumFile",
+    value: function getSimulariumFile() {
+      return this.simulariumFile;
+    }
   }]);
 
   return LocalFileSimulator;

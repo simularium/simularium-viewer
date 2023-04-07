@@ -27,7 +27,11 @@ export declare const enum NetMessageEnum {
     ID_INIT_TRAJECTORY_FILE = 14,
     ID_UPDATE_SIMULATION_STATE = 15,
     ID_CONVERT_TRAJECTORY_FILE = 16,
-    LENGTH = 17
+    ID_AVAILABLE_METRICS_REQUEST = 17,
+    ID_AVAILABLE_METRICS_RESPONSE = 18,
+    ID_PLOT_DATA_REQUEST = 19,
+    ID_PLOT_DATA_RESPONSE = 20,
+    LENGTH = 21
 }
 export declare const CONNECTION_SUCCESS_MSG = "Remote sim successfully started";
 export declare const CONNECTION_FAIL_MSG = "Failed to connect to server; try reloading. If the problem persists, there may be a problem with your connection speed or the server might be too busy.";

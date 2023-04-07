@@ -1,11 +1,13 @@
 import { RemoteSimulator, NetConnectionParams, VisData, VisDataMessage, TrajectoryFileInfo } from "../simularium";
 import { VisGeometry } from "../visGeometry";
-import { FileReturn } from "../simularium/types";
+import { FileReturn, PlotConfig } from "../simularium/types";
 import { IClientSimulatorImpl } from "../simularium/localSimulators/IClientSimulatorImpl";
 import { ISimulator } from "../simularium/ISimulator";
 import { FrontEndError } from "../simularium/FrontEndError";
 import type { ISimulariumFile } from "../simularium/ISimulariumFile";
+import { WebsocketClient } from "../simularium/WebsocketClient";
 import { TrajectoryType } from "../constants";
+import { RemoteMetricsCalculator } from "../simularium/RemoteMetricsCalculator";
 interface SimulariumControllerParams {
     remoteSimulator?: RemoteSimulator;
     netConnectionSettings?: NetConnectionParams;
@@ -21,6 +23,8 @@ interface SimulatorConnectionParams {
 }
 export default class SimulariumController {
     simulator?: ISimulator;
+    remoteWebsocketClient?: WebsocketClient;
+    metricsCalculator?: RemoteMetricsCalculator;
     visData: VisData;
     visGeometry: VisGeometry | undefined;
     tickIntervalLength: number;
@@ -54,6 +58,9 @@ export default class SimulariumController {
     changeFile(connectionParams: SimulatorConnectionParams, newFileName: string): Promise<FileReturn>;
     markFileChangeAsHandled(): void;
     getFile(): string;
+    private setupMetricsCalculator;
+    getMetrics(config: NetConnectionParams): Promise<void>;
+    getPlotData(config: NetConnectionParams, requestedPlots: PlotConfig[]): Promise<void>;
     disableNetworkCommands(): void;
     cacheJSON(json: VisDataMessage): void;
     clearLocalCache(): void;

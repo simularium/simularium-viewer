@@ -43,4 +43,5 @@ export declare class LocalFileSimulator implements ISimulator {
     requestTrajectoryFileInfo(_fileName: string): void;
     sendUpdate(_obj: Record<string, unknown>): void;
     private getFrame;
+    getSimulariumFile(): ISimulariumFile;
 }
