@@ -1,4 +1,4 @@
-// Gotta set up a separate RemoteMetrisCalculator in case we have a non-remote
+// Gotta set up a separate RemoteMetricsCalculator in case we have a non-remote
 // simulator and want to calculate metrics anyways
 
 import { FrontEndError } from "./FrontEndError";
