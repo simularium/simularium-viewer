@@ -12,6 +12,8 @@ describe("SimulariumController module", () => {
 
             const controller = new SimulariumController({
                 remoteSimulator: netConn,
+                localBackendServer: false,
+                useOctopus: true,
             });
 
             controller.start();
