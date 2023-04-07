@@ -24,7 +24,6 @@ import type { ISimulariumFile } from "../simularium/ISimulariumFile";
 import { WebsocketClient } from "../simularium/WebsocketClient";
 import { TrajectoryType } from "../constants";
 import { RemoteMetricsCalculator } from "../simularium/RemoteMetricsCalculator";
-import { Remote } from "comlink";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
