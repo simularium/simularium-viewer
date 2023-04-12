@@ -159,8 +159,6 @@ class Viewer extends React.Component<{}, ViewerState> {
         this.clearPendingFile = this.clearPendingFile.bind(this);
         this.convertFile = this.convertFile.bind(this);
         this.state = initialState;
-        console.log("this.useOctopus: " + props.useOctopus);
-        console.log("this.localBackendServer: " + props.localBackendServer);
         this.localBackendServer = props.localBackendServer;
         this.useOctopus = props.useOctopus;
 
