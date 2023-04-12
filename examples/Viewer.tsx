@@ -34,6 +34,8 @@ import { TrajectoryType } from "../src/constants";
 let netConnectionSettings = {
     serverIp: "staging-node1-agentviz-backend.cellexplore.net",
     serverPort: 9002,
+    secureConnection: true,
+    useOctopus: false,
 };
 
 let playbackFile = "TEST_LIVEMODE_API"; //"medyan_paper_M:A_0.675.simularium";
@@ -147,8 +149,6 @@ class Viewer extends React.Component<{}, ViewerState> {
     private viewerRef: React.RefObject<SimulariumViewer>;
     private panMode = false;
     private focusMode = true;
-    private useOctopus = false;
-    private localBackendServer = false;
 
     public constructor(props: ViewerState & InputParams) {
         super(props);
@@ -159,24 +159,24 @@ class Viewer extends React.Component<{}, ViewerState> {
         this.clearPendingFile = this.clearPendingFile.bind(this);
         this.convertFile = this.convertFile.bind(this);
         this.state = initialState;
-        this.localBackendServer = props.localBackendServer;
-        this.useOctopus = props.useOctopus;
 
-        if (this.localBackendServer) {
+        if (props.localBackendServer) {
             netConnectionSettings = {
                 serverIp: "0.0.0.0",
                 serverPort: 8765,
+                useOctopus: props.useOctopus,
+                secureConnection: false,
             };
-        } else if (this.useOctopus) {
+        } else if (props.useOctopus) {
             netConnectionSettings = {
                 serverIp: "18.223.108.15",
                 serverPort: 8765,
+                useOctopus: props.useOctopus,
+                secureConnection: false,
             };
         }
 
-        simulariumController = new SimulariumController({
-            useOctopus: this.useOctopus, localBackendServer: this.localBackendServer
-        })
+        simulariumController = new SimulariumController({})
     }
 
     public componentDidMount(): void {

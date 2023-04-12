@@ -58,6 +58,8 @@ export const CONNECTION_FAIL_MSG =
 export interface NetConnectionParams {
     serverIp?: string;
     serverPort?: number;
+    secureConnection?: boolean;
+    useOctopus?: boolean;
 }
 
 export class WebsocketClient {
@@ -77,8 +79,6 @@ export class WebsocketClient {
 
     public constructor(
         opts?: NetConnectionParams,
-        useOctopus?: boolean,
-        localBackendServer?: boolean,
         errorHandler?: (error: FrontEndError) => void
     ) {
         this.webSocket = null;
@@ -92,6 +92,8 @@ export class WebsocketClient {
         >();
         this.serverIp = opts && opts.serverIp ? opts.serverIp : "localhost";
         this.serverPort = opts && opts.serverPort ? opts.serverPort : 9002;
+        this.secureConnection =
+            opts && opts.secureConnection ? opts.secureConnection : false;
         this.connectionTimeWaited = 0;
         this.connectionRetries = 0;
         this.handleError =
@@ -102,9 +104,6 @@ export class WebsocketClient {
 
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
-
-        // Use wss when connected to simularium-engine, use ws otherwise
-        this.secureConnection = !(useOctopus || localBackendServer);
 
         // Frees the reserved backend in the event that the window closes w/o disconnecting
         window.addEventListener("beforeunload", this.onClose.bind(this));
