@@ -109,8 +109,6 @@ export default class SimulariumController {
             }
         }
 
-        console.log("controller oct: " + this.useOctopus);
-        console.log("controller server: " + this.localBackendServer);
         this.networkEnabled = true;
         this.isPaused = false;
         this.isFileChanging = false;
