@@ -637,6 +637,8 @@ class Viewport extends React.Component<
                     }}
                     ref={this.vdomRef}
                     tabIndex={0}
+                    data-height={height}
+                    data-width={width}
                 >
                     {showCameraControls && this.renderViewControls()}
                 </div>
