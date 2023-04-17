@@ -592,7 +592,9 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
           position: "relative"
         },
         ref: this.vdomRef,
-        tabIndex: 0
+        tabIndex: 0,
+        "data-height": height,
+        "data-width": width
       }, showCameraControls && this.renderViewControls()));
     }
   }], [{
