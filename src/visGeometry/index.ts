@@ -762,7 +762,10 @@ class VisGeometry {
         parent.appendChild(this.threejsrenderer.domElement);
         this.setUpControls(this.threejsrenderer.domElement);
 
-        this.resize(parent.scrollWidth, parent.scrollHeight);
+        this.resize(
+            Number(parent.dataset.width),
+            Number(parent.dataset.height)
+        );
 
         this.threejsrenderer.setClearColor(this.backgroundColor, 1.0);
         this.threejsrenderer.clear();
