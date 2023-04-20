@@ -147,9 +147,7 @@ export default class SimulariumController {
             this.remoteWebsocketClient = webSocketClient;
             this.simulator = new RemoteSimulator(
                 webSocketClient,
-                netConnectionConfig.useOctopus
-                    ? netConnectionConfig.useOctopus
-                    : false,
+                !!netConnectionConfig.useOctopus,
                 this.onError
             );
             this.simulator.setTrajectoryDataHandler(
