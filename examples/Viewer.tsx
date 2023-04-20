@@ -30,13 +30,7 @@ import {
 import ConversionForm from "./ConversionForm";
 import MetaballSimulator from "./MetaballSimulator";
 import { TrajectoryType } from "../src/constants";
-
-let netConnectionSettings = {
-    serverIp: "staging-node1-agentviz-backend.cellexplore.net",
-    serverPort: 9002,
-    secureConnection: true,
-    useOctopus: false,
-};
+import { NetConnectionParams } from "../src/simularium";
 
 let playbackFile = "TEST_LIVEMODE_API"; //"medyan_paper_M:A_0.675.simularium";
 let queryStringFile = "";
@@ -149,6 +143,7 @@ class Viewer extends React.Component<{}, ViewerState> {
     private viewerRef: React.RefObject<SimulariumViewer>;
     private panMode = false;
     private focusMode = true;
+    private netConnectionSettings: NetConnectionParams;
 
     public constructor(props: ViewerState & InputParams) {
         super(props);
@@ -161,18 +156,25 @@ class Viewer extends React.Component<{}, ViewerState> {
         this.state = initialState;
 
         if (props.localBackendServer) {
-            netConnectionSettings = {
+            this.netConnectionSettings = {
                 serverIp: "0.0.0.0",
                 serverPort: 8765,
                 useOctopus: props.useOctopus,
                 secureConnection: false,
             };
         } else if (props.useOctopus) {
-            netConnectionSettings = {
+            this.netConnectionSettings = {
                 serverIp: "18.223.108.15",
                 serverPort: 8765,
                 useOctopus: props.useOctopus,
                 secureConnection: false,
+            };
+        } else {
+            this.netConnectionSettings = {
+                serverIp: "staging-node1-agentviz-backend.cellexplore.net",
+                serverPort: 9002,
+                secureConnection: true,
+                useOctopus: false,
             };
         }
 
@@ -336,7 +338,9 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
-        simulariumController.convertAndLoadTrajectory(netConnectionSettings, obj, fileType)
+        simulariumController.convertAndLoadTrajectory(
+            this.netConnectionSettings, obj, fileType
+        )
             .then(() => {
                 this.clearPendingFile();
             })
@@ -490,7 +494,7 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     private configureAndLoad() {
-        simulariumController.configureNetwork(netConnectionSettings);
+        simulariumController.configureNetwork(this.netConnectionSettings);
         if (playbackFile.startsWith("http")) {
             return this.loadFromUrl(playbackFile);
         }
@@ -539,7 +543,7 @@ class Viewer extends React.Component<{}, ViewerState> {
         } else {
             simulariumController.changeFile(
                 {
-                    netConnectionSettings,
+                    netConnectionSettings: this.netConnectionSettings,
                 },
                 playbackFile
             );
@@ -749,13 +753,17 @@ class Viewer extends React.Component<{}, ViewerState> {
                     Focus Mode
                 </button>
                 <br />
-                <button onClick={() => simulariumController.getMetrics(netConnectionSettings)}>
+                <button
+                    onClick={() =>
+                        simulariumController.getMetrics(this.netConnectionSettings)
+                    }
+                >
                     Get available metrics
                 </button>
                 <button
                     onClick={() =>
                         simulariumController.getPlotData(
-                            netConnectionSettings,
+                            this.netConnectionSettings,
                             // TODO: allow user to select metrics based on results from
                             // the getMetrics() call
                             [
