@@ -139,13 +139,13 @@ const initialState: ViewerState = {
     filePending: null,
 };
 
-class Viewer extends React.Component<{}, ViewerState> {
+class Viewer extends React.Component<InputParams, ViewerState> {
     private viewerRef: React.RefObject<SimulariumViewer>;
     private panMode = false;
     private focusMode = true;
     private netConnectionSettings: NetConnectionParams;
 
-    public constructor(props: ViewerState & InputParams) {
+    public constructor(props: InputParams) {
         super(props);
         this.viewerRef = React.createRef();
         this.handleJsonMeshData = this.handleJsonMeshData.bind(this);
