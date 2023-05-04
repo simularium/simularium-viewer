@@ -112,7 +112,7 @@ interface InputParams {
     useOctopus: boolean;
 }
 
-let simulariumController;
+const simulariumController = new SimulariumController({});
 
 let currentFrame = 0;
 let currentTime = 0;
@@ -177,8 +177,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 useOctopus: false,
             };
         }
-
-        simulariumController = new SimulariumController({})
     }
 
     public componentDidMount(): void {
