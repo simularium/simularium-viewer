@@ -55,16 +55,20 @@ class SSAO1Pass {
 
             void main(void)
             {
-                vec2 texCoords = vUv;
+              vec2 texCoords = vUv;
               //debug
               //ssao_output = vec4(1);
               //return;
               vec2 noiseScale = vec2(width / 4.0, height / 4.0);
               vec4 viewPos4 = texture(viewPosTex, texCoords).xyzw;
-              if (viewPos4.w < 1.0) discard; // testing if this fragment has protein rendered on it, otherwise it's bg
+              // test if this fragment has any geometry rendered on it, otherwise it's bg
+              if (viewPos4.w < 1.0) discard; 
             
               vec3 viewPos = viewPos4.xyz;
               vec3 normal = texture(normalTex, texCoords).xyz;
+              
+              // We calculate a random offset using the noise texture sample. 
+              // This will be applied as rotation to all samples for our current fragments.
               vec3 randomVec = texture(noiseTex, texCoords * noiseScale).xyz;
             
               normal = normalize(normal * 2.0 - 1.0);
@@ -77,6 +81,7 @@ class SSAO1Pass {
               for(int i = 0; i < kernelSize; i++)
               {
                 vec3 posSample = TBN * samples[i];
+                // view space ray to this position:
                 posSample = viewPos + posSample * radius;
             
                 // transform sample to clip space
@@ -90,16 +95,20 @@ class SSAO1Pass {
                 vec4 sampleViewPos = texture(viewPosTex, offset.xy);
                 float sampleDepth = sampleViewPos.z;
                 float rangeCheck = smoothstep(0.0, 1.0, radius / abs(viewPos.z - sampleDepth));
-                occlusion += (sampleDepth >= posSample.z ? 1.0 : 0.0) * rangeCheck;
+                // compare the depth of the ray sample (posSample) vs the actual depth of geometry at that pixel (sampleDepth)
+                occlusion += (sampleDepth >= posSample.z + 0.0001 ? 1.0 : 0.0) * rangeCheck;
               }
             
-              //gl_FragColor = vec4(1.0 - occlusion/ float(kernelSize), 1.0 - occlusion / float(kernelSize), 1.0 - occlusion / float(kernelSize), 1.0);
-              //return;
+              float avg_occlusion = occlusion / float(kernelSize);
 
-              float occlusion_weight = smoothstep(ssaoThreshold - ssaoFalloff, ssaoThreshold, length(viewPos));
-              occlusion_weight = 1.0 - occlusion_weight;
-              occlusion_weight *= 0.95;
-              occlusion = 1.0 - ((occlusion_weight * occlusion) / float(kernelSize));
+            //   gl_FragColor = vec4(1.0 - avg_occlusion, 1.0 - avg_occlusion, 1.0 - avg_occlusion, 1.0);
+            //   return;
+
+            //   float occlusion_weight = smoothstep(ssaoThreshold - ssaoFalloff, ssaoThreshold, length(viewPos));
+            //   occlusion_weight = 1.0 - occlusion_weight;
+            //   occlusion_weight *= 0.95;
+              float occlusion_weight = 1.0;
+              occlusion = 1.0 - (occlusion_weight * avg_occlusion);
               //ssao_output = vec4(occlusion, occlusion, occlusion, 1.0);
               gl_FragColor = vec4(occlusion, occlusion, occlusion, 1.0);
             }
@@ -152,7 +161,8 @@ class SSAO1Pass {
 
     public createSSAOSamples(): Vector3[] {
         const samples: Vector3[] = [];
-        for (let i = 0; i < 64; i++) {
+        const sampleCount = 64;
+        for (let i = 0; i < sampleCount; i++) {
             // hemisphere kernel in tangent space
             const sample: Vector3 = new Vector3(
                 Math.random() * 2.0 - 1.0, // -1..1
@@ -160,16 +170,17 @@ class SSAO1Pass {
                 Math.random() // 0..1
             );
             sample.normalize();
-            sample.multiplyScalar(Math.random());
+
+            //sample.multiplyScalar(Math.random());
 
             // Uncomment all this to try to get better samples
-            // function lerp(x0: number, x1: number, alpha: number): number {
-            //     return x0 + (x1 - x0) * alpha;
-            // }
-            // const iRelative = i / 64.0;
-            // // scale samples s.t. they're more aligned to center of kernel
-            // const scale = lerp(0.1, 1.0, iRelative * iRelative);
-            // sample.multiplyScalar(scale);
+            function lerp(x0: number, x1: number, alpha: number): number {
+                return x0 + (x1 - x0) * alpha;
+            }
+            const iRelative = i / sampleCount;
+            // scale samples s.t. they're more aligned to center of kernel
+            const scale = lerp(0.1, 1.0, iRelative * iRelative);
+            sample.multiplyScalar(scale);
 
             samples.push(sample);
         }
