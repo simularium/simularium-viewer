@@ -66,7 +66,7 @@ class MetaballMesh implements GeometryInstanceContainer {
         typeId: number,
         lodScale = 1,
         subPoints: number[] = []
-    ): Mesh {
+    ): void {
         // MARCHING CUBES
 
         const mat = this.shaderSet.mat.clone();
