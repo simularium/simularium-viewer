@@ -3,7 +3,6 @@ import {
     BufferGeometry,
     Euler,
     Group,
-    Mesh,
     Quaternion,
     Vector3,
     Vector4,
@@ -145,7 +144,6 @@ class MetaballMesh implements GeometryInstanceContainer {
         effect.onBeforeRender();
         this.drawable.add(effect);
 
-        return effect;
     }
 }
 

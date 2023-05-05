@@ -7,7 +7,7 @@ import {
     Material,
     MeshLambertMaterial,
     MeshBasicMaterial,
-    TubeBufferGeometry,
+    TubeGeometry,
     Group,
     LOD,
     Mesh,
@@ -17,6 +17,7 @@ import {
     Camera,
     Raycaster,
     Scene,
+    Vector2
 } from "three";
 
 const FOLLOW_COLOR = new Color(0xffff00);
@@ -58,7 +59,7 @@ class LegacyRenderer {
             return;
         }
         // expensive
-        const fibergeometry = new TubeBufferGeometry(
+        const fibergeometry = new TubeGeometry(
             visAgent.fiberCurve,
             4 * (visAgent.fiberCurve.points.length - 1), // 4 segments per control point
             scale * 0.5,
@@ -159,7 +160,7 @@ class LegacyRenderer {
         }
     }
 
-    public hitTest(coords: { x: number; y: number }, camera: Camera): number {
+    public hitTest(coords: Vector2, camera: Camera): number {
         const raycaster = new Raycaster();
         raycaster.setFromCamera(coords, camera);
         // intersect the agent mesh group.

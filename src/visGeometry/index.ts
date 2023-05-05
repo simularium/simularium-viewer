@@ -879,7 +879,7 @@ class VisGeometry {
             this.setPdbLods();
 
             this.scene.updateMatrixWorld();
-            this.scene.autoUpdate = false;
+            this.scene.matrixAutoUpdate = false;
 
             // collect up the meshes that have > 0 instances
             const meshTypes: GeometryInstanceContainer[] = [];
@@ -934,7 +934,7 @@ class VisGeometry {
             this.instancedMeshGroup.visible = true;
             this.threejsrenderer.autoClear = true;
 
-            this.scene.autoUpdate = true;
+            this.scene.matrixAutoUpdate = true;
         }
     }
 
@@ -953,10 +953,10 @@ class VisGeometry {
         const size = new Vector2();
         this.threejsrenderer.getSize(size);
         if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
-            const mouse = {
-                x: (offsetX / size.x) * 2 - 1,
-                y: -(offsetY / size.y) * 2 + 1,
-            };
+            const mouse = new Vector2(
+                (offsetX / size.x) * 2 - 1,
+                -(offsetY / size.y) * 2 + 1
+            );
             return this.legacyRenderer.hitTest(mouse, this.camera);
         } else {
             // read from instance buffer pixel!
