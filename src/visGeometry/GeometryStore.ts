@@ -5,8 +5,8 @@ import {
     BufferGeometry,
     Object3D,
     Mesh,
-    SphereGeometry,
-    BoxGeometry,
+    SphereBufferGeometry,
+    BoxBufferGeometry,
 } from "three";
 
 import { checkAndSanitizePath, getFileExtension } from "../util";
@@ -49,12 +49,13 @@ class GeometryStore {
     private _cachedAssets: Map<string, string>;
     private _registry: Registry;
     public mlogger: ILogger;
-    public static sphereGeometry: SphereGeometry = new SphereGeometry(
+    public static sphereGeometry: SphereBufferGeometry =
+        new SphereBufferGeometry(1, 32, 32);
+    public static cubeGeometry: BoxBufferGeometry = new BoxBufferGeometry(
         1,
-        32,
-        32
+        1,
+        1
     );
-    public static cubeGeometry: BoxGeometry = new BoxGeometry(1, 1, 1);
 
     private static shouldLoadPrimitive = (
         displayType: GeometryDisplayType,

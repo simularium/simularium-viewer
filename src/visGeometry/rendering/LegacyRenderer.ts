@@ -7,7 +7,7 @@ import {
     Material,
     MeshLambertMaterial,
     MeshBasicMaterial,
-    TubeGeometry,
+    TubeBufferGeometry,
     Group,
     LOD,
     Mesh,
@@ -17,7 +17,7 @@ import {
     Camera,
     Raycaster,
     Scene,
-    Vector2
+    Vector2,
 } from "three";
 
 const FOLLOW_COLOR = new Color(0xffff00);
@@ -59,7 +59,7 @@ class LegacyRenderer {
             return;
         }
         // expensive
-        const fibergeometry = new TubeGeometry(
+        const fibergeometry = new TubeBufferGeometry(
             visAgent.fiberCurve,
             4 * (visAgent.fiberCurve.points.length - 1), // 4 segments per control point
             scale * 0.5,

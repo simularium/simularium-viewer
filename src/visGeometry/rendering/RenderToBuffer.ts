@@ -2,7 +2,7 @@ import {
     IUniform,
     Mesh,
     OrthographicCamera,
-    PlaneGeometry,
+    PlaneBufferGeometry,
     Scene,
     ShaderMaterial,
     WebGLRenderer,
@@ -16,7 +16,7 @@ interface RenderToBufferParams {
 
 class RenderToBuffer {
     public scene: Scene;
-    public geometry: PlaneGeometry;
+    public geometry: PlaneBufferGeometry;
     public material: ShaderMaterial;
     public camera: OrthographicCamera;
     public mesh: Mesh;
@@ -26,7 +26,7 @@ class RenderToBuffer {
         // fragmentShader
         // uniforms
         this.scene = new Scene();
-        this.geometry = new PlaneGeometry(2, 2);
+        this.geometry = new PlaneBufferGeometry(2, 2);
 
         // augment uniforms (and shader source?)
         this.material = new ShaderMaterial({
