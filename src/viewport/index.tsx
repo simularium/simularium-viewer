@@ -124,7 +124,7 @@ class Viewport extends React.Component<
         this.lastRenderTime = Date.now();
         this.startTime = Date.now();
         this.onPickObject = this.onPickObject.bind(this);
-        this.stats = new Stats();
+        this.stats = Stats();
         this.stats.showPanel(1);
 
         this.handlers = {
