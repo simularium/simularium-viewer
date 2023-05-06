@@ -141,7 +141,8 @@ class CompositePass {
                     discard;
                 }
                 float occ1 = texture(ssaoTex1, texCoords).r;
-                float occ2 = texture(ssaoTex2, texCoords).r;
+                //float occ2 = texture(ssaoTex2, texCoords).r;
+                float occ2 = 1.0;
                 float instanceId = (col0.y);
             
                 if(instanceId < 0.0)

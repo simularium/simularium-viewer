@@ -440,20 +440,20 @@ class SimulariumRenderer {
             this.blurIntermediateBuffer
         );
 
-        this.ssao2Pass.render(
-            renderer,
-            camera,
-            this.ssaoBuffer2,
-            this.gbuffer.texture[NORMALBUFFER],
-            this.gbuffer.texture[POSITIONBUFFER]
-        );
-        this.blur2Pass.render(
-            renderer,
-            this.ssaoBufferBlurred2,
-            this.ssaoBuffer2,
-            this.gbuffer.texture[POSITIONBUFFER],
-            this.blurIntermediateBuffer
-        );
+        // this.ssao2Pass.render(
+        //     renderer,
+        //     camera,
+        //     this.ssaoBuffer2,
+        //     this.gbuffer.texture[NORMALBUFFER],
+        //     this.gbuffer.texture[POSITIONBUFFER]
+        // );
+        // this.blur2Pass.render(
+        //     renderer,
+        //     this.ssaoBufferBlurred2,
+        //     this.ssaoBuffer2,
+        //     this.gbuffer.texture[POSITIONBUFFER],
+        //     this.blurIntermediateBuffer
+        // );
 
         // render composite pass into this buffer, overwriting whatever was there!
         // Be sure this buffer is not needed anymore!
