@@ -160,13 +160,16 @@ class CompositePass {
                 float eyeDepth = -col0.z;
 
                 vec3 atomColor = col.xyz;
-            
+                
                 // background color as HCL
                 vec3 bghcl = rgb2hcl(backgroundColor);
 
                 //inital Hue-Chroma-Luminance
 
                 // atom color in HCL
+                // apply occlusion first
+                col.xyz *= (occ1 * occ2);
+
                 vec3 hcl = rgb2hcl(col.xyz);
                 float h = hcl.r;
                 float c = hcl.g;
@@ -209,7 +212,7 @@ class CompositePass {
                     //color.xyz = vec3(0.0, 1.0, 0.0);
                 }
             
-                gl_FragColor = vec4( occ1 * occ2 * color.xyz, 1.0);
+                gl_FragColor = vec4( color.xyz, 1.0);
             }
             `,
         });

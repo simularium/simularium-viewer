@@ -171,16 +171,16 @@ class SSAO1Pass {
             );
             sample.normalize();
 
-            //sample.multiplyScalar(Math.random());
+            sample.multiplyScalar(Math.random());
 
             // Uncomment all this to try to get better samples
-            function lerp(x0: number, x1: number, alpha: number): number {
-                return x0 + (x1 - x0) * alpha;
-            }
-            const iRelative = i / sampleCount;
-            // scale samples s.t. they're more aligned to center of kernel
-            const scale = lerp(0.1, 1.0, iRelative * iRelative);
-            sample.multiplyScalar(scale);
+            // function lerp(x0: number, x1: number, alpha: number): number {
+            //     return x0 + (x1 - x0) * alpha;
+            // }
+            // const iRelative = i / sampleCount;
+            // // scale samples s.t. they're more aligned to center of kernel
+            // const scale = lerp(0.1, 1.0, iRelative * iRelative);
+            // sample.multiplyScalar(scale);
 
             samples.push(sample);
         }
