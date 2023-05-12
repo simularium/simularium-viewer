@@ -34,8 +34,8 @@ class CompositePass {
                     : { value: new Vector3(1.0, 0.0, 0.2) },
                 zNear: { value: 0.1 },
                 zFar: { value: 1000 },
-                atomicBeginDistance: { value: 150 },
-                chainBeginDistance: { value: 300 },
+                atomicBeginDistance: { value: 75 },
+                chainBeginDistance: { value: 150 },
                 followedInstance: { value: -1 },
             },
             fragmentShader: `
@@ -141,8 +141,8 @@ class CompositePass {
                     discard;
                 }
                 float occ1 = texture(ssaoTex1, texCoords).r;
-                //float occ2 = texture(ssaoTex2, texCoords).r;
-                float occ2 = 1.0;
+                float occ2 = texture(ssaoTex2, texCoords).r;
+                //float occ2 = 1.0;
                 float instanceId = (col0.y);
             
                 if(instanceId < 0.0)
@@ -168,7 +168,7 @@ class CompositePass {
 
                 // atom color in HCL
                 // apply occlusion first
-                col.xyz *= (occ1 * occ2);
+                //col.xyz *= (occ1 * occ2);
 
                 vec3 hcl = rgb2hcl(col.xyz);
                 float h = hcl.r;
@@ -212,7 +212,7 @@ class CompositePass {
                     //color.xyz = vec3(0.0, 1.0, 0.0);
                 }
             
-                gl_FragColor = vec4( color.xyz, 1.0);
+                gl_FragColor = vec4( color.xyz*occ1*occ2, 1.0);
             }
             `,
         });

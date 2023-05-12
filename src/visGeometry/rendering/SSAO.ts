@@ -104,10 +104,10 @@ class SSAO1Pass {
             //   gl_FragColor = vec4(1.0 - avg_occlusion, 1.0 - avg_occlusion, 1.0 - avg_occlusion, 1.0);
             //   return;
 
-            //   float occlusion_weight = smoothstep(ssaoThreshold - ssaoFalloff, ssaoThreshold, length(viewPos));
-            //   occlusion_weight = 1.0 - occlusion_weight;
+              float occlusion_weight = smoothstep(ssaoThreshold - ssaoFalloff, ssaoThreshold, length(viewPos));
+              occlusion_weight = 1.0 - occlusion_weight;
             //   occlusion_weight *= 0.95;
-              float occlusion_weight = 1.0;
+            //  float occlusion_weight = 1.0;
               occlusion = 1.0 - (occlusion_weight * avg_occlusion);
               //ssao_output = vec4(occlusion, occlusion, occlusion, 1.0);
               gl_FragColor = vec4(occlusion, occlusion, occlusion, 1.0);
@@ -171,16 +171,16 @@ class SSAO1Pass {
             );
             sample.normalize();
 
-            sample.multiplyScalar(Math.random());
+            //sample.multiplyScalar(Math.random());
 
             // Uncomment all this to try to get better samples
-            // function lerp(x0: number, x1: number, alpha: number): number {
-            //     return x0 + (x1 - x0) * alpha;
-            // }
-            // const iRelative = i / sampleCount;
-            // // scale samples s.t. they're more aligned to center of kernel
-            // const scale = lerp(0.1, 1.0, iRelative * iRelative);
-            // sample.multiplyScalar(scale);
+            function lerp(x0: number, x1: number, alpha: number): number {
+                return x0 + (x1 - x0) * alpha;
+            }
+            const iRelative = i / sampleCount;
+            // scale samples s.t. they're more aligned to center of kernel
+            const scale = lerp(0.1, 1.0, iRelative * iRelative);
+            sample.multiplyScalar(scale);
 
             samples.push(sample);
         }

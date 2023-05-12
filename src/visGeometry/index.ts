@@ -911,7 +911,11 @@ class VisGeometry {
                 meshTypes
             );
             this.renderer.setFollowedInstance(this.followObjectId);
-            this.renderer.setNearFar(this.boxNearZ, this.boxFarZ);
+            //get bounding box max dim
+            const v = new Vector3();
+            this.boundingBox.getSize(v);
+            const maxDim = Math.max(v.x, v.y, v.z);
+            this.renderer.setNearFar(this.boxNearZ, this.boxFarZ, maxDim);
             this.boundingBoxMesh.visible = false;
             this.tickMarksMesh.visible = false;
             this.agentPathGroup.visible = false;

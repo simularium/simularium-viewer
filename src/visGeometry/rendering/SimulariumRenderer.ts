@@ -78,21 +78,22 @@ class SimulariumRenderer {
     private parameters: SimulariumRenderParameters;
     private boundsNear: number;
     private boundsFar: number;
+    private boundsMaxDim: number;
 
     public constructor() {
         this.parameters = {
             // AO defaults
-            aoradius1: 1.2,
+            aoradius1: 1.5,
             blurradius1: 1.5,
             aothreshold1: 127.0,
             aofalloff1: 300.0,
-            aoradius2: 5.77,
-            blurradius2: 1.94,
+            aoradius2: 0.8,
+            blurradius2: 1.5,
             aothreshold2: 300.0,
             aofalloff2: 208.0,
             // end AO defaults
-            atomBeginDistance: 50.0,
-            chainBeginDistance: 100.0,
+            atomBeginDistance: 75.0,
+            chainBeginDistance: 150.0,
             bghueoffset: 1,
             bgchromaoffset: 0.45,
             bgluminanceoffset: 0.45,
@@ -105,6 +106,7 @@ class SimulariumRenderer {
         };
         this.boundsNear = 0.0;
         this.boundsFar = 100.0;
+        this.boundsMaxDim = 100.0;
 
         this.gbufferPass = new GBufferPass();
         // radius, threshold, falloff in view space coordinates.
@@ -371,9 +373,10 @@ class SimulariumRenderer {
         this.drawBufferPass.resize(x, y);
     }
 
-    public setNearFar(n: number, f: number): void {
+    public setNearFar(n: number, f: number, boxMaxDim: number): void {
         this.boundsNear = n;
         this.boundsFar = f;
+        this.boundsMaxDim = boxMaxDim;
     }
 
     public render(
@@ -382,19 +385,25 @@ class SimulariumRenderer {
         camera: PerspectiveCamera,
         target: WebGLRenderTarget | null
     ): void {
+        // some param settings were based on a bounding box of 300 units
+        const ratio = this.boundsMaxDim / 300.0;
         // updates for transformed bounds (should this happen in shader?)
         this.ssao1Pass.pass.material.uniforms.ssaoThreshold.value =
-            this.parameters.aothreshold1 + Math.max(this.boundsNear, 0.0);
+            this.parameters.aothreshold1 * ratio +
+            Math.max(this.boundsNear, 0.0);
         this.ssao1Pass.pass.material.uniforms.ssaoFalloff.value =
-            this.parameters.aofalloff1 + Math.max(this.boundsNear, 0.0);
+            this.parameters.aofalloff1 * ratio + Math.max(this.boundsNear, 0.0);
         this.ssao2Pass.pass.material.uniforms.ssaoThreshold.value =
-            this.parameters.aothreshold2 + Math.max(this.boundsNear, 0.0);
+            this.parameters.aothreshold2 * ratio +
+            Math.max(this.boundsNear, 0.0);
         this.ssao2Pass.pass.material.uniforms.ssaoFalloff.value =
-            this.parameters.aofalloff2 + Math.max(this.boundsNear, 0.0);
+            this.parameters.aofalloff2 * ratio + Math.max(this.boundsNear, 0.0);
         this.compositePass.pass.material.uniforms.atomicBeginDistance.value =
-            this.parameters.atomBeginDistance + Math.max(this.boundsNear, 0.0);
+            this.parameters.atomBeginDistance * ratio +
+            Math.max(this.boundsNear, 0.0);
         this.compositePass.pass.material.uniforms.chainBeginDistance.value =
-            this.parameters.chainBeginDistance + Math.max(this.boundsNear, 0.0);
+            this.parameters.chainBeginDistance * ratio +
+            Math.max(this.boundsNear, 0.0);
 
         // currently rendering is a draw call per PDB POINTS objects and one draw call per mesh TRIANGLES object (reusing same geometry buffer)
 
