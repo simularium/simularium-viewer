@@ -224,7 +224,7 @@ class CompositePass {
                 //     //color.xyz = vec3(0.0, 1.0, 0.0);
                 // }
 
-                gl_FragColor = vec4( color.xyz /* *occ1*occ2 */ , 1.0);
+                gl_FragColor = vec4( color.xyz *(occ1*occ2) , 1.0);
             }
             `,
         });

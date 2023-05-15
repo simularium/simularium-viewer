@@ -83,17 +83,17 @@ class SimulariumRenderer {
     public constructor() {
         this.parameters = {
             // AO defaults
-            aoradius1: 1.5,
+            aoradius1: 0.666,
             blurradius1: 1.5,
-            aothreshold1: 127.0,
-            aofalloff1: 300.0,
-            aoradius2: 0.8,
+            aothreshold1: 0.45, // % of bounds size
+            aofalloff1: 1.0, // % of bounds size
+            aoradius2: 0.666,
             blurradius2: 1.5,
-            aothreshold2: 300.0,
-            aofalloff2: 208.0,
+            aothreshold2: 1.0, // % of bounds size
+            aofalloff2: 0.6666, // % of bounds size
             // end AO defaults
-            atomBeginDistance: 75.0,
-            chainBeginDistance: 150.0,
+            atomBeginDistance: 0.6666, // % of bounds size
+            chainBeginDistance: 1.0, // % of bounds size
             bghueoffset: 1,
             bgchromaoffset: 0.45,
             bgluminanceoffset: 0.45,
@@ -226,8 +226,8 @@ class SimulariumRenderer {
                 this.blur1Pass.setRadius(event.value);
             }
         );
-        ao.addInput(settings, "aothreshold1", { min: 0.01, max: 300.0 });
-        ao.addInput(settings, "aofalloff1", { min: 0.01, max: 300.0 });
+        ao.addInput(settings, "aothreshold1", { min: 0.01, max: 2.0 });
+        ao.addInput(settings, "aofalloff1", { min: 0.01, max: 2.0 });
         ao.addSeparator();
 
         ao.addInput(settings, "aoradius2", { min: 0.01, max: 10.0 }).on(
@@ -242,13 +242,13 @@ class SimulariumRenderer {
                 this.blur2Pass.setRadius(event.value);
             }
         );
-        ao.addInput(settings, "aothreshold2", { min: 0.01, max: 300.0 });
-        ao.addInput(settings, "aofalloff2", { min: 0.01, max: 300.0 });
+        ao.addInput(settings, "aothreshold2", { min: 0.01, max: 2.0 });
+        ao.addInput(settings, "aofalloff2", { min: 0.01, max: 2.0 });
         const depth = gui.addFolder({ title: "DepthCueing", expanded: false });
-        depth.addInput(settings, "atomBeginDistance", { min: 0.0, max: 300.0 });
+        depth.addInput(settings, "atomBeginDistance", { min: 0.0, max: 2.0 });
         depth.addInput(settings, "chainBeginDistance", {
             min: 0.0,
-            max: 300.0,
+            max: 2.0,
         });
 
         depth
@@ -386,18 +386,28 @@ class SimulariumRenderer {
         target: WebGLRenderTarget | null
     ): void {
         // some param settings were based on a bounding box of 300 units
-        const ratio = this.boundsMaxDim / 300.0;
+        const ratio = this.boundsMaxDim;
         // updates for transformed bounds (should this happen in shader?)
         this.ssao1Pass.pass.material.uniforms.ssaoThreshold.value =
-            this.parameters.aothreshold1 * ratio +
+            this.parameters.chainBeginDistance * ratio +
+            // this.parameters.aothreshold1 * ratio +
             Math.max(this.boundsNear, 0.0);
         this.ssao1Pass.pass.material.uniforms.ssaoFalloff.value =
-            this.parameters.aofalloff1 * ratio + Math.max(this.boundsNear, 0.0);
+            (this.parameters.chainBeginDistance -
+                this.parameters.atomBeginDistance) *
+                ratio +
+            //this.parameters.aofalloff1 * ratio +
+            Math.max(this.boundsNear, 0.0);
         this.ssao2Pass.pass.material.uniforms.ssaoThreshold.value =
-            this.parameters.aothreshold2 * ratio +
+            this.parameters.chainBeginDistance * ratio +
+            //        this.parameters.aothreshold2 * ratio +
             Math.max(this.boundsNear, 0.0);
         this.ssao2Pass.pass.material.uniforms.ssaoFalloff.value =
-            this.parameters.aofalloff2 * ratio + Math.max(this.boundsNear, 0.0);
+            (this.parameters.chainBeginDistance -
+                this.parameters.atomBeginDistance) *
+                ratio +
+            //this.parameters.aofalloff2 * ratio +
+            Math.max(this.boundsNear, 0.0);
         this.compositePass.pass.material.uniforms.atomicBeginDistance.value =
             this.parameters.atomBeginDistance * ratio +
             Math.max(this.boundsNear, 0.0);
