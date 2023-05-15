@@ -182,38 +182,48 @@ class CompositePass {
                 c = bghcl.g;
                 l = bghcl.b;
 
-                // chainBeginDistance should be > atomicBeginDistance
+                // distance ranges:
+                // 0(near)-----atomBeginDistance------chainBeginDistance------far
 
+                // chainBeginDistance should be > atomicBeginDistance
                 if(eyeDepth < chainBeginDistance)
                 {
                     float cc = max(eyeDepth - atomicBeginDistance, 0.0);
                     float dd = chainBeginDistance - atomicBeginDistance;
-                    float ddd = min(1.0, max(cc/dd, 0.0));
-                    ddd = (1.0-(ddd));
-                    l = mix(bghcl.z, hcl.z, ddd);
-                    c = mix(bghcl.y, hcl.y, ddd);
-                    h = mix(bghcl.x, hcl.x, ddd);
+                    // t is 0.0 at atomicBeginDistance, 1.0 at chainBeginDistance
+                    // interpolate from hcl at near atomBeginDistance,
+                    // to bghcl at far chainBeginDistance.
+                    // beyond chainBeginDistance, color will be bghcl
+                    float t = cc/dd;
+                    t = clamp(t, 0.0, 1.0);
+                    l = mix(hcl.z, bghcl.z, t);
+                    c = mix(hcl.y, bghcl.y, t);
+                    h = mix(hcl.x, bghcl.x, t);
                 }
-                        
+
+                // h,c,l now contains current color.
+
                 vec3 color;
                 color = hcl2rgb(vec3(h, c, l));
 
-                color = max(color, vec3(0.0,0.0,0.0));
-                color = min(color, vec3(1.0,1.0,1.0));
-                
+                // color = max(color, vec3(0.0,0.0,0.0));
+                // color = min(color, vec3(1.0,1.0,1.0));
+                color = clamp(color, vec3(0.0,0.0,0.0), vec3(1.0,1.0,1.0));
+
                 if(eyeDepth < atomicBeginDistance)
                 {
+                    // small t = near, large t = far(close to atomBeginDistance)
                     float t = (eyeDepth/atomicBeginDistance);
-                    t = 1.0 - clamp(t, 0.0, 1.0);
+                    t = clamp(t, 0.0, 1.0);
                     // inside of atomicBeginDistance:
                     // near is atomColor, far is color.xyz
                     // linear RGB interp? not HCL?
-                    color.xyz = mix(color.xyz, atomColor, t);
+                    color.xyz = mix(atomColor, color.xyz, t);
                     //color.xyz = atomColor;
                     //color.xyz = vec3(0.0, 1.0, 0.0);
                 }
-            
-                gl_FragColor = vec4( color.xyz*occ1*occ2, 1.0);
+
+                gl_FragColor = vec4( color.xyz /* *occ1*occ2 */ , 1.0);
             }
             `,
         });
