@@ -83,12 +83,12 @@ class SimulariumRenderer {
     public constructor() {
         this.parameters = {
             // AO defaults
-            aoradius1: 0.666,
-            blurradius1: 1.5,
+            aoradius1: 0.666, // view space
+            blurradius1: 3.0, // pixels
             aothreshold1: 0.45, // % of bounds size
             aofalloff1: 1.0, // % of bounds size
-            aoradius2: 0.666,
-            blurradius2: 1.5,
+            aoradius2: 0.666, // view space
+            blurradius2: 3.0, // pixels
             aothreshold2: 1.0, // % of bounds size
             aofalloff2: 0.6666, // % of bounds size
             // end AO defaults

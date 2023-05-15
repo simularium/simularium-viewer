@@ -100,6 +100,7 @@ class SSAO1Pass {
               }
             
               float avg_occlusion = occlusion / float(kernelSize);
+              avg_occlusion *= 0.5;
 
             //   gl_FragColor = vec4(1.0 - avg_occlusion, 1.0 - avg_occlusion, 1.0 - avg_occlusion, 1.0);
             //   return;
