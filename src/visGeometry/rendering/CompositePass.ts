@@ -40,13 +40,13 @@ class CompositePass {
             },
             fragmentShader: `
             in vec2 vUv;
-            
+
             uniform sampler2D colorTex;
             uniform sampler2D ssaoTex1;
             uniform sampler2D ssaoTex2;
 
             uniform sampler2D colorsBuffer;
-            
+
             uniform float zNear;
             uniform float zFar;
             uniform vec3 backgroundColor;
@@ -54,10 +54,10 @@ class CompositePass {
 
             // a single instance to get a special highlight
             uniform float followedInstance;
-            
+
             uniform float atomicBeginDistance; // = 100.0;
             uniform float chainBeginDistance; // = 150.0;
-                                                
+
             const float HCLgamma_ = 3.0;
             const float HCLy0_ = 100.0;
             const float HCLmaxL_ = 0.530454533953517;
@@ -122,14 +122,14 @@ class CompositePass {
               HCL.z = mix(U, V, Q) / (HCLmaxL_ * 2.0);
               return HCL;
             }
-                        
+
             float LinearEyeDepth(float z_b)
             {
                 float z_n = 2.0 * z_b - 1.0;
                 float z_e = 2.0 * zNear * zFar / (zFar + zNear - z_n * (zFar - zNear));
                 return z_e;
             }
-            
+
             void main(void)
             {
                 vec2 texCoords = vUv;
@@ -144,10 +144,10 @@ class CompositePass {
                 float occ2 = texture(ssaoTex2, texCoords).r;
                 //float occ2 = 1.0;
                 float instanceId = (col0.y);
-            
+
                 if(instanceId < 0.0)
                     discard;
-            
+
                 // Subtracting 1 because we added 1 before setting this, to account for id 0 being highlighted.
                 // rounding because on some platforms (at least one nvidia+windows) int(abs(...)) is returning values that fluctuate
                 int agentColorIndex = int(round(abs(col0.x))-1.0);
@@ -159,8 +159,9 @@ class CompositePass {
 
                 float eyeDepth = -col0.z;
 
+                // atomColor is the "true" color
                 vec3 atomColor = col.xyz;
-                
+
                 // background color as HCL
                 vec3 bghcl = rgb2hcl(backgroundColor);
 
