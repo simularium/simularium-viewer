@@ -162,20 +162,16 @@ class CompositePass {
                 // atomColor is the "true" color
                 vec3 atomColor = col.xyz;
 
-                // background color as HCL
-                vec3 bghcl = rgb2hcl(backgroundColor);
-
                 //inital Hue-Chroma-Luminance
 
                 // atom color in HCL
-                // apply occlusion first
-                //col.xyz *= (occ1 * occ2);
-
                 vec3 hcl = rgb2hcl(col.xyz);
                 float h = hcl.r;
                 float c = hcl.g;
                 float l = hcl.b;
 
+                // background color as HCL
+                vec3 bghcl = rgb2hcl(backgroundColor);
                 // per-pixel BG is related to atom color
                 bghcl = mix(bghcl, hcl, bgHCLoffset);
                 h = bghcl.r;
@@ -184,6 +180,8 @@ class CompositePass {
 
                 // distance ranges:
                 // 0(near)-----atomBeginDistance------chainBeginDistance------far
+
+                // anything farther than chainBeginDistance will get the bg color
 
                 // chainBeginDistance should be > atomicBeginDistance
                 if(eyeDepth < chainBeginDistance)
@@ -210,18 +208,21 @@ class CompositePass {
                 // color = min(color, vec3(1.0,1.0,1.0));
                 color = clamp(color, vec3(0.0,0.0,0.0), vec3(1.0,1.0,1.0));
 
-                if(eyeDepth < atomicBeginDistance)
-                {
-                    // small t = near, large t = far(close to atomBeginDistance)
-                    float t = (eyeDepth/atomicBeginDistance);
-                    t = clamp(t, 0.0, 1.0);
-                    // inside of atomicBeginDistance:
-                    // near is atomColor, far is color.xyz
-                    // linear RGB interp? not HCL?
-                    color.xyz = mix(atomColor, color.xyz, t);
-                    //color.xyz = atomColor;
-                    //color.xyz = vec3(0.0, 1.0, 0.0);
-                }
+                // The following code does nothing because of the clamping
+                // nothing will be interpolated and we end up with color
+                // being the atom color.
+                // if(eyeDepth < atomicBeginDistance)
+                // {
+                //     // small t = near, large t = far(close to atomBeginDistance)
+                //     float t = (eyeDepth/atomicBeginDistance);
+                //     t = clamp(t, 0.0, 1.0);
+                //     // inside of atomicBeginDistance:
+                //     // near is atomColor, far is color.xyz
+                //     // linear RGB interp? not HCL?
+                //     color.xyz = mix(atomColor, color.xyz, t);
+                //     //color.xyz = atomColor;
+                //     //color.xyz = vec3(0.0, 1.0, 0.0);
+                // }
 
                 gl_FragColor = vec4( color.xyz /* *occ1*occ2 */ , 1.0);
             }
