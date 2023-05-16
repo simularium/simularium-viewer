@@ -118,12 +118,14 @@ class VisGeometry {
     // this is the threejs object that issues all the webgl calls
     public threejsrenderer: WebGLRenderer;
     public scene: Scene;
+
     public perspectiveCamera: PerspectiveCamera;
     public orthographicCamera: OrthographicCamera;
     public camera: Camera;
     public perspectiveControls: OrbitControls;
     public orthographicControls: OrbitControls;
     public controls: OrbitControls;
+
     public dl: DirectionalLight;
     public boundingBox: Box3;
     public boundingBoxMesh: Box3Helper;
@@ -224,11 +226,13 @@ class VisGeometry {
         this.dl = new DirectionalLight(0xffffff, 0.6);
         this.hemiLight = new HemisphereLight(0xffffff, 0x000000, 0.5);
         this.threejsrenderer = new WebGLRenderer({ premultipliedAlpha: false });
-        this.controls = new OrbitControls(
-            this.camera,
+        this.perspectiveControls = this.createControls(
             this.threejsrenderer.domElement
         );
-        this.setPanningMode(false);
+        this.orthographicControls = this.createControls(
+            this.threejsrenderer.domElement
+        );
+        this.controls = this.perspectiveControls;
         this.focusMode = true;
 
         this.boundingBox = new Box3(
@@ -567,24 +571,32 @@ class VisGeometry {
         this.dolly(changeBy);
     }
 
-    public setPanningMode(pan: boolean): void {
+    private setPanningModeForControls(
+        pan: boolean,
+        controls: OrbitControls
+    ): void {
         if (!pan) {
-            this.controls.enablePan = true;
-            this.controls.enableRotate = true;
-            this.controls.mouseButtons = {
+            controls.enablePan = true;
+            controls.enableRotate = true;
+            controls.mouseButtons = {
                 LEFT: MOUSE.ROTATE,
                 MIDDLE: MOUSE.DOLLY,
                 RIGHT: MOUSE.PAN,
             };
         } else {
-            this.controls.enablePan = true;
-            this.controls.enableRotate = true;
-            this.controls.mouseButtons = {
+            controls.enablePan = true;
+            controls.enableRotate = true;
+            controls.mouseButtons = {
                 LEFT: MOUSE.PAN,
                 MIDDLE: MOUSE.DOLLY,
                 RIGHT: MOUSE.ROTATE,
             };
         }
+    }
+
+    public setPanningMode(pan: boolean): void {
+        this.setPanningModeForControls(pan, this.perspectiveControls);
+        this.setPanningModeForControls(pan, this.orthographicControls);
     }
 
     public setFocusMode(focus: boolean): void {
@@ -671,24 +683,26 @@ class VisGeometry {
         this.updateScene(this.currentSceneAgents);
     }
 
-    public setUpControls(element: HTMLElement): void {
-        this.controls = new OrbitControls(this.camera, element);
-        this.controls.addEventListener("change", () => {
+    private createControls(element: HTMLElement): OrbitControls {
+        const controls = new OrbitControls(this.camera, element);
+        controls.addEventListener("change", () => {
             if (this.gui) {
                 this.gui.refresh();
             }
         });
 
-        this.controls.maxDistance = 750;
-        this.controls.minDistance = 1;
-        this.controls.zoomSpeed = 1.0;
-        this.setPanningMode(false);
-        this.controls.saveState();
+        controls.maxDistance = 750;
+        controls.minDistance = 1;
+        controls.zoomSpeed = 1.0;
+        this.setPanningModeForControls(false, controls);
+        controls.saveState();
+
+        return controls;
     }
 
     /**
      *   Setup ThreeJS Scene
-     * */
+     */
     public setupScene(): void {
         this.scene = new Scene();
         this.lightsGroup = new Group();
@@ -700,6 +714,15 @@ class VisGeometry {
         this.instancedMeshGroup = new Group();
         this.instancedMeshGroup.name = "instanced meshes for agents";
         this.scene.add(this.instancedMeshGroup);
+
+        this.perspectiveCamera = new PerspectiveCamera(
+            75,
+            CANVAS_INITIAL_WIDTH / CANVAS_INITIAL_HEIGHT,
+            CAMERA_INITIAL_ZNEAR,
+            CAMERA_INITIAL_ZFAR
+        );
+        this.orthographicCamera = new OrthographicCamera();
+        this.camera = this.perspectiveCamera;
 
         this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
 
@@ -760,17 +783,24 @@ class VisGeometry {
     }
 
     public setCameraType(ortho: boolean): void {
-        if (ortho) {
-            if (this.camera.isOrthographicCamera) {
-                return;
-            }
-            this.camera = this.orthographicCamera;
-        } else {
-            if (this.camera.isPerspectiveCamera) {
-                return;
-            }
+        const isOrthoCamera = (cam: Camera): cam is OrthographicCamera =>
+            !!(cam as OrthographicCamera).isOrthographicCamera;
+        if (isOrthoCamera(this.camera) === ortho) {
+            return;
         }
-        this.camera = ortho ? this.orthographicCamera : this.perspectiveCamera;
+
+        const newCam = ortho ? this.orthographicCamera : this.perspectiveCamera;
+        const newControls = ortho
+            ? this.orthographicControls
+            : this.perspectiveControls;
+
+        newCam.position.copy(this.camera.position);
+        newCam.up.copy(this.camera.up);
+        newControls.target.copy(this.controls.target);
+        newControls.update();
+
+        this.camera = newCam;
+        this.controls = newControls;
     }
 
     public reparent(parent?: HTMLElement | null): void {
@@ -779,7 +809,13 @@ class VisGeometry {
         }
 
         parent.appendChild(this.threejsrenderer.domElement);
-        this.setUpControls(this.threejsrenderer.domElement);
+        this.perspectiveControls = this.createControls(
+            this.threejsrenderer.domElement
+        );
+        this.orthographicControls = this.createControls(
+            this.threejsrenderer.domElement
+        );
+        this.controls = this.perspectiveControls;
 
         this.resize(
             Number(parent.dataset.width),
