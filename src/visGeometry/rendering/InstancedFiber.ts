@@ -218,7 +218,8 @@ class InstancedFiber {
 
         // we must create a new Geometry to have things update correctly
         this.instancedGeometry = new InstancedBufferGeometry().copy(
-            this.curveGeometry
+            // this typecast seems like an error in the copy method's typing
+            this.curveGeometry as InstancedBufferGeometry
         );
         // install the new geometry into our Mesh object
         this.mesh.geometry = this.instancedGeometry;

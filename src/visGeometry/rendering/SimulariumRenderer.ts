@@ -319,11 +319,12 @@ class SimulariumRenderer {
     }
 
     public hitTest(renderer: WebGLRenderer, x: number, y: number): number {
+        const tex = this.gbuffer.texture[AGENTBUFFER];
         const pixel = this.hitTestHelper.hitTest(
             renderer,
-            this.gbuffer.texture[AGENTBUFFER],
-            x / this.gbuffer.width,
-            y / this.gbuffer.height
+            tex,
+            x / tex.image.width,
+            y / tex.image.height
         );
         // (typeId), (instanceId), fragViewPos.z, fragPosDepth;
 

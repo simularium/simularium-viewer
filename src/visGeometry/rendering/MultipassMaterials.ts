@@ -22,7 +22,7 @@ export function updateResolution(s: MRTShaders, x: number, y: number): void {
 export function setRenderPass(
     obj: Mesh | Points,
     shaderSet: MRTShaders
-): Material {
+): void {
     obj.material = shaderSet.mat;
 }
 
