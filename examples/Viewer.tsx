@@ -145,6 +145,7 @@ class Viewer extends React.Component<{}, ViewerState> {
     private viewerRef: React.RefObject<SimulariumViewer>;
     private panMode = false;
     private focusMode = true;
+    private cameraMode = false;
 
     public constructor(props) {
         super(props);
@@ -314,7 +315,8 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
-        simulariumController.convertAndLoadTrajectory(netConnectionSettings, obj, fileType)
+        simulariumController
+            .convertAndLoadTrajectory(netConnectionSettings, obj, fileType)
             .then(() => {
                 this.clearPendingFile();
             })
@@ -336,7 +338,7 @@ class Viewer extends React.Component<{}, ViewerState> {
         // }
         return simulariumController
             .handleFileChange(simulariumFile, fileName, geoAssets)
-            .catch(console.log)
+            .catch(console.log);
     }
 
     public handleJsonMeshData(jsonData): void {
@@ -526,7 +528,7 @@ class Viewer extends React.Component<{}, ViewerState> {
 
     public render(): JSX.Element {
         if (this.state.filePending) {
-            const fileType = this.state.filePending.type
+            const fileType = this.state.filePending.type;
             return (
                 <ConversionForm
                     {...this.state.filePending}
@@ -726,8 +728,20 @@ class Viewer extends React.Component<{}, ViewerState> {
                 >
                     Focus Mode
                 </button>
+                <button
+                    onClick={() => {
+                        this.cameraMode = !this.cameraMode;
+                        simulariumController.setCameraType(this.cameraMode);
+                    }}
+                >
+                    Camera mode
+                </button>
                 <br />
-                <button onClick={() => simulariumController.getMetrics(netConnectionSettings)}>
+                <button
+                    onClick={() =>
+                        simulariumController.getMetrics(netConnectionSettings)
+                    }
+                >
                     Get available metrics
                 </button>
                 <button
@@ -742,12 +756,14 @@ class Viewer extends React.Component<{}, ViewerState> {
                                     metricsIdx: 0,
                                     metricsIdy: 2,
                                     scatterPlotMode: "lines",
-                                }, {
+                                },
+                                {
                                     plotType: "histogram",
                                     metricsIdx: 3,
-                                }
+                                },
                             ]
-                        )}
+                        )
+                    }
                 >
                     Get plot data
                 </button>

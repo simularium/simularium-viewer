@@ -501,45 +501,35 @@ export default class SimulariumController {
      * these functions will be callable.
      */
     public zoomIn(): void {
-        if (this.visGeometry) {
-            this.visGeometry.zoomIn();
-        }
+        this.visGeometry?.zoomIn();
     }
 
     public zoomOut(): void {
-        if (this.visGeometry) {
-            this.visGeometry.zoomOut();
-        }
+        this.visGeometry?.zoomOut();
     }
 
     public resetCamera(): void {
-        if (this.visGeometry) {
-            this.visGeometry.resetCamera();
-        }
+        this.visGeometry?.resetCamera();
     }
 
     public centerCamera(): void {
-        if (this.visGeometry) {
-            this.visGeometry.centerCamera();
-        }
+        this.visGeometry?.centerCamera();
     }
 
     public reOrientCamera(): void {
-        if (this.visGeometry) {
-            this.visGeometry.reOrientCamera();
-        }
+        this.visGeometry?.reOrientCamera();
     }
 
     public setPanningMode(pan: boolean): void {
-        if (this.visGeometry) {
-            this.visGeometry.setPanningMode(pan);
-        }
+        this.visGeometry?.setPanningMode(pan);
     }
 
     public setFocusMode(focus: boolean): void {
-        if (this.visGeometry) {
-            this.visGeometry.setFocusMode(focus);
-        }
+        this.visGeometry?.setFocusMode(focus);
+    }
+
+    public setCameraType(ortho: boolean): void {
+        this.visGeometry?.setCameraType(ortho);
     }
 }
 
