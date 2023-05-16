@@ -302,7 +302,10 @@ class GeometryStore {
         }
     }
 
-    private handleObjResponse(meshName: string, object: Object3D): void {
+    private handleObjResponse(
+        meshName: string,
+        object: Object3D
+    ): MeshLoadRequest | undefined {
         const item = this._registry.get(meshName);
         if (!item) {
             return; // should be unreachable, but needed for TypeScript
@@ -339,9 +342,10 @@ class GeometryStore {
         if (!object.name) {
             object.name = meshName;
         }
+        return meshLoadRequest;
     }
 
-    private fetchObj(url: string): Promise<Object3D> {
+    private fetchObj(url: string): Promise<MeshLoadRequest> {
         /** Request an obj from an external source */
         const objLoader = new OBJLoader();
         this.prepMeshRegistryForNewObj(url);
@@ -350,8 +354,15 @@ class GeometryStore {
                 objLoader.load(
                     url,
                     (object: Object3D) => {
-                        this.handleObjResponse(url, object);
-                        resolve(object);
+                        const meshLoadRequest = this.handleObjResponse(
+                            url,
+                            object
+                        );
+                        if (meshLoadRequest) {
+                            resolve(meshLoadRequest);
+                        } else {
+                            reject(`Failed to load mesh, or cancelled: ${url}`);
+                        }
                     },
                     (xhr) => {
                         this.mlogger.info(
@@ -402,8 +413,7 @@ class GeometryStore {
                 this.prepMeshRegistryForNewObj(urlOrPath);
                 const objLoader = new OBJLoader();
                 const object = objLoader.parse(file);
-                this.handleObjResponse(urlOrPath, object);
-                geometry = object;
+                geometry = this.handleObjResponse(urlOrPath, object);
             }
             // make sure we know not to try to load it from the url
             this._geoLoadAttempted.set(urlOrPath, true);
@@ -427,9 +437,7 @@ class GeometryStore {
                         return pdbModel;
                     });
                 case GeometryDisplayType.OBJ:
-                    return this.fetchObj(urlOrPath).then((object) => {
-                        return object;
-                    });
+                    return this.fetchObj(urlOrPath);
                 default:
                     // will replace geom in registry is sphere
                     return Promise.reject(
@@ -466,7 +474,8 @@ class GeometryStore {
                 // on updatescene, add instances
                 // on render, pass the group of marchingcubes objects
                 geometry = {
-                    mesh: null,
+                    // null is only acceptable for SphereGroup
+                    mesh: null as unknown as Object3D,
                     cancelled: false,
                     instances: new MetaballMesh(lookupKey),
                 } as MeshLoadRequest;

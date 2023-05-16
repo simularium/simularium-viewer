@@ -4,7 +4,7 @@ import {
     Mesh,
     NearestFilter,
     OrthographicCamera,
-    PlaneGeometry,
+    PlaneBufferGeometry,
     RGBAFormat,
     Scene,
     ShaderMaterial,
@@ -48,7 +48,7 @@ export default class HitTestHelper {
     }
     `;
         this.hitTestMesh = new Mesh(
-            new PlaneGeometry(2, 2),
+            new PlaneBufferGeometry(2, 2),
             new ShaderMaterial({
                 vertexShader: this.hitTestVertexShader,
                 fragmentShader: this.hitTestFragmentShader,
@@ -81,8 +81,11 @@ export default class HitTestHelper {
         // (typeId), (instanceId), fragViewPos.z, fragPosDepth;
 
         // tell the shader which texture to use, and which pixel to read from
-        this.hitTestMesh.material.uniforms.objectIdTexture.value = idBuffer;
-        this.hitTestMesh.material.uniforms.pixel.value = new Vector2(x, y);
+        (
+            this.hitTestMesh.material as ShaderMaterial
+        ).uniforms.objectIdTexture.value = idBuffer;
+        (this.hitTestMesh.material as ShaderMaterial).uniforms.pixel.value =
+            new Vector2(x, y);
 
         // "draw" the pixel into our hit test buffer
         renderer.setRenderTarget(this.hitTestBuffer);
