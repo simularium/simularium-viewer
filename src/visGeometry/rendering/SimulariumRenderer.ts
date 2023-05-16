@@ -9,6 +9,7 @@ import { InstancedFiberGroup } from "./InstancedFiber";
 import { GeometryInstanceContainer } from "../types";
 
 import {
+    Camera,
     Color,
     FloatType,
     Group,
@@ -18,7 +19,6 @@ import {
     WebGLMultipleRenderTargets,
     WebGLRenderer,
     WebGLRenderTarget,
-    PerspectiveCamera,
 } from "three";
 import { Pane } from "tweakpane";
 
@@ -378,7 +378,7 @@ class SimulariumRenderer {
     public render(
         renderer: WebGLRenderer,
         scene: Scene,
-        camera: PerspectiveCamera,
+        camera: Camera,
         target: WebGLRenderTarget | null
     ): void {
         // updates for transformed bounds (should this happen in shader?)

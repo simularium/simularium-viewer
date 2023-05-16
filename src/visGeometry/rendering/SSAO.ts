@@ -8,7 +8,7 @@ import {
     RGBAFormat,
     Vector2,
     Vector3,
-    PerspectiveCamera,
+    Camera,
     WebGLRenderer,
     WebGLRenderTarget,
 } from "three";
@@ -119,7 +119,7 @@ class SSAO1Pass {
 
     public render(
         renderer: WebGLRenderer,
-        camera: PerspectiveCamera,
+        camera: Camera,
         target: WebGLRenderTarget,
         normals: WebGLTexture,
         positions: WebGLTexture

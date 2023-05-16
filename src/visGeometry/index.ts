@@ -5,6 +5,7 @@ import {
     Box3Helper,
     BufferAttribute,
     BufferGeometry,
+    Camera,
     Color,
     DirectionalLight,
     Group,
@@ -12,6 +13,7 @@ import {
     LineBasicMaterial,
     LineSegments,
     Object3D,
+    OrthographicCamera,
     PerspectiveCamera,
     Scene,
     Vector2,
@@ -74,6 +76,9 @@ const CAMERA_DOLLY_STEP_SIZE = 10;
 const CAMERA_INITIAL_ZNEAR = 1.0;
 const CAMERA_INITIAL_ZFAR = 1000.0;
 
+const CANVAS_INITIAL_WIDTH = 100;
+const CANVAS_INITIAL_HEIGHT = 100;
+
 export enum RenderStyle {
     WEBGL1_FALLBACK,
     WEBGL2_PREFERRED,
@@ -113,7 +118,11 @@ class VisGeometry {
     // this is the threejs object that issues all the webgl calls
     public threejsrenderer: WebGLRenderer;
     public scene: Scene;
-    public camera: PerspectiveCamera;
+    public perspectiveCamera: PerspectiveCamera;
+    public orthographicCamera: OrthographicCamera;
+    public camera: Camera;
+    public perspectiveControls: OrbitControls;
+    public orthographicControls: OrbitControls;
     public controls: OrbitControls;
     public dl: DirectionalLight;
     public boundingBox: Box3;
@@ -200,12 +209,14 @@ class VisGeometry {
         this.mlogger = jsLogger.get("visgeometry");
         this.mlogger.setLevel(loggerLevel);
 
-        this.camera = new PerspectiveCamera(
+        this.perspectiveCamera = new PerspectiveCamera(
             75,
-            100 / 100,
+            CANVAS_INITIAL_WIDTH / CANVAS_INITIAL_HEIGHT,
             CAMERA_INITIAL_ZNEAR,
             CAMERA_INITIAL_ZFAR
         );
+        this.orthographicCamera = new OrthographicCamera();
+        this.camera = this.perspectiveCamera;
 
         this.initCameraPosition = this.camera.position.clone();
         this.cameraDefault = cloneDeep(DEFAULT_CAMERA_SPEC);
@@ -239,7 +250,7 @@ class VisGeometry {
         this.agentsWithPdbsToDraw = [];
         this.agentPdbsToDraw = [];
 
-        this.onError = (/*errorMessage*/) => noop;
+        this.onError = (/*errorMessage*/) => noop();
     }
 
     public setOnErrorCallBack(onError: (error: FrontEndError) => void): void {
@@ -679,8 +690,6 @@ class VisGeometry {
      *   Setup ThreeJS Scene
      * */
     public setupScene(): void {
-        const initWidth = 100;
-        const initHeight = 100;
         this.scene = new Scene();
         this.lightsGroup = new Group();
         this.lightsGroup.name = "lights";
@@ -691,13 +700,6 @@ class VisGeometry {
         this.instancedMeshGroup = new Group();
         this.instancedMeshGroup.name = "instanced meshes for agents";
         this.scene.add(this.instancedMeshGroup);
-
-        this.camera = new PerspectiveCamera(
-            75,
-            initWidth / initHeight,
-            CAMERA_INITIAL_ZNEAR,
-            CAMERA_INITIAL_ZFAR
-        );
 
         this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
 
@@ -736,7 +738,10 @@ class VisGeometry {
         // set this up after the renderStyle has been set.
         this.constructInstancedFibers();
 
-        this.threejsrenderer.setSize(initWidth, initHeight); // expected to change when reparented
+        this.threejsrenderer.setSize(
+            CANVAS_INITIAL_WIDTH,
+            CANVAS_INITIAL_HEIGHT
+        ); // expected to change when reparented
         this.threejsrenderer.setClearColor(this.backgroundColor, 1);
         this.threejsrenderer.clear();
 
@@ -752,6 +757,20 @@ class VisGeometry {
         this.camera.updateProjectionMatrix();
         this.threejsrenderer.setSize(width, height);
         this.renderer.resize(width, height);
+    }
+
+    public setCameraType(ortho: boolean): void {
+        if (ortho) {
+            if (this.camera.isOrthographicCamera) {
+                return;
+            }
+            this.camera = this.orthographicCamera;
+        } else {
+            if (this.camera.isPerspectiveCamera) {
+                return;
+            }
+        }
+        this.camera = ortho ? this.orthographicCamera : this.perspectiveCamera;
     }
 
     public reparent(parent?: HTMLElement | null): void {

@@ -14,7 +14,7 @@ import {
     Group,
     Scene,
     WebGLRenderer,
-    PerspectiveCamera,
+    Camera,
     WebGLMultipleRenderTargets,
 } from "three";
 
@@ -68,7 +68,7 @@ class GBufferPass {
     public render(
         renderer: WebGLRenderer,
         scene: Scene,
-        camera: PerspectiveCamera,
+        camera: Camera,
         gbuffer: WebGLMultipleRenderTargets
     ): void {
         const c = renderer.getClearColor(new Color()).clone();
