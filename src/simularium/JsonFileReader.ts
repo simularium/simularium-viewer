@@ -4,6 +4,7 @@ import type {
     SimulariumFileFormat,
     TrajectoryFileInfo,
     VisDataFrame,
+    VisDataMessage,
 } from "./types";
 import { FrontEndError } from "./FrontEndError";
 import { compareTimes } from "../util";
@@ -23,6 +24,10 @@ export default class JsonFileReader implements ISimulariumFile {
             (a: VisDataFrame, b: VisDataFrame): number =>
                 a.frameNumber - b.frameNumber
         );
+    }
+
+    getSpatialData(): VisDataMessage {
+        return this.simulariumFile.spatialData;
     }
 
     getTrajectoryFileInfo(): TrajectoryFileInfo {
@@ -49,5 +54,9 @@ export default class JsonFileReader implements ISimulariumFile {
 
     getPlotData(): Plot[] {
         return this.simulariumFile.plotData;
+    }
+
+    getFullFile(): SimulariumFileFormat {
+        return this.simulariumFile;
     }
 }
