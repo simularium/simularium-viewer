@@ -1,6 +1,6 @@
 import PDBModel from "../PDBModel";
 import VisAgent from "../VisAgent";
-import { BufferGeometry, Color, Camera, Scene } from "three";
+import { BufferGeometry, Color, Camera, Scene, Vector2 } from "three";
 declare class LegacyRenderer {
     private baseMaterial;
     private highlightMaterial;
@@ -14,9 +14,6 @@ declare class LegacyRenderer {
     addMesh(meshGeom: BufferGeometry, visAgent: VisAgent, scale: number, color: Color): void;
     addPdb(pdb: PDBModel, visAgent: VisAgent, color: Color, distances: number[]): void;
     endUpdate(scene: Scene): void;
-    hitTest(coords: {
-        x: number;
-        y: number;
-    }, camera: Camera): number;
+    hitTest(coords: Vector2, camera: Camera): number;
 }
 export { LegacyRenderer };

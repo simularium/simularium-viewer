@@ -4,5 +4,5 @@ export interface MRTShaders {
 }
 export declare function updateProjectionMatrix(s: MRTShaders, m: Matrix4): void;
 export declare function updateResolution(s: MRTShaders, x: number, y: number): void;
-export declare function setRenderPass(obj: Mesh | Points, shaderSet: MRTShaders): Material;
+export declare function setRenderPass(obj: Mesh | Points, shaderSet: MRTShaders): void;
 export declare function setSceneRenderPass(scene: Scene, shaderSet: MRTShaders): Material;

@@ -1,7 +1,5 @@
 // TODO these should not be needed anywhere except ClientSimulatorConnection
-export var ClientMessageEnum; // TODO these should not be needed anywhere except ClientSimulatorConnection
-
-(function (ClientMessageEnum) {
+export var ClientMessageEnum = /*#__PURE__*/function (ClientMessageEnum) {
   ClientMessageEnum[ClientMessageEnum["ID_UNDEFINED_WEB_REQUEST"] = 0] = "ID_UNDEFINED_WEB_REQUEST";
   ClientMessageEnum[ClientMessageEnum["ID_VIS_DATA_ARRIVE"] = 1] = "ID_VIS_DATA_ARRIVE";
   ClientMessageEnum[ClientMessageEnum["ID_VIS_DATA_REQUEST"] = 2] = "ID_VIS_DATA_REQUEST";
@@ -19,13 +17,14 @@ export var ClientMessageEnum; // TODO these should not be needed anywhere except
   ClientMessageEnum[ClientMessageEnum["ID_INIT_TRAJECTORY_FILE"] = 14] = "ID_INIT_TRAJECTORY_FILE";
   ClientMessageEnum[ClientMessageEnum["ID_UPDATE_SIMULATION_STATE"] = 15] = "ID_UPDATE_SIMULATION_STATE";
   ClientMessageEnum[ClientMessageEnum["LENGTH"] = 16] = "LENGTH";
-})(ClientMessageEnum || (ClientMessageEnum = {}));
+  return ClientMessageEnum;
+}({});
 
-export var ClientPlayBackType;
-
-(function (ClientPlayBackType) {
+// TODO these should not be needed anywhere except ClientSimulatorConnection
+export var ClientPlayBackType = /*#__PURE__*/function (ClientPlayBackType) {
   ClientPlayBackType[ClientPlayBackType["ID_LIVE_SIMULATION"] = 0] = "ID_LIVE_SIMULATION";
   ClientPlayBackType[ClientPlayBackType["ID_PRE_RUN_SIMULATION"] = 1] = "ID_PRE_RUN_SIMULATION";
   ClientPlayBackType[ClientPlayBackType["ID_TRAJECTORY_FILE_PLAYBACK"] = 2] = "ID_TRAJECTORY_FILE_PLAYBACK";
   ClientPlayBackType[ClientPlayBackType["LENGTH"] = 3] = "LENGTH";
-})(ClientPlayBackType || (ClientPlayBackType = {}));
+  return ClientPlayBackType;
+}({});

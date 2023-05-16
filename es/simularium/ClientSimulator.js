@@ -6,37 +6,26 @@ import { ClientMessageEnum, ClientPlayBackType } from "./localSimulators/IClient
 // a ClientSimulator is a ISimulator that is expected to run purely in procedural javascript in the browser client,
 // with the procedural implementation in a IClientSimulatorImpl
 export var ClientSimulator = /*#__PURE__*/function () {
-  // throttle the data interval so that the local client can keep up
-  // ideally the client (VisData) needs to be able to handle the data rate
   function ClientSimulator(sim) {
     _classCallCheck(this, ClientSimulator);
-
     _defineProperty(this, "localSimulator", void 0);
-
     _defineProperty(this, "simulatorIntervalId", 0);
-
+    // throttle the data interval so that the local client can keep up
+    // ideally the client (VisData) needs to be able to handle the data rate
     _defineProperty(this, "dataInterval", 66);
-
     _defineProperty(this, "logger", void 0);
-
     _defineProperty(this, "onTrajectoryFileInfoArrive", void 0);
-
     _defineProperty(this, "onTrajectoryDataArrive", void 0);
-
     this.logger = jsLogger.get("netconnection");
     this.logger.setLevel(jsLogger.DEBUG);
-
     this.onTrajectoryFileInfoArrive = function () {
       /* do nothing */
     };
-
     this.onTrajectoryDataArrive = function () {
       /* do nothing */
     };
-
     this.localSimulator = sim;
   }
-
   _createClass(ClientSimulator, [{
     key: "setTrajectoryFileInfoHandler",
     value: function setTrajectoryFileInfoHandler(handler) {
@@ -52,10 +41,10 @@ export var ClientSimulator = /*#__PURE__*/function () {
     value: function socketIsValid() {
       return true;
     }
+
     /**
      * Connect
      * */
-
   }, {
     key: "disconnect",
     value: function disconnect() {
@@ -78,25 +67,21 @@ export var ClientSimulator = /*#__PURE__*/function () {
     key: "sendSimulationRequest",
     value: function sendSimulationRequest(jsonData, _requestDescription) {
       var _this = this;
-
       // do processing, then return!
       //this.logWebSocketRequest(requestDescription, jsonData);
+
       switch (jsonData.msgType) {
         case ClientMessageEnum.ID_UPDATE_TIME_STEP:
           break;
-
         case ClientMessageEnum.ID_UPDATE_RATE_PARAM:
           break;
-
         case ClientMessageEnum.ID_MODEL_DEFINITION:
           break;
-
         case ClientMessageEnum.ID_UPDATE_SIMULATION_STATE:
           {
             this.localSimulator.updateSimulationState(jsonData["data"]);
           }
           break;
-
         case ClientMessageEnum.ID_VIS_DATA_REQUEST:
           {
             if (jsonData["frameNumber"] !== undefined) {
@@ -108,43 +93,35 @@ export var ClientSimulator = /*#__PURE__*/function () {
             }
           }
           break;
-
         case ClientMessageEnum.ID_VIS_DATA_PAUSE:
           {
             window.clearInterval(this.simulatorIntervalId);
             this.simulatorIntervalId = 0;
           }
           break;
-
         case ClientMessageEnum.ID_VIS_DATA_RESUME:
           {
             this.simulatorIntervalId = window.setInterval(function () {
               var frame = _this.localSimulator.update(0);
-
               _this.onTrajectoryDataArrive(frame);
             }, this.dataInterval);
           }
           break;
-
         case ClientMessageEnum.ID_VIS_DATA_ABORT:
           {
             window.clearInterval(this.simulatorIntervalId);
             this.simulatorIntervalId = 0;
           }
           break;
-
         case ClientMessageEnum.ID_GOTO_SIMULATION_TIME:
           {
             var _frame = this.localSimulator.update(jsonData["time"]);
-
             this.onTrajectoryDataArrive(_frame);
           }
           break;
-
         case ClientMessageEnum.ID_INIT_TRAJECTORY_FILE:
           {
             var _a = this.localSimulator.getInfo();
-
             console.log("receive trajectory file info");
             this.onTrajectoryFileInfoArrive(_a);
           }
@@ -157,7 +134,6 @@ export var ClientSimulator = /*#__PURE__*/function () {
       if (!this.socketIsValid()) {
         return;
       }
-
       var jsonData = {
         msgType: ClientMessageEnum.ID_UPDATE_TIME_STEP,
         timeStep: newTimeStep
@@ -170,7 +146,6 @@ export var ClientSimulator = /*#__PURE__*/function () {
       if (!this.socketIsValid()) {
         return;
       }
-
       obj.msgType = ClientMessageEnum.ID_UPDATE_SIMULATION_STATE;
       this.sendSimulationRequest(obj, "Simulation State Update");
     }
@@ -180,13 +155,13 @@ export var ClientSimulator = /*#__PURE__*/function () {
       if (!this.socketIsValid()) {
         return;
       }
-
       var dataToSend = {
         model: model,
         msgType: ClientMessageEnum.ID_MODEL_DEFINITION
       };
       this.sendSimulationRequest(dataToSend, "Model Definition");
     }
+
     /**
      * Simulation Control
      *
@@ -196,12 +171,10 @@ export var ClientSimulator = /*#__PURE__*/function () {
      *  Trajectory File: No simulation run, stream a result file piecemeal
      *
      */
-
   }, {
     key: "startRemoteSimPreRun",
     value: function startRemoteSimPreRun(timeStep, numTimeSteps) {
       var _this2 = this;
-
       var jsonData = {
         msgType: ClientMessageEnum.ID_VIS_DATA_REQUEST,
         mode: ClientPlayBackType.ID_PRE_RUN_SIMULATION,
@@ -216,7 +189,6 @@ export var ClientSimulator = /*#__PURE__*/function () {
     key: "startRemoteSimLive",
     value: function startRemoteSimLive() {
       var _this3 = this;
-
       var jsonData = {
         msgType: ClientMessageEnum.ID_VIS_DATA_REQUEST,
         mode: ClientPlayBackType.ID_LIVE_SIMULATION
@@ -229,7 +201,6 @@ export var ClientSimulator = /*#__PURE__*/function () {
     key: "startRemoteTrajectoryPlayback",
     value: function startRemoteTrajectoryPlayback(fileName) {
       var _this4 = this;
-
       var jsonData = {
         msgType: ClientMessageEnum.ID_VIS_DATA_REQUEST,
         mode: ClientPlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
@@ -245,7 +216,6 @@ export var ClientSimulator = /*#__PURE__*/function () {
       if (!this.socketIsValid()) {
         return;
       }
-
       this.sendSimulationRequest({
         msgType: ClientMessageEnum.ID_VIS_DATA_PAUSE
       }, "Pause Simulation");
@@ -256,7 +226,6 @@ export var ClientSimulator = /*#__PURE__*/function () {
       if (!this.socketIsValid()) {
         return;
       }
-
       this.sendSimulationRequest({
         msgType: ClientMessageEnum.ID_VIS_DATA_RESUME
       }, "Resume Simulation");
@@ -267,7 +236,6 @@ export var ClientSimulator = /*#__PURE__*/function () {
       if (!this.socketIsValid()) {
         return;
       }
-
       this.sendSimulationRequest({
         msgType: ClientMessageEnum.ID_VIS_DATA_ABORT
       }, "Abort Simulation");
@@ -298,6 +266,5 @@ export var ClientSimulator = /*#__PURE__*/function () {
       }, "Initialize trajectory file info");
     }
   }]);
-
   return ClientSimulator;
 }();

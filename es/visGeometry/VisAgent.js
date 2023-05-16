@@ -4,29 +4,18 @@ import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import { CatmullRomCurve3, Color, Vector3 } from "three";
 import VisTypes from "../simularium/VisTypes";
 var NO_AGENT = -1;
-
 var VisAgent = /*#__PURE__*/function () {
   function VisAgent(name) {
     _classCallCheck(this, VisAgent);
-
     _defineProperty(this, "agentData", void 0);
-
     _defineProperty(this, "fiberCurve", void 0);
-
     _defineProperty(this, "colorIndex", void 0);
-
     _defineProperty(this, "active", void 0);
-
     _defineProperty(this, "color", void 0);
-
     _defineProperty(this, "name", void 0);
-
     _defineProperty(this, "followed", void 0);
-
     _defineProperty(this, "highlighted", void 0);
-
     _defineProperty(this, "hidden", void 0);
-
     this.agentData = {
       x: 0,
       y: 0,
@@ -49,7 +38,6 @@ var VisAgent = /*#__PURE__*/function () {
     this.highlighted = false;
     this.fiberCurve = undefined;
   }
-
   _createClass(VisAgent, [{
     key: "resetMesh",
     value: function resetMesh() {
@@ -103,29 +91,24 @@ var VisAgent = /*#__PURE__*/function () {
   }, {
     key: "onPdbBeforeRender",
     value: function onPdbBeforeRender(renderer, scene, camera, geometry, material
-    /* group */
-    ) {
+    /* group */) {
       if (!material.uniforms) {
         return;
-      } // colorIndex is not necessarily equal to typeId but is generally a 1-1 mapping.
-
-
+      }
+      // colorIndex is not necessarily equal to typeId but is generally a 1-1 mapping.
       if (material.uniforms.typeId) {
         // negate the value if dehighlighted.
         // see implementation in CompositePass.ts for how the value is interpreted
         material.uniforms.typeId.value = this.signedTypeId();
         material.uniformsNeedUpdate = true;
       }
-
       if (material.uniforms.instanceId) {
         material.uniforms.instanceId.value = Number(this.agentData.instanceId);
         material.uniformsNeedUpdate = true;
       }
-
       if (material.uniforms.radius) {
         var lod = 0;
         material.uniforms.radius.value = (lod + 1) * 0.25; // * 8;
-
         material.uniformsNeedUpdate = true;
       }
     }
@@ -139,28 +122,24 @@ var VisAgent = /*#__PURE__*/function () {
     value: function updateFiber(subpoints) {
       var numSubPoints = subpoints.length;
       var numPoints = numSubPoints / 3;
-
       if (numSubPoints % 3 !== 0) {
         console.warn("Warning, subpoints array does not contain a multiple of 3");
         return;
       }
-
       if (numPoints < 2) {
         console.warn("Warning, subpoints array does not have enough points for a curve");
         return;
-      } // put all the subpoints into a Vector3[]
-
-
+      }
+      // put all the subpoints into a Vector3[]
       var curvePoints = [];
-
       for (var j = 0; j < numSubPoints; j += 3) {
         var x = subpoints[j];
         var y = subpoints[j + 1];
         var z = subpoints[j + 2];
         curvePoints.push(new Vector3(x, y, z));
-      } // set up new fiber as curved tube
+      }
 
-
+      // set up new fiber as curved tube
       this.fiberCurve = new CatmullRomCurve3(curvePoints);
     }
   }, {
@@ -173,12 +152,8 @@ var VisAgent = /*#__PURE__*/function () {
       }
     }
   }]);
-
   return VisAgent;
 }();
-
 _defineProperty(VisAgent, "UNASSIGNED_MESH_COLOR", 0xff00ff);
-
 _defineProperty(VisAgent, "UNASSIGNED_NAME_PREFIX", "Unassigned");
-
 export { VisAgent as default };

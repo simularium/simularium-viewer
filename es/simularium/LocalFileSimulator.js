@@ -5,40 +5,28 @@ import jsLogger from "js-logger";
 // a LocalFileSimulator is a ISimulator that plays back the contents of
 // a drag-n-drop trajectory file (a ISimulariumFile object)
 export var LocalFileSimulator = /*#__PURE__*/function () {
-  // setInterval is the playback engine for now
   function LocalFileSimulator(fileName, simulariumFile) {
     _classCallCheck(this, LocalFileSimulator);
-
     _defineProperty(this, "fileName", void 0);
-
     _defineProperty(this, "simulariumFile", void 0);
-
     _defineProperty(this, "logger", void 0);
-
     _defineProperty(this, "onTrajectoryFileInfoArrive", void 0);
-
     _defineProperty(this, "onTrajectoryDataArrive", void 0);
-
+    // setInterval is the playback engine for now
     _defineProperty(this, "playbackIntervalId", 0);
-
     _defineProperty(this, "currentPlaybackFrameIndex", 0);
-
     this.fileName = fileName;
     this.simulariumFile = simulariumFile;
     this.logger = jsLogger.get("netconnection");
     this.logger.setLevel(jsLogger.DEBUG);
-
     this.onTrajectoryFileInfoArrive = function () {
       /* do nothing */
     };
-
     this.onTrajectoryDataArrive = function () {
       /* do nothing */
     };
-
     console.log("NEW LOCALFILECONNECTION");
   }
-
   _createClass(LocalFileSimulator, [{
     key: "setTrajectoryFileInfoHandler",
     value: function setTrajectoryFileInfoHandler(handler) {
@@ -54,10 +42,10 @@ export var LocalFileSimulator = /*#__PURE__*/function () {
     value: function socketIsValid() {
       return true;
     }
+
     /**
      * Connect
      * */
-
   }, {
     key: "disconnect",
     value: function disconnect() {
@@ -75,16 +63,20 @@ export var LocalFileSimulator = /*#__PURE__*/function () {
     }
   }, {
     key: "sendTimeStepUpdate",
-    value: function sendTimeStepUpdate(_newTimeStep) {// not implemented
+    value: function sendTimeStepUpdate(_newTimeStep) {
+      // not implemented
     }
   }, {
     key: "sendParameterUpdate",
-    value: function sendParameterUpdate(_paramName, _paramValue) {// not implemented
+    value: function sendParameterUpdate(_paramName, _paramValue) {
+      // not implemented
     }
   }, {
     key: "sendModelDefinition",
-    value: function sendModelDefinition(_model) {// not implemented
+    value: function sendModelDefinition(_model) {
+      // not implemented
     }
+
     /**
      * Simulation Control
      *
@@ -94,14 +86,15 @@ export var LocalFileSimulator = /*#__PURE__*/function () {
      *  Trajectory File: No simulation run, stream a result file piecemeal
      *
      */
-
   }, {
     key: "startRemoteSimPreRun",
-    value: function startRemoteSimPreRun(_timeStep, _numTimeSteps) {// not implemented
+    value: function startRemoteSimPreRun(_timeStep, _numTimeSteps) {
+      // not implemented
     }
   }, {
     key: "startRemoteSimLive",
-    value: function startRemoteSimLive() {// not implemented
+    value: function startRemoteSimLive() {
+      // not implemented
     }
   }, {
     key: "startRemoteTrajectoryPlayback",
@@ -112,7 +105,6 @@ export var LocalFileSimulator = /*#__PURE__*/function () {
       } catch (e) {
         return Promise.reject(e);
       }
-
       return Promise.resolve();
     }
   }, {
@@ -125,20 +117,14 @@ export var LocalFileSimulator = /*#__PURE__*/function () {
     key: "resumeRemoteSim",
     value: function resumeRemoteSim() {
       var _this = this;
-
       this.playbackIntervalId = window.setInterval(function () {
         var numFrames = _this.simulariumFile.getNumFrames();
-
         if (_this.currentPlaybackFrameIndex >= numFrames) {
           _this.currentPlaybackFrameIndex = numFrames - 1;
-
           _this.pauseRemoteSim();
-
           return;
         }
-
         _this.onTrajectoryDataArrive(_this.getFrame(_this.currentPlaybackFrameIndex));
-
         _this.currentPlaybackFrameIndex++;
       }, 1);
     }
@@ -157,8 +143,9 @@ export var LocalFileSimulator = /*#__PURE__*/function () {
   }, {
     key: "gotoRemoteSimulationTime",
     value: function gotoRemoteSimulationTime(time) {
-      var frameNumber = this.simulariumFile.getFrameIndexAtTime(time); // frameNumber is -1 if findIndex() above doesn't find a match
+      var frameNumber = this.simulariumFile.getFrameIndexAtTime(time);
 
+      // frameNumber is -1 if findIndex() above doesn't find a match
       if (frameNumber !== -1) {
         this.currentPlaybackFrameIndex = frameNumber;
         this.requestSingleFrame(frameNumber);
@@ -171,7 +158,8 @@ export var LocalFileSimulator = /*#__PURE__*/function () {
     }
   }, {
     key: "sendUpdate",
-    value: function sendUpdate(_obj) {// not implemented
+    value: function sendUpdate(_obj) {
+      // not implemented
     }
   }, {
     key: "getFrame",
@@ -180,8 +168,8 @@ export var LocalFileSimulator = /*#__PURE__*/function () {
       // Theoretically we could return all frames here, and as a result
       // the Controller would precache the entire file in VisData.
       // Then subsequent frame requests would only hit the VisData cache.
-      var data = this.simulariumFile.getFrame(theFrameNumber);
 
+      var data = this.simulariumFile.getFrame(theFrameNumber);
       if (data instanceof ArrayBuffer) {
         return data;
       } else {
@@ -200,6 +188,5 @@ export var LocalFileSimulator = /*#__PURE__*/function () {
       return this.simulariumFile;
     }
   }]);
-
   return LocalFileSimulator;
 }();

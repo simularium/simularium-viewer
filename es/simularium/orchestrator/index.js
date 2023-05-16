@@ -1,16 +1,12 @@
 import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
-
 var Orchestrator = /*#__PURE__*/function () {
   function Orchestrator(params) {
     _classCallCheck(this, Orchestrator);
-
     _defineProperty(this, "serviceAddr", void 0);
-
     this.serviceAddr = params.serviceAddr || "https://localhost:5000";
   }
-
   _createClass(Orchestrator, [{
     key: "getNodes",
     value: function getNodes(params) {
@@ -50,9 +46,7 @@ var Orchestrator = /*#__PURE__*/function () {
       fetch(this.serviceAddr + "/assign?" + "command=free" + "&name=" + config.name);
     }
   }]);
-
   return Orchestrator;
 }();
-
 export { Orchestrator as default };
 export { Orchestrator };

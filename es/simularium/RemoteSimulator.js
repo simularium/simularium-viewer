@@ -7,53 +7,39 @@ import jsLogger from "js-logger";
 import { v4 as uuidv4 } from "uuid";
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
 import { NetMessageEnum, NetMessage } from "./WebsocketClient";
-var PlayBackType; // a RemoteSimulator is a ISimulator that connects to the Simularium Engine
-// back end server and plays back a trajectory specified in the NetConnectionParams
-
-(function (PlayBackType) {
+var PlayBackType = /*#__PURE__*/function (PlayBackType) {
   PlayBackType[PlayBackType["ID_LIVE_SIMULATION"] = 0] = "ID_LIVE_SIMULATION";
   PlayBackType[PlayBackType["ID_PRE_RUN_SIMULATION"] = 1] = "ID_PRE_RUN_SIMULATION";
   PlayBackType[PlayBackType["ID_TRAJECTORY_FILE_PLAYBACK"] = 2] = "ID_TRAJECTORY_FILE_PLAYBACK";
   PlayBackType[PlayBackType["LENGTH"] = 3] = "LENGTH";
-})(PlayBackType || (PlayBackType = {}));
-
+  return PlayBackType;
+}(PlayBackType || {}); // a RemoteSimulator is a ISimulator that connects to the Simularium Engine
+// back end server and plays back a trajectory specified in the NetConnectionParams
 export var RemoteSimulator = /*#__PURE__*/function () {
   function RemoteSimulator(webSocketClient, errorHandler) {
     _classCallCheck(this, RemoteSimulator);
-
     _defineProperty(this, "webSocketClient", void 0);
-
     _defineProperty(this, "logger", void 0);
-
     _defineProperty(this, "onTrajectoryFileInfoArrive", void 0);
-
     _defineProperty(this, "onTrajectoryDataArrive", void 0);
-
     _defineProperty(this, "lastRequestedFile", void 0);
-
     _defineProperty(this, "handleError", void 0);
-
     this.webSocketClient = webSocketClient;
     this.lastRequestedFile = "";
-
     this.handleError = errorHandler || function () {
       /* do nothing */
     };
-
     this.logger = jsLogger.get("netconnection");
     this.logger.setLevel(jsLogger.DEBUG);
     this.registerBinaryMessageHandlers();
     this.registerJsonMessageHandlers();
-
     this.onTrajectoryFileInfoArrive = function () {
       /* do nothing */
     };
-
     this.onTrajectoryDataArrive = function () {
       /* do nothing */
     };
   }
-
   _createClass(RemoteSimulator, [{
     key: "setTrajectoryFileInfoHandler",
     value: function setTrajectoryFileInfoHandler(handler) {
@@ -74,10 +60,10 @@ export var RemoteSimulator = /*#__PURE__*/function () {
     value: function getLastRequestedFile() {
       return this.lastRequestedFile;
     }
+
     /**
      *   Websocket Message Handlers
      * */
-
   }, {
     key: "onBinaryIdVisDataArrive",
     value: function onBinaryIdVisDataArrive(event) {
@@ -87,7 +73,6 @@ export var RemoteSimulator = /*#__PURE__*/function () {
       var byteView = new Uint8Array(event.data);
       var fileBytes = byteView.subarray(OFFSET_TO_NAME_LENGTH, OFFSET_TO_NAME_LENGTH + nameLength);
       var fileName = new TextDecoder("utf-8").decode(fileBytes);
-
       if (fileName == this.lastRequestedFile) {
         this.onTrajectoryDataArrive(event.data);
       } else {
@@ -112,23 +97,25 @@ export var RemoteSimulator = /*#__PURE__*/function () {
   }, {
     key: "updateTimestep",
     value: function updateTimestep() {
-      this.logger.debug("Update Timestep Message Arrived"); // TODO: implement callback
+      this.logger.debug("Update Timestep Message Arrived");
+      // TODO: implement callback
     }
   }, {
     key: "updateRateParam",
     value: function updateRateParam() {
-      this.logger.debug("Update Rate Param Message Arrived"); // TODO: implement callback
+      this.logger.debug("Update Rate Param Message Arrived");
+      // TODO: implement callback
     }
   }, {
     key: "onModelDefinitionArrive",
     value: function onModelDefinitionArrive() {
-      this.logger.debug("Model Definition Arrived"); // TODO: implement callback
+      this.logger.debug("Model Definition Arrived");
+      // TODO: implement callback
     }
   }, {
     key: "registerBinaryMessageHandlers",
     value: function registerBinaryMessageHandlers() {
       var _this = this;
-
       this.webSocketClient.addBinaryMessageHandler(NetMessageEnum.ID_VIS_DATA_ARRIVE, function (msg) {
         return _this.onBinaryIdVisDataArrive(msg);
       });
@@ -137,7 +124,6 @@ export var RemoteSimulator = /*#__PURE__*/function () {
     key: "registerJsonMessageHandlers",
     value: function registerJsonMessageHandlers() {
       var _this2 = this;
-
       this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_TRAJECTORY_FILE_INFO, this.onTrajectoryFileInfoArrive);
       this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_HEARTBEAT_PING, this.onHeartbeatPing);
       this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_VIS_DATA_ARRIVE, function (msg) {
@@ -147,10 +133,10 @@ export var RemoteSimulator = /*#__PURE__*/function () {
       this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_UPDATE_RATE_PARAM, this.updateRateParam);
       this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_MODEL_DEFINITION, this.onModelDefinitionArrive);
     }
+
     /**
      * WebSocket Connect
      * */
-
   }, {
     key: "disconnect",
     value: function disconnect() {
@@ -166,31 +152,25 @@ export var RemoteSimulator = /*#__PURE__*/function () {
     value: function () {
       var _connectToRemoteServer = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee() {
         return _regeneratorRuntime.wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                this.registerBinaryMessageHandlers();
-                this.registerJsonMessageHandlers();
-                return _context.abrupt("return", this.webSocketClient.connectToRemoteServer());
-
-              case 3:
-              case "end":
-                return _context.stop();
-            }
+          while (1) switch (_context.prev = _context.next) {
+            case 0:
+              this.registerBinaryMessageHandlers();
+              this.registerJsonMessageHandlers();
+              return _context.abrupt("return", this.webSocketClient.connectToRemoteServer());
+            case 3:
+            case "end":
+              return _context.stop();
           }
         }, _callee, this);
       }));
-
       function connectToRemoteServer() {
         return _connectToRemoteServer.apply(this, arguments);
       }
-
       return connectToRemoteServer;
     }()
     /**
      * Websocket Update Parameters
      */
-
   }, {
     key: "sendTimeStepUpdate",
     value: function sendTimeStepUpdate(newTimeStep) {
@@ -219,6 +199,7 @@ export var RemoteSimulator = /*#__PURE__*/function () {
       };
       this.webSocketClient.sendWebSocketRequest(dataToSend, "Model Definition");
     }
+
     /**
      * WebSocket Simulation Control
      *
@@ -228,12 +209,10 @@ export var RemoteSimulator = /*#__PURE__*/function () {
      *  Trajectory File: No simulation run, stream a result file piecemeal
      *
      */
-
   }, {
     key: "startRemoteSimPreRun",
     value: function startRemoteSimPreRun(timeStep, numTimeSteps) {
       var _this3 = this;
-
       var jsonData = {
         msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
         mode: PlayBackType.ID_PRE_RUN_SIMULATION,
@@ -250,7 +229,6 @@ export var RemoteSimulator = /*#__PURE__*/function () {
     key: "startRemoteSimLive",
     value: function startRemoteSimLive() {
       var _this4 = this;
-
       var jsonData = {
         msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
         mode: PlayBackType.ID_LIVE_SIMULATION
@@ -265,15 +243,15 @@ export var RemoteSimulator = /*#__PURE__*/function () {
     key: "startRemoteTrajectoryPlayback",
     value: function startRemoteTrajectoryPlayback(fileName) {
       var _this5 = this;
-
       this.lastRequestedFile = fileName;
       var jsonData = {
         msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
         mode: PlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
         "file-name": fileName
-      }; // begins a stream which will include a TrajectoryFileInfo and a series of VisDataMessages
-      // Note that it is possible for the first vis data to arrive before the TrajectoryFileInfo...
+      };
 
+      // begins a stream which will include a TrajectoryFileInfo and a series of VisDataMessages
+      // Note that it is possible for the first vis data to arrive before the TrajectoryFileInfo...
       return this.connectToRemoteServer().then(function () {
         _this5.webSocketClient.sendWebSocketRequest(jsonData, "Start Trajectory File Playback");
       })["catch"](function (error) {
@@ -300,7 +278,6 @@ export var RemoteSimulator = /*#__PURE__*/function () {
       if (!this.socketIsValid()) {
         return;
       }
-
       this.webSocketClient.sendWebSocketRequest({
         msgType: NetMessageEnum.ID_VIS_DATA_ABORT
       }, "Abort Simulation");
@@ -337,13 +314,13 @@ export var RemoteSimulator = /*#__PURE__*/function () {
         msgType: NetMessageEnum.ID_UPDATE_SIMULATION_STATE,
         data: obj
       }, "Send update instructions to simulation server");
-    } // Start autoconversion and roll right into the simulation
+    }
 
+    // Start autoconversion and roll right into the simulation
   }, {
     key: "convertTrajectory",
     value: function convertTrajectory(dataToConvert, fileType) {
       var _this6 = this;
-
       return this.connectToRemoteServer().then(function () {
         _this6.sendTrajectory(dataToConvert, fileType);
       })["catch"](function (e) {
@@ -364,6 +341,5 @@ export var RemoteSimulator = /*#__PURE__*/function () {
       }, "Convert trajectory output to simularium file format");
     }
   }]);
-
   return RemoteSimulator;
 }();

@@ -6,39 +6,27 @@ import InstancedMeshShader from "./InstancedMeshShader";
 import PDBGBufferShaders from "./PDBGBufferShaders";
 var tmpQuaternion = new Quaternion();
 var tmpEuler = new Euler();
-export var InstanceType;
-
-(function (InstanceType) {
+export var InstanceType = /*#__PURE__*/function (InstanceType) {
   InstanceType[InstanceType["MESH"] = 0] = "MESH";
   InstanceType[InstanceType["POINTS"] = 1] = "POINTS";
-})(InstanceType || (InstanceType = {}));
-
+  return InstanceType;
+}({});
 var InstancedMesh = /*#__PURE__*/function () {
-  // x,y,z,scale
-  // quaternion
-  // instance id, type id (color index), lod scale
-  // while updating instances
   function InstancedMesh(type, baseGeometry, name, count) {
     _classCallCheck(this, InstancedMesh);
-
     _defineProperty(this, "baseGeometry", void 0);
-
     _defineProperty(this, "drawable", void 0);
-
     _defineProperty(this, "shaderSet", void 0);
-
     _defineProperty(this, "instancedGeometry", void 0);
-
     _defineProperty(this, "positionAttribute", void 0);
-
+    // x,y,z,scale
     _defineProperty(this, "rotationAttribute", void 0);
-
+    // quaternion
     _defineProperty(this, "instanceAttribute", void 0);
-
+    // instance id, type id (color index), lod scale
+    // while updating instances
     _defineProperty(this, "currentInstance", void 0);
-
     _defineProperty(this, "isUpdating", void 0);
-
     this.baseGeometry = baseGeometry;
     this.drawable = type === InstanceType.MESH ? new Mesh(baseGeometry) : new Points(baseGeometry);
     this.drawable.name = name;
@@ -46,16 +34,17 @@ var InstancedMesh = /*#__PURE__*/function () {
     this.isUpdating = false;
     this.instancedGeometry = new InstancedBufferGeometry();
     this.instancedGeometry.instanceCount = 0;
-    this.shaderSet = type === InstanceType.MESH ? InstancedMeshShader.shaderSet : PDBGBufferShaders.shaderSet; // make typescript happy. these will be reallocated in reallocate()
+    this.shaderSet = type === InstanceType.MESH ? InstancedMeshShader.shaderSet : PDBGBufferShaders.shaderSet;
 
+    // make typescript happy. these will be reallocated in reallocate()
     this.positionAttribute = new InstancedBufferAttribute(Uint8Array.from([]), 1);
     this.rotationAttribute = new InstancedBufferAttribute(Uint8Array.from([]), 1);
-    this.instanceAttribute = new InstancedBufferAttribute(Uint8Array.from([]), 1); // because instanced, threejs needs to know not to early cull
+    this.instanceAttribute = new InstancedBufferAttribute(Uint8Array.from([]), 1);
 
+    // because instanced, threejs needs to know not to early cull
     this.drawable.frustumCulled = false;
     this.reallocate(count);
   }
-
   _createClass(InstancedMesh, [{
     key: "getMesh",
     value: function getMesh() {
@@ -95,11 +84,16 @@ var InstancedMesh = /*#__PURE__*/function () {
     key: "reallocate",
     value: function reallocate(n) {
       // tell threejs/webgl that we can discard the old buffers
-      this.dispose(); // we must create a new Geometry to have things update correctly
+      this.dispose();
 
-      this.instancedGeometry = new InstancedBufferGeometry().copy(this.baseGeometry); // install the new geometry into our Mesh object
+      // we must create a new Geometry to have things update correctly
+      this.instancedGeometry = new InstancedBufferGeometry().copy(
+      // this typecast seems like an error in the copy method's typing
+      this.baseGeometry);
+      // install the new geometry into our Mesh object
+      this.drawable.geometry = this.instancedGeometry;
 
-      this.drawable.geometry = this.instancedGeometry; // make new array,
+      // make new array,
       // copy old array into it,
       // reset into instancedGeometry
 
@@ -119,7 +113,8 @@ var InstancedMesh = /*#__PURE__*/function () {
   }, {
     key: "dispose",
     value: function dispose() {
-      this.instancedGeometry.dispose(); //this.meshGeometry.dispose();
+      this.instancedGeometry.dispose();
+      //this.meshGeometry.dispose();
     }
   }, {
     key: "beginUpdate",
@@ -132,13 +127,12 @@ var InstancedMesh = /*#__PURE__*/function () {
     key: "checkRealloc",
     value: function checkRealloc(count) {
       // do we need to increase storage?
-      var increment = 256; // total num instances possible in buffer
+      var increment = 256;
+      // total num instances possible in buffer
       // (could also check number of rows in datatexture)
-
-      var currentNumInstances = this.instanceAttribute.count; // num of instances needed
-
+      var currentNumInstances = this.instanceAttribute.count;
+      // num of instances needed
       var requestedNumInstances = count;
-
       if (requestedNumInstances > currentNumInstances) {
         // increase to next multiple of increment
         var newInstanceCount = (Math.trunc(requestedNumInstances / increment) + 1) * increment;
@@ -149,9 +143,7 @@ var InstancedMesh = /*#__PURE__*/function () {
     key: "addInstance",
     value: function addInstance(x, y, z, scale, rx, ry, rz, uniqueAgentId, typeId) {
       var lodScale = arguments.length > 9 && arguments[9] !== undefined ? arguments[9] : 1;
-
       var _subPoints = arguments.length > 10 && arguments[10] !== undefined ? arguments[10] : [];
-
       var offset = this.currentInstance;
       this.checkRealloc(this.currentInstance + 1);
       this.positionAttribute.setXYZW(offset, x, y, z, scale);
@@ -163,16 +155,15 @@ var InstancedMesh = /*#__PURE__*/function () {
   }, {
     key: "endUpdate",
     value: function endUpdate() {
-      this.updateInstanceCount(this.currentInstance); // assumes the entire buffers are invalidated.
+      this.updateInstanceCount(this.currentInstance);
 
+      // assumes the entire buffers are invalidated.
       this.instanceAttribute.needsUpdate = true;
       this.positionAttribute.needsUpdate = true;
       this.rotationAttribute.needsUpdate = true;
       this.isUpdating = false;
     }
   }]);
-
   return InstancedMesh;
 }();
-
 export { InstancedMesh };

@@ -2,7 +2,6 @@ import JsonFileReader from "./simularium/JsonFileReader";
 import BinaryFileReader from "./simularium/BinaryFileReader";
 export var compareTimes = function compareTimes(time1, time2, timeStepSize) {
   var stepSizeFraction = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0.01;
-
   /*
   Compares two time values in a series by seeing whether they are within some
   small fraction of the time step size.
@@ -15,6 +14,7 @@ export var compareTimes = function compareTimes(time1, time2, timeStepSize) {
       -1 if time1 < time2
       0 if time1 ~= time2
   */
+
   var epsilon = timeStepSize * stepSizeFraction;
   if (time1 - epsilon > time2) return 1;
   if (time1 + epsilon < time2) return -1;
@@ -26,13 +26,11 @@ export var checkAndSanitizePath = function checkAndSanitizePath(pathOrUrl) {
    * has a forward slash, also return it unmodified)
    */
   var isUrlRegEX = /(https?:\/\/)([\w\-])+\.{1}([a-zA-Z]{2,63})([\/\w-]*)*\/?\??([^#\n\r]*)?#?([^\n\r]*)/g;
-
   if (isUrlRegEX.test(pathOrUrl)) {
     return pathOrUrl;
   } else if (/\B\//g.test(pathOrUrl)) {
     return pathOrUrl;
   }
-
   return "/".concat(pathOrUrl);
 };
 export function getFileExtension(pathOrUrl) {

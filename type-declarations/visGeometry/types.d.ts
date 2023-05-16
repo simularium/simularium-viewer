@@ -6,7 +6,7 @@ export interface GeometryInstanceContainer {
     getMesh: () => Object3D;
     beginUpdate: () => void;
     endUpdate: () => void;
-    addInstance: (x: number, y: number, z: number, scale: number, rx: number, ry: number, rz: number, uniqueAgentId: number, typeId: number, lodScale: number, subPoints: number[]) => Object3D;
+    addInstance: (x: number, y: number, z: number, scale: number, rx: number, ry: number, rz: number, uniqueAgentId: number, typeId: number, lodScale: number, subPoints: number[]) => void;
     instanceCount: () => number;
     getShaders: () => MRTShaders;
 }

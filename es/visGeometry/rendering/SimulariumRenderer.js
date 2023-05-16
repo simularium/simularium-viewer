@@ -12,47 +12,27 @@ import { FloatType, NearestFilter, RGBAFormat, WebGLMultipleRenderTargets, WebGL
 var AGENTBUFFER = 0;
 var NORMALBUFFER = 1;
 var POSITIONBUFFER = 2;
-
 var SimulariumRenderer = /*#__PURE__*/function () {
   function SimulariumRenderer() {
     _classCallCheck(this, SimulariumRenderer);
-
     _defineProperty(this, "gbufferPass", void 0);
-
     _defineProperty(this, "ssao1Pass", void 0);
-
     _defineProperty(this, "ssao2Pass", void 0);
-
     _defineProperty(this, "blur1Pass", void 0);
-
     _defineProperty(this, "blur2Pass", void 0);
-
     _defineProperty(this, "compositePass", void 0);
-
     _defineProperty(this, "contourPass", void 0);
-
     _defineProperty(this, "drawBufferPass", void 0);
-
     _defineProperty(this, "gbuffer", void 0);
-
     _defineProperty(this, "hitTestHelper", void 0);
-
     _defineProperty(this, "blurIntermediateBuffer", void 0);
-
     _defineProperty(this, "ssaoBuffer", void 0);
-
     _defineProperty(this, "ssaoBuffer2", void 0);
-
     _defineProperty(this, "ssaoBufferBlurred", void 0);
-
     _defineProperty(this, "ssaoBufferBlurred2", void 0);
-
     _defineProperty(this, "parameters", void 0);
-
     _defineProperty(this, "boundsNear", void 0);
-
     _defineProperty(this, "boundsFar", void 0);
-
     this.parameters = {
       // AO defaults
       aoradius1: 1.2,
@@ -86,8 +66,8 @@ var SimulariumRenderer = /*#__PURE__*/function () {
     };
     this.boundsNear = 0.0;
     this.boundsFar = 100.0;
-    this.gbufferPass = new GBufferPass(); // radius, threshold, falloff in view space coordinates.
-
+    this.gbufferPass = new GBufferPass();
+    // radius, threshold, falloff in view space coordinates.
     this.ssao1Pass = new SSAO1Pass(this.parameters.aoradius1, this.parameters.aothreshold1, this.parameters.aofalloff1);
     this.ssao2Pass = new SSAO1Pass(this.parameters.aoradius2, this.parameters.aothreshold2, this.parameters.aofalloff2);
     this.blur1Pass = new BlurPass(this.parameters.blurradius1);
@@ -98,24 +78,24 @@ var SimulariumRenderer = /*#__PURE__*/function () {
       z: this.parameters.bgluminanceoffset
     });
     this.contourPass = new ContourPass();
-    this.drawBufferPass = new DrawBufferPass(); // buffers:
+    this.drawBufferPass = new DrawBufferPass();
 
+    // buffers:
     this.gbuffer = new WebGLMultipleRenderTargets(2, 2, 3);
-
     for (var i = 0, il = this.gbuffer.texture.length; i < il; i++) {
       this.gbuffer.texture[i].minFilter = NearestFilter;
       this.gbuffer.texture[i].magFilter = NearestFilter;
       this.gbuffer.texture[i].format = RGBAFormat;
       this.gbuffer.texture[i].type = FloatType;
       this.gbuffer.texture[i].generateMipmaps = false;
-    } // Name our G-Buffer attachments for debugging
-
-
+    }
+    // Name our G-Buffer attachments for debugging
     this.gbuffer.texture[AGENTBUFFER].name = "agentinfo";
     this.gbuffer.texture[NORMALBUFFER].name = "normal";
     this.gbuffer.texture[POSITIONBUFFER].name = "position";
-    this.hitTestHelper = new HitTestHelper(); // intermediate blurring buffer
+    this.hitTestHelper = new HitTestHelper();
 
+    // intermediate blurring buffer
     this.blurIntermediateBuffer = new WebGLRenderTarget(2, 2, {
       minFilter: NearestFilter,
       magFilter: NearestFilter,
@@ -162,7 +142,6 @@ var SimulariumRenderer = /*#__PURE__*/function () {
     });
     this.ssaoBufferBlurred2.texture.generateMipmaps = false;
   }
-
   _createClass(SimulariumRenderer, [{
     key: "applyAO",
     value: function applyAO(ao) {
@@ -183,7 +162,6 @@ var SimulariumRenderer = /*#__PURE__*/function () {
     key: "setupGui",
     value: function setupGui(gui) {
       var _this = this;
-
       var settings = this.parameters;
       var ao = gui.addFolder({
         title: "AO passes",
@@ -311,7 +289,9 @@ var SimulariumRenderer = /*#__PURE__*/function () {
   }, {
     key: "hitTest",
     value: function hitTest(renderer, x, y) {
-      var pixel = this.hitTestHelper.hitTest(renderer, this.gbuffer.texture[AGENTBUFFER], x / this.gbuffer.width, y / this.gbuffer.height); // (typeId), (instanceId), fragViewPos.z, fragPosDepth;
+      var tex = this.gbuffer.texture[AGENTBUFFER];
+      var pixel = this.hitTestHelper.hitTest(renderer, tex, x / tex.image.width, y / tex.image.height);
+      // (typeId), (instanceId), fragViewPos.z, fragPosDepth;
 
       if (pixel[3] === -1) {
         return -1;
@@ -321,8 +301,9 @@ var SimulariumRenderer = /*#__PURE__*/function () {
         var instance = Math.round(pixel[1]);
         return instance;
       }
-    } // colorsData is a Float32Array of rgb triples
+    }
 
+    // colorsData is a Float32Array of rgb triples
   }, {
     key: "updateColors",
     value: function updateColors(numColors, colorsData) {
@@ -336,8 +317,9 @@ var SimulariumRenderer = /*#__PURE__*/function () {
   }, {
     key: "resize",
     value: function resize(x, y) {
-      this.gbuffer.setSize(x, y); // intermediate blurring buffer
+      this.gbuffer.setSize(x, y);
 
+      // intermediate blurring buffer
       this.blurIntermediateBuffer.setSize(x, y);
       this.ssaoBuffer.setSize(x, y);
       this.ssaoBuffer2.setSize(x, y);
@@ -367,40 +349,53 @@ var SimulariumRenderer = /*#__PURE__*/function () {
       this.ssao2Pass.pass.material.uniforms.ssaoThreshold.value = this.parameters.aothreshold2 + Math.max(this.boundsNear, 0.0);
       this.ssao2Pass.pass.material.uniforms.ssaoFalloff.value = this.parameters.aofalloff2 + Math.max(this.boundsNear, 0.0);
       this.compositePass.pass.material.uniforms.atomicBeginDistance.value = this.parameters.atomBeginDistance + Math.max(this.boundsNear, 0.0);
-      this.compositePass.pass.material.uniforms.chainBeginDistance.value = this.parameters.chainBeginDistance + Math.max(this.boundsNear, 0.0); // currently rendering is a draw call per PDB POINTS objects and one draw call per mesh TRIANGLES object (reusing same geometry buffer)
+      this.compositePass.pass.material.uniforms.chainBeginDistance.value = this.parameters.chainBeginDistance + Math.max(this.boundsNear, 0.0);
+
+      // currently rendering is a draw call per PDB POINTS objects and one draw call per mesh TRIANGLES object (reusing same geometry buffer)
+
       // threejs does not allow:
       //   multiple render targets : i have to do 3x the vtx processing work to draw
       //   instancing is limited and not generalized : draw call overhead
       //   transform feedback (capture the post-transform state of an object and resubmit it multiple times)
       //   WEBGL_multi_draw extension support??? : draw call overhead
       //     chrome flags Enable Draft webgl extensions
+
       // webgl2 :  FF, Chrome, Edge, Android
       //    NOT: safari, ios safari  (due in 2020?)
+
       // no geometry or tessellation shaders in webgl2 at all
+
       // options to proceed:
       //   1. custom webgl renderer.  could still use some threejs classes for camera, matrices and maybe canvas handling
       //   2. fork threejs and mod (some of the asked for features are languishing in PRs)
       // Both options are time consuming.  #2 is probably quicker to implement, possibly less optimal JS code,
       //   more robust against varying user configs
       // we still need to maintain the simple mesh rendering for webgl1 devices.
+
       // DEPTH HANDLING STRATEGY:
       // gbuffer pass writes gl_FragDepth
       // depth buffer should be not written to or tested again after this.
+
       // 1 draw molecules into G buffers
+      this.gbufferPass.render(renderer, scene, camera, this.gbuffer);
 
-      this.gbufferPass.render(renderer, scene, camera, this.gbuffer); // 2 render ssao
-
+      // 2 render ssao
       this.ssao1Pass.render(renderer, camera, this.ssaoBuffer, this.gbuffer.texture[NORMALBUFFER], this.gbuffer.texture[POSITIONBUFFER]);
       this.blur1Pass.render(renderer, this.ssaoBufferBlurred, this.ssaoBuffer, this.gbuffer.texture[POSITIONBUFFER], this.blurIntermediateBuffer);
       this.ssao2Pass.render(renderer, camera, this.ssaoBuffer2, this.gbuffer.texture[NORMALBUFFER], this.gbuffer.texture[POSITIONBUFFER]);
-      this.blur2Pass.render(renderer, this.ssaoBufferBlurred2, this.ssaoBuffer2, this.gbuffer.texture[POSITIONBUFFER], this.blurIntermediateBuffer); // render composite pass into this buffer, overwriting whatever was there!
+      this.blur2Pass.render(renderer, this.ssaoBufferBlurred2, this.ssaoBuffer2, this.gbuffer.texture[POSITIONBUFFER], this.blurIntermediateBuffer);
+
+      // render composite pass into this buffer, overwriting whatever was there!
       // Be sure this buffer is not needed anymore!
+      var compositeTarget = this.blurIntermediateBuffer;
 
-      var compositeTarget = this.blurIntermediateBuffer; // render into default render target
-
+      // render into default render target
       this.compositePass.render(renderer, camera, compositeTarget, this.ssaoBufferBlurred, this.ssaoBufferBlurred2, this.gbuffer.texture[AGENTBUFFER]);
-      this.contourPass.render(renderer, target, compositeTarget, // this is the buffer with the instance ids and fragdepth!
-      this.gbuffer.texture[AGENTBUFFER], this.gbuffer.texture[NORMALBUFFER]); // DEBUGGING some of the intermediate buffers:
+      this.contourPass.render(renderer, target, compositeTarget,
+      // this is the buffer with the instance ids and fragdepth!
+      this.gbuffer.texture[AGENTBUFFER], this.gbuffer.texture[NORMALBUFFER]);
+
+      // DEBUGGING some of the intermediate buffers:
       //this.drawBufferPass.setScale(1.0 / 34.0, 1.0 / 6.0, 0, 1);
       //this.drawBufferPass.render(renderer, target, this.colorBuffer);
       //this.drawBufferPass.render(renderer, target, this.ssaoBuffer);
@@ -410,8 +405,6 @@ var SimulariumRenderer = /*#__PURE__*/function () {
       //this.drawBufferPass.render(renderer, target, this.positionBuffer);
     }
   }]);
-
   return SimulariumRenderer;
 }();
-
 export default SimulariumRenderer;

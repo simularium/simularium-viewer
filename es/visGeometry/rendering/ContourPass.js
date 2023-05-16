@@ -3,13 +3,10 @@ import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import { Color } from "three";
 import RenderToBuffer from "./RenderToBuffer";
-
 var ContourPass = /*#__PURE__*/function () {
   function ContourPass() {
     _classCallCheck(this, ContourPass);
-
     _defineProperty(this, "pass", void 0);
-
     this.pass = new RenderToBuffer({
       uniforms: {
         colorTex: {
@@ -45,9 +42,9 @@ var ContourPass = /*#__PURE__*/function () {
       },
       fragmentShader: "\n            in vec2 vUv;\n            \n            uniform sampler2D colorTex;\n            uniform sampler2D instanceIdTex;\n            uniform sampler2D normalsTex;\n            uniform float followedInstance;\n            uniform float outlineThickness;\n            uniform float followThickness;\n            uniform float followAlpha;\n            uniform float outlineAlpha;\n            uniform vec3 followColor;\n            uniform vec3 outlineColor;\n\n            bool isHighlighted(float typevalue) {\n              return (sign(typevalue) > 0.0);\n            }\n\n            bool isSameInstance(float x, float y) {\n              // typeIds and instanceIds are integers written to float gpu buffers.\n              // This fudge factor is working around a strange float bug on nvidia/Windows hardware.\n              // The numbers read are noisy and not uniform across faces.\n              // I can't tell if the bug occurs on read or on write, but the workaround is\n              // needed here at read time when we need to do comparisons.\n              // (TODO: dump buffer after read to inspec?)\n              // Straight equality works on MacOS and Intel/Windows gpu \n              // This should be tested periodically with new nvidia drivers on windows\n              // TODO: try \"round(abs(x-y)) == 0\" here\n              return abs(x-y) < 0.1;\n            }\n            bool isAdjacentToSame(float x, float l, float r, float b, float t) {\n              return isSameInstance(x, l) && isSameInstance(x, r) && isSameInstance(x, b) && isSameInstance(x, t);\n            }\n\n            void main(void)\n            {\n              vec4 col = texture(colorTex, vUv);\n           \n              ivec2 resolution = textureSize(colorTex, 0);\n            \n              vec2 pixelPos = vUv * vec2(float(resolution.x), float(resolution.y));\n              float wStep = 1.0 / float(resolution.x);\n              float hStep = 1.0 / float(resolution.y);\n            \n              vec4 instance = texture(instanceIdTex, vUv);\n              // instance.g is the agent id\n              float X = instance.g;\n              float R = texture(instanceIdTex, vUv + vec2(wStep, 0)).g;\n              float L = texture(instanceIdTex, vUv + vec2(-wStep, 0)).g;\n              float T = texture(instanceIdTex, vUv + vec2(0, hStep)).g;\n              float B = texture(instanceIdTex, vUv + vec2(0, -hStep)).g;\n            \n              vec4 finalColor = col;\n              if (isAdjacentToSame(X, R, L, T, B) )\n              {\n                // current pixel is NOT on the edge\n                finalColor = col;\n              }\n              else\n              {\n                // current pixel lies on the edge of an agent\n                // outline pixel color is a darkened version of the color\n                finalColor = mix(vec4(0.0,0.0,0.0,1.0), col, 0.8);\n\n              }\n\n              // instance.r is the type id\n              bool highlighted = isHighlighted(instance.r);\n              if (highlighted) {\n                float thickness = outlineThickness;\n                mat3 sx = mat3( \n                    1.0, 2.0, 1.0, \n                    0.0, 0.0, 0.0, \n                   -1.0, -2.0, -1.0 \n                );\n                mat3 sy = mat3( \n                    1.0, 0.0, -1.0, \n                    2.0, 0.0, -2.0, \n                    1.0, 0.0, -1.0 \n                );\n                mat3 I;\n                for (int i=0; i<3; i++) {\n                  for (int j=0; j<3; j++) {\n                    bool v = isHighlighted(\n                      texelFetch(instanceIdTex, \n                        ivec2(gl_FragCoord) + \n                        ivec2(\n                          (i-1)*int(thickness),\n                          (j-1)*int(thickness)\n                        ), \n                        0 ).r\n                    );\n                    I[i][j] = v ? 1.0 : 0.0; \n                  }\n                }\n                float gx = dot(sx[0], I[0]) + dot(sx[1], I[1]) + dot(sx[2], I[2]); \n                float gy = dot(sy[0], I[0]) + dot(sy[1], I[1]) + dot(sy[2], I[2]);\n\n                float g = sqrt(pow(gx, 2.0)+pow(gy, 2.0));\n                finalColor = mix(finalColor, vec4(outlineColor.rgb,1), g*outlineAlpha);\n\n              }\n\n              if (X >= 0.0 && isSameInstance(X, followedInstance)) {\n                float thickness = followThickness;\n                R = (texture(instanceIdTex, vUv + vec2(wStep*thickness, 0)).g);\n                L = (texture(instanceIdTex, vUv + vec2(-wStep*thickness, 0)).g);\n                T = (texture(instanceIdTex, vUv + vec2(0, hStep*thickness)).g);\n                B = (texture(instanceIdTex, vUv + vec2(0, -hStep*thickness)).g);\n                if ( !isAdjacentToSame(X, R, L, T, B) )\n                {\n                  // current pixel lies on the edge of the followed agent\n                  // outline pixel color is blended toward the followColor\n                  finalColor = mix(vec4(followColor.rgb,1), col, 1.0-followAlpha);\n                }\n              }\n        \n              gl_FragDepth = instance.w >= 0.0 ? instance.w : 1.0;\n              gl_FragColor = finalColor;\n            }\n            "
     });
-  } // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  }
 
-
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _createClass(ContourPass, [{
     key: "resize",
     value: function resize(x, y) {
@@ -96,15 +93,17 @@ var ContourPass = /*#__PURE__*/function () {
       this.pass.material.depthTest = true;
       this.pass.material.uniforms.colorTex.value = colorBuffer.texture;
       this.pass.material.uniforms.instanceIdTex.value = instanceIdBuffer;
-      this.pass.material.uniforms.normalsTex.value = normalsBuffer; // const c = renderer.getClearColor().clone();
+      this.pass.material.uniforms.normalsTex.value = normalsBuffer;
+
+      // const c = renderer.getClearColor().clone();
       // const a = renderer.getClearAlpha();
       // renderer.setClearColor(new THREE.Color(1.0, 0.0, 0.0), 1.0);
 
-      this.pass.render(renderer, target); // renderer.setClearColor(c, a);
+      this.pass.render(renderer, target);
+
+      // renderer.setClearColor(c, a);
     }
   }]);
-
   return ContourPass;
 }();
-
 export default ContourPass;
