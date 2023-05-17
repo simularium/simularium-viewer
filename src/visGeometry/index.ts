@@ -5,6 +5,7 @@ import {
     Box3Helper,
     BufferAttribute,
     BufferGeometry,
+    Camera,
     Color,
     DirectionalLight,
     Group,
@@ -74,6 +75,9 @@ const NO_AGENT = -1;
 const CAMERA_DOLLY_STEP_SIZE = 10;
 const CAMERA_INITIAL_ZNEAR = 1.0;
 const CAMERA_INITIAL_ZFAR = 1000.0;
+// distant objects are smaller to a perspective camera but the same size to an orthographic one
+// when switching cameras, calculate zoom by keeping objects this distance from the camera the same size
+const ORTHOGRAPHIC_FOCUS_DISTANCE = 50;
 
 const CANVAS_INITIAL_WIDTH = 100;
 const CANVAS_INITIAL_HEIGHT = 100;
@@ -95,9 +99,7 @@ function removeByName(group: Group, name: string): void {
     });
 }
 
-const isOrthoCamera = (
-    cam: PerspectiveCamera | OrthographicCamera
-): cam is OrthographicCamera =>
+const isOrthoCamera = (cam: Camera): cam is OrthographicCamera =>
     !!(cam as OrthographicCamera).isOrthographicCamera;
 
 type Bounds = readonly [number, number, number, number, number, number];
@@ -215,13 +217,26 @@ class VisGeometry {
         this.mlogger = jsLogger.get("visgeometry");
         this.mlogger.setLevel(loggerLevel);
 
+        const aspect = CANVAS_INITIAL_WIDTH / CANVAS_INITIAL_HEIGHT;
         this.perspectiveCamera = new PerspectiveCamera(
             75,
-            CANVAS_INITIAL_WIDTH / CANVAS_INITIAL_HEIGHT,
+            aspect,
             CAMERA_INITIAL_ZNEAR,
             CAMERA_INITIAL_ZFAR
         );
-        this.orthographicCamera = new OrthographicCamera();
+        const verticalSize =
+            Math.tan((this.perspectiveCamera.fov * Math.PI) / 360) *
+            ORTHOGRAPHIC_FOCUS_DISTANCE;
+        const horizontalSize = verticalSize * aspect;
+        console.log(horizontalSize, verticalSize);
+        this.orthographicCamera = new OrthographicCamera(
+            -horizontalSize,
+            horizontalSize,
+            verticalSize,
+            -verticalSize,
+            CAMERA_INITIAL_ZNEAR,
+            CAMERA_INITIAL_ZFAR
+        );
         this.camera = this.perspectiveCamera;
 
         this.initCameraPosition = this.camera.position.clone();

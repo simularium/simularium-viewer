@@ -9,11 +9,12 @@ import { InstancedFiberGroup } from "./InstancedFiber";
 import { GeometryInstanceContainer } from "../types";
 
 import {
-    Camera,
     Color,
     FloatType,
     Group,
     NearestFilter,
+    OrthographicCamera,
+    PerspectiveCamera,
     RGBAFormat,
     Scene,
     WebGLMultipleRenderTargets,
@@ -379,7 +380,7 @@ class SimulariumRenderer {
     public render(
         renderer: WebGLRenderer,
         scene: Scene,
-        camera: Camera,
+        camera: PerspectiveCamera | OrthographicCamera,
         target: WebGLRenderTarget | null
     ): void {
         // updates for transformed bounds (should this happen in shader?)

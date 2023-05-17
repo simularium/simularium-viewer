@@ -1,8 +1,9 @@
 import {
-    Camera,
     Color,
     DataTexture,
     FloatType,
+    OrthographicCamera,
+    PerspectiveCamera,
     RGBAFormat,
     Vector3,
     WebGLRenderer,
@@ -251,7 +252,7 @@ class CompositePass {
 
     public render(
         renderer: WebGLRenderer,
-        camera: Camera,
+        camera: PerspectiveCamera | OrthographicCamera,
         target: WebGLRenderTarget,
         ssaoBuffer1: WebGLRenderTarget,
         ssaoBuffer2: WebGLRenderTarget,
