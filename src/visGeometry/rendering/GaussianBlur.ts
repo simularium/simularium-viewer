@@ -1,14 +1,6 @@
-import {
-    Color,
-    ShaderMaterial,
-    Vector2,
-    WebGLRenderer,
-    WebGLRenderTarget,
-} from "three";
+import { Color, Vector2, WebGLRenderer, WebGLRenderTarget } from "three";
 
 import RenderToBuffer from "./RenderToBuffer";
-
-const BLUR_STDDEV = 4.0;
 
 class BlurPass1D {
     public pass: RenderToBuffer;
@@ -30,7 +22,7 @@ class BlurPass1D {
                 size: { value: new Vector2(512, 512) },
                 sampleUvOffsets: { value: [new Vector2(0, 0)] },
                 sampleWeights: { value: [1.0] },
-                depthCutoff: { value: 1 }, // view space
+                depthCutoff: { value: 0.1 }, // view space
             },
             fragmentShader: /* glsl */ `
 
@@ -167,17 +159,9 @@ class BlurPass {
     public blurXpass: BlurPass1D;
     public blurYpass: BlurPass1D;
 
-    public constructor(radius: number) {
-        this.blurXpass = new BlurPass1D(
-            new Vector2(1.0, 0.0),
-            radius,
-            BLUR_STDDEV
-        );
-        this.blurYpass = new BlurPass1D(
-            new Vector2(0.0, 1.0),
-            radius,
-            BLUR_STDDEV
-        );
+    public constructor(radius: number, stdDev: number) {
+        this.blurXpass = new BlurPass1D(new Vector2(1.0, 0.0), radius, stdDev);
+        this.blurYpass = new BlurPass1D(new Vector2(0.0, 1.0), radius, stdDev);
     }
 
     public resize(x: number, y: number): void {

@@ -117,8 +117,14 @@ class SimulariumRenderer {
         this.ssao1Pass = new SSAO1Pass();
         this.ssao2Pass = new SSAO1Pass();
 
-        this.blur1Pass = new BlurPass(this.parameters.ao1.blurRadius);
-        this.blur2Pass = new BlurPass(this.parameters.ao2.blurRadius);
+        this.blur1Pass = new BlurPass(
+            this.parameters.ao1.blurRadius,
+            this.parameters.ao1.blurStdDev
+        );
+        this.blur2Pass = new BlurPass(
+            this.parameters.ao2.blurRadius,
+            this.parameters.ao2.blurStdDev
+        );
         this.compositePass = new CompositePass({
             x: this.parameters.bghueoffset,
             y: this.parameters.bgchromaoffset,
