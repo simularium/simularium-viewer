@@ -5,7 +5,6 @@ import {
     Box3Helper,
     BufferAttribute,
     BufferGeometry,
-    Camera,
     Color,
     DirectionalLight,
     Group,
@@ -96,6 +95,11 @@ function removeByName(group: Group, name: string): void {
     });
 }
 
+const isOrthoCamera = (
+    cam: PerspectiveCamera | OrthographicCamera
+): cam is OrthographicCamera =>
+    !!(cam as OrthographicCamera).isOrthographicCamera;
+
 type Bounds = readonly [number, number, number, number, number, number];
 
 class VisGeometry {
@@ -121,7 +125,7 @@ class VisGeometry {
 
     public perspectiveCamera: PerspectiveCamera;
     public orthographicCamera: OrthographicCamera;
-    public camera: Camera;
+    public camera: PerspectiveCamera | OrthographicCamera;
     public perspectiveControls: OrbitControls;
     public orthographicControls: OrbitControls;
     public controls: OrbitControls;
@@ -524,8 +528,10 @@ class VisGeometry {
             lookAtPosition.z
         );
 
-        // Reset field of view
-        this.camera.fov = fovDegrees;
+        if (!isOrthoCamera(this.camera)) {
+            // Reset field of view
+            this.camera.fov = fovDegrees;
+        }
 
         // Apply the changes above
         this.camera.updateProjectionMatrix();
@@ -776,15 +782,15 @@ class VisGeometry {
         // at least 2x2 in size when resizing, to prevent bad buffer sizes
         width = Math.max(width, 2);
         height = Math.max(height, 2);
-        this.camera.aspect = width / height;
+        if (!isOrthoCamera(this.camera)) {
+            this.camera.aspect = width / height;
+        }
         this.camera.updateProjectionMatrix();
         this.threejsrenderer.setSize(width, height);
         this.renderer.resize(width, height);
     }
 
     public setCameraType(ortho: boolean): void {
-        const isOrthoCamera = (cam: Camera): cam is OrthographicCamera =>
-            !!(cam as OrthographicCamera).isOrthographicCamera;
         if (isOrthoCamera(this.camera) === ortho) {
             return;
         }
