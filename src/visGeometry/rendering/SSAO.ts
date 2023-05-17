@@ -4,7 +4,6 @@ import {
     Color,
     DataTexture,
     FloatType,
-    Matrix4,
     RGBAFormat,
     Vector2,
     Vector3,
@@ -18,109 +17,146 @@ class SSAO1Pass {
 
     public constructor(radius: number, threshold: number, falloff: number) {
         this.pass = new RenderToBuffer({
+            defines: {
+                NUM_SAMPLES: 7,
+                NUM_RINGS: 4,
+            },
             uniforms: {
-                iResolution: { value: new Vector2(2, 2) },
                 normalTex: { value: null },
                 viewPosTex: { value: null },
-                noiseTex: { value: this.createNoiseTex() },
-                projectionMatrix: { value: new Matrix4() },
-                width: { value: 2 },
-                height: { value: 2 },
-                radius: { value: radius },
-                ssaoThreshold: { value: threshold }, // = 0.5;
-                ssaoFalloff: { value: falloff }, // = 0.1;
-                samples: { value: this.createSSAOSamples() },
+                iResolution: { value: new Vector2(2, 2) }, // 'size'
+
+                cameraFar: { value: 100 },
+
+                scale: { value: 1.0 },
+                intensity: { value: 0.1 },
+                bias: { value: 0.5 },
+
+                minResolution: { value: 0.0 },
+                kernelRadius: { value: 100.0 },
+                randomSeed: { value: 0.0 },
             },
-            fragmentShader: `
-            uniform vec2 iResolution;
-            varying vec2 vUv;
+            fragmentShader: /* glsl */ `
+        
+                #include <common>
+        
+                varying vec2 vUv;
+        
+                uniform sampler2D viewPosTex;
+                uniform sampler2D normalTex;
+        
+                // uniform float cameraNear;
+                uniform float cameraFar;
+                // uniform mat4 cameraProjectionMatrix;
+                // uniform mat4 cameraInverseProjectionMatrix;
+        
+                uniform float scale;
+                uniform float intensity;
+                uniform float bias;
+                uniform float kernelRadius;
+                uniform float minResolution;
+                uniform vec2 iResolution;// size;
+                uniform float randomSeed;
+        
+                // RGBA depth
+        
+                #include <packing>
+        
+                vec4 getDefaultColor( const in vec2 screenPosition ) {
+                    return vec4( 1.0 );
+                }
+        
+                // float getDepth( const in vec2 screenPosition ) {
+                //     return texture2D( tDepth, screenPosition ).x;
+                // }
+        
+                // float getViewZ( const in float depth ) {
+                //     #if PERSPECTIVE_CAMERA == 1
+                //     return perspectiveDepthToViewZ( depth, cameraNear, cameraFar );
+                //     #else
+                //     return orthographicDepthToViewZ( depth, cameraNear, cameraFar );
+                //     #endif
+                // }
+        
+                // vec3 getViewPosition( const in vec2 screenPosition, const in float depth, const in float viewZ ) {
+                //     float clipW = cameraProjectionMatrix[2][3] * viewZ + cameraProjectionMatrix[3][3];
+                //     vec4 clipPosition = vec4( ( vec3( screenPosition, depth ) - 0.5 ) * 2.0, 1.0 );
+                //     clipPosition *= clipW; // unprojection.
+        
+                //     return ( cameraInverseProjectionMatrix * clipPosition ).xyz;
+                // }
+        
+                vec3 getViewNormal( const in vec3 viewPosition, const in vec2 screenPosition ) {
+                    return unpackRGBToNormal( texture2D( normalTex, screenPosition ).xyz );
+                }
+        
+                float scaleDividedByCameraFar;
+                float minResolutionMultipliedByCameraFar;
+        
+                float getOcclusion( const in vec3 centerViewPosition, const in vec3 centerViewNormal, const in vec3 sampleViewPosition ) {
+                    vec3 viewDelta = sampleViewPosition - centerViewPosition;
+                    float viewDistance = length( viewDelta );
+                    float scaledScreenDistance = scaleDividedByCameraFar * viewDistance;
+        
+                    return max(0.0, (dot(centerViewNormal, viewDelta) - minResolutionMultipliedByCameraFar) / scaledScreenDistance - bias) / (1.0 + pow2( scaledScreenDistance ) );
+                }
+        
+                // moving costly divides into consts
+                const float ANGLE_STEP = PI2 * float( NUM_RINGS ) / float( NUM_SAMPLES );
+                const float INV_NUM_SAMPLES = 1.0 / float( NUM_SAMPLES );
+        
+                float getAmbientOcclusion( const in vec3 centerViewPosition ) {
+                    // precompute some variables require in getOcclusion.
+                    scaleDividedByCameraFar = scale / cameraFar;
+                    minResolutionMultipliedByCameraFar = minResolution * cameraFar;
+                    vec3 centerViewNormal = getViewNormal( centerViewPosition, vUv );
+        
+                    // jsfiddle that shows sample pattern: https://jsfiddle.net/a16ff1p7/
+                    float angle = rand( vUv + randomSeed ) * PI2;
+                    vec2 radius = vec2( kernelRadius * INV_NUM_SAMPLES ) / iResolution; // size;
+                    vec2 radiusStep = radius;
+        
+                    float occlusionSum = 0.0;
+                    float weightSum = 0.0;
+        
+                    for( int i = 0; i < NUM_SAMPLES; i ++ ) {
+                        vec2 sampleUv = vUv + vec2( cos( angle ), sin( angle ) ) * radius;
+                        radius += radiusStep;
+                        angle += ANGLE_STEP;
 
-            uniform sampler2D normalTex;
-            uniform sampler2D viewPosTex;
-            uniform sampler2D noiseTex;
-            uniform vec3 samples[64];
-            uniform mat4 projectionMatrix;
-            
-            uniform float width;
-            uniform float height;
-            
-            //~ SSAO settings
-            uniform float radius;
-            uniform float ssaoThreshold; // = 0.5;
-            uniform float ssaoFalloff; // = 0.1;
-            
-            //layout(location = 0) out vec4 ssao_output;
-            
-            int kernelSize = 64;
+                        vec4 viewPos4 = texture(viewPosTex, sampleUv).xyzw;
+                        // test if this fragment has any geometry rendered on it, otherwise it's bg
+                        if (viewPos4.w < 1.0) continue; 
+                        vec3 sampleViewPosition = viewPos4.xyz;
+    
+                        occlusionSum += getOcclusion( centerViewPosition, centerViewNormal, sampleViewPosition );
+                        weightSum += 1.0;
+                    }
+        
+                    if( weightSum == 0.0 ) discard;
+        
+                    float ambientOcclusion = occlusionSum * ( intensity / weightSum );
+                    return clamp(ambientOcclusion, 0.0, 1.0);
+                }
+        
+                void main() {
+                    vec4 viewPos4 = texture(viewPosTex, vUv).xyzw;
+                    // test if this fragment has any geometry rendered on it, otherwise it's bg
+                    if (viewPos4.w < 1.0) discard; 
+                  
+                    float centerViewZ = viewPos4.z;
+                    vec3 viewPosition = viewPos4.xyz;
 
-            void main(void)
-            {
-              vec2 texCoords = vUv;
-              //debug
-              //ssao_output = vec4(1);
-              //return;
-              vec2 noiseScale = vec2(width / 4.0, height / 4.0);
-              vec4 viewPos4 = texture(viewPosTex, texCoords).xyzw;
-              // test if this fragment has any geometry rendered on it, otherwise it's bg
-              if (viewPos4.w < 1.0) discard; 
-            
-              vec3 viewPos = viewPos4.xyz;
-              vec3 normal = texture(normalTex, texCoords).xyz;
-              
-              // We calculate a random offset using the noise texture sample. 
-              // This will be applied as rotation to all samples for our current fragments.
-              vec3 randomVec = texture(noiseTex, texCoords * noiseScale).xyz;
-            
-              normal = normalize(normal * 2.0 - 1.0);
-              vec3 tangent = normalize(randomVec - normal * dot(randomVec, normal));
-              vec3 bitangent = cross(normal, tangent);
-              mat3 TBN = mat3(tangent, bitangent, normal);
-            
-              float occlusion = 0.0;
-            
-              for(int i = 0; i < kernelSize; i++)
-              {
-                vec3 posSample = TBN * samples[i];
-                // view space ray to this position:
-                posSample = viewPos + posSample * radius;
-            
-                // transform sample to clip space
-                vec4 offset = vec4(posSample, 1.0);
-                offset = projectionMatrix * offset;
-                // perspective divide to get to ndc
-                offset.xy /= offset.w;
-                // and back to the (0,0)-(1,1) range
-                offset.xy = offset.xy * 0.5 + 0.5;
-            
-                vec4 sampleViewPos = texture(viewPosTex, offset.xy);
-                float sampleDepth = sampleViewPos.z;
-                float rangeCheck = smoothstep(0.0, 1.0, radius / abs(viewPos.z - sampleDepth));
-                // compare the depth of the ray sample (posSample) vs the actual depth of geometry at that pixel (sampleDepth)
-                occlusion += (sampleDepth >= posSample.z + 0.0001 ? 1.0 : 0.0) * rangeCheck;
-              }
-            
-              float avg_occlusion = occlusion / float(kernelSize);
-              avg_occlusion *= 0.5;
-
-            //   gl_FragColor = vec4(1.0 - avg_occlusion, 1.0 - avg_occlusion, 1.0 - avg_occlusion, 1.0);
-            //   return;
-
-              float occlusion_weight = smoothstep(ssaoThreshold - ssaoFalloff, ssaoThreshold, length(viewPos));
-              occlusion_weight = 1.0 - occlusion_weight;
-            //   occlusion_weight *= 0.95;
-            //  float occlusion_weight = 1.0;
-              occlusion = 1.0 - (occlusion_weight * avg_occlusion);
-              //ssao_output = vec4(occlusion, occlusion, occlusion, 1.0);
-              gl_FragColor = vec4(occlusion, occlusion, occlusion, 1.0);
-            }
-            `,
+                    float ambientOcclusion = getAmbientOcclusion( viewPosition );
+        
+                    gl_FragColor = getDefaultColor( vUv );
+                    gl_FragColor.xyz *=  1.0 - ambientOcclusion;
+                }`,
         });
     }
 
     public resize(x: number, y: number): void {
         this.pass.material.uniforms.iResolution.value = new Vector2(x, y);
-        this.pass.material.uniforms.width.value = x;
-        this.pass.material.uniforms.height.value = y;
     }
 
     public setRadius(value: number): void {
@@ -134,8 +170,6 @@ class SSAO1Pass {
         normals: WebGLTexture,
         positions: WebGLTexture
     ): void {
-        this.pass.material.uniforms.projectionMatrix.value =
-            camera.projectionMatrix;
         this.pass.material.uniforms.viewPosTex.value = positions;
         this.pass.material.uniforms.normalTex.value = normals;
 

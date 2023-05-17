@@ -35,7 +35,6 @@ import VisTypes from "../simularium/VisTypes";
 import PDBModel from "./PDBModel";
 import AgentPath from "./agentPath";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
-import { AOSettings } from "./rendering/SimulariumRenderer";
 
 import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC } from "../constants";
 import {
@@ -282,10 +281,6 @@ class VisGeometry {
         cameraSpec.lookAtPosition.x = this.controls.target.x;
         cameraSpec.lookAtPosition.y = this.controls.target.y;
         cameraSpec.lookAtPosition.z = this.controls.target.z;
-    }
-
-    public applyAO(ao: AOSettings): void {
-        this.renderer.applyAO(ao);
     }
 
     public setupGui(container?: HTMLElement): void {

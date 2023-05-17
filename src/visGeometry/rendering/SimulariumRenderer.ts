@@ -26,26 +26,20 @@ const AGENTBUFFER = 0;
 const NORMALBUFFER = 1;
 const POSITIONBUFFER = 2;
 
-export interface AOSettings {
-    aoradius1: number;
-    blurradius1: number;
-    aothreshold1: number;
-    aofalloff1: number;
-    aoradius2: number;
-    blurradius2: number;
-    aothreshold2: number;
-    aofalloff2: number;
+export interface SimulariumAOParameters {
+    bias: number;
+    intensity: number;
+    scale: number;
+    kernelRadius: number;
+    minResolution: number;
+    blurRadius: number;
+    blurStdDev: number;
+    blurDepthCutoff: number;
 }
 
 interface SimulariumRenderParameters {
-    aoradius1: number;
-    aoradius2: number;
-    blurradius1: number;
-    blurradius2: number;
-    aothreshold1: number;
-    aofalloff1: number;
-    aothreshold2: number;
-    aofalloff2: number;
+    ao1: SimulariumAOParameters;
+    ao2: SimulariumAOParameters;
     atomBeginDistance: number;
     chainBeginDistance: number;
     bghueoffset: number;
@@ -82,16 +76,26 @@ class SimulariumRenderer {
 
     public constructor() {
         this.parameters = {
-            // AO defaults
-            aoradius1: 0.666, // view space
-            blurradius1: 3.0, // pixels
-            aothreshold1: 0.45, // % of bounds size
-            aofalloff1: 1.0, // % of bounds size
-            aoradius2: 0.666, // view space
-            blurradius2: 3.0, // pixels
-            aothreshold2: 1.0, // % of bounds size
-            aofalloff2: 0.6666, // % of bounds size
-            // end AO defaults
+            ao1: {
+                bias: 0.0,
+                intensity: 0.1,
+                scale: 1.0,
+                kernelRadius: 20.0,
+                minResolution: 0.0,
+                blurRadius: 1.0,
+                blurStdDev: 1.0,
+                blurDepthCutoff: 1.0,
+            },
+            ao2: {
+                bias: 0.0,
+                intensity: 0.1,
+                scale: 1.0,
+                kernelRadius: 20.0,
+                minResolution: 0.0,
+                blurRadius: 1.0,
+                blurStdDev: 1.0,
+                blurDepthCutoff: 1.0,
+            },
             atomBeginDistance: 0.6666, // % of bounds size
             chainBeginDistance: 1.0, // % of bounds size
             bghueoffset: 1,
@@ -110,19 +114,11 @@ class SimulariumRenderer {
 
         this.gbufferPass = new GBufferPass();
         // radius, threshold, falloff in view space coordinates.
-        this.ssao1Pass = new SSAO1Pass(
-            this.parameters.aoradius1,
-            this.parameters.aothreshold1,
-            this.parameters.aofalloff1
-        );
-        this.ssao2Pass = new SSAO1Pass(
-            this.parameters.aoradius2,
-            this.parameters.aothreshold2,
-            this.parameters.aofalloff2
-        );
+        this.ssao1Pass = new SSAO1Pass(0, 0, 0);
+        this.ssao2Pass = new SSAO1Pass(0, 0, 0);
 
-        this.blur1Pass = new BlurPass(this.parameters.blurradius1);
-        this.blur2Pass = new BlurPass(this.parameters.blurradius2);
+        this.blur1Pass = new BlurPass(this.parameters.ao1.blurRadius);
+        this.blur2Pass = new BlurPass(this.parameters.ao2.blurRadius);
         this.compositePass = new CompositePass({
             x: this.parameters.bghueoffset,
             y: this.parameters.bgchromaoffset,
@@ -196,54 +192,63 @@ class SimulariumRenderer {
         this.ssaoBufferBlurred2.texture.generateMipmaps = false;
     }
 
-    public applyAO(ao: AOSettings): void {
-        this.parameters.aoradius1 = ao.aoradius1;
-        this.parameters.aoradius2 = ao.aoradius2;
-        this.parameters.aothreshold1 = ao.aothreshold1;
-        this.parameters.aothreshold2 = ao.aothreshold2;
-        this.parameters.aofalloff1 = ao.aofalloff1;
-        this.parameters.aofalloff2 = ao.aofalloff2;
-        this.parameters.blurradius1 = ao.blurradius1;
-        this.parameters.blurradius2 = ao.blurradius2;
-        this.ssao1Pass.setRadius(this.parameters.aoradius1);
-        this.blur1Pass.setRadius(this.parameters.blurradius1);
-        this.ssao2Pass.setRadius(this.parameters.aoradius2);
-        this.blur2Pass.setRadius(this.parameters.blurradius2);
-    }
-
     public setupGui(gui: Pane): void {
         const settings = this.parameters;
-        const ao = gui.addFolder({ title: "AO passes", expanded: false });
-        ao.addInput(settings, "aoradius1", { min: 0.01, max: 10.0 }).on(
-            "change",
-            (event) => {
-                this.ssao1Pass.setRadius(event.value);
-            }
-        );
-        ao.addInput(settings, "blurradius1", { min: 0.01, max: 10.0 }).on(
-            "change",
-            (event) => {
-                this.blur1Pass.setRadius(event.value);
-            }
-        );
-        ao.addInput(settings, "aothreshold1", { min: 0.01, max: 2.0 });
-        ao.addInput(settings, "aofalloff1", { min: 0.01, max: 2.0 });
-        ao.addSeparator();
+        const ao1 = gui.addFolder({ title: "AO pass 1", expanded: false });
+        ao1.addInput(settings.ao1, "bias", { min: -1, max: 1 });
+        ao1.addInput(settings.ao1, "intensity", { min: 0, max: 1 });
+        ao1.addInput(settings.ao1, "scale", { min: 0, max: 10 });
+        ao1.addInput(settings.ao1, "kernelRadius", { min: 1, max: 100 });
+        ao1.addInput(settings.ao1, "minResolution", { min: 0, max: 1 });
+        ao1.addInput(settings.ao1, "blurRadius", { min: 0, max: 200 });
+        ao1.addInput(settings.ao1, "blurStdDev", { min: 0.5, max: 150 });
+        ao1.addInput(settings.ao1, "blurDepthCutoff", {
+            min: 0.0,
+            max: 0.1,
+        });
+        const ao2 = gui.addFolder({ title: "AO pass 2", expanded: false });
+        ao2.addInput(settings.ao2, "bias", { min: -1, max: 1 });
+        ao2.addInput(settings.ao2, "intensity", { min: 0, max: 1 });
+        ao2.addInput(settings.ao2, "scale", { min: 0, max: 10 });
+        ao2.addInput(settings.ao2, "kernelRadius", { min: 1, max: 100 });
+        ao2.addInput(settings.ao2, "minResolution", { min: 0, max: 1 });
+        ao2.addInput(settings.ao2, "blurRadius", { min: 0, max: 200 });
+        ao2.addInput(settings.ao2, "blurStdDev", { min: 0.5, max: 150 });
+        ao2.addInput(settings.ao2, "blurDepthCutoff", {
+            min: 0.0,
+            max: 0.1,
+        });
 
-        ao.addInput(settings, "aoradius2", { min: 0.01, max: 10.0 }).on(
-            "change",
-            (event) => {
-                this.ssao2Pass.setRadius(event.value);
-            }
-        );
-        ao.addInput(settings, "blurradius2", { min: 0.01, max: 10.0 }).on(
-            "change",
-            (event) => {
-                this.blur2Pass.setRadius(event.value);
-            }
-        );
-        ao.addInput(settings, "aothreshold2", { min: 0.01, max: 2.0 });
-        ao.addInput(settings, "aofalloff2", { min: 0.01, max: 2.0 });
+        // ao.addInput(settings, "aoradius1", { min: 0.01, max: 10.0 }).on(
+        //     "change",
+        //     (event) => {
+        //         this.ssao1Pass.setRadius(event.value);
+        //     }
+        // );
+        // ao.addInput(settings, "blurradius1", { min: 0.01, max: 10.0 }).on(
+        //     "change",
+        //     (event) => {
+        //         this.blur1Pass.setRadius(event.value);
+        //     }
+        // );
+        // ao.addInput(settings, "aothreshold1", { min: 0.01, max: 2.0 });
+        // ao.addInput(settings, "aofalloff1", { min: 0.01, max: 2.0 });
+        // ao.addSeparator();
+
+        // ao.addInput(settings, "aoradius2", { min: 0.01, max: 10.0 }).on(
+        //     "change",
+        //     (event) => {
+        //         this.ssao2Pass.setRadius(event.value);
+        //     }
+        // );
+        // ao.addInput(settings, "blurradius2", { min: 0.01, max: 10.0 }).on(
+        //     "change",
+        //     (event) => {
+        //         this.blur2Pass.setRadius(event.value);
+        //     }
+        // );
+        // ao.addInput(settings, "aothreshold2", { min: 0.01, max: 2.0 });
+        // ao.addInput(settings, "aofalloff2", { min: 0.01, max: 2.0 });
         const depth = gui.addFolder({ title: "DepthCueing", expanded: false });
         depth.addInput(settings, "atomBeginDistance", { min: 0.0, max: 2.0 });
         depth.addInput(settings, "chainBeginDistance", {
@@ -387,27 +392,64 @@ class SimulariumRenderer {
     ): void {
         // some param settings were based on a bounding box of 300 units
         const ratio = this.boundsMaxDim;
-        // updates for transformed bounds (should this happen in shader?)
-        this.ssao1Pass.pass.material.uniforms.ssaoThreshold.value =
-            this.parameters.chainBeginDistance * ratio +
-            // this.parameters.aothreshold1 * ratio +
-            Math.max(this.boundsNear, 0.0);
-        this.ssao1Pass.pass.material.uniforms.ssaoFalloff.value =
-            (this.parameters.chainBeginDistance -
-                this.parameters.atomBeginDistance) *
-                ratio +
-            //this.parameters.aofalloff1 * ratio +
-            Math.max(this.boundsNear, 0.0);
-        this.ssao2Pass.pass.material.uniforms.ssaoThreshold.value =
-            this.parameters.chainBeginDistance * ratio +
-            //        this.parameters.aothreshold2 * ratio +
-            Math.max(this.boundsNear, 0.0);
-        this.ssao2Pass.pass.material.uniforms.ssaoFalloff.value =
-            (this.parameters.chainBeginDistance -
-                this.parameters.atomBeginDistance) *
-                ratio +
-            //this.parameters.aofalloff2 * ratio +
-            Math.max(this.boundsNear, 0.0);
+
+        // update all ao settings here.
+        this.ssao1Pass.pass.material.uniforms.bias.value =
+            this.parameters.ao1.bias;
+        this.ssao1Pass.pass.material.uniforms.intensity.value =
+            this.parameters.ao1.intensity;
+        this.ssao1Pass.pass.material.uniforms.scale.value =
+            this.parameters.ao1.scale;
+        this.ssao1Pass.pass.material.uniforms.kernelRadius.value =
+            this.parameters.ao1.kernelRadius;
+        this.ssao1Pass.pass.material.uniforms.minResolution.value =
+            this.parameters.ao1.minResolution;
+        // this.ssao1Pass.pass.material.uniforms.blurRadius.value =
+        //     this.parameters.ao1.blurRadius;
+        // this.ssao1Pass.pass.material.uniforms.blurStdDev.value =
+        //     this.parameters.ao1.blurStdDev;
+        // this.ssao1Pass.pass.material.uniforms.blurDepthCutoff.value =
+        //     this.parameters.ao1.blurDepthCutoff;
+        this.ssao2Pass.pass.material.uniforms.bias.value =
+            this.parameters.ao2.bias;
+        this.ssao2Pass.pass.material.uniforms.intensity.value =
+            this.parameters.ao2.intensity;
+        this.ssao2Pass.pass.material.uniforms.scale.value =
+            this.parameters.ao2.scale;
+        this.ssao2Pass.pass.material.uniforms.kernelRadius.value =
+            this.parameters.ao2.kernelRadius;
+        this.ssao2Pass.pass.material.uniforms.minResolution.value =
+            this.parameters.ao2.minResolution;
+        // this.ssao2Pass.pass.material.uniforms.blurRadius.value =
+        //     this.parameters.ao2.blurRadius;
+        // this.ssao2Pass.pass.material.uniforms.blurStdDev.value =
+        //     this.parameters.ao2.blurStdDev;
+        // this.ssao2Pass.pass.material.uniforms.blurDepthCutoff.value =
+        //     this.parameters.ao2.blurDepthCutoff;
+
+        // // updates for transformed bounds (should this happen in shader?)
+        // this.ssao1Pass.pass.material.uniforms.ssaoThreshold.value =
+        //     this.parameters.chainBeginDistance * ratio +
+        //     // this.parameters.aothreshold1 * ratio +
+        //     Math.max(this.boundsNear, 0.0);
+        // this.ssao1Pass.pass.material.uniforms.ssaoFalloff.value =
+        //     (this.parameters.chainBeginDistance -
+        //         this.parameters.atomBeginDistance) *
+        //         ratio +
+        //     //this.parameters.aofalloff1 * ratio +
+        //     Math.max(this.boundsNear, 0.0);
+        // this.ssao2Pass.pass.material.uniforms.ssaoThreshold.value =
+        //     this.parameters.chainBeginDistance * ratio +
+        //     //        this.parameters.aothreshold2 * ratio +
+        //     Math.max(this.boundsNear, 0.0);
+        // this.ssao2Pass.pass.material.uniforms.ssaoFalloff.value =
+        //     (this.parameters.chainBeginDistance -
+        //         this.parameters.atomBeginDistance) *
+        //         ratio +
+        //     //this.parameters.aofalloff2 * ratio +
+        //     Math.max(this.boundsNear, 0.0);
+        this.ssao1Pass.pass.material.uniforms.cameraFar.value = camera.far;
+        this.ssao2Pass.pass.material.uniforms.cameraFar.value = camera.far;
         this.compositePass.pass.material.uniforms.atomicBeginDistance.value =
             this.parameters.atomBeginDistance * ratio +
             Math.max(this.boundsNear, 0.0);
