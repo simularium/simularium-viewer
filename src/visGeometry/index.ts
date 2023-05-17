@@ -76,7 +76,7 @@ const CAMERA_DOLLY_STEP_SIZE = 10;
 const CAMERA_INITIAL_ZNEAR = 1.0;
 const CAMERA_INITIAL_ZFAR = 1000.0;
 // distant objects are smaller to a perspective camera but the same size to an orthographic one
-// when switching cameras, calculate zoom by keeping objects this distance from the camera the same size
+// when switching cameras, calculate zoom to keep objects this distance from the camera the same size
 const ORTHOGRAPHIC_FOCUS_DISTANCE = 50;
 
 const CANVAS_INITIAL_WIDTH = 100;
@@ -94,9 +94,7 @@ function removeByName(group: Group, name: string): void {
             childrenToRemove.push(child);
         }
     });
-    childrenToRemove.forEach(function (child) {
-        group.remove(child);
-    });
+    childrenToRemove.forEach((child) => group.remove(child));
 }
 
 const isOrthoCamera = (cam: Camera): cam is OrthographicCamera =>
@@ -246,9 +244,11 @@ class VisGeometry {
         this.hemiLight = new HemisphereLight(0xffffff, 0x000000, 0.5);
         this.threejsrenderer = new WebGLRenderer({ premultipliedAlpha: false });
         this.perspectiveControls = this.createControls(
+            this.perspectiveCamera,
             this.threejsrenderer.domElement
         );
         this.orthographicControls = this.createControls(
+            this.orthographicCamera,
             this.threejsrenderer.domElement
         );
         this.controls = this.perspectiveControls;
@@ -704,8 +704,11 @@ class VisGeometry {
         this.updateScene(this.currentSceneAgents);
     }
 
-    private createControls(element: HTMLElement): OrbitControls {
-        const controls = new OrbitControls(this.camera, element);
+    private createControls(
+        camera: Camera,
+        element: HTMLElement
+    ): OrbitControls {
+        const controls = new OrbitControls(camera, element);
         controls.addEventListener("change", () => {
             if (this.gui) {
                 this.gui.refresh();
@@ -831,9 +834,11 @@ class VisGeometry {
 
         parent.appendChild(this.threejsrenderer.domElement);
         this.perspectiveControls = this.createControls(
+            this.perspectiveCamera,
             this.threejsrenderer.domElement
         );
         this.orthographicControls = this.createControls(
+            this.orthographicCamera,
             this.threejsrenderer.domElement
         );
         this.controls = this.perspectiveControls;
