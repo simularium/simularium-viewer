@@ -223,7 +223,7 @@ class CompositePass {
                 //     //color.xyz = atomColor;
                 //     //color.xyz = vec3(0.0, 1.0, 0.0);
                 // }
-                float occ = occ1*occ2;
+                float occ = occ1;//occ1*occ2;
                 //gl_FragColor = vec4(occ,occ,occ,1.0);
                 gl_FragColor = vec4( color.xyz *occ , 1.0);
             }

@@ -15,7 +15,7 @@ import {
 class SSAO1Pass {
     public pass: RenderToBuffer;
 
-    public constructor(radius: number, threshold: number, falloff: number) {
+    public constructor() {
         this.pass = new RenderToBuffer({
             defines: {
                 NUM_SAMPLES: 7,
@@ -157,10 +157,6 @@ class SSAO1Pass {
 
     public resize(x: number, y: number): void {
         this.pass.material.uniforms.iResolution.value = new Vector2(x, y);
-    }
-
-    public setRadius(value: number): void {
-        this.pass.material.uniforms.radius.value = value;
     }
 
     public render(
