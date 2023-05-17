@@ -2,11 +2,7 @@ import RenderToBuffer from "./RenderToBuffer";
 
 import {
     Color,
-    DataTexture,
-    FloatType,
-    RGBAFormat,
     Vector2,
-    Vector3,
     PerspectiveCamera,
     WebGLRenderer,
     WebGLRenderTarget,
@@ -155,48 +151,6 @@ class SSAO1Pass {
         renderer.setClearColor(new Color(1.0, 0.0, 0.0), 1.0);
         this.pass.render(renderer, target);
         renderer.setClearColor(c, a);
-    }
-
-    public createNoiseTex(): DataTexture {
-        const noisedata = new Float32Array(16 * 4);
-        for (let i = 0; i < 16; i++) {
-            noisedata[i * 4 + 0] = Math.random() * 2.0 - 1.0;
-            noisedata[i * 4 + 1] = Math.random() * 2.0 - 1.0;
-            noisedata[i * 4 + 2] = 0;
-            noisedata[i * 4 + 3] = 0;
-        }
-        // TODO half float type?
-        const tex = new DataTexture(noisedata, 4, 4, RGBAFormat, FloatType);
-        tex.needsUpdate = true;
-        return tex;
-    }
-
-    public createSSAOSamples(): Vector3[] {
-        const samples: Vector3[] = [];
-        const sampleCount = 64;
-        for (let i = 0; i < sampleCount; i++) {
-            // hemisphere kernel in tangent space
-            const sample: Vector3 = new Vector3(
-                Math.random() * 2.0 - 1.0, // -1..1
-                Math.random() * 2.0 - 1.0, // -1..1
-                Math.random() // 0..1
-            );
-            sample.normalize();
-
-            //sample.multiplyScalar(Math.random());
-
-            // Uncomment all this to try to get better samples
-            function lerp(x0: number, x1: number, alpha: number): number {
-                return x0 + (x1 - x0) * alpha;
-            }
-            const iRelative = i / sampleCount;
-            // scale samples s.t. they're more aligned to center of kernel
-            const scale = lerp(0.1, 1.0, iRelative * iRelative);
-            sample.multiplyScalar(scale);
-
-            samples.push(sample);
-        }
-        return samples;
     }
 }
 
