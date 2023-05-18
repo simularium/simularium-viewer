@@ -1,6 +1,5 @@
 import type {
     Plot,
-    SimulariumFileFormat,
     TrajectoryFileInfo,
     VisDataFrame,
     VisDataMessage,
