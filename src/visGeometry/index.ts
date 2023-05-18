@@ -12,17 +12,18 @@ import {
     HemisphereLight,
     LineBasicMaterial,
     LineSegments,
+    Mesh,
+    MOUSE,
     Object3D,
     OrthographicCamera,
     PerspectiveCamera,
+    Quaternion,
     Scene,
+    Spherical,
     Vector2,
     Vector3,
     WebGLRenderer,
     WebGLRendererParameters,
-    Mesh,
-    Quaternion,
-    MOUSE,
 } from "three";
 
 import { Pane } from "tweakpane";
@@ -798,17 +799,34 @@ class VisGeometry {
     }
 
     public setCameraType(ortho: boolean): void {
-        if (isOrthoCamera(this.camera) === ortho) {
+        const newCam = ortho ? this.orthographicCamera : this.perspectiveCamera;
+        if (newCam === this.camera) {
             return;
         }
 
-        const newCam = ortho ? this.orthographicCamera : this.perspectiveCamera;
+        // `OrbitControls` zooms `PerspectiveCamera`s by changing position to dolly
+        // relative to the target, and `OrthographicCamera`s by setting zoom and
+        // leaving position unchanged (keeping a constant distance to target).
 
-        newCam.position.copy(this.camera.position);
+        const offset = this.camera.position.clone().sub(this.controls.target);
+        const spherical = new Spherical().setFromVector3(offset);
+        let zoom = 1;
+
+        if (ortho) {
+            // If switching to ortho, reset distance to target and convert it to zoom.
+            zoom = DEFAULT_CAMERA_Z_POSITION / spherical.radius;
+            spherical.radius = DEFAULT_CAMERA_Z_POSITION;
+        } else {
+            // If switching to perspective, convert zoom to new distance to target.
+            spherical.radius = DEFAULT_CAMERA_Z_POSITION / this.camera.zoom;
+        }
+
+        newCam.position.setFromSpherical(spherical).add(this.controls.target);
         newCam.up.copy(this.camera.up);
+        newCam.zoom = zoom;
+
         this.controls.object = newCam;
         this.controls.update();
-
         this.camera = newCam;
     }
 
