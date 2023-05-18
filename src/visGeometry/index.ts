@@ -357,6 +357,8 @@ class VisGeometry {
         });
         fcam.addInput(cameraProxy, "position");
         fcam.addInput(this.controls, "target");
+        const fovInput = fcam.addInput(this.perspectiveCamera, "fov");
+        fovInput.on("change", () => this.updateOrthographicFrustum());
 
         [
             { camera: this.cam1, label: "Cam 1" },
