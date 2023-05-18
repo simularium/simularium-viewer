@@ -13,13 +13,12 @@ import {
     Color,
     Group,
     Mesh,
+    OrthographicCamera,
+    PerspectiveCamera,
     Points,
     Scene,
     WebGLRenderer,
-    Camera,
     WebGLMultipleRenderTargets,
-    PerspectiveCamera,
-    OrthographicCamera,
 } from "three";
 
 // strategy:
