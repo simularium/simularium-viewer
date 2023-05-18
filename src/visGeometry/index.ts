@@ -294,14 +294,11 @@ class VisGeometry {
     /** Set frustum of `orthographicCamera` from fov/aspect of `perspectiveCamera */
     private updateOrthographicFrustum(): void {
         const { fov, aspect } = this.perspectiveCamera;
-        const { position, lookAtPosition } = this.cameraDefault;
-
         const halfFovRadians = (fov * Math.PI) / 360;
 
         // Distant objects are smaller in perspective but the same size in ortho.
         // Find default distance to target and set the frustum size to keep objects
-        // at that distance the same size in both cameras. (Unless overridden with
-        // `handleCameraData`, orbitRadius = DEFAULT_CAMERA_Z_POSITION)
+        // at that distance the same size in both cameras.
         const orbitRadius = this.getDefaultOrbitRadius();
         const vSize = Math.tan(halfFovRadians) * orbitRadius;
         const hSize = vSize * aspect;
