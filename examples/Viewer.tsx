@@ -269,7 +269,6 @@ class Viewer extends React.Component<{}, ViewerState> {
             })
             .then((simulariumFile: ISimulariumFile) => {
                 const fileName = url;
-                console.log("GOT FILE", simulariumFile);
                 this.setState({
                     simulariumFile: { data: simulariumFile, name: fileName },
                 });
