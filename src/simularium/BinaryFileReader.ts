@@ -271,7 +271,9 @@ export default class BinaryFileReader implements ISimulariumFile {
         return this.plotData;
     }
 
-    getFullFile(): ArrayBuffer {
-        return this.fileContents;
+    getAsBlob(): Blob {
+        return new Blob([this.fileContents], {
+            type: "text/plain;charset=utf-8",
+        });
     }
 }
