@@ -575,7 +575,7 @@ class VisGeometry {
                 return;
             }
 
-            this.camera.zoom = newDistance / defaultRadius;
+            this.camera.zoom = defaultRadius / newDistance;
         } else {
             // Perspective camera: actually change position
             const position = this.camera.position.clone();
