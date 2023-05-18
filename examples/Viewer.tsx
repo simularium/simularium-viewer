@@ -565,6 +565,15 @@ class Viewer extends React.Component<{}, ViewerState> {
                     <option value="microtubules30_1.h5">MT 30</option>
                     <option value="endocytosis.simularium">Endocytosis</option>
                     <option value="pc4covid19.simularium">COVIDLUNG</option>
+                    <option value="nanoparticle_wrapping.simularium">Nanoparticle wrapping</option>
+                    <option value="smoldyn_min1.simularium">Smoldyn min1</option>
+                    <option value="smoldyn_spine.simularium">Smoldyn spine</option>
+                    <option value="medyan_Chandrasekaran_2019_UNI_alphaA_0.1_MA_0.675.simularium">medyan 625</option>
+                    <option value="medyan_Chandrasekaran_2019_UNI_alphaA_0.1_MA_0.0225.simularium">medyan 0225</option>
+                    <option value="springsalad_condensate_formation_Below_Ksp.simularium">springsalad below ksp</option>
+                    <option value="springsalad_condensate_formation_At_Ksp.simularium">springsalad at ksp</option>
+                    <option value="springsalad_condensate_formation_Above_Ksp.simularium">springsalad above ksp</option>
+                    <option value="blood-plasma-1.0.simularium">blood plasma</option>
                     <option value="ATPsynthase_2.h5">ATP 2</option>
                     <option value="ATPsynthase_3.h5">ATP 3</option>
                     <option value="ATPsynthase_4.h5">ATP 4</option>
