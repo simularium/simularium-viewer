@@ -17,7 +17,7 @@ export interface VisDataMessage {
     fileName: string;
 }
 
-interface Coordinates3d {
+export interface Coordinates3d {
     x: number;
     y: number;
     z: number;
@@ -29,6 +29,9 @@ export interface CameraSpec {
     upVector: Coordinates3d;
     fovDegrees: number;
 }
+
+export type CameraSpecWithType = CameraSpec &
+    ({ orthographic: false } | { orthograpic: true; zoom: number });
 
 interface ScatterTrace {
     x: number[];
