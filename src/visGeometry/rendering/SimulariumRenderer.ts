@@ -78,8 +78,8 @@ class SimulariumRenderer {
         this.parameters = {
             ao1: {
                 bias: 0.5,
-                intensity: 0.1,
-                scale: 5.0,
+                intensity: 0.08,
+                scale: 10.0,
                 kernelRadius: 20.0,
                 minResolution: 0.0,
                 blurRadius: 4.0,
@@ -212,18 +212,18 @@ class SimulariumRenderer {
             min: 0.0,
             max: 0.1,
         });
-        const ao2 = gui.addFolder({ title: "AO pass 2", expanded: false });
-        ao2.addInput(settings.ao2, "bias", { min: -1, max: 1 });
-        ao2.addInput(settings.ao2, "intensity", { min: 0, max: 1 });
-        ao2.addInput(settings.ao2, "scale", { min: 0, max: 10 });
-        ao2.addInput(settings.ao2, "kernelRadius", { min: 1, max: 100 });
-        ao2.addInput(settings.ao2, "minResolution", { min: 0, max: 1 });
-        ao2.addInput(settings.ao2, "blurRadius", { min: 0, max: 200 });
-        ao2.addInput(settings.ao2, "blurStdDev", { min: 0.5, max: 150 });
-        ao2.addInput(settings.ao2, "blurDepthCutoff", {
-            min: 0.0,
-            max: 0.1,
-        });
+        // const ao2 = gui.addFolder({ title: "AO pass 2", expanded: false });
+        // ao2.addInput(settings.ao2, "bias", { min: -1, max: 1 });
+        // ao2.addInput(settings.ao2, "intensity", { min: 0, max: 1 });
+        // ao2.addInput(settings.ao2, "scale", { min: 0, max: 10 });
+        // ao2.addInput(settings.ao2, "kernelRadius", { min: 1, max: 100 });
+        // ao2.addInput(settings.ao2, "minResolution", { min: 0, max: 1 });
+        // ao2.addInput(settings.ao2, "blurRadius", { min: 0, max: 200 });
+        // ao2.addInput(settings.ao2, "blurStdDev", { min: 0.5, max: 150 });
+        // ao2.addInput(settings.ao2, "blurDepthCutoff", {
+        //     min: 0.0,
+        //     max: 0.1,
+        // });
 
         const depth = gui.addFolder({ title: "DepthCueing", expanded: false });
         depth.addInput(settings, "atomBeginDistance", { min: 0.0, max: 2.0 });
@@ -340,15 +340,15 @@ class SimulariumRenderer {
         // intermediate blurring buffer
         this.blurIntermediateBuffer.setSize(x, y);
         this.ssaoBuffer.setSize(x, y);
-        this.ssaoBuffer2.setSize(x, y);
+        //this.ssaoBuffer2.setSize(x, y);
         this.ssaoBufferBlurred.setSize(x, y);
-        this.ssaoBufferBlurred2.setSize(x, y);
+        //this.ssaoBufferBlurred2.setSize(x, y);
 
         this.gbufferPass.resize(x, y);
         this.ssao1Pass.resize(x, y);
-        this.ssao2Pass.resize(x, y);
         this.blur1Pass.resize(x, y);
-        this.blur2Pass.resize(x, y);
+        //this.ssao2Pass.resize(x, y);
+        //this.blur2Pass.resize(x, y);
         this.compositePass.resize(x, y);
         this.contourPass.resize(x, y);
         this.drawBufferPass.resize(x, y);
@@ -381,30 +381,30 @@ class SimulariumRenderer {
         this.ssao1Pass.pass.material.uniforms.minResolution.value =
             this.parameters.ao1.minResolution;
 
-        this.ssao2Pass.pass.material.uniforms.bias.value =
-            this.parameters.ao2.bias;
-        this.ssao2Pass.pass.material.uniforms.intensity.value =
-            this.parameters.ao2.intensity;
-        this.ssao2Pass.pass.material.uniforms.scale.value =
-            this.parameters.ao2.scale;
-        this.ssao2Pass.pass.material.uniforms.kernelRadius.value =
-            this.parameters.ao2.kernelRadius;
-        this.ssao2Pass.pass.material.uniforms.minResolution.value =
-            this.parameters.ao2.minResolution;
+        // this.ssao2Pass.pass.material.uniforms.bias.value =
+        //     this.parameters.ao2.bias;
+        // this.ssao2Pass.pass.material.uniforms.intensity.value =
+        //     this.parameters.ao2.intensity;
+        // this.ssao2Pass.pass.material.uniforms.scale.value =
+        //     this.parameters.ao2.scale;
+        // this.ssao2Pass.pass.material.uniforms.kernelRadius.value =
+        //     this.parameters.ao2.kernelRadius;
+        // this.ssao2Pass.pass.material.uniforms.minResolution.value =
+        //     this.parameters.ao2.minResolution;
 
         this.ssao1Pass.pass.material.uniforms.cameraFar.value = camera.far;
-        this.ssao2Pass.pass.material.uniforms.cameraFar.value = camera.far;
+        //this.ssao2Pass.pass.material.uniforms.cameraFar.value = camera.far;
 
         this.blur1Pass.configure(
             this.parameters.ao1.blurRadius,
             this.parameters.ao1.blurStdDev,
             this.parameters.ao1.blurDepthCutoff
         );
-        this.blur2Pass.configure(
-            this.parameters.ao2.blurRadius,
-            this.parameters.ao2.blurStdDev,
-            this.parameters.ao2.blurDepthCutoff
-        );
+        // this.blur2Pass.configure(
+        //     this.parameters.ao2.blurRadius,
+        //     this.parameters.ao2.blurStdDev,
+        //     this.parameters.ao2.blurDepthCutoff
+        // );
         this.compositePass.pass.material.uniforms.atomicBeginDistance.value =
             this.parameters.atomBeginDistance * ratio +
             Math.max(this.boundsNear, 0.0);
@@ -456,20 +456,20 @@ class SimulariumRenderer {
             this.blurIntermediateBuffer
         );
 
-        this.ssao2Pass.render(
-            renderer,
-            camera,
-            this.ssaoBuffer2,
-            this.gbuffer.texture[NORMALBUFFER],
-            this.gbuffer.texture[POSITIONBUFFER]
-        );
-        this.blur2Pass.render(
-            renderer,
-            this.ssaoBufferBlurred2,
-            this.ssaoBuffer2,
-            this.gbuffer.texture[POSITIONBUFFER],
-            this.blurIntermediateBuffer
-        );
+        // this.ssao2Pass.render(
+        //     renderer,
+        //     camera,
+        //     this.ssaoBuffer2,
+        //     this.gbuffer.texture[NORMALBUFFER],
+        //     this.gbuffer.texture[POSITIONBUFFER]
+        // );
+        // this.blur2Pass.render(
+        //     renderer,
+        //     this.ssaoBufferBlurred2,
+        //     this.ssaoBuffer2,
+        //     this.gbuffer.texture[POSITIONBUFFER],
+        //     this.blurIntermediateBuffer
+        // );
 
         // render composite pass into this buffer, overwriting whatever was there!
         // Be sure this buffer is not needed anymore!

@@ -553,7 +553,6 @@ class Viewer extends React.Component<{}, ViewerState> {
                     </option>
                     <option value="kinesin002_01.h5">kinesin 002</option>
                     <option value="microtubules038_10.h5">MT 38</option>
-                    <option value="test_traj1.h5">TEST</option>
                     <option value="microtubules_v2_shrinking.h5">M Tub</option>
                     <option value="aster.cmo">Aster</option>
                     <option value="microtubules30_1.h5">MT 30</option>

@@ -43,7 +43,7 @@ class CompositePass {
 
             uniform sampler2D colorTex;
             uniform sampler2D ssaoTex1;
-            uniform sampler2D ssaoTex2;
+            //uniform sampler2D ssaoTex2;
 
             uniform sampler2D colorsBuffer;
 
@@ -141,7 +141,7 @@ class CompositePass {
                     discard;
                 }
                 float occ1 = texture(ssaoTex1, texCoords).r;
-                float occ2 = texture(ssaoTex2, texCoords).r;
+                //float occ2 = texture(ssaoTex2, texCoords).r;
 
                 float instanceId = (col0.y);
 
@@ -165,7 +165,7 @@ class CompositePass {
                 //inital Hue-Chroma-Luminance
 
                 // atom color in HCL
-                vec3 hcl = rgb2hcl(col.xyz);
+                vec3 hcl = rgb2hcl(col.xyz * occ1);
                 float h = hcl.r;
                 float c = hcl.g;
                 float l = hcl.b;
@@ -223,9 +223,8 @@ class CompositePass {
                 //     //color.xyz = atomColor;
                 //     //color.xyz = vec3(0.0, 1.0, 0.0);
                 // }
-                float occ = occ1;//occ1*occ2;
                 //gl_FragColor = vec4(occ,occ,occ,1.0);
-                gl_FragColor = vec4( color.xyz *occ , 1.0);
+                gl_FragColor = vec4( color.xyz , 1.0);
             }
             `,
         });
