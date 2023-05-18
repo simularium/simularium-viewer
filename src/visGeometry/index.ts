@@ -378,11 +378,7 @@ class VisGeometry {
         });
 
         this.gui.addButton({ title: "Export Cam" }).on("click", () => {
-            const preset = this.gui?.exportPreset();
-            const cam = {
-                position: preset?.position,
-                target: preset?.target,
-            };
+            const cam = this.storeCamera();
             const anchor = document.createElement("a");
             anchor.href = URL.createObjectURL(
                 new Blob([JSON.stringify(cam, null, 2)], {
@@ -399,13 +395,7 @@ class VisGeometry {
             fileinput.addEventListener("change", (e: Event) => {
                 const reader = new FileReader();
                 reader.onload = (event: ProgressEvent<FileReader>) => {
-                    const obj = JSON.parse(event?.target?.result as string);
-                    const cam: CameraSpecWithType = {
-                        ...cloneDeep(DEFAULT_CAMERA_SPEC),
-                        orthographic: false,
-                    };
-                    cam.position = obj.position;
-                    cam.lookAtPosition = obj.target;
+                    const cam = JSON.parse(event?.target?.result as string);
                     this.loadCamera(cam);
                 };
                 const files = (e.target as HTMLInputElement).files;
