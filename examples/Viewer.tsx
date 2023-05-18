@@ -533,7 +533,9 @@ class Viewer extends React.Component<{}, ViewerState> {
                 playbackFile
             );
         } else {
-            this.setState({simulariumFile: {name: playbackFile, data: null}})
+            this.setState({
+                simulariumFile: { name: playbackFile, data: null },
+            });
             simulariumController.changeFile(
                 {
                     netConnectionSettings,
@@ -541,6 +543,27 @@ class Viewer extends React.Component<{}, ViewerState> {
                 playbackFile
             );
         }
+    }
+
+    private downloadFile() {
+        const { simulariumFile } = this.state;
+        if (!simulariumFile) {
+            return;
+        }
+        let href = "";
+        if (!simulariumFile.data) {
+            href = `https://aics-simularium-data.s3.us-east-2.amazonaws.com/trajectory/${simulariumFile.name}`;
+        } else {
+            href = URL.createObjectURL(simulariumFile.data.getAsBlob());
+        }
+        const downloadLink = document.createElement("a");
+        downloadLink.download = simulariumFile.name;
+        downloadLink.style.display = "none";
+        downloadLink.href = href;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        URL.revokeObjectURL(downloadLink.href);
     }
 
     public render(): JSX.Element {
@@ -753,30 +776,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                 >
                     Get available metrics
                 </button>
-                <button
-                    onClick={() => {
-                        const { simulariumFile } = this.state;
-                        if (!simulariumFile ) {
-                            return;
-                        }
-                        let href = "";
-                        if (!simulariumFile.data) {
-                            href = `https://aics-simularium-data.s3.us-east-2.amazonaws.com/trajectory/${simulariumFile.name}`;
-                        } else {
-                            href = URL.createObjectURL(simulariumFile.data.getAsBlob());
-                        }
-                        const downloadLink = document.createElement("a");
-                        downloadLink.download = simulariumFile.name;
-                        downloadLink.style.display = "none";
-                        downloadLink.href = href;
-                        document.body.appendChild(downloadLink);
-                        downloadLink.click();
-                        document.body.removeChild(downloadLink);
-                        URL.revokeObjectURL(downloadLink.href);
-                    }}
-                >
-                    download
-                </button>
+                <button onClick={this.downloadFile}>download</button>
                 <button
                     onClick={() =>
                         simulariumController.getPlotData(
