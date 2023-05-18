@@ -145,7 +145,7 @@ class Viewer extends React.Component<{}, ViewerState> {
     private viewerRef: React.RefObject<SimulariumViewer>;
     private panMode = false;
     private focusMode = true;
-    private cameraMode = false;
+    private orthoMode = false;
 
     public constructor(props) {
         super(props);
@@ -730,8 +730,8 @@ class Viewer extends React.Component<{}, ViewerState> {
                 </button>
                 <button
                     onClick={() => {
-                        this.cameraMode = !this.cameraMode;
-                        simulariumController.setCameraType(this.cameraMode);
+                        this.orthoMode = !this.orthoMode;
+                        simulariumController.setCameraType(this.orthoMode);
                     }}
                 >
                     Camera mode
