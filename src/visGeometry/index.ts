@@ -281,8 +281,8 @@ class VisGeometry {
 
     /**
      * Derive the default distance from the camera target from `cameraDefault`.
-     * Unless `cameraDefault` has been changed by a call to `handleCameraData`,
-     * this will be equal to `DEFAULT_CAMERA_Z_POSITION`.
+     * Unless `cameraDefault` has been meaningfully changed by a call to
+     * `handleCameraData`, this will be equal to `DEFAULT_CAMERA_Z_POSITION`.
      */
     private getDefaultOrbitRadius(): number {
         const { position, lookAtPosition } = this.cameraDefault;
@@ -835,17 +835,18 @@ class VisGeometry {
         // relative to the target, and `OrthographicCamera`s by setting zoom and
         // leaving position unchanged (keeping a constant distance to target).
 
+        const defaultOrbitRadius = this.getDefaultOrbitRadius();
         const offset = this.camera.position.clone().sub(this.controls.target);
         const spherical = new Spherical().setFromVector3(offset);
         let zoom = 1;
 
         if (ortho) {
             // If switching to ortho, reset distance to target and convert it to zoom.
-            zoom = DEFAULT_CAMERA_Z_POSITION / spherical.radius;
-            spherical.radius = DEFAULT_CAMERA_Z_POSITION;
+            zoom = defaultOrbitRadius / spherical.radius;
+            spherical.radius = defaultOrbitRadius;
         } else {
             // If switching to perspective, convert zoom to new distance to target.
-            spherical.radius = DEFAULT_CAMERA_Z_POSITION / this.camera.zoom;
+            spherical.radius = defaultOrbitRadius / this.camera.zoom;
         }
 
         newCam.position.setFromSpherical(spherical).add(this.controls.target);
