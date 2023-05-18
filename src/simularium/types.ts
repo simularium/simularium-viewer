@@ -31,7 +31,7 @@ export interface CameraSpec {
 }
 
 export type CameraSpecWithType = CameraSpec &
-    ({ orthographic: false } | { orthograpic: true; zoom: number });
+    ({ orthographic: false } | { orthographic: true; zoom: number });
 
 interface ScatterTrace {
     x: number[];

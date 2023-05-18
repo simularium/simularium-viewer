@@ -46,6 +46,7 @@ import {
     AgentDisplayDataWithGeometry,
     AgentData,
     Coordinates3d,
+    CameraSpecWithType,
 } from "../simularium/types";
 
 import SimulariumRenderer from "./rendering/SimulariumRenderer";
@@ -159,9 +160,9 @@ class VisGeometry {
     private focusMode: boolean;
     public gui?: Pane;
 
-    private cam1: CameraSpec;
-    private cam2: CameraSpec;
-    private cam3: CameraSpec;
+    private cam1: CameraSpecWithType;
+    private cam2: CameraSpecWithType;
+    private cam3: CameraSpecWithType;
 
     // Scene update will populate these lists of visible pdb agents.
     // These lists are iterated at render time to detemine LOD.
@@ -170,9 +171,9 @@ class VisGeometry {
     private agentPdbsToDraw: PDBModel[];
 
     public constructor(loggerLevel: ILogLevel) {
-        this.cam1 = cloneDeep(DEFAULT_CAMERA_SPEC);
-        this.cam2 = cloneDeep(DEFAULT_CAMERA_SPEC);
-        this.cam3 = cloneDeep(DEFAULT_CAMERA_SPEC);
+        this.cam1 = { ...cloneDeep(DEFAULT_CAMERA_SPEC), orthographic: false };
+        this.cam2 = { ...cloneDeep(DEFAULT_CAMERA_SPEC), orthographic: false };
+        this.cam3 = { ...cloneDeep(DEFAULT_CAMERA_SPEC), orthographic: false };
 
         this.renderStyle = RenderStyle.WEBGL1_FALLBACK;
         this.supportsWebGL2Rendering = false;
@@ -302,26 +303,33 @@ class VisGeometry {
         this.orthographicCamera.updateProjectionMatrix();
     }
 
-    private loadCamera(cameraSpec: CameraSpec): void {
-        // TODO add other parameters from CameraSpec?
-        this.camera.position.set(
-            cameraSpec.position.x,
-            cameraSpec.position.y,
-            cameraSpec.position.z
-        );
-        this.controls.target.set(
-            cameraSpec.lookAtPosition.x,
-            cameraSpec.lookAtPosition.y,
-            cameraSpec.lookAtPosition.z
-        );
+    private loadCamera(cameraSpec: CameraSpecWithType): void {
+        this.perspectiveCamera.fov = cameraSpec.fovDegrees;
+        this.updateOrthographicFrustum();
+        this.setCameraType(cameraSpec.orthographic);
+        this.camera.position.copy(coordsToVector(cameraSpec.position));
+        this.camera.up.copy(coordsToVector(cameraSpec.upVector));
+        this.controls.target.copy(coordsToVector(cameraSpec.lookAtPosition));
+        if (cameraSpec.orthographic) {
+            this.orthographicCamera.zoom = cameraSpec.zoom;
+        }
     }
-    private storeCamera(cameraSpec: CameraSpec): void {
-        cameraSpec.position.x = this.camera.position.x;
-        cameraSpec.position.y = this.camera.position.y;
-        cameraSpec.position.z = this.camera.position.z;
-        cameraSpec.lookAtPosition.x = this.controls.target.x;
-        cameraSpec.lookAtPosition.y = this.controls.target.y;
-        cameraSpec.lookAtPosition.z = this.controls.target.z;
+    private storeCamera(cameraSpec?: CameraSpecWithType): CameraSpecWithType {
+        const spec = cameraSpec || {
+            ...cloneDeep(DEFAULT_CAMERA_SPEC),
+            orthographic: false,
+        };
+        spec.position = this.camera.position.clone();
+        spec.upVector = this.camera.up.clone();
+        spec.lookAtPosition = this.controls.target.clone();
+        spec.fovDegrees = this.perspectiveCamera.fov;
+
+        spec.orthographic = !!(this.camera as OrthographicCamera)
+            .isOrthographicCamera;
+        if (spec.orthographic) {
+            spec.zoom = this.orthographicCamera.zoom;
+        }
+        return spec;
     }
 
     public applyAO(ao: AOSettings): void {
@@ -336,6 +344,7 @@ class VisGeometry {
         this.gui.registerPlugin(EssentialsPlugin);
 
         const fcam = this.gui.addFolder({ title: "Camera" });
+        // TODO this always tracks perspective camera position
         fcam.addInput(this.camera, "position");
         fcam.addInput(this.controls, "target");
 
@@ -347,7 +356,7 @@ class VisGeometry {
             const grid: ButtonGridApi = this.gui?.addBlade({
                 view: "buttongrid",
                 size: [2, 1],
-                cells: (x, y) => ({
+                cells: (x: number, y: number) => ({
                     title: [["Activate", "Save"]][y][x],
                 }),
                 label: label,
@@ -384,7 +393,10 @@ class VisGeometry {
                 const reader = new FileReader();
                 reader.onload = (event: ProgressEvent<FileReader>) => {
                     const obj = JSON.parse(event?.target?.result as string);
-                    const cam = cloneDeep(DEFAULT_CAMERA_SPEC);
+                    const cam: CameraSpecWithType = {
+                        ...cloneDeep(DEFAULT_CAMERA_SPEC),
+                        orthographic: false,
+                    };
                     cam.position = obj.position;
                     cam.lookAtPosition = obj.target;
                     this.loadCamera(cam);
