@@ -77,7 +77,7 @@ const CAMERA_INITIAL_ZNEAR = 1.0;
 const CAMERA_INITIAL_ZFAR = 1000.0;
 // distant objects are smaller to a perspective camera but the same size to an orthographic one
 // when switching cameras, calculate zoom to keep objects this distance from the camera the same size
-const ORTHOGRAPHIC_FOCUS_DISTANCE = 50;
+const ORTHOGRAPHIC_FOCUS_DISTANCE = 120;
 
 const CANVAS_INITIAL_WIDTH = 100;
 const CANVAS_INITIAL_HEIGHT = 100;
@@ -99,6 +99,17 @@ function removeByName(group: Group, name: string): void {
 
 const isOrthoCamera = (cam: Camera): cam is OrthographicCamera =>
     !!(cam as OrthographicCamera).isOrthographicCamera;
+
+/**
+ * Convert FOV and aspect from `PerspectiveCamera`
+ * into frustum dimensions for `OrthographicCamera`
+ */
+function getOrthographicFrustum(fov: number, aspect: number): [number, number] {
+    const fovHalfRad = (fov * Math.PI) / 360;
+    const verticalSize = Math.tan(fovHalfRad) * ORTHOGRAPHIC_FOCUS_DISTANCE;
+    const horizontalSize = verticalSize * aspect;
+    return [horizontalSize, verticalSize];
+}
 
 type Bounds = readonly [number, number, number, number, number, number];
 
@@ -222,11 +233,10 @@ class VisGeometry {
             CAMERA_INITIAL_ZNEAR,
             CAMERA_INITIAL_ZFAR
         );
-        const verticalSize =
-            Math.tan((this.perspectiveCamera.fov * Math.PI) / 360) *
-            ORTHOGRAPHIC_FOCUS_DISTANCE;
-        const horizontalSize = verticalSize * aspect;
-        console.log(horizontalSize, verticalSize);
+        const [horizontalSize, verticalSize] = getOrthographicFrustum(
+            this.perspectiveCamera.fov,
+            aspect
+        );
         this.orthographicCamera = new OrthographicCamera(
             -horizontalSize,
             horizontalSize,
@@ -237,6 +247,7 @@ class VisGeometry {
         );
         this.camera = this.perspectiveCamera;
 
+        this.camera.position.z = DEFAULT_CAMERA_Z_POSITION;
         this.initCameraPosition = this.camera.position.clone();
         this.cameraDefault = cloneDeep(DEFAULT_CAMERA_SPEC);
 
@@ -739,15 +750,6 @@ class VisGeometry {
         this.instancedMeshGroup.name = "instanced meshes for agents";
         this.scene.add(this.instancedMeshGroup);
 
-        this.perspectiveCamera = new PerspectiveCamera(
-            75,
-            CANVAS_INITIAL_WIDTH / CANVAS_INITIAL_HEIGHT,
-            CAMERA_INITIAL_ZNEAR,
-            CAMERA_INITIAL_ZFAR
-        );
-        this.orthographicCamera = new OrthographicCamera();
-        this.camera = this.perspectiveCamera;
-
         this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
 
         this.dl = new DirectionalLight(0xffffff, 0.6);
@@ -791,19 +793,27 @@ class VisGeometry {
         ); // expected to change when reparented
         this.threejsrenderer.setClearColor(this.backgroundColor, 1);
         this.threejsrenderer.clear();
-
-        this.camera.position.z = DEFAULT_CAMERA_Z_POSITION;
-        this.initCameraPosition = this.camera.position.clone();
     }
 
     public resize(width: number, height: number): void {
         // at least 2x2 in size when resizing, to prevent bad buffer sizes
         width = Math.max(width, 2);
         height = Math.max(height, 2);
-        if (!isOrthoCamera(this.camera)) {
-            this.camera.aspect = width / height;
-        }
-        this.camera.updateProjectionMatrix();
+        const aspect = width / height;
+
+        this.perspectiveCamera.aspect = aspect;
+        this.perspectiveCamera.updateProjectionMatrix();
+
+        const [horizontalSize, verticalSize] = getOrthographicFrustum(
+            this.perspectiveCamera.fov,
+            aspect
+        );
+        this.orthographicCamera.left = -horizontalSize;
+        this.orthographicCamera.right = horizontalSize;
+        this.orthographicCamera.top = verticalSize;
+        this.orthographicCamera.bottom = -verticalSize;
+        this.orthographicCamera.updateProjectionMatrix();
+
         this.threejsrenderer.setSize(width, height);
         this.renderer.resize(width, height);
     }

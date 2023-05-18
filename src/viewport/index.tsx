@@ -118,6 +118,8 @@ class Viewport extends React.Component<
 
         this.visGeometry = new VisGeometry(loggerLevel);
         this.props.simulariumController.visData.clearCache();
+        // TODO this is called in the `VisGeometry` constructor. Why is it called
+        //   again here? Removing it generates arcane WebGL warnings - why?
         this.visGeometry.setupScene();
         this.visGeometry.createMaterials(props.agentColors);
         this.vdomRef = React.createRef();
