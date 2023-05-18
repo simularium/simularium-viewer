@@ -547,12 +547,6 @@ class Viewer extends React.Component<{}, ViewerState> {
                     <option value="TEST_LIVEMODE_API">
                         TEST LIVE MODE API
                     </option>
-                    <option value="medyan_paper_M:A_0.675.simularium">
-                        medyan test
-                    </option>
-                    <option value="smoldyn_min1_output.simularium">
-                        smoldyn_min1_output
-                    </option>
                     <option value="actin012_3.h5">Actin 12_3</option>
                     <option value="listeria_rocketbugs_normal_fine_2_filtered.simularium">
                         listeria 01
@@ -574,15 +568,6 @@ class Viewer extends React.Component<{}, ViewerState> {
                     <option value="springsalad_condensate_formation_At_Ksp.simularium">springsalad at ksp</option>
                     <option value="springsalad_condensate_formation_Above_Ksp.simularium">springsalad above ksp</option>
                     <option value="blood-plasma-1.0.simularium">blood plasma</option>
-                    <option value="ATPsynthase_2.h5">ATP 2</option>
-                    <option value="ATPsynthase_3.h5">ATP 3</option>
-                    <option value="ATPsynthase_4.h5">ATP 4</option>
-                    <option value="ATPsynthase_5.h5">ATP 5</option>
-                    <option value="ATPsynthase_6.h5">ATP 6</option>
-                    <option value="ATPsynthase_7.h5">ATP 7</option>
-                    <option value="ATPsynthase_8.h5">ATP 8</option>
-                    <option value="ATPsynthase_9.h5">ATP 9</option>
-                    <option value="ATPsynthase_10.h5">ATP 10</option>
                     <option value="TEST_SINGLE_PDB">TEST SINGLE PDB</option>
                     <option value="TEST_PDB">TEST PDB</option>
                     <option value="TEST_FIBERS">TEST FIBERS</option>
