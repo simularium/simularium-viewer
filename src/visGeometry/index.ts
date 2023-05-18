@@ -279,6 +279,18 @@ class VisGeometry {
         this.threejsrenderer.setClearColor(this.backgroundColor, 1);
     }
 
+    /**
+     * Derive the default distance from the camera target from `cameraDefault`.
+     * Unless `cameraDefault` has been changed by a call to `handleCameraData`,
+     * this will be equal to `DEFAULT_CAMERA_Z_POSITION`.
+     */
+    private getDefaultOrbitRadius(): number {
+        const { position, lookAtPosition } = this.cameraDefault;
+        return coordsToVector(position).distanceTo(
+            coordsToVector(lookAtPosition)
+        );
+    }
+
     /** Set frustum of `orthographicCamera` from fov/aspect of `perspectiveCamera */
     private updateOrthographicFrustum(): void {
         const { fov, aspect } = this.perspectiveCamera;
@@ -290,9 +302,7 @@ class VisGeometry {
         // Find default distance to target and set the frustum size to keep objects
         // at that distance the same size in both cameras. (Unless overridden with
         // `handleCameraData`, orbitRadius = DEFAULT_CAMERA_Z_POSITION)
-        const orbitRadius = coordsToVector(position).distanceTo(
-            coordsToVector(lookAtPosition)
-        );
+        const orbitRadius = this.getDefaultOrbitRadius();
         const vSize = Math.tan(halfFovRadians) * orbitRadius;
         const hSize = vSize * aspect;
 
@@ -566,22 +576,39 @@ class VisGeometry {
     }
 
     private dolly(changeBy: number): void {
-        const position = this.camera.position.clone();
-        const target = this.controls.target.clone();
-        const distance = position.distanceTo(target);
-        const newDistance = distance + changeBy;
-        if (
-            newDistance <= this.controls.minDistance ||
-            newDistance >= this.controls.maxDistance
-        ) {
-            return;
+        // TODO can we use the dolly method on OrbitControls here?
+        const { minDistance, maxDistance } = this.controls;
+
+        if ((this.camera as OrthographicCamera).isOrthographicCamera) {
+            // Orthographic camera: dolly using zoom
+            const defaultRadius = this.getDefaultOrbitRadius();
+            const newDistance = defaultRadius / this.camera.zoom + changeBy;
+
+            if (newDistance <= minDistance || newDistance >= maxDistance) {
+                return;
+            }
+
+            this.camera.zoom = newDistance / defaultRadius;
+        } else {
+            // Perspective camera: actually change position
+            const position = this.camera.position.clone();
+            const target = this.controls.target.clone();
+            const distance = position.distanceTo(target);
+            const newDistance = distance + changeBy;
+
+            if (newDistance <= minDistance || newDistance >= maxDistance) {
+                return;
+            }
+
+            const newPosition = new Vector3()
+                .subVectors(position, target)
+                .setLength(newDistance);
+            this.camera.position.copy(
+                new Vector3().addVectors(newPosition, target)
+            );
         }
-        const newPosition = new Vector3()
-            .subVectors(position, target)
-            .setLength(newDistance);
-        this.camera.position.copy(
-            new Vector3().addVectors(newPosition, target)
-        );
+
+        this.controls.update();
     }
 
     public zoomIn(): void {
@@ -715,14 +742,9 @@ class VisGeometry {
     }
 
     private updateControlsZoomBounds(): void {
-        const { position, lookAtPosition } = this.cameraDefault;
-        // will equal DEFAULT_CAMERA_Z_POSITION by default
-        const orbitRadius = coordsToVector(position).distanceTo(
-            coordsToVector(lookAtPosition)
-        );
-
         // Perspective camera limits - based on distance to target
         // Calculate from default orbit radius
+        const orbitRadius = this.getDefaultOrbitRadius();
         this.controls.minDistance = orbitRadius / MAX_ZOOM;
         this.controls.maxDistance = orbitRadius / MIN_ZOOM;
 
