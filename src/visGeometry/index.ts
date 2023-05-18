@@ -351,8 +351,11 @@ class VisGeometry {
         this.gui.registerPlugin(EssentialsPlugin);
 
         const fcam = this.gui.addFolder({ title: "Camera" });
-        // TODO this always tracks perspective camera position
-        fcam.addInput(this.camera, "position");
+        // proxy breaks through reference, so we don't just bind persp/ortho camera
+        const cameraProxy = new Proxy(this.camera, {
+            get: (_, p) => this.camera[p],
+        });
+        fcam.addInput(cameraProxy, "position");
         fcam.addInput(this.controls, "target");
 
         [
