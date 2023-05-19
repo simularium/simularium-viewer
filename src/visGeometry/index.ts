@@ -285,12 +285,12 @@ class VisGeometry {
      * `handleCameraData`, this will be equal to `DEFAULT_CAMERA_Z_POSITION`.
      */
     private getDefaultOrbitRadius(): number {
-        const { position, lookAtPosition, orthographic } = this.cameraDefault;
+        const { position, lookAtPosition } = this.cameraDefault;
         const radius = coordsToVector(position).distanceTo(
             coordsToVector(lookAtPosition)
         );
 
-        if (orthographic) {
+        if (this.cameraDefault.orthographic) {
             return radius / this.cameraDefault.zoom;
         }
         return radius;
