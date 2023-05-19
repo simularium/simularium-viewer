@@ -280,7 +280,7 @@ class VisGeometry {
     }
 
     /**
-     * Derive the default distance from the camera target from `cameraDefault`.
+     * Derive the default distance from camera to target from `cameraDefault`.
      * Unless `cameraDefault` has been meaningfully changed by a call to
      * `handleCameraData`, this will be equal to `DEFAULT_CAMERA_Z_POSITION`.
      */
@@ -568,7 +568,7 @@ class VisGeometry {
     }
 
     private dolly(changeBy: number): void {
-        // TODO can we use the dolly method on OrbitControls here?
+        // TODO should we use the dolly method on OrbitControls here?
         const { minDistance, maxDistance } = this.controls;
 
         if ((this.camera as OrthographicCamera).isOrthographicCamera) {
@@ -809,9 +809,8 @@ class VisGeometry {
         // at least 2x2 in size when resizing, to prevent bad buffer sizes
         width = Math.max(width, 2);
         height = Math.max(height, 2);
-        const aspect = width / height;
 
-        this.perspectiveCamera.aspect = aspect;
+        this.perspectiveCamera.aspect = width / height;
         this.perspectiveCamera.updateProjectionMatrix();
 
         this.updateOrthographicFrustum();
