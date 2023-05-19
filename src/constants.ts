@@ -1,7 +1,7 @@
-import { CameraSpec } from "./simularium/types";
+import { CameraSpec, PerspectiveCameraSpec } from "./simularium/types";
 
 export const DEFAULT_CAMERA_Z_POSITION = 120;
-export const DEFAULT_CAMERA_SPEC: CameraSpec = {
+export const DEFAULT_CAMERA_SPEC_PERSPECTIVE: PerspectiveCameraSpec = {
     position: {
         x: 0,
         y: 0,
@@ -18,6 +18,9 @@ export const DEFAULT_CAMERA_SPEC: CameraSpec = {
         z: 0,
     },
     fovDegrees: 75,
+};
+export const DEFAULT_CAMERA_SPEC: CameraSpec = {
+    ...DEFAULT_CAMERA_SPEC_PERSPECTIVE,
     orthographic: false,
 };
 

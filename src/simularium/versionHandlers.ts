@@ -1,7 +1,7 @@
 import { mapValues } from "lodash";
 import * as si from "si-prefix";
 
-import { DEFAULT_CAMERA_SPEC } from "../constants";
+import { DEFAULT_CAMERA_SPEC_PERSPECTIVE } from "../constants";
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
 import {
     AgentDisplayDataWithGeometry,
@@ -152,7 +152,7 @@ export const updateTrajectoryFileInfoFormat = (
                     magnitude: 1,
                     name: "s",
                 },
-                cameraDefault: DEFAULT_CAMERA_SPEC,
+                cameraDefault: DEFAULT_CAMERA_SPEC_PERSPECTIVE,
                 timeStepSize: v1Data.timeStepSize,
                 totalSteps: v1Data.totalSteps,
                 typeMapping: output.typeMapping,
