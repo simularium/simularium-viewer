@@ -41,12 +41,12 @@ import { AOSettings } from "./rendering/SimulariumRenderer";
 
 import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC } from "../constants";
 import {
-    CameraSpec,
-    EncodedTypeMapping,
-    AgentDisplayDataWithGeometry,
     AgentData,
+    AgentDisplayDataWithGeometry,
+    CameraSpec,
     Coordinates3d,
-    CameraSpecWithType,
+    EncodedTypeMapping,
+    PerspectiveCameraSpec,
 } from "../simularium/types";
 
 import SimulariumRenderer from "./rendering/SimulariumRenderer";
@@ -160,9 +160,9 @@ class VisGeometry {
     private focusMode: boolean;
     public gui?: Pane;
 
-    private cam1: CameraSpecWithType;
-    private cam2: CameraSpecWithType;
-    private cam3: CameraSpecWithType;
+    private cam1: CameraSpec;
+    private cam2: CameraSpec;
+    private cam3: CameraSpec;
 
     // Scene update will populate these lists of visible pdb agents.
     // These lists are iterated at render time to detemine LOD.
@@ -171,9 +171,9 @@ class VisGeometry {
     private agentPdbsToDraw: PDBModel[];
 
     public constructor(loggerLevel: ILogLevel) {
-        this.cam1 = { ...cloneDeep(DEFAULT_CAMERA_SPEC), orthographic: false };
-        this.cam2 = { ...cloneDeep(DEFAULT_CAMERA_SPEC), orthographic: false };
-        this.cam3 = { ...cloneDeep(DEFAULT_CAMERA_SPEC), orthographic: false };
+        this.cam1 = cloneDeep(DEFAULT_CAMERA_SPEC);
+        this.cam2 = cloneDeep(DEFAULT_CAMERA_SPEC);
+        this.cam3 = cloneDeep(DEFAULT_CAMERA_SPEC);
 
         this.renderStyle = RenderStyle.WEBGL1_FALLBACK;
         this.supportsWebGL2Rendering = false;
@@ -285,10 +285,15 @@ class VisGeometry {
      * `handleCameraData`, this will be equal to `DEFAULT_CAMERA_Z_POSITION`.
      */
     private getDefaultOrbitRadius(): number {
-        const { position, lookAtPosition } = this.cameraDefault;
-        return coordsToVector(position).distanceTo(
+        const { position, lookAtPosition, orthographic } = this.cameraDefault;
+        const radius = coordsToVector(position).distanceTo(
             coordsToVector(lookAtPosition)
         );
+
+        if (orthographic) {
+            return radius / this.cameraDefault.zoom;
+        }
+        return radius;
     }
 
     /** Set frustum of `orthographicCamera` from fov/aspect of `perspectiveCamera */
@@ -310,7 +315,7 @@ class VisGeometry {
         this.orthographicCamera.updateProjectionMatrix();
     }
 
-    private loadCamera(cameraSpec: CameraSpecWithType): void {
+    private loadCamera(cameraSpec: CameraSpec): void {
         this.perspectiveCamera.fov = cameraSpec.fovDegrees;
         this.updateOrthographicFrustum();
         this.setCameraType(cameraSpec.orthographic);
@@ -321,7 +326,7 @@ class VisGeometry {
             this.orthographicCamera.zoom = cameraSpec.zoom;
         }
     }
-    private storeCamera(cameraSpec?: CameraSpecWithType): CameraSpecWithType {
+    private storeCamera(cameraSpec?: CameraSpec): CameraSpec {
         const spec = cameraSpec || {
             ...cloneDeep(DEFAULT_CAMERA_SPEC),
             orthographic: false,
@@ -510,10 +515,10 @@ class VisGeometry {
         return this.threejsrenderer.domElement;
     }
 
-    public handleCameraData(cameraDefault?: CameraSpec): void {
+    public handleCameraData(cameraDefault?: PerspectiveCameraSpec): void {
         // Get default camera transform values from data
         if (cameraDefault) {
-            this.cameraDefault = cameraDefault;
+            this.cameraDefault = { ...cameraDefault, orthographic: false };
             this.updateOrthographicFrustum();
             this.updateControlsZoomBounds();
         } else {

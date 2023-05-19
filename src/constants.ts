@@ -18,6 +18,7 @@ export const DEFAULT_CAMERA_SPEC: CameraSpec = {
         z: 0,
     },
     fovDegrees: 75,
+    orthographic: false,
 };
 
 export const enum TrajectoryType {

@@ -23,14 +23,14 @@ export interface Coordinates3d {
     z: number;
 }
 
-export interface CameraSpec {
+export interface PerspectiveCameraSpec {
     position: Coordinates3d;
     lookAtPosition: Coordinates3d;
     upVector: Coordinates3d;
     fovDegrees: number;
 }
 
-export type CameraSpecWithType = CameraSpec &
+export type CameraSpec = PerspectiveCameraSpec &
     ({ orthographic: false } | { orthographic: true; zoom: number });
 
 interface ScatterTrace {
@@ -106,7 +106,7 @@ export interface TrajectoryFileInfoV2 extends TrajectoryFileInfoBase {
         magnitude: number;
         name: string;
     };
-    cameraDefault: CameraSpec;
+    cameraDefault: PerspectiveCameraSpec;
 }
 
 export type TrajectoryFileInfoAny = TrajectoryFileInfoV1 | TrajectoryFileInfoV2;
