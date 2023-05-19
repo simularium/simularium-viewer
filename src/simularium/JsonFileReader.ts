@@ -26,10 +26,6 @@ export default class JsonFileReader implements ISimulariumFile {
         );
     }
 
-    getSpatialData(): VisDataMessage {
-        return this.simulariumFile.spatialData;
-    }
-
     getTrajectoryFileInfo(): TrajectoryFileInfo {
         return this.simulariumFile.trajectoryInfo;
     }

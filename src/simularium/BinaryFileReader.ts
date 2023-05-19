@@ -263,10 +263,6 @@ export default class BinaryFileReader implements ISimulariumFile {
         return frameContents;
     }
 
-    getSpatialData(): DataView {
-        return this.spatialDataBlock;
-    }
-
     getPlotData(): Plot[] {
         return this.plotData;
     }
