@@ -30,14 +30,7 @@ import {
 import ConversionForm from "./ConversionForm";
 import MetaballSimulator from "./MetaballSimulator";
 import { TrajectoryType } from "../src/constants";
-
-const netConnectionSettings = {
-    // to test local server: (also may have to change wss to ws in the url)
-    // serverIp: "0.0.0.0",
-    // serverPort: 8765,
-    serverIp: "staging-node1-agentviz-backend.cellexplore.net",
-    serverPort: 9002,
-};
+import { NetConnectionParams } from "../src/simularium";
 
 let playbackFile = "TEST_LIVEMODE_API"; //"medyan_paper_M:A_0.675.simularium";
 let queryStringFile = "";
@@ -114,12 +107,17 @@ interface CustomType {
     };
 }
 
+interface InputParams {
+    localBackendServer: boolean;
+    useOctopus: boolean;
+}
+
 const simulariumController = new SimulariumController({});
 
 let currentFrame = 0;
 let currentTime = 0;
 
-const initialState = {
+const initialState: ViewerState = {
     renderStyle: RenderStyle.WEBGL2_PREFERRED,
     pauseOn: -1,
     particleTypeNames: [],
@@ -141,12 +139,13 @@ const initialState = {
     filePending: null,
 };
 
-class Viewer extends React.Component<{}, ViewerState> {
+class Viewer extends React.Component<InputParams, ViewerState> {
     private viewerRef: React.RefObject<SimulariumViewer>;
     private panMode = false;
     private focusMode = true;
+    private netConnectionSettings: NetConnectionParams;
 
-    public constructor(props) {
+    public constructor(props: InputParams) {
         super(props);
         this.viewerRef = React.createRef();
         this.handleJsonMeshData = this.handleJsonMeshData.bind(this);
@@ -155,6 +154,29 @@ class Viewer extends React.Component<{}, ViewerState> {
         this.clearPendingFile = this.clearPendingFile.bind(this);
         this.convertFile = this.convertFile.bind(this);
         this.state = initialState;
+
+        if (props.localBackendServer) {
+            this.netConnectionSettings = {
+                serverIp: "0.0.0.0",
+                serverPort: 8765,
+                useOctopus: props.useOctopus,
+                secureConnection: false,
+            };
+        } else if (props.useOctopus) {
+            this.netConnectionSettings = {
+                serverIp: "18.223.108.15",
+                serverPort: 8765,
+                useOctopus: props.useOctopus,
+                secureConnection: false,
+            };
+        } else {
+            this.netConnectionSettings = {
+                serverIp: "staging-node1-agentviz-backend.cellexplore.net",
+                serverPort: 9002,
+                secureConnection: true,
+                useOctopus: false,
+            };
+        }
     }
 
     public componentDidMount(): void {
@@ -314,7 +336,9 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
-        simulariumController.convertAndLoadTrajectory(netConnectionSettings, obj, fileType)
+        simulariumController.convertAndLoadTrajectory(
+            this.netConnectionSettings, obj, fileType
+        )
             .then(() => {
                 this.clearPendingFile();
             })
@@ -468,7 +492,7 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     private configureAndLoad() {
-        simulariumController.configureNetwork(netConnectionSettings);
+        simulariumController.configureNetwork(this.netConnectionSettings);
         if (playbackFile.startsWith("http")) {
             return this.loadFromUrl(playbackFile);
         }
@@ -517,7 +541,7 @@ class Viewer extends React.Component<{}, ViewerState> {
         } else {
             simulariumController.changeFile(
                 {
-                    netConnectionSettings,
+                    netConnectionSettings: this.netConnectionSettings,
                 },
                 playbackFile
             );
@@ -727,13 +751,17 @@ class Viewer extends React.Component<{}, ViewerState> {
                     Focus Mode
                 </button>
                 <br />
-                <button onClick={() => simulariumController.getMetrics(netConnectionSettings)}>
+                <button
+                    onClick={() =>
+                        simulariumController.getMetrics(this.netConnectionSettings)
+                    }
+                >
                     Get available metrics
                 </button>
                 <button
                     onClick={() =>
                         simulariumController.getPlotData(
-                            netConnectionSettings,
+                            this.netConnectionSettings,
                             // TODO: allow user to select metrics based on results from
                             // the getMetrics() call
                             [
