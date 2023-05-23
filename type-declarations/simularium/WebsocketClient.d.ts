@@ -38,11 +38,14 @@ export declare const CONNECTION_FAIL_MSG = "Failed to connect to server; try rel
 export interface NetConnectionParams {
     serverIp?: string;
     serverPort?: number;
+    secureConnection?: boolean;
+    useOctopus?: boolean;
 }
 export declare class WebsocketClient {
     private webSocket;
     private serverIp;
     private serverPort;
+    private secureConnection;
     connectionTimeWaited: number;
     connectionRetries: number;
     protected jsonMessageHandlers: Map<NetMessageEnum, (NetMessage: any) => void>;

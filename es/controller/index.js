@@ -98,7 +98,7 @@ var SimulariumController = /*#__PURE__*/function () {
       } else if (netConnectionConfig) {
         var webSocketClient = new WebsocketClient(netConnectionConfig, this.onError);
         this.remoteWebsocketClient = webSocketClient;
-        this.simulator = new RemoteSimulator(webSocketClient, this.onError);
+        this.simulator = new RemoteSimulator(webSocketClient, !!netConnectionConfig.useOctopus, this.onError);
         this.simulator.setTrajectoryDataHandler(this.visData.parseAgentsFromNetData.bind(this.visData));
       } else {
         // caught in try/catch block, not sent to front end

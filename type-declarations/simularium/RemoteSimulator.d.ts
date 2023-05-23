@@ -11,7 +11,8 @@ export declare class RemoteSimulator implements ISimulator {
     onTrajectoryDataArrive: (NetMessage: any) => void;
     protected lastRequestedFile: string;
     handleError: (error: FrontEndError) => void | (() => void);
-    constructor(webSocketClient: WebsocketClient, errorHandler?: (error: FrontEndError) => void);
+    protected useOctopus: boolean;
+    constructor(webSocketClient: WebsocketClient, useOctopus: boolean, errorHandler?: (error: FrontEndError) => void);
     setTrajectoryFileInfoHandler(handler: (msg: TrajectoryFileInfoV2) => void): void;
     setTrajectoryDataHandler(handler: (msg: VisDataMessage) => void): void;
     socketIsValid(): boolean;

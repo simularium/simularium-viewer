@@ -16,7 +16,7 @@ var PlayBackType = /*#__PURE__*/function (PlayBackType) {
 }(PlayBackType || {}); // a RemoteSimulator is a ISimulator that connects to the Simularium Engine
 // back end server and plays back a trajectory specified in the NetConnectionParams
 export var RemoteSimulator = /*#__PURE__*/function () {
-  function RemoteSimulator(webSocketClient, errorHandler) {
+  function RemoteSimulator(webSocketClient, useOctopus, errorHandler) {
     _classCallCheck(this, RemoteSimulator);
     _defineProperty(this, "webSocketClient", void 0);
     _defineProperty(this, "logger", void 0);
@@ -24,8 +24,10 @@ export var RemoteSimulator = /*#__PURE__*/function () {
     _defineProperty(this, "onTrajectoryDataArrive", void 0);
     _defineProperty(this, "lastRequestedFile", void 0);
     _defineProperty(this, "handleError", void 0);
+    _defineProperty(this, "useOctopus", void 0);
     this.webSocketClient = webSocketClient;
     this.lastRequestedFile = "";
+    this.useOctopus = useOctopus;
     this.handleError = errorHandler || function () {
       /* do nothing */
     };
@@ -244,11 +246,19 @@ export var RemoteSimulator = /*#__PURE__*/function () {
     value: function startRemoteTrajectoryPlayback(fileName) {
       var _this5 = this;
       this.lastRequestedFile = fileName;
-      var jsonData = {
-        msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
-        mode: PlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
-        "file-name": fileName
-      };
+      var jsonData;
+      if (this.useOctopus) {
+        jsonData = {
+          msgType: NetMessageEnum.ID_INIT_TRAJECTORY_FILE,
+          fileName: fileName
+        };
+      } else {
+        jsonData = {
+          msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
+          mode: PlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
+          "file-name": fileName
+        };
+      }
 
       // begins a stream which will include a TrajectoryFileInfo and a series of VisDataMessages
       // Note that it is possible for the first vis data to arrive before the TrajectoryFileInfo...
@@ -262,14 +272,16 @@ export var RemoteSimulator = /*#__PURE__*/function () {
     key: "pauseRemoteSim",
     value: function pauseRemoteSim() {
       this.webSocketClient.sendWebSocketRequest({
-        msgType: NetMessageEnum.ID_VIS_DATA_PAUSE
+        msgType: NetMessageEnum.ID_VIS_DATA_PAUSE,
+        fileName: this.lastRequestedFile
       }, "Pause Simulation");
     }
   }, {
     key: "resumeRemoteSim",
     value: function resumeRemoteSim() {
       this.webSocketClient.sendWebSocketRequest({
-        msgType: NetMessageEnum.ID_VIS_DATA_RESUME
+        msgType: NetMessageEnum.ID_VIS_DATA_RESUME,
+        fileName: this.lastRequestedFile
       }, "Resume Simulation");
     }
   }, {
@@ -279,7 +291,8 @@ export var RemoteSimulator = /*#__PURE__*/function () {
         return;
       }
       this.webSocketClient.sendWebSocketRequest({
-        msgType: NetMessageEnum.ID_VIS_DATA_ABORT
+        msgType: NetMessageEnum.ID_VIS_DATA_ABORT,
+        fileName: this.lastRequestedFile
       }, "Abort Simulation");
     }
   }, {
@@ -288,7 +301,8 @@ export var RemoteSimulator = /*#__PURE__*/function () {
       this.webSocketClient.sendWebSocketRequest({
         msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
         mode: PlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
-        frameNumber: startFrameNumber
+        frameNumber: startFrameNumber,
+        fileName: this.lastRequestedFile
       }, "Request Single Frame");
     }
   }, {
@@ -296,12 +310,14 @@ export var RemoteSimulator = /*#__PURE__*/function () {
     value: function gotoRemoteSimulationTime(time) {
       this.webSocketClient.sendWebSocketRequest({
         msgType: NetMessageEnum.ID_GOTO_SIMULATION_TIME,
-        time: time
+        time: time,
+        fileName: this.lastRequestedFile
       }, "Load single frame at specified Time");
     }
   }, {
     key: "requestTrajectoryFileInfo",
     value: function requestTrajectoryFileInfo(fileName) {
+      this.lastRequestedFile = fileName;
       this.webSocketClient.sendWebSocketRequest({
         msgType: NetMessageEnum.ID_INIT_TRAJECTORY_FILE,
         fileName: fileName
