@@ -620,13 +620,12 @@ class Viewer extends React.Component<{}, ViewerState> {
                             <label htmlFor={id}>{id}</label>
                             <input
                                 type="checkbox"
-                                onClick={(event) =>
+                                onChange={(event) =>
                                     this.turnAgentsOnOff(
                                         (event.target as HTMLInputElement).value
                                     )
                                 }
                                 value={id}
-                                defaultChecked={true}
                                 checked={
                                     this.state.selectionStateInfo.hiddenAgents.find(
                                         (element) => element.name === id
@@ -635,7 +634,7 @@ class Viewer extends React.Component<{}, ViewerState> {
                             />
                             <input
                                 type="checkbox"
-                                onClick={(event) =>
+                                onChange={(event) =>
                                     this.turnAgentHighlightsOnOff(
                                         (event.target as HTMLInputElement).value
                                     )
