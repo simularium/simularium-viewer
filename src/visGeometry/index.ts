@@ -379,6 +379,7 @@ class VisGeometry {
             anchor.href = dataUrl;
             anchor.download = "screenshot.png";
             anchor.click();
+            anchor.remove();
         });
         this.gui.addSeparator();
         const lodFolder = this.gui.addFolder({ title: "LoD", expanded: false });
