@@ -580,6 +580,10 @@ class VisGeometry {
     }
 
     public setFollowObject(obj: number): void {
+        if (this.visAgentInstances.size === 0) {
+            return;
+        }
+
         if (this.followObjectId !== NO_AGENT) {
             const visAgent = this.visAgentInstances.get(this.followObjectId);
             if (!visAgent) {
@@ -1722,7 +1726,7 @@ class VisGeometry {
             const agent = this.visAgentInstances.get(id);
             if (agent) {
                 color = agent.color.clone();
-            } else {
+            } else if (this.visAgentInstances.size > 0) {
                 console.error("COULD NOT FIND AGENT INSTANCE " + id);
             }
         }
