@@ -26,9 +26,6 @@ class BlurPass1D {
             },
             fragmentShader: /* glsl */ `
 
-        #include <common>
-        #include <packing>
-
         uniform sampler2D colorTex;
         uniform sampler2D viewPosTex;
 

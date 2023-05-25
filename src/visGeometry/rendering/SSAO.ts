@@ -36,7 +36,7 @@ class SSAO1Pass {
             },
             fragmentShader: /* glsl */ `
 
-                #include <common>
+                #include <common> // for pow2 and PI2
 
                 varying vec2 vUv;
 
