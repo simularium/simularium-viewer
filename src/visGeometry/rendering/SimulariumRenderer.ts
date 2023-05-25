@@ -39,7 +39,7 @@ export interface SimulariumAOParameters {
 
 interface SimulariumRenderParameters {
     ao1: SimulariumAOParameters;
-    ao2: SimulariumAOParameters;
+    //ao2: SimulariumAOParameters;
     atomBeginDistance: number;
     chainBeginDistance: number;
     bghueoffset: number;
@@ -56,9 +56,9 @@ interface SimulariumRenderParameters {
 class SimulariumRenderer {
     public gbufferPass: GBufferPass;
     public ssao1Pass: SSAO1Pass;
-    public ssao2Pass: SSAO1Pass;
+    //public ssao2Pass: SSAO1Pass;
     public blur1Pass: BlurPass;
-    public blur2Pass: BlurPass;
+    //public blur2Pass: BlurPass;
     public compositePass: CompositePass;
     public contourPass: ContourPass;
     public drawBufferPass: DrawBufferPass;
@@ -86,16 +86,16 @@ class SimulariumRenderer {
                 blurStdDev: 3.0,
                 blurDepthCutoff: 0.1,
             },
-            ao2: {
-                bias: 0.0,
-                intensity: 0.1,
-                scale: 1.0,
-                kernelRadius: 20.0,
-                minResolution: 0.0,
-                blurRadius: 4.0,
-                blurStdDev: 3.0,
-                blurDepthCutoff: 0.1,
-            },
+            // ao2: {
+            //     bias: 0.0,
+            //     intensity: 0.1,
+            //     scale: 1.0,
+            //     kernelRadius: 20.0,
+            //     minResolution: 0.0,
+            //     blurRadius: 4.0,
+            //     blurStdDev: 3.0,
+            //     blurDepthCutoff: 0.1,
+            // },
             atomBeginDistance: 0.6666, // % of bounds size
             chainBeginDistance: 1.0, // % of bounds size
             bghueoffset: 1,
@@ -115,16 +115,16 @@ class SimulariumRenderer {
         this.gbufferPass = new GBufferPass();
         // radius, threshold, falloff in view space coordinates.
         this.ssao1Pass = new SSAO1Pass();
-        this.ssao2Pass = new SSAO1Pass();
+        //this.ssao2Pass = new SSAO1Pass();
 
         this.blur1Pass = new BlurPass(
             this.parameters.ao1.blurRadius,
             this.parameters.ao1.blurStdDev
         );
-        this.blur2Pass = new BlurPass(
-            this.parameters.ao2.blurRadius,
-            this.parameters.ao2.blurStdDev
-        );
+        // this.blur2Pass = new BlurPass(
+        //     this.parameters.ao2.blurRadius,
+        //     this.parameters.ao2.blurStdDev
+        // );
         this.compositePass = new CompositePass({
             x: this.parameters.bghueoffset,
             y: this.parameters.bgchromaoffset,
@@ -367,7 +367,7 @@ class SimulariumRenderer {
         target: WebGLRenderTarget | null
     ): void {
         // some param settings were based on a bounding box of 300 units
-        const ratio = this.boundsMaxDim;
+        const sceneSize = this.boundsMaxDim;
 
         // update all ao settings here.
         this.ssao1Pass.pass.material.uniforms.bias.value =
@@ -406,10 +406,10 @@ class SimulariumRenderer {
         //     this.parameters.ao2.blurDepthCutoff
         // );
         this.compositePass.pass.material.uniforms.atomicBeginDistance.value =
-            this.parameters.atomBeginDistance * ratio +
+            this.parameters.atomBeginDistance * sceneSize +
             Math.max(this.boundsNear, 0.0);
         this.compositePass.pass.material.uniforms.chainBeginDistance.value =
-            this.parameters.chainBeginDistance * ratio +
+            this.parameters.chainBeginDistance * sceneSize +
             Math.max(this.boundsNear, 0.0);
 
         // currently rendering is a draw call per PDB POINTS objects and one draw call per mesh TRIANGLES object (reusing same geometry buffer)
