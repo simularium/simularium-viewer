@@ -39,7 +39,6 @@ export interface SimulariumAOParameters {
 
 interface SimulariumRenderParameters {
     ao1: SimulariumAOParameters;
-    //ao2: SimulariumAOParameters;
     atomBeginDistance: number;
     chainBeginDistance: number;
     bghueoffset: number;
@@ -56,9 +55,7 @@ interface SimulariumRenderParameters {
 class SimulariumRenderer {
     public gbufferPass: GBufferPass;
     public ssao1Pass: SSAO1Pass;
-    //public ssao2Pass: SSAO1Pass;
     public blur1Pass: BlurPass;
-    //public blur2Pass: BlurPass;
     public compositePass: CompositePass;
     public contourPass: ContourPass;
     public drawBufferPass: DrawBufferPass;
@@ -78,24 +75,14 @@ class SimulariumRenderer {
         this.parameters = {
             ao1: {
                 bias: 0.5,
-                intensity: 0.08,
+                intensity: 0.05,
                 scale: 10.0,
-                kernelRadius: 20.0,
+                kernelRadius: 15.0,
                 minResolution: 0.0,
                 blurRadius: 4.0,
                 blurStdDev: 3.0,
                 blurDepthCutoff: 0.1,
             },
-            // ao2: {
-            //     bias: 0.0,
-            //     intensity: 0.1,
-            //     scale: 1.0,
-            //     kernelRadius: 20.0,
-            //     minResolution: 0.0,
-            //     blurRadius: 4.0,
-            //     blurStdDev: 3.0,
-            //     blurDepthCutoff: 0.1,
-            // },
             atomBeginDistance: 0.6666, // % of bounds size
             chainBeginDistance: 1.0, // % of bounds size
             bghueoffset: 1,
@@ -113,18 +100,14 @@ class SimulariumRenderer {
         this.boundsMaxDim = 100.0;
 
         this.gbufferPass = new GBufferPass();
-        // radius, threshold, falloff in view space coordinates.
+
         this.ssao1Pass = new SSAO1Pass();
-        //this.ssao2Pass = new SSAO1Pass();
 
         this.blur1Pass = new BlurPass(
             this.parameters.ao1.blurRadius,
             this.parameters.ao1.blurStdDev
         );
-        // this.blur2Pass = new BlurPass(
-        //     this.parameters.ao2.blurRadius,
-        //     this.parameters.ao2.blurStdDev
-        // );
+
         this.compositePass = new CompositePass({
             x: this.parameters.bghueoffset,
             y: this.parameters.bgchromaoffset,
@@ -203,7 +186,7 @@ class SimulariumRenderer {
         const ao1 = gui.addFolder({ title: "AO pass 1", expanded: false });
         ao1.addInput(settings.ao1, "bias", { min: -1, max: 1 });
         ao1.addInput(settings.ao1, "intensity", { min: 0, max: 1 });
-        ao1.addInput(settings.ao1, "scale", { min: 0, max: 10 });
+        ao1.addInput(settings.ao1, "scale", { min: 0, max: 40 });
         ao1.addInput(settings.ao1, "kernelRadius", { min: 1, max: 100 });
         ao1.addInput(settings.ao1, "minResolution", { min: 0, max: 1 });
         ao1.addInput(settings.ao1, "blurRadius", { min: 0, max: 200 });
@@ -212,18 +195,6 @@ class SimulariumRenderer {
             min: 0.0,
             max: 0.1,
         });
-        // const ao2 = gui.addFolder({ title: "AO pass 2", expanded: false });
-        // ao2.addInput(settings.ao2, "bias", { min: -1, max: 1 });
-        // ao2.addInput(settings.ao2, "intensity", { min: 0, max: 1 });
-        // ao2.addInput(settings.ao2, "scale", { min: 0, max: 10 });
-        // ao2.addInput(settings.ao2, "kernelRadius", { min: 1, max: 100 });
-        // ao2.addInput(settings.ao2, "minResolution", { min: 0, max: 1 });
-        // ao2.addInput(settings.ao2, "blurRadius", { min: 0, max: 200 });
-        // ao2.addInput(settings.ao2, "blurStdDev", { min: 0.5, max: 150 });
-        // ao2.addInput(settings.ao2, "blurDepthCutoff", {
-        //     min: 0.0,
-        //     max: 0.1,
-        // });
 
         const depth = gui.addFolder({ title: "DepthCueing", expanded: false });
         depth.addInput(settings, "atomBeginDistance", { min: 0.0, max: 2.0 });
@@ -340,15 +311,11 @@ class SimulariumRenderer {
         // intermediate blurring buffer
         this.blurIntermediateBuffer.setSize(x, y);
         this.ssaoBuffer.setSize(x, y);
-        //this.ssaoBuffer2.setSize(x, y);
         this.ssaoBufferBlurred.setSize(x, y);
-        //this.ssaoBufferBlurred2.setSize(x, y);
 
         this.gbufferPass.resize(x, y);
         this.ssao1Pass.resize(x, y);
         this.blur1Pass.resize(x, y);
-        //this.ssao2Pass.resize(x, y);
-        //this.blur2Pass.resize(x, y);
         this.compositePass.resize(x, y);
         this.contourPass.resize(x, y);
         this.drawBufferPass.resize(x, y);
@@ -375,36 +342,26 @@ class SimulariumRenderer {
         this.ssao1Pass.pass.material.uniforms.intensity.value =
             this.parameters.ao1.intensity;
         this.ssao1Pass.pass.material.uniforms.scale.value =
-            this.parameters.ao1.scale;
+            (this.parameters.ao1.scale * sceneSize) / 100.0;
         this.ssao1Pass.pass.material.uniforms.kernelRadius.value =
             this.parameters.ao1.kernelRadius;
         this.ssao1Pass.pass.material.uniforms.minResolution.value =
             this.parameters.ao1.minResolution;
-
-        // this.ssao2Pass.pass.material.uniforms.bias.value =
-        //     this.parameters.ao2.bias;
-        // this.ssao2Pass.pass.material.uniforms.intensity.value =
-        //     this.parameters.ao2.intensity;
-        // this.ssao2Pass.pass.material.uniforms.scale.value =
-        //     this.parameters.ao2.scale;
-        // this.ssao2Pass.pass.material.uniforms.kernelRadius.value =
-        //     this.parameters.ao2.kernelRadius;
-        // this.ssao2Pass.pass.material.uniforms.minResolution.value =
-        //     this.parameters.ao2.minResolution;
+        this.ssao1Pass.pass.material.uniforms.beginFalloffDistance.value =
+            this.parameters.atomBeginDistance * sceneSize +
+            Math.max(this.boundsNear, 0.0);
+        this.ssao1Pass.pass.material.uniforms.endFalloffDistance.value =
+            this.parameters.chainBeginDistance * sceneSize +
+            Math.max(this.boundsNear, 0.0);
 
         this.ssao1Pass.pass.material.uniforms.cameraFar.value = camera.far;
-        //this.ssao2Pass.pass.material.uniforms.cameraFar.value = camera.far;
 
         this.blur1Pass.configure(
             this.parameters.ao1.blurRadius,
             this.parameters.ao1.blurStdDev,
             this.parameters.ao1.blurDepthCutoff
         );
-        // this.blur2Pass.configure(
-        //     this.parameters.ao2.blurRadius,
-        //     this.parameters.ao2.blurStdDev,
-        //     this.parameters.ao2.blurDepthCutoff
-        // );
+
         this.compositePass.pass.material.uniforms.atomicBeginDistance.value =
             this.parameters.atomBeginDistance * sceneSize +
             Math.max(this.boundsNear, 0.0);

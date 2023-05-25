@@ -179,7 +179,7 @@ class CompositePass {
                 l = bghcl.b;
 
                 // distance ranges:
-                // 0(near)-----atomBeginDistance------chainBeginDistance------far
+                // 0---near-----atomBeginDistance------chainBeginDistance------far
 
                 // anything farther than chainBeginDistance will get the bg color
 

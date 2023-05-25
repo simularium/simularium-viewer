@@ -31,6 +31,8 @@ class SSAO1Pass {
                 minResolution: { value: 0.0 },
                 kernelRadius: { value: 100.0 },
                 randomSeed: { value: 0.0 },
+                beginFalloffDistance: { value: 0.0 },
+                endFalloffDistance: { value: 100.0 },
             },
             fragmentShader: /* glsl */ `
 
@@ -53,16 +55,14 @@ class SSAO1Pass {
                 uniform float minResolution;
                 uniform vec2 iResolution;// size;
                 uniform float randomSeed;
+                uniform float beginFalloffDistance;
+                uniform float endFalloffDistance;
 
                 // RGBA depth
 
                 #include <packing>
 
-                vec4 getDefaultColor( const in vec2 screenPosition ) {
-                    return vec4( 1.0 );
-                }
-
-                vec3 getViewNormal( const in vec3 viewPosition, const in vec2 screenPosition ) {
+                vec3 getViewNormal( const in vec2 screenPosition ) {
                     vec3 n = texture2D( normalTex, screenPosition ).xyz;
                     return 2.0 * n - 1.0;
                 }
@@ -82,11 +82,11 @@ class SSAO1Pass {
                 const float ANGLE_STEP = PI2 * float( NUM_RINGS ) / float( NUM_SAMPLES );
                 const float INV_NUM_SAMPLES = 1.0 / float( NUM_SAMPLES );
 
-                float getAmbientOcclusion( const in vec3 centerViewPosition ) {
+                float getAmbientOcclusion( const in vec3 centerViewPosition, const in float depthInterpolant ) {
                     // precompute some variables require in getOcclusion.
                     scaleDividedByCameraFar = scale / cameraFar;
                     minResolutionMultipliedByCameraFar = minResolution * cameraFar;
-                    vec3 centerViewNormal = getViewNormal( centerViewPosition, vUv );
+                    vec3 centerViewNormal = getViewNormal( vUv );
 
                     // jsfiddle that shows sample pattern: https://jsfiddle.net/a16ff1p7/
                     float angle = rand( vUv + randomSeed ) * PI2;
@@ -112,7 +112,7 @@ class SSAO1Pass {
 
                     if( weightSum == 0.0 ) discard;
 
-                    float ambientOcclusion = occlusionSum * ( intensity / weightSum );
+                    float ambientOcclusion = occlusionSum * ( intensity / weightSum ) * (1.0-depthInterpolant);
                     return clamp(ambientOcclusion, 0.0, 1.0);
                 }
 
@@ -121,13 +121,14 @@ class SSAO1Pass {
                     // test if this fragment has any geometry rendered on it, otherwise it's bg
                     if (viewPos4.w < 1.0) discard;
 
-                    float centerViewZ = viewPos4.z;
                     vec3 viewPosition = viewPos4.xyz;
+                    float eyeZ = -viewPosition.z;
+                    float depthInterpolant = mix(0.0, 1.0, clamp((eyeZ-beginFalloffDistance)/(endFalloffDistance-beginFalloffDistance), 0.0, 1.0));
+                    //float depthInterpolant = smoothstep(beginFalloffDistance, endFalloffDistance, eyeZ);
 
-                    float ambientOcclusion = getAmbientOcclusion( viewPosition );
+                    float ambientOcclusion = getAmbientOcclusion( viewPosition, depthInterpolant );
 
-                    gl_FragColor = getDefaultColor( vUv );
-                    gl_FragColor.xyz *=  1.0 - ambientOcclusion;
+                    gl_FragColor = vec4(vec3(1.0-ambientOcclusion), 1.0);
                 }`,
         });
     }
