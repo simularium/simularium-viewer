@@ -43,10 +43,7 @@ class SSAO1Pass {
                 uniform sampler2D viewPosTex;
                 uniform sampler2D normalTex;
 
-                // uniform float cameraNear;
                 uniform float cameraFar;
-                // uniform mat4 cameraProjectionMatrix;
-                // uniform mat4 cameraInverseProjectionMatrix;
 
                 uniform float scale;
                 uniform float intensity;
@@ -57,10 +54,6 @@ class SSAO1Pass {
                 uniform float randomSeed;
                 uniform float beginFalloffDistance;
                 uniform float endFalloffDistance;
-
-                // RGBA depth
-
-                #include <packing>
 
                 vec3 getViewNormal( const in vec2 screenPosition ) {
                     vec3 n = texture2D( normalTex, screenPosition ).xyz;

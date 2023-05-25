@@ -40,22 +40,6 @@ class BlurPass1D {
         varying vec2 vUv;
         uniform vec2 size; // iResolution.xy
 
-        // float getDepth( const in vec2 screenPosition ) {
-        // 	#if DEPTH_PACKING == 1
-        // 	return unpackRGBAToDepth( texture2D( tDepth, screenPosition ) );
-        // 	#else
-        // 	return texture2D( tDepth, screenPosition ).x;
-        // 	#endif
-        // }
-
-        // float getViewZ( const in float depth ) {
-        // 	#if PERSPECTIVE_CAMERA == 1
-        // 	return perspectiveDepthToViewZ( depth, cameraNear, cameraFar );
-        // 	#else
-        // 	return orthographicDepthToViewZ( depth, cameraNear, cameraFar );
-        // 	#endif
-        // }
-
         void main() {
             vec4 viewPos4 = texture2D(viewPosTex, vUv);
             if (viewPos4.w < 1.0) discard;
