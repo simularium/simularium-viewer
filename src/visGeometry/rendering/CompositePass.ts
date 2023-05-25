@@ -19,7 +19,6 @@ class CompositePass {
             uniforms: {
                 colorTex: { value: null },
                 ssaoTex1: { value: null },
-                ssaoTex2: { value: null },
                 // colors indexed by particle type id
                 colorsBuffer: { value: null },
                 backgroundColor: { value: new Color(1, 1, 1) },
@@ -43,7 +42,6 @@ class CompositePass {
 
             uniform sampler2D colorTex;
             uniform sampler2D ssaoTex1;
-            //uniform sampler2D ssaoTex2;
 
             uniform sampler2D colorsBuffer;
 
@@ -141,7 +139,6 @@ class CompositePass {
                     discard;
                 }
                 float occ1 = texture(ssaoTex1, texCoords).r;
-                //float occ2 = texture(ssaoTex2, texCoords).r;
 
                 float instanceId = (col0.y);
 
@@ -278,7 +275,6 @@ class CompositePass {
 
         this.pass.material.uniforms.colorTex.value = colorBuffer;
         this.pass.material.uniforms.ssaoTex1.value = ssaoBuffer1.texture;
-        this.pass.material.uniforms.ssaoTex2.value = ssaoBuffer2.texture;
 
         // const c = renderer.getClearColor().clone();
         // const a = renderer.getClearAlpha();
