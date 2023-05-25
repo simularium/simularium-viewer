@@ -127,7 +127,7 @@ const initialState = {
     currentFrame: 0,
     currentTime: 0,
     height: 700,
-    width: 800,
+    width: 1200,
     hideAllAgents: false,
     agentColors: agentColors,
     showPaths: true,
