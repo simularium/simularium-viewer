@@ -115,7 +115,8 @@ class InstancedMesh implements GeometryInstanceContainer {
 
         // we must create a new Geometry to have things update correctly
         this.instancedGeometry = new InstancedBufferGeometry().copy(
-            this.baseGeometry
+            // this typecast seems like an error in the copy method's typing
+            this.baseGeometry as InstancedBufferGeometry
         );
         // install the new geometry into our Mesh object
         this.drawable.geometry = this.instancedGeometry;

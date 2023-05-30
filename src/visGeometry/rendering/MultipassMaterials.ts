@@ -19,10 +19,7 @@ export function updateResolution(s: MRTShaders, x: number, y: number): void {
     s.mat.uniforms.iResolution.value = new Vector2(x, y);
 }
 
-export function setRenderPass(
-    obj: Mesh | Points,
-    shaderSet: MRTShaders
-): Material {
+export function setRenderPass(obj: Mesh | Points, shaderSet: MRTShaders): void {
     obj.material = shaderSet.mat;
 }
 

@@ -12,6 +12,8 @@ import { GeometryInstanceContainer } from "../types";
 import {
     Color,
     Group,
+    Mesh,
+    Points,
     Scene,
     WebGLRenderer,
     PerspectiveCamera,
@@ -109,7 +111,7 @@ class GBufferPass {
             this.fibers.setRenderPass();
             for (let i = 0; i < this.meshTypes.length; ++i) {
                 setRenderPass(
-                    this.meshTypes[i].getMesh(),
+                    this.meshTypes[i].getMesh() as Mesh | Points,
                     this.meshTypes[i].getShaders()
                 );
             }
