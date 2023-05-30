@@ -81,6 +81,10 @@ interface ViewerState {
         template: { [key: string]: any };
         templateData: { [key: string]: any };
     } | null;
+    simulariumFile: {
+        name: string;
+        data: ISimulariumFile | null;
+    } | null;
 }
 
 interface BaseType {
@@ -137,7 +141,10 @@ const initialState: ViewerState = {
         hiddenAgents: [],
     },
     filePending: null,
+    simulariumFile: null,
 };
+
+type FrontEndError = typeof FrontEndError;
 
 class Viewer extends React.Component<InputParams, ViewerState> {
     private viewerRef: React.RefObject<SimulariumViewer>;
@@ -250,6 +257,12 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     const simulariumFile = parsedFiles[
                         simulariumFileIndex
                     ] as ISimulariumFile;
+                    this.setState({
+                        simulariumFile: {
+                            data: simulariumFile,
+                            name: filesArr[simulariumFileIndex].name,
+                        },
+                    });
                     // build the geoAssets as mapping name-value pairs:
                     const geoAssets = filesArr.reduce((acc, cur, index) => {
                         if (index !== simulariumFileIndex) {
@@ -276,9 +289,13 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             .then((blob: Blob) => {
                 return loadSimulariumFile(blob);
             })
-            .then((trajectoryFile) => {
+            .then((simulariumFile: ISimulariumFile) => {
                 const fileName = url;
-                this.loadFile(trajectoryFile, fileName).catch((error) => {
+                this.setState({
+                    simulariumFile: { data: simulariumFile, name: fileName },
+                });
+
+                this.loadFile(simulariumFile, fileName).catch((error) => {
                     console.log("Error loading file", error);
                     window.alert(`Error loading file: ${error.message}`);
                 });
@@ -360,7 +377,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         // }
         return simulariumController
             .handleFileChange(simulariumFile, fileName, geoAssets)
-            .catch(console.log)
+            .catch(console.log);
     }
 
     public handleJsonMeshData(jsonData): void {
@@ -539,6 +556,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 playbackFile
             );
         } else {
+            this.setState({
+                simulariumFile: { name: playbackFile, data: null },
+            });
             simulariumController.changeFile(
                 {
                     netConnectionSettings: this.netConnectionSettings,
@@ -548,9 +568,30 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         }
     }
 
+    private downloadFile() {
+        const { simulariumFile } = this.state;
+        if (!simulariumFile) {
+            return;
+        }
+        let href = "";
+        if (!simulariumFile.data) {
+            href = `https://aics-simularium-data.s3.us-east-2.amazonaws.com/trajectory/${simulariumFile.name}`;
+        } else {
+            href = URL.createObjectURL(simulariumFile.data.getAsBlob());
+        }
+        const downloadLink = document.createElement("a");
+        downloadLink.download = simulariumFile.name;
+        downloadLink.style.display = "none";
+        downloadLink.href = href;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        URL.revokeObjectURL(downloadLink.href);
+    }
+
     public render(): JSX.Element {
         if (this.state.filePending) {
-            const fileType = this.state.filePending.type
+            const fileType = this.state.filePending.type;
             return (
                 <ConversionForm
                     {...this.state.filePending}
@@ -758,6 +799,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 >
                     Get available metrics
                 </button>
+                <button onClick={this.downloadFile}>download</button>
                 <button
                     onClick={() =>
                         simulariumController.getPlotData(
@@ -770,12 +812,14 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                                     metricsIdx: 0,
                                     metricsIdy: 2,
                                     scatterPlotMode: "lines",
-                                }, {
+                                },
+                                {
                                     plotType: "histogram",
                                     metricsIdx: 3,
-                                }
+                                },
                             ]
-                        )}
+                        )
+                    }
                 >
                     Get plot data
                 </button>
