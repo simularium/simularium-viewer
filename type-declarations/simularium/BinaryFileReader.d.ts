@@ -39,5 +39,6 @@ export default class BinaryFileReader implements ISimulariumFile {
     getFrameIndexAtTime(time: number): number;
     getFrame(theFrameNumber: number): VisDataFrame | ArrayBuffer;
     getPlotData(): Plot[];
+    getAsBlob(): Blob;
 }
 export {};

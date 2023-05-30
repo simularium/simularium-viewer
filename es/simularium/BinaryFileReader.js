@@ -252,6 +252,13 @@ var BinaryFileReader = /*#__PURE__*/function () {
     value: function getPlotData() {
       return this.plotData;
     }
+  }, {
+    key: "getAsBlob",
+    value: function getAsBlob() {
+      return new Blob([this.fileContents], {
+        type: "text/plain;charset=utf-8"
+      });
+    }
   }], [{
     key: "isBinarySimulariumFile",
     value: function isBinarySimulariumFile(fileContents) {

@@ -8,4 +8,5 @@ export default class JsonFileReader implements ISimulariumFile {
     getFrameIndexAtTime(time: number): number;
     getFrame(theFrameNumber: number): VisDataFrame;
     getPlotData(): Plot[];
+    getAsBlob(): Blob;
 }

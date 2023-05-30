@@ -47,6 +47,13 @@ var JsonFileReader = /*#__PURE__*/function () {
     value: function getPlotData() {
       return this.simulariumFile.plotData;
     }
+  }, {
+    key: "getAsBlob",
+    value: function getAsBlob() {
+      return new Blob([JSON.stringify(this.simulariumFile)], {
+        type: "text/plain;charset=utf-8"
+      });
+    }
   }]);
   return JsonFileReader;
 }();

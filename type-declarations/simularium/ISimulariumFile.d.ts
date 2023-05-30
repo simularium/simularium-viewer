@@ -5,4 +5,5 @@ export interface ISimulariumFile {
     getNumFrames(): number;
     getFrameIndexAtTime(time: number): number;
     getFrame(theFrameNumber: number): VisDataFrame | ArrayBuffer;
+    getAsBlob(): Blob;
 }
