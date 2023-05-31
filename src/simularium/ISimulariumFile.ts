@@ -1,9 +1,4 @@
-import type {
-    Plot,
-    TrajectoryFileInfo,
-    VisDataFrame,
-    VisDataMessage,
-} from "./types";
+import type { Plot, TrajectoryFileInfo, VisDataFrame } from "./types";
 
 export interface ISimulariumFile {
     getTrajectoryFileInfo(): TrajectoryFileInfo;
