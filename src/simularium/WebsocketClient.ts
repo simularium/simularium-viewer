@@ -93,7 +93,9 @@ export class WebsocketClient {
         this.serverIp = opts && opts.serverIp ? opts.serverIp : "localhost";
         this.serverPort = opts && opts.serverPort ? opts.serverPort : 9002;
         this.secureConnection =
-            opts && opts.secureConnection ? opts.secureConnection : false;
+            opts && opts.secureConnection !== undefined
+                ? opts.secureConnection
+                : true;
         this.connectionTimeWaited = 0;
         this.connectionRetries = 0;
         this.handleError =

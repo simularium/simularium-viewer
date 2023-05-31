@@ -4,7 +4,6 @@ import type {
     SimulariumFileFormat,
     TrajectoryFileInfo,
     VisDataFrame,
-    VisDataMessage,
 } from "./types";
 import { FrontEndError } from "./FrontEndError";
 import { compareTimes } from "../util";
