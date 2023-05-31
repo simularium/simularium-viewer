@@ -62,7 +62,7 @@ export var WebsocketClient = /*#__PURE__*/function () {
     this.binaryMessageHandlers = new Map();
     this.serverIp = opts && opts.serverIp ? opts.serverIp : "localhost";
     this.serverPort = opts && opts.serverPort ? opts.serverPort : 9002;
-    this.secureConnection = opts && opts.secureConnection ? opts.secureConnection : false;
+    this.secureConnection = opts && opts.secureConnection !== undefined ? opts.secureConnection : true;
     this.connectionTimeWaited = 0;
     this.connectionRetries = 0;
     this.handleError = errorHandler || function () {
