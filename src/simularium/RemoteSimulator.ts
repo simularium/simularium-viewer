@@ -104,6 +104,9 @@ export class RemoteSimulator implements ISimulator {
     }
 
     public onHeartbeatPing(msg: NetMessage): void {
+        if (!this.webSocketClient) {
+            return;
+        }
         this.webSocketClient.sendWebSocketRequest(
             {
                 connId: msg.connId,
