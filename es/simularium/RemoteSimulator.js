@@ -126,14 +126,24 @@ export var RemoteSimulator = /*#__PURE__*/function () {
     key: "registerJsonMessageHandlers",
     value: function registerJsonMessageHandlers() {
       var _this2 = this;
-      this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_TRAJECTORY_FILE_INFO, this.onTrajectoryFileInfoArrive);
-      this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_HEARTBEAT_PING, this.onHeartbeatPing);
+      this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_TRAJECTORY_FILE_INFO, function (msg) {
+        return _this2.onTrajectoryFileInfoArrive(msg);
+      });
+      this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_HEARTBEAT_PING, function (msg) {
+        return _this2.onHeartbeatPing(msg);
+      });
       this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_VIS_DATA_ARRIVE, function (msg) {
         return _this2.onJsonIdVisDataArrive(msg);
       });
-      this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_UPDATE_TIME_STEP, this.updateTimestep);
-      this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_UPDATE_RATE_PARAM, this.updateRateParam);
-      this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_MODEL_DEFINITION, this.onModelDefinitionArrive);
+      this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_UPDATE_TIME_STEP, function (_msg) {
+        return _this2.updateTimestep();
+      });
+      this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_UPDATE_RATE_PARAM, function (_msg) {
+        return _this2.updateRateParam();
+      });
+      this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_MODEL_DEFINITION, function (_msg) {
+        return _this2.onModelDefinitionArrive();
+      });
     }
 
     /**
