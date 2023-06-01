@@ -144,12 +144,12 @@ export class RemoteSimulator implements ISimulator {
     private registerJsonMessageHandlers(): void {
         this.webSocketClient.addJsonMessageHandler(
             NetMessageEnum.ID_TRAJECTORY_FILE_INFO,
-            this.onTrajectoryFileInfoArrive
+            (msg) => this.onTrajectoryFileInfoArrive(msg)
         );
 
         this.webSocketClient.addJsonMessageHandler(
             NetMessageEnum.ID_HEARTBEAT_PING,
-            this.onHeartbeatPing
+            (msg) => this.onHeartbeatPing(msg)
         );
 
         this.webSocketClient.addJsonMessageHandler(
@@ -159,17 +159,17 @@ export class RemoteSimulator implements ISimulator {
 
         this.webSocketClient.addJsonMessageHandler(
             NetMessageEnum.ID_UPDATE_TIME_STEP,
-            this.updateTimestep
+            (_msg) => this.updateTimestep()
         );
 
         this.webSocketClient.addJsonMessageHandler(
             NetMessageEnum.ID_UPDATE_RATE_PARAM,
-            this.updateRateParam
+            (_msg) => this.updateRateParam()
         );
 
         this.webSocketClient.addJsonMessageHandler(
             NetMessageEnum.ID_MODEL_DEFINITION,
-            this.onModelDefinitionArrive
+            (_msg) => this.onModelDefinitionArrive()
         );
     }
 
