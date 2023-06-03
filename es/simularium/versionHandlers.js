@@ -3,7 +3,7 @@ function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (O
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 import { mapValues } from "lodash";
 import * as si from "si-prefix";
-import { DEFAULT_CAMERA_SPEC } from "../constants";
+import { DEFAULT_CAMERA_SPEC_PERSPECTIVE } from "../constants";
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
 import { GeometryDisplayType } from "../visGeometry/types";
 
@@ -101,7 +101,7 @@ export var updateTrajectoryFileInfoFormat = function updateTrajectoryFileInfoFor
           magnitude: 1,
           name: "s"
         },
-        cameraDefault: DEFAULT_CAMERA_SPEC,
+        cameraDefault: DEFAULT_CAMERA_SPEC_PERSPECTIVE,
         timeStepSize: v1Data.timeStepSize,
         totalSteps: v1Data.totalSteps,
         typeMapping: output.typeMapping,

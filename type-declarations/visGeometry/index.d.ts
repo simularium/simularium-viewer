@@ -1,5 +1,5 @@
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { Box3, Box3Helper, Color, DirectionalLight, Group, HemisphereLight, LineSegments, PerspectiveCamera, Scene, WebGLRenderer } from "three";
+import { Box3, Box3Helper, Color, DirectionalLight, Group, HemisphereLight, LineSegments, OrthographicCamera, PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import { Pane } from "tweakpane";
 import { ILogger, ILogLevel } from "js-logger";
 import VisAgent from "./VisAgent";
@@ -7,7 +7,7 @@ import PDBModel from "./PDBModel";
 import AgentPath from "./agentPath";
 import { FrontEndError } from "../simularium/FrontEndError";
 import { AOSettings } from "./rendering/SimulariumRenderer";
-import { CameraSpec, EncodedTypeMapping, AgentData } from "../simularium/types";
+import { AgentData, EncodedTypeMapping, PerspectiveCameraSpec } from "../simularium/types";
 import SimulariumRenderer from "./rendering/SimulariumRenderer";
 import { LegacyRenderer } from "./rendering/LegacyRenderer";
 import GeometryStore from "./GeometryStore";
@@ -36,7 +36,9 @@ declare class VisGeometry {
     mlogger: ILogger;
     threejsrenderer: WebGLRenderer;
     scene: Scene;
-    camera: PerspectiveCamera;
+    perspectiveCamera: PerspectiveCamera;
+    orthographicCamera: OrthographicCamera;
+    camera: PerspectiveCamera | OrthographicCamera;
     controls: OrbitControls;
     dl: DirectionalLight;
     boundingBox: Box3;
@@ -74,6 +76,14 @@ declare class VisGeometry {
     constructor(loggerLevel: ILogLevel);
     setOnErrorCallBack(onError: (error: FrontEndError) => void): void;
     setBackgroundColor(c: string | number | [number, number, number] | undefined): void;
+    /**
+     * Derive the default distance from camera to target from `cameraDefault`.
+     * Unless `cameraDefault` has been meaningfully changed by a call to
+     * `handleCameraData`, this will be equal to `DEFAULT_CAMERA_Z_POSITION`.
+     */
+    private getDefaultOrbitRadius;
+    /** Set frustum of `orthographicCamera` from fov/aspect of `perspectiveCamera */
+    private updateOrthographicFrustum;
     private loadCamera;
     private storeCamera;
     applyAO(ao: AOSettings): void;
@@ -83,7 +93,7 @@ declare class VisGeometry {
     private constructInstancedFibers;
     get logger(): ILogger;
     get renderDom(): HTMLElement;
-    handleCameraData(cameraDefault: CameraSpec): void;
+    handleCameraData(cameraDefault?: PerspectiveCameraSpec): void;
     resetCamera(): void;
     resetCameraPosition(): void;
     centerCamera(): void;
@@ -101,12 +111,14 @@ declare class VisGeometry {
     dehighlight(): void;
     private getAllTypeIdsForGeometryName;
     onNewRuntimeGeometryType(geoName: string, displayType: GeometryDisplayType, data: PDBModel | MeshLoadRequest): void;
-    setUpControls(element: HTMLElement): void;
+    private setupControls;
+    private updateControlsZoomBounds;
     /**
      *   Setup ThreeJS Scene
-     * */
+     */
     setupScene(): void;
     resize(width: number, height: number): void;
+    setCameraType(ortho: boolean): void;
     reparent(parent?: HTMLElement | null): void;
     disableControls(): void;
     enableControls(): void;

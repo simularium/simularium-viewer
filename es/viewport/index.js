@@ -169,6 +169,8 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
     _this.handleTimeChange = _this.handleTimeChange.bind(_assertThisInitialized(_this));
     _this.visGeometry = new VisGeometry(loggerLevel);
     _this.props.simulariumController.visData.clearCache();
+    // TODO this is called in the `VisGeometry` constructor. Why is it called
+    //   again here? Removing it generates arcane WebGL warnings - why?
     _this.visGeometry.setupScene();
     _this.visGeometry.createMaterials(props.agentColors);
     _this.vdomRef = /*#__PURE__*/React.createRef();

@@ -1,4 +1,4 @@
-import { Color, PerspectiveCamera, WebGLRenderer, WebGLRenderTarget } from "three";
+import { Color, OrthographicCamera, PerspectiveCamera, WebGLRenderer, WebGLRenderTarget } from "three";
 import RenderToBuffer from "./RenderToBuffer";
 declare class CompositePass {
     pass: RenderToBuffer;
@@ -14,6 +14,6 @@ declare class CompositePass {
     setBackgroundColor(color: Color): void;
     setFollowedInstance(instance: number): void;
     resize(x: number, y: number): void;
-    render(renderer: WebGLRenderer, camera: PerspectiveCamera, target: WebGLRenderTarget, ssaoBuffer1: WebGLRenderTarget, ssaoBuffer2: WebGLRenderTarget, colorBuffer: WebGLTexture): void;
+    render(renderer: WebGLRenderer, camera: PerspectiveCamera | OrthographicCamera, target: WebGLRenderTarget, ssaoBuffer1: WebGLRenderTarget, ssaoBuffer2: WebGLRenderTarget, colorBuffer: WebGLTexture): void;
 }
 export default CompositePass;

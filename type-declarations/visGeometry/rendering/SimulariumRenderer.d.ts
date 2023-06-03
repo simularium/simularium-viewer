@@ -6,7 +6,7 @@ import ContourPass from "./ContourPass";
 import DrawBufferPass from "./DrawBufferPass";
 import { InstancedFiberGroup } from "./InstancedFiber";
 import { GeometryInstanceContainer } from "../types";
-import { Color, Group, Scene, WebGLMultipleRenderTargets, WebGLRenderer, WebGLRenderTarget, PerspectiveCamera } from "three";
+import { Color, Group, OrthographicCamera, PerspectiveCamera, Scene, WebGLMultipleRenderTargets, WebGLRenderer, WebGLRenderTarget } from "three";
 import { Pane } from "tweakpane";
 export interface AOSettings {
     aoradius1: number;
@@ -47,6 +47,6 @@ declare class SimulariumRenderer {
     setMeshGroups(instancedMeshGroup: Group, fibers: InstancedFiberGroup, meshTypes: GeometryInstanceContainer[]): void;
     resize(x: number, y: number): void;
     setNearFar(n: number, f: number): void;
-    render(renderer: WebGLRenderer, scene: Scene, camera: PerspectiveCamera, target: WebGLRenderTarget | null): void;
+    render(renderer: WebGLRenderer, scene: Scene, camera: PerspectiveCamera | OrthographicCamera, target: WebGLRenderTarget | null): void;
 }
 export default SimulariumRenderer;

@@ -6,9 +6,11 @@ import _defineProperty from "@babel/runtime/helpers/defineProperty";
 function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 import WEBGL from "three/examples/jsm/capabilities/WebGL.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { Box3, Box3Helper, BufferAttribute, BufferGeometry, Color, DirectionalLight, Group, HemisphereLight, LineBasicMaterial, LineSegments, PerspectiveCamera, Scene, Vector2, Vector3, WebGLRenderer, Quaternion, MOUSE } from "three";
+import { Box3, Box3Helper, BufferAttribute, BufferGeometry, Color, DirectionalLight, Group, HemisphereLight, LineBasicMaterial, LineSegments, MOUSE, OrthographicCamera, PerspectiveCamera, Quaternion, Scene, Spherical, Vector2, Vector3, WebGLRenderer } from "three";
 import { Pane } from "tweakpane";
 import * as EssentialsPlugin from "@tweakpane/plugin-essentials";
 import jsLogger from "js-logger";
@@ -38,6 +40,10 @@ var NO_AGENT = -1;
 var CAMERA_DOLLY_STEP_SIZE = 10;
 var CAMERA_INITIAL_ZNEAR = 1.0;
 var CAMERA_INITIAL_ZFAR = 1000.0;
+var MAX_ZOOM = 120;
+var MIN_ZOOM = 0.16;
+var CANVAS_INITIAL_WIDTH = 100;
+var CANVAS_INITIAL_HEIGHT = 100;
 export var RenderStyle = /*#__PURE__*/function (RenderStyle) {
   RenderStyle[RenderStyle["WEBGL1_FALLBACK"] = 0] = "WEBGL1_FALLBACK";
   RenderStyle[RenderStyle["WEBGL2_PREFERRED"] = 1] = "WEBGL2_PREFERRED";
@@ -51,9 +57,15 @@ function removeByName(group, name) {
     }
   });
   childrenToRemove.forEach(function (child) {
-    group.remove(child);
+    return group.remove(child);
   });
 }
+var coordsToVector = function coordsToVector(_ref) {
+  var x = _ref.x,
+    y = _ref.y,
+    z = _ref.z;
+  return new Vector3(x, y, z);
+};
 var VisGeometry = /*#__PURE__*/function () {
   function VisGeometry(loggerLevel) {
     _classCallCheck(this, VisGeometry);
@@ -76,6 +88,8 @@ var VisGeometry = /*#__PURE__*/function () {
     // this is the threejs object that issues all the webgl calls
     _defineProperty(this, "threejsrenderer", void 0);
     _defineProperty(this, "scene", void 0);
+    _defineProperty(this, "perspectiveCamera", void 0);
+    _defineProperty(this, "orthographicCamera", void 0);
     _defineProperty(this, "camera", void 0);
     _defineProperty(this, "controls", void 0);
     _defineProperty(this, "dl", void 0);
@@ -149,16 +163,22 @@ var VisGeometry = /*#__PURE__*/function () {
     this.renderer.setBackgroundColor(this.backgroundColor);
     this.mlogger = jsLogger.get("visgeometry");
     this.mlogger.setLevel(loggerLevel);
-    this.camera = new PerspectiveCamera(75, 100 / 100, CAMERA_INITIAL_ZNEAR, CAMERA_INITIAL_ZFAR);
-    this.initCameraPosition = this.camera.position.clone();
     this.cameraDefault = cloneDeep(DEFAULT_CAMERA_SPEC);
+    var aspect = CANVAS_INITIAL_WIDTH / CANVAS_INITIAL_HEIGHT;
+    this.perspectiveCamera = new PerspectiveCamera(75, aspect, CAMERA_INITIAL_ZNEAR, CAMERA_INITIAL_ZFAR);
+    this.orthographicCamera = new OrthographicCamera();
+    this.orthographicCamera.near = CAMERA_INITIAL_ZNEAR;
+    this.orthographicCamera.far = CAMERA_INITIAL_ZFAR;
+    this.updateOrthographicFrustum();
+    this.camera = this.perspectiveCamera;
+    this.camera.position.z = DEFAULT_CAMERA_Z_POSITION;
+    this.initCameraPosition = this.camera.position.clone();
     this.dl = new DirectionalLight(0xffffff, 0.6);
     this.hemiLight = new HemisphereLight(0xffffff, 0x000000, 0.5);
     this.threejsrenderer = new WebGLRenderer({
       premultipliedAlpha: false
     });
-    this.controls = new OrbitControls(this.camera, this.threejsrenderer.domElement);
-    this.setPanningMode(false);
+    this.controls = this.setupControls(this.threejsrenderer.domElement);
     this.focusMode = true;
     this.boundingBox = new Box3(new Vector3(0, 0, 0), new Vector3(100, 100, 100));
     this.boundingBoxMesh = new Box3Helper(this.boundingBox, BOUNDING_BOX_COLOR);
@@ -173,7 +193,7 @@ var VisGeometry = /*#__PURE__*/function () {
     this.agentsWithPdbsToDraw = [];
     this.agentPdbsToDraw = [];
     this.onError = function /*errorMessage*/ () {
-      return noop;
+      return noop();
     };
   }
   _createClass(VisGeometry, [{
@@ -194,22 +214,74 @@ var VisGeometry = /*#__PURE__*/function () {
       this.renderer.setBackgroundColor(this.backgroundColor);
       this.threejsrenderer.setClearColor(this.backgroundColor, 1);
     }
+
+    /**
+     * Derive the default distance from camera to target from `cameraDefault`.
+     * Unless `cameraDefault` has been meaningfully changed by a call to
+     * `handleCameraData`, this will be equal to `DEFAULT_CAMERA_Z_POSITION`.
+     */
+  }, {
+    key: "getDefaultOrbitRadius",
+    value: function getDefaultOrbitRadius() {
+      var _this$cameraDefault = this.cameraDefault,
+        position = _this$cameraDefault.position,
+        lookAtPosition = _this$cameraDefault.lookAtPosition;
+      var radius = coordsToVector(position).distanceTo(coordsToVector(lookAtPosition));
+      if (this.cameraDefault.orthographic) {
+        return radius / this.cameraDefault.zoom;
+      }
+      return radius;
+    }
+
+    /** Set frustum of `orthographicCamera` from fov/aspect of `perspectiveCamera */
+  }, {
+    key: "updateOrthographicFrustum",
+    value: function updateOrthographicFrustum() {
+      var _this$perspectiveCame = this.perspectiveCamera,
+        fov = _this$perspectiveCame.fov,
+        aspect = _this$perspectiveCame.aspect;
+      var halfFovRadians = fov * Math.PI / 360;
+
+      // Distant objects are smaller in perspective but the same size in ortho.
+      // Find default distance to target and set the frustum size to keep objects
+      // at that distance the same size in both cameras.
+      var orbitRadius = this.getDefaultOrbitRadius();
+      var vSize = Math.tan(halfFovRadians) * orbitRadius;
+      var hSize = vSize * aspect;
+      this.orthographicCamera.left = -hSize;
+      this.orthographicCamera.right = hSize;
+      this.orthographicCamera.top = vSize;
+      this.orthographicCamera.bottom = -vSize;
+      this.orthographicCamera.updateProjectionMatrix();
+    }
   }, {
     key: "loadCamera",
     value: function loadCamera(cameraSpec) {
-      // TODO add other parameters from CameraSpec?
-      this.camera.position.set(cameraSpec.position.x, cameraSpec.position.y, cameraSpec.position.z);
-      this.controls.target.set(cameraSpec.lookAtPosition.x, cameraSpec.lookAtPosition.y, cameraSpec.lookAtPosition.z);
+      this.perspectiveCamera.fov = cameraSpec.fovDegrees;
+      this.updateOrthographicFrustum();
+      this.setCameraType(cameraSpec.orthographic);
+      this.camera.position.copy(coordsToVector(cameraSpec.position));
+      this.camera.up.copy(coordsToVector(cameraSpec.upVector));
+      this.controls.target.copy(coordsToVector(cameraSpec.lookAtPosition));
+      if (cameraSpec.orthographic) {
+        this.orthographicCamera.zoom = cameraSpec.zoom;
+      }
     }
   }, {
     key: "storeCamera",
     value: function storeCamera(cameraSpec) {
-      cameraSpec.position.x = this.camera.position.x;
-      cameraSpec.position.y = this.camera.position.y;
-      cameraSpec.position.z = this.camera.position.z;
-      cameraSpec.lookAtPosition.x = this.controls.target.x;
-      cameraSpec.lookAtPosition.y = this.controls.target.y;
-      cameraSpec.lookAtPosition.z = this.controls.target.z;
+      var spec = cameraSpec || _objectSpread(_objectSpread({}, cloneDeep(DEFAULT_CAMERA_SPEC)), {}, {
+        orthographic: false
+      });
+      spec.position = this.camera.position.clone();
+      spec.upVector = this.camera.up.clone();
+      spec.lookAtPosition = this.controls.target.clone();
+      spec.fovDegrees = this.perspectiveCamera.fov;
+      spec.orthographic = !!this.camera.isOrthographicCamera;
+      if (spec.orthographic) {
+        spec.zoom = this.orthographicCamera.zoom;
+      }
+      return spec;
     }
   }, {
     key: "applyAO",
@@ -228,8 +300,18 @@ var VisGeometry = /*#__PURE__*/function () {
       var fcam = this.gui.addFolder({
         title: "Camera"
       });
-      fcam.addInput(this.camera, "position");
+      // proxy breaks through reference, so we don't just bind persp/ortho camera
+      var cameraProxy = new Proxy(this.camera, {
+        get: function get(_, p) {
+          return _this.camera[p];
+        }
+      });
+      fcam.addInput(cameraProxy, "position");
       fcam.addInput(this.controls, "target");
+      var fovInput = fcam.addInput(this.perspectiveCamera, "fov");
+      fovInput.on("change", function () {
+        return _this.updateOrthographicFrustum();
+      });
       [{
         camera: this.cam1,
         label: "Cam 1"
@@ -239,10 +321,10 @@ var VisGeometry = /*#__PURE__*/function () {
       }, {
         camera: this.cam3,
         label: "Cam 3"
-      }].forEach(function (_ref) {
+      }].forEach(function (_ref2) {
         var _this$gui;
-        var camera = _ref.camera,
-          label = _ref.label;
+        var camera = _ref2.camera,
+          label = _ref2.label;
         var grid = (_this$gui = _this.gui) === null || _this$gui === void 0 ? void 0 : _this$gui.addBlade({
           view: "buttongrid",
           size: [2, 1],
@@ -264,12 +346,7 @@ var VisGeometry = /*#__PURE__*/function () {
       this.gui.addButton({
         title: "Export Cam"
       }).on("click", function () {
-        var _this$gui2;
-        var preset = (_this$gui2 = _this.gui) === null || _this$gui2 === void 0 ? void 0 : _this$gui2.exportPreset();
-        var cam = {
-          position: preset === null || preset === void 0 ? void 0 : preset.position,
-          target: preset === null || preset === void 0 ? void 0 : preset.target
-        };
+        var cam = _this.storeCamera();
         var anchor = document.createElement("a");
         anchor.href = URL.createObjectURL(new Blob([JSON.stringify(cam, null, 2)], {
           type: "text/plain"
@@ -287,10 +364,7 @@ var VisGeometry = /*#__PURE__*/function () {
           var reader = new FileReader();
           reader.onload = function (event) {
             var _event$target;
-            var obj = JSON.parse(event === null || event === void 0 ? void 0 : (_event$target = event.target) === null || _event$target === void 0 ? void 0 : _event$target.result);
-            var cam = cloneDeep(DEFAULT_CAMERA_SPEC);
-            cam.position = obj.position;
-            cam.lookAtPosition = obj.target;
+            var cam = JSON.parse(event === null || event === void 0 ? void 0 : (_event$target = event.target) === null || _event$target === void 0 ? void 0 : _event$target.result);
             _this.loadCamera(cam);
           };
           var files = e.target.files;
@@ -402,7 +476,11 @@ var VisGeometry = /*#__PURE__*/function () {
     value: function handleCameraData(cameraDefault) {
       // Get default camera transform values from data
       if (cameraDefault) {
-        this.cameraDefault = cameraDefault;
+        this.cameraDefault = _objectSpread(_objectSpread({}, cameraDefault), {}, {
+          orthographic: false
+        });
+        this.updateOrthographicFrustum();
+        this.updateControlsZoomBounds();
       } else {
         this.logger.info("Using default camera settings since none were provided");
         this.cameraDefault = cloneDeep(DEFAULT_CAMERA_SPEC);
@@ -423,29 +501,29 @@ var VisGeometry = /*#__PURE__*/function () {
   }, {
     key: "resetCameraPosition",
     value: function resetCameraPosition() {
-      var _this$cameraDefault = this.cameraDefault,
-        position = _this$cameraDefault.position,
-        upVector = _this$cameraDefault.upVector,
-        lookAtPosition = _this$cameraDefault.lookAtPosition,
-        fovDegrees = _this$cameraDefault.fovDegrees;
+      var _this$cameraDefault2 = this.cameraDefault,
+        position = _this$cameraDefault2.position,
+        upVector = _this$cameraDefault2.upVector,
+        lookAtPosition = _this$cameraDefault2.lookAtPosition,
+        fovDegrees = _this$cameraDefault2.fovDegrees;
 
       // Reset camera position
       this.camera.position.set(position.x, position.y, position.z);
       this.initCameraPosition = this.camera.position.clone();
 
       // Reset up vector (needs to be a unit vector)
-      var normalizedUpVector = new Vector3(upVector.x, upVector.y, upVector.z).normalize();
-      this.camera.up.set(normalizedUpVector.x, normalizedUpVector.y, normalizedUpVector.z);
+      var normalizedUpVector = coordsToVector(upVector).normalize();
+      this.camera.up.copy(normalizedUpVector);
 
       // Reset lookat position
-      this.camera.lookAt(lookAtPosition.x, lookAtPosition.y, lookAtPosition.z);
-      this.controls.target.set(lookAtPosition.x, lookAtPosition.y, lookAtPosition.z);
+      var lookAtVector = coordsToVector(lookAtPosition);
+      this.camera.lookAt(lookAtVector);
+      this.controls.target.copy(lookAtVector);
 
-      // Reset field of view
-      this.camera.fov = fovDegrees;
-
-      // Apply the changes above
-      this.camera.updateProjectionMatrix();
+      // Set fov (perspective) and frustum size (orthographic)
+      this.perspectiveCamera.fov = fovDegrees;
+      this.perspectiveCamera.updateProjectionMatrix();
+      this.updateOrthographicFrustum();
     }
   }, {
     key: "centerCamera",
@@ -463,15 +541,31 @@ var VisGeometry = /*#__PURE__*/function () {
   }, {
     key: "dolly",
     value: function dolly(changeBy) {
-      var position = this.camera.position.clone();
-      var target = this.controls.target.clone();
-      var distance = position.distanceTo(target);
-      var newDistance = distance + changeBy;
-      if (newDistance <= this.controls.minDistance || newDistance >= this.controls.maxDistance) {
-        return;
+      // TODO should we use the dolly method on OrbitControls here?
+      var _this$controls = this.controls,
+        minDistance = _this$controls.minDistance,
+        maxDistance = _this$controls.maxDistance;
+      if (this.camera.isOrthographicCamera) {
+        // Orthographic camera: dolly using zoom
+        var defaultRadius = this.getDefaultOrbitRadius();
+        var newDistance = defaultRadius / this.camera.zoom + changeBy;
+        if (newDistance <= minDistance || newDistance >= maxDistance) {
+          return;
+        }
+        this.camera.zoom = defaultRadius / newDistance;
+      } else {
+        // Perspective camera: actually change position
+        var position = this.camera.position.clone();
+        var target = this.controls.target.clone();
+        var distance = position.distanceTo(target);
+        var _newDistance = distance + changeBy;
+        if (_newDistance <= minDistance || _newDistance >= maxDistance) {
+          return;
+        }
+        var newPosition = new Vector3().subVectors(position, target).setLength(_newDistance);
+        this.camera.position.copy(new Vector3().addVectors(newPosition, target));
       }
-      var newPosition = new Vector3().subVectors(position, target).setLength(newDistance);
-      this.camera.position.copy(new Vector3().addVectors(newPosition, target));
+      this.controls.update();
     }
   }, {
     key: "zoomIn",
@@ -563,12 +657,12 @@ var VisGeometry = /*#__PURE__*/function () {
   }, {
     key: "getAllTypeIdsForGeometryName",
     value: function getAllTypeIdsForGeometryName(name) {
-      return _toConsumableArray(this.visGeomMap.entries()).filter(function (_ref2) {
-        var v = _ref2[1];
+      return _toConsumableArray(this.visGeomMap.entries()).filter(function (_ref3) {
+        var v = _ref3[1];
         return v === name;
-      }).map(function (_ref3) {
-        var _ref4 = _slicedToArray(_ref3, 1),
-          k = _ref4[0];
+      }).map(function (_ref4) {
+        var _ref5 = _slicedToArray(_ref4, 1),
+          k = _ref5[0];
         return k;
       });
     }
@@ -596,8 +690,8 @@ var VisGeometry = /*#__PURE__*/function () {
       this.updateScene(this.currentSceneAgents);
     }
   }, {
-    key: "setUpControls",
-    value: function setUpControls(element) {
+    key: "setupControls",
+    value: function setupControls(element) {
       var _this2 = this;
       this.controls = new OrbitControls(this.camera, element);
       this.controls.addEventListener("change", function () {
@@ -605,21 +699,32 @@ var VisGeometry = /*#__PURE__*/function () {
           _this2.gui.refresh();
         }
       });
-      this.controls.maxDistance = 750;
-      this.controls.minDistance = 1;
       this.controls.zoomSpeed = 1.0;
+      this.updateControlsZoomBounds();
       this.setPanningMode(false);
       this.controls.saveState();
+      return this.controls;
+    }
+  }, {
+    key: "updateControlsZoomBounds",
+    value: function updateControlsZoomBounds() {
+      // Perspective camera limits - based on distance to target
+      // Calculate from default orbit radius
+      var orbitRadius = this.getDefaultOrbitRadius();
+      this.controls.minDistance = orbitRadius / MAX_ZOOM;
+      this.controls.maxDistance = orbitRadius / MIN_ZOOM;
+
+      // Orthographic camera limits - based on zoom level
+      this.controls.maxZoom = MAX_ZOOM;
+      this.controls.minZoom = MIN_ZOOM;
     }
 
     /**
      *   Setup ThreeJS Scene
-     * */
+     */
   }, {
     key: "setupScene",
     value: function setupScene() {
-      var initWidth = 100;
-      var initHeight = 100;
       this.scene = new Scene();
       this.lightsGroup = new Group();
       this.lightsGroup.name = "lights";
@@ -630,7 +735,6 @@ var VisGeometry = /*#__PURE__*/function () {
       this.instancedMeshGroup = new Group();
       this.instancedMeshGroup.name = "instanced meshes for agents";
       this.scene.add(this.instancedMeshGroup);
-      this.camera = new PerspectiveCamera(75, initWidth / initHeight, CAMERA_INITIAL_ZNEAR, CAMERA_INITIAL_ZFAR);
       this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
       this.dl = new DirectionalLight(0xffffff, 0.6);
       this.dl.position.set(0, 0, 1);
@@ -663,11 +767,9 @@ var VisGeometry = /*#__PURE__*/function () {
 
       // set this up after the renderStyle has been set.
       this.constructInstancedFibers();
-      this.threejsrenderer.setSize(initWidth, initHeight); // expected to change when reparented
+      this.threejsrenderer.setSize(CANVAS_INITIAL_WIDTH, CANVAS_INITIAL_HEIGHT); // expected to change when reparented
       this.threejsrenderer.setClearColor(this.backgroundColor, 1);
       this.threejsrenderer.clear();
-      this.camera.position.z = DEFAULT_CAMERA_Z_POSITION;
-      this.initCameraPosition = this.camera.position.clone();
     }
   }, {
     key: "resize",
@@ -675,10 +777,42 @@ var VisGeometry = /*#__PURE__*/function () {
       // at least 2x2 in size when resizing, to prevent bad buffer sizes
       width = Math.max(width, 2);
       height = Math.max(height, 2);
-      this.camera.aspect = width / height;
-      this.camera.updateProjectionMatrix();
+      this.perspectiveCamera.aspect = width / height;
+      this.perspectiveCamera.updateProjectionMatrix();
+      this.updateOrthographicFrustum();
       this.threejsrenderer.setSize(width, height);
       this.renderer.resize(width, height);
+    }
+  }, {
+    key: "setCameraType",
+    value: function setCameraType(ortho) {
+      var newCam = ortho ? this.orthographicCamera : this.perspectiveCamera;
+      if (newCam === this.camera) {
+        return;
+      }
+
+      // `OrbitControls` zooms `PerspectiveCamera`s by changing position to dolly
+      // relative to the target, and `OrthographicCamera`s by setting zoom and
+      // leaving position unchanged (keeping a constant distance to target).
+
+      var defaultOrbitRadius = this.getDefaultOrbitRadius();
+      var offset = this.camera.position.clone().sub(this.controls.target);
+      var spherical = new Spherical().setFromVector3(offset);
+      var zoom = 1;
+      if (ortho) {
+        // If switching to ortho, reset distance to target and convert it to zoom.
+        zoom = defaultOrbitRadius / spherical.radius;
+        spherical.radius = defaultOrbitRadius;
+      } else {
+        // If switching to perspective, convert zoom to new distance to target.
+        spherical.radius = defaultOrbitRadius / this.camera.zoom;
+      }
+      newCam.position.setFromSpherical(spherical).add(this.controls.target);
+      newCam.up.copy(this.camera.up);
+      newCam.zoom = zoom;
+      this.controls.object = newCam;
+      this.controls.update();
+      this.camera = newCam;
     }
   }, {
     key: "reparent",
@@ -688,7 +822,7 @@ var VisGeometry = /*#__PURE__*/function () {
         return;
       }
       parent.appendChild(this.threejsrenderer.domElement);
-      this.setUpControls(this.threejsrenderer.domElement);
+      this.setupControls(this.threejsrenderer.domElement);
       this.resize(Number(parent.dataset.width), Number(parent.dataset.height));
       this.threejsrenderer.setClearColor(this.backgroundColor, 1.0);
       this.threejsrenderer.clear();

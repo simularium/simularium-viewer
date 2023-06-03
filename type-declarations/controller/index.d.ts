@@ -80,5 +80,6 @@ export default class SimulariumController {
     reOrientCamera(): void;
     setPanningMode(pan: boolean): void;
     setFocusMode(focus: boolean): void;
+    setCameraType(ortho: boolean): void;
 }
 export { SimulariumController };
