@@ -201,6 +201,12 @@ class VisGeometry {
         this.lightsGroup = new Group();
         this.agentPathGroup = new Group();
         this.instancedMeshGroup = new Group();
+        this.threejsrenderer = new WebGLRenderer();
+        this.dl = new DirectionalLight();
+        this.boundingBox = new Box3();
+        this.boundingBoxMesh = new Box3Helper(this.boundingBox);
+        this.tickMarksMesh = new LineSegments();
+        this.hemiLight = new HemisphereLight();
 
         this.setupScene();
 
@@ -231,22 +237,10 @@ class VisGeometry {
         this.camera.position.z = DEFAULT_CAMERA_Z_POSITION;
         this.initCameraPosition = this.camera.position.clone();
 
-        this.dl = new DirectionalLight(0xffffff, 0.6);
-        this.hemiLight = new HemisphereLight(0xffffff, 0x000000, 0.5);
-        this.threejsrenderer = new WebGLRenderer({ premultipliedAlpha: false });
-        this.controls = this.setupControls(this.threejsrenderer.domElement);
+        this.controls = this.setupControls();
         this.focusMode = true;
 
-        this.boundingBox = new Box3(
-            new Vector3(0, 0, 0),
-            new Vector3(100, 100, 100)
-        );
-        this.boundingBoxMesh = new Box3Helper(
-            this.boundingBox,
-            BOUNDING_BOX_COLOR
-        );
         this.tickIntervalLength = 0;
-        this.tickMarksMesh = new LineSegments();
         this.boxNearZ = 0;
         this.boxFarZ = 100;
         this.currentSceneAgents = [];
@@ -256,7 +250,7 @@ class VisGeometry {
         this.agentsWithPdbsToDraw = [];
         this.agentPdbsToDraw = [];
 
-        this.onError = (/*errorMessage*/) => noop();
+        this.onError = noop;
     }
 
     public setOnErrorCallBack(onError: (error: FrontEndError) => void): void {
@@ -722,8 +716,11 @@ class VisGeometry {
         this.updateScene(this.currentSceneAgents);
     }
 
-    private setupControls(element: HTMLElement): OrbitControls {
-        this.controls = new OrbitControls(this.camera, element);
+    private setupControls(): OrbitControls {
+        this.controls = new OrbitControls(
+            this.camera,
+            this.threejsrenderer.domElement
+        );
         this.controls.addEventListener("change", () => {
             if (this.gui) {
                 this.gui.refresh();
@@ -863,7 +860,7 @@ class VisGeometry {
         }
 
         parent.appendChild(this.threejsrenderer.domElement);
-        this.setupControls(this.threejsrenderer.domElement);
+        this.setupControls();
 
         this.resize(
             Number(parent.dataset.width),
