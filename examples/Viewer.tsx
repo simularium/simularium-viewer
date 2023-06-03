@@ -150,6 +150,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     private viewerRef: React.RefObject<SimulariumViewer>;
     private panMode = false;
     private focusMode = true;
+    private orthoMode = false;
     private netConnectionSettings: NetConnectionParams;
 
     public constructor(props: InputParams) {
@@ -790,6 +791,14 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     }}
                 >
                     Focus Mode
+                </button>
+                <button
+                    onClick={() => {
+                        this.orthoMode = !this.orthoMode;
+                        simulariumController.setCameraType(this.orthoMode);
+                    }}
+                >
+                    Camera mode
                 </button>
                 <br />
                 <button

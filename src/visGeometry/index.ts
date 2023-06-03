@@ -11,16 +11,18 @@ import {
     HemisphereLight,
     LineBasicMaterial,
     LineSegments,
+    Mesh,
+    MOUSE,
     Object3D,
+    OrthographicCamera,
     PerspectiveCamera,
+    Quaternion,
     Scene,
+    Spherical,
     Vector2,
     Vector3,
     WebGLRenderer,
     WebGLRendererParameters,
-    Mesh,
-    Quaternion,
-    MOUSE,
 } from "three";
 
 import { Pane } from "tweakpane";
@@ -39,10 +41,12 @@ import { AOSettings } from "./rendering/SimulariumRenderer";
 
 import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC } from "../constants";
 import {
-    CameraSpec,
-    EncodedTypeMapping,
-    AgentDisplayDataWithGeometry,
     AgentData,
+    AgentDisplayDataWithGeometry,
+    CameraSpec,
+    Coordinates3d,
+    EncodedTypeMapping,
+    PerspectiveCameraSpec,
 } from "../simularium/types";
 
 import SimulariumRenderer from "./rendering/SimulariumRenderer";
@@ -74,6 +78,12 @@ const CAMERA_DOLLY_STEP_SIZE = 10;
 const CAMERA_INITIAL_ZNEAR = 1.0;
 const CAMERA_INITIAL_ZFAR = 1000.0;
 
+const MAX_ZOOM = 120;
+const MIN_ZOOM = 0.16;
+
+const CANVAS_INITIAL_WIDTH = 100;
+const CANVAS_INITIAL_HEIGHT = 100;
+
 export enum RenderStyle {
     WEBGL1_FALLBACK,
     WEBGL2_PREFERRED,
@@ -86,10 +96,10 @@ function removeByName(group: Group, name: string): void {
             childrenToRemove.push(child);
         }
     });
-    childrenToRemove.forEach(function (child) {
-        group.remove(child);
-    });
+    childrenToRemove.forEach((child) => group.remove(child));
 }
+
+const coordsToVector = ({ x, y, z }: Coordinates3d) => new Vector3(x, y, z);
 
 type Bounds = readonly [number, number, number, number, number, number];
 
@@ -113,8 +123,12 @@ class VisGeometry {
     // this is the threejs object that issues all the webgl calls
     public threejsrenderer: WebGLRenderer;
     public scene: Scene;
-    public camera: PerspectiveCamera;
+
+    public perspectiveCamera: PerspectiveCamera;
+    public orthographicCamera: OrthographicCamera;
+    public camera: PerspectiveCamera | OrthographicCamera;
     public controls: OrbitControls;
+
     public dl: DirectionalLight;
     public boundingBox: Box3;
     public boundingBoxMesh: Box3Helper;
@@ -200,24 +214,27 @@ class VisGeometry {
         this.mlogger = jsLogger.get("visgeometry");
         this.mlogger.setLevel(loggerLevel);
 
-        this.camera = new PerspectiveCamera(
+        this.cameraDefault = cloneDeep(DEFAULT_CAMERA_SPEC);
+        const aspect = CANVAS_INITIAL_WIDTH / CANVAS_INITIAL_HEIGHT;
+        this.perspectiveCamera = new PerspectiveCamera(
             75,
-            100 / 100,
+            aspect,
             CAMERA_INITIAL_ZNEAR,
             CAMERA_INITIAL_ZFAR
         );
+        this.orthographicCamera = new OrthographicCamera();
+        this.orthographicCamera.near = CAMERA_INITIAL_ZNEAR;
+        this.orthographicCamera.far = CAMERA_INITIAL_ZFAR;
+        this.updateOrthographicFrustum();
+        this.camera = this.perspectiveCamera;
 
+        this.camera.position.z = DEFAULT_CAMERA_Z_POSITION;
         this.initCameraPosition = this.camera.position.clone();
-        this.cameraDefault = cloneDeep(DEFAULT_CAMERA_SPEC);
 
         this.dl = new DirectionalLight(0xffffff, 0.6);
         this.hemiLight = new HemisphereLight(0xffffff, 0x000000, 0.5);
         this.threejsrenderer = new WebGLRenderer({ premultipliedAlpha: false });
-        this.controls = new OrbitControls(
-            this.camera,
-            this.threejsrenderer.domElement
-        );
-        this.setPanningMode(false);
+        this.controls = this.setupControls(this.threejsrenderer.domElement);
         this.focusMode = true;
 
         this.boundingBox = new Box3(
@@ -239,7 +256,7 @@ class VisGeometry {
         this.agentsWithPdbsToDraw = [];
         this.agentPdbsToDraw = [];
 
-        this.onError = (/*errorMessage*/) => noop;
+        this.onError = (/*errorMessage*/) => noop();
     }
 
     public setOnErrorCallBack(onError: (error: FrontEndError) => void): void {
@@ -262,26 +279,69 @@ class VisGeometry {
         this.threejsrenderer.setClearColor(this.backgroundColor, 1);
     }
 
-    private loadCamera(cameraSpec: CameraSpec): void {
-        // TODO add other parameters from CameraSpec?
-        this.camera.position.set(
-            cameraSpec.position.x,
-            cameraSpec.position.y,
-            cameraSpec.position.z
+    /**
+     * Derive the default distance from camera to target from `cameraDefault`.
+     * Unless `cameraDefault` has been meaningfully changed by a call to
+     * `handleCameraData`, this will be equal to `DEFAULT_CAMERA_Z_POSITION`.
+     */
+    private getDefaultOrbitRadius(): number {
+        const { position, lookAtPosition } = this.cameraDefault;
+        const radius = coordsToVector(position).distanceTo(
+            coordsToVector(lookAtPosition)
         );
-        this.controls.target.set(
-            cameraSpec.lookAtPosition.x,
-            cameraSpec.lookAtPosition.y,
-            cameraSpec.lookAtPosition.z
-        );
+
+        if (this.cameraDefault.orthographic) {
+            return radius / this.cameraDefault.zoom;
+        }
+        return radius;
     }
-    private storeCamera(cameraSpec: CameraSpec): void {
-        cameraSpec.position.x = this.camera.position.x;
-        cameraSpec.position.y = this.camera.position.y;
-        cameraSpec.position.z = this.camera.position.z;
-        cameraSpec.lookAtPosition.x = this.controls.target.x;
-        cameraSpec.lookAtPosition.y = this.controls.target.y;
-        cameraSpec.lookAtPosition.z = this.controls.target.z;
+
+    /** Set frustum of `orthographicCamera` from fov/aspect of `perspectiveCamera */
+    private updateOrthographicFrustum(): void {
+        const { fov, aspect } = this.perspectiveCamera;
+        const halfFovRadians = (fov * Math.PI) / 360;
+
+        // Distant objects are smaller in perspective but the same size in ortho.
+        // Find default distance to target and set the frustum size to keep objects
+        // at that distance the same size in both cameras.
+        const orbitRadius = this.getDefaultOrbitRadius();
+        const vSize = Math.tan(halfFovRadians) * orbitRadius;
+        const hSize = vSize * aspect;
+
+        this.orthographicCamera.left = -hSize;
+        this.orthographicCamera.right = hSize;
+        this.orthographicCamera.top = vSize;
+        this.orthographicCamera.bottom = -vSize;
+        this.orthographicCamera.updateProjectionMatrix();
+    }
+
+    private loadCamera(cameraSpec: CameraSpec): void {
+        this.perspectiveCamera.fov = cameraSpec.fovDegrees;
+        this.updateOrthographicFrustum();
+        this.setCameraType(cameraSpec.orthographic);
+        this.camera.position.copy(coordsToVector(cameraSpec.position));
+        this.camera.up.copy(coordsToVector(cameraSpec.upVector));
+        this.controls.target.copy(coordsToVector(cameraSpec.lookAtPosition));
+        if (cameraSpec.orthographic) {
+            this.orthographicCamera.zoom = cameraSpec.zoom;
+        }
+    }
+    private storeCamera(cameraSpec?: CameraSpec): CameraSpec {
+        const spec = cameraSpec || {
+            ...cloneDeep(DEFAULT_CAMERA_SPEC),
+            orthographic: false,
+        };
+        spec.position = this.camera.position.clone();
+        spec.upVector = this.camera.up.clone();
+        spec.lookAtPosition = this.controls.target.clone();
+        spec.fovDegrees = this.perspectiveCamera.fov;
+
+        spec.orthographic = !!(this.camera as OrthographicCamera)
+            .isOrthographicCamera;
+        if (spec.orthographic) {
+            spec.zoom = this.orthographicCamera.zoom;
+        }
+        return spec;
     }
 
     public applyAO(ao: AOSettings): void {
@@ -296,8 +356,14 @@ class VisGeometry {
         this.gui.registerPlugin(EssentialsPlugin);
 
         const fcam = this.gui.addFolder({ title: "Camera" });
-        fcam.addInput(this.camera, "position");
+        // proxy breaks through reference, so we don't just bind persp/ortho camera
+        const cameraProxy = new Proxy(this.camera, {
+            get: (_, p) => this.camera[p],
+        });
+        fcam.addInput(cameraProxy, "position");
         fcam.addInput(this.controls, "target");
+        const fovInput = fcam.addInput(this.perspectiveCamera, "fov");
+        fovInput.on("change", () => this.updateOrthographicFrustum());
 
         [
             { camera: this.cam1, label: "Cam 1" },
@@ -307,7 +373,7 @@ class VisGeometry {
             const grid: ButtonGridApi = this.gui?.addBlade({
                 view: "buttongrid",
                 size: [2, 1],
-                cells: (x, y) => ({
+                cells: (x: number, y: number) => ({
                     title: [["Activate", "Save"]][y][x],
                 }),
                 label: label,
@@ -322,11 +388,7 @@ class VisGeometry {
         });
 
         this.gui.addButton({ title: "Export Cam" }).on("click", () => {
-            const preset = this.gui?.exportPreset();
-            const cam = {
-                position: preset?.position,
-                target: preset?.target,
-            };
+            const cam = this.storeCamera();
             const anchor = document.createElement("a");
             anchor.href = URL.createObjectURL(
                 new Blob([JSON.stringify(cam, null, 2)], {
@@ -343,10 +405,7 @@ class VisGeometry {
             fileinput.addEventListener("change", (e: Event) => {
                 const reader = new FileReader();
                 reader.onload = (event: ProgressEvent<FileReader>) => {
-                    const obj = JSON.parse(event?.target?.result as string);
-                    const cam = cloneDeep(DEFAULT_CAMERA_SPEC);
-                    cam.position = obj.position;
-                    cam.lookAtPosition = obj.target;
+                    const cam = JSON.parse(event?.target?.result as string);
                     this.loadCamera(cam);
                 };
                 const files = (e.target as HTMLInputElement).files;
@@ -456,10 +515,12 @@ class VisGeometry {
         return this.threejsrenderer.domElement;
     }
 
-    public handleCameraData(cameraDefault: CameraSpec): void {
+    public handleCameraData(cameraDefault?: PerspectiveCameraSpec): void {
         // Get default camera transform values from data
         if (cameraDefault) {
-            this.cameraDefault = cameraDefault;
+            this.cameraDefault = { ...cameraDefault, orthographic: false };
+            this.updateOrthographicFrustum();
+            this.updateControlsZoomBounds();
         } else {
             this.logger.info(
                 "Using default camera settings since none were provided"
@@ -486,34 +547,18 @@ class VisGeometry {
         this.initCameraPosition = this.camera.position.clone();
 
         // Reset up vector (needs to be a unit vector)
-        const normalizedUpVector = new Vector3(
-            upVector.x,
-            upVector.y,
-            upVector.z
-        ).normalize();
-        this.camera.up.set(
-            normalizedUpVector.x,
-            normalizedUpVector.y,
-            normalizedUpVector.z
-        );
+        const normalizedUpVector = coordsToVector(upVector).normalize();
+        this.camera.up.copy(normalizedUpVector);
 
         // Reset lookat position
-        this.camera.lookAt(
-            lookAtPosition.x,
-            lookAtPosition.y,
-            lookAtPosition.z
-        );
-        this.controls.target.set(
-            lookAtPosition.x,
-            lookAtPosition.y,
-            lookAtPosition.z
-        );
+        const lookAtVector = coordsToVector(lookAtPosition);
+        this.camera.lookAt(lookAtVector);
+        this.controls.target.copy(lookAtVector);
 
-        // Reset field of view
-        this.camera.fov = fovDegrees;
-
-        // Apply the changes above
-        this.camera.updateProjectionMatrix();
+        // Set fov (perspective) and frustum size (orthographic)
+        this.perspectiveCamera.fov = fovDegrees;
+        this.perspectiveCamera.updateProjectionMatrix();
+        this.updateOrthographicFrustum();
     }
 
     public centerCamera(): void {
@@ -528,22 +573,39 @@ class VisGeometry {
     }
 
     private dolly(changeBy: number): void {
-        const position = this.camera.position.clone();
-        const target = this.controls.target.clone();
-        const distance = position.distanceTo(target);
-        const newDistance = distance + changeBy;
-        if (
-            newDistance <= this.controls.minDistance ||
-            newDistance >= this.controls.maxDistance
-        ) {
-            return;
+        // TODO should we use the dolly method on OrbitControls here?
+        const { minDistance, maxDistance } = this.controls;
+
+        if ((this.camera as OrthographicCamera).isOrthographicCamera) {
+            // Orthographic camera: dolly using zoom
+            const defaultRadius = this.getDefaultOrbitRadius();
+            const newDistance = defaultRadius / this.camera.zoom + changeBy;
+
+            if (newDistance <= minDistance || newDistance >= maxDistance) {
+                return;
+            }
+
+            this.camera.zoom = defaultRadius / newDistance;
+        } else {
+            // Perspective camera: actually change position
+            const position = this.camera.position.clone();
+            const target = this.controls.target.clone();
+            const distance = position.distanceTo(target);
+            const newDistance = distance + changeBy;
+
+            if (newDistance <= minDistance || newDistance >= maxDistance) {
+                return;
+            }
+
+            const newPosition = new Vector3()
+                .subVectors(position, target)
+                .setLength(newDistance);
+            this.camera.position.copy(
+                new Vector3().addVectors(newPosition, target)
+            );
         }
-        const newPosition = new Vector3()
-            .subVectors(position, target)
-            .setLength(newDistance);
-        this.camera.position.copy(
-            new Vector3().addVectors(newPosition, target)
-        );
+
+        this.controls.update();
     }
 
     public zoomIn(): void {
@@ -660,7 +722,7 @@ class VisGeometry {
         this.updateScene(this.currentSceneAgents);
     }
 
-    public setUpControls(element: HTMLElement): void {
+    private setupControls(element: HTMLElement): OrbitControls {
         this.controls = new OrbitControls(this.camera, element);
         this.controls.addEventListener("change", () => {
             if (this.gui) {
@@ -668,19 +730,30 @@ class VisGeometry {
             }
         });
 
-        this.controls.maxDistance = 750;
-        this.controls.minDistance = 1;
         this.controls.zoomSpeed = 1.0;
+        this.updateControlsZoomBounds();
         this.setPanningMode(false);
         this.controls.saveState();
+
+        return this.controls;
+    }
+
+    private updateControlsZoomBounds(): void {
+        // Perspective camera limits - based on distance to target
+        // Calculate from default orbit radius
+        const orbitRadius = this.getDefaultOrbitRadius();
+        this.controls.minDistance = orbitRadius / MAX_ZOOM;
+        this.controls.maxDistance = orbitRadius / MIN_ZOOM;
+
+        // Orthographic camera limits - based on zoom level
+        this.controls.maxZoom = MAX_ZOOM;
+        this.controls.minZoom = MIN_ZOOM;
     }
 
     /**
      *   Setup ThreeJS Scene
-     * */
+     */
     public setupScene(): void {
-        const initWidth = 100;
-        const initHeight = 100;
         this.scene = new Scene();
         this.lightsGroup = new Group();
         this.lightsGroup.name = "lights";
@@ -691,13 +764,6 @@ class VisGeometry {
         this.instancedMeshGroup = new Group();
         this.instancedMeshGroup.name = "instanced meshes for agents";
         this.scene.add(this.instancedMeshGroup);
-
-        this.camera = new PerspectiveCamera(
-            75,
-            initWidth / initHeight,
-            CAMERA_INITIAL_ZNEAR,
-            CAMERA_INITIAL_ZFAR
-        );
 
         this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
 
@@ -736,22 +802,59 @@ class VisGeometry {
         // set this up after the renderStyle has been set.
         this.constructInstancedFibers();
 
-        this.threejsrenderer.setSize(initWidth, initHeight); // expected to change when reparented
+        this.threejsrenderer.setSize(
+            CANVAS_INITIAL_WIDTH,
+            CANVAS_INITIAL_HEIGHT
+        ); // expected to change when reparented
         this.threejsrenderer.setClearColor(this.backgroundColor, 1);
         this.threejsrenderer.clear();
-
-        this.camera.position.z = DEFAULT_CAMERA_Z_POSITION;
-        this.initCameraPosition = this.camera.position.clone();
     }
 
     public resize(width: number, height: number): void {
         // at least 2x2 in size when resizing, to prevent bad buffer sizes
         width = Math.max(width, 2);
         height = Math.max(height, 2);
-        this.camera.aspect = width / height;
-        this.camera.updateProjectionMatrix();
+
+        this.perspectiveCamera.aspect = width / height;
+        this.perspectiveCamera.updateProjectionMatrix();
+
+        this.updateOrthographicFrustum();
+
         this.threejsrenderer.setSize(width, height);
         this.renderer.resize(width, height);
+    }
+
+    public setCameraType(ortho: boolean): void {
+        const newCam = ortho ? this.orthographicCamera : this.perspectiveCamera;
+        if (newCam === this.camera) {
+            return;
+        }
+
+        // `OrbitControls` zooms `PerspectiveCamera`s by changing position to dolly
+        // relative to the target, and `OrthographicCamera`s by setting zoom and
+        // leaving position unchanged (keeping a constant distance to target).
+
+        const defaultOrbitRadius = this.getDefaultOrbitRadius();
+        const offset = this.camera.position.clone().sub(this.controls.target);
+        const spherical = new Spherical().setFromVector3(offset);
+        let zoom = 1;
+
+        if (ortho) {
+            // If switching to ortho, reset distance to target and convert it to zoom.
+            zoom = defaultOrbitRadius / spherical.radius;
+            spherical.radius = defaultOrbitRadius;
+        } else {
+            // If switching to perspective, convert zoom to new distance to target.
+            spherical.radius = defaultOrbitRadius / this.camera.zoom;
+        }
+
+        newCam.position.setFromSpherical(spherical).add(this.controls.target);
+        newCam.up.copy(this.camera.up);
+        newCam.zoom = zoom;
+
+        this.controls.object = newCam;
+        this.controls.update();
+        this.camera = newCam;
     }
 
     public reparent(parent?: HTMLElement | null): void {
@@ -760,7 +863,7 @@ class VisGeometry {
         }
 
         parent.appendChild(this.threejsrenderer.domElement);
-        this.setUpControls(this.threejsrenderer.domElement);
+        this.setupControls(this.threejsrenderer.domElement);
 
         this.resize(
             Number(parent.dataset.width),

@@ -13,12 +13,13 @@ import {
     FloatType,
     Group,
     NearestFilter,
+    OrthographicCamera,
+    PerspectiveCamera,
     RGBAFormat,
     Scene,
     WebGLMultipleRenderTargets,
     WebGLRenderer,
     WebGLRenderTarget,
-    PerspectiveCamera,
 } from "three";
 import { Pane } from "tweakpane";
 
@@ -379,7 +380,7 @@ class SimulariumRenderer {
     public render(
         renderer: WebGLRenderer,
         scene: Scene,
-        camera: PerspectiveCamera,
+        camera: PerspectiveCamera | OrthographicCamera,
         target: WebGLRenderTarget | null
     ): void {
         // updates for transformed bounds (should this happen in shader?)

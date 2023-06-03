@@ -5,10 +5,11 @@ import {
     DataTexture,
     FloatType,
     Matrix4,
+    OrthographicCamera,
+    PerspectiveCamera,
     RGBAFormat,
     Vector2,
     Vector3,
-    PerspectiveCamera,
     WebGLRenderer,
     WebGLRenderTarget,
 } from "three";
@@ -119,7 +120,7 @@ class SSAO1Pass {
 
     public render(
         renderer: WebGLRenderer,
-        camera: PerspectiveCamera,
+        camera: PerspectiveCamera | OrthographicCamera,
         target: WebGLRenderTarget,
         normals: WebGLTexture,
         positions: WebGLTexture

@@ -17,18 +17,21 @@ export interface VisDataMessage {
     fileName: string;
 }
 
-interface Coordinates3d {
+export interface Coordinates3d {
     x: number;
     y: number;
     z: number;
 }
 
-export interface CameraSpec {
+export interface PerspectiveCameraSpec {
     position: Coordinates3d;
     lookAtPosition: Coordinates3d;
     upVector: Coordinates3d;
     fovDegrees: number;
 }
+
+export type CameraSpec = PerspectiveCameraSpec &
+    ({ orthographic: false } | { orthographic: true; zoom: number });
 
 interface ScatterTrace {
     x: number[];
@@ -103,7 +106,7 @@ export interface TrajectoryFileInfoV2 extends TrajectoryFileInfoBase {
         magnitude: number;
         name: string;
     };
-    cameraDefault: CameraSpec;
+    cameraDefault: PerspectiveCameraSpec;
 }
 
 export type TrajectoryFileInfoAny = TrajectoryFileInfoV1 | TrajectoryFileInfoV2;
