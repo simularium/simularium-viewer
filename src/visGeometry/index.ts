@@ -197,8 +197,6 @@ class VisGeometry {
 
         this.fibers = new InstancedFiberGroup();
 
-        this.setupScene();
-
         this.legacyRenderer = new LegacyRenderer();
         this.renderer = new SimulariumRenderer();
 
@@ -206,8 +204,69 @@ class VisGeometry {
         this.pathEndColor = this.backgroundColor.clone();
         this.renderer.setBackgroundColor(this.backgroundColor);
 
+        // Set up scene
+
+        this.scene = new Scene();
+        this.lightsGroup = new Group();
+        this.lightsGroup.name = "lights";
+        this.scene.add(this.lightsGroup);
+        this.agentPathGroup = new Group();
+        this.agentPathGroup.name = "agent paths";
+        this.scene.add(this.agentPathGroup);
+        this.instancedMeshGroup = new Group();
+        this.instancedMeshGroup.name = "instanced meshes for agents";
+        this.scene.add(this.instancedMeshGroup);
+
+        this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
+
+        this.dl = new DirectionalLight(0xffffff, 0.6);
+        this.dl.position.set(0, 0, 1);
+        this.lightsGroup.add(this.dl);
+
+        this.hemiLight = new HemisphereLight(0xffffff, 0x000000, 0.5);
+        this.hemiLight.color.setHSL(0.095, 1, 0.75);
+        this.hemiLight.groundColor.setHSL(0.6, 1, 0.6);
+        this.hemiLight.position.set(0, 1, 0);
+        this.lightsGroup.add(this.hemiLight);
+
+        // Set up renderer
+
+        if (WEBGL.isWebGL2Available() === false) {
+            this.renderStyle = RenderStyle.WEBGL1_FALLBACK;
+            this.supportsWebGL2Rendering = false;
+            this.threejsrenderer = new WebGLRenderer({
+                premultipliedAlpha: false,
+            });
+        } else {
+            this.renderStyle = RenderStyle.WEBGL2_PREFERRED;
+            this.supportsWebGL2Rendering = true;
+            const canvas = document.createElement("canvas");
+            const context: WebGLRenderingContext = canvas.getContext("webgl2", {
+                alpha: false,
+            }) as WebGLRenderingContext;
+
+            const rendererParams: WebGLRendererParameters = {
+                canvas: canvas,
+                context: context,
+                premultipliedAlpha: false,
+            };
+            this.threejsrenderer = new WebGLRenderer(rendererParams);
+        }
+
+        // set this up after the renderStyle has been set.
+        this.constructInstancedFibers();
+
+        this.threejsrenderer.setSize(
+            CANVAS_INITIAL_WIDTH,
+            CANVAS_INITIAL_HEIGHT
+        ); // expected to change when reparented
+        this.threejsrenderer.setClearColor(this.backgroundColor, 1);
+        this.threejsrenderer.clear();
+
         this.mlogger = jsLogger.get("visgeometry");
         this.mlogger.setLevel(loggerLevel);
+
+        // Set up cameras
 
         this.cameraDefault = cloneDeep(DEFAULT_CAMERA_SPEC);
         const aspect = CANVAS_INITIAL_WIDTH / CANVAS_INITIAL_HEIGHT;
@@ -734,66 +793,6 @@ class VisGeometry {
         // Orthographic camera limits - based on zoom level
         this.controls.maxZoom = MAX_ZOOM;
         this.controls.minZoom = MIN_ZOOM;
-    }
-
-    /**
-     *   Setup ThreeJS Scene
-     */
-    public setupScene(): void {
-        this.scene = new Scene();
-        this.lightsGroup = new Group();
-        this.lightsGroup.name = "lights";
-        this.scene.add(this.lightsGroup);
-        this.agentPathGroup = new Group();
-        this.agentPathGroup.name = "agent paths";
-        this.scene.add(this.agentPathGroup);
-        this.instancedMeshGroup = new Group();
-        this.instancedMeshGroup.name = "instanced meshes for agents";
-        this.scene.add(this.instancedMeshGroup);
-
-        this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
-
-        this.dl = new DirectionalLight(0xffffff, 0.6);
-        this.dl.position.set(0, 0, 1);
-        this.lightsGroup.add(this.dl);
-
-        this.hemiLight = new HemisphereLight(0xffffff, 0x000000, 0.5);
-        this.hemiLight.color.setHSL(0.095, 1, 0.75);
-        this.hemiLight.groundColor.setHSL(0.6, 1, 0.6);
-        this.hemiLight.position.set(0, 1, 0);
-        this.lightsGroup.add(this.hemiLight);
-
-        if (WEBGL.isWebGL2Available() === false) {
-            this.renderStyle = RenderStyle.WEBGL1_FALLBACK;
-            this.supportsWebGL2Rendering = false;
-            this.threejsrenderer = new WebGLRenderer({
-                premultipliedAlpha: false,
-            });
-        } else {
-            this.renderStyle = RenderStyle.WEBGL2_PREFERRED;
-            this.supportsWebGL2Rendering = true;
-            const canvas = document.createElement("canvas");
-            const context: WebGLRenderingContext = canvas.getContext("webgl2", {
-                alpha: false,
-            }) as WebGLRenderingContext;
-
-            const rendererParams: WebGLRendererParameters = {
-                canvas: canvas,
-                context: context,
-                premultipliedAlpha: false,
-            };
-            this.threejsrenderer = new WebGLRenderer(rendererParams);
-        }
-
-        // set this up after the renderStyle has been set.
-        this.constructInstancedFibers();
-
-        this.threejsrenderer.setSize(
-            CANVAS_INITIAL_WIDTH,
-            CANVAS_INITIAL_HEIGHT
-        ); // expected to change when reparented
-        this.threejsrenderer.setClearColor(this.backgroundColor, 1);
-        this.threejsrenderer.clear();
     }
 
     public resize(width: number, height: number): void {
