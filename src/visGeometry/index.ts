@@ -121,31 +121,31 @@ class VisGeometry {
     public agentPaths: Map<number, AgentPath>;
     public mlogger: ILogger;
     // this is the threejs object that issues all the webgl calls
-    public threejsrenderer: WebGLRenderer;
-    public scene: Scene;
+    public threejsrenderer!: WebGLRenderer;
+    public scene!: Scene;
 
     public perspectiveCamera: PerspectiveCamera;
     public orthographicCamera: OrthographicCamera;
     public camera: PerspectiveCamera | OrthographicCamera;
     public controls: OrbitControls;
 
-    public dl: DirectionalLight;
-    public boundingBox: Box3;
-    public boundingBoxMesh: Box3Helper;
+    public dl!: DirectionalLight;
+    public hemiLight!: HemisphereLight;
+    public boundingBox!: Box3;
+    public boundingBoxMesh!: Box3Helper;
+    public tickMarksMesh!: LineSegments;
     public tickIntervalLength: number;
-    public tickMarksMesh: LineSegments;
     // front and back of transformed bounds in camera space
     private boxNearZ: number;
     private boxFarZ: number;
 
-    public hemiLight: HemisphereLight;
     public renderer: SimulariumRenderer;
     public legacyRenderer: LegacyRenderer;
     public currentSceneAgents: AgentData[];
     public colorsData: Float32Array;
-    public lightsGroup: Group;
-    public agentPathGroup: Group;
-    public instancedMeshGroup: Group;
+    public lightsGroup!: Group;
+    public agentPathGroup!: Group;
+    public instancedMeshGroup!: Group;
     public idColorMapping: Map<number, number>;
     private isIdColorMappingSet: boolean;
     private supportsWebGL2Rendering: boolean;
@@ -196,17 +196,6 @@ class VisGeometry {
         this.agentPaths = new Map<number, AgentPath>();
 
         this.fibers = new InstancedFiberGroup();
-
-        this.scene = new Scene();
-        this.lightsGroup = new Group();
-        this.agentPathGroup = new Group();
-        this.instancedMeshGroup = new Group();
-        this.threejsrenderer = new WebGLRenderer();
-        this.dl = new DirectionalLight();
-        this.boundingBox = new Box3();
-        this.boundingBoxMesh = new Box3Helper(this.boundingBox);
-        this.tickMarksMesh = new LineSegments();
-        this.hemiLight = new HemisphereLight();
 
         this.setupScene();
 
