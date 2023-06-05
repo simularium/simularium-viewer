@@ -121,16 +121,16 @@ class VisGeometry {
     public agentPaths: Map<number, AgentPath>;
     public mlogger: ILogger;
     // this is the threejs object that issues all the webgl calls
-    public threejsrenderer!: WebGLRenderer;
-    public scene!: Scene;
+    public threejsrenderer: WebGLRenderer;
+    public scene: Scene;
 
     public perspectiveCamera: PerspectiveCamera;
     public orthographicCamera: OrthographicCamera;
     public camera: PerspectiveCamera | OrthographicCamera;
     public controls: OrbitControls;
 
-    public dl!: DirectionalLight;
-    public hemiLight!: HemisphereLight;
+    public dl: DirectionalLight;
+    public hemiLight: HemisphereLight;
     public boundingBox!: Box3;
     public boundingBoxMesh!: Box3Helper;
     public tickMarksMesh!: LineSegments;
@@ -143,9 +143,9 @@ class VisGeometry {
     public legacyRenderer: LegacyRenderer;
     public currentSceneAgents: AgentData[];
     public colorsData: Float32Array;
-    public lightsGroup!: Group;
-    public agentPathGroup!: Group;
-    public instancedMeshGroup!: Group;
+    public lightsGroup: Group;
+    public agentPathGroup: Group;
+    public instancedMeshGroup: Group;
     public idColorMapping: Map<number, number>;
     private isIdColorMappingSet: boolean;
     private supportsWebGL2Rendering: boolean;
