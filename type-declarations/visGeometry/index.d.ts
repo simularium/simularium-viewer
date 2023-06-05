@@ -41,13 +41,13 @@ declare class VisGeometry {
     camera: PerspectiveCamera | OrthographicCamera;
     controls: OrbitControls;
     dl: DirectionalLight;
+    hemiLight: HemisphereLight;
     boundingBox: Box3;
     boundingBoxMesh: Box3Helper;
-    tickIntervalLength: number;
     tickMarksMesh: LineSegments;
+    tickIntervalLength: number;
     private boxNearZ;
     private boxFarZ;
-    hemiLight: HemisphereLight;
     renderer: SimulariumRenderer;
     legacyRenderer: LegacyRenderer;
     currentSceneAgents: AgentData[];
@@ -113,10 +113,6 @@ declare class VisGeometry {
     onNewRuntimeGeometryType(geoName: string, displayType: GeometryDisplayType, data: PDBModel | MeshLoadRequest): void;
     private setupControls;
     private updateControlsZoomBounds;
-    /**
-     *   Setup ThreeJS Scene
-     */
-    setupScene(): void;
     resize(width: number, height: number): void;
     setCameraType(ortho: boolean): void;
     reparent(parent?: HTMLElement | null): void;

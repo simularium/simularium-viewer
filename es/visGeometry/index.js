@@ -93,14 +93,14 @@ var VisGeometry = /*#__PURE__*/function () {
     _defineProperty(this, "camera", void 0);
     _defineProperty(this, "controls", void 0);
     _defineProperty(this, "dl", void 0);
+    _defineProperty(this, "hemiLight", void 0);
     _defineProperty(this, "boundingBox", void 0);
     _defineProperty(this, "boundingBoxMesh", void 0);
-    _defineProperty(this, "tickIntervalLength", void 0);
     _defineProperty(this, "tickMarksMesh", void 0);
+    _defineProperty(this, "tickIntervalLength", void 0);
     // front and back of transformed bounds in camera space
     _defineProperty(this, "boxNearZ", void 0);
     _defineProperty(this, "boxFarZ", void 0);
-    _defineProperty(this, "hemiLight", void 0);
     _defineProperty(this, "renderer", void 0);
     _defineProperty(this, "legacyRenderer", void 0);
     _defineProperty(this, "currentSceneAgents", void 0);
@@ -151,18 +151,67 @@ var VisGeometry = /*#__PURE__*/function () {
     // will store data for all agents that are drawing paths
     this.agentPaths = new Map();
     this.fibers = new InstancedFiberGroup();
-    this.scene = new Scene();
-    this.lightsGroup = new Group();
-    this.agentPathGroup = new Group();
-    this.instancedMeshGroup = new Group();
-    this.setupScene();
     this.legacyRenderer = new LegacyRenderer();
     this.renderer = new SimulariumRenderer();
     this.backgroundColor = DEFAULT_BACKGROUND_COLOR;
     this.pathEndColor = this.backgroundColor.clone();
     this.renderer.setBackgroundColor(this.backgroundColor);
+
+    // Set up scene
+
+    this.scene = new Scene();
+    this.lightsGroup = new Group();
+    this.lightsGroup.name = "lights";
+    this.scene.add(this.lightsGroup);
+    this.agentPathGroup = new Group();
+    this.agentPathGroup.name = "agent paths";
+    this.scene.add(this.agentPathGroup);
+    this.instancedMeshGroup = new Group();
+    this.instancedMeshGroup.name = "instanced meshes for agents";
+    this.scene.add(this.instancedMeshGroup);
+    this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
+    this.dl = new DirectionalLight(0xffffff, 0.6);
+    this.dl.position.set(0, 0, 1);
+    this.lightsGroup.add(this.dl);
+    this.hemiLight = new HemisphereLight(0xffffff, 0x000000, 0.5);
+    this.hemiLight.color.setHSL(0.095, 1, 0.75);
+    this.hemiLight.groundColor.setHSL(0.6, 1, 0.6);
+    this.hemiLight.position.set(0, 1, 0);
+    this.lightsGroup.add(this.hemiLight);
+
+    // Set up renderer
+
+    if (WEBGL.isWebGL2Available() === false) {
+      this.renderStyle = RenderStyle.WEBGL1_FALLBACK;
+      this.supportsWebGL2Rendering = false;
+      this.threejsrenderer = new WebGLRenderer({
+        premultipliedAlpha: false
+      });
+    } else {
+      this.renderStyle = RenderStyle.WEBGL2_PREFERRED;
+      this.supportsWebGL2Rendering = true;
+      var canvas = document.createElement("canvas");
+      var context = canvas.getContext("webgl2", {
+        alpha: false
+      });
+      var rendererParams = {
+        canvas: canvas,
+        context: context,
+        premultipliedAlpha: false
+      };
+      this.threejsrenderer = new WebGLRenderer(rendererParams);
+    }
+
+    // set this up after the renderStyle has been set.
+    this.constructInstancedFibers();
+    this.threejsrenderer.setSize(CANVAS_INITIAL_WIDTH, CANVAS_INITIAL_HEIGHT); // expected to change when reparented
+    this.threejsrenderer.setClearColor(this.backgroundColor, 1);
+    this.threejsrenderer.clear();
     this.mlogger = jsLogger.get("visgeometry");
     this.mlogger.setLevel(loggerLevel);
+
+    // Set up cameras
+
     this.cameraDefault = cloneDeep(DEFAULT_CAMERA_SPEC);
     var aspect = CANVAS_INITIAL_WIDTH / CANVAS_INITIAL_HEIGHT;
     this.perspectiveCamera = new PerspectiveCamera(75, aspect, CAMERA_INITIAL_ZNEAR, CAMERA_INITIAL_ZFAR);
@@ -173,17 +222,9 @@ var VisGeometry = /*#__PURE__*/function () {
     this.camera = this.perspectiveCamera;
     this.camera.position.z = DEFAULT_CAMERA_Z_POSITION;
     this.initCameraPosition = this.camera.position.clone();
-    this.dl = new DirectionalLight(0xffffff, 0.6);
-    this.hemiLight = new HemisphereLight(0xffffff, 0x000000, 0.5);
-    this.threejsrenderer = new WebGLRenderer({
-      premultipliedAlpha: false
-    });
-    this.controls = this.setupControls(this.threejsrenderer.domElement);
+    this.controls = this.setupControls();
     this.focusMode = true;
-    this.boundingBox = new Box3(new Vector3(0, 0, 0), new Vector3(100, 100, 100));
-    this.boundingBoxMesh = new Box3Helper(this.boundingBox, BOUNDING_BOX_COLOR);
     this.tickIntervalLength = 0;
-    this.tickMarksMesh = new LineSegments();
     this.boxNearZ = 0;
     this.boxFarZ = 100;
     this.currentSceneAgents = [];
@@ -192,9 +233,7 @@ var VisGeometry = /*#__PURE__*/function () {
     this.lodDistanceStops = [100, 200, 400, Number.MAX_VALUE];
     this.agentsWithPdbsToDraw = [];
     this.agentPdbsToDraw = [];
-    this.onError = function /*errorMessage*/ () {
-      return noop();
-    };
+    this.onError = noop;
   }
   _createClass(VisGeometry, [{
     key: "setOnErrorCallBack",
@@ -691,9 +730,9 @@ var VisGeometry = /*#__PURE__*/function () {
     }
   }, {
     key: "setupControls",
-    value: function setupControls(element) {
+    value: function setupControls() {
       var _this2 = this;
-      this.controls = new OrbitControls(this.camera, element);
+      this.controls = new OrbitControls(this.camera, this.threejsrenderer.domElement);
       this.controls.addEventListener("change", function () {
         if (_this2.gui) {
           _this2.gui.refresh();
@@ -717,59 +756,6 @@ var VisGeometry = /*#__PURE__*/function () {
       // Orthographic camera limits - based on zoom level
       this.controls.maxZoom = MAX_ZOOM;
       this.controls.minZoom = MIN_ZOOM;
-    }
-
-    /**
-     *   Setup ThreeJS Scene
-     */
-  }, {
-    key: "setupScene",
-    value: function setupScene() {
-      this.scene = new Scene();
-      this.lightsGroup = new Group();
-      this.lightsGroup.name = "lights";
-      this.scene.add(this.lightsGroup);
-      this.agentPathGroup = new Group();
-      this.agentPathGroup.name = "agent paths";
-      this.scene.add(this.agentPathGroup);
-      this.instancedMeshGroup = new Group();
-      this.instancedMeshGroup.name = "instanced meshes for agents";
-      this.scene.add(this.instancedMeshGroup);
-      this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
-      this.dl = new DirectionalLight(0xffffff, 0.6);
-      this.dl.position.set(0, 0, 1);
-      this.lightsGroup.add(this.dl);
-      this.hemiLight = new HemisphereLight(0xffffff, 0x000000, 0.5);
-      this.hemiLight.color.setHSL(0.095, 1, 0.75);
-      this.hemiLight.groundColor.setHSL(0.6, 1, 0.6);
-      this.hemiLight.position.set(0, 1, 0);
-      this.lightsGroup.add(this.hemiLight);
-      if (WEBGL.isWebGL2Available() === false) {
-        this.renderStyle = RenderStyle.WEBGL1_FALLBACK;
-        this.supportsWebGL2Rendering = false;
-        this.threejsrenderer = new WebGLRenderer({
-          premultipliedAlpha: false
-        });
-      } else {
-        this.renderStyle = RenderStyle.WEBGL2_PREFERRED;
-        this.supportsWebGL2Rendering = true;
-        var canvas = document.createElement("canvas");
-        var context = canvas.getContext("webgl2", {
-          alpha: false
-        });
-        var rendererParams = {
-          canvas: canvas,
-          context: context,
-          premultipliedAlpha: false
-        };
-        this.threejsrenderer = new WebGLRenderer(rendererParams);
-      }
-
-      // set this up after the renderStyle has been set.
-      this.constructInstancedFibers();
-      this.threejsrenderer.setSize(CANVAS_INITIAL_WIDTH, CANVAS_INITIAL_HEIGHT); // expected to change when reparented
-      this.threejsrenderer.setClearColor(this.backgroundColor, 1);
-      this.threejsrenderer.clear();
     }
   }, {
     key: "resize",
@@ -822,7 +808,7 @@ var VisGeometry = /*#__PURE__*/function () {
         return;
       }
       parent.appendChild(this.threejsrenderer.domElement);
-      this.setupControls(this.threejsrenderer.domElement);
+      this.setupControls();
       this.resize(Number(parent.dataset.width), Number(parent.dataset.height));
       this.threejsrenderer.setClearColor(this.backgroundColor, 1.0);
       this.threejsrenderer.clear();
