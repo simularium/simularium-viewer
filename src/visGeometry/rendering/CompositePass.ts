@@ -201,8 +201,6 @@ class CompositePass {
                 vec3 color;
                 color = hcl2rgb(vec3(h, c, l));
 
-                // color = max(color, vec3(0.0,0.0,0.0));
-                // color = min(color, vec3(1.0,1.0,1.0));
                 color = clamp(color, vec3(0.0,0.0,0.0), vec3(1.0,1.0,1.0));
 
                 // The following code does nothing because of the clamping
