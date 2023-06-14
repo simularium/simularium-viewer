@@ -149,7 +149,7 @@ export class RemoteSimulator implements ISimulator {
 
         this.webSocketClient.addJsonMessageHandler(
             NetMessageEnum.ID_HEARTBEAT_PING,
-            this.onHeartbeatPing
+            (msg) => this.onHeartbeatPing(msg)
         );
 
         this.webSocketClient.addJsonMessageHandler(
