@@ -489,14 +489,24 @@ class VisData {
                 this.netBuffer.byteLength
             );
 
-            const frames = VisData.parseBinary(tmp);
-            if (
-                frames.frameDataArray.length > 0 &&
-                frames.frameDataArray[0].frameNumber === 0
-            ) {
-                this.clearCache(); // new data has arrived
+            try {
+                const frames = VisData.parseBinary(tmp);
+                if (
+                    frames.frameDataArray.length > 0 &&
+                    frames.frameDataArray[0].frameNumber === 0
+                ) {
+                    this.clearCache(); // new data has arrived
+                }
+                this.addFramesToCache(frames);
+            } catch (err) {
+                // TODO: There are frequent errors due to a race condition that
+                // occurs when jumping to a new time if a partial frame is received
+                // after netBuffer is cleared. When binary messages are updated to
+                // include frame num for partial frames in their header, we can
+                // ensure that netBuffer is being combined with the matching frame,
+                // and this try/catch can be removed
+                console.log(err);
             }
-            this.addFramesToCache(frames);
 
             // Save remaining data for later processing
             const remainder = data.slice(eof + EOF_PHRASE.length);
