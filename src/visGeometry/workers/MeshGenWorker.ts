@@ -11,6 +11,35 @@ class MeshGenWorker {
         // pass the sphere mesh to consecutive CSG union operations
         // return the final mesh
 
+        /////////////////////////////////////////////////////////////////////
+        // NOTES
+        /////////////////////////////////////////////////////////////////////
+        // we want to generate the "shell mesh" of all these spheres
+        // TODO
+        // 1. add an implementation that generates a metaball mesh
+        // 2. try to test the three-bvh-csg library (was having incompatibility probs with threejs versions)
+        // 3. find some other algo to do quick mesh gen from point cloud (where the points have radii).
+
+        // ignoring performance.  we want to see transparent single objects with as little overdraw/overblending as possible
+
+        // TODO unrelated to this code.
+        // 1. brute force render one object at a time to buffer, only keep frontmost pixels
+        // 2. blend onto the composite buffer
+        // 3. clear intermediate buffer and go to step 1
+
+        // TODO "stochastic transparency"
+        // on the premise that some kind of random sampling of alphas combined with a max/min blending op
+        // and maybe using a temp intermediate buffer (?)
+        // will give a good approximation of the transparency we want
+
+        // render all xparent into buffer with depth testing so you get the frontmost pixels only of transparents
+        // but also depth tested against the opaque objects (because they were already rendered into the depth buffer first)
+        // two options: render object ids into that buffer and then blend in a composite that does color+alpha lookup.
+        // OR render color and alpha directly without blending, and then blend directly into the main buffer
+        /////////////////////////////////////////////////////////////////////
+        // END NOTES
+        /////////////////////////////////////////////////////////////////////
+
         let result: Mesh = new Mesh(new SphereGeometry(1, 8, 8));
         result.position.set(data[0], data[1], data[2]);
         result.updateMatrix();
