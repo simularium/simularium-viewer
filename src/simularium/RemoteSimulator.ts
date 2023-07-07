@@ -28,13 +28,16 @@ export class RemoteSimulator implements ISimulator {
     public onTrajectoryDataArrive: (NetMessage) => void;
     protected lastRequestedFile: string;
     public handleError: (error: FrontEndError) => void | (() => void);
+    protected useOctopus: boolean;
 
     public constructor(
         webSocketClient: WebsocketClient,
+        useOctopus: boolean,
         errorHandler?: (error: FrontEndError) => void
     ) {
         this.webSocketClient = webSocketClient;
         this.lastRequestedFile = "";
+        this.useOctopus = useOctopus;
         this.handleError =
             errorHandler ||
             (() => {
@@ -67,6 +70,10 @@ export class RemoteSimulator implements ISimulator {
 
     public socketIsValid(): boolean {
         return this.webSocketClient.socketIsValid();
+    }
+
+    public getLastRequestedFile(): string {
+        return this.lastRequestedFile;
     }
 
     /**
@@ -137,12 +144,12 @@ export class RemoteSimulator implements ISimulator {
     private registerJsonMessageHandlers(): void {
         this.webSocketClient.addJsonMessageHandler(
             NetMessageEnum.ID_TRAJECTORY_FILE_INFO,
-            this.onTrajectoryFileInfoArrive
+            (msg) => this.onTrajectoryFileInfoArrive(msg)
         );
 
         this.webSocketClient.addJsonMessageHandler(
             NetMessageEnum.ID_HEARTBEAT_PING,
-            this.onHeartbeatPing
+            (msg) => this.onHeartbeatPing(msg)
         );
 
         this.webSocketClient.addJsonMessageHandler(
@@ -152,17 +159,17 @@ export class RemoteSimulator implements ISimulator {
 
         this.webSocketClient.addJsonMessageHandler(
             NetMessageEnum.ID_UPDATE_TIME_STEP,
-            this.updateTimestep
+            (_msg) => this.updateTimestep()
         );
 
         this.webSocketClient.addJsonMessageHandler(
             NetMessageEnum.ID_UPDATE_RATE_PARAM,
-            this.updateRateParam
+            (_msg) => this.updateRateParam()
         );
 
         this.webSocketClient.addJsonMessageHandler(
             NetMessageEnum.ID_MODEL_DEFINITION,
-            this.onModelDefinitionArrive
+            (_msg) => this.onModelDefinitionArrive()
         );
     }
 
@@ -269,11 +276,19 @@ export class RemoteSimulator implements ISimulator {
 
     public startRemoteTrajectoryPlayback(fileName: string): Promise<void> {
         this.lastRequestedFile = fileName;
-        const jsonData = {
-            msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
-            mode: PlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
-            "file-name": fileName,
-        };
+        let jsonData;
+        if (this.useOctopus) {
+            jsonData = {
+                msgType: NetMessageEnum.ID_INIT_TRAJECTORY_FILE,
+                fileName: fileName,
+            };
+        } else {
+            jsonData = {
+                msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
+                mode: PlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
+                "file-name": fileName,
+            };
+        }
 
         // begins a stream which will include a TrajectoryFileInfo and a series of VisDataMessages
         // Note that it is possible for the first vis data to arrive before the TrajectoryFileInfo...
@@ -291,14 +306,20 @@ export class RemoteSimulator implements ISimulator {
 
     public pauseRemoteSim(): void {
         this.webSocketClient.sendWebSocketRequest(
-            { msgType: NetMessageEnum.ID_VIS_DATA_PAUSE },
+            {
+                msgType: NetMessageEnum.ID_VIS_DATA_PAUSE,
+                fileName: this.lastRequestedFile,
+            },
             "Pause Simulation"
         );
     }
 
     public resumeRemoteSim(): void {
         this.webSocketClient.sendWebSocketRequest(
-            { msgType: NetMessageEnum.ID_VIS_DATA_RESUME },
+            {
+                msgType: NetMessageEnum.ID_VIS_DATA_RESUME,
+                fileName: this.lastRequestedFile,
+            },
             "Resume Simulation"
         );
     }
@@ -308,7 +329,10 @@ export class RemoteSimulator implements ISimulator {
             return;
         }
         this.webSocketClient.sendWebSocketRequest(
-            { msgType: NetMessageEnum.ID_VIS_DATA_ABORT },
+            {
+                msgType: NetMessageEnum.ID_VIS_DATA_ABORT,
+                fileName: this.lastRequestedFile,
+            },
             "Abort Simulation"
         );
     }
@@ -319,6 +343,7 @@ export class RemoteSimulator implements ISimulator {
                 msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
                 mode: PlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
                 frameNumber: startFrameNumber,
+                fileName: this.lastRequestedFile,
             },
             "Request Single Frame"
         );
@@ -329,12 +354,14 @@ export class RemoteSimulator implements ISimulator {
             {
                 msgType: NetMessageEnum.ID_GOTO_SIMULATION_TIME,
                 time: time,
+                fileName: this.lastRequestedFile,
             },
             "Load single frame at specified Time"
         );
     }
 
     public requestTrajectoryFileInfo(fileName: string): void {
+        this.lastRequestedFile = fileName;
         this.webSocketClient.sendWebSocketRequest(
             {
                 msgType: NetMessageEnum.ID_INIT_TRAJECTORY_FILE,

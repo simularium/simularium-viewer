@@ -12,6 +12,7 @@ import {
     FileReturn,
     FILE_STATUS_SUCCESS,
     FILE_STATUS_FAIL,
+    PlotConfig,
 } from "../simularium/types";
 
 import { ClientSimulator } from "../simularium/ClientSimulator";
@@ -22,6 +23,7 @@ import { FrontEndError } from "../simularium/FrontEndError";
 import type { ISimulariumFile } from "../simularium/ISimulariumFile";
 import { WebsocketClient } from "../simularium/WebsocketClient";
 import { TrajectoryType } from "../constants";
+import { RemoteMetricsCalculator } from "../simularium/RemoteMetricsCalculator";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
@@ -44,6 +46,8 @@ interface SimulatorConnectionParams {
 
 export default class SimulariumController {
     public simulator?: ISimulator;
+    public remoteWebsocketClient?: WebsocketClient;
+    public metricsCalculator?: RemoteMetricsCalculator;
     public visData: VisData;
     public visGeometry: VisGeometry | undefined;
     public tickIntervalLength: number;
@@ -140,7 +144,12 @@ export default class SimulariumController {
                 netConnectionConfig,
                 this.onError
             );
-            this.simulator = new RemoteSimulator(webSocketClient, this.onError);
+            this.remoteWebsocketClient = webSocketClient;
+            this.simulator = new RemoteSimulator(
+                webSocketClient,
+                !!netConnectionConfig.useOctopus,
+                this.onError
+            );
             this.simulator.setTrajectoryDataHandler(
                 this.visData.parseAgentsFromNetData.bind(this.visData)
             );
@@ -402,6 +411,61 @@ export default class SimulariumController {
         return this.playBackFile;
     }
 
+    private setupMetricsCalculator(
+        config: NetConnectionParams
+    ): RemoteMetricsCalculator {
+        const webSocketClient =
+            this.remoteWebsocketClient &&
+            this.remoteWebsocketClient.socketIsValid()
+                ? this.remoteWebsocketClient
+                : new WebsocketClient(config, this.onError);
+        return new RemoteMetricsCalculator(webSocketClient, this.onError);
+    }
+
+    public async getMetrics(config: NetConnectionParams): Promise<void> {
+        if (
+            !this.metricsCalculator ||
+            !this.metricsCalculator.socketIsValid()
+        ) {
+            this.metricsCalculator = this.setupMetricsCalculator(config);
+            await this.metricsCalculator.connectToRemoteServer();
+        }
+        this.metricsCalculator.getAvailableMetrics();
+    }
+
+    public async getPlotData(
+        config: NetConnectionParams,
+        requestedPlots: PlotConfig[]
+    ): Promise<void> {
+        if (!this.simulator) {
+            return;
+        }
+
+        if (
+            !this.metricsCalculator ||
+            !this.metricsCalculator.socketIsValid()
+        ) {
+            this.metricsCalculator = this.setupMetricsCalculator(config);
+            await this.metricsCalculator.connectToRemoteServer();
+        }
+
+        if (this.simulator instanceof LocalFileSimulator) {
+            const simulariumFile: ISimulariumFile =
+                this.simulator.getSimulariumFile();
+            this.metricsCalculator.getPlotData(
+                simulariumFile["simulariumFile"],
+                requestedPlots
+            );
+        } else if (this.simulator instanceof RemoteSimulator) {
+            // we don't have the simularium file, so we'll just send an empty data object
+            this.metricsCalculator.getPlotData(
+                {},
+                requestedPlots,
+                this.simulator.getLastRequestedFile()
+            );
+        }
+    }
+
     public disableNetworkCommands(): void {
         this.networkEnabled = false;
 
@@ -441,45 +505,35 @@ export default class SimulariumController {
      * these functions will be callable.
      */
     public zoomIn(): void {
-        if (this.visGeometry) {
-            this.visGeometry.zoomIn();
-        }
+        this.visGeometry?.zoomIn();
     }
 
     public zoomOut(): void {
-        if (this.visGeometry) {
-            this.visGeometry.zoomOut();
-        }
+        this.visGeometry?.zoomOut();
     }
 
     public resetCamera(): void {
-        if (this.visGeometry) {
-            this.visGeometry.resetCamera();
-        }
+        this.visGeometry?.resetCamera();
     }
 
     public centerCamera(): void {
-        if (this.visGeometry) {
-            this.visGeometry.centerCamera();
-        }
+        this.visGeometry?.centerCamera();
     }
 
     public reOrientCamera(): void {
-        if (this.visGeometry) {
-            this.visGeometry.reOrientCamera();
-        }
+        this.visGeometry?.reOrientCamera();
     }
 
     public setPanningMode(pan: boolean): void {
-        if (this.visGeometry) {
-            this.visGeometry.setPanningMode(pan);
-        }
+        this.visGeometry?.setPanningMode(pan);
     }
 
     public setFocusMode(focus: boolean): void {
-        if (this.visGeometry) {
-            this.visGeometry.setFocusMode(focus);
-        }
+        this.visGeometry?.setFocusMode(focus);
+    }
+
+    public setCameraType(ortho: boolean): void {
+        this.visGeometry?.setCameraType(ortho);
     }
 
     public setTransparentAgentOpacity(opacity: number): void {

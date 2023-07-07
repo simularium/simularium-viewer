@@ -19,7 +19,7 @@ export interface GeometryInstanceContainer {
         typeId: number,
         lodScale: number,
         subPoints: number[]
-    ) => Object3D;
+    ) => void;
     instanceCount: () => number;
     getShaders: () => MRTShaders;
 }

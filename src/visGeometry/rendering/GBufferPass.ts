@@ -12,9 +12,12 @@ import { GeometryInstanceContainer } from "../types";
 import {
     Color,
     Group,
+    Mesh,
+    OrthographicCamera,
+    PerspectiveCamera,
+    Points,
     Scene,
     WebGLRenderer,
-    PerspectiveCamera,
     WebGLMultipleRenderTargets,
 } from "three";
 
@@ -72,7 +75,7 @@ class GBufferPass {
     public render(
         renderer: WebGLRenderer,
         scene: Scene,
-        camera: PerspectiveCamera,
+        camera: PerspectiveCamera | OrthographicCamera,
         gbuffer: WebGLMultipleRenderTargets
     ): void {
         const c = renderer.getClearColor(new Color()).clone();
@@ -114,7 +117,7 @@ class GBufferPass {
             this.fibers.setRenderPass();
             for (let i = 0; i < this.meshTypes.length; ++i) {
                 setRenderPass(
-                    this.meshTypes[i].getMesh(),
+                    this.meshTypes[i].getMesh() as Mesh | Points,
                     this.meshTypes[i].getShaders()
                 );
             }

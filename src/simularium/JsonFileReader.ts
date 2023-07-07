@@ -50,4 +50,10 @@ export default class JsonFileReader implements ISimulariumFile {
     getPlotData(): Plot[] {
         return this.simulariumFile.plotData;
     }
+
+    getAsBlob(): Blob {
+        return new Blob([JSON.stringify(this.simulariumFile)], {
+            type: "text/plain;charset=utf-8",
+        });
+    }
 }
