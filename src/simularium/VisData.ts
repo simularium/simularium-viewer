@@ -501,10 +501,12 @@ class VisData {
             } catch (err) {
                 // TODO: There are frequent errors due to a race condition that
                 // occurs when jumping to a new time if a partial frame is received
-                // after netBuffer is cleared. When binary messages are updated to
-                // include frame num for partial frames in their header, we can
-                // ensure that netBuffer is being combined with the matching frame,
-                // and this try/catch can be removed
+                // after netBuffer is cleared. We don't want this to trigger a front
+                // end error, it's best to catch it here and just move on, as the
+                // issue should be contained to just one frame. When binary messages
+                // are updated to include frame num for partial frames in their header,
+                // we can ensure that netBuffer is being combined with the matching
+                // frame, and this try/catch can be removed
                 console.log(err);
             }
 
