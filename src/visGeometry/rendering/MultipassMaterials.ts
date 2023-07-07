@@ -3,6 +3,7 @@ import {
     Material,
     Matrix4,
     Mesh,
+    Object3D,
     Points,
     RawShaderMaterial,
     Scene,
@@ -40,11 +41,12 @@ export function updateOpacity(s: MRTShaders, opacity: number): void {
 }
 
 export function setRenderPass(
-    obj: Mesh | Points,
+    obj: Object3D,
     shaderSet: MRTShaders,
     transparent = false
-): Material {
-    obj.material = transparent ? shaderSet.transMat : shaderSet.mat;
+): void {
+    (obj as Mesh | Points).material =
+        transparent && shaderSet.transMat ? shaderSet.transMat : shaderSet.mat;
 }
 
 export function setSceneRenderPass(

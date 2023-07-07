@@ -231,7 +231,9 @@ class InstancedFiber {
         );
 
         this.shaderSet.mat.uniforms.curveData.value = this.curveData;
-        this.shaderSet.transMat.uniforms.curveData.value = this.curveData;
+        if (this.shaderSet.transMat) {
+            this.shaderSet.transMat.uniforms.curveData.value = this.curveData;
+        }
 
         // make new array,
         // copy old array into it,

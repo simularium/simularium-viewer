@@ -1,6 +1,7 @@
 import {
     DataTexture,
     Group,
+    OrthographicCamera,
     PerspectiveCamera,
     Scene,
     WebGLRenderer,
@@ -59,8 +60,8 @@ class TransparencyPass {
     public render(
         renderer: WebGLRenderer,
         scene: Scene,
-        camera: PerspectiveCamera,
-        target: WebGLRenderTarget
+        camera: PerspectiveCamera | OrthographicCamera,
+        target: WebGLRenderTarget | null
     ): void {
         this.instancedMeshGroup.visible = false;
         this.transparentInstancedMeshGroup.visible = true;

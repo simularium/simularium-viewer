@@ -80,9 +80,6 @@ class SimulariumRenderer {
     public ssaoBufferBlurred: WebGLRenderTarget;
     public ssaoBufferBlurred2: WebGLRenderTarget;
     private parameters: SimulariumRenderParameters;
-    private instancedMeshGroup: Group;
-    private transparentInstancedMeshGroup: Group;
-    private transparentMeshTypes: GeometryInstanceContainer[];
     private boundsNear: number;
     private boundsFar: number;
 
@@ -152,8 +149,6 @@ class SimulariumRenderer {
         this.gbuffer.texture[POSITIONBUFFER].name = "position";
 
         this.hitTestHelper = new HitTestHelper();
-
-        this.transparentMeshTypes = [];
 
         // intermediate blurring buffer
         this.blurIntermediateBuffer = new WebGLRenderTarget(2, 2, {
@@ -373,9 +368,6 @@ class SimulariumRenderer {
         meshTypes: GeometryInstanceContainer[],
         transparentMeshTypes: GeometryInstanceContainer[]
     ): void {
-        this.instancedMeshGroup = instancedMeshGroup;
-        this.transparentInstancedMeshGroup = transparentInstancedMeshGroup;
-        this.transparentMeshTypes = transparentMeshTypes;
         this.gbufferPass.setMeshGroups(
             instancedMeshGroup,
             transparentInstancedMeshGroup,
