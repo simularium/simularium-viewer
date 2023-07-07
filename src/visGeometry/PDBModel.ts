@@ -4,13 +4,17 @@ import * as Comlink from "comlink";
 import parsePdb from "parse-pdb";
 import {
     Box3,
+    BufferAttribute,
     BufferGeometry,
     Float32BufferAttribute,
+    Mesh,
     Points,
+    SphereGeometry,
     Vector3,
 } from "three";
 
 import type { KMeansWorkerType } from "./workers/KMeansWorker";
+import type { MeshGenWorkerType } from "./workers/MeshGenWorker";
 import { getObject } from "./cifparser";
 
 import KMeans from "./rendering/KMeans3d";
@@ -78,6 +82,8 @@ class PDBModel {
     // and if it is still initializing, it should be dropped/ignored as soon as processing is done
     private _cancelled: boolean;
 
+    private csgMesh: Mesh;
+
     public constructor(filePath: string) {
         this.filePath = filePath;
         this.name = filePath;
@@ -86,6 +92,7 @@ class PDBModel {
         this.lodSizes = [];
         this._cancelled = false;
         this.bounds = new Box3();
+        this.csgMesh = new Mesh();
     }
 
     public set cancelled(cancelled: boolean) {
@@ -398,6 +405,50 @@ class PDBModel {
                 ),
             };
         }
+
+        const lastlod = sizes.length - 1;
+        // Enqueue this calculation
+        // expect to get back a mesh vertex buffer and index buffer
+        const retMeshData: {
+            position: Float32Array;
+            normal: Float32Array;
+            uv: Float32Array;
+        } = await TaskQueue.enqueue<{
+            position: Float32Array;
+            normal: Float32Array;
+            uv: Float32Array;
+        }>(
+            // allData is a flat array of 3d points
+            () => this.processMeshGenLod(retData[lastlod])
+        );
+
+        const g = new BufferGeometry();
+        g.setAttribute(
+            "position",
+            new Float32BufferAttribute(retMeshData.position.slice(), 3)
+        );
+        g.setAttribute(
+            "normal",
+            new Float32BufferAttribute(retMeshData.normal.slice(), 3)
+        );
+        g.setAttribute(
+            "uv",
+            new Float32BufferAttribute(retMeshData.uv.slice(), 2)
+        );
+
+        this.lods[lastlod + 1].instances = new InstancedMesh(
+            InstanceType.MESH,
+            g,
+            this.name + "_LOD" + (lastlod + 1),
+            0
+        );
+
+        this.lods[lastlod + 1].transparentInstances = new InstancedMesh(
+            InstanceType.MESH,
+            g,
+            this.name + "_LOD" + (lastlod + 1) + "_TRANS",
+            0
+        );
     }
 
     public numLODs(): number {
@@ -447,6 +498,22 @@ class PDBModel {
         const retData = await workerobj.run(
             n,
             sizes,
+            Comlink.transfer(allData, [allData.buffer])
+        );
+
+        worker.terminate();
+        return retData;
+    }
+
+    private async processMeshGenLod(allData) {
+        // https://webpack.js.org/guides/web-workers/#syntax
+        const worker = new Worker(
+            new URL("./workers/MeshGenWorker", import.meta.url)
+        );
+        const meshGenWorkerClass = Comlink.wrap<MeshGenWorkerType>(worker);
+        const workerobj = await new meshGenWorkerClass();
+
+        const retData = await workerobj.run(
             Comlink.transfer(allData, [allData.buffer])
         );
 
