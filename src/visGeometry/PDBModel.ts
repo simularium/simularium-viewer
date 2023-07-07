@@ -436,6 +436,7 @@ class PDBModel {
             new Float32BufferAttribute(retMeshData.uv.slice(), 2)
         );
 
+        ////////// HACK TO FORCE NEW MESH TO SHOW UP //////////
         this.lods[lastlod + 1].instances = new InstancedMesh(
             InstanceType.MESH,
             g,
