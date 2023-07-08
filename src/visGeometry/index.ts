@@ -37,7 +37,6 @@ import VisTypes from "../simularium/VisTypes";
 import PDBModel from "./PDBModel";
 import AgentPath from "./agentPath";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
-import { AOSettings } from "./rendering/SimulariumRenderer";
 
 import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC } from "../constants";
 import {
@@ -395,14 +394,6 @@ class VisGeometry {
         return spec;
     }
 
-    public applyAO(ao: AOSettings): void {
-        this.renderer.applyAO(ao);
-    }
-
-    public setOpacity(opacity: number): void {
-        this.renderer.setOpacity(opacity);
-    }
-
     public setupGui(container?: HTMLElement): void {
         this.gui = new Pane({
             title: "Advanced Settings",
@@ -498,6 +489,7 @@ class VisGeometry {
             anchor.href = dataUrl;
             anchor.download = "screenshot.png";
             anchor.click();
+            anchor.remove();
         });
         this.gui.addSeparator();
         const lodFolder = this.gui.addFolder({ title: "LoD", expanded: false });
@@ -711,6 +703,10 @@ class VisGeometry {
     }
 
     public setFollowObject(obj: number): void {
+        if (this.visAgentInstances.size === 0) {
+            return;
+        }
+
         if (this.followObjectId !== NO_AGENT) {
             const visAgent = this.visAgentInstances.get(this.followObjectId);
             if (!visAgent) {
@@ -1064,7 +1060,11 @@ class VisGeometry {
                 transparentMeshTypes
             );
             this.renderer.setFollowedInstance(this.followObjectId);
-            this.renderer.setNearFar(this.boxNearZ, this.boxFarZ);
+            //get bounding box max dim
+            const v = new Vector3();
+            this.boundingBox.getSize(v);
+            const maxDim = Math.max(v.x, v.y, v.z);
+            this.renderer.setNearFar(this.boxNearZ, this.boxFarZ, maxDim);
             this.boundingBoxMesh.visible = false;
             this.tickMarksMesh.visible = false;
             this.agentPathGroup.visible = false;
@@ -1906,7 +1906,7 @@ class VisGeometry {
             const agent = this.visAgentInstances.get(id);
             if (agent) {
                 color = agent.color.clone();
-            } else {
+            } else if (this.visAgentInstances.size > 0) {
                 console.error("COULD NOT FIND AGENT INSTANCE " + id);
             }
         }

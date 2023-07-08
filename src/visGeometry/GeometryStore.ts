@@ -505,8 +505,8 @@ class GeometryStore {
                 // on updatescene, add instances
                 // on render, pass the group of marchingcubes objects
                 geometry = {
-                    // null is only acceptable for SphereGroup
-                    mesh: null as unknown as Object3D,
+                    // the mesh should be ignored for SphereGroup
+                    mesh: new Object3D(),
                     cancelled: false,
                     instances: new MetaballMesh(lookupKey),
                     transparentInstances: new MetaballMesh(lookupKey),

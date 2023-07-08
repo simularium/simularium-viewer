@@ -18,7 +18,6 @@ class CompositePass {
             uniforms: {
                 colorTex: { value: null },
                 ssaoTex1: { value: null },
-                ssaoTex2: { value: null },
                 // colors indexed by particle type id
                 colorsBuffer: { value: null },
                 backgroundColor: { value: new Color(1, 1, 1) },
@@ -33,8 +32,8 @@ class CompositePass {
                     : { value: new Vector3(1.0, 0.0, 0.2) },
                 zNear: { value: 0.1 },
                 zFar: { value: 1000 },
-                atomicBeginDistance: { value: 150 },
-                chainBeginDistance: { value: 300 },
+                atomicBeginDistance: { value: 75 },
+                chainBeginDistance: { value: 150 },
                 followedInstance: { value: -1 },
             },
             fragmentShader: `
@@ -42,10 +41,9 @@ class CompositePass {
 
             uniform sampler2D colorTex;
             uniform sampler2D ssaoTex1;
-            uniform sampler2D ssaoTex2;
 
             uniform sampler2D colorsBuffer;
-            
+
             uniform float zNear;
             uniform float zFar;
             uniform vec3 backgroundColor;
@@ -53,10 +51,10 @@ class CompositePass {
 
             // a single instance to get a special highlight
             uniform float followedInstance;
-            
+
             uniform float atomicBeginDistance; // = 100.0;
             uniform float chainBeginDistance; // = 150.0;
-                                                
+
             const float HCLgamma_ = 3.0;
             const float HCLy0_ = 100.0;
             const float HCLmaxL_ = 0.530454533953517;
@@ -121,14 +119,14 @@ class CompositePass {
               HCL.z = mix(U, V, Q) / (HCLmaxL_ * 2.0);
               return HCL;
             }
-                        
+
             float LinearEyeDepth(float z_b)
             {
                 float z_n = 2.0 * z_b - 1.0;
                 float z_e = 2.0 * zNear * zFar / (zFar + zNear - z_n * (zFar - zNear));
                 return z_e;
             }
-            
+
             void main(void)
             {
                 vec2 texCoords = vUv;
@@ -140,12 +138,12 @@ class CompositePass {
                     discard;
                 }
                 float occ1 = texture(ssaoTex1, texCoords).r;
-                float occ2 = texture(ssaoTex2, texCoords).r;
+
                 float instanceId = (col0.y);
-            
+
                 if(instanceId < 0.0)
                     discard;
-            
+
                 // Subtracting 1 because we added 1 before setting this, to account for id 0 being highlighted.
                 // rounding because on some platforms (at least one nvidia+windows) int(abs(...)) is returning values that fluctuate
                 int agentColorIndex = int(round(abs(col0.x))-1.0);
@@ -157,57 +155,70 @@ class CompositePass {
 
                 float eyeDepth = -col0.z;
 
+                // atomColor is the "true" color
                 vec3 atomColor = col.xyz;
-            
-                // background color as HCL
-                vec3 bghcl = rgb2hcl(backgroundColor);
 
                 //inital Hue-Chroma-Luminance
 
                 // atom color in HCL
-                vec3 hcl = rgb2hcl(col.xyz);
+                vec3 hcl = rgb2hcl(col.xyz * occ1);
                 float h = hcl.r;
                 float c = hcl.g;
                 float l = hcl.b;
 
+                // background color as HCL
+                vec3 bghcl = rgb2hcl(backgroundColor);
                 // per-pixel BG is related to atom color
                 bghcl = mix(bghcl, hcl, bgHCLoffset);
                 h = bghcl.r;
                 c = bghcl.g;
                 l = bghcl.b;
 
-                // chainBeginDistance should be > atomicBeginDistance
+                // distance ranges:
+                // 0---near-----atomBeginDistance------chainBeginDistance------far
 
+                // anything farther than chainBeginDistance will get the bg color
+
+                // chainBeginDistance should be > atomicBeginDistance
                 if(eyeDepth < chainBeginDistance)
                 {
                     float cc = max(eyeDepth - atomicBeginDistance, 0.0);
                     float dd = chainBeginDistance - atomicBeginDistance;
-                    float ddd = min(1.0, max(cc/dd, 0.0));
-                    ddd = (1.0-(ddd));
-                    l = mix(bghcl.z, hcl.z, ddd);
-                    c = mix(bghcl.y, hcl.y, ddd);
-                    h = mix(bghcl.x, hcl.x, ddd);
+                    // t is 0.0 at atomicBeginDistance, 1.0 at chainBeginDistance
+                    // interpolate from hcl at near atomBeginDistance,
+                    // to bghcl at far chainBeginDistance.
+                    // beyond chainBeginDistance, color will be bghcl
+                    float t = cc/dd;
+                    t = clamp(t, 0.0, 1.0);
+                    l = mix(hcl.z, bghcl.z, t);
+                    c = mix(hcl.y, bghcl.y, t);
+                    h = mix(hcl.x, bghcl.x, t);
                 }
-                        
+
+                // h,c,l now contains current color.
+
                 vec3 color;
                 color = hcl2rgb(vec3(h, c, l));
 
-                color = max(color, vec3(0.0,0.0,0.0));
-                color = min(color, vec3(1.0,1.0,1.0));
-                
-                if(eyeDepth < atomicBeginDistance)
-                {
-                    float t = (eyeDepth/atomicBeginDistance);
-                    t = 1.0 - clamp(t, 0.0, 1.0);
-                    // inside of atomicBeginDistance:
-                    // near is atomColor, far is color.xyz
-                    // linear RGB interp? not HCL?
-                    color.xyz = mix(color.xyz, atomColor, t);
-                    //color.xyz = atomColor;
-                    //color.xyz = vec3(0.0, 1.0, 0.0);
-                }
-            
-                gl_FragColor = vec4( occ1 * occ2 * color.xyz, 1.0);
+                color = clamp(color, vec3(0.0,0.0,0.0), vec3(1.0,1.0,1.0));
+
+                // The following code does nothing because of the clamping
+                // nothing will be interpolated and we end up with color
+                // being the atom color.
+                // if(eyeDepth < atomicBeginDistance)
+                // {
+                //     // small t = near, large t = far(close to atomBeginDistance)
+                //     float t = (eyeDepth/atomicBeginDistance);
+                //     t = clamp(t, 0.0, 1.0);
+                //     // inside of atomicBeginDistance:
+                //     // near is atomColor, far is color.xyz
+                //     // linear RGB interp? not HCL?
+                //     color.xyz = mix(atomColor, color.xyz, t);
+                //     //color.xyz = atomColor;
+                //     //color.xyz = vec3(0.0, 1.0, 0.0);
+                // }
+                //gl_FragColor = vec4(occ,occ,occ,1.0);
+                gl_FragColor = vec4( color.xyz , 1.0);
             }
             `,
         });
@@ -255,7 +266,6 @@ class CompositePass {
 
         this.pass.material.uniforms.colorTex.value = colorBuffer;
         this.pass.material.uniforms.ssaoTex1.value = ssaoBuffer1.texture;
-        this.pass.material.uniforms.ssaoTex2.value = ssaoBuffer2.texture;
 
         // const c = renderer.getClearColor().clone();
         // const a = renderer.getClearAlpha();
