@@ -118,7 +118,6 @@ class Viewport extends React.Component<
 
         this.visGeometry = new VisGeometry(loggerLevel);
         this.props.simulariumController.visData.clearCache();
-        this.visGeometry.setupScene();
         this.visGeometry.createMaterials(props.agentColors);
         this.vdomRef = React.createRef();
         this.lastRenderTime = Date.now();

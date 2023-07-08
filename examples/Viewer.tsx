@@ -30,14 +30,7 @@ import {
 import ConversionForm from "./ConversionForm";
 import MetaballSimulator from "./MetaballSimulator";
 import { TrajectoryType } from "../src/constants";
-
-const netConnectionSettings = {
-    // to test local server: (also may have to change wss to ws in the url)
-    // serverIp: "0.0.0.0",
-    // serverPort: 8765,
-    serverIp: "staging-node1-agentviz-backend.cellexplore.net",
-    serverPort: 9002,
-};
+import { NetConnectionParams } from "../src/simularium";
 
 let playbackFile = "TEST_LIVEMODE_API"; //"medyan_paper_M:A_0.675.simularium";
 let queryStringFile = "";
@@ -88,6 +81,10 @@ interface ViewerState {
         template: { [key: string]: any };
         templateData: { [key: string]: any };
     } | null;
+    simulariumFile: {
+        name: string;
+        data: ISimulariumFile | null;
+    } | null;
 }
 
 interface BaseType {
@@ -114,12 +111,17 @@ interface CustomType {
     };
 }
 
+interface InputParams {
+    localBackendServer: boolean;
+    useOctopus: boolean;
+}
+
 const simulariumController = new SimulariumController({});
 
 let currentFrame = 0;
 let currentTime = 0;
 
-const initialState = {
+const initialState: ViewerState = {
     renderStyle: RenderStyle.WEBGL2_PREFERRED,
     pauseOn: -1,
     particleTypeNames: [],
@@ -139,14 +141,19 @@ const initialState = {
         hiddenAgents: [],
     },
     filePending: null,
+    simulariumFile: null,
 };
 
-class Viewer extends React.Component<{}, ViewerState> {
+type FrontEndError = typeof FrontEndError;
+
+class Viewer extends React.Component<InputParams, ViewerState> {
     private viewerRef: React.RefObject<SimulariumViewer>;
     private panMode = false;
     private focusMode = true;
+    private orthoMode = false;
+    private netConnectionSettings: NetConnectionParams;
 
-    public constructor(props) {
+    public constructor(props: InputParams) {
         super(props);
         this.viewerRef = React.createRef();
         this.handleJsonMeshData = this.handleJsonMeshData.bind(this);
@@ -155,6 +162,29 @@ class Viewer extends React.Component<{}, ViewerState> {
         this.clearPendingFile = this.clearPendingFile.bind(this);
         this.convertFile = this.convertFile.bind(this);
         this.state = initialState;
+
+        if (props.localBackendServer) {
+            this.netConnectionSettings = {
+                serverIp: "0.0.0.0",
+                serverPort: 8765,
+                useOctopus: props.useOctopus,
+                secureConnection: false,
+            };
+        } else if (props.useOctopus) {
+            this.netConnectionSettings = {
+                serverIp: "18.223.108.15",
+                serverPort: 8765,
+                useOctopus: props.useOctopus,
+                secureConnection: false,
+            };
+        } else {
+            this.netConnectionSettings = {
+                serverIp: "staging-node1-agentviz-backend.cellexplore.net",
+                serverPort: 9002,
+                secureConnection: true,
+                useOctopus: false,
+            };
+        }
     }
 
     public componentDidMount(): void {
@@ -228,6 +258,12 @@ class Viewer extends React.Component<{}, ViewerState> {
                     const simulariumFile = parsedFiles[
                         simulariumFileIndex
                     ] as ISimulariumFile;
+                    this.setState({
+                        simulariumFile: {
+                            data: simulariumFile,
+                            name: filesArr[simulariumFileIndex].name,
+                        },
+                    });
                     // build the geoAssets as mapping name-value pairs:
                     const geoAssets = filesArr.reduce((acc, cur, index) => {
                         if (index !== simulariumFileIndex) {
@@ -254,9 +290,13 @@ class Viewer extends React.Component<{}, ViewerState> {
             .then((blob: Blob) => {
                 return loadSimulariumFile(blob);
             })
-            .then((trajectoryFile) => {
+            .then((simulariumFile: ISimulariumFile) => {
                 const fileName = url;
-                this.loadFile(trajectoryFile, fileName).catch((error) => {
+                this.setState({
+                    simulariumFile: { data: simulariumFile, name: fileName },
+                });
+
+                this.loadFile(simulariumFile, fileName).catch((error) => {
                     console.log("Error loading file", error);
                     window.alert(`Error loading file: ${error.message}`);
                 });
@@ -314,7 +354,9 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
-        simulariumController.convertAndLoadTrajectory(netConnectionSettings, obj, fileType)
+        simulariumController.convertAndLoadTrajectory(
+            this.netConnectionSettings, obj, fileType
+        )
             .then(() => {
                 this.clearPendingFile();
             })
@@ -336,7 +378,7 @@ class Viewer extends React.Component<{}, ViewerState> {
         // }
         return simulariumController
             .handleFileChange(simulariumFile, fileName, geoAssets)
-            .catch(console.log)
+            .catch(console.log);
     }
 
     public handleJsonMeshData(jsonData): void {
@@ -468,7 +510,7 @@ class Viewer extends React.Component<{}, ViewerState> {
     }
 
     private configureAndLoad() {
-        simulariumController.configureNetwork(netConnectionSettings);
+        simulariumController.configureNetwork(this.netConnectionSettings);
         if (playbackFile.startsWith("http")) {
             return this.loadFromUrl(playbackFile);
         }
@@ -515,18 +557,42 @@ class Viewer extends React.Component<{}, ViewerState> {
                 playbackFile
             );
         } else {
+            this.setState({
+                simulariumFile: { name: playbackFile, data: null },
+            });
             simulariumController.changeFile(
                 {
-                    netConnectionSettings,
+                    netConnectionSettings: this.netConnectionSettings,
                 },
                 playbackFile
             );
         }
     }
 
+    private downloadFile() {
+        const { simulariumFile } = this.state;
+        if (!simulariumFile) {
+            return;
+        }
+        let href = "";
+        if (!simulariumFile.data) {
+            href = `https://aics-simularium-data.s3.us-east-2.amazonaws.com/trajectory/${simulariumFile.name}`;
+        } else {
+            href = URL.createObjectURL(simulariumFile.data.getAsBlob());
+        }
+        const downloadLink = document.createElement("a");
+        downloadLink.download = simulariumFile.name;
+        downloadLink.style.display = "none";
+        downloadLink.href = href;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        URL.revokeObjectURL(downloadLink.href);
+    }
+
     public render(): JSX.Element {
         if (this.state.filePending) {
-            const fileType = this.state.filePending.type
+            const fileType = this.state.filePending.type;
             return (
                 <ConversionForm
                     {...this.state.filePending}
@@ -718,14 +784,27 @@ class Viewer extends React.Component<{}, ViewerState> {
                 >
                     Focus Mode
                 </button>
+                <button
+                    onClick={() => {
+                        this.orthoMode = !this.orthoMode;
+                        simulariumController.setCameraType(this.orthoMode);
+                    }}
+                >
+                    Camera mode
+                </button>
                 <br />
-                <button onClick={() => simulariumController.getMetrics(netConnectionSettings)}>
+                <button
+                    onClick={() =>
+                        simulariumController.getMetrics(this.netConnectionSettings)
+                    }
+                >
                     Get available metrics
                 </button>
+                <button onClick={this.downloadFile}>download</button>
                 <button
                     onClick={() =>
                         simulariumController.getPlotData(
-                            netConnectionSettings,
+                            this.netConnectionSettings,
                             // TODO: allow user to select metrics based on results from
                             // the getMetrics() call
                             [
@@ -734,12 +813,14 @@ class Viewer extends React.Component<{}, ViewerState> {
                                     metricsIdx: 0,
                                     metricsIdy: 2,
                                     scatterPlotMode: "lines",
-                                }, {
+                                },
+                                {
                                     plotType: "histogram",
                                     metricsIdx: 3,
-                                }
+                                },
                             ]
-                        )}
+                        )
+                    }
                 >
                     Get plot data
                 </button>

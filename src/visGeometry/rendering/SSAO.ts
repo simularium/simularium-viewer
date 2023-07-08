@@ -3,9 +3,11 @@ import RenderToBuffer from "./RenderToBuffer";
 import {
     Color,
     Vector2,
+    OrthographicCamera,
     PerspectiveCamera,
     WebGLRenderer,
     WebGLRenderTarget,
+    WebGLTexture
 } from "three";
 
 class SSAO1Pass {
@@ -132,7 +134,7 @@ class SSAO1Pass {
 
     public render(
         renderer: WebGLRenderer,
-        camera: PerspectiveCamera,
+        camera: PerspectiveCamera | OrthographicCamera,
         target: WebGLRenderTarget,
         normals: WebGLTexture,
         positions: WebGLTexture

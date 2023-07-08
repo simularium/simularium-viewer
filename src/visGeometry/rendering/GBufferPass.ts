@@ -13,10 +13,11 @@ import {
     Color,
     Group,
     Mesh,
+    OrthographicCamera,
+    PerspectiveCamera,
     Points,
     Scene,
     WebGLRenderer,
-    PerspectiveCamera,
     WebGLMultipleRenderTargets,
 } from "three";
 
@@ -70,7 +71,7 @@ class GBufferPass {
     public render(
         renderer: WebGLRenderer,
         scene: Scene,
-        camera: PerspectiveCamera,
+        camera: PerspectiveCamera | OrthographicCamera,
         gbuffer: WebGLMultipleRenderTargets
     ): void {
         const c = renderer.getClearColor(new Color()).clone();

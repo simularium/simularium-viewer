@@ -13,12 +13,13 @@ import {
     FloatType,
     Group,
     NearestFilter,
+    OrthographicCamera,
+    PerspectiveCamera,
     RGBAFormat,
     Scene,
     WebGLMultipleRenderTargets,
     WebGLRenderer,
     WebGLRenderTarget,
-    PerspectiveCamera,
 } from "three";
 import { Pane } from "tweakpane";
 
@@ -330,7 +331,7 @@ class SimulariumRenderer {
     public render(
         renderer: WebGLRenderer,
         scene: Scene,
-        camera: PerspectiveCamera,
+        camera: PerspectiveCamera | OrthographicCamera,
         target: WebGLRenderTarget | null
     ): void {
         // some param settings were based on a bounding box of 300 units
