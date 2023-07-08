@@ -48,8 +48,10 @@ function createTubeGeometry(
     const xPositions: number[] = [];
     const angles: number[] = [];
     const uvs: Array<Array<number>> = [];
-    const vertices = baseGeometry.attributes.position.array;
-    const faceVertexUvs = baseGeometry.attributes.uv.array;
+    const vertices = (baseGeometry.getAttribute("position") as BufferAttribute)
+        .array;
+    const faceVertexUvs = (baseGeometry.getAttribute("uv") as BufferAttribute)
+        .array;
     // assume index is not null
     const indices = (baseGeometry.index as BufferAttribute).array;
     //  const faceVertexUvs = baseGeometry.faceVertexUvs[0];

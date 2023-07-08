@@ -87,7 +87,7 @@ export default class LinePath {
                 this.colors[ic * 6 + 4] = lerp(this.color.g, pathEndColor.g, b);
                 this.colors[ic * 6 + 5] = lerp(this.color.b, pathEndColor.b, b);
             }
-            this.line.geometry.attributes.color.needsUpdate = true;
+            this.line.geometry.getAttribute("color").needsUpdate = true;
         }
         // add a segment to this line
         this.points[this.numSegments * 2 * 3 + 0] = x - dx;
@@ -100,6 +100,6 @@ export default class LinePath {
         this.numSegments++;
 
         this.line.geometry.setDrawRange(0, this.numSegments * 2);
-        this.line.geometry.attributes.position.needsUpdate = true; // required after the first render
+        this.line.geometry.getAttribute("position").needsUpdate = true; // required after the first render
     }
 }

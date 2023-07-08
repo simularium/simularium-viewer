@@ -4,7 +4,7 @@ import {
     Mesh,
     NearestFilter,
     OrthographicCamera,
-    PlaneBufferGeometry,
+    PlaneGeometry,
     RGBAFormat,
     Scene,
     ShaderMaterial,
@@ -48,7 +48,7 @@ export default class HitTestHelper {
     }
     `;
         this.hitTestMesh = new Mesh(
-            new PlaneBufferGeometry(2, 2),
+            new PlaneGeometry(2, 2),
             new ShaderMaterial({
                 vertexShader: this.hitTestVertexShader,
                 fragmentShader: this.hitTestFragmentShader,

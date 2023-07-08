@@ -1,7 +1,7 @@
 import "regenerator-runtime/runtime";
 import * as Comlink from "comlink";
 
-import { Mesh, SphereGeometry } from "three";
+import { BufferAttribute, Mesh, SphereGeometry } from "three";
 import { CSG } from "three-csg-ts";
 
 class MeshGenWorker {
@@ -57,14 +57,17 @@ class MeshGenWorker {
         }
         const geo = result.geometry;
         const retval = {
-            position: geo.attributes.position.array as Float32Array,
-            normal: geo.attributes.normal.array as Float32Array,
-            uv: geo.attributes.uv.array as Float32Array,
+            position: (geo.getAttribute("position") as BufferAttribute)
+                .array as Float32Array,
+            normal: (geo.getAttribute("normal") as BufferAttribute)
+                .array as Float32Array,
+            uv: (geo.getAttribute("uv") as BufferAttribute)
+                .array as Float32Array,
         };
         return Comlink.transfer(retval, [
-            (retval.position as Float32Array).buffer,
-            (retval.normal as Float32Array).buffer,
-            (retval.uv as Float32Array).buffer,
+            retval.position.buffer,
+            retval.normal.buffer,
+            retval.uv.buffer,
         ]);
         // The result is a BufferGeometry
     }

@@ -4,12 +4,10 @@ import * as Comlink from "comlink";
 import parsePdb from "parse-pdb";
 import {
     Box3,
-    BufferAttribute,
     BufferGeometry,
     Float32BufferAttribute,
     Mesh,
     Points,
-    SphereGeometry,
     Vector3,
 } from "three";
 
@@ -409,15 +407,12 @@ class PDBModel {
         const lastlod = sizes.length - 1;
         // Enqueue this calculation
         // expect to get back a mesh vertex buffer and index buffer
-        const retMeshData: {
+        type CsgMeshData = {
             position: Float32Array;
             normal: Float32Array;
             uv: Float32Array;
-        } = await TaskQueue.enqueue<{
-            position: Float32Array;
-            normal: Float32Array;
-            uv: Float32Array;
-        }>(
+        };
+        const retMeshData: CsgMeshData = await TaskQueue.enqueue<CsgMeshData>(
             // allData is a flat array of 3d points
             () => this.processMeshGenLod(retData[lastlod])
         );

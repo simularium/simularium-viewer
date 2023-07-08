@@ -123,7 +123,7 @@ class Viewport extends React.Component<
         this.lastRenderTime = Date.now();
         this.startTime = Date.now();
         this.onPickObject = this.onPickObject.bind(this);
-        this.stats = Stats();
+        this.stats = new Stats();
         this.stats.showPanel(1);
 
         this.handlers = {
@@ -321,9 +321,10 @@ class Viewport extends React.Component<
                     prevProps.selectionStateInfo.transparentAgents
                 )
             ) {
-                const transparentIds = this.selectionInterface.getTransparentIds(
-                    selectionStateInfo
-                );
+                const transparentIds =
+                    this.selectionInterface.getTransparentIds(
+                        selectionStateInfo
+                    );
                 this.visGeometry.setTransparentByIds(transparentIds);
             }
         }
