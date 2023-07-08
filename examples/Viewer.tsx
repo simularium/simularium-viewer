@@ -129,7 +129,7 @@ const initialState: ViewerState = {
     currentFrame: 0,
     currentTime: 0,
     height: 700,
-    width: 800,
+    width: 1200,
     hideAllAgents: false,
     agentColors: agentColors,
     showPaths: true,
@@ -613,33 +613,26 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     <option value="TEST_LIVEMODE_API">
                         TEST LIVE MODE API
                     </option>
-                    <option value="medyan_paper_M:A_0.675.simularium">
-                        medyan test
-                    </option>
-                    <option value="smoldyn_min1_output.simularium">
-                        smoldyn_min1_output
-                    </option>
                     <option value="actin012_3.h5">Actin 12_3</option>
                     <option value="listeria_rocketbugs_normal_fine_2_filtered.simularium">
                         listeria 01
                     </option>
                     <option value="kinesin002_01.h5">kinesin 002</option>
                     <option value="microtubules038_10.h5">MT 38</option>
-                    <option value="test_traj1.h5">TEST</option>
                     <option value="microtubules_v2_shrinking.h5">M Tub</option>
                     <option value="aster.cmo">Aster</option>
                     <option value="microtubules30_1.h5">MT 30</option>
                     <option value="endocytosis.simularium">Endocytosis</option>
                     <option value="pc4covid19.simularium">COVIDLUNG</option>
-                    <option value="ATPsynthase_2.h5">ATP 2</option>
-                    <option value="ATPsynthase_3.h5">ATP 3</option>
-                    <option value="ATPsynthase_4.h5">ATP 4</option>
-                    <option value="ATPsynthase_5.h5">ATP 5</option>
-                    <option value="ATPsynthase_6.h5">ATP 6</option>
-                    <option value="ATPsynthase_7.h5">ATP 7</option>
-                    <option value="ATPsynthase_8.h5">ATP 8</option>
-                    <option value="ATPsynthase_9.h5">ATP 9</option>
-                    <option value="ATPsynthase_10.h5">ATP 10</option>
+                    <option value="nanoparticle_wrapping.simularium">Nanoparticle wrapping</option>
+                    <option value="smoldyn_min1.simularium">Smoldyn min1</option>
+                    <option value="smoldyn_spine.simularium">Smoldyn spine</option>
+                    <option value="medyan_Chandrasekaran_2019_UNI_alphaA_0.1_MA_0.675.simularium">medyan 625</option>
+                    <option value="medyan_Chandrasekaran_2019_UNI_alphaA_0.1_MA_0.0225.simularium">medyan 0225</option>
+                    <option value="springsalad_condensate_formation_Below_Ksp.simularium">springsalad below ksp</option>
+                    <option value="springsalad_condensate_formation_At_Ksp.simularium">springsalad at ksp</option>
+                    <option value="springsalad_condensate_formation_Above_Ksp.simularium">springsalad above ksp</option>
+                    <option value="blood-plasma-1.0.simularium">blood plasma</option>
                     <option value="TEST_SINGLE_PDB">TEST SINGLE PDB</option>
                     <option value="TEST_PDB">TEST PDB</option>
                     <option value="TEST_FIBERS">TEST FIBERS</option>
@@ -693,13 +686,12 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                             <label htmlFor={id}>{id}</label>
                             <input
                                 type="checkbox"
-                                onClick={(event) =>
+                                onChange={(event) =>
                                     this.turnAgentsOnOff(
                                         (event.target as HTMLInputElement).value
                                     )
                                 }
                                 value={id}
-                                defaultChecked={true}
                                 checked={
                                     this.state.selectionStateInfo.hiddenAgents.find(
                                         (element) => element.name === id
@@ -708,7 +700,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                             />
                             <input
                                 type="checkbox"
-                                onClick={(event) =>
+                                onChange={(event) =>
                                     this.turnAgentHighlightsOnOff(
                                         (event.target as HTMLInputElement).value
                                     )
