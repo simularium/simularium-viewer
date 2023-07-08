@@ -6,8 +6,7 @@ import {
     OrthographicCamera,
     PerspectiveCamera,
     WebGLRenderer,
-    WebGLRenderTarget,
-    WebGLTexture
+    WebGLRenderTarget
 } from "three";
 
 class SSAO1Pass {
