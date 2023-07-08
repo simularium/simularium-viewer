@@ -6,7 +6,6 @@ import VisAgent from "./VisAgent";
 import PDBModel from "./PDBModel";
 import AgentPath from "./agentPath";
 import { FrontEndError } from "../simularium/FrontEndError";
-import { AOSettings } from "./rendering/SimulariumRenderer";
 import { AgentData, EncodedTypeMapping, PerspectiveCameraSpec } from "../simularium/types";
 import SimulariumRenderer from "./rendering/SimulariumRenderer";
 import { LegacyRenderer } from "./rendering/LegacyRenderer";
@@ -86,7 +85,6 @@ declare class VisGeometry {
     private updateOrthographicFrustum;
     private loadCamera;
     private storeCamera;
-    applyAO(ao: AOSettings): void;
     setupGui(container?: HTMLElement): void;
     destroyGui(): void;
     setRenderStyle(renderStyle: RenderStyle): void;

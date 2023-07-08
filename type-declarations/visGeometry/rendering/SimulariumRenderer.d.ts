@@ -8,22 +8,20 @@ import { InstancedFiberGroup } from "./InstancedFiber";
 import { GeometryInstanceContainer } from "../types";
 import { Color, Group, OrthographicCamera, PerspectiveCamera, Scene, WebGLMultipleRenderTargets, WebGLRenderer, WebGLRenderTarget } from "three";
 import { Pane } from "tweakpane";
-export interface AOSettings {
-    aoradius1: number;
-    blurradius1: number;
-    aothreshold1: number;
-    aofalloff1: number;
-    aoradius2: number;
-    blurradius2: number;
-    aothreshold2: number;
-    aofalloff2: number;
+export interface SimulariumAOParameters {
+    bias: number;
+    intensity: number;
+    scale: number;
+    kernelRadius: number;
+    minResolution: number;
+    blurRadius: number;
+    blurStdDev: number;
+    blurDepthCutoff: number;
 }
 declare class SimulariumRenderer {
     gbufferPass: GBufferPass;
     ssao1Pass: SSAO1Pass;
-    ssao2Pass: SSAO1Pass;
     blur1Pass: BlurPass;
-    blur2Pass: BlurPass;
     compositePass: CompositePass;
     contourPass: ContourPass;
     drawBufferPass: DrawBufferPass;
@@ -37,8 +35,8 @@ declare class SimulariumRenderer {
     private parameters;
     private boundsNear;
     private boundsFar;
+    private boundsMaxDim;
     constructor();
-    applyAO(ao: AOSettings): void;
     setupGui(gui: Pane): void;
     setBackgroundColor(color: Color): void;
     setFollowedInstance(instance: number): void;
@@ -46,7 +44,7 @@ declare class SimulariumRenderer {
     updateColors(numColors: number, colorsData: Float32Array): void;
     setMeshGroups(instancedMeshGroup: Group, fibers: InstancedFiberGroup, meshTypes: GeometryInstanceContainer[]): void;
     resize(x: number, y: number): void;
-    setNearFar(n: number, f: number): void;
+    setNearFar(n: number, f: number, boxMaxDim: number): void;
     render(renderer: WebGLRenderer, scene: Scene, camera: PerspectiveCamera | OrthographicCamera, target: WebGLRenderTarget | null): void;
 }
 export default SimulariumRenderer;

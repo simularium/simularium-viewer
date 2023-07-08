@@ -323,11 +323,6 @@ var VisGeometry = /*#__PURE__*/function () {
       return spec;
     }
   }, {
-    key: "applyAO",
-    value: function applyAO(ao) {
-      this.renderer.applyAO(ao);
-    }
-  }, {
     key: "setupGui",
     value: function setupGui(container) {
       var _this = this;
@@ -436,6 +431,7 @@ var VisGeometry = /*#__PURE__*/function () {
         anchor.href = dataUrl;
         anchor.download = "screenshot.png";
         anchor.click();
+        anchor.remove();
       });
       this.gui.addSeparator();
       var lodFolder = this.gui.addFolder({
@@ -652,6 +648,9 @@ var VisGeometry = /*#__PURE__*/function () {
   }, {
     key: "setFollowObject",
     value: function setFollowObject(obj) {
+      if (this.visAgentInstances.size === 0) {
+        return;
+      }
       if (this.followObjectId !== NO_AGENT) {
         var visAgent = this.visAgentInstances.get(this.followObjectId);
         if (!visAgent) {
@@ -938,7 +937,11 @@ var VisGeometry = /*#__PURE__*/function () {
         }
         this.renderer.setMeshGroups(this.instancedMeshGroup, this.fibers, meshTypes);
         this.renderer.setFollowedInstance(this.followObjectId);
-        this.renderer.setNearFar(this.boxNearZ, this.boxFarZ);
+        //get bounding box max dim
+        var v = new Vector3();
+        this.boundingBox.getSize(v);
+        var maxDim = Math.max(v.x, v.y, v.z);
+        this.renderer.setNearFar(this.boxNearZ, this.boxFarZ, maxDim);
         this.boundingBoxMesh.visible = false;
         this.tickMarksMesh.visible = false;
         this.agentPathGroup.visible = false;
@@ -1535,7 +1538,7 @@ var VisGeometry = /*#__PURE__*/function () {
         var agent = this.visAgentInstances.get(id);
         if (agent) {
           color = agent.color.clone();
-        } else {
+        } else if (this.visAgentInstances.size > 0) {
           console.error("COULD NOT FIND AGENT INSTANCE " + id);
         }
       }

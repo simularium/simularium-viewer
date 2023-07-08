@@ -3,29 +3,46 @@ import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import { Color, Vector2 } from "three";
 import RenderToBuffer from "./RenderToBuffer";
-var BlurXPass = /*#__PURE__*/function () {
-  function BlurXPass() {
-    _classCallCheck(this, BlurXPass);
+var BlurPass1D = /*#__PURE__*/function () {
+  function BlurPass1D(uvOffset, radius, stdDev) {
+    _classCallCheck(this, BlurPass1D);
     _defineProperty(this, "pass", void 0);
+    _defineProperty(this, "uvOffset", void 0);
+    _defineProperty(this, "radius", void 0);
+    _defineProperty(this, "stdDev", void 0);
+    this.uvOffset = uvOffset;
+    this.radius = 0;
+    this.stdDev = 0;
     this.pass = new RenderToBuffer({
+      defines: {
+        KERNEL_RADIUS: 8
+      },
       uniforms: {
-        size: {
-          value: new Vector2(2, 2)
-        },
         colorTex: {
           value: null
         },
         viewPosTex: {
           value: null
         },
-        amount: {
-          value: 2
-        }
+        size: {
+          value: new Vector2(512, 512)
+        },
+        sampleUvOffsets: {
+          value: [new Vector2(0, 0)]
+        },
+        sampleWeights: {
+          value: [1.0]
+        },
+        depthCutoff: {
+          value: 0.1
+        } // view space
       },
-      fragmentShader: "\n            in vec2 vUv;\n            \n            uniform sampler2D colorTex;\n            uniform sampler2D viewPosTex;\n            // \"radius\" in framebuffer pixels\n            uniform float amount;\n            uniform vec2 size;\n            \n            //layout(location = 0) out vec4 out_col;\n            \n            void main(void)\n            {\n                vec2 texCoords = vUv;\n                float step = 1.0 / (size.x);\n            \n                vec4 texel, color = vec4(0.0);\n                int i;\n                float w, sum = 0.0;\n            \n                // in view space depth coordinates\n                const float depthThreshold = 1.0;//0.0001;\n            \n                if (amount == 0.0)\n                {\n                    color = texture(colorTex, texCoords);\n                    sum = 1.0;\n                }\n                else\n                {\n                    int iAmount = int((amount) + 1.0);\n                    float currentDepth = texture(viewPosTex, texCoords).z;\n                    for (i = -iAmount; i <= iAmount; i++)\n                    {\n                        float sampleDepth = texture(viewPosTex, texCoords + vec2(float(i) * step, 0.0)).z;\n                        if (abs(currentDepth - sampleDepth) < depthThreshold) {\n                            texel = texture(colorTex, texCoords + vec2(float(i) * step, 0.0));\n                            w = exp(-pow(float(i) / amount * 1.5, 2.0));\n                            //w = 1.0;\n                            color += texel * w;\n                            sum += w;\n                        }\n                    }\n                }\n            \n                //out_col = color / sum;\n                gl_FragColor = color / sum;\n            }\n                        "
+
+      fragmentShader: /* glsl */"\n\n        uniform sampler2D colorTex;\n        uniform sampler2D viewPosTex;\n\n        uniform float depthCutoff;\n\n        uniform vec2 sampleUvOffsets[ KERNEL_RADIUS + 1 ];\n        uniform float sampleWeights[ KERNEL_RADIUS + 1 ];\n\n        varying vec2 vUv;\n        uniform vec2 size; // iResolution.xy\n\n        void main() {\n            vec4 viewPos4 = texture2D(viewPosTex, vUv);\n            if (viewPos4.w < 1.0) discard;\n\n            float centerViewZ = -viewPos4.z;\n            bool rBreak = false, lBreak = false;\n\n            float weightSum = sampleWeights[0];\n            vec4 diffuseSum = texture2D( colorTex, vUv ) * weightSum;\n\n            vec2 vInvSize = 1.0 / size;\n\n            for( int i = 1; i <= KERNEL_RADIUS; i ++ ) {\n\n                float sampleWeight = sampleWeights[i];\n                vec2 sampleUvOffset = sampleUvOffsets[i] * vInvSize;\n\n                vec2 sampleUv = vUv + sampleUvOffset;\n                float viewZ = -texture2D(viewPosTex, sampleUv).z;\n\n                if( abs( viewZ - centerViewZ ) > depthCutoff ) rBreak = true;\n\n                if( ! rBreak ) {\n                    diffuseSum += texture2D( colorTex, sampleUv ) * sampleWeight;\n                    weightSum += sampleWeight;\n                }\n\n                sampleUv = vUv - sampleUvOffset;\n                viewZ = -texture2D(viewPosTex, sampleUv).z;\n\n                if( abs( viewZ - centerViewZ ) > depthCutoff ) lBreak = true;\n\n                if( ! lBreak ) {\n                    diffuseSum += texture2D( colorTex, sampleUv ) * sampleWeight;\n                    weightSum += sampleWeight;\n                }\n\n            }\n\n            gl_FragColor = diffuseSum / weightSum;\n        }"
     });
+    this.configure(radius, stdDev);
   }
-  _createClass(BlurXPass, [{
+  _createClass(BlurPass1D, [{
     key: "resize",
     value: function resize(x, y) {
       this.pass.material.uniforms.size.value = new Vector2(x, y);
@@ -35,52 +52,49 @@ var BlurXPass = /*#__PURE__*/function () {
     value: function render(renderer, tgt) {
       this.pass.render(renderer, tgt);
     }
-  }]);
-  return BlurXPass;
-}();
-var BlurYPass = /*#__PURE__*/function () {
-  function BlurYPass() {
-    _classCallCheck(this, BlurYPass);
-    _defineProperty(this, "pass", void 0);
-    this.pass = new RenderToBuffer({
-      uniforms: {
-        size: {
-          value: new Vector2(2, 2)
-        },
-        colorTex: {
-          value: null
-        },
-        viewPosTex: {
-          value: null
-        },
-        amount: {
-          value: 2
-        }
-      },
-      fragmentShader: "\n            in vec2 vUv;\n            \n            uniform sampler2D colorTex;\n            uniform sampler2D viewPosTex;\n            // \"radius\" in framebuffer pixels\n            uniform float amount;\n            uniform vec2 size;\n            \n            //layout(location = 0) out vec4 out_col;\n            \n            void main(void)\n            {\n                vec2 texCoords = vUv;\n                float step = 1.0 / (size.y);\n            \n                vec4 texel, color = vec4(0.0);\n                int i;\n                float w, sum = 0.0;\n            \n                // in view space depth coordinates\n                const float depthThreshold = 1.0;//0.0001;\n            \n                if (amount == 0.0)\n                {\n                    color = texture(colorTex, texCoords);\n                    sum = 1.0;\n                }\n                else\n                {\n                    int iAmount = int((amount) + 1.0);\n                    float currentDepth = texture(viewPosTex, texCoords).z;\n                    for (i = -iAmount; i <= iAmount; i++)\n                    {\n                        float sampleDepth = texture(viewPosTex, texCoords + vec2(0.0, float(i) * step)).z;\n                        if (abs(currentDepth - sampleDepth) < depthThreshold) {\n                            texel = texture(colorTex, texCoords + vec2(0.0, float(i) * step));\n                            w = exp(-pow(float(i) / amount * 1.5, 2.0));\n                            //w = 1.0;\n                            color += texel * w;\n                            sum += w;\n                        }\n                    }\n                }\n            \n                //out_col = color / sum;\n                gl_FragColor = color / sum;\n            }\n                                    "
-    });
-  }
-  _createClass(BlurYPass, [{
-    key: "resize",
-    value: function resize(x, y) {
-      this.pass.material.uniforms.size.value = new Vector2(x, y);
+  }, {
+    key: "createSampleWeights",
+    value: function createSampleWeights(kernelRadius, stdDev) {
+      var weights = [];
+      for (var i = 0; i <= kernelRadius; i++) {
+        weights.push(gaussian(i, stdDev));
+      }
+      return weights;
     }
   }, {
-    key: "render",
-    value: function render(renderer, tgt) {
-      this.pass.render(renderer, tgt);
+    key: "createSampleOffsets",
+    value: function createSampleOffsets(kernelRadius, uvIncrement) {
+      var offsets = [];
+      for (var i = 0; i <= kernelRadius; i++) {
+        offsets.push(uvIncrement.clone().multiplyScalar(i));
+      }
+      return offsets;
+    }
+  }, {
+    key: "configure",
+    value: function configure(kernelRadius, stdDev) {
+      if (kernelRadius !== this.radius || stdDev !== this.stdDev) {
+        this.pass.material.defines["KERNEL_RADIUS"] = kernelRadius;
+        this.pass.material.uniforms["sampleUvOffsets"].value = this.createSampleOffsets(kernelRadius, this.uvOffset);
+        this.pass.material.uniforms["sampleWeights"].value = this.createSampleWeights(kernelRadius, stdDev);
+        this.pass.material.needsUpdate = true;
+        this.radius = kernelRadius;
+        this.stdDev = stdDev;
+      }
     }
   }]);
-  return BlurYPass;
+  return BlurPass1D;
 }();
+function gaussian(x, stdDev) {
+  return Math.exp(-(x * x) / (2.0 * (stdDev * stdDev))) / (Math.sqrt(2.0 * Math.PI) * stdDev);
+}
 var BlurPass = /*#__PURE__*/function () {
-  function BlurPass(radius) {
+  function BlurPass(radius, stdDev) {
     _classCallCheck(this, BlurPass);
     _defineProperty(this, "blurXpass", void 0);
     _defineProperty(this, "blurYpass", void 0);
-    this.blurXpass = new BlurXPass();
-    this.blurYpass = new BlurYPass();
-    this.setRadius(radius);
+    this.blurXpass = new BlurPass1D(new Vector2(1.0, 0.0), radius, stdDev);
+    this.blurYpass = new BlurPass1D(new Vector2(0.0, 1.0), radius, stdDev);
   }
   _createClass(BlurPass, [{
     key: "resize",
@@ -89,10 +103,12 @@ var BlurPass = /*#__PURE__*/function () {
       this.blurYpass.resize(x, y);
     }
   }, {
-    key: "setRadius",
-    value: function setRadius(r) {
-      this.blurXpass.pass.material.uniforms.amount.value = r;
-      this.blurYpass.pass.material.uniforms.amount.value = r;
+    key: "configure",
+    value: function configure(radius, stdDev, depthCutoff) {
+      this.blurXpass.configure(radius, stdDev);
+      this.blurXpass.pass.material.uniforms.depthCutoff.value = depthCutoff;
+      this.blurYpass.configure(radius, stdDev);
+      this.blurYpass.pass.material.uniforms.depthCutoff.value = depthCutoff;
     }
   }, {
     key: "render",

@@ -6,7 +6,7 @@ import _regeneratorRuntime from "@babel/runtime/regenerator";
 import { forEach } from "lodash";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import jsLogger from "js-logger";
-import { Mesh, SphereBufferGeometry, BoxBufferGeometry } from "three";
+import { Object3D, Mesh, SphereBufferGeometry, BoxBufferGeometry } from "three";
 import { checkAndSanitizePath, getFileExtension } from "../util";
 import PDBModel from "./PDBModel";
 import { InstancedMesh, InstanceType } from "./rendering/InstancedMesh";
@@ -385,8 +385,8 @@ var GeometryStore = /*#__PURE__*/function () {
                 // on updatescene, add instances
                 // on render, pass the group of marchingcubes objects
                 geometry = {
-                  // null is only acceptable for SphereGroup
-                  mesh: null,
+                  // the mesh should be ignored for SphereGroup
+                  mesh: new Object3D(),
                   cancelled: false,
                   instances: new MetaballMesh(lookupKey)
                 };

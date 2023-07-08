@@ -17,9 +17,7 @@ var SimulariumRenderer = /*#__PURE__*/function () {
     _classCallCheck(this, SimulariumRenderer);
     _defineProperty(this, "gbufferPass", void 0);
     _defineProperty(this, "ssao1Pass", void 0);
-    _defineProperty(this, "ssao2Pass", void 0);
     _defineProperty(this, "blur1Pass", void 0);
-    _defineProperty(this, "blur2Pass", void 0);
     _defineProperty(this, "compositePass", void 0);
     _defineProperty(this, "contourPass", void 0);
     _defineProperty(this, "drawBufferPass", void 0);
@@ -33,19 +31,22 @@ var SimulariumRenderer = /*#__PURE__*/function () {
     _defineProperty(this, "parameters", void 0);
     _defineProperty(this, "boundsNear", void 0);
     _defineProperty(this, "boundsFar", void 0);
+    _defineProperty(this, "boundsMaxDim", void 0);
     this.parameters = {
-      // AO defaults
-      aoradius1: 1.2,
-      blurradius1: 1.5,
-      aothreshold1: 127.0,
-      aofalloff1: 300.0,
-      aoradius2: 5.77,
-      blurradius2: 1.94,
-      aothreshold2: 300.0,
-      aofalloff2: 208.0,
-      // end AO defaults
-      atomBeginDistance: 50.0,
-      chainBeginDistance: 100.0,
+      ao1: {
+        bias: 0.5,
+        intensity: 0.05,
+        scale: 10.0,
+        kernelRadius: 15.0,
+        minResolution: 0.0,
+        blurRadius: 4.0,
+        blurStdDev: 3.0,
+        blurDepthCutoff: 0.1
+      },
+      atomBeginDistance: 0.6666,
+      // % of bounds size
+      chainBeginDistance: 1.0,
+      // % of bounds size
       bghueoffset: 1,
       bgchromaoffset: 0.45,
       bgluminanceoffset: 0.45,
@@ -66,12 +67,10 @@ var SimulariumRenderer = /*#__PURE__*/function () {
     };
     this.boundsNear = 0.0;
     this.boundsFar = 100.0;
+    this.boundsMaxDim = 100.0;
     this.gbufferPass = new GBufferPass();
-    // radius, threshold, falloff in view space coordinates.
-    this.ssao1Pass = new SSAO1Pass(this.parameters.aoradius1, this.parameters.aothreshold1, this.parameters.aofalloff1);
-    this.ssao2Pass = new SSAO1Pass(this.parameters.aoradius2, this.parameters.aothreshold2, this.parameters.aofalloff2);
-    this.blur1Pass = new BlurPass(this.parameters.blurradius1);
-    this.blur2Pass = new BlurPass(this.parameters.blurradius2);
+    this.ssao1Pass = new SSAO1Pass();
+    this.blur1Pass = new BlurPass(this.parameters.ao1.blurRadius, this.parameters.ao1.blurStdDev);
     this.compositePass = new CompositePass({
       x: this.parameters.bghueoffset,
       y: this.parameters.bgchromaoffset,
@@ -143,70 +142,45 @@ var SimulariumRenderer = /*#__PURE__*/function () {
     this.ssaoBufferBlurred2.texture.generateMipmaps = false;
   }
   _createClass(SimulariumRenderer, [{
-    key: "applyAO",
-    value: function applyAO(ao) {
-      this.parameters.aoradius1 = ao.aoradius1;
-      this.parameters.aoradius2 = ao.aoradius2;
-      this.parameters.aothreshold1 = ao.aothreshold1;
-      this.parameters.aothreshold2 = ao.aothreshold2;
-      this.parameters.aofalloff1 = ao.aofalloff1;
-      this.parameters.aofalloff2 = ao.aofalloff2;
-      this.parameters.blurradius1 = ao.blurradius1;
-      this.parameters.blurradius2 = ao.blurradius2;
-      this.ssao1Pass.setRadius(this.parameters.aoradius1);
-      this.blur1Pass.setRadius(this.parameters.blurradius1);
-      this.ssao2Pass.setRadius(this.parameters.aoradius2);
-      this.blur2Pass.setRadius(this.parameters.blurradius2);
-    }
-  }, {
     key: "setupGui",
     value: function setupGui(gui) {
       var _this = this;
       var settings = this.parameters;
-      var ao = gui.addFolder({
-        title: "AO passes",
+      var ao1 = gui.addFolder({
+        title: "AO pass 1",
         expanded: false
       });
-      ao.addInput(settings, "aoradius1", {
-        min: 0.01,
-        max: 10.0
-      }).on("change", function (event) {
-        _this.ssao1Pass.setRadius(event.value);
+      ao1.addInput(settings.ao1, "bias", {
+        min: -1,
+        max: 1
       });
-      ao.addInput(settings, "blurradius1", {
-        min: 0.01,
-        max: 10.0
-      }).on("change", function (event) {
-        _this.blur1Pass.setRadius(event.value);
+      ao1.addInput(settings.ao1, "intensity", {
+        min: 0,
+        max: 1
       });
-      ao.addInput(settings, "aothreshold1", {
-        min: 0.01,
-        max: 300.0
+      ao1.addInput(settings.ao1, "scale", {
+        min: 0,
+        max: 40
       });
-      ao.addInput(settings, "aofalloff1", {
-        min: 0.01,
-        max: 300.0
+      ao1.addInput(settings.ao1, "kernelRadius", {
+        min: 1,
+        max: 100
       });
-      ao.addSeparator();
-      ao.addInput(settings, "aoradius2", {
-        min: 0.01,
-        max: 10.0
-      }).on("change", function (event) {
-        _this.ssao2Pass.setRadius(event.value);
+      ao1.addInput(settings.ao1, "minResolution", {
+        min: 0,
+        max: 1
       });
-      ao.addInput(settings, "blurradius2", {
-        min: 0.01,
-        max: 10.0
-      }).on("change", function (event) {
-        _this.blur2Pass.setRadius(event.value);
+      ao1.addInput(settings.ao1, "blurRadius", {
+        min: 0,
+        max: 200
       });
-      ao.addInput(settings, "aothreshold2", {
-        min: 0.01,
-        max: 300.0
+      ao1.addInput(settings.ao1, "blurStdDev", {
+        min: 0.5,
+        max: 150
       });
-      ao.addInput(settings, "aofalloff2", {
-        min: 0.01,
-        max: 300.0
+      ao1.addInput(settings.ao1, "blurDepthCutoff", {
+        min: 0.0,
+        max: 0.1
       });
       var depth = gui.addFolder({
         title: "DepthCueing",
@@ -214,11 +188,11 @@ var SimulariumRenderer = /*#__PURE__*/function () {
       });
       depth.addInput(settings, "atomBeginDistance", {
         min: 0.0,
-        max: 300.0
+        max: 2.0
       });
       depth.addInput(settings, "chainBeginDistance", {
         min: 0.0,
-        max: 300.0
+        max: 2.0
       });
       depth.addInput(settings, "bghueoffset", {
         min: 0.0,
@@ -322,34 +296,39 @@ var SimulariumRenderer = /*#__PURE__*/function () {
       // intermediate blurring buffer
       this.blurIntermediateBuffer.setSize(x, y);
       this.ssaoBuffer.setSize(x, y);
-      this.ssaoBuffer2.setSize(x, y);
       this.ssaoBufferBlurred.setSize(x, y);
-      this.ssaoBufferBlurred2.setSize(x, y);
       this.gbufferPass.resize(x, y);
       this.ssao1Pass.resize(x, y);
-      this.ssao2Pass.resize(x, y);
       this.blur1Pass.resize(x, y);
-      this.blur2Pass.resize(x, y);
       this.compositePass.resize(x, y);
       this.contourPass.resize(x, y);
       this.drawBufferPass.resize(x, y);
     }
   }, {
     key: "setNearFar",
-    value: function setNearFar(n, f) {
+    value: function setNearFar(n, f, boxMaxDim) {
       this.boundsNear = n;
       this.boundsFar = f;
+      this.boundsMaxDim = boxMaxDim;
     }
   }, {
     key: "render",
     value: function render(renderer, scene, camera, target) {
-      // updates for transformed bounds (should this happen in shader?)
-      this.ssao1Pass.pass.material.uniforms.ssaoThreshold.value = this.parameters.aothreshold1 + Math.max(this.boundsNear, 0.0);
-      this.ssao1Pass.pass.material.uniforms.ssaoFalloff.value = this.parameters.aofalloff1 + Math.max(this.boundsNear, 0.0);
-      this.ssao2Pass.pass.material.uniforms.ssaoThreshold.value = this.parameters.aothreshold2 + Math.max(this.boundsNear, 0.0);
-      this.ssao2Pass.pass.material.uniforms.ssaoFalloff.value = this.parameters.aofalloff2 + Math.max(this.boundsNear, 0.0);
-      this.compositePass.pass.material.uniforms.atomicBeginDistance.value = this.parameters.atomBeginDistance + Math.max(this.boundsNear, 0.0);
-      this.compositePass.pass.material.uniforms.chainBeginDistance.value = this.parameters.chainBeginDistance + Math.max(this.boundsNear, 0.0);
+      // some param settings were based on a bounding box of 300 units
+      var sceneSize = this.boundsMaxDim;
+
+      // update all ao settings here.
+      this.ssao1Pass.pass.material.uniforms.bias.value = this.parameters.ao1.bias;
+      this.ssao1Pass.pass.material.uniforms.intensity.value = this.parameters.ao1.intensity;
+      this.ssao1Pass.pass.material.uniforms.scale.value = this.parameters.ao1.scale * sceneSize / 100.0;
+      this.ssao1Pass.pass.material.uniforms.kernelRadius.value = this.parameters.ao1.kernelRadius;
+      this.ssao1Pass.pass.material.uniforms.minResolution.value = this.parameters.ao1.minResolution;
+      this.ssao1Pass.pass.material.uniforms.beginFalloffDistance.value = this.parameters.atomBeginDistance * sceneSize + Math.max(this.boundsNear, 0.0);
+      this.ssao1Pass.pass.material.uniforms.endFalloffDistance.value = this.parameters.chainBeginDistance * sceneSize + Math.max(this.boundsNear, 0.0);
+      this.ssao1Pass.pass.material.uniforms.cameraFar.value = camera.far;
+      this.blur1Pass.configure(this.parameters.ao1.blurRadius, this.parameters.ao1.blurStdDev, this.parameters.ao1.blurDepthCutoff);
+      this.compositePass.pass.material.uniforms.atomicBeginDistance.value = this.parameters.atomBeginDistance * sceneSize + Math.max(this.boundsNear, 0.0);
+      this.compositePass.pass.material.uniforms.chainBeginDistance.value = this.parameters.chainBeginDistance * sceneSize + Math.max(this.boundsNear, 0.0);
 
       // currently rendering is a draw call per PDB POINTS objects and one draw call per mesh TRIANGLES object (reusing same geometry buffer)
 
@@ -382,8 +361,6 @@ var SimulariumRenderer = /*#__PURE__*/function () {
       // 2 render ssao
       this.ssao1Pass.render(renderer, camera, this.ssaoBuffer, this.gbuffer.texture[NORMALBUFFER], this.gbuffer.texture[POSITIONBUFFER]);
       this.blur1Pass.render(renderer, this.ssaoBufferBlurred, this.ssaoBuffer, this.gbuffer.texture[POSITIONBUFFER], this.blurIntermediateBuffer);
-      this.ssao2Pass.render(renderer, camera, this.ssaoBuffer2, this.gbuffer.texture[NORMALBUFFER], this.gbuffer.texture[POSITIONBUFFER]);
-      this.blur2Pass.render(renderer, this.ssaoBufferBlurred2, this.ssaoBuffer2, this.gbuffer.texture[POSITIONBUFFER], this.blurIntermediateBuffer);
 
       // render composite pass into this buffer, overwriting whatever was there!
       // Be sure this buffer is not needed anymore!

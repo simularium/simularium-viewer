@@ -4,6 +4,9 @@ interface RenderToBufferParams {
     uniforms: {
         [uniform: string]: IUniform;
     };
+    defines?: {
+        [uniform: string]: number;
+    };
 }
 declare class RenderToBuffer {
     scene: Scene;
