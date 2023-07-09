@@ -394,6 +394,10 @@ class VisGeometry {
         return spec;
     }
 
+    public setOpacity(opacity: number): void {
+        this.renderer.setOpacity(opacity);
+    }
+
     public setupGui(container?: HTMLElement): void {
         this.gui = new Pane({
             title: "Advanced Settings",
