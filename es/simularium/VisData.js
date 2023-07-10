@@ -262,12 +262,24 @@ var VisData = /*#__PURE__*/function () {
         var tmp = new ArrayBuffer(this.netBuffer.byteLength + frame.byteLength);
         new Uint8Array(tmp).set(new Uint8Array(this.netBuffer));
         new Uint8Array(tmp).set(new Uint8Array(frame), this.netBuffer.byteLength);
-        var frames = VisData.parseBinary(tmp);
-        if (frames.frameDataArray.length > 0 && frames.frameDataArray[0].frameNumber === 0) {
-          this.clearCache(); // new data has arrived
-        }
+        try {
+          var frames = VisData.parseBinary(tmp);
+          if (frames.frameDataArray.length > 0 && frames.frameDataArray[0].frameNumber === 0) {
+            this.clearCache(); // new data has arrived
+          }
 
-        this.addFramesToCache(frames);
+          this.addFramesToCache(frames);
+        } catch (err) {
+          // TODO: There are frequent errors due to a race condition that
+          // occurs when jumping to a new time if a partial frame is received
+          // after netBuffer is cleared. We don't want this to trigger a front
+          // end error, it's best to catch it here and just move on, as the
+          // issue should be contained to just one frame. When binary messages
+          // are updated to include frame num for partial frames in their header,
+          // we can ensure that netBuffer is being combined with the matching
+          // frame, and this try/catch can be removed
+          console.log(err);
+        }
 
         // Save remaining data for later processing
         var remainder = data.slice(eof + EOF_PHRASE.length);
