@@ -18,6 +18,7 @@ export interface SelectionEntry {
 export interface SelectionStateInfo {
     highlightedAgents: SelectionEntry[];
     hiddenAgents: SelectionEntry[];
+    colorChangeAgents: SelectionEntry[];
 }
 
 interface DisplayStateEntry {
@@ -215,6 +216,18 @@ class SelectionInterface {
             indices = [...indices, ...this.getIds(name, tags)];
         });
 
+        return indices;
+    }
+
+    public getColorChangeAgentIds(info: SelectionStateInfo): number[] {
+        const requests = info.colorChangeAgents;
+        let indices: number[] = [];
+
+        requests.forEach((r) => {
+            const name = r.name;
+            const tags = r.tags;
+            indices = [...indices, ...this.getIds(name, tags)];
+        });
         return indices;
     }
 
