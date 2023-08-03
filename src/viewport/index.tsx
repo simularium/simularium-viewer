@@ -41,6 +41,7 @@ type ViewportProps = {
     selectionStateInfo: SelectionStateInfo;
     showCameraControls: boolean;
     onError?: (error: FrontEndError) => void;
+    selectedColor: string;
 } & Partial<DefaultProps>;
 
 const defaultProps = {
@@ -314,6 +315,27 @@ class Viewport extends React.Component<
                 const hiddenIds =
                     this.selectionInterface.getHiddenIds(selectionStateInfo);
                 this.visGeometry.setVisibleByIds(hiddenIds);
+            }
+            if (
+                !isEqual(
+                    selectionStateInfo.colorChangeAgents,
+                    prevProps.selectionStateInfo.colorChangeAgents
+                )
+            ) {
+                const colorChangeAgentIds =
+                    this.selectionInterface.getColorChangeAgentIds(
+                        selectionStateInfo
+                    );
+                //get the selected color
+                let typeCastAgentColors = agentColors as string[];
+                let colorChangeColorId = typeCastAgentColors.indexOf(
+                    this.props.selectedColor
+                );
+                this.visGeometry.setColorForIds(
+                    colorChangeAgentIds,
+                    colorChangeColorId
+                );
+                this.visGeometry.setColorChangeByIds(colorChangeAgentIds);
             }
         }
 
