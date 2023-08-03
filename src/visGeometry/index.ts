@@ -116,6 +116,7 @@ class VisGeometry {
     public visAgentInstances: Map<number, VisAgent>;
     public fixLightsToCamera: boolean;
     public highlightedIds: number[];
+    public colorChangeIds: number[];
     public hiddenIds: number[];
     public agentPaths: Map<number, AgentPath>;
     public mlogger: ILogger;
@@ -187,6 +188,7 @@ class VisGeometry {
         this.visAgentInstances = new Map<number, VisAgent>();
         this.fixLightsToCamera = true;
         this.highlightedIds = [];
+        this.colorChangeIds = [];
         this.hiddenIds = [];
         this.needToCenterCamera = false;
         this.needToReOrientCamera = false;
@@ -724,6 +726,11 @@ class VisGeometry {
         this.updateScene(this.currentSceneAgents);
     }
 
+    public setColorChangeByIds(ids: number[]): void {
+        this.colorChangeIds = ids;
+        this.updateScene(this.currentSceneAgents);
+    }
+
     public dehighlight(): void {
         this.setHighlightByIds([]);
     }
@@ -1146,11 +1153,15 @@ class VisGeometry {
          * @param ids agent ids that should all have the same color
          * @param colorId index into the color array
          */
-        if (this.isIdColorMappingSet) {
-            throw new FrontEndError(
-                "Attempted to set agent-color after color mapping was finalized"
-            );
-        }
+
+        //todo: this code is commented out for now to allow colors to be changed
+        // after the intitial mapping is finalized
+        // need to either make a new function or handle setting and resettting isIdColorMappingSet
+        // if (this.isIdColorMappingSet) {
+        //     throw new FrontEndError(
+        //         "Attempted to set agent-color after color mapping was finalized"
+        //     );
+        // }
         ids.forEach((id) => this.setColorForId(id, colorId));
     }
 
