@@ -219,8 +219,8 @@ class SelectionInterface {
         return indices;
     }
 
-    public getColorChangeAgentIds(info: SelectionStateInfo): number[] {
-        const requests = info.colorChangeAgents;
+    public getColorChangeAgentIds(info: SelectionEntry[]): number[] {
+        const requests = info;
         let indices: number[] = [];
 
         requests.forEach((r) => {
