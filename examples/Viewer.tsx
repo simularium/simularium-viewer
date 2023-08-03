@@ -31,6 +31,7 @@ import ConversionForm from "./ConversionForm";
 import MetaballSimulator from "./MetaballSimulator";
 import { TrajectoryType } from "../src/constants";
 import { NetConnectionParams } from "../src/simularium";
+import { SelectionEntry } from "../src/simularium/SelectionInterface";
 
 let playbackFile = "TEST_LIVEMODE_API"; //"medyan_paper_M:A_0.675.simularium";
 let queryStringFile = "";
@@ -85,6 +86,9 @@ interface ViewerState {
         name: string;
         data: ISimulariumFile | null;
     } | null;
+    selectedColor: string;
+    selectedAgent: string;
+    colorToAdd: string;
 }
 
 interface BaseType {
@@ -139,9 +143,13 @@ const initialState: ViewerState = {
     selectionStateInfo: {
         highlightedAgents: [],
         hiddenAgents: [],
+        colorChangeAgents: [],
     },
     filePending: null,
     simulariumFile: null,
+    selectedColor: "",
+    selectedAgent: "",
+    colorToAdd: "",
 };
 
 type FrontEndError = typeof FrontEndError;
@@ -590,6 +598,57 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         URL.revokeObjectURL(downloadLink.href);
     }
 
+    public handleColorSelection = (event) => {
+        this.setState({ selectedColor: event.target.value });
+    };
+
+    public handleAgentSelection = (event) => {
+        const value = event.target.value;
+        this.setState({ selectedAgent: value });
+    };
+
+    public assignColorToAgent = () => {
+        if (!this.state.selectedAgent) {
+            throw new Error("No agent selected");
+            return;
+        } else if (!this.state.selectedColor) {
+            throw new Error("No color selected");
+            return;
+        } else {
+            // todo: handle tags
+            const entry: SelectionEntry = {
+                name: this.state.selectedAgent,
+                tags: [],
+            };
+            const entryArray: SelectionEntry[] = [entry];
+            this.setState({
+                ...this.state,
+                selectionStateInfo: {
+                    ...this.state.selectionStateInfo,
+                    colorChangeAgents: entryArray,
+                },
+            });
+        }
+    };
+
+    public receiveNewColorInput = (event) => {
+        const value = event.target.value;
+        this.setState({ colorToAdd: value });
+    };
+
+    public addColorToColorArray = (event) => {
+        const hexColorCodeRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+        const color = this.state.colorToAdd;
+        if (hexColorCodeRegex.test(color)) {
+            this.setState({
+                agentColors: [...this.state.agentColors, color] as string[],
+            });
+            simulariumController.visGeometry.addColorToColorArray(color);
+        } else {
+            alert("Please enter a valid hex color code");
+        }
+    };
+
     public render(): JSX.Element {
         if (this.state.filePending) {
             const fileType = this.state.filePending.type;
@@ -828,6 +887,38 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     Tick interval length:{" "}
                     {simulariumController.tickIntervalLength}
                 </span>
+                <select
+                    id="agentSelect"
+                    onChange={this.handleAgentSelection}
+                    defaultValue={this.state.selectedAgent}
+                >
+                    {this.state.particleTypeNames.map((name) => (
+                        <option value={name}>{name}</option>
+                    ))}
+                </select>
+                <select
+                    id="colorSelect"
+                    onChange={this.handleColorSelection}
+                    defaultValue={this.state.selectedColor}
+                    style={{ backgroundColor: this.state.selectedColor }}
+                >
+                    {this.state.agentColors.map((name) => (
+                        <option value={name}>{name}</option>
+                    ))}
+                </select>
+                <button onClick={this.assignColorToAgent}>
+                    {" "}
+                    Apply Color to Agent
+                </button>
+                <input
+                    id="colorAddition"
+                    type="text"
+                    placeholder="add Hex Color"
+                    onChange={this.receiveNewColorInput}
+                ></input>
+                <button onClick={this.addColorToColorArray}>
+                    Add color to color array
+                </button>
                 <div className="viewer-container">
                     <SimulariumViewer
                         ref={this.viewerRef}
@@ -851,6 +942,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         showPaths={this.state.showPaths}
                         onError={this.onError}
                         backgroundColor={[0, 0, 0]}
+                        selectedColor={this.state.selectedColor}
                     />
                 </div>
             </div>
