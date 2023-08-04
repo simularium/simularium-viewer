@@ -87,8 +87,9 @@ interface ViewerState {
         data: ISimulariumFile | null;
     } | null;
     selectedColor: string;
+    customColor: string;
+    assignedColor: string;
     selectedAgent: string;
-    colorToAdd: string;
 }
 
 interface BaseType {
@@ -149,7 +150,7 @@ const initialState: ViewerState = {
     simulariumFile: null,
     selectedColor: "",
     selectedAgent: "",
-    colorToAdd: "",
+    customColor: "",
 };
 
 type FrontEndError = typeof FrontEndError;
@@ -627,18 +628,19 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     ...this.state.selectionStateInfo,
                     colorChangeAgents: entryArray,
                 },
+                assignedColor: this.state.selectedColor,
             });
         }
     };
 
     public receiveNewColorInput = (event) => {
         const value = event.target.value;
-        this.setState({ colorToAdd: value });
+        this.setState({ customColor: value });
     };
 
     public addColorToColorArray = (event) => {
         const hexColorCodeRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
-        const color = this.state.colorToAdd;
+        const color = this.state.customColor;
         if (hexColorCodeRegex.test(color)) {
             this.setState({
                 agentColors: [...this.state.agentColors, color] as string[],
@@ -941,7 +943,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         showPaths={this.state.showPaths}
                         onError={this.onError}
                         backgroundColor={[0, 0, 0]}
-                        selectedColor={this.state.selectedColor}
+                        assignedColor={this.state.assignedColor}
                     />
                 </div>
             </div>

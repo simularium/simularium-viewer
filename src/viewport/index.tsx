@@ -42,7 +42,7 @@ type ViewportProps = {
     selectionStateInfo: SelectionStateInfo;
     showCameraControls: boolean;
     onError?: (error: FrontEndError) => void;
-    selectedColor: string;
+    assignedColor: string;
 } & Partial<DefaultProps>;
 
 const defaultProps = {
@@ -322,10 +322,12 @@ class Viewport extends React.Component<
                     selectionStateInfo.colorChangeAgents,
                     prevProps.selectionStateInfo.colorChangeAgents
                 )
+                ||
+                !isEqual(this.props.assignedColor, prevProps.assignedColor)
             ) {
                 this.changeAgentColor(
                     selectionStateInfo.colorChangeAgents,
-                    this.props.selectedColor
+                    this.props.assignedColor
                 );
             }
         }
