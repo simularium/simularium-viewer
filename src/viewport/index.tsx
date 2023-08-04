@@ -561,7 +561,7 @@ class Viewport extends React.Component<
     ): void {
         // TODO: if color is not present in color array, add it
         if (typeof agents === "string") {
-            agents = this.selectionEntryFromAgentName(agents);
+            agents = this.convertAgentNameToSelectionEntry(agents);
         }
         const agentIds = this.selectionInterface.getColorChangeAgentIds(agents);
         const colorId = this.getColorId(
@@ -571,7 +571,7 @@ class Viewport extends React.Component<
         this.applyColorToAgents(agentIds, colorId);
     }
 
-    public selectionEntryFromAgentName(name: string): SelectionEntry[] {
+    public convertAgentNameToSelectionEntry(name: string): SelectionEntry[] {
         const uiDisplayData = this.selectionInterface.getUIDisplayData();
         const agentNames = uiDisplayData.map((a) => a.name);
         if (!agentNames.includes(name)) {

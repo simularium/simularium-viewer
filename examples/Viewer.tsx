@@ -643,7 +643,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             this.setState({
                 agentColors: [...this.state.agentColors, color] as string[],
             });
-            simulariumController.visGeometry.addColorToColorArray(color);
         } else {
             alert("Please enter a valid hex color code");
         }
