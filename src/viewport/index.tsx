@@ -321,8 +321,7 @@ class Viewport extends React.Component<
                 !isEqual(
                     selectionStateInfo.colorChangeAgents,
                     prevProps.selectionStateInfo.colorChangeAgents
-                )
-                ||
+                ) ||
                 !isEqual(this.props.assignedColor, prevProps.assignedColor)
             ) {
                 this.changeAgentColor(
@@ -561,7 +560,6 @@ class Viewport extends React.Component<
         agents: string | SelectionEntry[],
         color: string
     ): void {
-        // TODO: if color is not present in color array, add it
         if (typeof agents === "string") {
             agents = this.convertAgentNameToSelectionEntry(agents);
         }
@@ -594,8 +592,13 @@ class Viewport extends React.Component<
         }
         const typeCastAgentColors = agentColors as string[];
         if (!typeCastAgentColors.includes(color)) {
-            // todo: if color is not present in color array, add it
-            throw new Error("Color not found");
+            const uiDisplayData = this.selectionInterface.getUIDisplayData();
+            const updatedColors = this.selectionInterface.setAgentColors(
+                uiDisplayData,
+                [...agentColors, color],
+                this.visGeometry.setColorForIds.bind(this.visGeometry)
+            );
+            this.visGeometry.createMaterials(updatedColors);
         }
         const colorId = typeCastAgentColors.indexOf(color);
         return colorId;
