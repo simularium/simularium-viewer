@@ -81,6 +81,7 @@ var SimulariumController = /*#__PURE__*/function () {
     this.setPanningMode = this.setPanningMode.bind(this);
     this.setFocusMode = this.setFocusMode.bind(this);
     this.convertAndLoadTrajectory = this.convertAndLoadTrajectory.bind(this);
+    this.setCameraType = this.setCameraType.bind(this);
   }
   _createClass(SimulariumController, [{
     key: "createSimulatorConnection",
