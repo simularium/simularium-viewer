@@ -203,17 +203,8 @@ class Viewport extends React.Component<
             }
         }
         onTrajectoryFileInfoChanged(trajectoryFileInfo);
-        this.visGeometry.clearColorMapping();
+        this.setColors(agentColors);
         const uiDisplayData = this.selectionInterface.getUIDisplayData();
-        const updatedColors = this.selectionInterface.setAgentColors(
-            uiDisplayData,
-            agentColors,
-            this.visGeometry.setColorForIds.bind(this.visGeometry)
-        );
-        if (!isEqual(updatedColors, agentColors)) {
-            this.visGeometry.createMaterials(updatedColors);
-        }
-        this.visGeometry.finalizeIdColorMapping();
         onUIDisplayDataChanged(uiDisplayData);
     }
 
@@ -592,16 +583,25 @@ class Viewport extends React.Component<
         }
         const typeCastAgentColors = agentColors as string[];
         if (!typeCastAgentColors.includes(color)) {
-            const uiDisplayData = this.selectionInterface.getUIDisplayData();
-            const updatedColors = this.selectionInterface.setAgentColors(
-                uiDisplayData,
-                [...agentColors, color],
-                this.visGeometry.setColorForIds.bind(this.visGeometry)
-            );
-            this.visGeometry.createMaterials(updatedColors);
+            const updatedColors = [...agentColors, color] as string[]
+            this.setColors(updatedColors);
         }
         const colorId = typeCastAgentColors.indexOf(color);
         return colorId;
+    }
+
+    public setColors(agentColors: string[] | number[]): void {
+         this.visGeometry.clearColorMapping();
+         const uiDisplayData = this.selectionInterface.getUIDisplayData();
+         const updatedColors = this.selectionInterface.setAgentColors(
+             uiDisplayData,
+             agentColors,
+             this.visGeometry.setColorForIds.bind(this.visGeometry)
+         );
+         if (!isEqual(updatedColors, agentColors)) {
+             this.visGeometry.createMaterials(updatedColors);
+         }
+         this.visGeometry.finalizeIdColorMapping();
     }
 
     public applyColorToAgents(agentIds: number[], colorId: number): void {
