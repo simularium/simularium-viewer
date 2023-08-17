@@ -936,7 +936,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 <select
                     id="agentSelect"
                     onChange={this.handleAgentSelection}
-                    defaultValue="Select Agent"
                 >
                     <option value="Select Agent"> Select Agent</option>
                     {this.state.particleTypeNames.map((name) => (
@@ -946,7 +945,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 <select
                     id="subAgentSelect"
                     onChange={this.handleSubAgentSelection}
-                    defaultValue="Select Sub-Agent"
                 >
                     <option value="Select Sub-Agent"> Select Sub-Agent</option>
                     {this.state.subAgentNames.map((name) => (
