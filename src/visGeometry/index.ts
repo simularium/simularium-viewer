@@ -1154,9 +1154,11 @@ class VisGeometry {
          * @param colorId index into the color array
          */
 
-        //todo: this code is commented out for now to allow colors to be changed
-        // after the intitial mapping is finalized
-        // need to either make a new function or handle setting and resettting isIdColorMappingSet
+        //TODO: this is commented out because I'm unsure how best to handle this
+        // the purpose of this feature is to allow color mapping to be changed
+        // should we just remove this error handling? or should the color change methods
+        // clear the mapping, apply the color change then reset it?
+
         // if (this.isIdColorMappingSet) {
         //     throw new FrontEndError(
         //         "Attempted to set agent-color after color mapping was finalized"
