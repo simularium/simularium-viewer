@@ -90,6 +90,8 @@ interface ViewerState {
     customColor: string;
     assignedColor: string;
     selectedAgent: string;
+    subAgentNames: string[];
+    selectedSubAgent: string;
 }
 
 interface BaseType {
@@ -151,6 +153,8 @@ const initialState: ViewerState = {
     selectedColor: "",
     selectedAgent: "",
     customColor: "",
+    subAgentNames: [],
+    selectedSubAgent: "",
 };
 
 type FrontEndError = typeof FrontEndError;
@@ -606,6 +610,26 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     public handleAgentSelection = (event) => {
         const value = event.target.value;
         this.setState({ selectedAgent: value });
+        const subAgents = this.getSubAgentsforAgent(value);
+        if (subAgents) {
+            this.setState({ subAgentNames: subAgents });
+        }
+    };
+
+    public handleSubAgentSelection = (event) => {
+        const value = event.target.value;
+        this.setState({ selectedSubAgent: value });
+    };
+
+    public getSubAgentsforAgent = (agentName: string) => {
+        const agent = this.state.uiDisplayData.find(
+            (element) => element.name === agentName
+        );
+        if (!agent) {
+            throw new Error("No agent found");
+            return;
+        }
+        return agent.displayStates.map((element) => element.id);
     };
 
     public assignColorToAgent = () => {
@@ -616,17 +640,16 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             throw new Error("No color selected");
             return;
         } else {
-            // todo: handle tags
-            const entry: SelectionEntry = {
+            const subAgent: string[] = this.state.selectedSubAgent ? [this.state.selectedSubAgent] : [];
+            const entry: SelectionEntry[] = [{
                 name: this.state.selectedAgent,
-                tags: [],
-            };
-            const entryArray: SelectionEntry[] = [entry];
+                tags: subAgent,
+            }];
             this.setState({
                 ...this.state,
                 selectionStateInfo: {
                     ...this.state.selectionStateInfo,
-                    colorChangeAgents: entryArray,
+                    colorChangeAgents: entry,
                 },
                 assignedColor: this.state.selectedColor,
             });
@@ -684,15 +707,33 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     <option value="microtubules30_1.h5">MT 30</option>
                     <option value="endocytosis.simularium">Endocytosis</option>
                     <option value="pc4covid19.simularium">COVIDLUNG</option>
-                    <option value="nanoparticle_wrapping.simularium">Nanoparticle wrapping</option>
-                    <option value="smoldyn_min1.simularium">Smoldyn min1</option>
-                    <option value="smoldyn_spine.simularium">Smoldyn spine</option>
-                    <option value="medyan_Chandrasekaran_2019_UNI_alphaA_0.1_MA_0.675.simularium">medyan 625</option>
-                    <option value="medyan_Chandrasekaran_2019_UNI_alphaA_0.1_MA_0.0225.simularium">medyan 0225</option>
-                    <option value="springsalad_condensate_formation_Below_Ksp.simularium">springsalad below ksp</option>
-                    <option value="springsalad_condensate_formation_At_Ksp.simularium">springsalad at ksp</option>
-                    <option value="springsalad_condensate_formation_Above_Ksp.simularium">springsalad above ksp</option>
-                    <option value="blood-plasma-1.0.simularium">blood plasma</option>
+                    <option value="nanoparticle_wrapping.simularium">
+                        Nanoparticle wrapping
+                    </option>
+                    <option value="smoldyn_min1.simularium">
+                        Smoldyn min1
+                    </option>
+                    <option value="smoldyn_spine.simularium">
+                        Smoldyn spine
+                    </option>
+                    <option value="medyan_Chandrasekaran_2019_UNI_alphaA_0.1_MA_0.675.simularium">
+                        medyan 625
+                    </option>
+                    <option value="medyan_Chandrasekaran_2019_UNI_alphaA_0.1_MA_0.0225.simularium">
+                        medyan 0225
+                    </option>
+                    <option value="springsalad_condensate_formation_Below_Ksp.simularium">
+                        springsalad below ksp
+                    </option>
+                    <option value="springsalad_condensate_formation_At_Ksp.simularium">
+                        springsalad at ksp
+                    </option>
+                    <option value="springsalad_condensate_formation_Above_Ksp.simularium">
+                        springsalad above ksp
+                    </option>
+                    <option value="blood-plasma-1.0.simularium">
+                        blood plasma
+                    </option>
                     <option value="TEST_SINGLE_PDB">TEST SINGLE PDB</option>
                     <option value="TEST_PDB">TEST PDB</option>
                     <option value="TEST_FIBERS">TEST FIBERS</option>
@@ -855,7 +896,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 <br />
                 <button
                     onClick={() =>
-                        simulariumController.getMetrics(this.netConnectionSettings)
+                        simulariumController.getMetrics(
+                            this.netConnectionSettings
+                        )
                     }
                 >
                     Get available metrics
@@ -888,12 +931,25 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     Tick interval length:{" "}
                     {simulariumController.tickIntervalLength}
                 </span>
+                <br></br>
+                <span>Color change agent selection:</span>
                 <select
                     id="agentSelect"
                     onChange={this.handleAgentSelection}
                     defaultValue={this.state.selectedAgent}
                 >
                     {this.state.particleTypeNames.map((name) => (
+                        <option value={name}>{name}</option>
+                    ))}
+                </select>
+                {/* a select that takes a chosen agent and display tags aka subtypes */}
+                <span> Color change subagent selection:</span>
+                <select
+                    id="subAgentSelect"
+                    onChange={this.handleSubAgentSelection}
+                    defaultValue={this.state.selectedSubAgent}
+                >
+                    {this.state.subAgentNames.map((name) => (
                         <option value={name}>{name}</option>
                     ))}
                 </select>
