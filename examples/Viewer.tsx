@@ -932,23 +932,23 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     {simulariumController.tickIntervalLength}
                 </span>
                 <br></br>
-                <span>Color change agent selection:</span>
+                <span>Color change agent selections:</span>
                 <select
                     id="agentSelect"
                     onChange={this.handleAgentSelection}
-                    defaultValue={this.state.selectedAgent}
+                    defaultValue="Select Agent"
                 >
+                    <option value="Select Agent"> Select Agent</option>
                     {this.state.particleTypeNames.map((name) => (
                         <option value={name}>{name}</option>
                     ))}
                 </select>
-                {/* a select that takes a chosen agent and display tags aka subtypes */}
-                <span> Color change subagent selection:</span>
                 <select
                     id="subAgentSelect"
                     onChange={this.handleSubAgentSelection}
-                    defaultValue={this.state.selectedSubAgent}
+                    defaultValue="Select Sub-Agent"
                 >
+                    <option value="Select Sub-Agent"> Select Sub-Agent</option>
                     {this.state.subAgentNames.map((name) => (
                         <option value={name}>{name}</option>
                     ))}
@@ -959,6 +959,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     defaultValue={this.state.selectedColor}
                     style={{ backgroundColor: this.state.selectedColor }}
                 >
+                    <option value="Select Color"> Select Color</option>
                     {this.state.agentColors.map((name) => (
                         <option value={name}>{name}</option>
                     ))}
