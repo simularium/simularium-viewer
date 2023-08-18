@@ -258,7 +258,6 @@ class CompositePass {
         camera: PerspectiveCamera | OrthographicCamera,
         target: WebGLRenderTarget,
         ssaoBuffer1: WebGLRenderTarget,
-        ssaoBuffer2: WebGLRenderTarget,
         colorBuffer: WebGLTexture
     ): void {
         this.pass.material.uniforms.zNear.value = camera.near;

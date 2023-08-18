@@ -67,9 +67,7 @@ class SimulariumRenderer {
     private hitTestHelper: HitTestHelper;
     public blurIntermediateBuffer: WebGLRenderTarget;
     public ssaoBuffer: WebGLRenderTarget;
-    public ssaoBuffer2: WebGLRenderTarget;
     public ssaoBufferBlurred: WebGLRenderTarget;
-    public ssaoBufferBlurred2: WebGLRenderTarget;
     private parameters: SimulariumRenderParameters;
     private boundsNear: number;
     private boundsFar: number;
@@ -157,15 +155,6 @@ class SimulariumRenderer {
             stencilBuffer: false,
         });
         this.ssaoBuffer.texture.generateMipmaps = false;
-        this.ssaoBuffer2 = new WebGLRenderTarget(2, 2, {
-            minFilter: NearestFilter,
-            magFilter: NearestFilter,
-            format: RGBAFormat,
-            type: FloatType,
-            depthBuffer: false,
-            stencilBuffer: false,
-        });
-        this.ssaoBuffer2.texture.generateMipmaps = false;
         this.ssaoBufferBlurred = new WebGLRenderTarget(2, 2, {
             minFilter: NearestFilter,
             magFilter: NearestFilter,
@@ -175,15 +164,6 @@ class SimulariumRenderer {
             stencilBuffer: false,
         });
         this.ssaoBufferBlurred.texture.generateMipmaps = false;
-        this.ssaoBufferBlurred2 = new WebGLRenderTarget(2, 2, {
-            minFilter: NearestFilter,
-            magFilter: NearestFilter,
-            format: RGBAFormat,
-            type: FloatType,
-            depthBuffer: false,
-            stencilBuffer: false,
-        });
-        this.ssaoBufferBlurred2.texture.generateMipmaps = false;
     }
 
     public setupGui(gui: Pane): void {
@@ -454,7 +434,6 @@ class SimulariumRenderer {
             camera,
             compositeTarget,
             this.ssaoBufferBlurred,
-            this.ssaoBufferBlurred2,
             this.gbuffer.texture[AGENTBUFFER]
         );
 
