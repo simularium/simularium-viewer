@@ -57,8 +57,8 @@ interface SimulariumRenderParameters {
 
 class SimulariumRenderer {
     public gbufferPass: GBufferPass;
-    public ssao1Pass: SSAO1Pass;
-    public blur1Pass: BlurPass;
+    public ssaoPass: SSAO1Pass;
+    public blurPass: BlurPass;
     public compositePass: CompositePass;
     public contourPass: ContourPass;
     public transparencyPass: TransparencyPass;
@@ -103,9 +103,9 @@ class SimulariumRenderer {
 
         this.gbufferPass = new GBufferPass();
 
-        this.ssao1Pass = new SSAO1Pass();
+        this.ssaoPass = new SSAO1Pass();
 
-        this.blur1Pass = new BlurPass(
+        this.blurPass = new BlurPass(
             this.parameters.ao1.blurRadius,
             this.parameters.ao1.blurStdDev
         );
@@ -325,8 +325,8 @@ class SimulariumRenderer {
         this.ssaoBufferBlurred.setSize(x, y);
 
         this.gbufferPass.resize(x, y);
-        this.ssao1Pass.resize(x, y);
-        this.blur1Pass.resize(x, y);
+        this.ssaoPass.resize(x, y);
+        this.blurPass.resize(x, y);
         this.compositePass.resize(x, y);
         this.contourPass.resize(x, y);
         this.drawBufferPass.resize(x, y);
@@ -348,26 +348,26 @@ class SimulariumRenderer {
         const sceneSize = this.boundsMaxDim;
 
         // update all ao settings here.
-        this.ssao1Pass.pass.material.uniforms.bias.value =
+        this.ssaoPass.pass.material.uniforms.bias.value =
             this.parameters.ao1.bias;
-        this.ssao1Pass.pass.material.uniforms.intensity.value =
+        this.ssaoPass.pass.material.uniforms.intensity.value =
             this.parameters.ao1.intensity;
-        this.ssao1Pass.pass.material.uniforms.scale.value =
+        this.ssaoPass.pass.material.uniforms.scale.value =
             (this.parameters.ao1.scale * sceneSize) / 100.0;
-        this.ssao1Pass.pass.material.uniforms.kernelRadius.value =
+        this.ssaoPass.pass.material.uniforms.kernelRadius.value =
             this.parameters.ao1.kernelRadius;
-        this.ssao1Pass.pass.material.uniforms.minResolution.value =
+        this.ssaoPass.pass.material.uniforms.minResolution.value =
             this.parameters.ao1.minResolution;
-        this.ssao1Pass.pass.material.uniforms.beginFalloffDistance.value =
+        this.ssaoPass.pass.material.uniforms.beginFalloffDistance.value =
             this.parameters.atomBeginDistance * sceneSize +
             Math.max(this.boundsNear, 0.0);
-        this.ssao1Pass.pass.material.uniforms.endFalloffDistance.value =
+        this.ssaoPass.pass.material.uniforms.endFalloffDistance.value =
             this.parameters.chainBeginDistance * sceneSize +
             Math.max(this.boundsNear, 0.0);
 
-        this.ssao1Pass.pass.material.uniforms.cameraFar.value = camera.far;
+        this.ssaoPass.pass.material.uniforms.cameraFar.value = camera.far;
 
-        this.blur1Pass.configure(
+        this.blurPass.configure(
             this.parameters.ao1.blurRadius,
             this.parameters.ao1.blurStdDev,
             this.parameters.ao1.blurDepthCutoff
@@ -409,14 +409,14 @@ class SimulariumRenderer {
         this.gbufferPass.render(renderer, scene, camera, this.gbuffer);
 
         // 2 render ssao
-        this.ssao1Pass.render(
+        this.ssaoPass.render(
             renderer,
             camera,
             this.ssaoBuffer,
             this.gbuffer.texture[NORMALBUFFER],
             this.gbuffer.texture[POSITIONBUFFER]
         );
-        this.blur1Pass.render(
+        this.blurPass.render(
             renderer,
             this.ssaoBufferBlurred,
             this.ssaoBuffer,
