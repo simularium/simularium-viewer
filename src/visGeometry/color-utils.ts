@@ -21,13 +21,3 @@ export const checkHexColor = (color: string): string => {
     }
     return color;
 };
-
-export const agentColorArrayAreStrings = (
-    agentColors: string[] | number[]
-): boolean => {
-    if (typeof agentColors[0] === "string") {
-        return true;
-    } else {
-        return false;
-    }
-};
