@@ -250,7 +250,6 @@ class VisGeometry {
         this.camera.position.z = DEFAULT_CAMERA_Z_POSITION;
         this.initCameraPosition = this.camera.position.clone();
 
-        //this.controls = this.setupControls();
         this.focusMode = true;
 
         this.tickIntervalLength = 0;
