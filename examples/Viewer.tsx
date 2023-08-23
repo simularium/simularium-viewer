@@ -20,6 +20,7 @@ import PointSimulatorLive from "./PointSimulatorLive";
 import PdbSimulator from "./PdbSimulator";
 import SinglePdbSimulator from "./SinglePdbSimulator";
 import CurveSimulator from "./CurveSimulator";
+import ColorPicker from "./ColorPicker";
 import {
     SMOLDYN_TEMPLATE,
     UI_BASE_TYPES,
@@ -31,7 +32,6 @@ import ConversionForm from "./ConversionForm";
 import MetaballSimulator from "./MetaballSimulator";
 import { TrajectoryType } from "../src/constants";
 import { NetConnectionParams } from "../src/simularium";
-import { SelectionEntry } from "../src/simularium/SelectionInterface";
 
 let playbackFile = "TEST_LIVEMODE_API"; //"medyan_paper_M:A_0.675.simularium";
 let queryStringFile = "";
@@ -86,7 +86,6 @@ interface ViewerState {
         name: string;
         data: ISimulariumFile | null;
     } | null;
-    selectedColor: string;
     customColor: string;
     assignedColor: string;
     selectedAgent: string;
@@ -146,11 +145,10 @@ const initialState: ViewerState = {
     selectionStateInfo: {
         highlightedAgents: [],
         hiddenAgents: [],
-        colorChangeAgents: [],
+        colorChanges: { agents: [], color: "" },
     },
     filePending: null,
     simulariumFile: null,
-    selectedColor: "",
     selectedAgent: "",
     customColor: "",
     subAgentNames: [],
@@ -367,9 +365,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     }
 
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
-        simulariumController.convertAndLoadTrajectory(
-            this.netConnectionSettings, obj, fileType
-        )
+        simulariumController
+            .convertAndLoadTrajectory(this.netConnectionSettings, obj, fileType)
             .then(() => {
                 this.clearPendingFile();
             })
@@ -603,74 +600,21 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         URL.revokeObjectURL(downloadLink.href);
     }
 
-    public handleColorSelection = (event) => {
-        this.setState({ selectedColor: event.target.value });
+    public updateAgentColorArray = (color) => {
+        const agentColors = [...this.state.agentColors, color] as string[];
+        this.setState({ agentColors });
     };
 
-    public handleAgentSelection = (event) => {
-        const value = event.target.value;
-        this.setState({ selectedAgent: value });
-        const subAgents = this.getSubAgentsforAgent(value);
-        if (subAgents) {
-            this.setState({ subAgentNames: subAgents });
-        }
-    };
-
-    public handleSubAgentSelection = (event) => {
-        const value = event.target.value;
-        this.setState({ selectedSubAgent: value });
-    };
-
-    public getSubAgentsforAgent = (agentName: string) => {
-        const agent = this.state.uiDisplayData.find(
-            (element) => element.name === agentName
-        );
-        if (!agent) {
-            throw new Error("No agent found");
-            return;
-        }
-        return agent.displayStates.map((element) => element.id);
-    };
-
-    public assignColorToAgent = () => {
-        if (!this.state.selectedAgent) {
-            throw new Error("No agent selected");
-            return;
-        } else if (!this.state.selectedColor) {
-            throw new Error("No color selected");
-            return;
-        } else {
-            const subAgent: string[] = this.state.selectedSubAgent ? [this.state.selectedSubAgent] : [];
-            const entry: SelectionEntry[] = [{
-                name: this.state.selectedAgent,
-                tags: subAgent,
-            }];
-            this.setState({
-                ...this.state,
-                selectionStateInfo: {
-                    ...this.state.selectionStateInfo,
-                    colorChangeAgents: entry,
-                },
-                assignedColor: this.state.selectedColor,
-            });
-        }
-    };
-
-    public receiveNewColorInput = (event) => {
-        const value = event.target.value;
-        this.setState({ customColor: value });
-    };
-
-    public addColorToColorArray = (event) => {
-        const hexColorCodeRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
-        const color = this.state.customColor;
-        if (hexColorCodeRegex.test(color)) {
-            this.setState({
-                agentColors: [...this.state.agentColors, color] as string[],
-            });
-        } else {
-            alert("Please enter a valid hex color code");
-        }
+    public setColorSelectionInfo = (colorChanges) => {
+        this.setState({
+            ...this.state,
+            selectionStateInfo: {
+                hiddenAgents: this.state.selectionStateInfo.hiddenAgents,
+                highlightedAgents:
+                    this.state.selectionStateInfo.highlightedAgents,
+                colorChanges: colorChanges,
+            },
+        });
     };
 
     public render(): JSX.Element {
@@ -932,49 +876,13 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     {simulariumController.tickIntervalLength}
                 </span>
                 <br></br>
-                <span>Color change agent selections:</span>
-                <select
-                    id="agentSelect"
-                    onChange={this.handleAgentSelection}
-                >
-                    <option value="Select Agent"> Select Agent</option>
-                    {this.state.particleTypeNames.map((name) => (
-                        <option value={name}>{name}</option>
-                    ))}
-                </select>
-                <select
-                    id="subAgentSelect"
-                    onChange={this.handleSubAgentSelection}
-                >
-                    <option value="Select Sub-Agent"> Select Sub-Agent</option>
-                    {this.state.subAgentNames.map((name) => (
-                        <option value={name}>{name}</option>
-                    ))}
-                </select>
-                <select
-                    id="colorSelect"
-                    onChange={this.handleColorSelection}
-                    defaultValue={this.state.selectedColor}
-                    style={{ backgroundColor: this.state.selectedColor }}
-                >
-                    <option value="Select Color"> Select Color</option>
-                    {this.state.agentColors.map((name) => (
-                        <option value={name}>{name}</option>
-                    ))}
-                </select>
-                <button onClick={this.assignColorToAgent}>
-                    {" "}
-                    Apply Color to Agent
-                </button>
-                <input
-                    id="colorAddition"
-                    type="text"
-                    placeholder="add Hex Color"
-                    onChange={this.receiveNewColorInput}
-                ></input>
-                <button onClick={this.addColorToColorArray}>
-                    Add color to color array
-                </button>
+                <ColorPicker
+                    uiDisplayData={this.state.uiDisplayData}
+                    particleTypeNames={this.state.particleTypeNames}
+                    agentColors={agentColors}
+                    updateAgentColorArray={this.updateAgentColorArray}
+                    setColorSelectionInfo={this.setColorSelectionInfo}
+                />
                 <div className="viewer-container">
                     <SimulariumViewer
                         ref={this.viewerRef}
