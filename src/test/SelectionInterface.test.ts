@@ -23,6 +23,10 @@ const idMapping = {
 };
 
 const color = "";
+const initialColorChanges = {
+    agents: [],
+    color,
+};
 
 describe("SelectionInterface module", () => {
     describe("decode", () => {
@@ -231,7 +235,7 @@ describe("SelectionInterface module", () => {
                     { name: "D", tags: [] },
                 ],
                 hiddenAgents: [],
-                colorChangeAgents: [],
+                colorChanges: initialColorChanges,
             };
             const ids = si.getHighlightedIds(selectionStateHighlight);
             const allAs = [0, 1, 2, 3];
@@ -251,7 +255,7 @@ describe("SelectionInterface module", () => {
                     { name: "D", tags: [""] },
                 ],
                 hiddenAgents: [],
-                colorChangeAgents: [],
+                colorChanges: initialColorChanges,
             };
             const ids = si.getHighlightedIds(selectionStateHighlight);
 
@@ -268,7 +272,7 @@ describe("SelectionInterface module", () => {
                     { name: "E", tags: ["t1000"] },
                 ],
                 hiddenAgents: [],
-                colorChangeAgents: [],
+                colorChanges: initialColorChanges,
             };
             const ids = si.getHighlightedIds(selectionStateHighlight);
 
@@ -281,7 +285,7 @@ describe("SelectionInterface module", () => {
             const selectionStateHighlight = {
                 highlightedAgents: [{ name: "E", tags: [""] }],
                 hiddenAgents: [],
-                colorChangeAgents: [],
+                colorChanges: initialColorChanges,
             };
             const ids = si.getHighlightedIds(selectionStateHighlight);
 
@@ -299,7 +303,7 @@ describe("SelectionInterface module", () => {
                     { name: "A", tags: [] },
                     { name: "C", tags: [] },
                 ],
-                colorChangeAgents: [],
+                colorChanges: initialColorChanges,
             };
             const ids = si.getHiddenIds(selectionStateHide);
 
@@ -315,7 +319,7 @@ describe("SelectionInterface module", () => {
                     { name: "A", tags: ["t1", "t2"] },
                     { name: "B", tags: ["t1"] },
                 ],
-                colorChangeAgents: [],
+                colorChanges: initialColorChanges,
             };
             const ids = si.getHiddenIds(selectionStateHide);
             expect(ids).toEqual([1, 2, 3, 5, 7]);
@@ -331,65 +335,9 @@ describe("SelectionInterface module", () => {
                     { name: "A", tags: [""] },
                     { name: "C", tags: ["", "t1", "t2"] },
                 ],
-                colorChangeAgents: [],
+                colorChanges: initialColorChanges,
             };
             const ids = si.getHiddenIds(selectionStateHide);
-
-            expect(ids).toEqual([0, 8, 9, 10, 11]);
-        });
-    });
-
-    describe("getColorChangeIds", () => {
-        test("Color change: select multiple by name", () => {
-            const si = new SelectionInterface();
-            si.parse(idMapping);
-            const selectionStateColor = {
-                highlightedAgents: [],
-                hiddenAgents: [],
-                colorChangeAgents: [
-                    { name: "A", tags: [] },
-                    { name: "C", tags: [] },
-                ],
-            };
-            const ids = si.getColorChangeAgentIds(
-                selectionStateColor.colorChangeAgents
-            );
-
-            expect(ids).toEqual([0, 1, 2, 3, 8, 9, 10, 11]);
-        });
-
-        test("Color change: change color by name & tags", () => {
-            const si = new SelectionInterface();
-            si.parse(idMapping);
-            const selectionStateColor = {
-                highlightedAgents: [],
-                hiddenAgents: [],
-                colorChangeAgents: [
-                    { name: "A", tags: ["t1", "t2"] },
-                    { name: "B", tags: ["t1"] },
-                ],
-            };
-            const ids = si.getColorChangeAgentIds(
-                selectionStateColor.colorChangeAgents
-            );
-            expect(ids).toEqual([1, 2, 3, 5, 7]);
-        });
-
-        test("Color change: change color by name & null tag", () => {
-            const si = new SelectionInterface();
-            si.parse(idMapping);
-
-            const selectionStateColor = {
-                highlightedAgents: [],
-                hiddenAgents: [],
-                colorChangeAgents: [
-                    { name: "A", tags: [""] },
-                    { name: "C", tags: ["", "t1", "t2"] },
-                ],
-            };
-            const ids = si.getColorChangeAgentIds(
-                selectionStateColor.colorChangeAgents
-            );
 
             expect(ids).toEqual([0, 8, 9, 10, 11]);
         });
@@ -469,9 +417,25 @@ describe("SelectionInterface module", () => {
         });
     });
 
-    describe("changeAgentColors", () => {});
+    describe("updateAgentColors", () => {
+        test("it will update the entries with a new color", () => {
+            const agentIds = [0];
+            const newColor = "#111111";
+            const colorChanges = {
+                agents: [{ name: "A", tags: [] }],
+                color: newColor,
+            };
+            const si = new SelectionInterface();
+            si.parse(idMapping);
+            const oldColors = si.getColorsForName("A");
+            expect(oldColors).not.toContain(newColor);
+            si.updateAgentColors(agentIds, colorChanges);
+            const colors = si.getColorsForName("A");
+            expect(colors).toContain(newColor);
+        });
+    });
 
-    describe("setAgentColors", () => {
+    describe("setInitialAgentColors", () => {
         const defaultColor = "#0";
         const defaultColorListLength = 6;
         let si: SelectionInterface;
