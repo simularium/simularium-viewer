@@ -13,3 +13,21 @@ export function convertColorNumberToString(color: number | string): string {
     }
     return "#" + new Color(color).getHexString();
 }
+
+export const checkHexColor = (color: string): string => {
+    const hexColorCodeRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+    if (!hexColorCodeRegex.test(color)) {
+        throw new Error("Invalid color code");
+    }
+    return color;
+};
+
+export const agentColorArrayAreStrings = (
+    agentColors: string[] | number[]
+): boolean => {
+    if (typeof agentColors[0] === "string") {
+        return true;
+    } else {
+        return false;
+    }
+};

@@ -30,7 +30,7 @@ import * as EssentialsPlugin from "@tweakpane/plugin-essentials";
 import { ButtonGridApi } from "@tweakpane/plugin-essentials/dist/types/button-grid/api/button-grid";
 import jsLogger from "js-logger";
 import { ILogger, ILogLevel } from "js-logger";
-import { cloneDeep, noop } from "lodash";
+import { cloneDeep, isEqual, map, noop, round } from "lodash";
 
 import VisAgent from "./VisAgent";
 import VisTypes from "../simularium/VisTypes";
@@ -116,7 +116,6 @@ class VisGeometry {
     public visAgentInstances: Map<number, VisAgent>;
     public fixLightsToCamera: boolean;
     public highlightedIds: number[];
-    public colorChangeIds: number[];
     public hiddenIds: number[];
     public agentPaths: Map<number, AgentPath>;
     public mlogger: ILogger;
@@ -188,7 +187,6 @@ class VisGeometry {
         this.visAgentInstances = new Map<number, VisAgent>();
         this.fixLightsToCamera = true;
         this.highlightedIds = [];
-        this.colorChangeIds = [];
         this.hiddenIds = [];
         this.needToCenterCamera = false;
         this.needToReOrientCamera = false;
@@ -726,11 +724,6 @@ class VisGeometry {
         this.updateScene(this.currentSceneAgents);
     }
 
-    public setColorChangeByIds(ids: number[]): void {
-        this.colorChangeIds = ids;
-        this.updateScene(this.currentSceneAgents);
-    }
-
     public dehighlight(): void {
         this.setHighlightByIds([]);
     }
@@ -1093,7 +1086,25 @@ class VisGeometry {
         }
     }
 
-    public addNewColor(color: number | string): void {
+    private indexOfColor(color: number[]) {
+        const colorArray = this.colorsData;
+        const colorToCheck = map(color, (num) => round(num, 6));
+        for (let i = 0; i < colorArray.length - 3; i += 4) {
+            const index = i / 4;
+            const currentColor = [
+                round(this.colorsData[i], 6),
+                round(this.colorsData[i + 1], 6),
+                round(this.colorsData[i + 2], 6),
+                this.colorsData[i + 3],
+            ];
+            if (isEqual(currentColor, colorToCheck)) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    public addNewColor(color: number | string): number {
         const colorNumber = convertColorStringToNumber(color);
         const newColor = [
             ((colorNumber & 0x00ff0000) >> 16) / 255.0,
@@ -1101,10 +1112,18 @@ class VisGeometry {
             ((colorNumber & 0x000000ff) >> 0) / 255.0,
             1.0,
         ];
+        const currentIndex = this.indexOfColor(newColor);
+        if (currentIndex !== -1) {
+            return currentIndex;
+        }
+
+        const newIndex = this.colorsData.length;
         const newArray = [...this.colorsData, ...newColor];
         const newColorData = new Float32Array(newArray.length);
         newColorData.set(newArray);
         this.colorsData = newColorData;
+        this.renderer.updateColors(this.colorsData.length / 4, this.colorsData);
+        return newIndex;
     }
 
     public createMaterials(colors: (number | string)[]): void {
@@ -1165,6 +1184,11 @@ class VisGeometry {
         //     );
         // }
         ids.forEach((id) => this.setColorForId(id, colorId));
+    }
+
+    public applyColorToAgents(agentIds: number[], colorId: number): void {
+        this.setColorForIds(agentIds, colorId);
+        this.updateScene(this.currentSceneAgents);
     }
 
     public getColorForIndex(index: number): Color {
