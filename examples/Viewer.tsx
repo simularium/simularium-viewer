@@ -86,11 +86,6 @@ interface ViewerState {
         name: string;
         data: ISimulariumFile | null;
     } | null;
-    customColor: string;
-    assignedColor: string;
-    selectedAgent: string;
-    subAgentNames: string[];
-    selectedSubAgent: string;
 }
 
 interface BaseType {
@@ -149,10 +144,6 @@ const initialState: ViewerState = {
     },
     filePending: null,
     simulariumFile: null,
-    selectedAgent: "",
-    customColor: "",
-    subAgentNames: [],
-    selectedSubAgent: "",
 };
 
 type FrontEndError = typeof FrontEndError;
@@ -879,7 +870,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 <ColorPicker
                     uiDisplayData={this.state.uiDisplayData}
                     particleTypeNames={this.state.particleTypeNames}
-                    agentColors={agentColors}
+                    agentColors={this.state.agentColors}
                     updateAgentColorArray={this.updateAgentColorArray}
                     setColorSelectionInfo={this.setColorSelectionInfo}
                 />
@@ -906,7 +897,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         showPaths={this.state.showPaths}
                         onError={this.onError}
                         backgroundColor={[0, 0, 0]}
-                        assignedColor={this.state.assignedColor}
                     />
                 </div>
             </div>

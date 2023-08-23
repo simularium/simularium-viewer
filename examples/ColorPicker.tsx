@@ -12,6 +12,7 @@ const ColorPicker = ({
     const [selectedAgent, setSelectedAgent] = useState("");
     const [selectedColor, setSelectedColor] = useState("");
     const [selectedSubagent, setSelectedSubAgent] = useState("");
+    const [colorToAppend, setColorToAppend] = useState("");
 
     const getSubAgentsforAgent = (agentName: string) => {
         const agent = uiDisplayData.find(
@@ -55,9 +56,7 @@ const ColorPicker = ({
         }
     };
 
-    const addColorToColorArray = (event) => {
-        const customColor = event.target.value;
-
+    const addColorToColorArray = (customColor: string) => {
         const hexColorCodeRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
         const color = customColor;
         if (hexColorCodeRegex.test(color)) {
@@ -110,9 +109,11 @@ const ColorPicker = ({
                 id="colorAddition"
                 type="text"
                 placeholder="add Hex Color"
-                onChange={addColorToColorArray}
+                onChange={(event) => {
+                    console.log(event.target.value)
+                    setColorToAppend(event.target.value)}}
             ></input>
-            <button onClick={addColorToColorArray}>
+            <button onClick={() => addColorToColorArray(colorToAppend)}>
                 Add color to color array
             </button>
         </>
