@@ -17,7 +17,8 @@ import { TrajectoryFileInfoAny } from "../simularium/types";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
 import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry";
-import { SelectionEntry } from "../simularium/SelectionInterface";
+import { ColorChanges } from "../simularium/SelectionInterface";
+
 
 export type PropColor = string | number | [number, number, number];
 
@@ -42,7 +43,6 @@ type ViewportProps = {
     selectionStateInfo: SelectionStateInfo;
     showCameraControls: boolean;
     onError?: (error: FrontEndError) => void;
-    assignedColor: string;
 } & Partial<DefaultProps>;
 
 const defaultProps = {
@@ -310,15 +310,11 @@ class Viewport extends React.Component<
             }
             if (
                 !isEqual(
-                    selectionStateInfo.colorChangeAgents,
-                    prevProps.selectionStateInfo.colorChangeAgents
-                ) ||
-                !isEqual(this.props.assignedColor, prevProps.assignedColor)
+                    selectionStateInfo.colorChanges,
+                    prevProps.selectionStateInfo.colorChanges
+                )
             ) {
-                this.changeAgentColor(
-                    selectionStateInfo.colorChangeAgents,
-                    this.props.assignedColor
-                );
+                this.changeAgentsColor(selectionStateInfo.colorChanges);
             }
         }
 
@@ -547,66 +543,36 @@ class Viewport extends React.Component<
         }
     }
 
-    public changeAgentColor(
-        agents: string | SelectionEntry[],
-        color: string
-    ): void {
-        if (typeof agents === "string") {
-            agents = this.convertAgentNameToSelectionEntry(agents);
-        }
-        const agentIds = this.selectionInterface.getColorChangeAgentIds(agents);
-        const colorId = this.getColorId(
-            color,
-            this.props.agentColors as string[]
-        );
-        this.applyColorToAgents(agentIds, colorId);
+    private getColorId(color: string): number {
+        /**
+         * Check if the new color is in our current array of color options, if not,
+         * add it before returning the index
+         */
+        return this.visGeometry.addNewColor(color);
     }
 
-    public convertAgentNameToSelectionEntry(name: string): SelectionEntry[] {
-        const uiDisplayData = this.selectionInterface.getUIDisplayData();
-        const agentNames = uiDisplayData.map((a) => a.name);
-        if (!agentNames.includes(name)) {
-            throw new Error("Agent name not found");
-        } else {
-            const colorChangeAgents = {
-                name: name,
-                tags: [],
-            };
-            return [colorChangeAgents];
-        }
-    }
+    public changeAgentsColor(colorChanges: ColorChanges): void {
+        const { agents, color } = colorChanges;
+        const agentIds =
+        this.selectionInterface.getAgentIdsByNamesAndTags(agents);
+        this.selectionInterface.updateAgentColors(agentIds, colorChanges);
+        const colorId = this.getColorId(color);
+        this.visGeometry.applyColorToAgents(agentIds, colorId);
 
-    public getColorId(color: string, agentColors: string[] | number[]): number {
-        const hexColorCodeRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
-        if (!hexColorCodeRegex.test(color)) {
-            throw new Error("Invalid color code");
-        }
-        const typeCastAgentColors = agentColors as string[];
-        if (!typeCastAgentColors.includes(color)) {
-            const updatedColors = [...agentColors, color] as string[]
-            this.setColors(updatedColors);
-        }
-        const colorId = typeCastAgentColors.indexOf(color);
-        return colorId;
     }
 
     public setColors(agentColors: string[] | number[]): void {
-         this.visGeometry.clearColorMapping();
-         const uiDisplayData = this.selectionInterface.getUIDisplayData();
-         const updatedColors = this.selectionInterface.setAgentColors(
-             uiDisplayData,
-             agentColors,
-             this.visGeometry.setColorForIds.bind(this.visGeometry)
-         );
-         if (!isEqual(updatedColors, agentColors)) {
-             this.visGeometry.createMaterials(updatedColors);
-         }
-         this.visGeometry.finalizeIdColorMapping();
-    }
-
-    public applyColorToAgents(agentIds: number[], colorId: number): void {
-        this.visGeometry.setColorForIds(agentIds, colorId);
-        this.visGeometry.setColorChangeByIds(agentIds);
+        this.visGeometry.clearColorMapping();
+        const uiDisplayData = this.selectionInterface.getUIDisplayData();
+        const updatedColors = this.selectionInterface.setInitialAgentColors(
+            uiDisplayData,
+            agentColors,
+            this.visGeometry.setColorForIds.bind(this.visGeometry)
+        );
+        if (!isEqual(updatedColors, agentColors)) {
+            this.visGeometry.createMaterials(updatedColors);
+        }
+        this.visGeometry.finalizeIdColorMapping();
     }
 
     public stopAnimate(): void {
