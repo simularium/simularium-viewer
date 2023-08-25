@@ -21,7 +21,7 @@ var RenderToBuffer = /*#__PURE__*/function () {
       vertexShader: ["varying vec2 vUv;", "void main()", "{", "vUv = uv;", "gl_Position = vec4( position, 1.0 );", "}"].join("\n"),
       fragmentShader: paramsObj.fragmentShader,
       uniforms: paramsObj.uniforms,
-      defines: paramsObj.defines
+      defines: paramsObj.defines || {}
     });
 
     // in order to guarantee the whole quad is drawn every time optimally:

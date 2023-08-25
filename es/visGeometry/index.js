@@ -178,35 +178,6 @@ var VisGeometry = /*#__PURE__*/function () {
     this.hemiLight.groundColor.setHSL(0.6, 1, 0.6);
     this.hemiLight.position.set(0, 1, 0);
     this.lightsGroup.add(this.hemiLight);
-
-    // Set up renderer
-
-    if (WEBGL.isWebGL2Available() === false) {
-      this.renderStyle = RenderStyle.WEBGL1_FALLBACK;
-      this.supportsWebGL2Rendering = false;
-      this.threejsrenderer = new WebGLRenderer({
-        premultipliedAlpha: false
-      });
-    } else {
-      this.renderStyle = RenderStyle.WEBGL2_PREFERRED;
-      this.supportsWebGL2Rendering = true;
-      var canvas = document.createElement("canvas");
-      var context = canvas.getContext("webgl2", {
-        alpha: false
-      });
-      var rendererParams = {
-        canvas: canvas,
-        context: context,
-        premultipliedAlpha: false
-      };
-      this.threejsrenderer = new WebGLRenderer(rendererParams);
-    }
-
-    // set this up after the renderStyle has been set.
-    this.constructInstancedFibers();
-    this.threejsrenderer.setSize(CANVAS_INITIAL_WIDTH, CANVAS_INITIAL_HEIGHT); // expected to change when reparented
-    this.threejsrenderer.setClearColor(this.backgroundColor, 1);
-    this.threejsrenderer.clear();
     this.mlogger = jsLogger.get("visgeometry");
     this.mlogger.setLevel(loggerLevel);
 
@@ -222,7 +193,6 @@ var VisGeometry = /*#__PURE__*/function () {
     this.camera = this.perspectiveCamera;
     this.camera.position.z = DEFAULT_CAMERA_Z_POSITION;
     this.initCameraPosition = this.camera.position.clone();
-    this.controls = this.setupControls();
     this.focusMode = true;
     this.tickIntervalLength = 0;
     this.boxNearZ = 0;
@@ -800,12 +770,44 @@ var VisGeometry = /*#__PURE__*/function () {
       this.camera = newCam;
     }
   }, {
+    key: "createWebGL",
+    value: function createWebGL() {
+      if (WEBGL.isWebGL2Available() === false) {
+        this.renderStyle = RenderStyle.WEBGL1_FALLBACK;
+        this.supportsWebGL2Rendering = false;
+        this.threejsrenderer = new WebGLRenderer({
+          premultipliedAlpha: false
+        });
+      } else {
+        this.renderStyle = RenderStyle.WEBGL2_PREFERRED;
+        this.supportsWebGL2Rendering = true;
+        var canvas = document.createElement("canvas");
+        var context = canvas.getContext("webgl2", {
+          alpha: false
+        });
+        var rendererParams = {
+          canvas: canvas,
+          context: context,
+          premultipliedAlpha: false
+        };
+        this.threejsrenderer = new WebGLRenderer(rendererParams);
+      }
+
+      // set this up after the renderStyle has been set.
+      this.constructInstancedFibers();
+      this.threejsrenderer.setSize(CANVAS_INITIAL_WIDTH, CANVAS_INITIAL_HEIGHT); // expected to change when reparented
+      this.threejsrenderer.setClearColor(this.backgroundColor, 1);
+      this.threejsrenderer.clear();
+      return this.threejsrenderer;
+    }
+  }, {
     key: "reparent",
     value: function reparent(parent) {
       var _this3 = this;
       if (parent === undefined || parent == null) {
         return;
       }
+      this.threejsrenderer = this.createWebGL();
       parent.appendChild(this.threejsrenderer.domElement);
       this.setupControls();
       this.resize(Number(parent.dataset.width), Number(parent.dataset.height));

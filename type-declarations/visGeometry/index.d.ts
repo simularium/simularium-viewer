@@ -113,6 +113,7 @@ declare class VisGeometry {
     private updateControlsZoomBounds;
     resize(width: number, height: number): void;
     setCameraType(ortho: boolean): void;
+    private createWebGL;
     reparent(parent?: HTMLElement | null): void;
     disableControls(): void;
     enableControls(): void;
