@@ -120,13 +120,13 @@ class VisGeometry {
     public agentPaths: Map<number, AgentPath>;
     public mlogger: ILogger;
     // this is the threejs object that issues all the webgl calls
-    public threejsrenderer: WebGLRenderer;
+    public threejsrenderer!: WebGLRenderer;
     public scene: Scene;
 
     public perspectiveCamera: PerspectiveCamera;
     public orthographicCamera: OrthographicCamera;
     public camera: PerspectiveCamera | OrthographicCamera;
-    public controls: OrbitControls;
+    public controls!: OrbitControls;
 
     public dl: DirectionalLight;
     public hemiLight: HemisphereLight;
@@ -228,40 +228,6 @@ class VisGeometry {
         this.hemiLight.position.set(0, 1, 0);
         this.lightsGroup.add(this.hemiLight);
 
-        // Set up renderer
-
-        if (WEBGL.isWebGL2Available() === false) {
-            this.renderStyle = RenderStyle.WEBGL1_FALLBACK;
-            this.supportsWebGL2Rendering = false;
-            this.threejsrenderer = new WebGLRenderer({
-                premultipliedAlpha: false,
-            });
-        } else {
-            this.renderStyle = RenderStyle.WEBGL2_PREFERRED;
-            this.supportsWebGL2Rendering = true;
-            const canvas = document.createElement("canvas");
-            const context: WebGLRenderingContext = canvas.getContext("webgl2", {
-                alpha: false,
-            }) as WebGLRenderingContext;
-
-            const rendererParams: WebGLRendererParameters = {
-                canvas: canvas,
-                context: context,
-                premultipliedAlpha: false,
-            };
-            this.threejsrenderer = new WebGLRenderer(rendererParams);
-        }
-
-        // set this up after the renderStyle has been set.
-        this.constructInstancedFibers();
-
-        this.threejsrenderer.setSize(
-            CANVAS_INITIAL_WIDTH,
-            CANVAS_INITIAL_HEIGHT
-        ); // expected to change when reparented
-        this.threejsrenderer.setClearColor(this.backgroundColor, 1);
-        this.threejsrenderer.clear();
-
         this.mlogger = jsLogger.get("visgeometry");
         this.mlogger.setLevel(loggerLevel);
 
@@ -284,7 +250,6 @@ class VisGeometry {
         this.camera.position.z = DEFAULT_CAMERA_Z_POSITION;
         this.initCameraPosition = this.camera.position.clone();
 
-        this.controls = this.setupControls();
         this.focusMode = true;
 
         this.tickIntervalLength = 0;
@@ -842,11 +807,48 @@ class VisGeometry {
         this.camera = newCam;
     }
 
+    private createWebGL(): WebGLRenderer {
+        if (WEBGL.isWebGL2Available() === false) {
+            this.renderStyle = RenderStyle.WEBGL1_FALLBACK;
+            this.supportsWebGL2Rendering = false;
+            this.threejsrenderer = new WebGLRenderer({
+                premultipliedAlpha: false,
+            });
+        } else {
+            this.renderStyle = RenderStyle.WEBGL2_PREFERRED;
+            this.supportsWebGL2Rendering = true;
+            const canvas = document.createElement("canvas");
+            const context: WebGLRenderingContext = canvas.getContext("webgl2", {
+                alpha: false,
+            }) as WebGLRenderingContext;
+
+            const rendererParams: WebGLRendererParameters = {
+                canvas: canvas,
+                context: context,
+                premultipliedAlpha: false,
+            };
+            this.threejsrenderer = new WebGLRenderer(rendererParams);
+        }
+
+        // set this up after the renderStyle has been set.
+        this.constructInstancedFibers();
+
+        this.threejsrenderer.setSize(
+            CANVAS_INITIAL_WIDTH,
+            CANVAS_INITIAL_HEIGHT
+        ); // expected to change when reparented
+        this.threejsrenderer.setClearColor(this.backgroundColor, 1);
+        this.threejsrenderer.clear();
+
+        return this.threejsrenderer;
+    }
+
     public reparent(parent?: HTMLElement | null): void {
         if (parent === undefined || parent == null) {
             return;
         }
 
+        this.threejsrenderer = this.createWebGL();
         parent.appendChild(this.threejsrenderer.domElement);
         this.setupControls();
 
