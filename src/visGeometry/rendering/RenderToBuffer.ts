@@ -42,7 +42,7 @@ class RenderToBuffer {
             ].join("\n"),
             fragmentShader: paramsObj.fragmentShader,
             uniforms: paramsObj.uniforms,
-            defines: paramsObj.defines,
+            defines: paramsObj.defines || {},
         });
 
         // in order to guarantee the whole quad is drawn every time optimally:

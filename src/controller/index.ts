@@ -115,6 +115,7 @@ export default class SimulariumController {
         this.setFocusMode = this.setFocusMode.bind(this);
         this.convertAndLoadTrajectory =
             this.convertAndLoadTrajectory.bind(this);
+        this.setCameraType = this.setCameraType.bind(this);
     }
 
     private createSimulatorConnection(
