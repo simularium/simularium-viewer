@@ -146,7 +146,6 @@ class VisGeometry {
     public agentPathGroup: Group;
     public instancedMeshGroup: Group;
     public idColorMapping: Map<number, number>;
-    private isIdColorMappingSet: boolean;
     private supportsWebGL2Rendering: boolean;
     private lodBias: number;
     private lodDistanceStops: number[];
@@ -181,7 +180,6 @@ class VisGeometry {
         this.geometryStore = new GeometryStore(loggerLevel);
         this.scaleMapping = new Map<number, number>();
         this.idColorMapping = new Map<number, number>();
-        this.isIdColorMappingSet = false;
         this.followObjectId = NO_AGENT;
         this.visAgents = [];
         this.visAgentInstances = new Map<number, VisAgent>();
@@ -1134,7 +1132,6 @@ class VisGeometry {
 
     public clearColorMapping(): void {
         this.idColorMapping.clear();
-        this.isIdColorMappingSet = false;
     }
 
     private getColorIndexForTypeId(typeId: number): number {
@@ -1172,17 +1169,6 @@ class VisGeometry {
          * @param ids agent ids that should all have the same color
          * @param colorId index into the color array
          */
-
-        //TODO: this is commented out because I'm unsure how best to handle this
-        // the purpose of this feature is to allow color mapping to be changed
-        // should we just remove this error handling? or should the color change methods
-        // clear the mapping, apply the color change then reset it?
-
-        // if (this.isIdColorMappingSet) {
-        //     throw new FrontEndError(
-        //         "Attempted to set agent-color after color mapping was finalized"
-        //     );
-        // }
         ids.forEach((id) => this.setColorForId(id, colorId));
     }
 
@@ -1197,10 +1183,6 @@ class VisGeometry {
             this.colorsData[index * 4 + 1],
             this.colorsData[index * 4 + 2]
         );
-    }
-
-    public finalizeIdColorMapping(): void {
-        this.isIdColorMappingSet = true;
     }
 
     /**
@@ -1600,9 +1582,6 @@ class VisGeometry {
      *   Update Scene
      **/
     private updateScene(agents: AgentData[]): void {
-        if (!this.isIdColorMappingSet) {
-            return;
-        }
         this.currentSceneAgents = agents;
 
         // values for updating agent path
