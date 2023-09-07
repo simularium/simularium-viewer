@@ -25,7 +25,7 @@ export interface ColorChanges {
 export interface SelectionStateInfo {
     highlightedAgents: SelectionEntry[];
     hiddenAgents: SelectionEntry[];
-    colorChanges: ColorChanges;
+    colorChanges: ColorChanges[];
 }
 
 interface DisplayStateEntry {
@@ -277,6 +277,7 @@ class SelectionInterface {
     ): void {
         const newColor = convertColorNumberToString(color);
         const entry = this.entries[agentName];
+        // if no display state update parent color
         entry.forEach((displayState) => {
             if (idsToUpdate.includes(displayState.id)) {
                 displayState.color = newColor;
