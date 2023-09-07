@@ -203,9 +203,17 @@ class Viewport extends React.Component<
             }
         }
         onTrajectoryFileInfoChanged(trajectoryFileInfo);
-        this.setColors(agentColors);
-        const uiDisplayData = this.selectionInterface.getUIDisplayData();
-        onUIDisplayDataChanged(uiDisplayData);
+            this.visGeometry.clearColorMapping();
+            const uiDisplayData = this.selectionInterface.getUIDisplayData();
+            const updatedColors = this.selectionInterface.setInitialAgentColors(
+                uiDisplayData,
+                agentColors,
+                this.visGeometry.setColorForIds.bind(this.visGeometry)
+            );
+            if (!isEqual(updatedColors, agentColors)) {
+                this.visGeometry.createMaterials(updatedColors);
+            }
+            onUIDisplayDataChanged(uiDisplayData);
     }
 
     public componentDidMount(): void {
@@ -551,14 +559,16 @@ class Viewport extends React.Component<
         return this.visGeometry.addNewColor(color);
     }
 
-    public changeAgentsColor(colorChanges: ColorChanges): void {
-        const { agents, color } = colorChanges;
+    public changeAgentsColor(colorChanges: ColorChanges[]): void {
+        colorChanges.forEach((colorChange) => {
+            const { agents, color } = colorChange;
+        // const { agents, color } = colorChanges;
         const agentIds =
         this.selectionInterface.getAgentIdsByNamesAndTags(agents);
-        this.selectionInterface.updateAgentColors(agentIds, colorChanges);
+        this.selectionInterface.updateAgentColors(agentIds, colorChange);
         const colorId = this.getColorId(color);
         this.visGeometry.applyColorToAgents(agentIds, colorId);
-
+        });
     }
 
     public setColors(agentColors: string[] | number[]): void {
@@ -572,7 +582,6 @@ class Viewport extends React.Component<
         if (!isEqual(updatedColors, agentColors)) {
             this.visGeometry.createMaterials(updatedColors);
         }
-        this.visGeometry.finalizeIdColorMapping();
     }
 
     public stopAnimate(): void {
