@@ -1,6 +1,7 @@
-import { filter, find, uniq } from "lodash";
+import { filter, find, set, uniq } from "lodash";
 import { EncodedTypeMapping } from "./types";
 import { convertColorNumberToString } from "../visGeometry/color-utils";
+import _ from "lodash";
 
 // An individual entry parsed from an encoded name
 // The encoded names can be just a name or a name plus a
@@ -231,14 +232,16 @@ class SelectionInterface {
     }
 
     public getUIDisplayData(): UIDisplayData {
-        return Object.keys(this.entries).map((name) => {
+        let data = Object.keys(this.entries).map((name) => {
             const displayStates: DisplayStateEntry[] = [];
             const encounteredTags: string[] = [];
             const hasMultipleStates =
                 Object.keys(this.entries[name]).length > 1;
+            // console.log(name, this.entries[name])
             this.entries[name].forEach((entry: DecodedTypeEntry) => {
                 // add unmodified state if there are multiple states, and one of them
                 // has no state tags
+                // console.log("entry", entry.id, "color", entry.color);
                 if (!entry.tags.length && hasMultipleStates) {
                     displayStates.push({
                         name: "<unmodified>",
@@ -260,14 +263,24 @@ class SelectionInterface {
                     displayStates.push(displayState);
                 });
             });
-
-            const color = "";
+            const color = this.entries[name][0].color || "";
             return {
                 name,
                 displayStates,
                 color,
             };
         });
+
+        // console.log("deep clone of return value", _.cloneDeep(data));
+        // console.log("return value of getUiDisplayData", data);
+        // setTimeout(() => {
+        //     console.log(
+        //         "delayed deep clone of return value",
+        //         _.cloneDeep(data)
+        //     );
+        //     console.log("delayed return value of getUiDisplayData", data);
+        // }, 0);
+        return data;
     }
 
     private updateUiDataColor(
@@ -280,6 +293,7 @@ class SelectionInterface {
         // if no display state update parent color
         entry.forEach((displayState) => {
             if (idsToUpdate.includes(displayState.id)) {
+                console.log("updateUiDataColor");
                 displayState.color = newColor;
             }
         });
@@ -287,9 +301,9 @@ class SelectionInterface {
 
     public updateAgentColors(
         agentIds: number[],
-        colorChanges: ColorChanges
+        colorChanges: ColorChanges,
+        uiDisplayData: UIDisplayData
     ): void {
-        const uiDisplayData = this.getUIDisplayData();
         colorChanges.agents.forEach((agentToUpdate) => {
             for (const group of uiDisplayData) {
                 if (group.name === agentToUpdate.name) {
@@ -324,6 +338,11 @@ class SelectionInterface {
                 // if no colors have been set by the user for this name,
                 // just give all states of this agent name the same color
                 setColorForIds(ids, defaultColorIndex);
+                this.updateUiDataColor(
+                    group.name,
+                    ids,
+                    colors[defaultColorIndex]
+                );
             } else {
                 // otherwise, we need to update any user defined colors
                 newColors.forEach((color, index) => {
@@ -375,7 +394,6 @@ class SelectionInterface {
                 defaultColorIndex++;
             }
         });
-
         return colors;
     }
 }
