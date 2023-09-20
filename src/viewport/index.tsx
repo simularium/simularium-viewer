@@ -202,7 +202,6 @@ class Viewport extends React.Component<
             }
         }
         const uiDisplayData = this.selectionInterface.getUIDisplayData();
-        // console.log("in on trajfileinfo", uiDisplayData);
         onTrajectoryFileInfoChanged(trajectoryFileInfo);
         this.visGeometry.clearColorMapping();
 
@@ -215,8 +214,7 @@ class Viewport extends React.Component<
             this.visGeometry.createMaterials(updatedColors);
         }
 
-        onUIDisplayDataChanged(uiDisplayData);
-        // console.log("in on trajfileinfo after on data changes", uiDisplayData);
+        onUIDisplayDataChanged(this.selectionInterface.getUIDisplayData());
     }
 
     public componentDidMount(): void {
@@ -325,13 +323,6 @@ class Viewport extends React.Component<
                     prevProps.selectionStateInfo.colorChanges
                 )
             ) {
-                // console.log(
-                //     "in update",
-                //     this.selectionInterface.getUIDisplayData()
-                // );
-                console.log(
-                    "firing change agents colors in component did update"
-                );
                 this.changeAgentsColor(selectionStateInfo.colorChanges);
             }
         }
@@ -572,34 +563,22 @@ class Viewport extends React.Component<
     public changeAgentsColor(colorChanges: ColorChanges[]): void {
         const {
             onUIDisplayDataChanged,
-            agentColors,
         } = this.props;
         colorChanges.forEach((colorChange) => {
             const { agents, color } = colorChange;
             let uiDisplayData = this.selectionInterface.getUIDisplayData();
-            // console.log("uidisplay data in change agents color", uiDisplayData);
             const agentIds =
                 this.selectionInterface.getAgentIdsByNamesAndTags(agents);
        
             this.selectionInterface.updateAgentColors(agentIds, colorChange, uiDisplayData);
             const colorId = this.getColorId(color);
             this.visGeometry.applyColorToAgents(agentIds, colorId);
-                //  this.selectionInterface.setInitialAgentColors(
-                //      uiDisplayData,
-                //      agentColors,
-                //      this.visGeometry.setColorForIds.bind(this.visGeometry)
-                //  );
             const updatedUiDisplayData = this.selectionInterface.getUIDisplayData();
             onUIDisplayDataChanged(updatedUiDisplayData);
-            console.log(
-                "uiDisplayData at end of change agents color",
-                updatedUiDisplayData
-            );
         });
     }
 
     public setColors(agentColors: string[] | number[]): void {
-        console.log("firing set colors")
         this.visGeometry.clearColorMapping();
         const uiDisplayData = this.selectionInterface.getUIDisplayData();
         const updatedColors = this.selectionInterface.setInitialAgentColors(
