@@ -232,16 +232,14 @@ class SelectionInterface {
     }
 
     public getUIDisplayData(): UIDisplayData {
-        let data = Object.keys(this.entries).map((name) => {
+        return Object.keys(this.entries).map((name) => {
             const displayStates: DisplayStateEntry[] = [];
             const encounteredTags: string[] = [];
             const hasMultipleStates =
                 Object.keys(this.entries[name]).length > 1;
-            // console.log(name, this.entries[name])
             this.entries[name].forEach((entry: DecodedTypeEntry) => {
                 // add unmodified state if there are multiple states, and one of them
                 // has no state tags
-                // console.log("entry", entry.id, "color", entry.color);
                 if (!entry.tags.length && hasMultipleStates) {
                     displayStates.push({
                         name: "<unmodified>",
@@ -270,17 +268,6 @@ class SelectionInterface {
                 color,
             };
         });
-
-        // console.log("deep clone of return value", _.cloneDeep(data));
-        // console.log("return value of getUiDisplayData", data);
-        // setTimeout(() => {
-        //     console.log(
-        //         "delayed deep clone of return value",
-        //         _.cloneDeep(data)
-        //     );
-        //     console.log("delayed return value of getUiDisplayData", data);
-        // }, 0);
-        return data;
     }
 
     private updateUiDataColor(
@@ -293,7 +280,6 @@ class SelectionInterface {
         // if no display state update parent color
         entry.forEach((displayState) => {
             if (idsToUpdate.includes(displayState.id)) {
-                console.log("updateUiDataColor");
                 displayState.color = newColor;
             }
         });
