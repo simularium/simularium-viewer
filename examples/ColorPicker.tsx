@@ -49,10 +49,10 @@ const ColorPicker = ({
                     tags: subAgent,
                 },
             ];
-            setColorSelectionInfo({
+            setColorSelectionInfo([{
                 agents: entry,
                 color: selectedColor,
-            });
+            }]);
         }
     };
 

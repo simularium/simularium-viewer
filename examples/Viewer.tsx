@@ -140,7 +140,7 @@ const initialState: ViewerState = {
     selectionStateInfo: {
         highlightedAgents: [],
         hiddenAgents: [],
-        colorChanges: { agents: [], color: "" },
+        colorChanges: [{ agents: [], color: "" }],
     },
     filePending: null,
     simulariumFile: null,
