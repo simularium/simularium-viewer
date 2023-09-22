@@ -578,19 +578,6 @@ class Viewport extends React.Component<
         });
     }
 
-    public setColors(agentColors: string[] | number[]): void {
-        this.visGeometry.clearColorMapping();
-        const uiDisplayData = this.selectionInterface.getUIDisplayData();
-        const updatedColors = this.selectionInterface.setInitialAgentColors(
-            uiDisplayData,
-            agentColors,
-            this.visGeometry.setColorForIds.bind(this.visGeometry)
-        );
-        if (!isEqual(updatedColors, agentColors)) {
-            this.visGeometry.createMaterials(updatedColors);
-        }
-    }
-
     public stopAnimate(): void {
         if (this.animationRequestID !== 0) {
             cancelAnimationFrame(this.animationRequestID);
