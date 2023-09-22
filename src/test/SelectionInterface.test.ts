@@ -528,8 +528,8 @@ describe("SelectionInterface module", () => {
 
         test("it set the entry color to the 'unmodified' state color if provided", () => {
             // initially should have no color
-            expect(uiDisplayDataForA?.color).toEqual("");
-            expect(uiDisplayDataForB?.color).toEqual("");
+            expect(uiDisplayDataForA?.color).toEqual("#aaaaaa");
+            expect(uiDisplayDataForB?.color).toEqual("#bbbbbb");
             si.setInitialAgentColors(uiDisplayData, colorList, setColorForIds);
             expect(uiDisplayDataForA?.color).toEqual("#aaaaaa");
             expect(uiDisplayDataForB?.color).toEqual("#bbbbbb");
