@@ -23,10 +23,12 @@ const idMapping = {
 };
 
 const color = "";
-const initialColorChanges = {
-    agents: [],
-    color,
-};
+const initialColorChanges = [
+    {
+        agents: [],
+        color,
+    },
+];
 
 describe("SelectionInterface module", () => {
     describe("decode", () => {
@@ -427,9 +429,10 @@ describe("SelectionInterface module", () => {
             };
             const si = new SelectionInterface();
             si.parse(idMapping);
+            const uiDisplayData = si.getUIDisplayData();
             const oldColors = si.getColorsForName("A");
             expect(oldColors).not.toContain(newColor);
-            si.updateAgentColors(agentIds, colorChanges);
+            si.updateAgentColors(agentIds, colorChanges, uiDisplayData);
             const colors = si.getColorsForName("A");
             expect(colors).toContain(newColor);
         });
