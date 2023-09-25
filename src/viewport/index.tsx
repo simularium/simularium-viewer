@@ -566,7 +566,7 @@ class Viewport extends React.Component<
         } = this.props;
         colorChanges.forEach((colorChange) => {
             const { agents, color } = colorChange;
-            let uiDisplayData = this.selectionInterface.getUIDisplayData();
+            const uiDisplayData = this.selectionInterface.getUIDisplayData();
             const agentIds =
                 this.selectionInterface.getAgentIdsByNamesAndTags(agents);
        
