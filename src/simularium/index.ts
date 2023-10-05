@@ -6,12 +6,7 @@ export type {
     EncodedTypeMapping,
     SimulariumFileFormat,
 } from "./types";
-export type {
-    SelectionStateInfo,
-    UIDisplayData,
-    ColorChanges,
-    SelectionEntry,
-} from "./SelectionInterface";
+export type { SelectionStateInfo, UIDisplayData } from "./SelectionInterface";
 export { ErrorLevel, FrontEndError } from "./FrontEndError";
 export { NetMessageEnum } from "./WebsocketClient";
 export { RemoteSimulator } from "./RemoteSimulator";
