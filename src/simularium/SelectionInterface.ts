@@ -3,6 +3,8 @@ import { EncodedTypeMapping } from "./types";
 import { convertColorNumberToString } from "../visGeometry/color-utils";
 
 // An individual entry parsed from an encoded name
+// The encoded names can be just a name or a name plus a
+// state, such as "proteinA#bound"
 interface DecodedTypeEntry {
     id: number;
     name: string;
@@ -15,9 +17,15 @@ export interface SelectionEntry {
     tags: string[];
 }
 
+export interface ColorChanges {
+    agents: SelectionEntry[];
+    color: string;
+}
+
 export interface SelectionStateInfo {
     highlightedAgents: SelectionEntry[];
     hiddenAgents: SelectionEntry[];
+    colorChanges: ColorChanges[];
 }
 
 interface DisplayStateEntry {
@@ -79,6 +87,10 @@ class SelectionInterface {
     }
 
     public decode(encodedName: string, color: string, idParam?: number): void {
+        /**
+         * Takes an encoded name, the color and the agent id, and stores
+         * a decoded entry on the class mapped by the agent name
+         */
         let name = "";
         let tags: string[] = [];
         const id = idParam !== undefined ? idParam : -1;
@@ -185,14 +197,9 @@ class SelectionInterface {
         }
         return [];
     }
-    /*
-     * If an entity has both a name and all the tags specified in the
-     * selection state info, it will be considered highlighted
-     */
-    public getHighlightedIds(info: SelectionStateInfo): number[] {
-        const requests = info.highlightedAgents;
-        let indices: number[] = [];
 
+    public getAgentIdsByNamesAndTags(requests: SelectionEntry[]): number[] {
+        let indices: number[] = [];
         requests.forEach((r) => {
             const name = r.name;
             const tags = r.tags;
@@ -202,20 +209,21 @@ class SelectionInterface {
     }
 
     /*
+     * If an entity has both a name and all the tags specified in the
+     * selection state info, it will be considered highlighted
+     */
+    public getHighlightedIds(info: SelectionStateInfo): number[] {
+        const requests = info.highlightedAgents;
+        return this.getAgentIdsByNamesAndTags(requests);
+    }
+
+    /*
      * If an entry has a name specified in the selection state info
      * or a tag specified, it will be considered hidden
      */
     public getHiddenIds(info: SelectionStateInfo): number[] {
         const requests = info.hiddenAgents;
-        let indices: number[] = [];
-
-        requests.forEach((r) => {
-            const name = r.name;
-            const tags = r.tags;
-            indices = [...indices, ...this.getIds(name, tags)];
-        });
-
-        return indices;
+        return this.getAgentIdsByNamesAndTags(requests);
     }
 
     public clear(): void {
@@ -252,8 +260,7 @@ class SelectionInterface {
                     displayStates.push(displayState);
                 });
             });
-
-            const color = "";
+            const color = this.entries[name][0].color || "";
             return {
                 name,
                 displayStates,
@@ -263,19 +270,40 @@ class SelectionInterface {
     }
 
     private updateUiDataColor(
-        entry: UIDisplayEntry,
-        id: number,
+        agentName: string,
+        idsToUpdate: number[],
         color: number | string
-    ) {
-        const tagsToUpdate = this.getTags(entry.name, id);
-        entry.displayStates.forEach((displayState: DisplayStateEntry) => {
-            if (tagsToUpdate.includes(displayState.id)) {
-                displayState.color = convertColorNumberToString(color);
+    ): void {
+        const newColor = convertColorNumberToString(color);
+        const entry = this.entries[agentName];
+        // if no display state update parent color
+        entry.forEach((displayState) => {
+            if (idsToUpdate.includes(displayState.id)) {
+                displayState.color = newColor;
             }
         });
     }
 
-    public setAgentColors(
+    public updateAgentColors(
+        agentIds: number[],
+        colorChanges: ColorChanges,
+        uiDisplayData: UIDisplayData
+    ): void {
+        colorChanges.agents.forEach((agentToUpdate) => {
+            for (const group of uiDisplayData) {
+                if (group.name === agentToUpdate.name) {
+                    this.updateUiDataColor(
+                        group.name,
+                        agentIds,
+                        colorChanges.color
+                    );
+                    break;
+                }
+            }
+        });
+    }
+
+    public setInitialAgentColors(
         uiDisplayData: UIDisplayData,
         colors: (string | number)[],
         setColorForIds: (ids: number[], colorIndex: number) => void
@@ -295,6 +323,11 @@ class SelectionInterface {
                 // if no colors have been set by the user for this name,
                 // just give all states of this agent name the same color
                 setColorForIds(ids, defaultColorIndex);
+                this.updateUiDataColor(
+                    group.name,
+                    ids,
+                    colors[defaultColorIndex]
+                );
             } else {
                 // otherwise, we need to update any user defined colors
                 newColors.forEach((color, index) => {
@@ -314,8 +347,8 @@ class SelectionInterface {
                     } else {
                         // need update the display data with the default color being used
                         this.updateUiDataColor(
-                            group,
-                            ids[index],
+                            group.name,
+                            [ids[index]],
                             colors[groupColorIndex]
                         );
                     }
@@ -346,7 +379,6 @@ class SelectionInterface {
                 defaultColorIndex++;
             }
         });
-
         return colors;
     }
 }

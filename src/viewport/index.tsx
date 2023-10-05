@@ -17,6 +17,7 @@ import { TrajectoryFileInfoAny } from "../simularium/types";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
 import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry";
+import { ColorChanges } from "../simularium/SelectionInterface";
 
 export type PropColor = string | number | [number, number, number];
 
@@ -200,10 +201,11 @@ class Viewport extends React.Component<
                 console.log("error parsing 'typeMapping' data", e);
             }
         }
+        const uiDisplayData = this.selectionInterface.getUIDisplayData();
         onTrajectoryFileInfoChanged(trajectoryFileInfo);
         this.visGeometry.clearColorMapping();
-        const uiDisplayData = this.selectionInterface.getUIDisplayData();
-        const updatedColors = this.selectionInterface.setAgentColors(
+
+        const updatedColors = this.selectionInterface.setInitialAgentColors(
             uiDisplayData,
             agentColors,
             this.visGeometry.setColorForIds.bind(this.visGeometry)
@@ -211,8 +213,8 @@ class Viewport extends React.Component<
         if (!isEqual(updatedColors, agentColors)) {
             this.visGeometry.createMaterials(updatedColors);
         }
-        this.visGeometry.finalizeIdColorMapping();
-        onUIDisplayDataChanged(uiDisplayData);
+
+        onUIDisplayDataChanged(this.selectionInterface.getUIDisplayData());
     }
 
     public componentDidMount(): void {
@@ -314,6 +316,14 @@ class Viewport extends React.Component<
                 const hiddenIds =
                     this.selectionInterface.getHiddenIds(selectionStateInfo);
                 this.visGeometry.setVisibleByIds(hiddenIds);
+            }
+            if (
+                !isEqual(
+                    selectionStateInfo.colorChanges,
+                    prevProps.selectionStateInfo.colorChanges
+                )
+            ) {
+                this.changeAgentsColor(selectionStateInfo.colorChanges);
             }
         }
 
@@ -540,6 +550,32 @@ class Viewport extends React.Component<
         if (this.vdomRef.current) {
             this.vdomRef.current.dispatchEvent(event);
         }
+    }
+
+    private getColorId(color: string): number {
+        /**
+         * Check if the new color is in our current array of color options, if not,
+         * add it before returning the index
+         */
+        return this.visGeometry.addNewColor(color);
+    }
+
+    public changeAgentsColor(colorChanges: ColorChanges[]): void {
+        const {
+            onUIDisplayDataChanged,
+        } = this.props;
+        colorChanges.forEach((colorChange) => {
+            const { agents, color } = colorChange;
+            const uiDisplayData = this.selectionInterface.getUIDisplayData();
+            const agentIds =
+                this.selectionInterface.getAgentIdsByNamesAndTags(agents);
+       
+            this.selectionInterface.updateAgentColors(agentIds, colorChange, uiDisplayData);
+            const colorId = this.getColorId(color);
+            this.visGeometry.applyColorToAgents(agentIds, colorId);
+            const updatedUiDisplayData = this.selectionInterface.getUIDisplayData();
+            onUIDisplayDataChanged(updatedUiDisplayData);
+        });
     }
 
     public stopAnimate(): void {

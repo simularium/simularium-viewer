@@ -20,6 +20,7 @@ import PointSimulatorLive from "./PointSimulatorLive";
 import PdbSimulator from "./PdbSimulator";
 import SinglePdbSimulator from "./SinglePdbSimulator";
 import CurveSimulator from "./CurveSimulator";
+import ColorPicker from "./ColorPicker";
 import {
     SMOLDYN_TEMPLATE,
     UI_BASE_TYPES,
@@ -139,6 +140,7 @@ const initialState: ViewerState = {
     selectionStateInfo: {
         highlightedAgents: [],
         hiddenAgents: [],
+        colorChanges: [{ agents: [], color: "" }],
     },
     filePending: null,
     simulariumFile: null,
@@ -354,9 +356,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     }
 
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
-        simulariumController.convertAndLoadTrajectory(
-            this.netConnectionSettings, obj, fileType
-        )
+        simulariumController
+            .convertAndLoadTrajectory(this.netConnectionSettings, obj, fileType)
             .then(() => {
                 this.clearPendingFile();
             })
@@ -590,6 +591,23 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         URL.revokeObjectURL(downloadLink.href);
     }
 
+    public updateAgentColorArray = (color) => {
+        const agentColors = [...this.state.agentColors, color] as string[];
+        this.setState({ agentColors });
+    };
+
+    public setColorSelectionInfo = (colorChanges) => {
+        this.setState({
+            ...this.state,
+            selectionStateInfo: {
+                hiddenAgents: this.state.selectionStateInfo.hiddenAgents,
+                highlightedAgents:
+                    this.state.selectionStateInfo.highlightedAgents,
+                colorChanges: colorChanges,
+            },
+        });
+    };
+
     public render(): JSX.Element {
         if (this.state.filePending) {
             const fileType = this.state.filePending.type;
@@ -624,15 +642,33 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     <option value="microtubules30_1.h5">MT 30</option>
                     <option value="endocytosis.simularium">Endocytosis</option>
                     <option value="pc4covid19.simularium">COVIDLUNG</option>
-                    <option value="nanoparticle_wrapping.simularium">Nanoparticle wrapping</option>
-                    <option value="smoldyn_min1.simularium">Smoldyn min1</option>
-                    <option value="smoldyn_spine.simularium">Smoldyn spine</option>
-                    <option value="medyan_Chandrasekaran_2019_UNI_alphaA_0.1_MA_0.675.simularium">medyan 625</option>
-                    <option value="medyan_Chandrasekaran_2019_UNI_alphaA_0.1_MA_0.0225.simularium">medyan 0225</option>
-                    <option value="springsalad_condensate_formation_Below_Ksp.simularium">springsalad below ksp</option>
-                    <option value="springsalad_condensate_formation_At_Ksp.simularium">springsalad at ksp</option>
-                    <option value="springsalad_condensate_formation_Above_Ksp.simularium">springsalad above ksp</option>
-                    <option value="blood-plasma-1.0.simularium">blood plasma</option>
+                    <option value="nanoparticle_wrapping.simularium">
+                        Nanoparticle wrapping
+                    </option>
+                    <option value="smoldyn_min1.simularium">
+                        Smoldyn min1
+                    </option>
+                    <option value="smoldyn_spine.simularium">
+                        Smoldyn spine
+                    </option>
+                    <option value="medyan_Chandrasekaran_2019_UNI_alphaA_0.1_MA_0.675.simularium">
+                        medyan 625
+                    </option>
+                    <option value="medyan_Chandrasekaran_2019_UNI_alphaA_0.1_MA_0.0225.simularium">
+                        medyan 0225
+                    </option>
+                    <option value="springsalad_condensate_formation_Below_Ksp.simularium">
+                        springsalad below ksp
+                    </option>
+                    <option value="springsalad_condensate_formation_At_Ksp.simularium">
+                        springsalad at ksp
+                    </option>
+                    <option value="springsalad_condensate_formation_Above_Ksp.simularium">
+                        springsalad above ksp
+                    </option>
+                    <option value="blood-plasma-1.0.simularium">
+                        blood plasma
+                    </option>
                     <option value="TEST_SINGLE_PDB">TEST SINGLE PDB</option>
                     <option value="TEST_PDB">TEST PDB</option>
                     <option value="TEST_FIBERS">TEST FIBERS</option>
@@ -795,7 +831,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 <br />
                 <button
                     onClick={() =>
-                        simulariumController.getMetrics(this.netConnectionSettings)
+                        simulariumController.getMetrics(
+                            this.netConnectionSettings
+                        )
                     }
                 >
                     Get available metrics
@@ -828,6 +866,14 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     Tick interval length:{" "}
                     {simulariumController.tickIntervalLength}
                 </span>
+                <br></br>
+                <ColorPicker
+                    uiDisplayData={this.state.uiDisplayData}
+                    particleTypeNames={this.state.particleTypeNames}
+                    agentColors={this.state.agentColors}
+                    updateAgentColorArray={this.updateAgentColorArray}
+                    setColorSelectionInfo={this.setColorSelectionInfo}
+                />
                 <div className="viewer-container">
                     <SimulariumViewer
                         ref={this.viewerRef}
