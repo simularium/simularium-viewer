@@ -1574,6 +1574,9 @@ class VisGeometry {
                 agentData.y,
                 agentData.z,
                 agentData.cr * scale * 0.5,
+                agentData.xrot,
+                agentData.yrot,
+                agentData.zrot,
                 visAgent.agentData.instanceId,
                 visAgent.signedTypeId()
             );

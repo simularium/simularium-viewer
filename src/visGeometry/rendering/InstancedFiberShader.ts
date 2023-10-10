@@ -12,6 +12,7 @@ in vec2 uv;
 
 // per instance attributes
 in vec4 translateAndScale; // xyz trans, w scale
+in vec4 rotation; // quaternion
 // instanceID, typeId, and which row of texture contains this curve
 in vec3 instanceAndTypeId;
 
@@ -305,6 +306,10 @@ void createTube (float t, vec2 volume, out vec3 offset, out vec3 normal) {
 }
 #endif
 
+vec3 applyQuaternionToVector( vec4 q, vec3 v ) {
+  return v + 2.0 * cross( q.xyz, cross( q.xyz, v ) + q.w * v );
+}
+
 void main() {
   // load the curve
   for (int i = 0; i < NUM_POINTS; ++i) {
@@ -329,6 +334,8 @@ void main() {
   // vUv = uv.yx; // swizzle this to match expectations
 
   // project our vertex position
+  transformed = applyQuaternionToVector(rotation, transformed);
+  transformed += translateAndScale.xyz;
   vec4 mvPosition = modelViewMatrix * vec4(transformed, 1.0);
 
   IN_viewPos = mvPosition.xyz;

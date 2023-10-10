@@ -20,6 +20,7 @@ import PointSimulatorLive from "./PointSimulatorLive";
 import PdbSimulator from "./PdbSimulator";
 import SinglePdbSimulator from "./SinglePdbSimulator";
 import CurveSimulator from "./CurveSimulator";
+import SingleCurveSimulator from "./SingleCurveSimulator";
 import ColorPicker from "./ColorPicker";
 import {
     SMOLDYN_TEMPLATE,
@@ -536,6 +537,13 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 },
                 playbackFile
             );
+        } else if (playbackFile === "TEST_SINGLE_FIBER") {
+            simulariumController.changeFile(
+                {
+                    clientSimulator: new SingleCurveSimulator(),
+                },
+                playbackFile
+            );
         } else if (playbackFile === "TEST_PDB") {
             simulariumController.changeFile(
                 {
@@ -671,6 +679,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     </option>
                     <option value="TEST_SINGLE_PDB">TEST SINGLE PDB</option>
                     <option value="TEST_PDB">TEST PDB</option>
+                    <option value="TEST_SINGLE_FIBER">TEST SINGLE FIBER</option>
                     <option value="TEST_FIBERS">TEST FIBERS</option>
                     <option value="TEST_POINTS">TEST POINTS</option>
                     <option value="TEST_METABALLS">TEST METABALLS</option>

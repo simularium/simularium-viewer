@@ -2,9 +2,11 @@ import {
     BufferAttribute,
     BufferGeometry,
     CylinderGeometry,
+    Euler,
     InstancedBufferAttribute,
     InstancedBufferGeometry,
     Mesh,
+    Quaternion,
     DataTexture,
     RGBAFormat,
     FloatType,
@@ -20,6 +22,9 @@ import {
     setRenderPass,
     updateProjectionMatrix,
 } from "./MultipassMaterials";
+
+const tmpQuaternion = new Quaternion();
+const tmpEuler = new Euler();
 
 function createTubeGeometry(
     numSides = 8,
@@ -128,6 +133,7 @@ class InstancedFiber {
     private instancedGeometry: InstancedBufferGeometry;
 
     private positionAttribute: InstancedBufferAttribute; // x,y,z,scale
+    private rotationAttribute: InstancedBufferAttribute; // quaternion
     private instanceAttribute: InstancedBufferAttribute; // instance id, type id (color index)
 
     // holds control points for all the curves
@@ -153,6 +159,10 @@ class InstancedFiber {
         // make typescript happy. these will be reallocated in reallocate()
         this.curveGeometry = new BufferGeometry();
         this.positionAttribute = new InstancedBufferAttribute(
+            Uint8Array.from([]),
+            1
+        );
+        this.rotationAttribute = new InstancedBufferAttribute(
             Uint8Array.from([]),
             1
         );
@@ -242,6 +252,11 @@ class InstancedFiber {
             this.positionAttribute
         );
 
+        const newRot = new Float32Array(4 * n);
+        newRot.set(this.rotationAttribute.array);
+        this.rotationAttribute = new InstancedBufferAttribute(newRot, 4, false);
+        this.instancedGeometry.setAttribute("rotation", this.rotationAttribute);
+
         const newInst = new Float32Array(3 * n);
         newInst.set(this.instanceAttribute.array);
         this.instanceAttribute = new InstancedBufferAttribute(
@@ -290,12 +305,17 @@ class InstancedFiber {
         y: number,
         z: number,
         scale: number,
+        rx: number,
+        ry: number,
+        rz: number,
         uniqueAgentId: number,
         typeId: number
     ): void {
         const offset = this.currentInstance;
         this.checkRealloc(this.currentInstance + 1);
         this.positionAttribute.setXYZW(offset, x, y, z, scale);
+        const q = tmpQuaternion.setFromEuler(tmpEuler.set(rx, ry, rz));
+        this.rotationAttribute.setXYZW(offset, q.x, q.y, q.z, q.w);
         this.instanceAttribute.setXYZ(
             offset,
             uniqueAgentId,
@@ -320,6 +340,7 @@ class InstancedFiber {
         // assumes the entire buffers are invalidated.
         this.instanceAttribute.needsUpdate = true;
         this.positionAttribute.needsUpdate = true;
+        this.rotationAttribute.needsUpdate = true;
         this.curveData.needsUpdate = true;
         this.isUpdating = false;
     }
@@ -373,6 +394,9 @@ class InstancedFiberGroup {
         y: number,
         z: number,
         scale: number,
+        rx: number,
+        ry: number,
+        rz: number,
         uniqueAgentId: number,
         typeId: number
     ): void {
@@ -386,6 +410,9 @@ class InstancedFiberGroup {
             y,
             z,
             scale,
+            rx,
+            ry,
+            rz,
             uniqueAgentId,
             typeId
         );

@@ -176,4 +176,6 @@ export default class CurveSim implements IClientSimulatorImpl {
             },
         };
     }
+
+    updateSimulationState(data: Record<string, unknown>) {}
 }
