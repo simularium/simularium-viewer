@@ -11,3 +11,10 @@ export function convertColorNumberToString(color) {
   }
   return "#" + new Color(color).getHexString();
 }
+export var checkHexColor = function checkHexColor(color) {
+  var hexColorCodeRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+  if (!hexColorCodeRegex.test(color)) {
+    throw new Error("Invalid color code");
+  }
+  return color;
+};

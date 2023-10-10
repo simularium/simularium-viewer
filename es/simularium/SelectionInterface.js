@@ -2,10 +2,15 @@ import _toConsumableArray from "@babel/runtime/helpers/toConsumableArray";
 import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
+function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 import { filter, find, uniq } from "lodash";
 import { convertColorNumberToString } from "../visGeometry/color-utils";
 
 // An individual entry parsed from an encoded name
+// The encoded names can be just a name or a name plus a
+// state, such as "proteinA#bound"
 var SelectionInterface = /*#__PURE__*/function () {
   function SelectionInterface() {
     _classCallCheck(this, SelectionInterface);
@@ -55,6 +60,10 @@ var SelectionInterface = /*#__PURE__*/function () {
   }, {
     key: "decode",
     value: function decode(encodedName, color, idParam) {
+      /**
+       * Takes an encoded name, the color and the agent id, and stores
+       * a decoded entry on the class mapped by the agent name
+       */
       var name = "";
       var tags = [];
       var id = idParam !== undefined ? idParam : -1;
@@ -161,15 +170,10 @@ var SelectionInterface = /*#__PURE__*/function () {
       }
       return [];
     }
-    /*
-     * If an entity has both a name and all the tags specified in the
-     * selection state info, it will be considered highlighted
-     */
   }, {
-    key: "getHighlightedIds",
-    value: function getHighlightedIds(info) {
+    key: "getAgentIdsByNamesAndTags",
+    value: function getAgentIdsByNamesAndTags(requests) {
       var _this3 = this;
-      var requests = info.highlightedAgents;
       var indices = [];
       requests.forEach(function (r) {
         var name = r.name;
@@ -180,21 +184,25 @@ var SelectionInterface = /*#__PURE__*/function () {
     }
 
     /*
+     * If an entity has both a name and all the tags specified in the
+     * selection state info, it will be considered highlighted
+     */
+  }, {
+    key: "getHighlightedIds",
+    value: function getHighlightedIds(info) {
+      var requests = info.highlightedAgents;
+      return this.getAgentIdsByNamesAndTags(requests);
+    }
+
+    /*
      * If an entry has a name specified in the selection state info
      * or a tag specified, it will be considered hidden
      */
   }, {
     key: "getHiddenIds",
     value: function getHiddenIds(info) {
-      var _this4 = this;
       var requests = info.hiddenAgents;
-      var indices = [];
-      requests.forEach(function (r) {
-        var name = r.name;
-        var tags = r.tags;
-        indices = [].concat(_toConsumableArray(indices), _toConsumableArray(_this4.getIds(name, tags)));
-      });
-      return indices;
+      return this.getAgentIdsByNamesAndTags(requests);
     }
   }, {
     key: "clear",
@@ -204,12 +212,12 @@ var SelectionInterface = /*#__PURE__*/function () {
   }, {
     key: "getUIDisplayData",
     value: function getUIDisplayData() {
-      var _this5 = this;
+      var _this4 = this;
       return Object.keys(this.entries).map(function (name) {
         var displayStates = [];
         var encounteredTags = [];
-        var hasMultipleStates = Object.keys(_this5.entries[name]).length > 1;
-        _this5.entries[name].forEach(function (entry) {
+        var hasMultipleStates = Object.keys(_this4.entries[name]).length > 1;
+        _this4.entries[name].forEach(function (entry) {
           // add unmodified state if there are multiple states, and one of them
           // has no state tags
           if (!entry.tags.length && hasMultipleStates) {
@@ -233,7 +241,7 @@ var SelectionInterface = /*#__PURE__*/function () {
             displayStates.push(displayState);
           });
         });
-        var color = "";
+        var color = _this4.entries[name][0].color || "";
         return {
           name: name,
           displayStates: displayStates,
@@ -243,17 +251,41 @@ var SelectionInterface = /*#__PURE__*/function () {
     }
   }, {
     key: "updateUiDataColor",
-    value: function updateUiDataColor(entry, id, color) {
-      var tagsToUpdate = this.getTags(entry.name, id);
-      entry.displayStates.forEach(function (displayState) {
-        if (tagsToUpdate.includes(displayState.id)) {
-          displayState.color = convertColorNumberToString(color);
+    value: function updateUiDataColor(agentName, idsToUpdate, color) {
+      var newColor = convertColorNumberToString(color);
+      var entry = this.entries[agentName];
+      // if no display state update parent color
+      entry.forEach(function (displayState) {
+        if (idsToUpdate.includes(displayState.id)) {
+          displayState.color = newColor;
         }
       });
     }
   }, {
-    key: "setAgentColors",
-    value: function setAgentColors(uiDisplayData, colors, setColorForIds) {
+    key: "updateAgentColors",
+    value: function updateAgentColors(agentIds, colorChanges, uiDisplayData) {
+      var _this5 = this;
+      colorChanges.agents.forEach(function (agentToUpdate) {
+        var _iterator = _createForOfIteratorHelper(uiDisplayData),
+          _step;
+        try {
+          for (_iterator.s(); !(_step = _iterator.n()).done;) {
+            var group = _step.value;
+            if (group.name === agentToUpdate.name) {
+              _this5.updateUiDataColor(group.name, agentIds, colorChanges.color);
+              break;
+            }
+          }
+        } catch (err) {
+          _iterator.e(err);
+        } finally {
+          _iterator.f();
+        }
+      });
+    }
+  }, {
+    key: "setInitialAgentColors",
+    value: function setInitialAgentColors(uiDisplayData, colors, setColorForIds) {
       var _this6 = this;
       var defaultColorIndex = 0;
       uiDisplayData.forEach(function (group) {
@@ -270,6 +302,7 @@ var SelectionInterface = /*#__PURE__*/function () {
           // if no colors have been set by the user for this name,
           // just give all states of this agent name the same color
           setColorForIds(ids, defaultColorIndex);
+          _this6.updateUiDataColor(group.name, ids, colors[defaultColorIndex]);
         } else {
           // otherwise, we need to update any user defined colors
           newColors.forEach(function (color, index) {
@@ -288,7 +321,7 @@ var SelectionInterface = /*#__PURE__*/function () {
               }
             } else {
               // need update the display data with the default color being used
-              _this6.updateUiDataColor(group, ids[index], colors[groupColorIndex]);
+              _this6.updateUiDataColor(group.name, [ids[index]], colors[groupColorIndex]);
             }
             // if the user used all the same colors for all states of this agent,
             // use that for the group as well

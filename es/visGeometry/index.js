@@ -14,7 +14,7 @@ import { Box3, Box3Helper, BufferAttribute, BufferGeometry, Color, DirectionalLi
 import { Pane } from "tweakpane";
 import * as EssentialsPlugin from "@tweakpane/plugin-essentials";
 import jsLogger from "js-logger";
-import { cloneDeep, noop } from "lodash";
+import { cloneDeep, isEqual, map, noop, round } from "lodash";
 import VisAgent from "./VisAgent";
 import VisTypes from "../simularium/VisTypes";
 import AgentPath from "./agentPath";
@@ -109,7 +109,6 @@ var VisGeometry = /*#__PURE__*/function () {
     _defineProperty(this, "agentPathGroup", void 0);
     _defineProperty(this, "instancedMeshGroup", void 0);
     _defineProperty(this, "idColorMapping", void 0);
-    _defineProperty(this, "isIdColorMappingSet", void 0);
     _defineProperty(this, "supportsWebGL2Rendering", void 0);
     _defineProperty(this, "lodBias", void 0);
     _defineProperty(this, "lodDistanceStops", void 0);
@@ -138,7 +137,6 @@ var VisGeometry = /*#__PURE__*/function () {
     this.geometryStore = new GeometryStore(loggerLevel);
     this.scaleMapping = new Map();
     this.idColorMapping = new Map();
-    this.isIdColorMappingSet = false;
     this.followObjectId = NO_AGENT;
     this.visAgents = [];
     this.visAgentInstances = new Map();
@@ -1011,14 +1009,37 @@ var VisGeometry = /*#__PURE__*/function () {
       }
     }
   }, {
+    key: "indexOfColor",
+    value: function indexOfColor(color) {
+      var colorArray = this.colorsData;
+      var colorToCheck = map(color, function (num) {
+        return round(num, 6);
+      });
+      for (var i = 0; i < colorArray.length - 3; i += 4) {
+        var index = i / 4;
+        var currentColor = [round(this.colorsData[i], 6), round(this.colorsData[i + 1], 6), round(this.colorsData[i + 2], 6), this.colorsData[i + 3]];
+        if (isEqual(currentColor, colorToCheck)) {
+          return index;
+        }
+      }
+      return -1;
+    }
+  }, {
     key: "addNewColor",
     value: function addNewColor(color) {
       var colorNumber = convertColorStringToNumber(color);
       var newColor = [((colorNumber & 0x00ff0000) >> 16) / 255.0, ((colorNumber & 0x0000ff00) >> 8) / 255.0, ((colorNumber & 0x000000ff) >> 0) / 255.0, 1.0];
+      var currentIndex = this.indexOfColor(newColor);
+      if (currentIndex !== -1) {
+        return currentIndex;
+      }
+      var newIndex = this.colorsData.length;
       var newArray = [].concat(_toConsumableArray(this.colorsData), newColor);
       var newColorData = new Float32Array(newArray.length);
       newColorData.set(newArray);
       this.colorsData = newColorData;
+      this.renderer.updateColors(this.colorsData.length / 4, this.colorsData);
+      return newIndex;
     }
   }, {
     key: "createMaterials",
@@ -1031,7 +1052,6 @@ var VisGeometry = /*#__PURE__*/function () {
     key: "clearColorMapping",
     value: function clearColorMapping() {
       this.idColorMapping.clear();
-      this.isIdColorMappingSet = false;
     }
   }, {
     key: "getColorIndexForTypeId",
@@ -1072,22 +1092,20 @@ var VisGeometry = /*#__PURE__*/function () {
        * @param ids agent ids that should all have the same color
        * @param colorId index into the color array
        */
-      if (this.isIdColorMappingSet) {
-        throw new FrontEndError("Attempted to set agent-color after color mapping was finalized");
-      }
       ids.forEach(function (id) {
         return _this5.setColorForId(id, colorId);
       });
     }
   }, {
+    key: "applyColorToAgents",
+    value: function applyColorToAgents(agentIds, colorId) {
+      this.setColorForIds(agentIds, colorId);
+      this.updateScene(this.currentSceneAgents);
+    }
+  }, {
     key: "getColorForIndex",
     value: function getColorForIndex(index) {
       return new Color(this.colorsData[index * 4], this.colorsData[index * 4 + 1], this.colorsData[index * 4 + 2]);
-    }
-  }, {
-    key: "finalizeIdColorMapping",
-    value: function finalizeIdColorMapping() {
-      this.isIdColorMappingSet = true;
     }
 
     /**
@@ -1347,9 +1365,6 @@ var VisGeometry = /*#__PURE__*/function () {
     key: "updateScene",
     value: function updateScene(agents) {
       var _this7 = this;
-      if (!this.isIdColorMappingSet) {
-        return;
-      }
       this.currentSceneAgents = agents;
 
       // values for updating agent path

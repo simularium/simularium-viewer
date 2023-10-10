@@ -235,15 +235,14 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
           console.log("error parsing 'typeMapping' data", e);
         }
       }
+      var uiDisplayData = this.selectionInterface.getUIDisplayData();
       onTrajectoryFileInfoChanged(trajectoryFileInfo);
       this.visGeometry.clearColorMapping();
-      var uiDisplayData = this.selectionInterface.getUIDisplayData();
-      var updatedColors = this.selectionInterface.setAgentColors(uiDisplayData, agentColors, this.visGeometry.setColorForIds.bind(this.visGeometry));
+      var updatedColors = this.selectionInterface.setInitialAgentColors(uiDisplayData, agentColors, this.visGeometry.setColorForIds.bind(this.visGeometry));
       if (!isEqual(updatedColors, agentColors)) {
         this.visGeometry.createMaterials(updatedColors);
       }
-      this.visGeometry.finalizeIdColorMapping();
-      onUIDisplayDataChanged(uiDisplayData);
+      onUIDisplayDataChanged(this.selectionInterface.getUIDisplayData());
     }
   }, {
     key: "componentDidMount",
@@ -315,6 +314,9 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
         if (!isEqual(selectionStateInfo.hiddenAgents, prevProps.selectionStateInfo.hiddenAgents)) {
           var hiddenIds = this.selectionInterface.getHiddenIds(selectionStateInfo);
           this.visGeometry.setVisibleByIds(hiddenIds);
+        }
+        if (!isEqual(selectionStateInfo.colorChanges, prevProps.selectionStateInfo.colorChanges)) {
+          this.changeAgentsColor(selectionStateInfo.colorChanges);
         }
       }
 
@@ -411,6 +413,32 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
       if (this.vdomRef.current) {
         this.vdomRef.current.dispatchEvent(event);
       }
+    }
+  }, {
+    key: "getColorId",
+    value: function getColorId(color) {
+      /**
+       * Check if the new color is in our current array of color options, if not,
+       * add it before returning the index
+       */
+      return this.visGeometry.addNewColor(color);
+    }
+  }, {
+    key: "changeAgentsColor",
+    value: function changeAgentsColor(colorChanges) {
+      var _this5 = this;
+      var onUIDisplayDataChanged = this.props.onUIDisplayDataChanged;
+      colorChanges.forEach(function (colorChange) {
+        var agents = colorChange.agents,
+          color = colorChange.color;
+        var uiDisplayData = _this5.selectionInterface.getUIDisplayData();
+        var agentIds = _this5.selectionInterface.getAgentIdsByNamesAndTags(agents);
+        _this5.selectionInterface.updateAgentColors(agentIds, colorChange, uiDisplayData);
+        var colorId = _this5.getColorId(color);
+        _this5.visGeometry.applyColorToAgents(agentIds, colorId);
+        var updatedUiDisplayData = _this5.selectionInterface.getUIDisplayData();
+        onUIDisplayDataChanged(updatedUiDisplayData);
+      });
     }
   }, {
     key: "stopAnimate",

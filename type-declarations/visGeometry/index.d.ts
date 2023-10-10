@@ -55,7 +55,6 @@ declare class VisGeometry {
     agentPathGroup: Group;
     instancedMeshGroup: Group;
     idColorMapping: Map<number, number>;
-    private isIdColorMappingSet;
     private supportsWebGL2Rendering;
     private lodBias;
     private lodDistanceStops;
@@ -123,15 +122,16 @@ declare class VisGeometry {
     hitTest(offsetX: number, offsetY: number): number;
     private setAgentColors;
     private setColorArray;
-    addNewColor(color: number | string): void;
+    private indexOfColor;
+    addNewColor(color: number | string): number;
     createMaterials(colors: (number | string)[]): void;
     clearColorMapping(): void;
     private getColorIndexForTypeId;
     private getColorForTypeId;
     private setColorForId;
     setColorForIds(ids: number[], colorId: number): void;
+    applyColorToAgents(agentIds: number[], colorId: number): void;
     getColorForIndex(index: number): Color;
-    finalizeIdColorMapping(): void;
     /**
      *   Data Management
      */

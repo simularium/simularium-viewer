@@ -3,6 +3,7 @@ import SimulariumController from "../controller";
 import { TrajectoryFileInfo, SelectionStateInfo, UIDisplayData } from "../simularium";
 import { FrontEndError } from "../simularium/FrontEndError";
 import { RenderStyle } from "../visGeometry";
+import { ColorChanges } from "../simularium/SelectionInterface";
 export declare type PropColor = string | number | [number, number, number];
 declare type ViewportProps = {
     renderStyle: RenderStyle;
@@ -91,6 +92,8 @@ declare class Viewport extends React.Component<ViewportProps & DefaultProps, Vie
     onPickObject(posX: number, posY: number): void;
     private handleTimeChange;
     private dispatchUpdatedTime;
+    private getColorId;
+    changeAgentsColor(colorChanges: ColorChanges[]): void;
     stopAnimate(): void;
     animate(): void;
     renderViewControls(): React.ReactElement;
