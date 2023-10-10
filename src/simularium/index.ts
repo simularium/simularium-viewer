@@ -5,10 +5,13 @@ export type {
     TrajectoryFileInfo,
     EncodedTypeMapping,
     SimulariumFileFormat,
+} from "./types";
+export type {
+    SelectionStateInfo,
+    UIDisplayData,
     SelectionEntry,
     ColorChanges,
-} from "./types";
-export type { SelectionStateInfo, UIDisplayData } from "./SelectionInterface";
+} from "./SelectionInterface";
 export { ErrorLevel, FrontEndError } from "./FrontEndError";
 export { NetMessageEnum } from "./WebsocketClient";
 export { RemoteSimulator } from "./RemoteSimulator";

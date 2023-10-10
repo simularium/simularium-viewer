@@ -177,13 +177,3 @@ export interface PlotConfig {
     metricsIdy?: number;
     scatterPlotMode?: string;
 }
-
-export interface SelectionEntry {
-    name: string;
-    tags: string[];
-}
-
-export interface ColorChanges {
-    agents: SelectionEntry[];
-    color: string;
-}
