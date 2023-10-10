@@ -5,6 +5,8 @@ export type {
     TrajectoryFileInfo,
     EncodedTypeMapping,
     SimulariumFileFormat,
+    SelectionEntry,
+    ColorChanges,
 } from "./types";
 export type { SelectionStateInfo, UIDisplayData } from "./SelectionInterface";
 export { ErrorLevel, FrontEndError } from "./FrontEndError";
