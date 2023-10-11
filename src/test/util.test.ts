@@ -46,10 +46,17 @@ describe("util", () => {
         });
     });
     describe("checkAndSanitizePath", () => {
-        test("it returns a url unmodified", () => {
+        test("it returns a non dropbox url unmodified", () => {
             const url = "http://www.url.com";
             const result = checkAndSanitizePath(url);
             expect(result).toEqual(url);
+        });
+        test("it returns a dropbox url modified with dropboxusercontent", () => {
+            const url =
+                "https://www.dropbox.com/scl/fi/xh3vmyt9d74cl5cbhqgpm/Antigen.obj?rlkey=key&dl=1";
+            const expected =
+                "https://dl.dropboxusercontent.com/scl/fi/xh3vmyt9d74cl5cbhqgpm/Antigen.obj?rlkey=key&dl=1";
+            expect(checkAndSanitizePath(url)).toEqual(expected);
         });
         test("it returns a path with a forward slash unmodified", () => {
             const path = "/path/to/file.obj";
