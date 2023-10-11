@@ -27,7 +27,11 @@ export var checkAndSanitizePath = function checkAndSanitizePath(pathOrUrl) {
    */
   var isUrlRegEX = /(https?:\/\/)([\w\-])+\.{1}([a-zA-Z]{2,63})([\/\w-]*)*\/?\??([^#\n\r]*)?#?([^\n\r]*)/g;
   if (isUrlRegEX.test(pathOrUrl)) {
-    return pathOrUrl;
+    var url = pathOrUrl;
+    if (url.includes("dropbox")) {
+      url = url.replace("www.dropbox.com", "dl.dropboxusercontent.com");
+    }
+    return url;
   } else if (/\B\//g.test(pathOrUrl)) {
     return pathOrUrl;
   }
