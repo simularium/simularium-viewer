@@ -214,4 +214,6 @@ export default class PdbSim implements IClientSimulatorImpl {
             },
         };
     }
+
+    updateSimulationState(data: Record<string, unknown>) {}
 }

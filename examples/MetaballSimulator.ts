@@ -182,4 +182,6 @@ export default class MetaballSimulator implements IClientSimulatorImpl {
             },
         };
     }
+
+    updateSimulationState(data: Record<string, unknown>) {}
 }
