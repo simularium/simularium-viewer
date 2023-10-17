@@ -34,7 +34,20 @@ ___
 2. Push the new package.json version: `git push origin main`
 3. Push the new tag: `git push origin [NEW_TAG]` -- e.g. `git push origin v2.7.1`
 4. Write up [release notes](https://github.com/simularium/simularium-viewer/releases).
+    - Select the tag
+    - Click "generate release notes" 
+    - Use this template to summarize changes (delete any categories that aren't relevant). `## Pull requests included in this release` should be above the auto generated content: 
+```Markdown
+## What's Changed
 
+### **🎉 New features**   
+    -
+### **🐞 Bug Fixes**
+    - 
+### **⛏ Maintenance** 
+    -
+## Pull requests included in this release
+```
 ___
 
 ## Questions or Thoughts?
