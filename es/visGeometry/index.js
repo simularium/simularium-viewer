@@ -1354,7 +1354,7 @@ var VisGeometry = /*#__PURE__*/function () {
         this.legacyRenderer.addFiber(visAgent, agentData.cr * scale, this.getColorForTypeId(typeId));
       } else {
         // update/add to render list
-        this.fibers.addInstance(agentData.subpoints.length / 3, agentData.subpoints, agentData.x, agentData.y, agentData.z, agentData.cr * scale * 0.5, visAgent.agentData.instanceId, visAgent.signedTypeId());
+        this.fibers.addInstance(agentData.subpoints.length / 3, agentData.subpoints, agentData.x, agentData.y, agentData.z, agentData.cr * scale * 0.5, agentData.xrot, agentData.yrot, agentData.zrot, visAgent.agentData.instanceId, visAgent.signedTypeId());
       }
     }
 

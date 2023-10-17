@@ -145,10 +145,11 @@ var VisAgent = /*#__PURE__*/function () {
   }, {
     key: "getFollowPosition",
     value: function getFollowPosition() {
+      var pos = new Vector3(this.agentData.x, this.agentData.y, this.agentData.z);
       if (this.agentData["vis-type"] === VisTypes.ID_VIS_TYPE_FIBER && this.fiberCurve) {
-        return this.fiberCurve.getPoint(0.5);
+        return this.fiberCurve.getPoint(0.5).add(pos);
       } else {
-        return new Vector3(this.agentData.x, this.agentData.y, this.agentData.z);
+        return pos;
       }
     }
   }]);

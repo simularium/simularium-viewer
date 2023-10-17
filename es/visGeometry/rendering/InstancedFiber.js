@@ -2,9 +2,11 @@ import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import _slicedToArray from "@babel/runtime/helpers/slicedToArray";
-import { BufferAttribute, BufferGeometry, CylinderGeometry, InstancedBufferAttribute, InstancedBufferGeometry, Mesh, DataTexture, RGBAFormat, FloatType, Vector2, Vector3, Group } from "three";
+import { BufferAttribute, BufferGeometry, CylinderGeometry, Euler, InstancedBufferAttribute, InstancedBufferGeometry, Mesh, Quaternion, DataTexture, RGBAFormat, FloatType, Vector2, Vector3, Group } from "three";
 import { createShaders } from "./InstancedFiberShader";
 import { setRenderPass as _setRenderPass, updateProjectionMatrix as _updateProjectionMatrix } from "./MultipassMaterials";
+var tmpQuaternion = new Quaternion();
+var tmpEuler = new Euler();
 function createTubeGeometry() {
   var numSides = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 8;
   var subdivisions = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 50;
@@ -93,6 +95,8 @@ var InstancedFiber = /*#__PURE__*/function () {
     _defineProperty(this, "instancedGeometry", void 0);
     _defineProperty(this, "positionAttribute", void 0);
     // x,y,z,scale
+    _defineProperty(this, "rotationAttribute", void 0);
+    // quaternion
     _defineProperty(this, "instanceAttribute", void 0);
     // instance id, type id (color index)
     // holds control points for all the curves
@@ -112,6 +116,7 @@ var InstancedFiber = /*#__PURE__*/function () {
     // make typescript happy. these will be reallocated in reallocate()
     this.curveGeometry = new BufferGeometry();
     this.positionAttribute = new InstancedBufferAttribute(Uint8Array.from([]), 1);
+    this.rotationAttribute = new InstancedBufferAttribute(Uint8Array.from([]), 1);
     this.instanceAttribute = new InstancedBufferAttribute(Uint8Array.from([]), 1);
     this.curveData = new DataTexture(Uint8Array.from([]), 0, 0);
     this.mesh = new Mesh(this.instancedGeometry);
@@ -178,6 +183,10 @@ var InstancedFiber = /*#__PURE__*/function () {
       newPos.set(this.positionAttribute.array);
       this.positionAttribute = new InstancedBufferAttribute(newPos, 4, false);
       this.instancedGeometry.setAttribute("translateAndScale", this.positionAttribute);
+      var newRot = new Float32Array(4 * n);
+      newRot.set(this.rotationAttribute.array);
+      this.rotationAttribute = new InstancedBufferAttribute(newRot, 4, false);
+      this.instancedGeometry.setAttribute("rotation", this.rotationAttribute);
       var newInst = new Float32Array(3 * n);
       newInst.set(this.instanceAttribute.array);
       this.instanceAttribute = new InstancedBufferAttribute(newInst, 3, false);
@@ -214,10 +223,12 @@ var InstancedFiber = /*#__PURE__*/function () {
     }
   }, {
     key: "addInstance",
-    value: function addInstance(curvePts, x, y, z, scale, uniqueAgentId, typeId) {
+    value: function addInstance(curvePts, x, y, z, scale, rx, ry, rz, uniqueAgentId, typeId) {
       var offset = this.currentInstance;
       this.checkRealloc(this.currentInstance + 1);
       this.positionAttribute.setXYZW(offset, x, y, z, scale);
+      var q = tmpQuaternion.setFromEuler(tmpEuler.set(rx, ry, rz));
+      this.rotationAttribute.setXYZW(offset, q.x, q.y, q.z, q.w);
       this.instanceAttribute.setXYZ(offset, uniqueAgentId, typeId, this.currentInstance);
       var nPts = Math.min(curvePts.length / 3, this.nCurvePoints);
       for (var i = 0; i < nPts; ++i) {
@@ -237,6 +248,7 @@ var InstancedFiber = /*#__PURE__*/function () {
       // assumes the entire buffers are invalidated.
       this.instanceAttribute.needsUpdate = true;
       this.positionAttribute.needsUpdate = true;
+      this.rotationAttribute.needsUpdate = true;
       this.curveData.needsUpdate = true;
       this.isUpdating = false;
     }
@@ -284,12 +296,12 @@ var InstancedFiberGroup = /*#__PURE__*/function () {
     }
   }, {
     key: "addInstance",
-    value: function addInstance(nCurvePts, curvePts, x, y, z, scale, uniqueAgentId, typeId) {
+    value: function addInstance(nCurvePts, curvePts, x, y, z, scale, rx, ry, rz, uniqueAgentId, typeId) {
       if (!this.fibers[nCurvePts]) {
         // create new
         this.fibers[nCurvePts] = new InstancedFiber(nCurvePts, 256);
       }
-      this.fibers[nCurvePts].addInstance(curvePts, x, y, z, scale, uniqueAgentId, typeId);
+      this.fibers[nCurvePts].addInstance(curvePts, x, y, z, scale, rx, ry, rz, uniqueAgentId, typeId);
     }
   }, {
     key: "endUpdate",

@@ -9,6 +9,7 @@ declare class InstancedFiber {
     private shaderSet;
     private instancedGeometry;
     private positionAttribute;
+    private rotationAttribute;
     private instanceAttribute;
     private curveData;
     private currentInstance;
@@ -22,7 +23,7 @@ declare class InstancedFiber {
     dispose(): void;
     beginUpdate(): void;
     private checkRealloc;
-    addInstance(curvePts: number[], x: number, y: number, z: number, scale: number, uniqueAgentId: number, typeId: number): void;
+    addInstance(curvePts: number[], x: number, y: number, z: number, scale: number, rx: number, ry: number, rz: number, uniqueAgentId: number, typeId: number): void;
     endUpdate(): void;
 }
 declare class InstancedFiberGroup {
@@ -34,7 +35,7 @@ declare class InstancedFiberGroup {
     getGroup(): Group;
     clear(): void;
     beginUpdate(): void;
-    addInstance(nCurvePts: number, curvePts: number[], x: number, y: number, z: number, scale: number, uniqueAgentId: number, typeId: number): void;
+    addInstance(nCurvePts: number, curvePts: number[], x: number, y: number, z: number, scale: number, rx: number, ry: number, rz: number, uniqueAgentId: number, typeId: number): void;
     endUpdate(): void;
     setRenderPass(): void;
     updateProjectionMatrix(cam: Matrix4): void;
