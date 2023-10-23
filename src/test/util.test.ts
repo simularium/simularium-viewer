@@ -24,8 +24,8 @@ describe("util", () => {
 
         test("it correctly determines time1 ~= time2 when time1 is slightly greater", () => {
             const result = compareTimes(
-                14.700000190734863,
-                14.699999809265137,
+                14.70000019073486,
+                14.69999980926513,
                 PRECISION_REF
             );
             expect(result).toEqual(0);

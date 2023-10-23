@@ -1,7 +1,10 @@
 module.exports = {
     preset: "ts-jest",
     transform: {
-        "^.+\\.(ts|tsx|js|jsx)$": ["esbuild-jest"],
+        "^.+\\.[tj]sx?$": [
+            "babel-jest",
+            { configFile: "./babel-jest.config.js" },
+        ],
     },
     moduleFileExtensions: ["js", "jsx", "ts", "tsx"],
     testEnvironment: "jsdom",
