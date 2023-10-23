@@ -1007,7 +1007,8 @@ class VisGeometry {
             this.renderer.setNearFar(
                 this.boxNearZ,
                 this.boxFarZ,
-                maxDim * this.camera.zoom
+                maxDim,
+                this.camera.zoom
             );
             this.boundingBoxMesh.visible = false;
             this.tickMarksMesh.visible = false;
