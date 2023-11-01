@@ -5,17 +5,18 @@ import type {
     ISimulariumFile,
     UIDisplayData,
     SelectionStateInfo,
+    SelectionEntry,
 } from "../type-declarations";
 import SimulariumViewer, {
     SimulariumController,
     RenderStyle,
-    ErrorLevel,
-    FrontEndError,
     loadSimulariumFile,
-} from "../es";
+    FrontEndError,
+    ErrorLevel,
+} from "../src/index";
 import "../style/style.css";
-
 import PointSimulator from "./PointSimulator";
+import BindingSimulator from "./BindingSimulatorLive";
 import PointSimulatorLive from "./PointSimulatorLive";
 import PdbSimulator from "./PdbSimulator";
 import SinglePdbSimulator from "./SinglePdbSimulator";
@@ -118,7 +119,9 @@ interface InputParams {
     useOctopus: boolean;
 }
 
-const simulariumController = new SimulariumController({});
+const simulariumController = new SimulariumController(
+    {}
+);
 
 let currentFrame = 0;
 let currentTime = 0;
@@ -146,8 +149,6 @@ const initialState: ViewerState = {
     filePending: null,
     simulariumFile: null,
 };
-
-type FrontEndError = typeof FrontEndError;
 
 class Viewer extends React.Component<InputParams, ViewerState> {
     private viewerRef: React.RefObject<SimulariumViewer>;
@@ -273,6 +274,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                             acc[cur.name] = parsedFiles[index];
                             return acc;
                         }
+                        return acc;
                     }, {});
                     const fileName = filesArr[simulariumFileIndex].name;
                     this.loadFile(simulariumFile, fileName, geoAssets);
@@ -399,7 +401,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public turnAgentsOnOff(nameToToggle: string) {
         let currentHiddenAgents = this.state.selectionStateInfo.hiddenAgents;
-        let nextHiddenAgents = [];
+        let nextHiddenAgents: SelectionEntry[] = [];
         if (currentHiddenAgents.some((a) => a.name === nameToToggle)) {
             nextHiddenAgents = currentHiddenAgents.filter(
                 (hiddenAgent) => hiddenAgent.name !== nameToToggle
@@ -422,7 +424,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     public turnAgentHighlightsOnOff(nameToToggle: string) {
         let currentHighlightedAgents =
             this.state.selectionStateInfo.highlightedAgents;
-        let nextHighlightedAgents = [];
+        let nextHighlightedAgents: SelectionEntry[] = [];
         if (currentHighlightedAgents.some((a) => a.name === nameToToggle)) {
             nextHighlightedAgents = currentHighlightedAgents.filter(
                 (hiddenAgent) => hiddenAgent.name !== nameToToggle
@@ -527,6 +529,13 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             simulariumController.changeFile(
                 {
                     clientSimulator: new PointSimulator(8000, 4),
+                },
+                playbackFile
+            );
+            } else if (playbackFile === "TEST_BINDING") {
+            simulariumController.changeFile(
+                {
+                    clientSimulator: new BindingSimulator(8000, 4),
                 },
                 playbackFile
             );
