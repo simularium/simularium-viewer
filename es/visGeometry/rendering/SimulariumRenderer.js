@@ -32,6 +32,7 @@ var SimulariumRenderer = /*#__PURE__*/function () {
     _defineProperty(this, "boundsNear", void 0);
     _defineProperty(this, "boundsFar", void 0);
     _defineProperty(this, "boundsMaxDim", void 0);
+    _defineProperty(this, "cameraZoom", void 0);
     this.parameters = {
       ao1: {
         bias: 0.5,
@@ -68,6 +69,7 @@ var SimulariumRenderer = /*#__PURE__*/function () {
     this.boundsNear = 0.0;
     this.boundsFar = 100.0;
     this.boundsMaxDim = 100.0;
+    this.cameraZoom = 1.0;
     this.gbufferPass = new GBufferPass();
     this.ssao1Pass = new SSAO1Pass();
     this.blur1Pass = new BlurPass(this.parameters.ao1.blurRadius, this.parameters.ao1.blurStdDev);
@@ -306,10 +308,11 @@ var SimulariumRenderer = /*#__PURE__*/function () {
     }
   }, {
     key: "setNearFar",
-    value: function setNearFar(n, f, boxMaxDim) {
+    value: function setNearFar(n, f, boxMaxDim, cameraZoom) {
       this.boundsNear = n;
       this.boundsFar = f;
       this.boundsMaxDim = boxMaxDim;
+      this.cameraZoom = cameraZoom;
     }
   }, {
     key: "render",
@@ -320,7 +323,7 @@ var SimulariumRenderer = /*#__PURE__*/function () {
       // update all ao settings here.
       this.ssao1Pass.pass.material.uniforms.bias.value = this.parameters.ao1.bias;
       this.ssao1Pass.pass.material.uniforms.intensity.value = this.parameters.ao1.intensity;
-      this.ssao1Pass.pass.material.uniforms.scale.value = this.parameters.ao1.scale * sceneSize / 100.0;
+      this.ssao1Pass.pass.material.uniforms.scale.value = this.parameters.ao1.scale * sceneSize * this.cameraZoom / 100.0;
       this.ssao1Pass.pass.material.uniforms.kernelRadius.value = this.parameters.ao1.kernelRadius;
       this.ssao1Pass.pass.material.uniforms.minResolution.value = this.parameters.ao1.minResolution;
       this.ssao1Pass.pass.material.uniforms.beginFalloffDistance.value = this.parameters.atomBeginDistance * sceneSize + Math.max(this.boundsNear, 0.0);

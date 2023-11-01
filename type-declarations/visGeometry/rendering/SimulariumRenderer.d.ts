@@ -36,6 +36,7 @@ declare class SimulariumRenderer {
     private boundsNear;
     private boundsFar;
     private boundsMaxDim;
+    private cameraZoom;
     constructor();
     setupGui(gui: Pane): void;
     setBackgroundColor(color: Color): void;
@@ -44,7 +45,7 @@ declare class SimulariumRenderer {
     updateColors(numColors: number, colorsData: Float32Array): void;
     setMeshGroups(instancedMeshGroup: Group, fibers: InstancedFiberGroup, meshTypes: GeometryInstanceContainer[]): void;
     resize(x: number, y: number): void;
-    setNearFar(n: number, f: number, boxMaxDim: number): void;
+    setNearFar(n: number, f: number, boxMaxDim: number, cameraZoom: number): void;
     render(renderer: WebGLRenderer, scene: Scene, camera: PerspectiveCamera | OrthographicCamera, target: WebGLRenderTarget | null): void;
 }
 export default SimulariumRenderer;

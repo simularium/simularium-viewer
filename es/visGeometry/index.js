@@ -941,7 +941,8 @@ var VisGeometry = /*#__PURE__*/function () {
         var v = new Vector3();
         this.boundingBox.getSize(v);
         var maxDim = Math.max(v.x, v.y, v.z);
-        this.renderer.setNearFar(this.boxNearZ, this.boxFarZ, maxDim);
+        // this.camera.zoom accounts for perspective vs ortho cameras
+        this.renderer.setNearFar(this.boxNearZ, this.boxFarZ, maxDim, this.camera.zoom);
         this.boundingBoxMesh.visible = false;
         this.tickMarksMesh.visible = false;
         this.agentPathGroup.visible = false;
