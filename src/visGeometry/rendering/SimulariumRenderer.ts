@@ -71,6 +71,7 @@ class SimulariumRenderer {
     private boundsNear: number;
     private boundsFar: number;
     private boundsMaxDim: number;
+    private cameraZoom: number;
 
     public constructor() {
         this.parameters = {
@@ -99,6 +100,7 @@ class SimulariumRenderer {
         this.boundsNear = 0.0;
         this.boundsFar = 100.0;
         this.boundsMaxDim = 100.0;
+        this.cameraZoom = 1.0;
 
         this.gbufferPass = new GBufferPass();
 
@@ -322,10 +324,16 @@ class SimulariumRenderer {
         this.drawBufferPass.resize(x, y);
     }
 
-    public setNearFar(n: number, f: number, boxMaxDim: number): void {
+    public setNearFar(
+        n: number,
+        f: number,
+        boxMaxDim: number,
+        cameraZoom: number
+    ): void {
         this.boundsNear = n;
         this.boundsFar = f;
         this.boundsMaxDim = boxMaxDim;
+        this.cameraZoom = cameraZoom;
     }
 
     public render(
@@ -343,7 +351,7 @@ class SimulariumRenderer {
         this.ssao1Pass.pass.material.uniforms.intensity.value =
             this.parameters.ao1.intensity;
         this.ssao1Pass.pass.material.uniforms.scale.value =
-            (this.parameters.ao1.scale * sceneSize) / 100.0;
+            (this.parameters.ao1.scale * sceneSize * this.cameraZoom) / 100.0;
         this.ssao1Pass.pass.material.uniforms.kernelRadius.value =
             this.parameters.ao1.kernelRadius;
         this.ssao1Pass.pass.material.uniforms.minResolution.value =
