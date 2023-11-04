@@ -206,6 +206,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             viewerContainer.addEventListener("drop", this.onDrop);
             viewerContainer.addEventListener("dragover", this.onDragOver);
         }
+        this.configureAndLoad()
     }
 
     public onDragOver = (e: Event): void => {
@@ -535,7 +536,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             } else if (playbackFile === "TEST_BINDING") {
             simulariumController.changeFile(
                 {
-                    clientSimulator: new BindingSimulator(8000, 4),
+                    clientSimulator: new BindingSimulator([{id: 0, count: 30, radius: 3}, {id: 1, count: 30, radius: 1.5}]),
                 },
                 playbackFile
             );
@@ -641,6 +642,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 <select
                     onChange={(event) => {
                         playbackFile = event.target.value;
+                        this.configureAndLoad();
                     }}
                     defaultValue={playbackFile}
                 >
@@ -692,10 +694,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     <option value="TEST_FIBERS">TEST FIBERS</option>
                     <option value="TEST_POINTS">TEST POINTS</option>
                     <option value="TEST_METABALLS">TEST METABALLS</option>
+                    <option value="TEST_BINDING">TEST BINDING</option>
                 </select>
-                <button onClick={() => this.configureAndLoad()}>
-                    Load model
-                </button>
+
                 <button onClick={() => this.translateAgent()}>
                     TranslateAgent
                 </button>
