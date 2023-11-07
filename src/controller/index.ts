@@ -334,7 +334,7 @@ export default class SimulariumController {
             throw new Error("File must be a .simularium file");
         }
 
-        if (geoAssets && geoAssets.length) {
+        if (geoAssets) {
             return this.changeFile({ simulariumFile, geoAssets }, fileName);
         } else {
             return this.changeFile({ simulariumFile }, fileName);
