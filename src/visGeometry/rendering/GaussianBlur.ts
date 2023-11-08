@@ -10,7 +10,7 @@ class BlurPass1D {
 
     public constructor(uvOffset: Vector2, radius: number, stdDev: number) {
         this.uvOffset = uvOffset;
-        this.radius = 0;
+        this.radius = 8;
         this.stdDev = 0;
         this.pass = new RenderToBuffer({
             defines: {
@@ -117,13 +117,14 @@ class BlurPass1D {
 
     public configure(kernelRadius: number, stdDev: number): void {
         if (kernelRadius !== this.radius || stdDev !== this.stdDev) {
-            this.pass.material.defines["KERNEL_RADIUS"] = kernelRadius;
+            const kr = Math.ceil(kernelRadius);
+            this.pass.material.defines["KERNEL_RADIUS"] = kr;
             this.pass.material.uniforms["sampleUvOffsets"].value =
-                this.createSampleOffsets(kernelRadius, this.uvOffset);
+                this.createSampleOffsets(kr, this.uvOffset);
             this.pass.material.uniforms["sampleWeights"].value =
-                this.createSampleWeights(kernelRadius, stdDev);
+                this.createSampleWeights(kr, stdDev);
             this.pass.material.needsUpdate = true;
-            this.radius = kernelRadius;
+            this.radius = kr;
             this.stdDev = stdDev;
         }
     }
