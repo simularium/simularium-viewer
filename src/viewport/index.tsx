@@ -557,7 +557,7 @@ class Viewport extends React.Component<
          * Check if the new color is in our current array of color options, if not,
          * add it before returning the index
          */
-        return this.visGeometry.addNewColor(color);
+        return this.visGeometry.addNewColor(color) / 4;
     }
 
     public changeAgentsColor(colorChanges: ColorChanges[]): void {
@@ -569,9 +569,10 @@ class Viewport extends React.Component<
             const uiDisplayData = this.selectionInterface.getUIDisplayData();
             const agentIds =
                 this.selectionInterface.getAgentIdsByNamesAndTags(agents);
-       
+            console.log("agentIds", agentIds)
             this.selectionInterface.updateAgentColors(agentIds, colorChange, uiDisplayData);
             const colorId = this.getColorId(color);
+            console.log("colorID", colorId);
             this.visGeometry.applyColorToAgents(agentIds, colorId);
             const updatedUiDisplayData = this.selectionInterface.getUIDisplayData();
             onUIDisplayDataChanged(updatedUiDisplayData);

@@ -66,6 +66,7 @@ export default class VisAgent {
     }
 
     public setColor(color: Color, colorIndex: number): void {
+        console.log("in set color, color:", color, "colorIndex:", colorIndex);
         this.color = color;
         this.colorIndex = colorIndex;
     }

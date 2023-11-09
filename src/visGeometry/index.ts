@@ -145,7 +145,7 @@ class VisGeometry {
     public lightsGroup: Group;
     public agentPathGroup: Group;
     public instancedMeshGroup: Group;
-    public idColorMapping: Map<number, number>;
+    public idColorMapping: Map<number, number>; // agentId to colorId, often 1: 1 mapping
     private supportsWebGL2Rendering: boolean;
     private lodBias: number;
     private lodDistanceStops: number[];
@@ -719,7 +719,7 @@ class VisGeometry {
             if (typeIds.includes(visAgent.agentData.type)) {
                 visAgent.setColor(
                     this.getColorForTypeId(visAgent.agentData.type),
-                    this.getColorIndexForTypeId(visAgent.agentData.type)
+                    this.getColorIdForTypeId(visAgent.agentData.type)
                 );
             }
         }
@@ -1064,7 +1064,7 @@ class VisGeometry {
         this.visAgents.forEach((agent) => {
             agent.setColor(
                 this.getColorForTypeId(agent.agentData.type),
-                this.getColorIndexForTypeId(agent.agentData.type)
+                this.getColorIdForTypeId(agent.agentData.type)
             );
         });
     }
@@ -1116,13 +1116,25 @@ class VisGeometry {
         if (currentIndex !== -1) {
             return currentIndex;
         }
-
+        console.log("not updated colorsData", this.colorsData);
         const newIndex = this.colorsData.length;
         const newArray = [...this.colorsData, ...newColor];
         const newColorData = new Float32Array(newArray.length);
         newColorData.set(newArray);
         this.colorsData = newColorData;
+        console.log(
+            "updated colorsData",
+            newIndex,
+            newColorData.length,
+            this.colorsData.length
+        );
         this.renderer.updateColors(this.colorsData.length / 4, this.colorsData);
+        // console.log(
+        //     "returned index in visGeo addNewColor",
+        //     newIndex,
+        //     "and length of color array",
+        //     this.colorsData.length
+        // );
         return newIndex;
     }
 
@@ -1136,7 +1148,26 @@ class VisGeometry {
         this.idColorMapping.clear();
     }
 
-    private getColorIndexForTypeId(typeId: number): number {
+    private getDataColorIndexForTypeId(typeId: number): number {
+        const colorId = this.idColorMapping.get(typeId);
+        if (colorId === undefined) {
+            this.logger.error(
+                "getDataColorIndexForTypeId could not find " + typeId
+            );
+            return -1;
+        }
+        return colorId;
+    }
+
+    private getColorIdForTypeId(typeId: number): number {
+        // trying get the index into the number of colors in the app
+        // not the index into colorData array
+        // console.log(
+        //     "color mapping in getColorIndexforTypeID",
+        //     this.idColorMapping
+        // );
+        // Index into colorData array, so 4 times as long as number of
+        // colors in the app
         const index = this.idColorMapping.get(typeId);
         if (index === undefined) {
             this.logger.error(
@@ -1144,20 +1175,22 @@ class VisGeometry {
             );
             return 0;
         }
-        return index % (this.colorsData.length / 4);
+        const colorId = index % (this.colorsData.length / 4);
+        console.log("converted", this.colorsData.length / 4, index, colorId);
+        return colorId;
     }
 
     private getColorForTypeId(typeId: number): Color {
-        const index = this.getColorIndexForTypeId(typeId);
+        const index = this.getColorIdForTypeId(typeId);
         return this.getColorForIndex(index);
     }
 
-    private setColorForId(id: number, colorId: number): void {
+    private setColorForId(id: number, dataColorIndex: number): void {
         /**
          * @param id agent id
-         * @param colorId index into the color array
+         * @param colorId index into the colorData array
          */
-        this.idColorMapping.set(id, colorId);
+        this.idColorMapping.set(id, dataColorIndex);
 
         // if we don't have a mesh for this, add a sphere instance to mesh registry?
         if (!this.visGeomMap.has(id)) {
@@ -1165,17 +1198,26 @@ class VisGeometry {
         }
     }
 
-    public setColorForIds(ids: number[], colorId: number): void {
+    public setColorForIds(ids: number[], dataColorIndex: number): void {
         /**
          * Sets one color for a set of ids, using an index into a color array
          * @param ids agent ids that should all have the same color
-         * @param colorId index into the color array
+         * @param dataColorIndex index into the colorData array
          */
-        ids.forEach((id) => this.setColorForId(id, colorId));
+        ids.forEach((id) => {
+            // console.log("in setColor for Ids, ID: ", id, "colorID", colorId);
+            this.setColorForId(id, dataColorIndex);
+        });
     }
 
-    public applyColorToAgents(agentIds: number[], colorId: number): void {
-        this.setColorForIds(agentIds, colorId);
+    public applyColorToAgents(
+        agentIds: number[],
+        dataColorIndex: number
+    ): void {
+        /**
+         * Sets one color for a set of ids, using an index into a colorData array
+         */
+        this.setColorForIds(agentIds, dataColorIndex);
         this.updateScene(this.currentSceneAgents);
     }
 
@@ -1621,6 +1663,12 @@ class VisGeometry {
             const visType = agentData["vis-type"];
             const instanceId = agentData.instanceId;
             const typeId = agentData.type;
+            // console.log(
+            //     "agentData in updateScene, instanceId:",
+            //     instanceId,
+            //     "typeId:",
+            //     typeId
+            // );
 
             lastx = agentData.x;
             lasty = agentData.y;
@@ -1670,8 +1718,8 @@ class VisGeometry {
             }
 
             visAgent.setColor(
-                this.getColorForTypeId(typeId),
-                this.getColorIndexForTypeId(typeId)
+                this.getColorForTypeId(typeId), // gets index, then does *4, *4+1, *4+2
+                this.getColorIdForTypeId(typeId) // should be colorID
             );
 
             // if not fiber...
