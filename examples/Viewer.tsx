@@ -35,7 +35,7 @@ import MetaballSimulator from "./MetaballSimulator";
 import { TrajectoryType } from "../src/constants";
 import { NetConnectionParams } from "../src/simularium";
 
-let playbackFile = "TEST_LIVEMODE_API"; //"medyan_paper_M:A_0.675.simularium";
+let playbackFile = "TEST_BINDING"; //"medyan_paper_M:A_0.675.simularium";
 let queryStringFile = "";
 const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.has("file")) {
@@ -641,6 +641,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             <div className="container" style={{ height: "90%", width: "75%" }}>
                 <select
                     onChange={(event) => {
+                        simulariumController.stop();
                         playbackFile = event.target.value;
                         this.configureAndLoad();
                     }}

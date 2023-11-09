@@ -12,65 +12,163 @@ import { DEFAULT_CAMERA_SPEC } from "../src/constants";
 import { random } from "lodash";
 
 const MAX_DISTANCE = 0;
-
+const NUDGE_DISTANCE = 0.4;
 class Instance {
     id: number;
     radius: number;
     x: number;
     y: number;
-    closestParticle: Instance;
+    lastXStep: number;
+    lastYStep: number;
+    child: Instance;
+    bound: boolean;
+    closestParticles: Instance[];
     constructor(id, radius, posx, posy) {
         this.id = id;
         this.radius = radius;
         this.x = posx;
         this.y = posy;
+        this.bound = false;
     }
-    private adjust(dxClosest, dyClosest, distClosest) {
-        const adjustSize =  this.radius - distClosest;
-        // 6 = squrt (newx2 + newy2)
-        // newx**2 = 6**2 - newy**2
+
+    private adjust(dxClosest, dyClosest, neededDistance, curDistance) {
         const slope = dyClosest / dxClosest;
-        let newdx = Math.sqrt(adjustSize ** 2 / (1 + slope ** 2));
-        let newdy = slope * newdx;
+        let dy = neededDistance * dyClosest / curDistance ;
+        let dx = dy / slope;
 
-        this.x = this.x + newdx;
-        this.y = this.y + newdy;
-
-
-        if (!this.closestParticle) {
-            return;
+        this.x = this.x + dx - dxClosest;
+        this.y = this.y + dy - dyClosest;
+        if (this.child) {
+            this.child.x = this.child.x + dx - dxClosest;
+            this.child.y = this.child.y + dy - dyClosest;
         }
-        var newxClosest = this.closestParticle.x - this.x;
-        var newyClosest = this.closestParticle.y - this.y;
-        var newDistClosest =
-            Math.sqrt(newxClosest * newxClosest + newyClosest * newyClosest) -
-            this.closestParticle.radius;
-
-        // if (distClosest < MAX_DISTANCE) {
-        //     this.adjust(newxClosest, newyClosest, newDistClosest);
-        // }
-    };
+    }
 
     public move(amplitude) {
+        if (this.bound) {
+            return;
+        }
         let xStep = random(-amplitude, amplitude);
-        this.x = this.x + xStep;
-
         let yStep = random(-amplitude, amplitude);
-        this.y = this.y + yStep;
+
+        let posX = this.x + xStep;
+        let posY = this.y + yStep;
+        const edge = size / 2;
+
+        if (posX > edge + this.radius) {
+            xStep = xStep - size;
+        }
+        if (posX < -edge - this.radius) {
+            xStep = size + xStep;
+        }
+        if (posY > edge + this.radius) {
+            yStep = yStep - size;
+        }
+        if (posY < -edge - this.radius) {
+            yStep = size + yStep;
+        }
+        this.x += xStep;
+        this.y += yStep;
+        this.lastXStep = xStep;
+        this.lastYStep = yStep;
+        if (this.child) {
+            this.child.x += xStep;
+            this.child.y += yStep;
+        }
     }
 
     public setClosest(closest) {
-        this.closestParticle = closest;
+        this.closestParticles = closest;
+    }
+
+    private isBindingPair(instance) {
+        return this.child === instance || this === instance.child;
+    }
+
+    private checkCollision(closeParticle) {
+        if (this.isBindingPair(closeParticle)) {
+            return;
+        }
+        var dxClosest = this.x - closeParticle.x;
+        var dyClosest = this.y - closeParticle.y;
+        var distClosest = Math.sqrt(dxClosest ** 2 + dyClosest ** 2);
+        const neededDistance = this.radius + closeParticle.radius;
+        const adjustSize = distClosest - neededDistance;
+
+        if (adjustSize < 0) {
+            const isLigand = this.radius < closeParticle.radius;
+            const additionalDistance = random(0, NUDGE_DISTANCE);
+            if (closeParticle.id !== this.id) {
+                if (isLigand) {
+                    if (this.bound) {
+                        return;
+                    }
+                    if (closeParticle.child) {
+                        return this.adjust(
+                            dxClosest,
+                            dyClosest,
+                            neededDistance,
+                            distClosest
+                        );
+                    } else {
+                        this.adjust(
+                            dxClosest,
+                            dyClosest,
+                            neededDistance,
+                            distClosest
+                        );
+                        closeParticle.child = this;
+                        this.bound = true;
+                    }
+                } else {
+                    if (closeParticle.bound) {
+                        return;
+                    }
+                    if (this.child) {
+                        return closeParticle.adjust(
+                            dxClosest,
+                            dyClosest,
+                            neededDistance,
+                            distClosest
+                        );
+                    } else {
+                        closeParticle.adjust(
+                            dxClosest,
+                            dyClosest,
+                            neededDistance,
+                            distClosest
+                        );
+                        this.child = closeParticle;
+                        closeParticle.bound = true;
+                    }
+                }
+            }
+            // both are ligands
+            if (isLigand) {
+                if (!this.bound) {
+                    this.adjust(dxClosest, dyClosest, neededDistance, distClosest);
+                } else if (!closeParticle.bound) {
+                    closeParticle.adjust(
+                        dxClosest,
+                        dyClosest,
+                        neededDistance,
+                        distClosest
+                    );
+                } else {
+                    return;
+                }
+            } else {
+                this.adjust(dxClosest, dyClosest, neededDistance, distClosest);
+            }
+        }
     }
 
     public checkCollisions() {
-        var dxClosest = this.closestParticle.x - this.x;
-        var dyClosest = this.closestParticle.y - this.y;
-        var distClosest =
-            Math.sqrt(dxClosest * dxClosest + dyClosest * dyClosest) -
-            this.closestParticle.radius;
-        if (distClosest - this.radius < 0) {
-            this.adjust(dxClosest, dyClosest, distClosest);
+        if (!this.closestParticles.length) {
+            return;
+        }
+        for (let i = 0; i < this.closestParticles.length; ++i) {
+            this.checkCollision(this.closestParticles[i]);
         }
     }
 }
@@ -83,13 +181,20 @@ export default class BindingSimulator implements IClientSimulatorImpl {
     agents: { id: number; radius: number }[] = [];
 
     constructor(agents) {
-        this.agents = agents
+        this.agents = agents;
         this.instances = [];
         for (let i = 0; i < agents.length; ++i) {
             const agent = agents[i];
             for (let j = 0; j < agent.count; ++j) {
                 const position = this.makePoints();
-                this.instances.push(new Instance(agent.id, agent.radius,position[0], position[1]))
+                this.instances.push(
+                    new Instance(
+                        agent.id,
+                        agent.radius,
+                        position[0],
+                        position[1]
+                    )
+                );
             }
         }
         this.currentFrame = 0;
@@ -104,35 +209,36 @@ export default class BindingSimulator implements IClientSimulatorImpl {
     }
 
     private getRandomPointInBox(xmin, xmax, ymin, ymax) {
-        return [
-            this.randomFloat(xmin, xmax),
-            this.randomFloat(ymin, ymax),
-        ];
+        return [this.randomFloat(xmin, xmax), this.randomFloat(ymin, ymax)];
     }
 
-    private getClosest (toCheck) {
+    private getClosest(toCheck) {
         let currentDistance = Infinity;
-        let closest;
+        let closest: Instance[] = [];
 
         for (var i = this.instances.length; i--; ) {
             var current = this.instances[i];
             if (toCheck !== current) {
                 var dx = current.x - toCheck.x;
                 var dy = current.y - toCheck.y;
-                var d = dx * dx + dy * dy - current.radius * current.radius;
-                if (d < currentDistance) {
-                    currentDistance = d;
-                    closest = current;
+                var d = Math.sqrt(dx ** 2 + dy ** 2) - current.radius - toCheck.radius;
+                if (d < 8) {
+                    // currentDistance = d;
+                    closest.push(current);
                 }
             }
         }
 
         return closest;
-    };
+    }
 
     private makePoints() {
-        return  this.getRandomPointInBox(-size/2, size/2, -size/2, size/2);
-     
+        return this.getRandomPointInBox(
+            -size / 2,
+            size / 2,
+            -size / 2,
+            size / 2
+        );
     }
 
     public updateSimulationState(data: Record<string, unknown>) {
@@ -176,8 +282,16 @@ export default class BindingSimulator implements IClientSimulatorImpl {
         for (let ii = 0; ii < this.instances.length; ++ii) {
             const instance = this.instances[ii];
             agentData.push(VisTypes.ID_VIS_TYPE_DEFAULT); // vis type
-            agentData.push(instance.id); // instance id
-            agentData.push(instance.id); // type
+            agentData.push(
+                instance.bound || instance.child
+                    ? 100 + instance.id
+                    : instance.id
+            ); // instance id
+            agentData.push(
+                instance.bound || instance.child
+                    ? 100 + instance.id
+                    : instance.id
+            ); // type
             agentData.push(instance.x); // x
             agentData.push(instance.y); // y
             agentData.push(0); // z
@@ -208,7 +322,12 @@ export default class BindingSimulator implements IClientSimulatorImpl {
     public getInfo(): TrajectoryFileInfo {
         const typeMapping: EncodedTypeMapping = {};
         for (let i = 0; i < this.agents.length; ++i) {
-            typeMapping[i] = { name: `point${this.agents[i].id}` };
+            typeMapping[this.agents[i].id] = {
+                name: `${this.agents[i].id}`,
+            };
+            typeMapping[this.agents[i].id + 100] = {
+                name: `${this.agents[i].id}#bound`,
+            };
         }
         return {
             // TODO get msgType and connId out of here
