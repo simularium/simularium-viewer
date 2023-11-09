@@ -15,6 +15,7 @@ import SimulariumViewer, {
 } from "../es";
 import "../style/style.css";
 
+import PhysicsSimulator from "./PhysicsSimulator";
 import PointSimulator from "./PointSimulator";
 import PointSimulatorLive from "./PointSimulatorLive";
 import PdbSimulator from "./PdbSimulator";
@@ -523,6 +524,13 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 },
                 playbackFile
             );
+        } else if (playbackFile === "TEST_PHYSICS") {
+            simulariumController.changeFile(
+                {
+                    clientSimulator: new PhysicsSimulator(80, 4),
+                },
+                playbackFile
+            );
         } else if (playbackFile === "TEST_POINTS") {
             simulariumController.changeFile(
                 {
@@ -682,6 +690,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     <option value="TEST_SINGLE_FIBER">TEST SINGLE FIBER</option>
                     <option value="TEST_FIBERS">TEST FIBERS</option>
                     <option value="TEST_POINTS">TEST POINTS</option>
+                    <option value="TEST_PHYSICS">TEST PHYSICS</option>
                     <option value="TEST_METABALLS">TEST METABALLS</option>
                 </select>
                 <button onClick={() => this.configureAndLoad()}>

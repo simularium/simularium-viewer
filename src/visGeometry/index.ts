@@ -936,7 +936,7 @@ class VisGeometry {
         // Tight bounds with fudge factor because the bounding box is not really
         // bounding.  Also allow for camera to be inside of box.
         this.camera.near = Math.max(this.boxNearZ * 0.66, CAMERA_INITIAL_ZNEAR);
-        this.camera.far = Math.min(this.boxFarZ * 1.33, CAMERA_INITIAL_ZFAR);
+        this.camera.far = this.boxFarZ * 1.33; //Math.min(this.boxFarZ * 1.33, CAMERA_INITIAL_ZFAR);
         this.camera.updateProjectionMatrix();
 
         // update light sources due to camera moves
