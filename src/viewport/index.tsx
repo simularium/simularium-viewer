@@ -53,6 +53,14 @@ const defaultProps = {
     hideAllAgents: false,
     showPaths: true,
     showBounds: true,
+    selectionStateInfo: {
+        colorChanges: [
+            {
+                agents: [],
+                color: "",
+            },
+        ],
+    },
     agentColors: [
         0x6ac1e5, 0xff2200, 0xee7967, 0xff6600, 0xd94d49, 0xffaa00, 0xffcc00,
         0x00ccff, 0x00aaff, 0x8048f3, 0x07f4ec, 0x79bd8f, 0x8800ff, 0xaa00ff,
@@ -321,7 +329,7 @@ class Viewport extends React.Component<
                 !isEqual(
                     selectionStateInfo.colorChanges,
                     prevProps.selectionStateInfo.colorChanges
-                )
+                ) && !isEqual(selectionStateInfo.colorChanges, defaultProps.selectionStateInfo.colorChanges)
             ) {
                 this.changeAgentsColor(selectionStateInfo.colorChanges);
             }
@@ -557,7 +565,7 @@ class Viewport extends React.Component<
          * Check if the new color is in our current array of color options, if not,
          * add it before returning the index
          */
-        return this.visGeometry.addNewColor(color) / 4;
+        return this.visGeometry.addNewColor(color);
     }
 
     public changeAgentsColor(colorChanges: ColorChanges[]): void {
@@ -569,10 +577,8 @@ class Viewport extends React.Component<
             const uiDisplayData = this.selectionInterface.getUIDisplayData();
             const agentIds =
                 this.selectionInterface.getAgentIdsByNamesAndTags(agents);
-            console.log("agentIds", agentIds)
             this.selectionInterface.updateAgentColors(agentIds, colorChange, uiDisplayData);
             const colorId = this.getColorId(color);
-            console.log("colorID", colorId);
             this.visGeometry.applyColorToAgents(agentIds, colorId);
             const updatedUiDisplayData = this.selectionInterface.getUIDisplayData();
             onUIDisplayDataChanged(updatedUiDisplayData);

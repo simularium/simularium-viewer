@@ -1071,10 +1071,10 @@ class VisGeometry {
 
     private setColorArray(colors: (number | string)[]): void {
         const colorNumbers = colors.map(convertColorStringToNumber);
-        const numColors = colors.length;
+        const numberOfColors = colors.length;
         // fill buffer of colors:
-        this.colorsData = new Float32Array(numColors * 4);
-        for (let i = 0; i < numColors; i += 1) {
+        this.colorsData = new Float32Array(numberOfColors * 4);
+        for (let i = 0; i < numberOfColors; i += 1) {
             // each color is currently a hex value:
             this.colorsData[i * 4 + 0] =
                 ((colorNumbers[i] & 0x00ff0000) >> 16) / 255.0;
@@ -1090,7 +1090,7 @@ class VisGeometry {
         const colorArray = this.colorsData;
         const colorToCheck = map(color, (num) => round(num, 6));
         for (let i = 0; i < colorArray.length - 3; i += 4) {
-            const index = i / 4;
+            const index = i;
             const currentColor = [
                 round(this.colorsData[i], 6),
                 round(this.colorsData[i + 1], 6),
@@ -1104,6 +1104,10 @@ class VisGeometry {
         return -1;
     }
 
+    private convertDataColorIndexToId(dataColorIndex: number): number {
+        return dataColorIndex / 4;
+    }
+
     public addNewColor(color: number | string): number {
         const colorNumber = convertColorStringToNumber(color);
         const newColor = [
@@ -1112,30 +1116,17 @@ class VisGeometry {
             ((colorNumber & 0x000000ff) >> 0) / 255.0,
             1.0,
         ];
-        const currentIndex = this.indexOfColor(newColor);
-        if (currentIndex !== -1) {
-            return currentIndex;
+        const colorDataIndex = this.indexOfColor(newColor);
+        if (colorDataIndex !== -1) {
+            return this.convertDataColorIndexToId(colorDataIndex);
         }
-        console.log("not updated colorsData", this.colorsData);
         const newIndex = this.colorsData.length;
         const newArray = [...this.colorsData, ...newColor];
         const newColorData = new Float32Array(newArray.length);
         newColorData.set(newArray);
         this.colorsData = newColorData;
-        console.log(
-            "updated colorsData",
-            newIndex,
-            newColorData.length,
-            this.colorsData.length
-        );
         this.renderer.updateColors(this.colorsData.length / 4, this.colorsData);
-        // console.log(
-        //     "returned index in visGeo addNewColor",
-        //     newIndex,
-        //     "and length of color array",
-        //     this.colorsData.length
-        // );
-        return newIndex;
+        return this.convertDataColorIndexToId(newIndex);
     }
 
     public createMaterials(colors: (number | string)[]): void {
@@ -1162,10 +1153,6 @@ class VisGeometry {
     private getColorIdForTypeId(typeId: number): number {
         // trying get the index into the number of colors in the app
         // not the index into colorData array
-        // console.log(
-        //     "color mapping in getColorIndexforTypeID",
-        //     this.idColorMapping
-        // );
         // Index into colorData array, so 4 times as long as number of
         // colors in the app
         const index = this.idColorMapping.get(typeId);
@@ -1176,7 +1163,6 @@ class VisGeometry {
             return 0;
         }
         const colorId = index % (this.colorsData.length / 4);
-        console.log("converted", this.colorsData.length / 4, index, colorId);
         return colorId;
     }
 
@@ -1205,7 +1191,6 @@ class VisGeometry {
          * @param dataColorIndex index into the colorData array
          */
         ids.forEach((id) => {
-            // console.log("in setColor for Ids, ID: ", id, "colorID", colorId);
             this.setColorForId(id, dataColorIndex);
         });
     }
@@ -1663,13 +1648,6 @@ class VisGeometry {
             const visType = agentData["vis-type"];
             const instanceId = agentData.instanceId;
             const typeId = agentData.type;
-            // console.log(
-            //     "agentData in updateScene, instanceId:",
-            //     instanceId,
-            //     "typeId:",
-            //     typeId
-            // );
-
             lastx = agentData.x;
             lasty = agentData.y;
             lastz = agentData.z;
