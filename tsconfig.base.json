@@ -5,14 +5,17 @@
     "declarationDir": "type-declarations",
     "downlevelIteration": true,
     "jsx": "preserve",
-    "lib": ["DOM", "ES2015", "ES6", "DOM.Iterable", "ScriptHost", "es2016.array.include"],
+    "lib": ["DOM", "ES2017", "ES6", "DOM.Iterable", "ScriptHost", "es2016.array.include"],
     "module": "es2020",
     "moduleResolution": "Node",
     "noImplicitAny": false,
     "preserveConstEnums": true,
     "sourceMap": true,
     "strict": true,
-    "target": "ES6"
+    "target": "ES6",
+    "skipLibCheck": true,
+    "types": ["@types/dom-webcodecs"]
+
   },
   "files": [
     "src/index.ts"
