@@ -33,7 +33,8 @@ export default class Mp4VideoRecorder extends CanvasRecorder {
     private muxer?: Muxer<ArrayBufferTarget>;
 
     constructor(
-        setFrameAndRender: (frame: number) => Promise<void>,
+        // setFrameAndRender: (frame: number) => Promise<void>,
+        setFrameAndRender: (frame: number) => number,
         getCanvas: () => HTMLCanvasElement,
         options: Partial<RecordingOptions>
     ) {
@@ -105,7 +106,9 @@ export default class Mp4VideoRecorder extends CanvasRecorder {
         const frameIndex = Math.floor(
             (frame - this.options.min) / this.options.frameIncrement
         );
-        const fps = this.options.fps;
+        // SIM TODO add this back to support fps options
+        // const fps = this.options.fps;
+        const fps = 30;
 
         // Video compression works by recording changes from one frame to the next. Keyframes
         // have the full frame data saved, so adding them in ensures a smaller drop in frame
@@ -127,12 +130,21 @@ export default class Mp4VideoRecorder extends CanvasRecorder {
         }
 
         // Force a re-render just before recording to prevent blank frames.
-        await this.setFrameAndRender(frame);
+        //SIM TODO commented  because we dont want to be setting frames in sim
+        // await this.setFrameAndRender(frame);
         // Add the frame to the video encoder
+        // console.log("durationMicroseconds", durationMicroseconds)
+        // console.log("timestampMicroseconds", timestampMicroseconds)
+        // console.log("keyFrame", keyFrame)
+        console.log("frame", frame);
+        // const videoFrame = new VideoFrame(this.getCanvas(), {
+        //     duration: durationMicroseconds,
+        //     timestamp: timestampMicroseconds,
+        // });
         const videoFrame = new VideoFrame(this.getCanvas(), {
-            duration: durationMicroseconds,
-            timestamp: timestampMicroseconds,
+            timestamp: frame,
         });
+        console.log("videoFrame", videoFrame);
         this.videoEncoder.encode(videoFrame, {
             keyFrame,
         });

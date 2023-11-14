@@ -5,7 +5,7 @@
     "declarationDir": "type-declarations",
     "downlevelIteration": true,
     "jsx": "preserve",
-    "lib": ["DOM", "ES2017", "ES6", "DOM.Iterable", "ScriptHost", "es2016.array.include"],
+    "lib": ["DOM", "ES2017", "ES6", "DOM.Iterable", "ScriptHost", "es2016.array.include", "esnext"],
     "module": "es2020",
     "moduleResolution": "Node",
     "noImplicitAny": false,
@@ -14,7 +14,7 @@
     "strict": true,
     "target": "ES6",
     "skipLibCheck": true,
-    "types": ["@types/dom-webcodecs"]
+    "types": ["@types/dom-webcodecs", "@types/dom-mediacapture-record"]
 
   },
   "files": [

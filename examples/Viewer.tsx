@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { isEqual, findIndex, map, reduce } from "lodash";
 
 import type {
@@ -22,6 +22,7 @@ import SinglePdbSimulator from "./SinglePdbSimulator";
 import CurveSimulator from "./CurveSimulator";
 import SingleCurveSimulator from "./SingleCurveSimulator";
 import ColorPicker from "./ColorPicker";
+import Download from "./Download";
 import {
     SMOLDYN_TEMPLATE,
     UI_BASE_TYPES,
@@ -33,6 +34,7 @@ import ConversionForm from "./ConversionForm";
 import MetaballSimulator from "./MetaballSimulator";
 import { TrajectoryType } from "../src/constants";
 import { NetConnectionParams } from "../src/simularium";
+import VideoRecorderComponent from "./DownloadComponent";
 
 let playbackFile = "TEST_LIVEMODE_API"; //"medyan_paper_M:A_0.675.simularium";
 let queryStringFile = "";
@@ -87,6 +89,7 @@ interface ViewerState {
         name: string;
         data: ISimulariumFile | null;
     } | null;
+    isRecording: boolean;
 }
 
 interface BaseType {
@@ -145,6 +148,7 @@ const initialState: ViewerState = {
     },
     filePending: null,
     simulariumFile: null,
+    isRecording: false,
 };
 
 type FrontEndError = typeof FrontEndError;
@@ -206,6 +210,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             viewerContainer.addEventListener("dragover", this.onDragOver);
         }
     }
+
+    canvasEl = document.querySelector("canvas") as HTMLCanvasElement;
 
     public onDragOver = (e: Event): void => {
         if (e.stopPropagation) {
@@ -616,6 +622,18 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         });
     };
 
+    ////// DOWNLOAD MOVIES FUNCTIONS AND PROPS
+
+    public setIsRecording = (isRecording: boolean) => {
+        this.setState({ 
+            ...this.state,
+            isRecording: isRecording });
+    }
+
+    public getCurrentFrame = () => {
+        return this.state.currentFrame;
+    }
+
     public render(): JSX.Element {
         if (this.state.filePending) {
             const fileType = this.state.filePending.type;
@@ -883,6 +901,23 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     updateAgentColorArray={this.updateAgentColorArray}
                     setColorSelectionInfo={this.setColorSelectionInfo}
                 />
+                {/* <Download
+                    totalFrames={this.state.totalDuration / this.state.timeStep}
+                    setFrame={this.getCurrentFrame}
+                    getCanvas={() => {
+                        // return document.querySelector(
+                        //     "canvas"
+                        // ) as HTMLCanvasElement;
+                        return this.canvasEl;
+                    }}
+                    // the download component should have have an onclick
+                    onClick={console.log}
+                    currentFrame={this.state.currentFrame}
+                    setIsRecording={this.setIsRecording}
+                    defaultImagePrefix="simularium"
+                    disabled={false}
+                /> */}
+                {/* <VideoRecorderComponent /> */}
                 <div className="viewer-container">
                     <SimulariumViewer
                         ref={this.viewerRef}

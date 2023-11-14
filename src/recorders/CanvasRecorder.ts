@@ -71,7 +71,8 @@ export default class CanvasRecorder {
     private finishedRecording: boolean;
     private timerId: number;
 
-    protected setFrameAndRender: (frame: number) => Promise<void>;
+    // protected setFrameAndRender: (frame: number) => Promise<void>;
+    protected setFrameAndRender: (frame: number) => number;
     protected getCanvas: () => HTMLCanvasElement;
     protected options: RecordingOptions;
 
@@ -81,7 +82,8 @@ export default class CanvasRecorder {
      * @param options Configurable options for the recording.
      */
     constructor(
-        setFrameAndRender: (frame: number) => Promise<void>,
+        // setFrameAndRender: (frame: number) => Promise<void>,
+        setFrameAndRender: (frame: number) => number,
         getCanvas: () => HTMLCanvasElement,
         options?: Partial<RecordingOptions>
     ) {

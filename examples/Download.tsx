@@ -27,7 +27,7 @@ import { clamp } from "three/src/math/MathUtils";
 // import SpinBox from "./SpinBox";
 // import ImageSequenceRecorder from "../colorizer/recorders/ImageSequenceRecorder";
 import CanvasRecorder, {
-    // RecordingOptions,
+    RecordingOptions,
 } from "../src/recorders/CanvasRecorder";
 // import { AppThemeContext } from "./AppStyle";
 import Mp4VideoRecorder, {
@@ -37,12 +37,13 @@ import Mp4VideoRecorder, {
 type DownloadButtonProps = {
     totalFrames: number;
     // setFrame: (frame: number) => Promise<void>;
+    setFrame: (frame: number) => number;
     getCanvas: () => HTMLCanvasElement;
     /** Callback, called whenever the button is clicked. Can be used to stop playback. */
     onClick?: () => void;
     currentFrame: number;
     /** Callback, called whenever the recording process starts or stops. */
-    // setIsRecording?: (recording: boolean) => void;
+    setIsRecording?: (recording: boolean) => void;
     defaultImagePrefix?: string;
     disabled?: boolean;
 };
@@ -53,60 +54,6 @@ const defaultProps: Partial<DownloadButtonProps> = {
     disabled: false,
     onClick: () => {},
 };
-
-// const HorizontalDiv = styled.div`
-//     display: flex;
-//     flex-direction: row;
-//     gap: 6px;
-//     flex-wrap: wrap;
-// `;
-
-// const VerticalDiv = styled.div`
-//     display: flex;
-//     flex-direction: column;
-//     gap: 10px;
-// `;
-
-// const CustomRangeDiv = styled(HorizontalDiv)`
-//     & input {
-//         width: 70px;
-//         text-align: right;
-//     }
-// `;
-
-// const CustomRadio = styled(Radio)`
-//     & span {
-//         // Clip text when the radio is too narrow
-//         overflow: hidden;
-//         text-overflow: ellipsis;
-//         white-space: nowrap;
-//     }
-
-//     & span:not(.ant-radio-button) {
-//         // Text span
-//         width: 100%;
-//         text-align: center;
-//     }
-// `;
-
-// const ExportModeRadioGroup = styled(Radio.Group)`
-//     & {
-//         // Use standard 40px of padding, unless the view is too narrow and it needs to shrink
-//         padding: 0 calc(min(40px, 5vw));
-//     }
-//     & label {
-//         // Make the Radio options the same width
-//         flex-grow: 1;
-//         width: 50%;
-//     }
-// `;
-
-// const CustomRadioGroup = styled(Radio.Group)`
-//     & {
-//         display: flex;
-//         flex-direction: row;
-//     }
-// `;
 
 /**
  * A single Export button that opens up an export modal when clicked. Manages starting and stopping
@@ -317,7 +264,7 @@ export default function Download(inputProps: DownloadButtonProps): ReactElement 
         // unless we want an mvp feature that plays it back
         // and exports the whole thing
         // SIM TODO: not needed for mp4/sim/mvp
-        // let min: number, max: number;
+        let min: number, max: number;
         // switch (rangeMode) {
         //     case RangeMode.ALL:
         //         min = 0;
@@ -333,35 +280,46 @@ export default function Download(inputProps: DownloadButtonProps): ReactElement 
         //         max = clamp(customMax, min, props.totalFrames - 1);
         // }
 
+        // we need to set min and max
+        min = 0;
+        max = props.totalFrames - 1;
+        console.log("min: " + min + " max: " + max)
+
         // Copy configuration to options object
         // want to minimize this as much as possible for MVP
-        // const recordingOptions: Partial<RecordingOptions> = {
-        //     min: min,
-        //     max: max,
-        //     prefix: getImagePrefix(),
-        //     minDigits: (props.totalFrames - 1).toString().length,
-        //     // Disable download delay for video
-        //     delayMs: recordingMode === RecordingMode.IMAGE_SEQUENCE ? 100 : 0,
-        //     frameIncrement: frameIncrement,
-        //     fps: fps,
-        //     bitrate: videoBitsPerSecond,
-        //     onCompleted: async () => {
-        //         // Close modal once recording finishes and show completion notification
-        //         setPercentComplete(100);
-        //         notification.success({
-        //             message: "Export complete.",
-        //             placement: "bottomLeft",
-        //             duration: 4,
-        //             icon: (
-        //                 <div
-        //                     // style={{ color: theme.color.text.success }}
-        //                 />
-        //             ),
-        //         });
+        const recordingOptions: Partial<RecordingOptions> = {
+            min: min,
+            max: max,
+            prefix: props.defaultImagePrefix,
+            minDigits: (props.totalFrames - 1).toString().length,
+            // Disable download delay for video
+            delayMs: 0,
+            frameIncrement: frameIncrement,
+            fps: fps,
+            bitrate: videoBitsPerSecond,
+            onCompleted: async () => {
+                // Close modal once recording finishes and show completion notification
+                // TODO SIM quality of life, can handle these later
+                // re: percent complete and notification of success
+                // setPercentComplete(100);
+                // notification.success({
+                //     message: "Export complete.",
+                //     placement: "bottomLeft",
+                //     duration: 4,
+                //     icon: (
+                //         <div
+                //             // style={{ color: theme.color.text.success }}
+                //         />
+                //     ),
+                // });
+                console.log("complete")
+            }
+        };
         //         // Close the modal after a small delay so the success notification can be seen
         //         setIsPlayingCloseAnimation(true);
         //         setTimeout(() => stopRecording(true), 750);
         //     },
+        // SIM TODO: after proof of concept
         //     onRecordedFrame: (frame: number) => {
         //         // Update the progress bar as frames are recorded.
         //         setPercentComplete(
@@ -372,19 +330,19 @@ export default function Download(inputProps: DownloadButtonProps): ReactElement 
         // };
 
         // copied over from default
-        const recordingOptions = {
-            min: 0,
-            max: 0,
-            frameIncrement: 1,
-            prefix: "image-",
-            delayMs: 100,
-            fps: 30,
-            bitrate: 10e6,
-            outputSize: [730, 500] as [number, number],
-            onCompleted: async function (): Promise<void> {},
-            onRecordedFrame: function (_frame: number): void {},
-            onError: function (_error: Error): void {},
-        };
+        // const recordingOptions = {
+        //     min: 0,
+        //     max: 0,
+        //     frameIncrement: 1,
+        //     prefix: "image-",
+        //     delayMs: 100,
+        //     fps: 30,
+        //     bitrate: 10e6,
+        //     outputSize: [730, 500] as [number, number],
+        //     onCompleted: async function (): Promise<void> {},
+        //     onRecordedFrame: function (_frame: number): void {},
+        //     onError: function (_error: Error): void {},
+        // };
         //from nucmorph switch statement for initializing different recorders
         // except we just have mp4
         recorder.current = new Mp4VideoRecorder(
@@ -420,12 +378,10 @@ export default function Download(inputProps: DownloadButtonProps): ReactElement 
          *
          */
         <div>
-            <button 
-            // onClick={this.startRecording.bind(this)}
-            >
+            <button onClick={handleStartExport}>
                 Start Recording
             </button>
-            <button 
+            <button
             // onClick={this.stopRecording.bind(this)}
             >
                 Stop Recording
