@@ -83,6 +83,9 @@ class Recorder {
             } else {
                 // if recording and the queue is not full, encode the frame and then close it
                 // encoder is passing chunks to muxer
+                // don't entirely understand the use of keyFrames
+                // this is from the docs and will make the resulting video larger but also scrubbable
+                // can optimize/alter these parameters?
                 this.frameCounter++;
                 const keyFrame = this.frameCounter % 150 === 0;
                 this.encoder.encode(frame, { keyFrame });

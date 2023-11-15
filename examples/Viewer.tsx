@@ -637,11 +637,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     }
 
     public getTrajectoryTitle = (): string => {
-        console.log("getTrajectoryTitle", this.state.trajectoryTitle);
         if (this.state.trajectoryTitle) {
             return this.state.trajectoryTitle;
         } else {
-            return "simulation_recording";
+            return "simulation_movie";
         } 
     }
 

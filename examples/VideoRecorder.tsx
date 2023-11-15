@@ -21,7 +21,7 @@ const VideoRecorder = ({ trajectoryTitle }: VideoRecorderProps) => {
         if (canvasEl) {
             recorderRef.current = new Recorder(canvasEl, trajectoryTitle);
         }
-    }, []);
+    }, [trajectoryTitle]);
 
     const startRecording = async () => {
         if (recorderRef.current) {
