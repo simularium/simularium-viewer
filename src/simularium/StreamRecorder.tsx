@@ -38,7 +38,10 @@ class Recorder {
         try {
             // returns a media stream captured from the viewer canvas
             // more details here: https://developer.chrome.com/en/articles/webcodecs/
-            const stream = this.canvasEl.captureStream();
+
+            // fixed at 30 fps for now
+            const fps = 30;
+            const stream = this.canvasEl.captureStream(fps);
             const track = stream.getVideoTracks()[0];
             // MediaStreamTrackProcessor makes the captured stream readable
             this.trackProcessor = new MediaStreamTrackProcessor(track);
