@@ -16,7 +16,6 @@ import SimulariumViewer, {
 } from "../src/index";
 import "../style/style.css";
 import PointSimulator from "./PointSimulator";
-import BindingSimulator from "./BindingSimulatorLive";
 import PointSimulatorLive from "./PointSimulatorLive";
 import PdbSimulator from "./PdbSimulator";
 import SinglePdbSimulator from "./SinglePdbSimulator";
@@ -206,6 +205,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             viewerContainer.addEventListener("drop", this.onDrop);
             viewerContainer.addEventListener("dragover", this.onDragOver);
         }
+        this.configureAndLoad()
     }
 
     public onDragOver = (e: Event): void => {
@@ -532,13 +532,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 },
                 playbackFile
             );
-            } else if (playbackFile === "TEST_BINDING") {
-            simulariumController.changeFile(
-                {
-                    clientSimulator: new BindingSimulator(8000, 4),
-                },
-                playbackFile
-            );
         } else if (playbackFile === "TEST_FIBERS") {
             simulariumController.changeFile(
                 {
@@ -640,7 +633,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             <div className="container" style={{ height: "90%", width: "75%" }}>
                 <select
                     onChange={(event) => {
+                        simulariumController.stop();
                         playbackFile = event.target.value;
+                        this.configureAndLoad();
                     }}
                     defaultValue={playbackFile}
                 >
@@ -692,10 +687,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     <option value="TEST_FIBERS">TEST FIBERS</option>
                     <option value="TEST_POINTS">TEST POINTS</option>
                     <option value="TEST_METABALLS">TEST METABALLS</option>
+                    <option value="TEST_BINDING">TEST BINDING</option>
                 </select>
-                <button onClick={() => this.configureAndLoad()}>
-                    Load model
-                </button>
+
                 <button onClick={() => this.translateAgent()}>
                     TranslateAgent
                 </button>
