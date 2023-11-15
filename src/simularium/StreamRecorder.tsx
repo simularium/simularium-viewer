@@ -10,13 +10,13 @@ class Recorder {
     private reader: ReadableStreamDefaultReader<VideoFrame>;
     private muxer?: Muxer<ArrayBufferTarget>;
     private isRecording: boolean;
-    private fileName: string;
+    private trajectoryTitle: string;
 
-    constructor(canvasEl: HTMLCanvasElement, fileName: string) {
+    constructor(canvasEl: HTMLCanvasElement, trajectoryTitle: string) {
         // this is defined in the Viewer component
         // TODO should this be handled differently to make it more flexible when embedding in other applications
         this.canvasEl = canvasEl;
-        this.fileName = fileName;
+        this.trajectoryTitle = trajectoryTitle;
         // VideoEncoder sends chunks of frame data to the muxer
         this.encoder = new VideoEncoder({
             output: (chunk, meta) => {
@@ -107,7 +107,7 @@ class Recorder {
         // create a blob from the muxer output  and download it
         const videoBlob = new Blob([buffer], { type: "video/mp4" });
         const url = URL.createObjectURL(videoBlob);
-        this.download(this.fileName + ".mp4", url);
+        this.download(this.trajectoryTitle + ".mp4", url);
 
         URL.revokeObjectURL(url);
     }
