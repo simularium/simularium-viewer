@@ -34,7 +34,7 @@ import ConversionForm from "./ConversionForm";
 import MetaballSimulator from "./MetaballSimulator";
 import { TrajectoryType } from "../src/constants";
 import { NetConnectionParams } from "../src/simularium";
-import VideoRecorderComponent from "./DownloadComponent";
+import VideoRecorder from "./VideoRecorder";
 
 let playbackFile = "TEST_LIVEMODE_API"; //"medyan_paper_M:A_0.675.simularium";
 let queryStringFile = "";
@@ -90,6 +90,7 @@ interface ViewerState {
         data: ISimulariumFile | null;
     } | null;
     isRecording: boolean;
+    trajectoryTitle: string;
 }
 
 interface BaseType {
@@ -149,6 +150,7 @@ const initialState: ViewerState = {
     filePending: null,
     simulariumFile: null,
     isRecording: false,
+    trajectoryTitle: ""
 };
 
 type FrontEndError = typeof FrontEndError;
@@ -210,8 +212,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             viewerContainer.addEventListener("dragover", this.onDragOver);
         }
     }
-
-    canvasEl = document.querySelector("canvas") as HTMLCanvasElement;
 
     public onDragOver = (e: Event): void => {
         if (e.stopPropagation) {
@@ -450,6 +450,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public handleTrajectoryInfo(data): void {
         console.log("Trajectory info arrived", data);
+        console.log("Trajectory info arrived", data.trajectoryTitle);
         // NOTE: Currently incorrectly assumes initial time of 0
         const totalDuration = (data.totalSteps - 1) * data.timeStepSize;
         this.setState({
@@ -457,6 +458,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             timeStep: data.timeStepSize,
             currentFrame: 0,
             currentTime: 0,
+            trajectoryTitle: data.trajectoryTitle
         });
     }
 
@@ -632,6 +634,15 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public getCurrentFrame = () => {
         return this.state.currentFrame;
+    }
+
+    public getTrajectoryTitle = (): string => {
+        console.log("getTrajectoryTitle", this.state.trajectoryTitle);
+        if (this.state.trajectoryTitle) {
+            return this.state.trajectoryTitle;
+        } else {
+            return "simulation_recording";
+        } 
     }
 
     public render(): JSX.Element {
@@ -901,23 +912,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     updateAgentColorArray={this.updateAgentColorArray}
                     setColorSelectionInfo={this.setColorSelectionInfo}
                 />
-                {/* <Download
-                    totalFrames={this.state.totalDuration / this.state.timeStep}
-                    setFrame={this.getCurrentFrame}
-                    getCanvas={() => {
-                        // return document.querySelector(
-                        //     "canvas"
-                        // ) as HTMLCanvasElement;
-                        return this.canvasEl;
-                    }}
-                    // the download component should have have an onclick
-                    onClick={console.log}
-                    currentFrame={this.state.currentFrame}
-                    setIsRecording={this.setIsRecording}
-                    defaultImagePrefix="simularium"
-                    disabled={false}
-                /> */}
-                {/* <VideoRecorderComponent /> */}
+                <VideoRecorder trajectoryTitle={this.getTrajectoryTitle()} />
                 <div className="viewer-container">
                     <SimulariumViewer
                         ref={this.viewerRef}
