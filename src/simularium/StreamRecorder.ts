@@ -4,7 +4,7 @@ class StreamRecorder {
     private canvasEl: HTMLCanvasElement;
     private encoder: VideoEncoder;
     private frameCounter: number;
-    // TODO: this is working but the linter is throwing a type error, what is best practice here?
+    // TODO: this is working but the linter is throwing a type error, not sure if that's a major issue?
     private trackProcessor: MediaStreamTrackProcessor;
     private reader: ReadableStreamDefaultReader<VideoFrame>;
     private muxer?: Muxer<ArrayBufferTarget>;
@@ -36,19 +36,20 @@ class StreamRecorder {
             // returns a media stream captured from the viewer canvas
             // more details here: https://developer.chrome.com/en/articles/webcodecs/
 
-            // fixed at 30 fps for now
+            // TODO: in future we could let users specify config options?
             const fps = 30;
+            const config: VideoEncoderConfig = {
+                codec: "avc1.420028",
+                width: this.canvasEl.width,
+                height: this.canvasEl.height,
+            };
+
             const stream = this.canvasEl.captureStream(fps);
             const track = stream.getVideoTracks()[0];
             // MediaStreamTrackProcessor makes the captured stream readable
             this.trackProcessor = new MediaStreamTrackProcessor(track);
             this.reader = this.trackProcessor.readable.getReader();
 
-            const config: VideoEncoderConfig = {
-                codec: "avc1.420028", // TODO: do we want different configs?
-                width: this.canvasEl.width,
-                height: this.canvasEl.height,
-            };
             const { supported, config: supportedConfig } =
                 await VideoEncoder.isConfigSupported(config);
             if (supported && supportedConfig) {
@@ -56,7 +57,7 @@ class StreamRecorder {
             } else {
                 console.log("unsupported config");
             }
-
+            // Muxer will handle the conversion from raw video data to mp4
             this.muxer = new Muxer({
                 target: new ArrayBufferTarget(),
                 video: {
@@ -78,13 +79,13 @@ class StreamRecorder {
             if (result.done) break;
 
             const frame = result.value;
+            // Drop the frame if encoder is overwhelmed
             if (this.encoder.encodeQueueSize > 2) {
-                frame.close(); // Drop the frame if encoder is overwhelmed
+                frame.close();
             } else {
-                // if recording and the queue is healthy, encode the frame and then close it
-                // don't entirely understand the use of keyFrames
-                // this application is straight from the docs and will make the resulting file larger but also scrubbable
-                // can optimize/alter these parameters?
+                // this application of keyframes is straight from the docs
+                // and will make the resulting file larger but also scrubbable
+                // We could optimize/alter the frequency of keyframes?
                 this.frameCounter++;
                 const keyFrame = this.frameCounter % 150 === 0;
                 this.encoder.encode(frame, { keyFrame });
@@ -106,7 +107,7 @@ class StreamRecorder {
         this.muxer.finalize();
         const { buffer } = this.muxer.target;
 
-        // create a blob from the muxer output  and download it
+        // Create a blob from the muxer output and download it
         const videoBlob = new Blob([buffer], { type: "video/mp4" });
         const url = URL.createObjectURL(videoBlob);
         this.download(this.trajectoryTitle + ".mp4", url);
