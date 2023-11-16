@@ -2,7 +2,7 @@
   "extends": "./tsconfig.base",
   "include": [
     "src/**/*"
-, "examples/Download.tsx"  ],
+  ],
   "exclude": [
     "src/visGeometry/workers/**/*"
   ]
