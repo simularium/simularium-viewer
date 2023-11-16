@@ -149,7 +149,6 @@ const initialState: ViewerState = {
     filePending: null,
     simulariumFile: null,
     isRecording: false,
-    recordingTime: 0,
     trajectoryTitle: ""
 };
 
