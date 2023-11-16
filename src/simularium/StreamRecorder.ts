@@ -1,10 +1,24 @@
 import { ArrayBufferTarget, Muxer } from "mp4-muxer";
 
+// TODO: the code below solves 2/3 typeCheck errors
+// but it doesn't solve the error on line 65
+// and it's hacky and incomplete, I'd appreciate guidance
+// during review on a better way to to do this.
+// The code runs and does the job with this error present...
+
+type MediaStreamTrackProcessor = any;
+
+declare global {
+    interface HTMLCanvasElement {
+        captureStream(frameRate?: number): MediaStream;
+    }
+}
+
 class StreamRecorder {
     private canvasEl: HTMLCanvasElement;
     private encoder: VideoEncoder;
     private frameCounter: number;
-    // TODO: this is working but the linter is throwing a type error, not sure if that's a major issue?
+
     private trackProcessor: MediaStreamTrackProcessor;
     private reader: ReadableStreamDefaultReader<VideoFrame>;
     private muxer?: Muxer<ArrayBufferTarget>;
