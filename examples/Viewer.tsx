@@ -22,7 +22,6 @@ import SinglePdbSimulator from "./SinglePdbSimulator";
 import CurveSimulator from "./CurveSimulator";
 import SingleCurveSimulator from "./SingleCurveSimulator";
 import ColorPicker from "./ColorPicker";
-import Download from "./Download";
 import {
     SMOLDYN_TEMPLATE,
     UI_BASE_TYPES,
@@ -34,7 +33,7 @@ import ConversionForm from "./ConversionForm";
 import MetaballSimulator from "./MetaballSimulator";
 import { TrajectoryType } from "../src/constants";
 import { NetConnectionParams } from "../src/simularium";
-import VideoRecorder from "./VideoRecorder";
+import RecordMovieComponent from "./RecordMovieComponent";
 
 let playbackFile = "TEST_LIVEMODE_API"; //"medyan_paper_M:A_0.675.simularium";
 let queryStringFile = "";
@@ -150,6 +149,7 @@ const initialState: ViewerState = {
     filePending: null,
     simulariumFile: null,
     isRecording: false,
+    recordingTime: 0,
     trajectoryTitle: ""
 };
 
@@ -450,7 +450,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public handleTrajectoryInfo(data): void {
         console.log("Trajectory info arrived", data);
-        console.log("Trajectory info arrived", data.trajectoryTitle);
         // NOTE: Currently incorrectly assumes initial time of 0
         const totalDuration = (data.totalSteps - 1) * data.timeStepSize;
         this.setState({
@@ -911,7 +910,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     updateAgentColorArray={this.updateAgentColorArray}
                     setColorSelectionInfo={this.setColorSelectionInfo}
                 />
-                <VideoRecorder trajectoryTitle={this.getTrajectoryTitle()} />
+                <RecordMovieComponent trajectoryTitle={this.getTrajectoryTitle()} />
                 <div className="viewer-container">
                     <SimulariumViewer
                         ref={this.viewerRef}
