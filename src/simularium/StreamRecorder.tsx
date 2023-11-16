@@ -1,11 +1,11 @@
 import { ArrayBufferTarget, Muxer } from "mp4-muxer";
 
-// TODO: this is working but the type is throwing an error, what is best practice here?
 
-class Recorder {
+class StreamRecorder {
     private canvasEl: HTMLCanvasElement;
     private encoder: VideoEncoder;
     private frameCounter: number;
+    // TODO: this is working but the linter is throwing a type error, what is best practice here?
     private trackProcessor: MediaStreamTrackProcessor;
     private reader: ReadableStreamDefaultReader<VideoFrame>;
     private muxer?: Muxer<ArrayBufferTarget>;
@@ -13,8 +13,6 @@ class Recorder {
     private trajectoryTitle: string;
 
     constructor(canvasEl: HTMLCanvasElement, trajectoryTitle: string) {
-        // this is defined in the Viewer component
-        // TODO should this be handled differently to make it more flexible when embedding in other applications
         this.canvasEl = canvasEl;
         this.trajectoryTitle = trajectoryTitle;
         // VideoEncoder sends chunks of frame data to the muxer
@@ -84,10 +82,9 @@ class Recorder {
             if (this.encoder.encodeQueueSize > 2) {
                 frame.close(); // Drop the frame if encoder is overwhelmed
             } else {
-                // if recording and the queue is not full, encode the frame and then close it
-                // encoder is passing chunks to muxer
+                // if recording and the queue is healthy, encode the frame and then close it
                 // don't entirely understand the use of keyFrames
-                // this is from the docs and will make the resulting video larger but also scrubbable
+                // this application is straight from the docs and will make the resulting file larger but also scrubbable
                 // can optimize/alter these parameters?
                 this.frameCounter++;
                 const keyFrame = this.frameCounter % 150 === 0;
@@ -114,7 +111,6 @@ class Recorder {
         const videoBlob = new Blob([buffer], { type: "video/mp4" });
         const url = URL.createObjectURL(videoBlob);
         this.download(this.trajectoryTitle + ".mp4", url);
-
         URL.revokeObjectURL(url);
     }
 
@@ -128,4 +124,4 @@ class Recorder {
     }
 }
 
-export default Recorder;
+export default StreamRecorder;

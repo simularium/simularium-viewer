@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import Recorder from "../src/simularium/StreamRecorder";
+import StreamRecorder from "../src/simularium/StreamRecorder";
 
 interface RecordMovieComponentProps {
     trajectoryTitle: string;
@@ -8,18 +8,18 @@ interface RecordMovieComponentProps {
 const RecordMovieComponent = ({
     trajectoryTitle,
 }: RecordMovieComponentProps) => {
+    const recorderRef = useRef<StreamRecorder | null>(null);
     const [isRecording, setIsRecording] = useState(false);
     let [recordingDuration, setRecordingDuration] = useState<number>(0);
     let [recordingStatus, setRecordingStatus] =
         useState<string>("Not recording");
     let [outputStatus, setOutputStatus] = useState<string>("");
-    const recorderRef = useRef<Recorder | null>(null);
 
     useEffect(() => {
         // Access the existing canvas element
         const canvasEl = document.querySelector("canvas");
         if (canvasEl) {
-            recorderRef.current = new Recorder(canvasEl, trajectoryTitle);
+            recorderRef.current = new StreamRecorder(canvasEl, trajectoryTitle);
         }
     }, [trajectoryTitle]);
 
@@ -49,7 +49,6 @@ const RecordMovieComponent = ({
     };
 
     const stopRecording = async () => {
-        // when we start recording again, reset ouput status to recording in progress
         if (recorderRef.current) {
             setIsRecording(false);
             setRecordingStatus("Not recording");
