@@ -1,6 +1,5 @@
 import { ArrayBufferTarget, Muxer } from "mp4-muxer";
 
-
 class StreamRecorder {
     private canvasEl: HTMLCanvasElement;
     private encoder: VideoEncoder;
