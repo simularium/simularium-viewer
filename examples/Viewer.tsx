@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React from "react";
 import { isEqual, findIndex, map, reduce } from "lodash";
 
 import type {
@@ -88,7 +88,6 @@ interface ViewerState {
         name: string;
         data: ISimulariumFile | null;
     } | null;
-    isRecording: boolean;
     trajectoryTitle: string;
 }
 
@@ -622,18 +621,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         });
     };
 
-    ////// DOWNLOAD MOVIES FUNCTIONS AND PROPS
-
-    public setIsRecording = (isRecording: boolean) => {
-        this.setState({ 
-            ...this.state,
-            isRecording: isRecording });
-    }
-
-    public getCurrentFrame = () => {
-        return this.state.currentFrame;
-    }
-
+    ////// DOWNLOAD MOVIES PROP ///////
     public getTrajectoryTitle = (): string => {
         if (this.state.trajectoryTitle) {
             return this.state.trajectoryTitle;
