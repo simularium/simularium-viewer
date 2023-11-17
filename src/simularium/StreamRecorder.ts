@@ -1,26 +1,30 @@
 import { ArrayBufferTarget, Muxer } from "mp4-muxer";
-
+import { MediaStreamTrackProcessor as MediaStreamTrackProcessorType } from "@types/dom-mediacapture-transform";
 // TODO: the code below solves 2/3 typeCheck errors
 // but it doesn't solve the error on line 65
 // and it's hacky and incomplete, I'd appreciate guidance
 // during review on a better way to to do this.
 // The code runs and does the job with this error present...
 
-type MediaStreamTrackProcessor = any;
-
 declare global {
     interface HTMLCanvasElement {
         captureStream(frameRate?: number): MediaStream;
     }
+    interface Window {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        MediaStreamTrackProcessor: MediaStreamTrackProcessorType;
+    }
 }
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const MediaStreamTrackProcessor = window.MediaStreamTrackProcessor;
 
 class StreamRecorder {
     private canvasEl: HTMLCanvasElement;
     private encoder: VideoEncoder;
     private frameCounter: number;
 
-    private trackProcessor: MediaStreamTrackProcessor;
-    private reader: ReadableStreamDefaultReader<VideoFrame>;
+    private trackProcessor: MediaStreamTrackProcessorType;
+    private reader: ReadableStreamDefaultReader<VideoFrame> | null;
     private muxer?: Muxer<ArrayBufferTarget>;
     private isRecording: boolean;
     private trajectoryTitle: string;
@@ -37,6 +41,7 @@ class StreamRecorder {
             },
             error: this.handleError,
         });
+        this.reader = null;
         this.frameCounter = 0;
         this.isRecording = false;
     }
@@ -83,12 +88,15 @@ class StreamRecorder {
             this.isRecording = true;
             this.readFrames();
         } catch (error) {
-            this.handleError(error);
+            this.handleError(error as DOMException);
         }
     }
 
     private async readFrames(): Promise<void> {
         while (this.isRecording) {
+            if (!this.reader) {
+                return;
+            }
             const result = await this.reader.read();
             if (result.done) break;
 
