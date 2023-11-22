@@ -271,8 +271,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     const geoAssets = filesArr.reduce((acc, cur, index) => {
                         if (index !== simulariumFileIndex) {
                             acc[cur.name] = parsedFiles[index];
-                            return acc;
                         }
+                        return acc;
                     }, {});
                     const fileName = filesArr[simulariumFileIndex].name;
                     this.loadFile(simulariumFile, fileName, geoAssets);
