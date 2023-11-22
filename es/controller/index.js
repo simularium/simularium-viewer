@@ -270,7 +270,7 @@ var SimulariumController = /*#__PURE__*/function () {
       if (!fileName.includes(".simularium")) {
         throw new Error("File must be a .simularium file");
       }
-      if (geoAssets && geoAssets.length) {
+      if (geoAssets) {
         return this.changeFile({
           simulariumFile: simulariumFile,
           geoAssets: geoAssets
