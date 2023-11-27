@@ -1061,10 +1061,11 @@ class VisGeometry {
     }
 
     /**
-     * Agent color handling
+     * AGENT COLOR HANDLING (TODO: move to separate file)
+     * General notes about data being used to map color to agents:
      * @property this.colorsData is an array of floats, each 4 floats is a color
-     * @param dataColorIndex is an index into the colorsData array, so it is a multiple of 4
-     * @param colorId is an index into the numberOfColors, so it is a number between 0
+     *  `dataColorIndex` is always an index into the colorsData array, so it is a multiple of 4
+     * `colorId` is always an index into the numberOfColors, so it is a number between 0
      * and numberOfColors-1.
      * @property this.idColorMapping uses @param colorId. It maps agent id to colorId
      *
@@ -1226,10 +1227,10 @@ class VisGeometry {
         });
     }
 
+    /**
+     * Sets one color for a set of ids
+     */
     public applyColorToAgents(agentIds: number[], colorId: number): void {
-        /**
-         * Sets one color for a set of ids
-         */
         this.setColorForIds(agentIds, colorId);
         this.updateScene(this.currentSceneAgents);
     }
@@ -1733,8 +1734,8 @@ class VisGeometry {
             }
 
             visAgent.setColor(
-                this.getColorForTypeId(typeId), // gets index, then does *4, *4+1, *4+2
-                this.getColorIdForTypeId(typeId) // should be colorID
+                this.getColorForTypeId(typeId),
+                this.getColorIdForTypeId(typeId)
             );
 
             // if not fiber...
