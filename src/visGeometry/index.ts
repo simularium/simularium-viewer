@@ -1152,7 +1152,7 @@ class VisGeometry {
         const index = this.idColorMapping.get(typeId);
         if (index === undefined) {
             this.logger.error(
-                "getColorIndexForTypeId could not find " + typeId
+                "getColorIdForTypeId could not find " + typeId
             );
             return -1;
         }
