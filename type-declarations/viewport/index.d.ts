@@ -3,7 +3,7 @@ import SimulariumController from "../controller";
 import { TrajectoryFileInfo, SelectionStateInfo, UIDisplayData } from "../simularium";
 import { FrontEndError } from "../simularium/FrontEndError";
 import { RenderStyle } from "../visGeometry";
-import { ColorChanges } from "../simularium/SelectionInterface";
+import { ColorChanges, SelectionEntry } from "../simularium/SelectionInterface";
 export declare type PropColor = string | number | [number, number, number];
 declare type ViewportProps = {
     renderStyle: RenderStyle;
@@ -34,6 +34,12 @@ declare const defaultProps: {
     hideAllAgents: boolean;
     showPaths: boolean;
     showBounds: boolean;
+    selectionStateInfo: {
+        colorChanges: {
+            agents: SelectionEntry[];
+            color: string;
+        }[];
+    };
     agentColors: string[] | number[];
 };
 declare type DefaultProps = typeof defaultProps;
@@ -70,6 +76,12 @@ declare class Viewport extends React.Component<ViewportProps & DefaultProps, Vie
         hideAllAgents: boolean;
         showPaths: boolean;
         showBounds: boolean;
+        selectionStateInfo: {
+            colorChanges: {
+                agents: SelectionEntry[];
+                color: string;
+            }[];
+        };
         agentColors: string[] | number[];
     };
     private static isCustomEvent;

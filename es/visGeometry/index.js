@@ -109,6 +109,7 @@ var VisGeometry = /*#__PURE__*/function () {
     _defineProperty(this, "agentPathGroup", void 0);
     _defineProperty(this, "instancedMeshGroup", void 0);
     _defineProperty(this, "idColorMapping", void 0);
+    // agentId to colorId, often 1: 1 mapping
     _defineProperty(this, "supportsWebGL2Rendering", void 0);
     _defineProperty(this, "lodBias", void 0);
     _defineProperty(this, "lodDistanceStops", void 0);
@@ -690,7 +691,7 @@ var VisGeometry = /*#__PURE__*/function () {
       for (var i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
         var visAgent = this.visAgents[i];
         if (typeIds.includes(visAgent.agentData.type)) {
-          visAgent.setColor(this.getColorForTypeId(visAgent.agentData.type), this.getColorIndexForTypeId(visAgent.agentData.type));
+          visAgent.setColor(this.getColorForTypeId(visAgent.agentData.type), this.getColorIdForTypeId(visAgent.agentData.type));
         }
       }
       this.updateScene(this.currentSceneAgents);
@@ -986,22 +987,46 @@ var VisGeometry = /*#__PURE__*/function () {
         return this.renderer.hitTest(this.threejsrenderer, offsetX, size.y - offsetY);
       }
     }
+
+    /**
+     * AGENT COLOR HANDLING (TODO: move to separate file)
+     * General notes about data being used to map color to agents:
+     * @property this.colorsData is an array of floats, each 4 floats is a color
+     *  `dataColorIndex` is always an index into the colorsData array, so it is a multiple of 4
+     * `colorId` is always is a number between 0 and numberOfColors-1; ie the index of the color
+     * in the initial colors array.
+     * @property this.idColorMapping uses @param colorId. It maps agent id to colorId
+     *
+     * No other module should know about this.colorsData, or the fact that it's 4 times as
+     * long as the input colors. They should only know about colorId
+     * Therefore all the public color methods should use colorId, and the private methods
+     * can convert between colorId and dataColorIndex
+     */
+
+    /**
+     * Agent color handling: private methods
+     */
+  }, {
+    key: "numberOfColors",
+    get: function get() {
+      return this.colorsData.length / 4;
+    }
   }, {
     key: "setAgentColors",
     value: function setAgentColors() {
       var _this4 = this;
       this.visAgents.forEach(function (agent) {
-        agent.setColor(_this4.getColorForTypeId(agent.agentData.type), _this4.getColorIndexForTypeId(agent.agentData.type));
+        agent.setColor(_this4.getColorForTypeId(agent.agentData.type), _this4.getColorIdForTypeId(agent.agentData.type));
       });
     }
   }, {
     key: "setColorArray",
     value: function setColorArray(colors) {
       var colorNumbers = colors.map(convertColorStringToNumber);
-      var numColors = colors.length;
+      var numberOfColors = colors.length;
       // fill buffer of colors:
-      this.colorsData = new Float32Array(numColors * 4);
-      for (var i = 0; i < numColors; i += 1) {
+      this.colorsData = new Float32Array(numberOfColors * 4);
+      for (var i = 0; i < numberOfColors; i += 1) {
         // each color is currently a hex value:
         this.colorsData[i * 4 + 0] = ((colorNumbers[i] & 0x00ff0000) >> 16) / 255.0;
         this.colorsData[i * 4 + 1] = ((colorNumbers[i] & 0x0000ff00) >> 8) / 255.0;
@@ -1010,14 +1035,30 @@ var VisGeometry = /*#__PURE__*/function () {
       }
     }
   }, {
-    key: "indexOfColor",
-    value: function indexOfColor(color) {
+    key: "convertDataColorIndexToId",
+    value: function convertDataColorIndexToId(dataColorIndex) {
+      if (dataColorIndex % 4 !== 0) {
+        this.logger.error("convertDataColorIndexToId: color index not divisible by 4");
+        return -1;
+      }
+      var index = dataColorIndex / 4;
+      // this loops the index back to the beginning of the array
+      // in the chance that the index is out of range, which
+      // should be impossible. But just being cautious
+      return index % this.numberOfColors;
+    }
+  }, {
+    key: "getColorDataIndex",
+    value: function getColorDataIndex(color) {
+      /**
+       * returns the index into the colorsData array
+       */
       var colorArray = this.colorsData;
       var colorToCheck = map(color, function (num) {
         return round(num, 6);
       });
       for (var i = 0; i < colorArray.length - 3; i += 4) {
-        var index = i / 4;
+        var index = i;
         var currentColor = [round(this.colorsData[i], 6), round(this.colorsData[i + 1], 6), round(this.colorsData[i + 2], 6), this.colorsData[i + 3]];
         if (isEqual(currentColor, colorToCheck)) {
           return index;
@@ -1026,21 +1067,63 @@ var VisGeometry = /*#__PURE__*/function () {
       return -1;
     }
   }, {
+    key: "getColorIdForTypeId",
+    value: function getColorIdForTypeId(typeId) {
+      /**
+       * returns the index in terms of numberOfColors (colorId). No conversion
+       * is necessary because idColorMapping is also using this index
+       */
+      var index = this.idColorMapping.get(typeId);
+      if (index === undefined) {
+        this.logger.error("getColorIdForTypeId could not find " + typeId);
+        return -1;
+      }
+      var colorId = index % this.numberOfColors;
+      return colorId;
+    }
+  }, {
+    key: "getColorForTypeId",
+    value: function getColorForTypeId(typeId) {
+      var index = this.getColorIdForTypeId(typeId);
+      return this.getColorForColorId(index);
+    }
+  }, {
+    key: "setColorForId",
+    value: function setColorForId(id, colorId) {
+      /**
+       * @param id agent id
+       * @param colorId index into the numberOfColors
+       */
+      this.idColorMapping.set(id, colorId);
+
+      // if we don't have a mesh for this, add a sphere instance to mesh registry?
+      if (!this.visGeomMap.has(id)) {
+        this.visGeomMap.set(id, DEFAULT_MESH_NAME);
+      }
+    }
+
+    /**
+     *  Agent color handling: public methods
+     */
+  }, {
     key: "addNewColor",
     value: function addNewColor(color) {
       var colorNumber = convertColorStringToNumber(color);
       var newColor = [((colorNumber & 0x00ff0000) >> 16) / 255.0, ((colorNumber & 0x0000ff00) >> 8) / 255.0, ((colorNumber & 0x000000ff) >> 0) / 255.0, 1.0];
-      var currentIndex = this.indexOfColor(newColor);
-      if (currentIndex !== -1) {
-        return currentIndex;
+      var colorDataIndex = this.getColorDataIndex(newColor);
+      if (colorDataIndex !== -1) {
+        // found the color, need to return the colorId to the
+        // external caller, with no other changes needed
+        return this.convertDataColorIndexToId(colorDataIndex);
       }
-      var newIndex = this.colorsData.length;
+      // the color isn't in colorsData, so add it and return the colorId
+      var newColorDataIndex = this.colorsData.length;
       var newArray = [].concat(_toConsumableArray(this.colorsData), newColor);
       var newColorData = new Float32Array(newArray.length);
       newColorData.set(newArray);
       this.colorsData = newColorData;
-      this.renderer.updateColors(this.colorsData.length / 4, this.colorsData);
-      return newIndex;
+      this.renderer.updateColors(this.numberOfColors, this.colorsData);
+      return this.convertDataColorIndexToId(newColorDataIndex);
     }
   }, {
     key: "createMaterials",
@@ -1055,48 +1138,22 @@ var VisGeometry = /*#__PURE__*/function () {
       this.idColorMapping.clear();
     }
   }, {
-    key: "getColorIndexForTypeId",
-    value: function getColorIndexForTypeId(typeId) {
-      var index = this.idColorMapping.get(typeId);
-      if (index === undefined) {
-        this.logger.error("getColorIndexForTypeId could not find " + typeId);
-        return 0;
-      }
-      return index % (this.colorsData.length / 4);
-    }
-  }, {
-    key: "getColorForTypeId",
-    value: function getColorForTypeId(typeId) {
-      var index = this.getColorIndexForTypeId(typeId);
-      return this.getColorForIndex(index);
-    }
-  }, {
-    key: "setColorForId",
-    value: function setColorForId(id, colorId) {
-      /**
-       * @param id agent id
-       * @param colorId index into the color array
-       */
-      this.idColorMapping.set(id, colorId);
-
-      // if we don't have a mesh for this, add a sphere instance to mesh registry?
-      if (!this.visGeomMap.has(id)) {
-        this.visGeomMap.set(id, DEFAULT_MESH_NAME);
-      }
-    }
-  }, {
     key: "setColorForIds",
     value: function setColorForIds(ids, colorId) {
       var _this5 = this;
       /**
        * Sets one color for a set of ids, using an index into a color array
        * @param ids agent ids that should all have the same color
-       * @param colorId index into the color array
+       * @param colorId index into the numberOfColors
        */
       ids.forEach(function (id) {
-        return _this5.setColorForId(id, colorId);
+        _this5.setColorForId(id, colorId);
       });
     }
+
+    /**
+     * Sets one color for a set of ids
+     */
   }, {
     key: "applyColorToAgents",
     value: function applyColorToAgents(agentIds, colorId) {
@@ -1104,9 +1161,17 @@ var VisGeometry = /*#__PURE__*/function () {
       this.updateScene(this.currentSceneAgents);
     }
   }, {
-    key: "getColorForIndex",
-    value: function getColorForIndex(index) {
-      return new Color(this.colorsData[index * 4], this.colorsData[index * 4 + 1], this.colorsData[index * 4 + 2]);
+    key: "getColorForColorId",
+    value: function getColorForColorId(colorId) {
+      if (colorId < 0) {
+        this.logger.error("getColorForColorId: invalid colorId");
+        colorId = 0;
+      }
+      if (colorId >= this.numberOfColors) {
+        this.logger.error("getColorForColorId: colorId out of range");
+        colorId = colorId % this.numberOfColors;
+      }
+      return new Color(this.colorsData[colorId * 4], this.colorsData[colorId * 4 + 1], this.colorsData[colorId * 4 + 2]);
     }
 
     /**
@@ -1433,7 +1498,7 @@ var VisGeometry = /*#__PURE__*/function () {
         if (visAgent.hidden) {
           return;
         }
-        visAgent.setColor(_this7.getColorForTypeId(typeId), _this7.getColorIndexForTypeId(typeId));
+        visAgent.setColor(_this7.getColorForTypeId(typeId), _this7.getColorIdForTypeId(typeId));
 
         // if not fiber...
         if (visType === VisTypes.ID_VIS_TYPE_DEFAULT) {

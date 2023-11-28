@@ -120,18 +120,43 @@ declare class VisGeometry {
     render(_time: number): void;
     private transformBoundingBox;
     hitTest(offsetX: number, offsetY: number): number;
+    /**
+     * AGENT COLOR HANDLING (TODO: move to separate file)
+     * General notes about data being used to map color to agents:
+     * @property this.colorsData is an array of floats, each 4 floats is a color
+     *  `dataColorIndex` is always an index into the colorsData array, so it is a multiple of 4
+     * `colorId` is always is a number between 0 and numberOfColors-1; ie the index of the color
+     * in the initial colors array.
+     * @property this.idColorMapping uses @param colorId. It maps agent id to colorId
+     *
+     * No other module should know about this.colorsData, or the fact that it's 4 times as
+     * long as the input colors. They should only know about colorId
+     * Therefore all the public color methods should use colorId, and the private methods
+     * can convert between colorId and dataColorIndex
+     */
+    /**
+     * Agent color handling: private methods
+     */
+    private get numberOfColors();
     private setAgentColors;
     private setColorArray;
-    private indexOfColor;
+    private convertDataColorIndexToId;
+    private getColorDataIndex;
+    private getColorIdForTypeId;
+    private getColorForTypeId;
+    private setColorForId;
+    /**
+     *  Agent color handling: public methods
+     */
     addNewColor(color: number | string): number;
     createMaterials(colors: (number | string)[]): void;
     clearColorMapping(): void;
-    private getColorIndexForTypeId;
-    private getColorForTypeId;
-    private setColorForId;
     setColorForIds(ids: number[], colorId: number): void;
+    /**
+     * Sets one color for a set of ids
+     */
     applyColorToAgents(agentIds: number[], colorId: number): void;
-    getColorForIndex(index: number): Color;
+    getColorForColorId(colorId: number): Color;
     /**
      *   Data Management
      */
