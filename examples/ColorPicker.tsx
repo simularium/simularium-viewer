@@ -110,7 +110,6 @@ const ColorPicker = ({
                 type="text"
                 placeholder="add Hex Color"
                 onChange={(event) => {
-                    console.log(event.target.value)
                     setColorToAppend(event.target.value)}}
             ></input>
             <button onClick={() => addColorToColorArray(colorToAppend)}>

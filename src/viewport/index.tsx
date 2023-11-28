@@ -17,7 +17,7 @@ import { TrajectoryFileInfoAny } from "../simularium/types";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
 import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry";
-import { ColorChanges } from "../simularium/SelectionInterface";
+import { ColorChanges, SelectionEntry } from "../simularium/SelectionInterface";
 
 export type PropColor = string | number | [number, number, number];
 
@@ -53,6 +53,14 @@ const defaultProps = {
     hideAllAgents: false,
     showPaths: true,
     showBounds: true,
+    selectionStateInfo: {
+        colorChanges: [
+            {
+                agents: [] as SelectionEntry[],
+                color: "",
+            },
+        ],
+    },
     agentColors: [
         0x6ac1e5, 0xff2200, 0xee7967, 0xff6600, 0xd94d49, 0xffaa00, 0xffcc00,
         0x00ccff, 0x00aaff, 0x8048f3, 0x07f4ec, 0x79bd8f, 0x8800ff, 0xaa00ff,
@@ -321,6 +329,10 @@ class Viewport extends React.Component<
                 !isEqual(
                     selectionStateInfo.colorChanges,
                     prevProps.selectionStateInfo.colorChanges
+                ) &&
+                !isEqual(
+                    selectionStateInfo.colorChanges,
+                    defaultProps.selectionStateInfo.colorChanges
                 )
             ) {
                 this.changeAgentsColor(selectionStateInfo.colorChanges);
@@ -561,19 +573,21 @@ class Viewport extends React.Component<
     }
 
     public changeAgentsColor(colorChanges: ColorChanges[]): void {
-        const {
-            onUIDisplayDataChanged,
-        } = this.props;
+        const { onUIDisplayDataChanged } = this.props;
         colorChanges.forEach((colorChange) => {
             const { agents, color } = colorChange;
             const uiDisplayData = this.selectionInterface.getUIDisplayData();
             const agentIds =
                 this.selectionInterface.getAgentIdsByNamesAndTags(agents);
-       
-            this.selectionInterface.updateAgentColors(agentIds, colorChange, uiDisplayData);
+            this.selectionInterface.updateAgentColors(
+                agentIds,
+                colorChange,
+                uiDisplayData
+            );
             const colorId = this.getColorId(color);
             this.visGeometry.applyColorToAgents(agentIds, colorId);
-            const updatedUiDisplayData = this.selectionInterface.getUIDisplayData();
+            const updatedUiDisplayData =
+                this.selectionInterface.getUIDisplayData();
             onUIDisplayDataChanged(updatedUiDisplayData);
         });
     }
