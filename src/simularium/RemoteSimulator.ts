@@ -29,6 +29,7 @@ export class RemoteSimulator implements ISimulator {
     protected lastRequestedFile: string;
     public handleError: (error: FrontEndError) => void | (() => void);
     protected useOctopus: boolean;
+    protected serverHealthy: boolean;
 
     public constructor(
         webSocketClient: WebsocketClient,
@@ -43,6 +44,7 @@ export class RemoteSimulator implements ISimulator {
             (() => {
                 /* do nothing */
             });
+        this.serverHealthy = false;
 
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
@@ -55,6 +57,7 @@ export class RemoteSimulator implements ISimulator {
         this.onTrajectoryDataArrive = () => {
             /* do nothing */
         };
+        this.requestServerHealthCheck();
     }
 
     public setTrajectoryFileInfoHandler(
@@ -134,6 +137,10 @@ export class RemoteSimulator implements ISimulator {
         // TODO: implement callback
     }
 
+    public onHealthCheckResponse(): void {
+        this.serverHealthy = true;
+    }
+
     private registerBinaryMessageHandlers(): void {
         this.webSocketClient.addBinaryMessageHandler(
             NetMessageEnum.ID_VIS_DATA_ARRIVE,
@@ -171,6 +178,11 @@ export class RemoteSimulator implements ISimulator {
             NetMessageEnum.ID_MODEL_DEFINITION,
             (_msg) => this.onModelDefinitionArrive()
         );
+
+        this.webSocketClient.addJsonMessageHandler(
+            NetMessageEnum.ID_SERVER_HEALTHY_RESPONSE,
+            (_msg) => this.onHealthCheckResponse()
+        );
     }
 
     /**
@@ -188,6 +200,10 @@ export class RemoteSimulator implements ISimulator {
         this.registerBinaryMessageHandlers();
         this.registerJsonMessageHandlers();
         return this.webSocketClient.connectToRemoteServer();
+    }
+
+    public isServerHealthy(): boolean {
+        return this.serverHealthy;
     }
 
     /**
@@ -411,5 +427,20 @@ export class RemoteSimulator implements ISimulator {
             },
             "Convert trajectory output to simularium file format"
         );
+    }
+
+    public requestServerHealthCheck(): Promise<void> {
+        return this.connectToRemoteServer()
+            .then(() => {
+                this.webSocketClient.sendWebSocketRequest(
+                    {
+                        msgType: NetMessageEnum.ID_CHECK_HEALTH_REQUEST,
+                    },
+                    "Request server health check"
+                );
+            })
+            .catch((e) => {
+                throw new FrontEndError(e.message, ErrorLevel.ERROR);
+            });
     }
 }

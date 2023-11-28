@@ -47,6 +47,9 @@ export const enum NetMessageEnum {
     ID_AVAILABLE_METRICS_RESPONSE = 18,
     ID_PLOT_DATA_REQUEST = 19,
     ID_PLOT_DATA_RESPONSE = 20,
+    ID_ERROR_MSG = 21,
+    ID_CHECK_HEALTH_REQUEST = 22,
+    ID_SERVER_HEALTHY_RESPONSE = 23,
     // insert new values here before LENGTH
     LENGTH,
 }
