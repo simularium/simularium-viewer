@@ -1146,13 +1146,13 @@ class VisGeometry {
 
     private getColorIdForTypeId(typeId: number): number {
         /**
-         * returns the index into numberOfColors (colorId). No conversion
+         * returns the index in terms of numberOfColors (colorId). No conversion
          * is necessary because idColorMapping is also using this index
          */
         const index = this.idColorMapping.get(typeId);
         if (index === undefined) {
             this.logger.error(
-                "getColorIndexForTypeId could not find " + typeId
+                "getColorIdForTypeId could not find " + typeId
             );
             return -1;
         }
