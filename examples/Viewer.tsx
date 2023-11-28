@@ -5,16 +5,29 @@ import type {
     ISimulariumFile,
     UIDisplayData,
     SelectionStateInfo,
+    SelectionEntry,
 } from "../type-declarations";
 import SimulariumViewer, {
     SimulariumController,
     RenderStyle,
-    ErrorLevel,
-    FrontEndError,
     loadSimulariumFile,
-} from "../es";
+    FrontEndError,
+    ErrorLevel,
+} from "../src/index";
+/**
+ * NOTE: if you are debugging an import/build issue
+ * on the front end, you may need to switch to the
+ * following import statements to reproduce the issue 
+ * here. 
+ */
+// import SimulariumViewer, {
+//     SimulariumController,
+//     RenderStyle,
+//     loadSimulariumFile,
+//     FrontEndError,
+//     ErrorLevel,
+// } from "../es";
 import "../style/style.css";
-
 import PointSimulator from "./PointSimulator";
 import PointSimulatorLive from "./PointSimulatorLive";
 import PdbSimulator from "./PdbSimulator";
@@ -118,7 +131,9 @@ interface InputParams {
     useOctopus: boolean;
 }
 
-const simulariumController = new SimulariumController({});
+const simulariumController = new SimulariumController(
+    {}
+);
 
 let currentFrame = 0;
 let currentTime = 0;
@@ -146,8 +161,6 @@ const initialState: ViewerState = {
     filePending: null,
     simulariumFile: null,
 };
-
-type FrontEndError = typeof FrontEndError;
 
 class Viewer extends React.Component<InputParams, ViewerState> {
     private viewerRef: React.RefObject<SimulariumViewer>;
@@ -205,6 +218,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             viewerContainer.addEventListener("drop", this.onDrop);
             viewerContainer.addEventListener("dragover", this.onDragOver);
         }
+        this.configureAndLoad()
     }
 
     public onDragOver = (e: Event): void => {
@@ -399,7 +413,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public turnAgentsOnOff(nameToToggle: string) {
         let currentHiddenAgents = this.state.selectionStateInfo.hiddenAgents;
-        let nextHiddenAgents = [];
+        let nextHiddenAgents: SelectionEntry[] = [];
         if (currentHiddenAgents.some((a) => a.name === nameToToggle)) {
             nextHiddenAgents = currentHiddenAgents.filter(
                 (hiddenAgent) => hiddenAgent.name !== nameToToggle
@@ -422,7 +436,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     public turnAgentHighlightsOnOff(nameToToggle: string) {
         let currentHighlightedAgents =
             this.state.selectionStateInfo.highlightedAgents;
-        let nextHighlightedAgents = [];
+        let nextHighlightedAgents: SelectionEntry[] = [];
         if (currentHighlightedAgents.some((a) => a.name === nameToToggle)) {
             nextHighlightedAgents = currentHighlightedAgents.filter(
                 (hiddenAgent) => hiddenAgent.name !== nameToToggle
@@ -631,7 +645,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             <div className="container" style={{ height: "90%", width: "75%" }}>
                 <select
                     onChange={(event) => {
+                        simulariumController.stop();
                         playbackFile = event.target.value;
+                        this.configureAndLoad();
                     }}
                     defaultValue={playbackFile}
                 >
@@ -683,10 +699,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     <option value="TEST_FIBERS">TEST FIBERS</option>
                     <option value="TEST_POINTS">TEST POINTS</option>
                     <option value="TEST_METABALLS">TEST METABALLS</option>
+                    <option value="TEST_BINDING">TEST BINDING</option>
                 </select>
-                <button onClick={() => this.configureAndLoad()}>
-                    Load model
-                </button>
+
                 <button onClick={() => this.translateAgent()}>
                     TranslateAgent
                 </button>
