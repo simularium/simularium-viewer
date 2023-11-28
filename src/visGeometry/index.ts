@@ -1065,8 +1065,8 @@ class VisGeometry {
      * General notes about data being used to map color to agents:
      * @property this.colorsData is an array of floats, each 4 floats is a color
      *  `dataColorIndex` is always an index into the colorsData array, so it is a multiple of 4
-     * `colorId` is always an index into the numberOfColors, so it is a number between 0
-     * and numberOfColors-1.
+     * `colorId` is always is a number between 0 and numberOfColors-1; ie the index of the color
+     * in the initial colors array.
      * @property this.idColorMapping uses @param colorId. It maps agent id to colorId
      *
      * No other module should know about this.colorsData, or the fact that it's 4 times as
