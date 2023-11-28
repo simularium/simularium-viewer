@@ -14,6 +14,19 @@ import SimulariumViewer, {
     FrontEndError,
     ErrorLevel,
 } from "../src/index";
+/**
+ * NOTE: if you are debugging an import/build issue
+ * on the front end, you may need to switch to the
+ * following import statements to reproduce the issue 
+ * here. 
+ */
+// import SimulariumViewer, {
+//     SimulariumController,
+//     RenderStyle,
+//     loadSimulariumFile,
+//     FrontEndError,
+//     ErrorLevel,
+// } from "../es";
 import "../style/style.css";
 import PointSimulator from "./PointSimulator";
 import PointSimulatorLive from "./PointSimulatorLive";
