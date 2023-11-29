@@ -316,7 +316,7 @@ export class WebsocketClient {
         jsonData: Record<string, unknown>,
         requestDescription: string
     ): void {
-        if (this.socketIsValid()) {
+        if (this.socketIsConnected()) {
             if (this.webSocket !== null) {
                 this.webSocket.send(JSON.stringify(jsonData));
             }
