@@ -141,6 +141,17 @@ export class RemoteSimulator implements ISimulator {
         this.serverHealthy = true;
     }
 
+    public onErrorMsg(msg): void {
+        this.logger.error(
+            "Error message of type ",
+            msg.errorCode,
+            " arrived: ",
+            msg.errorMsg
+        );
+        const error = new FrontEndError(msg.errorMsg, ErrorLevel.WARNING);
+        this.handleError(error);
+    }
+
     private registerBinaryMessageHandlers(): void {
         this.webSocketClient.addBinaryMessageHandler(
             NetMessageEnum.ID_VIS_DATA_ARRIVE,
@@ -182,6 +193,11 @@ export class RemoteSimulator implements ISimulator {
         this.webSocketClient.addJsonMessageHandler(
             NetMessageEnum.ID_SERVER_HEALTHY_RESPONSE,
             (_msg) => this.onHealthCheckResponse()
+        );
+
+        this.webSocketClient.addJsonMessageHandler(
+            NetMessageEnum.ID_ERROR_MSG,
+            (msg) => this.onErrorMsg(msg)
         );
     }
 
