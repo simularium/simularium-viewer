@@ -100,6 +100,7 @@ interface ViewerState {
         name: string;
         data: ISimulariumFile | null;
     } | null;
+    serverHealthy: boolean;
 }
 
 interface BaseType {
@@ -160,6 +161,7 @@ const initialState: ViewerState = {
     },
     filePending: null,
     simulariumFile: null,
+    serverHealthy: false,
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
@@ -177,6 +179,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         this.loadFile = this.loadFile.bind(this);
         this.clearPendingFile = this.clearPendingFile.bind(this);
         this.convertFile = this.convertFile.bind(this);
+        this.onHealthCheckResponse = this.onHealthCheckResponse.bind(this);
         this.state = initialState;
 
         if (props.localBackendServer) {
@@ -355,6 +358,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         return typeMap;
     }
 
+    public onHealthCheckResponse() {
+        this.setState({ serverHealthy: true });
+    }
+
     public async loadSmoldynFile() {
         const smoldynTemplate = await fetch(
             `${UI_TEMPLATE_DOWNLOAD_URL_ROOT}/${SMOLDYN_TEMPLATE}`
@@ -367,7 +374,11 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 template: smoldynTemplate.smoldyn_data,
                 templateData: templateMap,
             },
+            serverHealthy: false,
         });
+        simulariumController.checkServerHealth(
+            this.onHealthCheckResponse, this.netConnectionSettings
+        );
     }
 
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
@@ -638,6 +649,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     {...this.state.filePending}
                     submitFile={(obj) => this.convertFile(obj, fileType)}
                     onReturned={this.clearPendingFile}
+                    submitDisabled={!this.state.serverHealthy}
                 />
             );
         }
