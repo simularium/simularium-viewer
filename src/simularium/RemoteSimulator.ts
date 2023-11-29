@@ -26,10 +26,10 @@ export class RemoteSimulator implements ISimulator {
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (NetMessage) => void;
     public onTrajectoryDataArrive: (NetMessage) => void;
+    public healthCheckHandler: () => void;
     protected lastRequestedFile: string;
     public handleError: (error: FrontEndError) => void | (() => void);
     protected useOctopus: boolean;
-    protected serverHealthy: boolean;
 
     public constructor(
         webSocketClient: WebsocketClient,
@@ -44,7 +44,6 @@ export class RemoteSimulator implements ISimulator {
             (() => {
                 /* do nothing */
             });
-        this.serverHealthy = false;
 
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
@@ -57,7 +56,9 @@ export class RemoteSimulator implements ISimulator {
         this.onTrajectoryDataArrive = () => {
             /* do nothing */
         };
-        this.requestServerHealthCheck();
+        this.healthCheckHandler = () => {
+            /* do nothing */
+        };
     }
 
     public setTrajectoryFileInfoHandler(
@@ -69,6 +70,10 @@ export class RemoteSimulator implements ISimulator {
         handler: (msg: VisDataMessage) => void
     ): void {
         this.onTrajectoryDataArrive = handler;
+    }
+
+    public setHealthCheckHandler(handler: () => void): void {
+        this.healthCheckHandler = handler;
     }
 
     public socketIsValid(): boolean {
@@ -137,10 +142,6 @@ export class RemoteSimulator implements ISimulator {
         // TODO: implement callback
     }
 
-    public onHealthCheckResponse(): void {
-        this.serverHealthy = true;
-    }
-
     public onErrorMsg(msg): void {
         this.logger.error(
             "Error message of type ",
@@ -192,7 +193,7 @@ export class RemoteSimulator implements ISimulator {
 
         this.webSocketClient.addJsonMessageHandler(
             NetMessageEnum.ID_SERVER_HEALTHY_RESPONSE,
-            (_msg) => this.onHealthCheckResponse()
+            (_msg) => this.healthCheckHandler()
         );
 
         this.webSocketClient.addJsonMessageHandler(
@@ -216,10 +217,6 @@ export class RemoteSimulator implements ISimulator {
         this.registerBinaryMessageHandlers();
         this.registerJsonMessageHandlers();
         return this.webSocketClient.connectToRemoteServer();
-    }
-
-    public isServerHealthy(): boolean {
-        return this.serverHealthy;
     }
 
     /**
@@ -445,7 +442,7 @@ export class RemoteSimulator implements ISimulator {
         );
     }
 
-    public requestServerHealthCheck(): Promise<void> {
+    public checkServerHealth(): Promise<void> {
         return this.connectToRemoteServer()
             .then(() => {
                 this.webSocketClient.sendWebSocketRequest(
