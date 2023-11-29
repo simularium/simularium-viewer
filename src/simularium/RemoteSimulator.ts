@@ -357,6 +357,9 @@ export class RemoteSimulator implements ISimulator {
     }
 
     public abortRemoteSim(): void {
+        if (!this.socketIsValid()) {
+            return;
+        }
         this.webSocketClient.sendWebSocketRequest(
             {
                 msgType: NetMessageEnum.ID_VIS_DATA_ABORT,
