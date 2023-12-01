@@ -7,6 +7,7 @@ import {
     NetMessageEnum,
     MessageEventLike,
     NetMessage,
+    ErrorMessage,
 } from "./WebsocketClient";
 import { ISimulator } from "./ISimulator";
 import { TrajectoryFileInfoV2, VisDataMessage } from "./types";
@@ -142,7 +143,7 @@ export class RemoteSimulator implements ISimulator {
         // TODO: implement callback
     }
 
-    public onErrorMsg(msg): void {
+    public onErrorMsg(msg: ErrorMessage): void {
         this.logger.error(
             "Error message of type ",
             msg.errorCode,
@@ -151,6 +152,7 @@ export class RemoteSimulator implements ISimulator {
         );
         const error = new FrontEndError(msg.errorMsg, ErrorLevel.WARNING);
         this.handleError(error);
+        // TODO: specific handling based on error code
     }
 
     private registerBinaryMessageHandlers(): void {
