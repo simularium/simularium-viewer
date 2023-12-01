@@ -109,10 +109,26 @@ export interface TrajectoryFileInfoV2 extends TrajectoryFileInfoBase {
     cameraDefault: PerspectiveCameraSpec;
 }
 
+export interface ModelInfo {
+    authors?: string;
+    description?: string;
+    doi?: string;
+    inputDataUrl?: string;
+    rawOutputDataUrl?: string;
+    sourceCodeLicenseUrl?: string;
+    sourceCodeUrl?: string;
+    title?: string;
+    version?: string;
+}
+export interface TrajectoryFileInfoV3 extends TrajectoryFileInfoV2 {
+    modelInfo?: ModelInfo;
+    trajectoryTitle?: string;
+}
+
 export type TrajectoryFileInfoAny = TrajectoryFileInfoV1 | TrajectoryFileInfoV2;
 
 // This should always point to the latest version
-export type TrajectoryFileInfo = TrajectoryFileInfoV2;
+export type TrajectoryFileInfo = TrajectoryFileInfoV3;
 
 export interface SimulariumFileFormat {
     trajectoryInfo: TrajectoryFileInfo;
