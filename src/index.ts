@@ -6,6 +6,8 @@ export type {
     VisDataFrame,
     ColorChanges,
     SelectionEntry,
+    TrajectoryFileInfo,
+    NetConnectionParams,
 } from "./simularium";
 export type { ISimulariumFile } from "./simularium/ISimulariumFile";
 
