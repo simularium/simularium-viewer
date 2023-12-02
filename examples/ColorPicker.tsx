@@ -50,7 +50,7 @@ const ColorPicker = ({
                 },
             ];
             setColorSelectionInfo([{
-                agents: entry,
+                agent: entry,
                 color: selectedColor,
             }]);
         }

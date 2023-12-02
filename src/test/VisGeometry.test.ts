@@ -7,7 +7,7 @@
 
 import VisGeometry from "../visGeometry";
 import jsLogger from "js-logger";
-import { convertColorStringToNumber } from "../visGeometry/color-utils";
+import { convertColorStringToNumber } from "../visGeometry/ColorHandler";
 import { Color } from "three";
 
 const initialColorData = ["#000000", "#000001", "#000002", "#000003"];

@@ -1,6 +1,6 @@
 import { filter, find, uniq } from "lodash";
 import { EncodedTypeMapping } from "./types";
-import { convertColorNumberToString } from "../visGeometry/color-utils";
+import { convertColorNumberToString } from "../visGeometry/ColorHandler";
 
 // An individual entry parsed from an encoded name
 // The encoded names can be just a name or a name plus a
@@ -17,15 +17,15 @@ export interface SelectionEntry {
     tags: string[];
 }
 
-export interface ColorChanges {
-    agents: SelectionEntry[];
+export interface ColorChange {
+    agent: SelectionEntry;
     color: string;
 }
 
 export interface SelectionStateInfo {
     highlightedAgents: SelectionEntry[];
     hiddenAgents: SelectionEntry[];
-    colorChanges: ColorChanges[];
+    colorChange: ColorChange | null;
 }
 
 interface DisplayStateEntry {
@@ -286,21 +286,16 @@ class SelectionInterface {
 
     public updateAgentColors(
         agentIds: number[],
-        colorChanges: ColorChanges,
+        colorChanges: ColorChange,
         uiDisplayData: UIDisplayData
     ): void {
-        colorChanges.agents.forEach((agentToUpdate) => {
-            for (const group of uiDisplayData) {
-                if (group.name === agentToUpdate.name) {
-                    this.updateUiDataColor(
-                        group.name,
-                        agentIds,
-                        colorChanges.color
-                    );
-                    break;
-                }
+        const { agent, color } = colorChanges;
+        for (const group of uiDisplayData) {
+            if (group.name === agent.name) {
+                this.updateUiDataColor(group.name, agentIds, color);
+                break;
             }
-        });
+        }
     }
 
     public setInitialAgentColors(

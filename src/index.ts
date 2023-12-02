@@ -4,7 +4,7 @@ export type {
     SelectionStateInfo,
     UIDisplayData,
     VisDataFrame,
-    ColorChanges,
+    ColorChange,
     SelectionEntry,
 } from "./simularium";
 export type { ISimulariumFile } from "./simularium/ISimulariumFile";

@@ -23,12 +23,7 @@ const idMapping = {
 };
 
 const color = "";
-const initialColorChanges = [
-    {
-        agents: [],
-        color,
-    },
-];
+const initialColorChanges = [];
 
 describe("SelectionInterface module", () => {
     describe("decode", () => {
@@ -423,10 +418,12 @@ describe("SelectionInterface module", () => {
         test("it will update the entries with a new color", () => {
             const agentIds = [0];
             const newColor = "#111111";
-            const colorChanges = {
-                agents: [{ name: "A", tags: [] }],
-                color: newColor,
-            };
+            const colorChanges = [
+                {
+                    agent: [{ name: "A", tags: [] }],
+                    color: newColor,
+                },
+            ];
             const si = new SelectionInterface();
             si.parse(idMapping);
             const uiDisplayData = si.getUIDisplayData();
