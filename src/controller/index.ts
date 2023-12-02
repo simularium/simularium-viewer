@@ -235,9 +235,7 @@ export default class SimulariumController {
     ): Promise<void> {
         try {
             if (
-                !this.simulator ||
-                !(this.simulator instanceof RemoteSimulator) ||
-                !this.simulator.socketIsValid()
+                !(this.simulator && this.simulator.isConnectedToRemoteServer())
             ) {
                 // Only configure network if we aren't already connected to the remote server
                 this.configureNetwork(netConnectionConfig);
@@ -423,15 +421,11 @@ export default class SimulariumController {
         handler: () => void,
         netConnectionConfig: NetConnectionParams
     ): void {
-        if (
-            !this.simulator ||
-            !(this.simulator instanceof RemoteSimulator) ||
-            !this.simulator.socketIsValid()
-        ) {
+        if (!(this.simulator && this.simulator.isConnectedToRemoteServer())) {
             // Only configure network if we aren't already connected to the remote server
             this.configureNetwork(netConnectionConfig);
         }
-        if (this.simulator && this.simulator instanceof RemoteSimulator) {
+        if (this.simulator instanceof RemoteSimulator) {
             this.simulator.setHealthCheckHandler(handler);
             this.simulator.checkServerHealth();
         }

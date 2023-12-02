@@ -215,6 +215,10 @@ export class RemoteSimulator implements ISimulator {
         return this.webSocketClient.getIp();
     }
 
+    public isConnectedToRemoteServer(): boolean {
+        return this.socketIsValid();
+    }
+
     public async connectToRemoteServer(): Promise<string> {
         this.registerBinaryMessageHandlers();
         this.registerJsonMessageHandlers();
