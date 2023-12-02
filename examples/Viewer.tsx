@@ -13,6 +13,8 @@ import SimulariumViewer, {
     loadSimulariumFile,
     FrontEndError,
     ErrorLevel,
+    NetConnectionParams,
+    TrajectoryFileInfo
 } from "../src/index";
 /**
  * NOTE: if you are debugging an import/build issue
@@ -45,7 +47,6 @@ import {
 import ConversionForm from "./ConversionForm";
 import MetaballSimulator from "./MetaballSimulator";
 import { TrajectoryType } from "../src/constants";
-import { NetConnectionParams } from "../src/simularium";
 
 let playbackFile = "TEST_LIVEMODE_API"; //"medyan_paper_M:A_0.675.simularium";
 let queryStringFile = "";
@@ -456,7 +457,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         });
     }
 
-    public handleTrajectoryInfo(data): void {
+    public handleTrajectoryInfo(data: TrajectoryFileInfo): void {
         console.log("Trajectory info arrived", data);
         // NOTE: Currently incorrectly assumes initial time of 0
         const totalDuration = (data.totalSteps - 1) * data.timeStepSize;
