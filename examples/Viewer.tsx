@@ -156,7 +156,7 @@ const initialState: ViewerState = {
     selectionStateInfo: {
         highlightedAgents: [],
         hiddenAgents: [],
-        colorChanges: [],
+        colorChange: null,
     },
     filePending: null,
     simulariumFile: null,
@@ -618,14 +618,14 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         this.setState({ agentColors });
     };
 
-    public setColorSelectionInfo = (colorChanges) => {
+    public setColorSelectionInfo = (colorChange) => {
         this.setState({
             ...this.state,
             selectionStateInfo: {
                 hiddenAgents: this.state.selectionStateInfo.hiddenAgents,
                 highlightedAgents:
                     this.state.selectionStateInfo.highlightedAgents,
-                colorChanges: colorChanges,
+                colorChange: colorChange,
             },
         });
     };
