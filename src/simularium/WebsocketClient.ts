@@ -6,10 +6,6 @@ export interface NetMessage {
     connId: string;
     msgType: number;
     fileName: string;
-}
-
-export interface ErrorMessage {
-    msgType: number;
     errorCode: number;
     errorMsg: string;
 }
