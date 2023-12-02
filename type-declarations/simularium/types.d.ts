@@ -94,8 +94,23 @@ export interface TrajectoryFileInfoV2 extends TrajectoryFileInfoBase {
     };
     cameraDefault: PerspectiveCameraSpec;
 }
+export interface ModelInfo {
+    authors?: string;
+    description?: string;
+    doi?: string;
+    inputDataUrl?: string;
+    rawOutputDataUrl?: string;
+    sourceCodeLicenseUrl?: string;
+    sourceCodeUrl?: string;
+    title?: string;
+    version?: string;
+}
+export interface TrajectoryFileInfoV3 extends TrajectoryFileInfoV2 {
+    modelInfo?: ModelInfo;
+    trajectoryTitle?: string;
+}
 export declare type TrajectoryFileInfoAny = TrajectoryFileInfoV1 | TrajectoryFileInfoV2;
-export declare type TrajectoryFileInfo = TrajectoryFileInfoV2;
+export declare type TrajectoryFileInfo = TrajectoryFileInfoV3;
 export interface SimulariumFileFormat {
     trajectoryInfo: TrajectoryFileInfo;
     spatialData: VisDataMessage;
