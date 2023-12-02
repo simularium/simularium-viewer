@@ -1088,14 +1088,13 @@ class VisGeometry {
         this.setAgentColors();
     }
 
-    public applyColorToAgents(agentIds: number[], colorId: number): void {
-        this.colorHandler.setColorForIds(agentIds, colorId);
+    public applyColorToAgents(
+        agentIds: number[],
+        color: string | number
+    ): void {
+        this.colorHandler.setColorForIds(agentIds, color);
         this.setGeom(agentIds);
         this.updateScene(this.currentSceneAgents);
-    }
-
-    public addNewColor(color: number | string): number {
-        return this.colorHandler.addNewColor(color);
     }
 
     /**

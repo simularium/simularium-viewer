@@ -284,24 +284,10 @@ class SelectionInterface {
         });
     }
 
-    public updateAgentColors(
-        agentIds: number[],
-        colorChanges: ColorChange,
-        uiDisplayData: UIDisplayData
-    ): void {
-        const { agent, color } = colorChanges;
-        for (const group of uiDisplayData) {
-            if (group.name === agent.name) {
-                this.updateUiDataColor(group.name, agentIds, color);
-                break;
-            }
-        }
-    }
-
     public setInitialAgentColors(
         uiDisplayData: UIDisplayData,
         colors: (string | number)[],
-        setColorForIds: (ids: number[], colorIndex: number) => void
+        setColorForIds: (ids: number[], color: string | number) => void
     ): (string | number)[] {
         let defaultColorIndex = 0;
         uiDisplayData.forEach((group) => {
@@ -317,7 +303,7 @@ class SelectionInterface {
             if (!hasNewColors) {
                 // if no colors have been set by the user for this name,
                 // just give all states of this agent name the same color
-                setColorForIds(ids, defaultColorIndex);
+                setColorForIds(ids, colors[defaultColorIndex]);
                 this.updateUiDataColor(
                     group.name,
                     ids,
@@ -355,7 +341,7 @@ class SelectionInterface {
                     } else {
                         groupColorIndex = -1;
                     }
-                    setColorForIds([ids[index]], agentColorIndex);
+                    setColorForIds([ids[index]], colors[agentColorIndex]);
                 });
             }
             if (groupColorIndex > -1) {

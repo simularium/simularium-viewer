@@ -1,6 +1,6 @@
 import { map, round, isEqual } from "lodash";
 import { Color } from "three";
-import { DEFAULT_MESH_NAME } from "./GeometryStore";
+import SimulariumRenderer from "./rendering/SimulariumRenderer";
 
 export function convertColorStringToNumber(color: number | string): number {
     if (typeof color !== "string") {
@@ -27,9 +27,9 @@ export const checkHexColor = (color: string): string => {
 class ColorHandler {
     public idColorMapping: Map<number, number>;
     private colorsData: Float32Array;
-    private renderer: any;
+    private renderer: SimulariumRenderer;
 
-    constructor(colors: (number | string)[], renderer: any) {
+    constructor(colors: (number | string)[], renderer: SimulariumRenderer) {
         this.idColorMapping = new Map<number, number>();
         this.colorsData = this.setColorArray(colors);
         this.renderer = renderer;
@@ -38,11 +38,6 @@ class ColorHandler {
 
     private get numberOfColors(): number {
         return this.colorsData.length / 4;
-    }
-
-    public updateColorArray(colors: (number | string)[]): void {
-        this.colorsData = this.setColorArray(colors);
-        this.renderer.updateColors(colors.length, this.colorsData);
     }
 
     private setColorArray(colors: (number | string)[]): Float32Array {
@@ -95,7 +90,7 @@ class ColorHandler {
         return -1;
     }
 
-    private getColorIdForTypeId(typeId: number): number {
+    private getColorIdForAgentType(typeId: number): number {
         /**
          * returns the index in terms of numberOfColors (colorId). No conversion
          * is necessary because idColorMapping is also using this index
@@ -108,11 +103,6 @@ class ColorHandler {
         return colorId;
     }
 
-    public getColorForTypeId(typeId: number): Color {
-        const index = this.getColorIdForTypeId(typeId);
-        return this.getColorForColorId(index);
-    }
-
     /**
      * @param id agent id
      * @param colorId index into the numberOfColors
@@ -121,7 +111,22 @@ class ColorHandler {
         this.idColorMapping.set(id, colorId);
     }
 
-    public addNewColor(color: number | string): number {
+    private getColorById(colorId: number): Color {
+        if (colorId < 0) {
+            colorId = 0;
+        }
+        if (colorId >= this.numberOfColors) {
+            colorId = colorId % this.numberOfColors;
+        }
+
+        return new Color(
+            this.colorsData[colorId * 4],
+            this.colorsData[colorId * 4 + 1],
+            this.colorsData[colorId * 4 + 2]
+        );
+    }
+
+    private addNewColor(color: number | string): number {
         const colorNumber = convertColorStringToNumber(color);
         const newColor = [
             ((colorNumber & 0x00ff0000) >> 16) / 255.0,
@@ -145,11 +150,26 @@ class ColorHandler {
         return this.convertDataColorIndexToId(newColorDataIndex);
     }
 
+    /**
+     * Check if the new color is in our current array of color options, if not,
+     * add it before returning the index
+     */
+    private getColorId(color: string): number {
+        return this.addNewColor(color);
+    }
+
+    public updateColorArray(colors: (number | string)[]): void {
+        this.colorsData = this.setColorArray(colors);
+        this.renderer.updateColors(colors.length, this.colorsData);
+    }
+
     public clearColorMapping(): void {
         this.idColorMapping.clear();
     }
 
-    public setColorForIds(ids: number[], colorId: number): void {
+    public setColorForIds(ids: number[], color: string | number): void {
+        const colorString = convertColorNumberToString(color);
+        const colorId = this.getColorId(colorString);
         /**
          * Sets one color for a set of ids, using an index into a color array
          * @param ids agent ids that should all have the same color
@@ -160,19 +180,9 @@ class ColorHandler {
         });
     }
 
-    public getColorForColorId(colorId: number): Color {
-        if (colorId < 0) {
-            colorId = 0;
-        }
-        if (colorId >= this.numberOfColors) {
-            colorId = colorId % this.numberOfColors;
-        }
-
-        return new Color(
-            this.colorsData[colorId * 4],
-            this.colorsData[colorId * 4 + 1],
-            this.colorsData[colorId * 4 + 2]
-        );
+    public getColorForTypeId(typeId: number): Color {
+        const index = this.getColorIdForAgentType(typeId);
+        return this.getColorById(index);
     }
 
     public getColorInfoForAgentId(agentType: number): {
@@ -180,7 +190,7 @@ class ColorHandler {
         colorId: number;
     } {
         const color = this.getColorForTypeId(agentType);
-        const colorId = this.getColorIdForTypeId(agentType);
+        const colorId = this.getColorIdForAgentType(agentType);
         return { color, colorId };
     }
 }

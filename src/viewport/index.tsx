@@ -552,27 +552,12 @@ class Viewport extends React.Component<
         }
     }
 
-    private getColorId(color: string): number {
-        /**
-         * Check if the new color is in our current array of color options, if not,
-         * add it before returning the index
-         */
-        return this.visGeometry.addNewColor(color);
-    }
-
     public changeAgentsColor(colorChange: ColorChange): void {
         const { agent, color } = colorChange;
-        const uiDisplayData = this.selectionInterface.getUIDisplayData();
         const agentIds = this.selectionInterface.getAgentIdsByNamesAndTags([
             agent,
         ]);
-        this.selectionInterface.updateAgentColors(
-            agentIds,
-            colorChange,
-            uiDisplayData
-        );
-        const colorId = this.getColorId(color);
-        this.visGeometry.applyColorToAgents(agentIds, colorId);
+        this.visGeometry.applyColorToAgents(agentIds, color);
     }
 
     public stopAnimate(): void {
