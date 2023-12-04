@@ -1,6 +1,5 @@
 import { map, round, isEqual } from "lodash";
 import { Color } from "three";
-import SimulariumRenderer from "./rendering/SimulariumRenderer";
 
 export function convertColorStringToNumber(color: number | string): number {
     if (typeof color !== "string") {
@@ -27,13 +26,12 @@ export const checkHexColor = (color: string): string => {
 class ColorHandler {
     public idColorMapping: Map<number, number>;
     private colorsData: Float32Array;
-    private renderer: SimulariumRenderer;
 
-    constructor(colors: (number | string)[], renderer: SimulariumRenderer) {
+    constructor() {
         this.idColorMapping = new Map<number, number>();
-        this.colorsData = this.setColorArray(colors);
-        this.renderer = renderer;
-        this.renderer.updateColors(colors.length, this.colorsData);
+        // will be set by setColorArray, but need to initialize
+        // so that typescript doesn't complain
+        this.colorsData = new Float32Array(this.numberOfColors * 4);
     }
 
     private get numberOfColors(): number {
@@ -146,7 +144,6 @@ class ColorHandler {
         const newColorData = new Float32Array(newArray.length);
         newColorData.set(newArray);
         this.colorsData = newColorData;
-        this.renderer.updateColors(this.numberOfColors, this.colorsData);
         return this.convertDataColorIndexToId(newColorDataIndex);
     }
 
@@ -158,9 +155,15 @@ class ColorHandler {
         return this.addNewColor(color);
     }
 
-    public updateColorArray(colors: (number | string)[]): void {
+    public updateColorArray(colors: (number | string)[]): {
+        colorArray: Float32Array;
+        numberOfColors: number;
+    } {
         this.colorsData = this.setColorArray(colors);
-        this.renderer.updateColors(colors.length, this.colorsData);
+        return {
+            colorArray: this.colorsData,
+            numberOfColors: this.numberOfColors,
+        };
     }
 
     public clearColorMapping(): void {
@@ -170,7 +173,7 @@ class ColorHandler {
     public setColorForAgentTypes(
         agentTypes: number[],
         color: string | number
-    ): void {
+    ): { colorArray: Float32Array; numberOfColors: number } {
         const colorString = convertColorNumberToString(color);
         const colorId = this.getColorId(colorString);
         /**
@@ -181,6 +184,10 @@ class ColorHandler {
         agentTypes.forEach((id) => {
             this.setColorForAgentType(id, colorId);
         });
+        return {
+            colorArray: this.colorsData,
+            numberOfColors: this.numberOfColors,
+        };
     }
 
     public getColorForAgentType(agentType: number): Color {

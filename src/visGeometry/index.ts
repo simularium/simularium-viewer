@@ -199,7 +199,7 @@ class VisGeometry {
         this.backgroundColor = DEFAULT_BACKGROUND_COLOR;
         this.pathEndColor = this.backgroundColor.clone();
         this.renderer.setBackgroundColor(this.backgroundColor);
-        this.colorHandler = new ColorHandler([], this.renderer);
+        this.colorHandler = new ColorHandler();
         // Set up scene
 
         this.scene = new Scene();
@@ -1075,7 +1075,11 @@ class VisGeometry {
     }
 
     public createMaterials(colors: (number | string)[]): void {
-        this.colorHandler.updateColorArray(colors);
+        const newColorData = this.colorHandler.updateColorArray(colors);
+        this.renderer.updateColors(
+            newColorData.numberOfColors,
+            newColorData.colorArray
+        );
         this.setAgentColors();
     }
 
@@ -1083,7 +1087,14 @@ class VisGeometry {
         agentIds: number[],
         color: string | number
     ): void {
-        this.colorHandler.setColorForAgentTypes(agentIds, color);
+        const newColorData = this.colorHandler.setColorForAgentTypes(
+            agentIds,
+            color
+        );
+        this.renderer.updateColors(
+            newColorData.numberOfColors,
+            newColorData.colorArray
+        );
         this.updateScene(this.currentSceneAgents);
     }
 
