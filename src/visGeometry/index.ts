@@ -51,7 +51,7 @@ import {
 import SimulariumRenderer from "./rendering/SimulariumRenderer";
 import { InstancedFiberGroup } from "./rendering/InstancedFiber";
 import { LegacyRenderer } from "./rendering/LegacyRenderer";
-import GeometryStore, { DEFAULT_MESH_NAME } from "./GeometryStore";
+import GeometryStore from "./GeometryStore";
 import {
     AgentGeometry,
     GeometryDisplayType,
