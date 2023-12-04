@@ -79,7 +79,7 @@ var PDBModel = /*#__PURE__*/function () {
           this.pdb.atoms = [];
           for (var i = 0; i < atomSites.length; ++i) {
             var _this$pdb;
-            (_this$pdb = this.pdb) === null || _this$pdb === void 0 ? void 0 : _this$pdb.atoms.push({
+            (_this$pdb = this.pdb) === null || _this$pdb === void 0 || _this$pdb.atoms.push({
               x: atomSites[i].Cartn_x,
               y: atomSites[i].Cartn_y,
               z: atomSites[i].Cartn_z

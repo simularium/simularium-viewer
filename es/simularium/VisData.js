@@ -218,7 +218,6 @@ var VisData = /*#__PURE__*/function () {
         if (frames.frameDataArray.length > 0 && frames.frameDataArray[0].frameNumber === 0) {
           this.clearCache(); // new data has arrived
         }
-
         this.addFramesToCache(frames);
         return;
       }
@@ -267,7 +266,6 @@ var VisData = /*#__PURE__*/function () {
           if (frames.frameDataArray.length > 0 && frames.frameDataArray[0].frameNumber === 0) {
             this.clearCache(); // new data has arrived
           }
-
           this.addFramesToCache(frames);
         } catch (err) {
           // TODO: There are frequent errors due to a race condition that
@@ -464,7 +462,7 @@ var VisData = /*#__PURE__*/function () {
           var nSubPoints = agentDataView[dataIter + nSubPointsIndex];
           if (!Number.isInteger(nSubPoints) || !Number.isInteger(dataIter)) {
             throw new FrontEndError("Your data is malformed, non-integer value found for num-subpoints.", ErrorLevel.ERROR, "Number of Subpoints: <pre>".concat(nSubPoints, "</pre>"));
-            return "break";
+            return 1; // break
           }
 
           // each array length is variable based on how many subpoints the agent has
@@ -490,8 +488,7 @@ var VisData = /*#__PURE__*/function () {
           dataIter = dataIter + chunkLength;
         };
         while (dataIter < agentDataView.length) {
-          var _ret = _loop2();
-          if (_ret === "break") break;
+          if (_loop2()) break;
         }
         var numParsedAgents = parsedAgentData.length;
         if (numParsedAgents != expectedNumAgents) {

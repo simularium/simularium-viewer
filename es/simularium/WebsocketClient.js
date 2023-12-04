@@ -16,6 +16,7 @@ import { FrontEndError, ErrorLevel } from "./FrontEndError";
 //     fileName: string; // identifies the trajectory this connection is dealing with
 //     payload: Object; // the JS object with the message data itself
 // }
+
 // these have been set to correspond to backend values
 export var NetMessageEnum = /*#__PURE__*/function (NetMessageEnum) {
   NetMessageEnum[NetMessageEnum["ID_UNDEFINED_WEB_REQUEST"] = 0] = "ID_UNDEFINED_WEB_REQUEST";

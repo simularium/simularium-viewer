@@ -219,7 +219,6 @@ var GeometryStore = /*#__PURE__*/function () {
         if (!entry) {
           return; // should be unreachable, but needed for TypeScript
         }
-
         var geometry = entry.geometry,
           displayType = entry.displayType;
         if (geometry && displayType !== GeometryDisplayType.PDB && displayType !== GeometryDisplayType.SPHERE_GROUP) {
@@ -242,7 +241,6 @@ var GeometryStore = /*#__PURE__*/function () {
       if (!item) {
         return; // should be unreachable, but needed for TypeScript
       }
-
       var meshLoadRequest = item.geometry;
       if (meshLoadRequest && meshLoadRequest.cancelled || !meshLoadRequest) {
         this._registry["delete"](meshName);

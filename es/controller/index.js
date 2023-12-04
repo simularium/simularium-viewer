@@ -15,6 +15,7 @@ jsLogger.setHandler(jsLogger.createDefaultHandler());
 
 // TODO: refine this as part of the public API for initializing the
 // controller (also see SimulatorConnectionParams below)
+
 // TODO: refine this as part of the public API for initializing the
 // controller with a simulator connection
 var SimulariumController = /*#__PURE__*/function () {
@@ -465,49 +466,49 @@ var SimulariumController = /*#__PURE__*/function () {
     key: "zoomIn",
     value: function zoomIn() {
       var _this$visGeometry;
-      (_this$visGeometry = this.visGeometry) === null || _this$visGeometry === void 0 ? void 0 : _this$visGeometry.zoomIn();
+      (_this$visGeometry = this.visGeometry) === null || _this$visGeometry === void 0 || _this$visGeometry.zoomIn();
     }
   }, {
     key: "zoomOut",
     value: function zoomOut() {
       var _this$visGeometry2;
-      (_this$visGeometry2 = this.visGeometry) === null || _this$visGeometry2 === void 0 ? void 0 : _this$visGeometry2.zoomOut();
+      (_this$visGeometry2 = this.visGeometry) === null || _this$visGeometry2 === void 0 || _this$visGeometry2.zoomOut();
     }
   }, {
     key: "resetCamera",
     value: function resetCamera() {
       var _this$visGeometry3;
-      (_this$visGeometry3 = this.visGeometry) === null || _this$visGeometry3 === void 0 ? void 0 : _this$visGeometry3.resetCamera();
+      (_this$visGeometry3 = this.visGeometry) === null || _this$visGeometry3 === void 0 || _this$visGeometry3.resetCamera();
     }
   }, {
     key: "centerCamera",
     value: function centerCamera() {
       var _this$visGeometry4;
-      (_this$visGeometry4 = this.visGeometry) === null || _this$visGeometry4 === void 0 ? void 0 : _this$visGeometry4.centerCamera();
+      (_this$visGeometry4 = this.visGeometry) === null || _this$visGeometry4 === void 0 || _this$visGeometry4.centerCamera();
     }
   }, {
     key: "reOrientCamera",
     value: function reOrientCamera() {
       var _this$visGeometry5;
-      (_this$visGeometry5 = this.visGeometry) === null || _this$visGeometry5 === void 0 ? void 0 : _this$visGeometry5.reOrientCamera();
+      (_this$visGeometry5 = this.visGeometry) === null || _this$visGeometry5 === void 0 || _this$visGeometry5.reOrientCamera();
     }
   }, {
     key: "setPanningMode",
     value: function setPanningMode(pan) {
       var _this$visGeometry6;
-      (_this$visGeometry6 = this.visGeometry) === null || _this$visGeometry6 === void 0 ? void 0 : _this$visGeometry6.setPanningMode(pan);
+      (_this$visGeometry6 = this.visGeometry) === null || _this$visGeometry6 === void 0 || _this$visGeometry6.setPanningMode(pan);
     }
   }, {
     key: "setFocusMode",
     value: function setFocusMode(focus) {
       var _this$visGeometry7;
-      (_this$visGeometry7 = this.visGeometry) === null || _this$visGeometry7 === void 0 ? void 0 : _this$visGeometry7.setFocusMode(focus);
+      (_this$visGeometry7 = this.visGeometry) === null || _this$visGeometry7 === void 0 || _this$visGeometry7.setFocusMode(focus);
     }
   }, {
     key: "setCameraType",
     value: function setCameraType(ortho) {
       var _this$visGeometry8;
-      (_this$visGeometry8 = this.visGeometry) === null || _this$visGeometry8 === void 0 ? void 0 : _this$visGeometry8.setCameraType(ortho);
+      (_this$visGeometry8 = this.visGeometry) === null || _this$visGeometry8 === void 0 || _this$visGeometry8.setCameraType(ortho);
     }
   }]);
   return SimulariumController;
