@@ -1074,15 +1074,6 @@ class VisGeometry {
         });
     }
 
-    public setGeom(ids: number[]): void {
-        ids.forEach((id) => {
-            // if we don't have a mesh for this, add a sphere instance to mesh registry?
-            if (!this.visGeomMap.has(id)) {
-                this.visGeomMap.set(id, DEFAULT_MESH_NAME);
-            }
-        });
-    }
-
     public createMaterials(colors: (number | string)[]): void {
         this.colorHandler.updateColorArray(colors);
         this.setAgentColors();
@@ -1093,7 +1084,6 @@ class VisGeometry {
         color: string | number
     ): void {
         this.colorHandler.setColorForAgentTypes(agentIds, color);
-        this.setGeom(agentIds);
         this.updateScene(this.currentSceneAgents);
     }
 
