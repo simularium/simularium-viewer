@@ -2,6 +2,7 @@ import { CatmullRomCurve3, Color, Vector3 } from "three";
 
 import VisTypes from "../simularium/VisTypes";
 import { AgentData } from "../simularium/types";
+import { AgentColorInfo } from "./types";
 
 const NO_AGENT = -1;
 
@@ -68,7 +69,7 @@ export default class VisAgent {
         };
     }
 
-    public setColor(colorInfo: { color: Color; colorId: number }): void {
+    public setColor(colorInfo: AgentColorInfo): void {
         this.color = colorInfo.color;
         this.colorIndex = colorInfo.colorId;
     }
