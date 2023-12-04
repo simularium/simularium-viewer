@@ -8,20 +8,23 @@
 import ColorHandler from "../visGeometry/ColorHandler";
 import { convertColorStringToNumber } from "../visGeometry/ColorHandler";
 import { Color } from "three";
-import SimulariumRenderer from "../visGeometry/rendering/SimulariumRenderer";
 
 const initialColorData = ["#000000", "#000001", "#000002", "#000003"];
-const renderer = new SimulariumRenderer();
-const colorHandler = new ColorHandler(initialColorData, renderer);
+const colorHandler = new ColorHandler();
 
 describe("ColorHandler", () => {
-    test("constructor sets colorsData with 4 values for each color", () => {
-        expect((colorHandler as any).colorsData).toHaveLength(
-            initialColorData.length * 4
-        );
-        expect((colorHandler as any).numberOfColors).toBe(
-            initialColorData.length
-        );
+    beforeEach(() => {
+        (colorHandler as any).updateColorArray(initialColorData);
+    });
+    describe("setColorArray", () => {
+        test("sets colorsData with 4 values for each color", () => {
+            expect((colorHandler as any).colorsData).toHaveLength(
+                initialColorData.length * 4
+            );
+            expect((colorHandler as any).numberOfColors).toBe(
+                initialColorData.length
+            );
+        });
     });
     describe("convertDataColorIndexToId", () => {
         test("it returns the index into the shorter, color as string, array", () => {
