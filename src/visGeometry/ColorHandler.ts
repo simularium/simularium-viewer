@@ -31,7 +31,7 @@ class ColorHandler {
         this.idColorMapping = new Map<number, number>();
         // will be set by setColorArray, but need to initialize
         // so that typescript doesn't complain
-        this.colorsData = new Float32Array(this.numberOfColors * 4);
+        this.colorsData = new Float32Array(0);
     }
 
     private get numberOfColors(): number {
