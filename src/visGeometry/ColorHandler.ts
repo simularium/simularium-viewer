@@ -69,10 +69,10 @@ class ColorHandler {
         return index % this.numberOfColors;
     }
 
+    /**
+     * returns the index into the colorsData array
+     */
     private getColorDataIndex(color: number[]): number {
-        /**
-         * returns the index into the colorsData array
-         */
         const colorArray = this.colorsData;
         const colorToCheck = map(color, (num) => round(num, 6));
         for (let i = 0; i < colorArray.length - 3; i += 4) {
@@ -90,11 +90,11 @@ class ColorHandler {
         return -1;
     }
 
+    /**
+     * returns the index in terms of numberOfColors (colorId). No conversion
+     * is necessary because idColorMapping is also using this index
+     */
     private getColorIdForAgentType(typeId: number): number {
-        /**
-         * returns the index in terms of numberOfColors (colorId). No conversion
-         * is necessary because idColorMapping is also using this index
-         */
         const index = this.idColorMapping.get(typeId);
         if (index === undefined) {
             return -1;
@@ -104,11 +104,11 @@ class ColorHandler {
     }
 
     /**
-     * @param id agent id
+     * @param agentType agent type number
      * @param colorId index into the numberOfColors
      */
-    private setColorForId(id: number, colorId: number): void {
-        this.idColorMapping.set(id, colorId);
+    private setColorForAgentType(agentType: number, colorId: number): void {
+        this.idColorMapping.set(agentType, colorId);
     }
 
     private getColorById(colorId: number): Color {
@@ -167,7 +167,10 @@ class ColorHandler {
         this.idColorMapping.clear();
     }
 
-    public setColorForIds(ids: number[], color: string | number): void {
+    public setColorForAgentTypes(
+        agentTypes: number[],
+        color: string | number
+    ): void {
         const colorString = convertColorNumberToString(color);
         const colorId = this.getColorId(colorString);
         /**
@@ -175,21 +178,21 @@ class ColorHandler {
          * @param ids agent ids that should all have the same color
          * @param colorId index into the numberOfColors
          */
-        ids.forEach((id) => {
-            this.setColorForId(id, colorId);
+        agentTypes.forEach((id) => {
+            this.setColorForAgentType(id, colorId);
         });
     }
 
-    public getColorForTypeId(typeId: number): Color {
-        const index = this.getColorIdForAgentType(typeId);
+    public getColorForAgentType(agentType: number): Color {
+        const index = this.getColorIdForAgentType(agentType);
         return this.getColorById(index);
     }
 
-    public getColorInfoForAgentId(agentType: number): {
+    public getColorInfoForAgentType(agentType: number): {
         color: Color;
         colorId: number;
     } {
-        const color = this.getColorForTypeId(agentType);
+        const color = this.getColorForAgentType(agentType);
         const colorId = this.getColorIdForAgentType(agentType);
         return { color, colorId };
     }

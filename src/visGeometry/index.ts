@@ -717,7 +717,7 @@ class VisGeometry {
             const visAgent = this.visAgents[i];
             if (typeIds.includes(visAgent.agentData.type)) {
                 visAgent.setColor(
-                    this.colorHandler.getColorInfoForAgentId(
+                    this.colorHandler.getColorInfoForAgentType(
                         visAgent.agentData.type
                     )
                 );
@@ -1069,7 +1069,7 @@ class VisGeometry {
     private setAgentColors(): void {
         this.visAgents.forEach((agent) => {
             agent.setColor(
-                this.colorHandler.getColorInfoForAgentId(agent.agentData.type)
+                this.colorHandler.getColorInfoForAgentType(agent.agentData.type)
             );
         });
     }
@@ -1092,7 +1092,7 @@ class VisGeometry {
         agentIds: number[],
         color: string | number
     ): void {
-        this.colorHandler.setColorForIds(agentIds, color);
+        this.colorHandler.setColorForAgentTypes(agentIds, color);
         this.setGeom(agentIds);
         this.updateScene(this.currentSceneAgents);
     }
@@ -1407,7 +1407,7 @@ class VisGeometry {
             this.legacyRenderer.addPdb(
                 pdbEntry,
                 visAgent,
-                this.colorHandler.getColorForTypeId(typeId),
+                this.colorHandler.getColorForAgentType(typeId),
                 this.lodDistanceStops
             );
         } else {
@@ -1440,7 +1440,7 @@ class VisGeometry {
                 (meshGeom as Mesh).geometry,
                 visAgent,
                 radius * scale,
-                this.colorHandler.getColorForTypeId(typeId)
+                this.colorHandler.getColorForAgentType(typeId)
             );
         } else {
             if (meshEntry && meshEntry.instances) {
@@ -1473,7 +1473,7 @@ class VisGeometry {
             this.legacyRenderer.addFiber(
                 visAgent,
                 agentData.cr * scale,
-                this.colorHandler.getColorForTypeId(typeId)
+                this.colorHandler.getColorForAgentType(typeId)
             );
         } else {
             // update/add to render list
@@ -1578,7 +1578,9 @@ class VisGeometry {
                 return;
             }
 
-            visAgent.setColor(this.colorHandler.getColorInfoForAgentId(typeId));
+            visAgent.setColor(
+                this.colorHandler.getColorInfoForAgentType(typeId)
+            );
 
             // if not fiber...
             if (visType === VisTypes.ID_VIS_TYPE_DEFAULT) {
