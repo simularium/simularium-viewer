@@ -1,5 +1,6 @@
 import { map, round, isEqual } from "lodash";
 import { Color } from "three";
+import { AgentColorInfo } from "./types";
 
 export function convertColorStringToNumber(color: number | string): number {
     if (typeof color !== "string") {
@@ -195,10 +196,7 @@ class ColorHandler {
         return this.getColorById(index);
     }
 
-    public getColorInfoForAgentType(agentType: number): {
-        color: Color;
-        colorId: number;
-    } {
+    public getColorInfoForAgentType(agentType: number): AgentColorInfo {
         const color = this.getColorForAgentType(agentType);
         const colorId = this.getColorIdForAgentType(agentType);
         return { color, colorId };
