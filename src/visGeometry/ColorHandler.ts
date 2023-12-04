@@ -25,12 +25,12 @@ export const checkHexColor = (color: string): string => {
 };
 
 class ColorHandler {
-    public idColorMapping: Map<number, number>;
+    public agentTypeToColorId: Map<number, number>;
     private colorsData: Float32Array;
 
     constructor() {
-        this.idColorMapping = new Map<number, number>();
-        // will be set by setColorArray, but need to initialize
+        this.agentTypeToColorId = new Map<number, number>();
+        // will be set by makeColorDataArray, but need to initialize
         // so that typescript doesn't complain
         this.colorsData = new Float32Array(0);
     }
@@ -39,7 +39,7 @@ class ColorHandler {
         return this.colorsData.length / 4;
     }
 
-    private setColorArray(colors: (number | string)[]): Float32Array {
+    private makeColorDataArray(colors: (number | string)[]): Float32Array {
         const colorNumbers = colors.map(convertColorStringToNumber);
         const numberOfColors = colors.length;
         // fill buffer of colors:
@@ -91,10 +91,10 @@ class ColorHandler {
 
     /**
      * returns the index in terms of numberOfColors (colorId). No conversion
-     * is necessary because idColorMapping is also using this index
+     * is necessary because agentTypeToColorId is also using this index
      */
     private getColorIdForAgentType(typeId: number): number {
-        const index = this.idColorMapping.get(typeId);
+        const index = this.agentTypeToColorId.get(typeId);
         if (index === undefined) {
             return -1;
         }
@@ -107,7 +107,7 @@ class ColorHandler {
      * @param colorId index into the numberOfColors
      */
     private setColorForAgentType(agentType: number, colorId: number): void {
-        this.idColorMapping.set(agentType, colorId);
+        this.agentTypeToColorId.set(agentType, colorId);
     }
 
     private getColorById(colorId: number): Color {
@@ -160,7 +160,7 @@ class ColorHandler {
         colorArray: Float32Array;
         numberOfColors: number;
     } {
-        this.colorsData = this.setColorArray(colors);
+        this.colorsData = this.makeColorDataArray(colors);
         return {
             colorArray: this.colorsData,
             numberOfColors: this.numberOfColors,
@@ -168,7 +168,7 @@ class ColorHandler {
     }
 
     public clearColorMapping(): void {
-        this.idColorMapping.clear();
+        this.agentTypeToColorId.clear();
     }
 
     public setColorForAgentTypes(

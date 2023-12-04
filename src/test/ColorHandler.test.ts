@@ -16,7 +16,7 @@ describe("ColorHandler", () => {
     beforeEach(() => {
         (colorHandler as any).updateColorArray(initialColorData);
     });
-    describe("setColorArray", () => {
+    describe("updateColorArray", () => {
         test("sets colorsData with 4 values for each color", () => {
             expect((colorHandler as any).colorsData).toHaveLength(
                 initialColorData.length * 4
