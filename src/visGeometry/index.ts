@@ -1408,7 +1408,7 @@ class VisGeometry {
             this.legacyRenderer.addPdb(
                 pdbEntry,
                 visAgent,
-                this.colorHandler.getColorForAgentType(typeId),
+                this.colorHandler.getColorInfoForAgentType(typeId).color,
                 this.lodDistanceStops
             );
         } else {
@@ -1441,7 +1441,7 @@ class VisGeometry {
                 (meshGeom as Mesh).geometry,
                 visAgent,
                 radius * scale,
-                this.colorHandler.getColorForAgentType(typeId)
+                this.colorHandler.getColorInfoForAgentType(typeId).color
             );
         } else {
             if (meshEntry && meshEntry.instances) {
@@ -1474,7 +1474,7 @@ class VisGeometry {
             this.legacyRenderer.addFiber(
                 visAgent,
                 agentData.cr * scale,
-                this.colorHandler.getColorForAgentType(typeId)
+                this.colorHandler.getColorInfoForAgentType(typeId).color
             );
         } else {
             // update/add to render list

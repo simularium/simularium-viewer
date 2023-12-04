@@ -191,14 +191,9 @@ class ColorHandler {
         };
     }
 
-    public getColorForAgentType(agentType: number): Color {
-        const index = this.getColorIdForAgentType(agentType);
-        return this.getColorById(index);
-    }
-
     public getColorInfoForAgentType(agentType: number): AgentColorInfo {
-        const color = this.getColorForAgentType(agentType);
         const colorId = this.getColorIdForAgentType(agentType);
+        const color = this.getColorById(colorId);
         return { color, colorId };
     }
 }
