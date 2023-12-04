@@ -6,9 +6,13 @@ export interface NetMessage {
     connId: string;
     msgType: number;
     fileName: string;
+}
+
+export interface ErrorMessage extends NetMessage {
     errorCode: number;
     errorMsg: string;
 }
+
 // TODO: proposed new NetMessage data type:
 // This factors the raw data structure away from the networking and transmission info.
 // This allows the data structure to make a bit more sense with respect to typescript typing,
