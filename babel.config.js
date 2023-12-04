@@ -1,6 +1,6 @@
 module.exports = {
     plugins: [
-        "@babel/plugin-proposal-class-properties",
+        "@babel/plugin-class-properties",
         "const-enum",
         "@babel/plugin-transform-runtime",
     ],
