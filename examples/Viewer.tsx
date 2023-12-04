@@ -645,7 +645,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             <div className="container" style={{ height: "90%", width: "75%" }}>
                 <select
                     onChange={(event) => {
-                        simulariumController.stop();
+                        simulariumController.pause();
                         playbackFile = event.target.value;
                         this.configureAndLoad();
                     }}
