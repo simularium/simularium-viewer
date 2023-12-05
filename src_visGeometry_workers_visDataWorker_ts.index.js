@@ -182,10 +182,13 @@ __webpack_require__.r(__webpack_exports__);
 // TODO: see proposed new NetMessage data type
 //       Remove msgType and fileName from this data structure
 //       Then this data structure appears as a payload of the NetMessage
+
 // TODO: see proposed new NetMessage data type
 //       Remove msgType and connId from this data structure.
 //       Then this data structure appears as a payload of the NetMessage
+
 // This should always point to the latest version
+
 var FILE_STATUS_SUCCESS = "success";
 var FILE_STATUS_FAIL = "fail";
 // IMPORTANT: Order of this array needs to perfectly match the incoming data.
@@ -390,7 +393,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ _isNativeFunction)
 /* harmony export */ });
 function _isNativeFunction(fn) {
-  return Function.toString.call(fn).indexOf("[native code]") !== -1;
+  try {
+    return Function.toString.call(fn).indexOf("[native code]") !== -1;
+  } catch (e) {
+    return typeof fn === "function";
+  }
 }
 
 /***/ }),
@@ -520,14 +527,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ _typeof)
 /* harmony export */ });
-function _typeof(obj) {
+function _typeof(o) {
   "@babel/helpers - typeof";
 
-  return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) {
-    return typeof obj;
-  } : function (obj) {
-    return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-  }, _typeof(obj);
+  return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
+    return typeof o;
+  } : function (o) {
+    return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
+  }, _typeof(o);
 }
 
 /***/ }),
