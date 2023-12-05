@@ -157,7 +157,7 @@ const initialState: ViewerState = {
     selectionStateInfo: {
         highlightedAgents: [],
         hiddenAgents: [],
-        colorChanges: [{ agents: [], color: "" }],
+        colorChange: null,
     },
     filePending: null,
     simulariumFile: null,
@@ -619,14 +619,14 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         this.setState({ agentColors });
     };
 
-    public setColorSelectionInfo = (colorChanges) => {
+    public setColorSelectionInfo = (colorChange) => {
         this.setState({
             ...this.state,
             selectionStateInfo: {
                 hiddenAgents: this.state.selectionStateInfo.hiddenAgents,
                 highlightedAgents:
                     this.state.selectionStateInfo.highlightedAgents,
-                colorChanges: colorChanges,
+                colorChange: colorChange,
             },
         });
     };
@@ -646,7 +646,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             <div className="container" style={{ height: "90%", width: "75%" }}>
                 <select
                     onChange={(event) => {
-                        simulariumController.stop();
+                        simulariumController.pause();
                         playbackFile = event.target.value;
                         this.configureAndLoad();
                     }}

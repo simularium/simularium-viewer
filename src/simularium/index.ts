@@ -10,7 +10,7 @@ export type {
     SelectionStateInfo,
     UIDisplayData,
     SelectionEntry,
-    ColorChanges,
+    ColorChange,
 } from "./SelectionInterface";
 export { ErrorLevel, FrontEndError } from "./FrontEndError";
 export { NetMessageEnum } from "./WebsocketClient";

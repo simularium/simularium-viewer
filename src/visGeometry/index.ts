@@ -30,7 +30,7 @@ import * as EssentialsPlugin from "@tweakpane/plugin-essentials";
 import { ButtonGridApi } from "@tweakpane/plugin-essentials/dist/types/button-grid/api/button-grid";
 import jsLogger from "js-logger";
 import { ILogger, ILogLevel } from "js-logger";
-import { cloneDeep, isEqual, map, noop, round } from "lodash";
+import { cloneDeep, noop } from "lodash";
 
 import VisAgent from "./VisAgent";
 import VisTypes from "../simularium/VisTypes";
@@ -51,7 +51,7 @@ import {
 import SimulariumRenderer from "./rendering/SimulariumRenderer";
 import { InstancedFiberGroup } from "./rendering/InstancedFiber";
 import { LegacyRenderer } from "./rendering/LegacyRenderer";
-import GeometryStore, { DEFAULT_MESH_NAME } from "./GeometryStore";
+import GeometryStore from "./GeometryStore";
 import {
     AgentGeometry,
     GeometryDisplayType,
@@ -61,7 +61,7 @@ import {
     PDBGeometry,
 } from "./types";
 import { checkAndSanitizePath } from "../util";
-import { convertColorStringToNumber } from "./color-utils";
+import ColorHandler from "./ColorHandler";
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 100000;
@@ -138,6 +138,7 @@ class VisGeometry {
     private boxNearZ: number;
     private boxFarZ: number;
 
+    public colorHandler: ColorHandler;
     public renderer: SimulariumRenderer;
     public legacyRenderer: LegacyRenderer;
     public currentSceneAgents: AgentData[];
@@ -145,7 +146,6 @@ class VisGeometry {
     public lightsGroup: Group;
     public agentPathGroup: Group;
     public instancedMeshGroup: Group;
-    public idColorMapping: Map<number, number>; // agentId to colorId, often 1: 1 mapping
     private supportsWebGL2Rendering: boolean;
     private lodBias: number;
     private lodDistanceStops: number[];
@@ -179,7 +179,6 @@ class VisGeometry {
         this.visGeomMap = new Map<number, string>();
         this.geometryStore = new GeometryStore(loggerLevel);
         this.scaleMapping = new Map<number, number>();
-        this.idColorMapping = new Map<number, number>();
         this.followObjectId = NO_AGENT;
         this.visAgents = [];
         this.visAgentInstances = new Map<number, VisAgent>();
@@ -200,7 +199,7 @@ class VisGeometry {
         this.backgroundColor = DEFAULT_BACKGROUND_COLOR;
         this.pathEndColor = this.backgroundColor.clone();
         this.renderer.setBackgroundColor(this.backgroundColor);
-
+        this.colorHandler = new ColorHandler();
         // Set up scene
 
         this.scene = new Scene();
@@ -718,8 +717,9 @@ class VisGeometry {
             const visAgent = this.visAgents[i];
             if (typeIds.includes(visAgent.agentData.type)) {
                 visAgent.setColor(
-                    this.getColorForTypeId(visAgent.agentData.type),
-                    this.getColorIdForTypeId(visAgent.agentData.type)
+                    this.colorHandler.getColorInfoForAgentType(
+                        visAgent.agentData.type
+                    )
                 );
             }
         }
@@ -1066,196 +1066,36 @@ class VisGeometry {
         }
     }
 
-    /**
-     * AGENT COLOR HANDLING (TODO: move to separate file)
-     * General notes about data being used to map color to agents:
-     * @property this.colorsData is an array of floats, each 4 floats is a color
-     *  `dataColorIndex` is always an index into the colorsData array, so it is a multiple of 4
-     * `colorId` is always is a number between 0 and numberOfColors-1; ie the index of the color
-     * in the initial colors array.
-     * @property this.idColorMapping uses @param colorId. It maps agent id to colorId
-     *
-     * No other module should know about this.colorsData, or the fact that it's 4 times as
-     * long as the input colors. They should only know about colorId
-     * Therefore all the public color methods should use colorId, and the private methods
-     * can convert between colorId and dataColorIndex
-     */
-
-    /**
-     * Agent color handling: private methods
-     */
-
-    private get numberOfColors(): number {
-        return this.colorsData.length / 4;
-    }
-
     private setAgentColors(): void {
         this.visAgents.forEach((agent) => {
             agent.setColor(
-                this.getColorForTypeId(agent.agentData.type),
-                this.getColorIdForTypeId(agent.agentData.type)
+                this.colorHandler.getColorInfoForAgentType(agent.agentData.type)
             );
         });
-    }
-
-    private setColorArray(colors: (number | string)[]): void {
-        const colorNumbers = colors.map(convertColorStringToNumber);
-        const numberOfColors = colors.length;
-        // fill buffer of colors:
-        this.colorsData = new Float32Array(numberOfColors * 4);
-        for (let i = 0; i < numberOfColors; i += 1) {
-            // each color is currently a hex value:
-            this.colorsData[i * 4 + 0] =
-                ((colorNumbers[i] & 0x00ff0000) >> 16) / 255.0;
-            this.colorsData[i * 4 + 1] =
-                ((colorNumbers[i] & 0x0000ff00) >> 8) / 255.0;
-            this.colorsData[i * 4 + 2] =
-                ((colorNumbers[i] & 0x000000ff) >> 0) / 255.0;
-            this.colorsData[i * 4 + 3] = 1.0;
-        }
-    }
-
-    private convertDataColorIndexToId(dataColorIndex: number): number {
-        if (dataColorIndex % 4 !== 0) {
-            this.logger.error(
-                "convertDataColorIndexToId: color index not divisible by 4"
-            );
-            return -1;
-        }
-        const index = dataColorIndex / 4;
-        // this loops the index back to the beginning of the array
-        // in the chance that the index is out of range, which
-        // should be impossible. But just being cautious
-        return index % this.numberOfColors;
-    }
-
-    private getColorDataIndex(color: number[]): number {
-        /**
-         * returns the index into the colorsData array
-         */
-        const colorArray = this.colorsData;
-        const colorToCheck = map(color, (num) => round(num, 6));
-        for (let i = 0; i < colorArray.length - 3; i += 4) {
-            const index = i;
-            const currentColor = [
-                round(this.colorsData[i], 6),
-                round(this.colorsData[i + 1], 6),
-                round(this.colorsData[i + 2], 6),
-                this.colorsData[i + 3],
-            ];
-            if (isEqual(currentColor, colorToCheck)) {
-                return index;
-            }
-        }
-        return -1;
-    }
-
-    private getColorIdForTypeId(typeId: number): number {
-        /**
-         * returns the index in terms of numberOfColors (colorId). No conversion
-         * is necessary because idColorMapping is also using this index
-         */
-        const index = this.idColorMapping.get(typeId);
-        if (index === undefined) {
-            this.logger.error(
-                "getColorIdForTypeId could not find " + typeId
-            );
-            return -1;
-        }
-        const colorId = index % this.numberOfColors;
-        return colorId;
-    }
-
-    private getColorForTypeId(typeId: number): Color {
-        const index = this.getColorIdForTypeId(typeId);
-        return this.getColorForColorId(index);
-    }
-
-    private setColorForId(id: number, colorId: number): void {
-        /**
-         * @param id agent id
-         * @param colorId index into the numberOfColors
-         */
-        this.idColorMapping.set(id, colorId);
-
-        // if we don't have a mesh for this, add a sphere instance to mesh registry?
-        if (!this.visGeomMap.has(id)) {
-            this.visGeomMap.set(id, DEFAULT_MESH_NAME);
-        }
-    }
-
-    /**
-     *  Agent color handling: public methods
-     */
-
-    public addNewColor(color: number | string): number {
-        const colorNumber = convertColorStringToNumber(color);
-        const newColor = [
-            ((colorNumber & 0x00ff0000) >> 16) / 255.0,
-            ((colorNumber & 0x0000ff00) >> 8) / 255.0,
-            ((colorNumber & 0x000000ff) >> 0) / 255.0,
-            1.0,
-        ];
-        const colorDataIndex = this.getColorDataIndex(newColor);
-        if (colorDataIndex !== -1) {
-            // found the color, need to return the colorId to the
-            // external caller, with no other changes needed
-            return this.convertDataColorIndexToId(colorDataIndex);
-        }
-        // the color isn't in colorsData, so add it and return the colorId
-        const newColorDataIndex = this.colorsData.length;
-        const newArray = [...this.colorsData, ...newColor];
-        const newColorData = new Float32Array(newArray.length);
-        newColorData.set(newArray);
-        this.colorsData = newColorData;
-        this.renderer.updateColors(this.numberOfColors, this.colorsData);
-        return this.convertDataColorIndexToId(newColorDataIndex);
     }
 
     public createMaterials(colors: (number | string)[]): void {
-        this.setColorArray(colors);
-        this.renderer.updateColors(colors.length, this.colorsData);
+        const newColorData = this.colorHandler.updateColorArray(colors);
+        this.renderer.updateColors(
+            newColorData.numberOfColors,
+            newColorData.colorArray
+        );
         this.setAgentColors();
     }
 
-    public clearColorMapping(): void {
-        this.idColorMapping.clear();
-    }
-
-    public setColorForIds(ids: number[], colorId: number): void {
-        /**
-         * Sets one color for a set of ids, using an index into a color array
-         * @param ids agent ids that should all have the same color
-         * @param colorId index into the numberOfColors
-         */
-        ids.forEach((id) => {
-            this.setColorForId(id, colorId);
-        });
-    }
-
-    /**
-     * Sets one color for a set of ids
-     */
-    public applyColorToAgents(agentIds: number[], colorId: number): void {
-        this.setColorForIds(agentIds, colorId);
-        this.updateScene(this.currentSceneAgents);
-    }
-
-    public getColorForColorId(colorId: number): Color {
-        if (colorId < 0) {
-            this.logger.error("getColorForColorId: invalid colorId");
-            colorId = 0;
-        }
-        if (colorId >= this.numberOfColors) {
-            this.logger.error("getColorForColorId: colorId out of range");
-            colorId = colorId % this.numberOfColors;
-        }
-
-        return new Color(
-            this.colorsData[colorId * 4],
-            this.colorsData[colorId * 4 + 1],
-            this.colorsData[colorId * 4 + 2]
+    public applyColorToAgents(
+        agentIds: number[],
+        color: string | number
+    ): void {
+        const newColorData = this.colorHandler.setColorForAgentTypes(
+            agentIds,
+            color
         );
+        this.renderer.updateColors(
+            newColorData.numberOfColors,
+            newColorData.colorArray
+        );
+        this.updateScene(this.currentSceneAgents);
     }
 
     /**
@@ -1568,7 +1408,7 @@ class VisGeometry {
             this.legacyRenderer.addPdb(
                 pdbEntry,
                 visAgent,
-                this.getColorForTypeId(typeId),
+                this.colorHandler.getColorInfoForAgentType(typeId).color,
                 this.lodDistanceStops
             );
         } else {
@@ -1601,7 +1441,7 @@ class VisGeometry {
                 (meshGeom as Mesh).geometry,
                 visAgent,
                 radius * scale,
-                this.getColorForTypeId(typeId)
+                this.colorHandler.getColorInfoForAgentType(typeId).color
             );
         } else {
             if (meshEntry && meshEntry.instances) {
@@ -1634,7 +1474,7 @@ class VisGeometry {
             this.legacyRenderer.addFiber(
                 visAgent,
                 agentData.cr * scale,
-                this.getColorForTypeId(typeId)
+                this.colorHandler.getColorInfoForAgentType(typeId).color
             );
         } else {
             // update/add to render list
@@ -1740,8 +1580,7 @@ class VisGeometry {
             }
 
             visAgent.setColor(
-                this.getColorForTypeId(typeId),
-                this.getColorIdForTypeId(typeId)
+                this.colorHandler.getColorInfoForAgentType(typeId)
             );
 
             // if not fiber...
