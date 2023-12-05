@@ -143,13 +143,16 @@ export class RemoteSimulator implements ISimulator {
         // TODO: implement callback
     }
 
-    public onErrorMsg(msg: ErrorMessage): void {
+    public onErrorMsg(msg: NetMessage): void {
+        const e = msg as ErrorMessage;
         this.logger.error(
             "Error message of type ",
-            msg.errorCode,
+            e.errorCode,
             " arrived: ",
-            msg.errorMsg
+            e.errorMsg
         );
+        const error = new FrontEndError(e.errorMsg, ErrorLevel.WARNING);
+        this.handleError(error);
         // TODO: specific handling based on error code
     }
 
