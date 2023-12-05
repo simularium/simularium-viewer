@@ -1,5 +1,6 @@
 import { CatmullRomCurve3, Color, Vector3 } from "three";
 import { AgentData } from "../simularium/types";
+import { AgentColorInfo } from "./types";
 export default class VisAgent {
     private static readonly UNASSIGNED_MESH_COLOR;
     static readonly UNASSIGNED_NAME_PREFIX = "Unassigned";
@@ -14,7 +15,7 @@ export default class VisAgent {
     hidden: boolean;
     constructor(name: string);
     resetMesh(): void;
-    setColor(color: Color, colorIndex: number): void;
+    setColor(colorInfo: AgentColorInfo): void;
     setHidden(hidden: boolean): void;
     setFollowed(followed: boolean): void;
     setHighlighted(highlighted: boolean): void;

@@ -3,7 +3,7 @@ import SimulariumController from "../controller";
 import { TrajectoryFileInfo, SelectionStateInfo, UIDisplayData } from "../simularium";
 import { FrontEndError } from "../simularium/FrontEndError";
 import { RenderStyle } from "../visGeometry";
-import { ColorChanges, SelectionEntry } from "../simularium/SelectionInterface";
+import { ColorChange } from "../simularium/SelectionInterface";
 export declare type PropColor = string | number | [number, number, number];
 declare type ViewportProps = {
     renderStyle: RenderStyle;
@@ -34,12 +34,6 @@ declare const defaultProps: {
     hideAllAgents: boolean;
     showPaths: boolean;
     showBounds: boolean;
-    selectionStateInfo: {
-        colorChanges: {
-            agents: SelectionEntry[];
-            color: string;
-        }[];
-    };
     agentColors: string[] | number[];
 };
 declare type DefaultProps = typeof defaultProps;
@@ -76,12 +70,6 @@ declare class Viewport extends React.Component<ViewportProps & DefaultProps, Vie
         hideAllAgents: boolean;
         showPaths: boolean;
         showBounds: boolean;
-        selectionStateInfo: {
-            colorChanges: {
-                agents: SelectionEntry[];
-                color: string;
-            }[];
-        };
         agentColors: string[] | number[];
     };
     private static isCustomEvent;
@@ -104,8 +92,7 @@ declare class Viewport extends React.Component<ViewportProps & DefaultProps, Vie
     onPickObject(posX: number, posY: number): void;
     private handleTimeChange;
     private dispatchUpdatedTime;
-    private getColorId;
-    changeAgentsColor(colorChanges: ColorChanges[]): void;
+    changeAgentsColor(colorChange: ColorChange): void;
     stopAnimate(): void;
     animate(): void;
     renderViewControls(): React.ReactElement;

@@ -3,14 +3,14 @@ export interface SelectionEntry {
     name: string;
     tags: string[];
 }
-export interface ColorChanges {
-    agents: SelectionEntry[];
+export interface ColorChange {
+    agent: SelectionEntry;
     color: string;
 }
 export interface SelectionStateInfo {
     highlightedAgents: SelectionEntry[];
     hiddenAgents: SelectionEntry[];
-    colorChanges: ColorChanges[];
+    colorChange: ColorChange | null;
 }
 interface DisplayStateEntry {
     name: string;
@@ -41,8 +41,7 @@ declare class SelectionInterface {
     clear(): void;
     getUIDisplayData(): UIDisplayData;
     private updateUiDataColor;
-    updateAgentColors(agentIds: number[], colorChanges: ColorChanges, uiDisplayData: UIDisplayData): void;
-    setInitialAgentColors(uiDisplayData: UIDisplayData, colors: (string | number)[], setColorForIds: (ids: number[], colorIndex: number) => void): (string | number)[];
+    setInitialAgentColors(uiDisplayData: UIDisplayData, colors: (string | number)[], setColorForIds: (ids: number[], color: string | number) => void): (string | number)[];
 }
 export { SelectionInterface };
 export default SelectionInterface;

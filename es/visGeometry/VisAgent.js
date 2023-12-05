@@ -43,7 +43,10 @@ var VisAgent = /*#__PURE__*/function () {
     value: function resetMesh() {
       this.followed = false;
       this.highlighted = false;
-      this.setColor(new Color(VisAgent.UNASSIGNED_MESH_COLOR), 0);
+      this.setColor({
+        color: new Color(VisAgent.UNASSIGNED_MESH_COLOR),
+        colorId: 0
+      });
       this.agentData = {
         x: 0,
         y: 0,
@@ -60,9 +63,9 @@ var VisAgent = /*#__PURE__*/function () {
     }
   }, {
     key: "setColor",
-    value: function setColor(color, colorIndex) {
-      this.color = color;
-      this.colorIndex = colorIndex;
+    value: function setColor(colorInfo) {
+      this.color = colorInfo.color;
+      this.colorIndex = colorInfo.colorId;
     }
   }, {
     key: "setHidden",

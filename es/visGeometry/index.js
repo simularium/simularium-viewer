@@ -14,7 +14,7 @@ import { Box3, Box3Helper, BufferAttribute, BufferGeometry, Color, DirectionalLi
 import { Pane } from "tweakpane";
 import * as EssentialsPlugin from "@tweakpane/plugin-essentials";
 import jsLogger from "js-logger";
-import { cloneDeep, isEqual, map, noop, round } from "lodash";
+import { cloneDeep, noop } from "lodash";
 import VisAgent from "./VisAgent";
 import VisTypes from "../simularium/VisTypes";
 import AgentPath from "./agentPath";
@@ -23,10 +23,10 @@ import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC } from "../constants";
 import SimulariumRenderer from "./rendering/SimulariumRenderer";
 import { InstancedFiberGroup } from "./rendering/InstancedFiber";
 import { LegacyRenderer } from "./rendering/LegacyRenderer";
-import GeometryStore, { DEFAULT_MESH_NAME } from "./GeometryStore";
+import GeometryStore from "./GeometryStore";
 import { GeometryDisplayType } from "./types";
 import { checkAndSanitizePath } from "../util";
-import { convertColorStringToNumber } from "./color-utils";
+import ColorHandler from "./ColorHandler";
 var MAX_PATH_LEN = 32;
 var MAX_MESHES = 100000;
 var DEFAULT_BACKGROUND_COLOR = new Color(0, 0, 0);
@@ -101,6 +101,7 @@ var VisGeometry = /*#__PURE__*/function () {
     // front and back of transformed bounds in camera space
     _defineProperty(this, "boxNearZ", void 0);
     _defineProperty(this, "boxFarZ", void 0);
+    _defineProperty(this, "colorHandler", void 0);
     _defineProperty(this, "renderer", void 0);
     _defineProperty(this, "legacyRenderer", void 0);
     _defineProperty(this, "currentSceneAgents", void 0);
@@ -108,8 +109,6 @@ var VisGeometry = /*#__PURE__*/function () {
     _defineProperty(this, "lightsGroup", void 0);
     _defineProperty(this, "agentPathGroup", void 0);
     _defineProperty(this, "instancedMeshGroup", void 0);
-    _defineProperty(this, "idColorMapping", void 0);
-    // agentId to colorId, often 1: 1 mapping
     _defineProperty(this, "supportsWebGL2Rendering", void 0);
     _defineProperty(this, "lodBias", void 0);
     _defineProperty(this, "lodDistanceStops", void 0);
@@ -137,7 +136,6 @@ var VisGeometry = /*#__PURE__*/function () {
     this.visGeomMap = new Map();
     this.geometryStore = new GeometryStore(loggerLevel);
     this.scaleMapping = new Map();
-    this.idColorMapping = new Map();
     this.followObjectId = NO_AGENT;
     this.visAgents = [];
     this.visAgentInstances = new Map();
@@ -155,7 +153,7 @@ var VisGeometry = /*#__PURE__*/function () {
     this.backgroundColor = DEFAULT_BACKGROUND_COLOR;
     this.pathEndColor = this.backgroundColor.clone();
     this.renderer.setBackgroundColor(this.backgroundColor);
-
+    this.colorHandler = new ColorHandler();
     // Set up scene
 
     this.scene = new Scene();
@@ -691,7 +689,7 @@ var VisGeometry = /*#__PURE__*/function () {
       for (var i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
         var visAgent = this.visAgents[i];
         if (typeIds.includes(visAgent.agentData.type)) {
-          visAgent.setColor(this.getColorForTypeId(visAgent.agentData.type), this.getColorIdForTypeId(visAgent.agentData.type));
+          visAgent.setColor(this.colorHandler.getColorInfoForAgentType(visAgent.agentData.type));
         }
       }
       this.updateScene(this.currentSceneAgents);
@@ -987,191 +985,27 @@ var VisGeometry = /*#__PURE__*/function () {
         return this.renderer.hitTest(this.threejsrenderer, offsetX, size.y - offsetY);
       }
     }
-
-    /**
-     * AGENT COLOR HANDLING (TODO: move to separate file)
-     * General notes about data being used to map color to agents:
-     * @property this.colorsData is an array of floats, each 4 floats is a color
-     *  `dataColorIndex` is always an index into the colorsData array, so it is a multiple of 4
-     * `colorId` is always is a number between 0 and numberOfColors-1; ie the index of the color
-     * in the initial colors array.
-     * @property this.idColorMapping uses @param colorId. It maps agent id to colorId
-     *
-     * No other module should know about this.colorsData, or the fact that it's 4 times as
-     * long as the input colors. They should only know about colorId
-     * Therefore all the public color methods should use colorId, and the private methods
-     * can convert between colorId and dataColorIndex
-     */
-
-    /**
-     * Agent color handling: private methods
-     */
-  }, {
-    key: "numberOfColors",
-    get: function get() {
-      return this.colorsData.length / 4;
-    }
   }, {
     key: "setAgentColors",
     value: function setAgentColors() {
       var _this4 = this;
       this.visAgents.forEach(function (agent) {
-        agent.setColor(_this4.getColorForTypeId(agent.agentData.type), _this4.getColorIdForTypeId(agent.agentData.type));
+        agent.setColor(_this4.colorHandler.getColorInfoForAgentType(agent.agentData.type));
       });
-    }
-  }, {
-    key: "setColorArray",
-    value: function setColorArray(colors) {
-      var colorNumbers = colors.map(convertColorStringToNumber);
-      var numberOfColors = colors.length;
-      // fill buffer of colors:
-      this.colorsData = new Float32Array(numberOfColors * 4);
-      for (var i = 0; i < numberOfColors; i += 1) {
-        // each color is currently a hex value:
-        this.colorsData[i * 4 + 0] = ((colorNumbers[i] & 0x00ff0000) >> 16) / 255.0;
-        this.colorsData[i * 4 + 1] = ((colorNumbers[i] & 0x0000ff00) >> 8) / 255.0;
-        this.colorsData[i * 4 + 2] = ((colorNumbers[i] & 0x000000ff) >> 0) / 255.0;
-        this.colorsData[i * 4 + 3] = 1.0;
-      }
-    }
-  }, {
-    key: "convertDataColorIndexToId",
-    value: function convertDataColorIndexToId(dataColorIndex) {
-      if (dataColorIndex % 4 !== 0) {
-        this.logger.error("convertDataColorIndexToId: color index not divisible by 4");
-        return -1;
-      }
-      var index = dataColorIndex / 4;
-      // this loops the index back to the beginning of the array
-      // in the chance that the index is out of range, which
-      // should be impossible. But just being cautious
-      return index % this.numberOfColors;
-    }
-  }, {
-    key: "getColorDataIndex",
-    value: function getColorDataIndex(color) {
-      /**
-       * returns the index into the colorsData array
-       */
-      var colorArray = this.colorsData;
-      var colorToCheck = map(color, function (num) {
-        return round(num, 6);
-      });
-      for (var i = 0; i < colorArray.length - 3; i += 4) {
-        var index = i;
-        var currentColor = [round(this.colorsData[i], 6), round(this.colorsData[i + 1], 6), round(this.colorsData[i + 2], 6), this.colorsData[i + 3]];
-        if (isEqual(currentColor, colorToCheck)) {
-          return index;
-        }
-      }
-      return -1;
-    }
-  }, {
-    key: "getColorIdForTypeId",
-    value: function getColorIdForTypeId(typeId) {
-      /**
-       * returns the index in terms of numberOfColors (colorId). No conversion
-       * is necessary because idColorMapping is also using this index
-       */
-      var index = this.idColorMapping.get(typeId);
-      if (index === undefined) {
-        this.logger.error("getColorIdForTypeId could not find " + typeId);
-        return -1;
-      }
-      var colorId = index % this.numberOfColors;
-      return colorId;
-    }
-  }, {
-    key: "getColorForTypeId",
-    value: function getColorForTypeId(typeId) {
-      var index = this.getColorIdForTypeId(typeId);
-      return this.getColorForColorId(index);
-    }
-  }, {
-    key: "setColorForId",
-    value: function setColorForId(id, colorId) {
-      /**
-       * @param id agent id
-       * @param colorId index into the numberOfColors
-       */
-      this.idColorMapping.set(id, colorId);
-
-      // if we don't have a mesh for this, add a sphere instance to mesh registry?
-      if (!this.visGeomMap.has(id)) {
-        this.visGeomMap.set(id, DEFAULT_MESH_NAME);
-      }
-    }
-
-    /**
-     *  Agent color handling: public methods
-     */
-  }, {
-    key: "addNewColor",
-    value: function addNewColor(color) {
-      var colorNumber = convertColorStringToNumber(color);
-      var newColor = [((colorNumber & 0x00ff0000) >> 16) / 255.0, ((colorNumber & 0x0000ff00) >> 8) / 255.0, ((colorNumber & 0x000000ff) >> 0) / 255.0, 1.0];
-      var colorDataIndex = this.getColorDataIndex(newColor);
-      if (colorDataIndex !== -1) {
-        // found the color, need to return the colorId to the
-        // external caller, with no other changes needed
-        return this.convertDataColorIndexToId(colorDataIndex);
-      }
-      // the color isn't in colorsData, so add it and return the colorId
-      var newColorDataIndex = this.colorsData.length;
-      var newArray = [].concat(_toConsumableArray(this.colorsData), newColor);
-      var newColorData = new Float32Array(newArray.length);
-      newColorData.set(newArray);
-      this.colorsData = newColorData;
-      this.renderer.updateColors(this.numberOfColors, this.colorsData);
-      return this.convertDataColorIndexToId(newColorDataIndex);
     }
   }, {
     key: "createMaterials",
     value: function createMaterials(colors) {
-      this.setColorArray(colors);
-      this.renderer.updateColors(colors.length, this.colorsData);
+      var newColorData = this.colorHandler.updateColorArray(colors);
+      this.renderer.updateColors(newColorData.numberOfColors, newColorData.colorArray);
       this.setAgentColors();
     }
   }, {
-    key: "clearColorMapping",
-    value: function clearColorMapping() {
-      this.idColorMapping.clear();
-    }
-  }, {
-    key: "setColorForIds",
-    value: function setColorForIds(ids, colorId) {
-      var _this5 = this;
-      /**
-       * Sets one color for a set of ids, using an index into a color array
-       * @param ids agent ids that should all have the same color
-       * @param colorId index into the numberOfColors
-       */
-      ids.forEach(function (id) {
-        _this5.setColorForId(id, colorId);
-      });
-    }
-
-    /**
-     * Sets one color for a set of ids
-     */
-  }, {
     key: "applyColorToAgents",
-    value: function applyColorToAgents(agentIds, colorId) {
-      this.setColorForIds(agentIds, colorId);
+    value: function applyColorToAgents(agentIds, color) {
+      var newColorData = this.colorHandler.setColorForAgentTypes(agentIds, color);
+      this.renderer.updateColors(newColorData.numberOfColors, newColorData.colorArray);
       this.updateScene(this.currentSceneAgents);
-    }
-  }, {
-    key: "getColorForColorId",
-    value: function getColorForColorId(colorId) {
-      if (colorId < 0) {
-        this.logger.error("getColorForColorId: invalid colorId");
-        colorId = 0;
-      }
-      if (colorId >= this.numberOfColors) {
-        this.logger.error("getColorForColorId: colorId out of range");
-        colorId = colorId % this.numberOfColors;
-      }
-      return new Color(this.colorsData[colorId * 4], this.colorsData[colorId * 4 + 1], this.colorsData[colorId * 4 + 2]);
     }
 
     /**
@@ -1204,7 +1038,7 @@ var VisGeometry = /*#__PURE__*/function () {
   }, {
     key: "setGeometryData",
     value: function setGeometryData(typeMapping) {
-      var _this6 = this;
+      var _this5 = this;
       this.logger.info("Received type mapping data: ", typeMapping);
       Object.keys(typeMapping).forEach(function (id) {
         var entry = typeMapping[id];
@@ -1213,11 +1047,11 @@ var VisGeometry = /*#__PURE__*/function () {
           displayType = _entry$geometry.displayType;
         var lookupKey = url ? checkAndSanitizePath(url) : displayType;
         // map id --> lookupKey
-        _this6.visGeomMap.set(Number(id), lookupKey);
+        _this5.visGeomMap.set(Number(id), lookupKey);
         // get geom for lookupKey,
         // will only load each geometry once, so may return nothing
         // if the same geometry is assigned to more than one agent
-        _this6.geometryStore.mapKeyToGeom(Number(id), entry.geometry).then(function (newGeometryLoaded) {
+        _this5.geometryStore.mapKeyToGeom(Number(id), entry.geometry).then(function (newGeometryLoaded) {
           if (!newGeometryLoaded) {
             // no new geometry to load
             return;
@@ -1227,25 +1061,25 @@ var VisGeometry = /*#__PURE__*/function () {
             geometry = newGeometryLoaded.geometry,
             errorMessage = newGeometryLoaded.errorMessage;
           var newDisplayType = returnedDisplayType || displayType;
-          _this6.onNewRuntimeGeometryType(lookupKey, newDisplayType, geometry);
+          _this5.onNewRuntimeGeometryType(lookupKey, newDisplayType, geometry);
           // handle additional async update to LOD for pdbs
           if (newDisplayType === GeometryDisplayType.PDB && geometry) {
             var pdbModel = geometry;
             return pdbModel.generateLOD().then(function () {
-              _this6.logger.info("Finished loading pdb LODs: ", lookupKey);
-              _this6.onNewRuntimeGeometryType(lookupKey, newDisplayType, geometry);
+              _this5.logger.info("Finished loading pdb LODs: ", lookupKey);
+              _this5.onNewRuntimeGeometryType(lookupKey, newDisplayType, geometry);
             });
           }
           // if returned with a resolve, but has an error message,
           // the error was handled, and the geometry was replaced with a sphere
           // but still good to tell the user about it.
           if (errorMessage) {
-            _this6.onError(new FrontEndError(errorMessage, ErrorLevel.WARNING));
-            _this6.logger.info(errorMessage);
+            _this5.onError(new FrontEndError(errorMessage, ErrorLevel.WARNING));
+            _this5.logger.info(errorMessage);
           }
         })["catch"](function (reason) {
-          _this6.onError(new FrontEndError(reason));
-          _this6.logger.info(reason);
+          _this5.onError(new FrontEndError(reason));
+          _this5.logger.info(reason);
         });
       });
       this.updateScene(this.currentSceneAgents);
@@ -1382,7 +1216,7 @@ var VisGeometry = /*#__PURE__*/function () {
     key: "addPdbToDrawList",
     value: function addPdbToDrawList(typeId, visAgent, pdbEntry) {
       if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
-        this.legacyRenderer.addPdb(pdbEntry, visAgent, this.getColorForTypeId(typeId), this.lodDistanceStops);
+        this.legacyRenderer.addPdb(pdbEntry, visAgent, this.colorHandler.getColorInfoForAgentType(typeId).color, this.lodDistanceStops);
       } else {
         // if the pdb doesn't have any lods yet then we can't draw with it.
         if (pdbEntry && pdbEntry.numLODs() > 0) {
@@ -1403,7 +1237,7 @@ var VisGeometry = /*#__PURE__*/function () {
         console.warn("MeshEntry is present but mesh unavailable. Not rendering agent.");
       }
       if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
-        this.legacyRenderer.addMesh(meshGeom.geometry, visAgent, radius * scale, this.getColorForTypeId(typeId));
+        this.legacyRenderer.addMesh(meshGeom.geometry, visAgent, radius * scale, this.colorHandler.getColorInfoForAgentType(typeId).color);
       } else {
         if (meshEntry && meshEntry.instances) {
           meshEntry.instances.addInstance(agentData.x, agentData.y, agentData.z, radius * scale, agentData.xrot, agentData.yrot, agentData.zrot, visAgent.agentData.instanceId, visAgent.signedTypeId(), 1, agentData.subpoints);
@@ -1416,7 +1250,7 @@ var VisGeometry = /*#__PURE__*/function () {
       visAgent.updateFiber(agentData.subpoints);
       var scale = this.getScaleForId(typeId);
       if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
-        this.legacyRenderer.addFiber(visAgent, agentData.cr * scale, this.getColorForTypeId(typeId));
+        this.legacyRenderer.addFiber(visAgent, agentData.cr * scale, this.colorHandler.getColorInfoForAgentType(typeId).color);
       } else {
         // update/add to render list
         this.fibers.addInstance(agentData.subpoints.length / 3, agentData.subpoints, agentData.x, agentData.y, agentData.z, agentData.cr * scale * 0.5, agentData.xrot, agentData.yrot, agentData.zrot, visAgent.agentData.instanceId, visAgent.signedTypeId());
@@ -1429,7 +1263,7 @@ var VisGeometry = /*#__PURE__*/function () {
   }, {
     key: "updateScene",
     value: function updateScene(agents) {
-      var _this7 = this;
+      var _this6 = this;
       this.currentSceneAgents = agents;
 
       // values for updating agent path
@@ -1466,8 +1300,8 @@ var VisGeometry = /*#__PURE__*/function () {
         lastz = agentData.z;
 
         // look up last agent with this instanceId.
-        var visAgent = _this7.visAgentInstances.get(instanceId);
-        var path = _this7.findPathForAgent(instanceId);
+        var visAgent = _this6.visAgentInstances.get(instanceId);
+        var path = _this6.findPathForAgent(instanceId);
         if (path) {
           if (visAgent) {
             lastx = visAgent.agentData.x;
@@ -1476,53 +1310,53 @@ var VisGeometry = /*#__PURE__*/function () {
           }
         }
         if (!visAgent) {
-          visAgent = _this7.createAgent();
+          visAgent = _this6.createAgent();
           visAgent.agentData.instanceId = instanceId;
           //visAgent.mesh.userData = { id: instanceId };
-          _this7.visAgentInstances.set(instanceId, visAgent);
+          _this6.visAgentInstances.set(instanceId, visAgent);
           // set hidden so that it is revealed later in this function:
           visAgent.hidden = true;
         }
         if (visAgent.agentData.instanceId !== instanceId) {
-          _this7.logger.warn("incoming instance id ".concat(instanceId, " mismatched with visagent ").concat(visAgent.agentData.instanceId));
+          _this6.logger.warn("incoming instance id ".concat(instanceId, " mismatched with visagent ").concat(visAgent.agentData.instanceId));
         }
         visAgent.active = true;
 
         // update the agent!
         visAgent.agentData = agentData;
-        var isHighlighted = _this7.highlightedIds.includes(visAgent.agentData.type);
+        var isHighlighted = _this6.highlightedIds.includes(visAgent.agentData.type);
         visAgent.setHighlighted(isHighlighted);
-        var isHidden = _this7.hiddenIds.includes(visAgent.agentData.type);
+        var isHidden = _this6.hiddenIds.includes(visAgent.agentData.type);
         visAgent.setHidden(isHidden);
         if (visAgent.hidden) {
           return;
         }
-        visAgent.setColor(_this7.getColorForTypeId(typeId), _this7.getColorIdForTypeId(typeId));
+        visAgent.setColor(_this6.colorHandler.getColorInfoForAgentType(typeId));
 
         // if not fiber...
         if (visType === VisTypes.ID_VIS_TYPE_DEFAULT) {
-          var response = _this7.getGeoForAgentType(typeId);
+          var response = _this6.getGeoForAgentType(typeId);
           if (!response) {
-            _this7.logger.warn("No mesh nor pdb available for ".concat(typeId, "? Should be unreachable code"));
+            _this6.logger.warn("No mesh nor pdb available for ".concat(typeId, "? Should be unreachable code"));
             return;
           }
           var geometry = response.geometry,
             displayType = response.displayType;
           if (geometry && displayType === GeometryDisplayType.PDB) {
             var pdbEntry = geometry;
-            _this7.addPdbToDrawList(typeId, visAgent, pdbEntry);
+            _this6.addPdbToDrawList(typeId, visAgent, pdbEntry);
           } else {
             var meshEntry = geometry;
-            _this7.addMeshToDrawList(typeId, visAgent, meshEntry, agentData);
+            _this6.addMeshToDrawList(typeId, visAgent, meshEntry, agentData);
           }
           dx = agentData.x - lastx;
           dy = agentData.y - lasty;
           dz = agentData.z - lastz;
           if (path) {
-            _this7.addPointToPath(path, agentData.x, agentData.y, agentData.z, dx, dy, dz);
+            _this6.addPointToPath(path, agentData.x, agentData.y, agentData.z, dx, dy, dz);
           }
         } else if (visType === VisTypes.ID_VIS_TYPE_FIBER) {
-          _this7.addFiberToDrawList(typeId, visAgent, agentData);
+          _this6.addFiberToDrawList(typeId, visAgent, agentData);
         }
       });
       this.fibers.endUpdate();

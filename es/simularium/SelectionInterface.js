@@ -2,11 +2,8 @@ import _toConsumableArray from "@babel/runtime/helpers/toConsumableArray";
 import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
-function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 import { filter, find, uniq } from "lodash";
-import { convertColorNumberToString } from "../visGeometry/color-utils";
+import { convertColorNumberToString } from "../visGeometry/ColorHandler";
 
 // An individual entry parsed from an encoded name
 // The encoded names can be just a name or a name plus a
@@ -262,47 +259,25 @@ var SelectionInterface = /*#__PURE__*/function () {
       });
     }
   }, {
-    key: "updateAgentColors",
-    value: function updateAgentColors(agentIds, colorChanges, uiDisplayData) {
-      var _this5 = this;
-      colorChanges.agents.forEach(function (agentToUpdate) {
-        var _iterator = _createForOfIteratorHelper(uiDisplayData),
-          _step;
-        try {
-          for (_iterator.s(); !(_step = _iterator.n()).done;) {
-            var group = _step.value;
-            if (group.name === agentToUpdate.name) {
-              _this5.updateUiDataColor(group.name, agentIds, colorChanges.color);
-              break;
-            }
-          }
-        } catch (err) {
-          _iterator.e(err);
-        } finally {
-          _iterator.f();
-        }
-      });
-    }
-  }, {
     key: "setInitialAgentColors",
     value: function setInitialAgentColors(uiDisplayData, colors, setColorForIds) {
-      var _this6 = this;
+      var _this5 = this;
       var defaultColorIndex = 0;
       uiDisplayData.forEach(function (group) {
         // the color for the whole grouping for this entry.name
         var groupColorIndex = defaultColorIndex;
         // list of ids that all have this same name
-        var ids = _this6.getIds(group.name);
+        var ids = _this5.getIds(group.name);
         // list of colors for this entry, will be empty strings for
         // ids that don't have a user set color
-        var newColors = _this6.getColorsForName(group.name);
+        var newColors = _this5.getColorsForName(group.name);
         var hasNewColors = filter(newColors).length > 0;
         var allTheSameColor = uniq(newColors).length === 1;
         if (!hasNewColors) {
           // if no colors have been set by the user for this name,
           // just give all states of this agent name the same color
-          setColorForIds(ids, defaultColorIndex);
-          _this6.updateUiDataColor(group.name, ids, colors[defaultColorIndex]);
+          setColorForIds(ids, colors[defaultColorIndex]);
+          _this5.updateUiDataColor(group.name, ids, colors[defaultColorIndex]);
         } else {
           // otherwise, we need to update any user defined colors
           newColors.forEach(function (color, index) {
@@ -321,7 +296,7 @@ var SelectionInterface = /*#__PURE__*/function () {
               }
             } else {
               // need update the display data with the default color being used
-              _this6.updateUiDataColor(group.name, [ids[index]], colors[groupColorIndex]);
+              _this5.updateUiDataColor(group.name, [ids[index]], colors[groupColorIndex]);
             }
             // if the user used all the same colors for all states of this agent,
             // use that for the group as well
@@ -331,7 +306,7 @@ var SelectionInterface = /*#__PURE__*/function () {
             } else {
               groupColorIndex = -1;
             }
-            setColorForIds([ids[index]], agentColorIndex);
+            setColorForIds([ids[index]], colors[agentColorIndex]);
           });
         }
         if (groupColorIndex > -1) {
