@@ -460,7 +460,9 @@ export class RemoteSimulator implements ISimulator {
                 );
             })
             .catch((e) => {
-                throw new FrontEndError(e.message, ErrorLevel.ERROR);
+                this.handleError(
+                    new FrontEndError(e.message, ErrorLevel.WARNING)
+                );
             });
     }
 }
