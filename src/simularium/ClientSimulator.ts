@@ -63,6 +63,10 @@ export class ClientSimulator implements ISimulator {
         return "";
     }
 
+    public isConnectedToRemoteServer(): boolean {
+        return false;
+    }
+
     public connectToRemoteServer(_address: string): Promise<string> {
         return Promise.resolve("Local client sim successfully started");
     }
