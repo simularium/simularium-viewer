@@ -59,6 +59,11 @@ export var ClientSimulator = /*#__PURE__*/function () {
       return "";
     }
   }, {
+    key: "isConnectedToRemoteServer",
+    value: function isConnectedToRemoteServer() {
+      return false;
+    }
+  }, {
     key: "connectToRemoteServer",
     value: function connectToRemoteServer(_address) {
       return Promise.resolve("Local client sim successfully started");

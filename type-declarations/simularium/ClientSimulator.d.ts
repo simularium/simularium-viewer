@@ -18,6 +18,7 @@ export declare class ClientSimulator implements ISimulator {
      * */
     disconnect(): void;
     getIp(): string;
+    isConnectedToRemoteServer(): boolean;
     connectToRemoteServer(_address: string): Promise<string>;
     private sendSimulationRequest;
     sendTimeStepUpdate(newTimeStep: number): void;

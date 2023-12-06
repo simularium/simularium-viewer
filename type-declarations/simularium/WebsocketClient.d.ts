@@ -5,6 +5,10 @@ export interface NetMessage {
     msgType: number;
     fileName: string;
 }
+export interface ErrorMessage extends NetMessage {
+    errorCode: number;
+    errorMsg: string;
+}
 interface SimulariumEvent {
     data: string;
 }
@@ -31,7 +35,21 @@ export declare const enum NetMessageEnum {
     ID_AVAILABLE_METRICS_RESPONSE = 18,
     ID_PLOT_DATA_REQUEST = 19,
     ID_PLOT_DATA_RESPONSE = 20,
-    LENGTH = 21
+    ID_ERROR_MSG = 21,
+    ID_CHECK_HEALTH_REQUEST = 22,
+    ID_SERVER_HEALTHY_RESPONSE = 23,
+    LENGTH = 24
+}
+export declare const enum ServerErrorCodes {
+    FILE_NOT_FOUND = 0,
+    MALFORMED_MESSAGE = 1,
+    MALFORMED_FILE = 2,
+    AUTOCONVERSION_ERROR = 3,
+    METRICS_CALC_ERROR = 4,
+    FRAME_NOT_FOUND = 5,
+    FILENAME_MISMATCH = 6,
+    NO_RUNNING_SIMULATION = 7,
+    LENGTH = 8
 }
 export declare const CONNECTION_SUCCESS_MSG = "Remote sim successfully started";
 export declare const CONNECTION_FAIL_MSG = "Failed to connect to server; try reloading. If the problem persists, there may be a problem with your connection speed or the server might be too busy.";

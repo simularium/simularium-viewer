@@ -22,6 +22,7 @@ export var RemoteSimulator = /*#__PURE__*/function () {
     _defineProperty(this, "logger", void 0);
     _defineProperty(this, "onTrajectoryFileInfoArrive", void 0);
     _defineProperty(this, "onTrajectoryDataArrive", void 0);
+    _defineProperty(this, "healthCheckHandler", void 0);
     _defineProperty(this, "lastRequestedFile", void 0);
     _defineProperty(this, "handleError", void 0);
     _defineProperty(this, "useOctopus", void 0);
@@ -41,6 +42,9 @@ export var RemoteSimulator = /*#__PURE__*/function () {
     this.onTrajectoryDataArrive = function () {
       /* do nothing */
     };
+    this.healthCheckHandler = function () {
+      /* do nothing */
+    };
   }
   _createClass(RemoteSimulator, [{
     key: "setTrajectoryFileInfoHandler",
@@ -51,6 +55,11 @@ export var RemoteSimulator = /*#__PURE__*/function () {
     key: "setTrajectoryDataHandler",
     value: function setTrajectoryDataHandler(handler) {
       this.onTrajectoryDataArrive = handler;
+    }
+  }, {
+    key: "setHealthCheckHandler",
+    value: function setHealthCheckHandler(handler) {
+      this.healthCheckHandler = handler;
     }
   }, {
     key: "socketIsValid",
@@ -115,6 +124,14 @@ export var RemoteSimulator = /*#__PURE__*/function () {
       // TODO: implement callback
     }
   }, {
+    key: "onErrorMsg",
+    value: function onErrorMsg(msg) {
+      this.logger.error("Error message of type ", msg.errorCode, " arrived: ", msg.errorMsg);
+      var error = new FrontEndError(msg.errorMsg, ErrorLevel.WARNING);
+      this.handleError(error);
+      // TODO: specific handling based on error code
+    }
+  }, {
     key: "registerBinaryMessageHandlers",
     value: function registerBinaryMessageHandlers() {
       var _this = this;
@@ -144,6 +161,12 @@ export var RemoteSimulator = /*#__PURE__*/function () {
       this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_MODEL_DEFINITION, function (_msg) {
         return _this2.onModelDefinitionArrive();
       });
+      this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_SERVER_HEALTHY_RESPONSE, function (_msg) {
+        return _this2.healthCheckHandler();
+      });
+      this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_ERROR_MSG, function (msg) {
+        return _this2.onErrorMsg(msg);
+      });
     }
 
     /**
@@ -158,6 +181,11 @@ export var RemoteSimulator = /*#__PURE__*/function () {
     key: "getIp",
     value: function getIp() {
       return this.webSocketClient.getIp();
+    }
+  }, {
+    key: "isConnectedToRemoteServer",
+    value: function isConnectedToRemoteServer() {
+      return this.socketIsValid();
     }
   }, {
     key: "connectToRemoteServer",
@@ -365,6 +393,18 @@ export var RemoteSimulator = /*#__PURE__*/function () {
         fileName: fileName,
         data: dataToConvert
       }, "Convert trajectory output to simularium file format");
+    }
+  }, {
+    key: "checkServerHealth",
+    value: function checkServerHealth() {
+      var _this7 = this;
+      return this.connectToRemoteServer().then(function () {
+        _this7.webSocketClient.sendWebSocketRequest({
+          msgType: NetMessageEnum.ID_CHECK_HEALTH_REQUEST
+        }, "Request server health check");
+      })["catch"](function (e) {
+        _this7.handleError(new FrontEndError(e.message, ErrorLevel.WARNING));
+      });
     }
   }]);
   return RemoteSimulator;

@@ -40,8 +40,23 @@ export var NetMessageEnum = /*#__PURE__*/function (NetMessageEnum) {
   NetMessageEnum[NetMessageEnum["ID_AVAILABLE_METRICS_RESPONSE"] = 18] = "ID_AVAILABLE_METRICS_RESPONSE";
   NetMessageEnum[NetMessageEnum["ID_PLOT_DATA_REQUEST"] = 19] = "ID_PLOT_DATA_REQUEST";
   NetMessageEnum[NetMessageEnum["ID_PLOT_DATA_RESPONSE"] = 20] = "ID_PLOT_DATA_RESPONSE";
-  NetMessageEnum[NetMessageEnum["LENGTH"] = 21] = "LENGTH";
+  NetMessageEnum[NetMessageEnum["ID_ERROR_MSG"] = 21] = "ID_ERROR_MSG";
+  NetMessageEnum[NetMessageEnum["ID_CHECK_HEALTH_REQUEST"] = 22] = "ID_CHECK_HEALTH_REQUEST";
+  NetMessageEnum[NetMessageEnum["ID_SERVER_HEALTHY_RESPONSE"] = 23] = "ID_SERVER_HEALTHY_RESPONSE";
+  NetMessageEnum[NetMessageEnum["LENGTH"] = 24] = "LENGTH";
   return NetMessageEnum;
+}({});
+export var ServerErrorCodes = /*#__PURE__*/function (ServerErrorCodes) {
+  ServerErrorCodes[ServerErrorCodes["FILE_NOT_FOUND"] = 0] = "FILE_NOT_FOUND";
+  ServerErrorCodes[ServerErrorCodes["MALFORMED_MESSAGE"] = 1] = "MALFORMED_MESSAGE";
+  ServerErrorCodes[ServerErrorCodes["MALFORMED_FILE"] = 2] = "MALFORMED_FILE";
+  ServerErrorCodes[ServerErrorCodes["AUTOCONVERSION_ERROR"] = 3] = "AUTOCONVERSION_ERROR";
+  ServerErrorCodes[ServerErrorCodes["METRICS_CALC_ERROR"] = 4] = "METRICS_CALC_ERROR";
+  ServerErrorCodes[ServerErrorCodes["FRAME_NOT_FOUND"] = 5] = "FRAME_NOT_FOUND";
+  ServerErrorCodes[ServerErrorCodes["FILENAME_MISMATCH"] = 6] = "FILENAME_MISMATCH";
+  ServerErrorCodes[ServerErrorCodes["NO_RUNNING_SIMULATION"] = 7] = "NO_RUNNING_SIMULATION";
+  ServerErrorCodes[ServerErrorCodes["LENGTH"] = 8] = "LENGTH";
+  return ServerErrorCodes;
 }({});
 export var CONNECTION_SUCCESS_MSG = "Remote sim successfully started";
 export var CONNECTION_FAIL_MSG = "Failed to connect to server; try reloading. If the problem persists, there may be a problem with your connection speed or the server might be too busy.";
@@ -323,7 +338,7 @@ export var WebsocketClient = /*#__PURE__*/function () {
   }, {
     key: "sendWebSocketRequest",
     value: function sendWebSocketRequest(jsonData, requestDescription) {
-      if (this.socketIsValid()) {
+      if (this.socketIsConnected()) {
         if (this.webSocket !== null) {
           this.webSocket.send(JSON.stringify(jsonData));
         }

@@ -7,6 +7,7 @@ export interface ISimulator {
      * */
     connectToRemoteServer(address: string): Promise<string>;
     socketIsValid(): boolean;
+    isConnectedToRemoteServer(): boolean;
     getIp(): string;
     disconnect(): void;
     sendTimeStepUpdate(newTimeStep: number): void;

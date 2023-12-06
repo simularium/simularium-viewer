@@ -175,7 +175,10 @@ var SimulariumController = /*#__PURE__*/function () {
     value: function convertAndLoadTrajectory(netConnectionConfig, dataToConvert, fileType) {
       var _this4 = this;
       try {
-        this.configureNetwork(netConnectionConfig);
+        if (!(this.simulator && this.simulator.isConnectedToRemoteServer())) {
+          // Only configure network if we aren't already connected to the remote server
+          this.configureNetwork(netConnectionConfig);
+        }
         if (!(this.simulator instanceof RemoteSimulator)) {
           throw new Error("Autoconversion requires a RemoteSimulator");
         }
@@ -347,6 +350,18 @@ var SimulariumController = /*#__PURE__*/function () {
     key: "getFile",
     value: function getFile() {
       return this.playBackFile;
+    }
+  }, {
+    key: "checkServerHealth",
+    value: function checkServerHealth(handler, netConnectionConfig) {
+      if (!(this.simulator && this.simulator.isConnectedToRemoteServer())) {
+        // Only configure network if we aren't already connected to the remote server
+        this.configureNetwork(netConnectionConfig);
+      }
+      if (this.simulator instanceof RemoteSimulator) {
+        this.simulator.setHealthCheckHandler(handler);
+        this.simulator.checkServerHealth();
+      }
     }
   }, {
     key: "setupMetricsCalculator",

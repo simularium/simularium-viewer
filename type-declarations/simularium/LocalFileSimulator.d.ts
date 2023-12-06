@@ -19,6 +19,7 @@ export declare class LocalFileSimulator implements ISimulator {
      * */
     disconnect(): void;
     getIp(): string;
+    isConnectedToRemoteServer(): boolean;
     connectToRemoteServer(_address: string): Promise<string>;
     sendTimeStepUpdate(_newTimeStep: number): void;
     sendParameterUpdate(_paramName: string, _paramValue: number): void;

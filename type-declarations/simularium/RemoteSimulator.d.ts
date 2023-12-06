@@ -1,6 +1,6 @@
 import { ILogger } from "js-logger";
 import { FrontEndError } from "./FrontEndError";
-import { WebsocketClient, MessageEventLike, NetMessage } from "./WebsocketClient";
+import { WebsocketClient, MessageEventLike, NetMessage, ErrorMessage } from "./WebsocketClient";
 import { ISimulator } from "./ISimulator";
 import { TrajectoryFileInfoV2, VisDataMessage } from "./types";
 import { TrajectoryType } from "../constants";
@@ -9,12 +9,14 @@ export declare class RemoteSimulator implements ISimulator {
     protected logger: ILogger;
     onTrajectoryFileInfoArrive: (NetMessage: any) => void;
     onTrajectoryDataArrive: (NetMessage: any) => void;
+    healthCheckHandler: () => void;
     protected lastRequestedFile: string;
     handleError: (error: FrontEndError) => void | (() => void);
     protected useOctopus: boolean;
     constructor(webSocketClient: WebsocketClient, useOctopus: boolean, errorHandler?: (error: FrontEndError) => void);
     setTrajectoryFileInfoHandler(handler: (msg: TrajectoryFileInfoV2) => void): void;
     setTrajectoryDataHandler(handler: (msg: VisDataMessage) => void): void;
+    setHealthCheckHandler(handler: () => void): void;
     socketIsValid(): boolean;
     getLastRequestedFile(): string;
     /**
@@ -26,6 +28,7 @@ export declare class RemoteSimulator implements ISimulator {
     updateTimestep(): void;
     updateRateParam(): void;
     onModelDefinitionArrive(): void;
+    onErrorMsg(msg: ErrorMessage): void;
     private registerBinaryMessageHandlers;
     private registerJsonMessageHandlers;
     /**
@@ -33,6 +36,7 @@ export declare class RemoteSimulator implements ISimulator {
      * */
     disconnect(): void;
     getIp(): string;
+    isConnectedToRemoteServer(): boolean;
     connectToRemoteServer(): Promise<string>;
     /**
      * Websocket Update Parameters
@@ -61,4 +65,5 @@ export declare class RemoteSimulator implements ISimulator {
     sendUpdate(obj: Record<string, unknown>): void;
     convertTrajectory(dataToConvert: Record<string, unknown>, fileType: TrajectoryType): Promise<void>;
     sendTrajectory(dataToConvert: Record<string, unknown>, fileType: TrajectoryType): void;
+    checkServerHealth(): Promise<void>;
 }

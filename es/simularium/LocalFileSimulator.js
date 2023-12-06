@@ -57,6 +57,11 @@ export var LocalFileSimulator = /*#__PURE__*/function () {
       return "";
     }
   }, {
+    key: "isConnectedToRemoteServer",
+    value: function isConnectedToRemoteServer() {
+      return false;
+    }
+  }, {
     key: "connectToRemoteServer",
     value: function connectToRemoteServer(_address) {
       return Promise.resolve("Local file successfully started");
