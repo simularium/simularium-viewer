@@ -143,15 +143,14 @@ export class RemoteSimulator implements ISimulator {
         // TODO: implement callback
     }
 
-    public onErrorMsg(msg: NetMessage): void {
-        const e = msg as ErrorMessage;
+    public onErrorMsg(msg: ErrorMessage): void {
         this.logger.error(
             "Error message of type ",
-            e.errorCode,
+            msg.errorCode,
             " arrived: ",
-            e.errorMsg
+            msg.errorMsg
         );
-        const error = new FrontEndError(e.errorMsg, ErrorLevel.WARNING);
+        const error = new FrontEndError(msg.errorMsg, ErrorLevel.WARNING);
         this.handleError(error);
         // TODO: specific handling based on error code
     }
@@ -201,7 +200,7 @@ export class RemoteSimulator implements ISimulator {
 
         this.webSocketClient.addJsonMessageHandler(
             NetMessageEnum.ID_ERROR_MSG,
-            (msg) => this.onErrorMsg(msg)
+            (msg) => this.onErrorMsg(msg as ErrorMessage)
         );
     }
 
