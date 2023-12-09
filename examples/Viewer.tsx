@@ -188,14 +188,14 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 serverIp: "0.0.0.0",
                 serverPort: 8765,
                 useOctopus: props.useOctopus,
-                secureConnection: false,
+                secureConnection: props.useOctopus,
             };
         } else if (props.useOctopus) {
             this.netConnectionSettings = {
                 serverIp: "18.223.108.15",
                 serverPort: 8765,
-                useOctopus: props.useOctopus,
-                secureConnection: false,
+                useOctopus: true,
+                secureConnection: true,
             };
         } else {
             this.netConnectionSettings = {
