@@ -1,4 +1,4 @@
-import { System, Circle, Response, rad2deg, deg2rad } from "detect-collisions";
+import { System, Circle, Response } from "detect-collisions";
 
 import {
     IClientSimulatorImpl,
@@ -15,8 +15,6 @@ import { random } from "lodash";
 import { Vector } from "sat";
 import { GeometryDisplayType } from "../src/visGeometry/types";
 
-const MAX_DISTANCE = 0;
-const NUDGE_DISTANCE = 0.4;
 class BindingInstance extends Circle {
     id: number;
     child: BindingInstance | null;
@@ -30,150 +28,85 @@ class BindingInstance extends Circle {
         this.child = null;
     }
 
-    private adjust(dxClosest, dyClosest, neededDistance, curDistance) {
-        const slope = dyClosest / dxClosest;
-        let dy = (neededDistance * dyClosest) / curDistance;
-        let dx = dy / slope;
+    public resolveCollision(other, overlapV, system) {
+        this.adjust(other, overlapV);
+    }
 
-        this.x = this.x + dx - dxClosest;
-        this.y = this.y + dy - dyClosest;
+    public isBoundPair(other) {
+        return this.child == other || other.child == this;
+    }
+
+    private move(x, y) {
+        this.setPosition(this.pos.x + x, this.pos.y + y);
         if (this.child) {
-            this.child.x = this.child.x + dx - dxClosest;
-            this.child.y = this.child.y + dy - dyClosest;
-        }
-    }
-}
-
-const size = 100;
-
-export default class BindingSimulator implements IClientSimulatorImpl {
-    instances: BindingInstance[];
-    currentFrame: number;
-    agents: { id: number; radius: number }[] = [];
-    system: System;
-    constructor(agents) {
-        this.system = new System();
-        this.agents = agents;
-        this.instances = [];
-        this.system.createLine(
-            new Vector(-size / 2, -size / 2),
-            new Vector(-size / 2, size / 2),
-            { isStatic: true }
-        );
-        this.system.createLine(
-            new Vector(-size / 2, size / 2),
-            new Vector(size / 2, size / 2),
-            { isStatic: true }
-        );
-        this.system.createLine(
-            new Vector(size / 2, size / 2),
-            new Vector(size / 2, -size / 2),
-            { isStatic: true }
-        );
-        this.system.createLine(
-            new Vector(size / 2, -size / 2),
-            new Vector(-size / 2, -size / 2),
-            { isStatic: true }
-        );
-        for (let i = 0; i < agents.length; ++i) {
-            const agent = agents[i];
-            for (let j = 0; j < agent.count; ++j) {
-                const position: number[] = this.getRandomPointOnSide(i);
-                const circle = new Circle(
-                    new Vector(...position),
-                    agent.radius
-                );
-                const instance = new BindingInstance(
-                    circle,
-                    agent.id,
-                    agent.partners
-                );
-                this.system.insert(instance);
-                this.instances.push(instance);
-            }
-        }
-        this.currentFrame = 0;
-        this.system.separate();
-    }
-
-    private randomFloat(min, max) {
-        if (max === undefined) {
-            max = min;
-            min = 0;
-        }
-        return Math.random() * (max - min) + min;
-    }
-
-    private getRandomPointInBox(xmin, xmax, ymin, ymax) {
-        return [this.randomFloat(xmin, xmax), this.randomFloat(ymin, ymax)];
-    }
-
-    private getRandomPointOnSide(side) {
-        const dAlongSide = this.randomFloat(-size / 2, size / 2);
-        const dFromSide = this.randomFloat(0, size / 2 );
-
-        switch (side) {
-            case 0:
-                return [dFromSide, dAlongSide];
-            case 1:
-                return [-dFromSide, dAlongSide];
-            case 3:
-                return [dAlongSide, -dFromSide];
-            case 4:
-                return [dAlongSide, dFromSide];
+            this.child.setPosition(this.child.pos.x + x, this.child.pos.y + y);
         }
     }
 
-    public move(circle: BindingInstance) {
-        if (circle.bound) {
+    private adjust(other, overlapV) {
+        const { x, y } = overlapV;
+        if (!this.bound) {
+            this.move(-x, -y);
+        } else if (!other.bound) {
+            other.move(-x, -y);
+        } else {
+            //TODO: find parent and move the parent
+        }
+    }
+
+    public rotateGroup(xStep, yStep) {
+        if (!this.child) {
+            return;
+        }
+        const angle = random(-Math.PI / 4, Math.PI / 4);
+        const center = this.findCenter(this, this.child);
+        const newCirclePosition = this.rotate(
+            this.pos.x,
+            this.pos.y,
+            angle,
+            center
+        );
+        this.setPosition(newCirclePosition[0], newCirclePosition[1]);
+        const childPosX = this.child.pos.x + xStep;
+        const childPosY = this.child.pos.y + yStep;
+        const childPosAndRotation = this.rotate(
+            childPosX,
+            childPosY,
+            angle,
+            center
+        );
+        this.child.setPosition(childPosAndRotation[0], childPosAndRotation[1]);
+    }
+
+    public oneStep() {
+        if (this.bound) {
             return;
         }
 
         const amplitude = 1;
-        let xStep = random(-amplitude, amplitude);
-        let yStep = random(-amplitude, amplitude);
-        let posX = circle.pos.x + xStep;
-        let posY = circle.pos.y + yStep;
+        let xStep = random(-amplitude, amplitude, true);
+        let yStep = random(-amplitude, amplitude, true);
+        let posX = this.pos.x + xStep;
+        let posY = this.pos.y + yStep;
         const edge = size / 2;
 
-        if (posX > edge + circle.r) {
+        if (posX > edge + this.r) {
             const over = posX - edge;
             xStep = xStep - over;
         }
-        if (posX < -edge - circle.r) {
+        if (posX < -edge - this.r) {
             const over = posX + edge;
-
             xStep = xStep - over;
         }
-        if (posY > edge + circle.r) {
+        if (posY > edge + this.r) {
             yStep = yStep - size;
         }
-        if (posY < -edge - circle.r) {
+        if (posY < -edge - this.r) {
             yStep = size + yStep;
         }
-        circle.setPosition(circle.pos.x + xStep, circle.pos.y + yStep);
-        if (circle.child) {
-            const angle = random(-Math.PI/2, Math.PI/2);
-            const center = this.findCenter(circle, circle.child);
-            const newCirclePosition = this.rotate(
-                circle.pos.x,
-                circle.pos.y,
-                angle,
-                center
-            );
-            circle.setPosition(newCirclePosition[0], newCirclePosition[1]);
-            const childPosX = circle.child.pos.x + xStep;
-            const childPosY = circle.child.pos.y + yStep;
-            const childPosAndRotation = this.rotate(
-                childPosX,
-                childPosY,
-                angle,
-                center
-            );
-            circle.child.setPosition(
-                childPosAndRotation[0],
-                childPosAndRotation[1]
-            );
+        this.setPosition(this.pos.x + xStep, this.pos.y + yStep);
+        if (this.child) {
+            this.rotateGroup(xStep, yStep);
         }
     }
 
@@ -197,29 +130,110 @@ export default class BindingSimulator implements IClientSimulatorImpl {
         return [x, y];
     }
 
-    private bind(agent: BindingInstance, ligand: BindingInstance) {
-        if (ligand.bound || agent.child) {
-            return true;
+    public unBind(ligand: BindingInstance) {
+        const willUnBind = random(0, 1, true) > 0.9;
+        if (!willUnBind) {
+            return;
         }
-        const willBind = random(0, 1) > 0.5;
-        if (!willBind) {
-            return false;
-        }
-        // a is the ligand
-        agent.child = ligand;
-        agent.isStatic = true;
-        ligand.bound = true;
-        ligand.isStatic = true;
-        return false;
+        this.child = null;
+        this.isTrigger = false;
+        ligand.bound = false;
+        ligand.isTrigger = false;
+        return;
     }
 
-    private makePoints(): number[] {
-        return this.getRandomPointInBox(
-            -size / 2,
-            size / 2,
-            -size / 2,
-            size / 2
-        );
+    public bind(ligand: BindingInstance) {
+        if (ligand.bound || this.child) {
+            // already have bound ligand or already bound
+            // can't bind to another ligand
+            return;
+        }
+        const willBind = random(0, 1, true) > 0.5;
+        if (!willBind) {
+            return;
+        }
+        this.child = ligand;
+        this.isTrigger = true;
+        ligand.bound = true;
+        ligand.isTrigger = true;
+        return;
+    }
+}
+
+const size = 100;
+
+export default class BindingSimulator implements IClientSimulatorImpl {
+    instances: BindingInstance[];
+    currentFrame: number;
+    agents: { id: number; radius: number }[] = [];
+    system: System;
+    constructor(agents) {
+        this.system = new System();
+        this.agents = agents;
+        this.instances = [];
+        this.createBoundingLines();
+        for (let i = 0; i < agents.length; ++i) {
+            const agent = agents[i];
+            for (let j = 0; j < agent.count; ++j) {
+                const position: number[] = this.getRandomPointOnSide(i);
+                const circle = new Circle(
+                    new Vector(...position),
+                    agent.radius
+                );
+                const instance = new BindingInstance(
+                    circle,
+                    agent.id,
+                    agent.partners
+                );
+                this.system.insert(instance);
+                this.instances.push(instance);
+            }
+        }
+        this.currentFrame = 0;
+        this.system.separate();
+    }
+
+    private createBoundingLines() {
+        const points = [
+            [-size / 2, -size / 2],
+            [-size / 2, size / 2],
+            [size / 2, size / 2],
+            [size / 2, -size / 2],
+        ];
+        points.forEach((point, index) => {
+            const nextPoint = points[(index + 1) % points.length];
+            this.system.createLine(
+                new Vector(point[0], point[1]),
+                new Vector(nextPoint[0], nextPoint[1]),
+                { isStatic: true }
+            );
+        })
+    }
+
+    private randomFloat(min, max) {
+        if (max === undefined) {
+            max = min;
+            min = 0;
+        }
+        return Math.random() * (max - min) + min;
+    }
+
+    private getRandomPointOnSide(side) {
+        const dAlongSide = this.randomFloat(-size / 2, size / 2);
+        const dFromSide = this.randomFloat(0, size / 2);
+
+        switch (side) {
+            case 0:
+                return [dFromSide, dAlongSide];
+            case 1:
+                return [-dFromSide, dAlongSide];
+            case 3:
+                return [dAlongSide, -dFromSide];
+            case 4:
+                return [dAlongSide, dFromSide];
+            default:
+                return [dFromSide, dAlongSide];
+        }
     }
 
     public updateSimulationState(data: Record<string, unknown>) {
@@ -235,55 +249,35 @@ export default class BindingSimulator implements IClientSimulatorImpl {
     }
 
     public update(_dt: number): VisDataMessage {
-        //const dt_adjusted = dt / 1000;
         for (let ii = 0; ii < this.instances.length; ++ii) {
-            this.move(this.instances[ii]);
+            this.instances[ii].oneStep();
         }
         this.system.checkAll((response: Response) => {
-            const { a, b, overlapV, aInB, bInA } = response;
+            const { a, b, overlapV } = response;
 
             if (response) {
-                if (a.partners.includes(b.id)) {
-                    let needToResolveCollision = false;
-                    // a is the ligand
+                if (a.isBoundPair(b)) {
                     if (a.r < b.r) {
-                        needToResolveCollision = this.bind(b, a);
-                        if (needToResolveCollision) {
-                            const dxClosest = b.pos.x - a.pos.x;
-                            const dyClosest = b.pos.y - a.pos.y;
-                            const curDistance = Math.sqrt(
-                                dxClosest * dxClosest + dyClosest * dyClosest
-                            );
-                            const neededDistance = a.r + b.r;
-
-                            b.adjust(
-                                -dxClosest,
-                                -dyClosest,
-                                neededDistance,
-                                curDistance
-                            );
-                        }
+                        b.unBind(a);
                     } else {
                         // b is the ligand
-                        needToResolveCollision = this.bind(a, b);
-                        if (needToResolveCollision) {
-                            const dxClosest = b.pos.x - a.pos.x;
-                            const dyClosest = b.pos.y - a.pos.y;
-                            const curDistance = Math.sqrt(
-                                dxClosest * dxClosest + dyClosest * dyClosest
-                            );
-                            const neededDistance = a.r + b.r;
-                            a.adjust(
-                                dxClosest,
-                                dyClosest,
-                                neededDistance,
-                                curDistance
-                            );
-                        }
+                        a.unBind(b);
                     }
-                } else {
-                    a.setPosition(a.pos.x - overlapV.x, a.pos.y - overlapV.y);
                 }
+                if (a.partners.includes(b.id)) {
+                    // a is the ligand
+                    if (a.r < b.r) {
+                        b.bind(a);
+                    } else {
+                        // b is the ligand
+                        a.bind(b);
+                    }
+                }
+                if (a.isTrigger && b.isTrigger && !a.isBoundPair(b)) {
+                    a.resolveCollision(b, overlapV, this.system);
+                }
+            } else {
+                console.log("no response");
             }
         });
         this.system.separate();
