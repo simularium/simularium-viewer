@@ -16,7 +16,7 @@ import SimulariumViewer, {
 } from "../src/index";
 import "../style/style.css";
 import PointSimulator from "./PointSimulator";
-import BindingSimulator from "./BindingSimulatorLive";
+import BindingSimulator from "./BindingSimulatorLive copy";
 import PointSimulatorLive from "./PointSimulatorLive";
 import PdbSimulator from "./PdbSimulator";
 import SinglePdbSimulator from "./SinglePdbSimulator";
@@ -119,9 +119,7 @@ interface InputParams {
     useOctopus: boolean;
 }
 
-const simulariumController = new SimulariumController(
-    {}
-);
+const simulariumController = new SimulariumController({});
 
 let currentFrame = 0;
 let currentTime = 0;
@@ -206,7 +204,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             viewerContainer.addEventListener("drop", this.onDrop);
             viewerContainer.addEventListener("dragover", this.onDragOver);
         }
-        this.configureAndLoad()
+        this.configureAndLoad();
     }
 
     public onDragOver = (e: Event): void => {
@@ -533,10 +531,14 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 },
                 playbackFile
             );
-            } else if (playbackFile === "TEST_BINDING") {
+        } else if (playbackFile === "TEST_BINDING") {
             simulariumController.changeFile(
                 {
-                    clientSimulator: new BindingSimulator([{id: 0, count: 30, radius: 3}, {id: 1, count: 30, radius: 1.5}]),
+                    clientSimulator: new BindingSimulator([
+                        { id: 0, count: 60, radius: 1, partners: [1, 2] },
+                        { id: 1, count: 80, radius: 0.7, partners: [0] },
+                        // { id: 2, count: 30, radius: 1.5, partners: [0] },
+                    ]),
                 },
                 playbackFile
             );
