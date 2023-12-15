@@ -20,12 +20,16 @@ class BindingInstance extends Circle {
     child: BindingInstance | null;
     bound: boolean;
     partners: number[];
-    constructor(circle, id, partners) {
+    kOn?: number;
+    kOff?: number;
+    constructor(circle, id, partners, kOn?, kOff?) {
         super(circle.pos, circle.r);
         this.id = id;
         this.partners = partners;
         this.bound = false;
         this.child = null;
+        this.kOn = kOn;
+        this.kOff = kOff;
     }
 
     public resolveCollision(other, overlapV, system) {
@@ -131,7 +135,10 @@ class BindingInstance extends Circle {
     }
 
     public unBind(ligand: BindingInstance) {
-        const willUnBind = random(0, 1, true) > 0.9;
+        if (ligand.kOff === undefined) {
+            return;
+        }
+        const willUnBind = random(0, 1, true) > ligand.kOff;
         if (!willUnBind) {
             return;
         }
@@ -148,7 +155,10 @@ class BindingInstance extends Circle {
             // can't bind to another ligand
             return;
         }
-        const willBind = random(0, 1, true) > 0.5;
+        if (ligand.kOn === undefined) {
+            return;
+        }
+        const willBind = random(0, 1, true) > ligand.kOn;
         if (!willBind) {
             return;
         }
@@ -183,7 +193,9 @@ export default class BindingSimulator implements IClientSimulatorImpl {
                 const instance = new BindingInstance(
                     circle,
                     agent.id,
-                    agent.partners
+                    agent.partners,
+                    agent.kOn,
+                    agent.kOff
                 );
                 this.system.insert(instance);
                 this.instances.push(instance);
