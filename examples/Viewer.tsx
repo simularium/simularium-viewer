@@ -16,7 +16,7 @@ import SimulariumViewer, {
 } from "../src/index";
 import "../style/style.css";
 import PointSimulator from "./PointSimulator";
-import BindingSimulator from "./BindingSimulatorLive copy";
+import BindingSimulator from "./BindingSimulator2D";
 import PointSimulatorLive from "./PointSimulatorLive";
 import PdbSimulator from "./PdbSimulator";
 import SinglePdbSimulator from "./SinglePdbSimulator";
@@ -532,12 +532,13 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 playbackFile
             );
         } else if (playbackFile === "TEST_BINDING") {
+            simulariumController.setCameraType(true);
             simulariumController.changeFile(
                 {
                     clientSimulator: new BindingSimulator([
-                        { id: 0, count: 60, radius: 1, partners: [1, 2] },
-                        { id: 1, count: 80, radius: 0.7, partners: [0] },
-                        // { id: 2, count: 30, radius: 1.5, partners: [0] },
+                        { id: 0, count: 30, radius: 2, partners: [1, 2] },
+                        { id: 1, count: 300, radius: 0.7, partners: [0], kOn: 0.1, kOff: 0.5},
+                        // { id: 2, count: 80, radius: 1.5, partners: [0], kOn: 0.1, kOff: 0.1},
                     ]),
                 },
                 playbackFile

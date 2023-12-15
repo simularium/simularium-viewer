@@ -298,11 +298,7 @@ export default class BindingSimulator implements IClientSimulatorImpl {
         for (let ii = 0; ii < this.instances.length; ++ii) {
             const instance = this.instances[ii];
             agentData.push(VisTypes.ID_VIS_TYPE_DEFAULT); // vis type
-            agentData.push(
-                instance.bound || instance.child
-                    ? 100 + instance.id
-                    : instance.id
-            ); // instance id
+            agentData.push(ii); // instance id
             agentData.push(
                 instance.bound || instance.child
                     ? 100 + instance.id
@@ -335,6 +331,12 @@ export default class BindingSimulator implements IClientSimulatorImpl {
         return frameData;
     }
 
+    public getPlotData() {
+        return {
+            plotData: [],
+        };
+    }
+
     public getInfo(): TrajectoryFileInfo {
         const typeMapping: EncodedTypeMapping = {};
         for (let i = 0; i < this.agents.length; ++i) {
@@ -362,7 +364,15 @@ export default class BindingSimulator implements IClientSimulatorImpl {
                 y: size,
                 z: 1,
             },
-            cameraDefault: DEFAULT_CAMERA_SPEC,
+            cameraDefault: {
+                ...DEFAULT_CAMERA_SPEC,
+                position: {
+                    x: 0,
+                    y: 0,
+                    z: 50,
+                },
+            
+            },
             typeMapping: typeMapping,
             spatialUnits: {
                 magnitude: 10,
