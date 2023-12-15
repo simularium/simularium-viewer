@@ -14,7 +14,7 @@ import SimulariumViewer, {
     FrontEndError,
     ErrorLevel,
     NetConnectionParams,
-    TrajectoryFileInfo
+    TrajectoryFileInfo,
 } from "../src/index";
 /**
  * NOTE: if you are debugging an import/build issue
