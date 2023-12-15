@@ -7,6 +7,12 @@ export interface NetMessage {
     msgType: number;
     fileName: string;
 }
+
+export interface ErrorMessage extends NetMessage {
+    errorCode: number;
+    errorMsg: string;
+}
+
 // TODO: proposed new NetMessage data type:
 // This factors the raw data structure away from the networking and transmission info.
 // This allows the data structure to make a bit more sense with respect to typescript typing,
@@ -47,7 +53,22 @@ export const enum NetMessageEnum {
     ID_AVAILABLE_METRICS_RESPONSE = 18,
     ID_PLOT_DATA_REQUEST = 19,
     ID_PLOT_DATA_RESPONSE = 20,
+    ID_ERROR_MSG = 21,
+    ID_CHECK_HEALTH_REQUEST = 22,
+    ID_SERVER_HEALTHY_RESPONSE = 23,
     // insert new values here before LENGTH
+    LENGTH,
+}
+
+export const enum ServerErrorCodes {
+    FILE_NOT_FOUND = 0,
+    MALFORMED_MESSAGE = 1,
+    MALFORMED_FILE = 2,
+    AUTOCONVERSION_ERROR = 3,
+    METRICS_CALC_ERROR = 4,
+    FRAME_NOT_FOUND = 5,
+    FILENAME_MISMATCH = 6,
+    NO_RUNNING_SIMULATION = 7,
     LENGTH,
 }
 
@@ -313,7 +334,7 @@ export class WebsocketClient {
         jsonData: Record<string, unknown>,
         requestDescription: string
     ): void {
-        if (this.socketIsValid()) {
+        if (this.socketIsConnected()) {
             if (this.webSocket !== null) {
                 this.webSocket.send(JSON.stringify(jsonData));
             }

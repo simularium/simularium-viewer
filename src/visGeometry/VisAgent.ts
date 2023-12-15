@@ -2,6 +2,7 @@ import { CatmullRomCurve3, Color, Vector3 } from "three";
 
 import VisTypes from "../simularium/VisTypes";
 import { AgentData } from "../simularium/types";
+import { AgentColorInfo } from "./types";
 
 const NO_AGENT = -1;
 
@@ -49,7 +50,10 @@ export default class VisAgent {
     public resetMesh(): void {
         this.followed = false;
         this.highlighted = false;
-        this.setColor(new Color(VisAgent.UNASSIGNED_MESH_COLOR), 0);
+        this.setColor({
+            color: new Color(VisAgent.UNASSIGNED_MESH_COLOR),
+            colorId: 0,
+        });
         this.agentData = {
             x: 0,
             y: 0,
@@ -65,9 +69,9 @@ export default class VisAgent {
         };
     }
 
-    public setColor(color: Color, colorIndex: number): void {
-        this.color = color;
-        this.colorIndex = colorIndex;
+    public setColor(colorInfo: AgentColorInfo): void {
+        this.color = colorInfo.color;
+        this.colorIndex = colorInfo.colorId;
     }
 
     public setHidden(hidden: boolean): void {

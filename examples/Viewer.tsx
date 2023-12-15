@@ -13,7 +13,22 @@ import SimulariumViewer, {
     loadSimulariumFile,
     FrontEndError,
     ErrorLevel,
+    NetConnectionParams,
+    TrajectoryFileInfo
 } from "../src/index";
+/**
+ * NOTE: if you are debugging an import/build issue
+ * on the front end, you may need to switch to the
+ * following import statements to reproduce the issue 
+ * here. 
+ */
+// import SimulariumViewer, {
+//     SimulariumController,
+//     RenderStyle,
+//     loadSimulariumFile,
+//     FrontEndError,
+//     ErrorLevel,
+// } from "../es";
 import "../style/style.css";
 import PointSimulator from "./PointSimulator";
 import BindingSimulator from "./BindingSimulator2D";
@@ -33,7 +48,6 @@ import {
 import ConversionForm from "./ConversionForm";
 import MetaballSimulator from "./MetaballSimulator";
 import { TrajectoryType } from "../src/constants";
-import { NetConnectionParams } from "../src/simularium";
 
 let playbackFile = "TEST_BINDING"; //"medyan_paper_M:A_0.675.simularium";
 let queryStringFile = "";
@@ -88,6 +102,7 @@ interface ViewerState {
         name: string;
         data: ISimulariumFile | null;
     } | null;
+    serverHealthy: boolean;
 }
 
 interface BaseType {
@@ -119,7 +134,9 @@ interface InputParams {
     useOctopus: boolean;
 }
 
-const simulariumController = new SimulariumController({});
+const simulariumController = new SimulariumController(
+    {}
+);
 
 let currentFrame = 0;
 let currentTime = 0;
@@ -142,10 +159,11 @@ const initialState: ViewerState = {
     selectionStateInfo: {
         highlightedAgents: [],
         hiddenAgents: [],
-        colorChanges: [{ agents: [], color: "" }],
+        colorChange: null,
     },
     filePending: null,
     simulariumFile: null,
+    serverHealthy: false,
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
@@ -163,6 +181,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         this.loadFile = this.loadFile.bind(this);
         this.clearPendingFile = this.clearPendingFile.bind(this);
         this.convertFile = this.convertFile.bind(this);
+        this.onHealthCheckResponse = this.onHealthCheckResponse.bind(this);
         this.state = initialState;
 
         if (props.localBackendServer) {
@@ -170,14 +189,14 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 serverIp: "0.0.0.0",
                 serverPort: 8765,
                 useOctopus: props.useOctopus,
-                secureConnection: false,
+                secureConnection: props.useOctopus,
             };
         } else if (props.useOctopus) {
             this.netConnectionSettings = {
                 serverIp: "18.223.108.15",
                 serverPort: 8765,
-                useOctopus: props.useOctopus,
-                secureConnection: false,
+                useOctopus: true,
+                secureConnection: true,
             };
         } else {
             this.netConnectionSettings = {
@@ -271,7 +290,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     const geoAssets = filesArr.reduce((acc, cur, index) => {
                         if (index !== simulariumFileIndex) {
                             acc[cur.name] = parsedFiles[index];
-                            return acc;
                         }
                         return acc;
                     }, {});
@@ -342,6 +360,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         return typeMap;
     }
 
+    public onHealthCheckResponse() {
+        this.setState({ serverHealthy: true });
+    }
+
     public async loadSmoldynFile() {
         const smoldynTemplate = await fetch(
             `${UI_TEMPLATE_DOWNLOAD_URL_ROOT}/${SMOLDYN_TEMPLATE}`
@@ -354,7 +376,11 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 template: smoldynTemplate.smoldyn_data,
                 templateData: templateMap,
             },
+            serverHealthy: false,
         });
+        simulariumController.checkServerHealth(
+            this.onHealthCheckResponse, this.netConnectionSettings
+        );
     }
 
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
@@ -443,7 +469,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         });
     }
 
-    public handleTrajectoryInfo(data): void {
+    public handleTrajectoryInfo(data: TrajectoryFileInfo): void {
         console.log("Trajectory info arrived", data);
         // NOTE: Currently incorrectly assumes initial time of 0
         const totalDuration = (data.totalSteps - 1) * data.timeStepSize;
@@ -617,14 +643,14 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         this.setState({ agentColors });
     };
 
-    public setColorSelectionInfo = (colorChanges) => {
+    public setColorSelectionInfo = (colorChange) => {
         this.setState({
             ...this.state,
             selectionStateInfo: {
                 hiddenAgents: this.state.selectionStateInfo.hiddenAgents,
                 highlightedAgents:
                     this.state.selectionStateInfo.highlightedAgents,
-                colorChanges: colorChanges,
+                colorChange: colorChange,
             },
         });
     };
@@ -637,6 +663,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     {...this.state.filePending}
                     submitFile={(obj) => this.convertFile(obj, fileType)}
                     onReturned={this.clearPendingFile}
+                    submitDisabled={!this.state.serverHealthy}
                 />
             );
         }
@@ -644,7 +671,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             <div className="container" style={{ height: "90%", width: "75%" }}>
                 <select
                     onChange={(event) => {
-                        simulariumController.stop();
+                        simulariumController.pause();
                         playbackFile = event.target.value;
                         this.configureAndLoad();
                     }}

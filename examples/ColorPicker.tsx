@@ -43,16 +43,14 @@ const ColorPicker = ({
             if (selectedSubagent === "<unmodified>") {
                 subAgent = [""];
             }
-            const entry: SelectionEntry[] = [
-                {
-                    name: selectedAgent,
-                    tags: subAgent,
-                },
-            ];
-            setColorSelectionInfo([{
-                agents: entry,
+            const entry: SelectionEntry = {
+                name: selectedAgent,
+                tags: subAgent,
+            };
+            setColorSelectionInfo({
+                agent: entry,
                 color: selectedColor,
-            }]);
+            });
         }
     };
 
@@ -110,8 +108,8 @@ const ColorPicker = ({
                 type="text"
                 placeholder="add Hex Color"
                 onChange={(event) => {
-                    console.log(event.target.value)
-                    setColorToAppend(event.target.value)}}
+                    setColorToAppend(event.target.value);
+                }}
             ></input>
             <button onClick={() => addColorToColorArray(colorToAppend)}>
                 Add color to color array

@@ -1,4 +1,4 @@
-import { BufferGeometry, Object3D } from "three";
+import { BufferGeometry, Color, Object3D } from "three";
 import PDBModel from "./PDBModel";
 import { MRTShaders } from "./rendering/MultipassMaterials";
 
@@ -63,4 +63,9 @@ export interface GeometryStoreLoadResponse {
     displayType?: GeometryDisplayType;
     geometry: MeshLoadRequest | PDBModel;
     errorMessage?: string;
+}
+
+export interface AgentColorInfo {
+    color: Color;
+    colorId: number;
 }

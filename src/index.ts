@@ -4,10 +4,13 @@ export type {
     SelectionStateInfo,
     UIDisplayData,
     VisDataFrame,
-    ColorChanges,
+    ColorChange,
     SelectionEntry,
+    TrajectoryFileInfo,
+    NetConnectionParams,
 } from "./simularium";
 export type { ISimulariumFile } from "./simularium/ISimulariumFile";
+export type { TimeData } from "./viewport";
 
 export { RenderStyle } from "./viewport";
 export { SimulariumController } from "./controller";
