@@ -845,12 +845,12 @@ class VisGeometry {
         if (parent === undefined || parent == null) {
             return;
         }
-        if (parent["data-has-canvas"]) {
+        if (parent["data-has-simularium-viewer-canvas"]) {
             return;
         }
         this.threejsrenderer = this.createWebGL();
         parent.appendChild(this.threejsrenderer.domElement);
-        parent["data-has-canvas"] = true;
+        parent["data-has-simularium-viewer-canvas"] = true;
         this.setupControls();
 
         this.resize(
