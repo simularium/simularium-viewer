@@ -1,19 +1,17 @@
 import { System, Circle, Response } from "detect-collisions";
+import { random } from "lodash";
+import { Vector } from "sat";
 
 import {
     IClientSimulatorImpl,
     ClientMessageEnum,
-} from "../src/simularium/localSimulators/IClientSimulatorImpl";
-import {
+    GeometryDisplayType,
     EncodedTypeMapping,
     TrajectoryFileInfo,
     VisDataMessage,
-} from "../src/simularium/types";
-import VisTypes from "../src/simularium/VisTypes";
-import { DEFAULT_CAMERA_SPEC } from "../src/constants";
-import { random } from "lodash";
-import { Vector } from "sat";
-import { GeometryDisplayType } from "../src/visGeometry/types";
+    DEFAULT_CAMERA_SPEC,
+    VisTypes,
+} from "../src";
 
 class BindingInstance extends Circle {
     id: number;
@@ -86,8 +84,10 @@ class BindingInstance extends Circle {
         if (this.bound) {
             return;
         }
-
-        const amplitude = 1;
+        // D(r)≈(4.10901922×10^−3)/r nm^2/s
+        const diffusionCoefficient = 4 * 10**-3 / this.r;
+        
+        const amplitude = Math.sqrt(2 * diffusionCoefficient);
         let xStep = random(-amplitude, amplitude, true);
         let yStep = random(-amplitude, amplitude, true);
         let posX = this.pos.x + xStep;
@@ -177,11 +177,13 @@ export default class BindingSimulator implements IClientSimulatorImpl {
     currentFrame: number;
     agents: { id: number; radius: number }[] = [];
     system: System;
+    distanceFactor: number;
     constructor(agents) {
         this.system = new System();
         this.agents = agents;
         this.instances = [];
         this.createBoundingLines();
+        this.distanceFactor = 10;
         for (let i = 0; i < agents.length; ++i) {
             const agent = agents[i];
             for (let j = 0; j < agent.count; ++j) {
@@ -375,7 +377,7 @@ export default class BindingSimulator implements IClientSimulatorImpl {
             },
             typeMapping: typeMapping,
             spatialUnits: {
-                magnitude: 10,
+                magnitude: this.distanceFactor,
                 name: "nm",
             },
             timeUnits: {
