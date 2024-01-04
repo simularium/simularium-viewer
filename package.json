@@ -49,7 +49,7 @@
         "@babel/preset-typescript": "^7.23.3",
         "@types/jest": "^27.0.1",
         "@types/lodash": "^4.14.175",
-        "@types/react": "^16.14.3",
+        "@types/react": "^18.2.46",
         "@types/three": "^0.137.0",
         "@typescript-eslint/eslint-plugin": "~4.29.0",
         "@typescript-eslint/parser": "~4.29.0",
@@ -79,8 +79,8 @@
         "postcss-cli": "^8.3.1",
         "postcss-preset-env": "^6.7.0",
         "prettier": "^2.2.1",
-        "react": "^16.9.0",
-        "react-dom": "^16.9.0",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
         "regenerator-runtime": "^0.13.7",
         "rimraf": "~2.6",
         "ts-jest": "27.1",
@@ -91,8 +91,8 @@
         "webpack-dev-server": "^4.5.0"
     },
     "peerDependencies": {
-        "react": "^16.9.0",
-        "react-dom": "^16.9.0"
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0"
     },
     "dependencies": {
         "@babel/plugin-transform-runtime": "^7.23.6",
@@ -103,6 +103,7 @@
         "@fortawesome/react-fontawesome": "^0.1.14",
         "@tweakpane/core": "^1.0.8",
         "@tweakpane/plugin-essentials": "^0.1.4",
+        "@types/react-dom": "^18.2.18",
         "comlink": "^4.3.1",
         "detect-collisions": "^9.2.2",
         "js-logger": "^1.6.1",
