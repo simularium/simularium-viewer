@@ -49,7 +49,7 @@ import ConversionForm from "./ConversionForm";
 import MetaballSimulator from "./MetaballSimulator";
 import { TrajectoryType } from "../src/constants";
 
-let playbackFile = "TEST_BINDING"; //"medyan_paper_M:A_0.675.simularium";
+let playbackFile = "TEST_LIVEMODE_API";
 let queryStringFile = "";
 const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.has("file")) {
@@ -562,9 +562,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             simulariumController.changeFile(
                 {
                     clientSimulator: new BindingSimulator([
-                        { id: 0, count: 30, radius: 0.75, partners: [1, 2] },
-                        { id: 1, count: 300, radius: 0.1, partners: [0], kOn: 0.1, kOff: 0.5},
-                        // { id: 2, count: 80, radius: 1.5, partners: [0], kOn: 0.1, kOff: 0.1},
+                        { id: 0, count: 30, radius: 3, partners: [1, 2] },
+                        { id: 1, count: 300, radius: 1, partners: [0], kOn: 0.1, kOff: 0.5},
                     ]),
                 },
                 playbackFile
