@@ -350,6 +350,7 @@ export default class BindingSimulator implements IClientSimulatorImpl {
                 geometry: {
                     color: "#81dbe6",
                     displayType: GeometryDisplayType.SPHERE,
+                    url: "",
                 },
             };
         }

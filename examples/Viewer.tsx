@@ -49,7 +49,7 @@ import ConversionForm from "./ConversionForm";
 import MetaballSimulator from "./MetaballSimulator";
 import { TrajectoryType } from "../src/constants";
 
-let playbackFile = "TEST_LIVEMODE_API";
+let playbackFile = "TEST_BINDING";
 let queryStringFile = "";
 const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.has("file")) {
@@ -563,7 +563,22 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 {
                     clientSimulator: new BindingSimulator([
                         { id: 0, count: 30, radius: 3, partners: [1, 2] },
-                        { id: 1, count: 300, radius: 1, partners: [0], kOn: 0.1, kOff: 0.5},
+                        {
+                            id: 1,
+                            count: 300,
+                            radius: 1,
+                            partners: [0],
+                            kOn: 0.1,
+                            kOff: 0.5,
+                        },
+                        {
+                            id: 2,
+                            count: 300,
+                            radius: 1,
+                            partners: [0],
+                            kOn: 0.1,
+                            kOff: 0.5,
+                        },
                     ]),
                 },
                 playbackFile
