@@ -45,7 +45,9 @@ var VisData = /*#__PURE__*/function () {
     key: "setupWebWorker",
     value: function setupWebWorker() {
       var _this = this;
-      this.webWorker = new Worker(new URL("../visGeometry/workers/visDataWorker", import.meta.url));
+      this.webWorker = new Worker(new URL("../visGeometry/workers/visDataWorker", import.meta.url), {
+        type: "module"
+      });
 
       // event.data is of type ParsedBundle
       this.webWorker.onmessage = function (event) {

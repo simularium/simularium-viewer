@@ -1,6 +1,7 @@
 import { ILogger } from "js-logger";
 import { FrontEndError } from "./FrontEndError";
-import { WebsocketClient, MessageEventLike, NetMessage, ErrorMessage } from "./WebsocketClient";
+import { WebsocketClient, MessageEventLike } from "./WebsocketClient";
+import type { NetMessage, ErrorMessage } from "./WebsocketClient";
 import { ISimulator } from "./ISimulator";
 import { TrajectoryFileInfoV2, VisDataMessage } from "./types";
 import { TrajectoryType } from "../constants";

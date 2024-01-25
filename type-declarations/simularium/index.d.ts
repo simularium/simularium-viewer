@@ -1,4 +1,5 @@
 export type { NetConnectionParams } from "./WebsocketClient";
+export type { IClientSimulatorImpl } from "./localSimulators/IClientSimulatorImpl";
 export type { VisDataMessage, VisDataFrame, TrajectoryFileInfo, EncodedTypeMapping, SimulariumFileFormat, } from "./types";
 export type { SelectionStateInfo, UIDisplayData, SelectionEntry, ColorChange, } from "./SelectionInterface";
 export { ErrorLevel, FrontEndError } from "./FrontEndError";
@@ -8,3 +9,5 @@ export { VisData } from "./VisData";
 export { ThreadUtil } from "./ThreadUtil";
 export { SelectionInterface } from "./SelectionInterface";
 export { Orchestrator } from "./orchestrator";
+export { default as VisTypes } from "./VisTypes";
+export { ClientMessageEnum } from "./localSimulators/IClientSimulatorImpl";

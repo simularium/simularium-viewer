@@ -6,7 +6,7 @@ import _regeneratorRuntime from "@babel/runtime/regenerator";
 import jsLogger from "js-logger";
 import { v4 as uuidv4 } from "uuid";
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
-import { NetMessageEnum, NetMessage } from "./WebsocketClient";
+import { NetMessageEnum } from "./WebsocketClient";
 var PlayBackType = /*#__PURE__*/function (PlayBackType) {
   PlayBackType[PlayBackType["ID_LIVE_SIMULATION"] = 0] = "ID_LIVE_SIMULATION";
   PlayBackType[PlayBackType["ID_PRE_RUN_SIMULATION"] = 1] = "ID_PRE_RUN_SIMULATION";

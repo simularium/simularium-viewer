@@ -1,4 +1,5 @@
-import { RemoteSimulator, NetConnectionParams, VisData, VisDataMessage, TrajectoryFileInfo } from "../simularium";
+import { VisData, RemoteSimulator } from "../simularium";
+import type { NetConnectionParams, TrajectoryFileInfo, VisDataMessage } from "../simularium";
 import { VisGeometry } from "../visGeometry";
 import { FileReturn, PlotConfig } from "../simularium/types";
 import { IClientSimulatorImpl } from "../simularium/localSimulators/IClientSimulatorImpl";

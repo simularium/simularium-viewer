@@ -360,7 +360,9 @@ var PDBModel = /*#__PURE__*/function () {
           while (1) switch (_context2.prev = _context2.next) {
             case 0:
               // https://webpack.js.org/guides/web-workers/#syntax
-              worker = new Worker(new URL("./workers/KMeansWorker", import.meta.url));
+              worker = new Worker(new URL("./workers/KMeansWorker", import.meta.url), {
+                type: "module"
+              });
               kMeansWorkerClass = Comlink.wrap(worker);
               _context2.next = 4;
               return new kMeansWorkerClass();

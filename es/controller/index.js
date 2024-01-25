@@ -5,7 +5,7 @@ import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import _regeneratorRuntime from "@babel/runtime/regenerator";
 import jsLogger from "js-logger";
 import { isEmpty, noop } from "lodash";
-import { RemoteSimulator, VisData, TrajectoryFileInfo } from "../simularium";
+import { VisData, RemoteSimulator } from "../simularium";
 import { FILE_STATUS_SUCCESS, FILE_STATUS_FAIL } from "../simularium/types";
 import { ClientSimulator } from "../simularium/ClientSimulator";
 import { LocalFileSimulator } from "../simularium/LocalFileSimulator";

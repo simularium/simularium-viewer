@@ -99,11 +99,11 @@ class Viewer extends React.Component {
 
 ## Run an example app locally
 
-1. Run `npm install` to install the dependencies.
+1. Run `npm run install-examples` to install the dependencies.
 2. Run `npm start`
 3. Navigate to `http://localhost:8080/public/` - the `/` at the end is required
 
-This will run the example in `/examples/Viewer.tsx`, demonstrating the viewer's functionality.
+This will run the example in `/examples/src/`, demonstrating the viewer's functionality.
 
 ---
 

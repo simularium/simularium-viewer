@@ -804,8 +804,12 @@ var VisGeometry = /*#__PURE__*/function () {
       if (parent === undefined || parent == null) {
         return;
       }
+      if (parent["data-has-simularium-viewer-canvas"]) {
+        return;
+      }
       this.threejsrenderer = this.createWebGL();
       parent.appendChild(this.threejsrenderer.domElement);
+      parent["data-has-simularium-viewer-canvas"] = true;
       this.setupControls();
       this.resize(Number(parent.dataset.width), Number(parent.dataset.height));
       this.threejsrenderer.setClearColor(this.backgroundColor, 1.0);
