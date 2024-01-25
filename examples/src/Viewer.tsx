@@ -7,6 +7,7 @@ import type {
     SelectionStateInfo,
     SelectionEntry,
 } from "../../type-declarations";
+import { TrajectoryType } from "../../src/constants";
 import SimulariumViewer, {
     SimulariumController,
     RenderStyle,
@@ -16,6 +17,7 @@ import SimulariumViewer, {
     NetConnectionParams,
     TrajectoryFileInfo,
 } from "../../src/index";
+
 /**
  * NOTE: if you are debugging an import/build issue
  * on the front end, you may need to switch to the
@@ -47,7 +49,6 @@ import {
 } from "./api-settings";
 import ConversionForm from "./ConversionForm";
 import MetaballSimulator from "./simulators/MetaballSimulator";
-import { TrajectoryType } from "../../src/constants";
 
 let playbackFile = "TEST_LIVEMODE_API";
 let queryStringFile = "";
