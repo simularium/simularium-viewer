@@ -8,7 +8,11 @@ module.exports = {
         es6: true,
         browser: true,
     },
-    ignorePatterns: ["examples/webpack.dev.js", ".eslintrc.js", "babel.config.js"],
+    ignorePatterns: [
+        "examples/webpack.dev.js",
+        ".eslintrc.js",
+        "babel.config.js",
+    ],
     parser: "@typescript-eslint/parser",
     parserOptions: {
         project: ["./tsconfig.json", "./src/visGeometry/workers/tsconfig.json"],
@@ -24,7 +28,7 @@ module.exports = {
             },
             {
                 selector: "variable",
-                format: ["camelCase", "UPPER_CASE"],
+                format: ["camelCase", "UPPER_CASE", "PascalCase"],
             },
             {
                 selector: "property",
@@ -33,6 +37,10 @@ module.exports = {
             },
             {
                 selector: "typeLike",
+                format: ["PascalCase"],
+            },
+            {
+                selector: "interface",
                 format: ["PascalCase"],
             },
             {
