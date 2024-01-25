@@ -1,14 +1,14 @@
 import {
     IClientSimulatorImpl,
     ClientMessageEnum,
-} from "../src/simularium/localSimulators/IClientSimulatorImpl";
+} from "../../../src/simularium/localSimulators/IClientSimulatorImpl";
 import {
     EncodedTypeMapping,
     TrajectoryFileInfo,
     VisDataMessage,
-} from "../src/simularium/types";
-import VisTypes from "../src/simularium/VisTypes";
-import { GeometryDisplayType } from "../src/visGeometry/types";
+} from "../../../src/simularium/types";
+import VisTypes from "../../../src/simularium/VisTypes";
+import { GeometryDisplayType } from "../../../src/visGeometry/types";
 
 export default class PdbSim implements IClientSimulatorImpl {
     pdbType: string;

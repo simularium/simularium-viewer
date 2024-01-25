@@ -1,4 +1,5 @@
 export type { NetConnectionParams } from "./WebsocketClient";
+export type { IClientSimulatorImpl } from "./localSimulators/IClientSimulatorImpl";
 export type {
     VisDataMessage,
     VisDataFrame,
@@ -6,6 +7,7 @@ export type {
     EncodedTypeMapping,
     SimulariumFileFormat,
 } from "./types";
+
 export type {
     SelectionStateInfo,
     UIDisplayData,
@@ -19,3 +21,5 @@ export { VisData } from "./VisData";
 export { ThreadUtil } from "./ThreadUtil";
 export { SelectionInterface } from "./SelectionInterface";
 export { Orchestrator } from "./orchestrator";
+export { default as VisTypes } from "./VisTypes";
+export { ClientMessageEnum } from "./localSimulators/IClientSimulatorImpl";

@@ -6,7 +6,8 @@ import type {
     UIDisplayData,
     SelectionStateInfo,
     SelectionEntry,
-} from "../type-declarations";
+} from "../../type-declarations";
+import { TrajectoryType } from "../../src/constants";
 import SimulariumViewer, {
     SimulariumController,
     RenderStyle,
@@ -14,8 +15,9 @@ import SimulariumViewer, {
     FrontEndError,
     ErrorLevel,
     NetConnectionParams,
-    TrajectoryFileInfo
-} from "../src/index";
+    TrajectoryFileInfo,
+} from "../../src/index";
+
 /**
  * NOTE: if you are debugging an import/build issue
  * on the front end, you may need to switch to the
@@ -29,13 +31,14 @@ import SimulariumViewer, {
 //     FrontEndError,
 //     ErrorLevel,
 // } from "../es";
-import "../style/style.css";
-import PointSimulator from "./PointSimulator";
-import PointSimulatorLive from "./PointSimulatorLive";
-import PdbSimulator from "./PdbSimulator";
-import SinglePdbSimulator from "./SinglePdbSimulator";
-import CurveSimulator from "./CurveSimulator";
-import SingleCurveSimulator from "./SingleCurveSimulator";
+import "../../style/style.css";
+import PointSimulator from "./simulators/PointSimulator";
+import BindingSimulator from "./simulators/BindingSimulator2D";
+import PointSimulatorLive from "./simulators/PointSimulatorLive";
+import PdbSimulator from "./simulators/PdbSimulator";
+import SinglePdbSimulator from "./simulators/SinglePdbSimulator";
+import CurveSimulator from "./simulators/CurveSimulator";
+import SingleCurveSimulator from "./simulators/SingleCurveSimulator";
 import ColorPicker from "./ColorPicker";
 import {
     SMOLDYN_TEMPLATE,
@@ -45,10 +48,9 @@ import {
     UI_TEMPLATE_URL_ROOT,
 } from "./api-settings";
 import ConversionForm from "./ConversionForm";
-import MetaballSimulator from "./MetaballSimulator";
-import { TrajectoryType } from "../src/constants";
+import MetaballSimulator from "./simulators/MetaballSimulator";
 
-let playbackFile = "TEST_LIVEMODE_API"; //"medyan_paper_M:A_0.675.simularium";
+let playbackFile = "TEST_LIVEMODE_API";
 let queryStringFile = "";
 const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.has("file")) {
@@ -222,7 +224,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             viewerContainer.addEventListener("drop", this.onDrop);
             viewerContainer.addEventListener("dragover", this.onDragOver);
         }
-        this.configureAndLoad()
+        this.configureAndLoad();
     }
 
     public onDragOver = (e: Event): void => {
@@ -266,7 +268,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 file.name.includes(".simularium")
             );
             Promise.all(
-                filesArr.map((element, index) => {
+                filesArr.map((element, index): Promise<string | ISimulariumFile> => {
                     if (index !== simulariumFileIndex) {
                         // is async call
                         return element.text();
@@ -275,7 +277,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     }
                 })
             )
-                .then((parsedFiles) => {
+                .then((parsedFiles : (ISimulariumFile | string)[]) => {
                     const simulariumFile = parsedFiles[
                         simulariumFileIndex
                     ] as ISimulariumFile;
@@ -298,7 +300,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 .catch((error) => {
                     this.onError(error);
                 });
-        } catch (error) {
+        } catch (error: any) {
             return this.onError(new FrontEndError(error.message));
         }
     };
@@ -553,6 +555,32 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             simulariumController.changeFile(
                 {
                     clientSimulator: new PointSimulator(8000, 4),
+                },
+                playbackFile
+            );
+        } else if (playbackFile === "TEST_BINDING") {
+            simulariumController.setCameraType(true);
+            simulariumController.changeFile(
+                {
+                    clientSimulator: new BindingSimulator([
+                        { id: 0, count: 30, radius: 3, partners: [1, 2] },
+                        {
+                            id: 1,
+                            count: 300,
+                            radius: 1,
+                            partners: [0],
+                            kOn: 0.1,
+                            kOff: 0.5,
+                        },
+                        {
+                            id: 2,
+                            count: 300,
+                            radius: 1,
+                            partners: [0],
+                            kOn: 0.1,
+                            kOff: 0.5,
+                        },
+                    ]),
                 },
                 playbackFile
             );

@@ -237,7 +237,8 @@ class VisData {
 
     private setupWebWorker() {
         this.webWorker = new Worker(
-            new URL("../visGeometry/workers/visDataWorker", import.meta.url)
+            new URL("../visGeometry/workers/visDataWorker", import.meta.url),
+            { type: "module" }
         );
 
         // event.data is of type ParsedBundle

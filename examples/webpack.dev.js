@@ -5,7 +5,7 @@ const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const webpack = require('webpack');
 
 module.exports = {
-    entry: "./examples/index.tsx",
+    entry: "./src/index.tsx",
     output: {
         filename: "index.js",
         path: path.resolve(__dirname, "public"),
@@ -14,7 +14,7 @@ module.exports = {
     devtool: "source-map",
     plugins: [
         new HtmlWebpackPlugin({
-            template: "./examples/index.html",
+            template: "./src/index.html",
         }),
         new MiniCssExtractPlugin({
             filename: "style.[contenthash].css",
@@ -22,7 +22,7 @@ module.exports = {
         new CopyWebpackPlugin({
             patterns: [
                 {
-                    from: "examples/assets",
+                    from: "./src/assets",
                     to: path.resolve(__dirname, "public/assets"),
                 },
             ],
@@ -52,7 +52,6 @@ module.exports = {
             },
             {
                 test: /\.css/,
-                include: [path.resolve(__dirname, "style")],
                 use: [
                     {
                         loader: MiniCssExtractPlugin.loader,
