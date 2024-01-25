@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { SelectionEntry } from "../type-declarations/simularium/SelectionInterface";
+import { SelectionEntry } from "../../type-declarations/simularium/SelectionInterface";
 
 const ColorPicker = ({
     uiDisplayData,

@@ -1,7 +1,7 @@
 {
   "extends": "./tsconfig.base",
   "include": [
-    "src/**/*"
+    "src/**/*", "examples/**/*.ts", "examples/**/*.tsx"
   ],
   "exclude": [
     "src/visGeometry/workers/**/*"

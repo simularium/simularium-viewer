@@ -6,7 +6,7 @@ import type {
     UIDisplayData,
     SelectionStateInfo,
     SelectionEntry,
-} from "../type-declarations";
+} from "../../type-declarations";
 import SimulariumViewer, {
     SimulariumController,
     RenderStyle,
@@ -15,7 +15,7 @@ import SimulariumViewer, {
     ErrorLevel,
     NetConnectionParams,
     TrajectoryFileInfo,
-} from "../src/index";
+} from "../../src/index";
 /**
  * NOTE: if you are debugging an import/build issue
  * on the front end, you may need to switch to the
@@ -29,7 +29,7 @@ import SimulariumViewer, {
 //     FrontEndError,
 //     ErrorLevel,
 // } from "../es";
-import "../style/style.css";
+import "../../style/style.css";
 import PointSimulator from "./PointSimulator";
 import BindingSimulator from "./BindingSimulator2D";
 import PointSimulatorLive from "./PointSimulatorLive";
@@ -47,9 +47,9 @@ import {
 } from "./api-settings";
 import ConversionForm from "./ConversionForm";
 import MetaballSimulator from "./MetaballSimulator";
-import { TrajectoryType } from "../src/constants";
+import { TrajectoryType } from "../../src/constants";
 
-let playbackFile = "TEST_BINDING";
+let playbackFile = "TEST_LIVEMODE_API";
 let queryStringFile = "";
 const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.has("file")) {
@@ -299,7 +299,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 .catch((error) => {
                     this.onError(error);
                 });
-        } catch (error) {
+        } catch (error: any) {
             return this.onError(new FrontEndError(error.message));
         }
     };

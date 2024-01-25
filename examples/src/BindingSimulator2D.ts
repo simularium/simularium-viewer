@@ -11,7 +11,7 @@ import {
     VisDataMessage,
     DEFAULT_CAMERA_SPEC,
     VisTypes,
-} from "../src";
+} from "../../src";
 
 class BindingInstance extends Circle {
     id: number;

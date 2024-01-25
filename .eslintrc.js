@@ -8,6 +8,7 @@ module.exports = {
         es6: true,
         browser: true,
     },
+    ignorePatterns: ["examples/webpack.dev.js", ".eslintrc.js", "babel.config.js"],
     parser: "@typescript-eslint/parser",
     parserOptions: {
         project: ["./tsconfig.json", "./src/visGeometry/workers/tsconfig.json"],
