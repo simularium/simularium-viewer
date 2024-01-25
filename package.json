@@ -7,6 +7,7 @@
     "types": "type-declarations",
     "scripts": {
         "start": "npm run build && cd examples && npm run serve-example",
+        "install-examples": "npm install && cd examples && npm install",
         "gh-build": "npm-run-all processCSS build-example",
         "lint": "eslint src --ext .ts,.tsx,.js,.jsx",
         "test": "jest --coverage",
