@@ -1,14 +1,14 @@
 import {
     IClientSimulatorImpl,
     ClientMessageEnum,
-} from "../../src/simularium/localSimulators/IClientSimulatorImpl";
+} from "../../../src/simularium/localSimulators/IClientSimulatorImpl";
 import {
     EncodedTypeMapping,
     TrajectoryFileInfo,
     VisDataMessage,
-} from "../../src/simularium/types";
-import VisTypes from "../../src/simularium/VisTypes";
-import { GeometryDisplayType } from "../../src/visGeometry/types";
+} from "../../../src/simularium/types";
+import VisTypes from "../../../src/simularium/VisTypes";
+import { GeometryDisplayType } from "../../../src/visGeometry/types";
 
 export default class MetaballSimulator implements IClientSimulatorImpl {
     currentFrame: number;
@@ -67,7 +67,7 @@ export default class MetaballSimulator implements IClientSimulatorImpl {
             ]);
             // one agent:
             // make 8 points within a certain box with given radii
-            const subpts = [];
+            const subpts: number[] = [];
             for (let i = 0; i < 8; ++i) {
                 // position
                 // coordinates in object space???

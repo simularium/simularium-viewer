@@ -30,13 +30,13 @@ import SimulariumViewer, {
 //     ErrorLevel,
 // } from "../es";
 import "../../style/style.css";
-import PointSimulator from "./PointSimulator";
-import BindingSimulator from "./BindingSimulator2D";
-import PointSimulatorLive from "./PointSimulatorLive";
-import PdbSimulator from "./PdbSimulator";
-import SinglePdbSimulator from "./SinglePdbSimulator";
-import CurveSimulator from "./CurveSimulator";
-import SingleCurveSimulator from "./SingleCurveSimulator";
+import PointSimulator from "./simulators/PointSimulator";
+import BindingSimulator from "./simulators/BindingSimulator2D";
+import PointSimulatorLive from "./simulators/PointSimulatorLive";
+import PdbSimulator from "./simulators/PdbSimulator";
+import SinglePdbSimulator from "./simulators/SinglePdbSimulator";
+import CurveSimulator from "./simulators/CurveSimulator";
+import SingleCurveSimulator from "./simulators/SingleCurveSimulator";
 import ColorPicker from "./ColorPicker";
 import {
     SMOLDYN_TEMPLATE,
@@ -46,7 +46,7 @@ import {
     UI_TEMPLATE_URL_ROOT,
 } from "./api-settings";
 import ConversionForm from "./ConversionForm";
-import MetaballSimulator from "./MetaballSimulator";
+import MetaballSimulator from "./simulators/MetaballSimulator";
 import { TrajectoryType } from "../../src/constants";
 
 let playbackFile = "TEST_LIVEMODE_API";
@@ -267,7 +267,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 file.name.includes(".simularium")
             );
             Promise.all(
-                filesArr.map((element, index) => {
+                filesArr.map((element, index): Promise<string | ISimulariumFile> => {
                     if (index !== simulariumFileIndex) {
                         // is async call
                         return element.text();
@@ -276,7 +276,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     }
                 })
             )
-                .then((parsedFiles) => {
+                .then((parsedFiles : (ISimulariumFile | string)[]) => {
                     const simulariumFile = parsedFiles[
                         simulariumFileIndex
                     ] as ISimulariumFile;
