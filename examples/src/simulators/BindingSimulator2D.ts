@@ -1,6 +1,6 @@
 import { System, Circle, Response } from "detect-collisions";
 import { random } from "lodash";
-import { Vector } from "sat";
+import { Vector3 } from "three";
 
 import {
     IClientSimulatorImpl,
@@ -189,7 +189,7 @@ export default class BindingSimulator implements IClientSimulatorImpl {
             for (let j = 0; j < agent.count; ++j) {
                 const position: number[] = this.getRandomPointOnSide(i);
                 const circle = new Circle(
-                    new Vector(...position),
+                    new Vector3(...position),
                     agent.radius
                 );
                 const instance = new BindingInstance(
@@ -217,8 +217,8 @@ export default class BindingSimulator implements IClientSimulatorImpl {
         points.forEach((point, index) => {
             const nextPoint = points[(index + 1) % points.length];
             this.system.createLine(
-                new Vector(point[0], point[1]),
-                new Vector(nextPoint[0], nextPoint[1]),
+                new Vector3(point[0], point[1]),
+                new Vector3(nextPoint[0], nextPoint[1]),
                 { isStatic: true }
             );
         })
