@@ -86,8 +86,8 @@ class BindingInstance extends Circle {
         }
         // D(r)≈(4.10901922×10^−3)/r nm^2/s
         const diffusionCoefficient = 4 * 10**-3 / this.r;
-        
-        const amplitude = Math.sqrt(2 * diffusionCoefficient);
+        const timeFactor = 30;
+        const amplitude = Math.sqrt(2 * diffusionCoefficient) * timeFactor;
         let xStep = random(-amplitude, amplitude, true);
         let yStep = random(-amplitude, amplitude, true);
         let posX = this.pos.x + xStep;
