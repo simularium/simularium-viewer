@@ -5,23 +5,42 @@ import type {
     ISimulariumFile,
     UIDisplayData,
     SelectionStateInfo,
-} from "../type-declarations";
+    SelectionEntry,
+} from "../../type-declarations";
+import { TrajectoryType } from "../../src/constants";
 import SimulariumViewer, {
     SimulariumController,
     RenderStyle,
-    ErrorLevel,
-    FrontEndError,
     loadSimulariumFile,
-} from "../es";
-import "../style/style.css";
+    FrontEndError,
+    ErrorLevel,
+    NetConnectionParams,
+    TrajectoryFileInfo,
+} from "../../src/index";
 
-import PointSimulator from "./PointSimulator";
-import PointSimulatorLive from "./PointSimulatorLive";
-import PdbSimulator from "./PdbSimulator";
-import SinglePdbSimulator from "./SinglePdbSimulator";
-import CurveSimulator from "./CurveSimulator";
-import SingleCurveSimulator from "./SingleCurveSimulator";
+/**
+ * NOTE: if you are debugging an import/build issue
+ * on the front end, you may need to switch to the
+ * following import statements to reproduce the issue 
+ * here. 
+ */
+// import SimulariumViewer, {
+//     SimulariumController,
+//     RenderStyle,
+//     loadSimulariumFile,
+//     FrontEndError,
+//     ErrorLevel,
+// } from "../es";
+import "../../style/style.css";
+import PointSimulator from "./simulators/PointSimulator";
+import BindingSimulator from "./simulators/BindingSimulator2D";
+import PointSimulatorLive from "./simulators/PointSimulatorLive";
+import PdbSimulator from "./simulators/PdbSimulator";
+import SinglePdbSimulator from "./simulators/SinglePdbSimulator";
+import CurveSimulator from "./simulators/CurveSimulator";
+import SingleCurveSimulator from "./simulators/SingleCurveSimulator";
 import ColorPicker from "./ColorPicker";
+import RecordMovieComponent from "./RecordMovieComponent";
 import {
     SMOLDYN_TEMPLATE,
     UI_BASE_TYPES,
@@ -30,12 +49,9 @@ import {
     UI_TEMPLATE_URL_ROOT,
 } from "./api-settings";
 import ConversionForm from "./ConversionForm";
-import MetaballSimulator from "./MetaballSimulator";
-import { TrajectoryType } from "../src/constants";
-import { NetConnectionParams } from "../src/simularium";
-import RecordMovieComponent from "./RecordMovieComponent";
+import MetaballSimulator from "./simulators/MetaballSimulator";
 
-let playbackFile = "TEST_LIVEMODE_API"; //"medyan_paper_M:A_0.675.simularium";
+let playbackFile = "TEST_LIVEMODE_API";
 let queryStringFile = "";
 const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.has("file")) {
@@ -88,7 +104,7 @@ interface ViewerState {
         name: string;
         data: ISimulariumFile | null;
     } | null;
-    trajectoryTitle: string;
+    serverHealthy: boolean;
 }
 
 interface BaseType {
@@ -120,7 +136,9 @@ interface InputParams {
     useOctopus: boolean;
 }
 
-const simulariumController = new SimulariumController({});
+const simulariumController = new SimulariumController(
+    {}
+);
 
 let currentFrame = 0;
 let currentTime = 0;
@@ -143,15 +161,14 @@ const initialState: ViewerState = {
     selectionStateInfo: {
         highlightedAgents: [],
         hiddenAgents: [],
-        colorChanges: [{ agents: [], color: "" }],
+        colorChange: null,
     },
     filePending: null,
     simulariumFile: null,
-    isRecording: false,
+    serverHealthy: false,
+        isRecording: false,
     trajectoryTitle: ""
 };
-
-type FrontEndError = typeof FrontEndError;
 
 class Viewer extends React.Component<InputParams, ViewerState> {
     private viewerRef: React.RefObject<SimulariumViewer>;
@@ -168,6 +185,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         this.loadFile = this.loadFile.bind(this);
         this.clearPendingFile = this.clearPendingFile.bind(this);
         this.convertFile = this.convertFile.bind(this);
+        this.onHealthCheckResponse = this.onHealthCheckResponse.bind(this);
         this.state = initialState;
 
         if (props.localBackendServer) {
@@ -175,14 +193,14 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 serverIp: "0.0.0.0",
                 serverPort: 8765,
                 useOctopus: props.useOctopus,
-                secureConnection: false,
+                secureConnection: props.useOctopus,
             };
         } else if (props.useOctopus) {
             this.netConnectionSettings = {
                 serverIp: "18.223.108.15",
                 serverPort: 8765,
-                useOctopus: props.useOctopus,
-                secureConnection: false,
+                useOctopus: true,
+                secureConnection: true,
             };
         } else {
             this.netConnectionSettings = {
@@ -209,6 +227,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             viewerContainer.addEventListener("drop", this.onDrop);
             viewerContainer.addEventListener("dragover", this.onDragOver);
         }
+        this.configureAndLoad();
     }
 
     public onDragOver = (e: Event): void => {
@@ -252,7 +271,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 file.name.includes(".simularium")
             );
             Promise.all(
-                filesArr.map((element, index) => {
+                filesArr.map((element, index): Promise<string | ISimulariumFile> => {
                     if (index !== simulariumFileIndex) {
                         // is async call
                         return element.text();
@@ -261,7 +280,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     }
                 })
             )
-                .then((parsedFiles) => {
+                .then((parsedFiles : (ISimulariumFile | string)[]) => {
                     const simulariumFile = parsedFiles[
                         simulariumFileIndex
                     ] as ISimulariumFile;
@@ -275,8 +294,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     const geoAssets = filesArr.reduce((acc, cur, index) => {
                         if (index !== simulariumFileIndex) {
                             acc[cur.name] = parsedFiles[index];
-                            return acc;
                         }
+                        return acc;
                     }, {});
                     const fileName = filesArr[simulariumFileIndex].name;
                     this.loadFile(simulariumFile, fileName, geoAssets);
@@ -284,7 +303,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 .catch((error) => {
                     this.onError(error);
                 });
-        } catch (error) {
+        } catch (error: any) {
             return this.onError(new FrontEndError(error.message));
         }
     };
@@ -345,6 +364,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         return typeMap;
     }
 
+    public onHealthCheckResponse() {
+        this.setState({ serverHealthy: true });
+    }
+
     public async loadSmoldynFile() {
         const smoldynTemplate = await fetch(
             `${UI_TEMPLATE_DOWNLOAD_URL_ROOT}/${SMOLDYN_TEMPLATE}`
@@ -357,7 +380,11 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 template: smoldynTemplate.smoldyn_data,
                 templateData: templateMap,
             },
+            serverHealthy: false,
         });
+        simulariumController.checkServerHealth(
+            this.onHealthCheckResponse, this.netConnectionSettings
+        );
     }
 
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
@@ -403,7 +430,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public turnAgentsOnOff(nameToToggle: string) {
         let currentHiddenAgents = this.state.selectionStateInfo.hiddenAgents;
-        let nextHiddenAgents = [];
+        let nextHiddenAgents: SelectionEntry[] = [];
         if (currentHiddenAgents.some((a) => a.name === nameToToggle)) {
             nextHiddenAgents = currentHiddenAgents.filter(
                 (hiddenAgent) => hiddenAgent.name !== nameToToggle
@@ -426,7 +453,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     public turnAgentHighlightsOnOff(nameToToggle: string) {
         let currentHighlightedAgents =
             this.state.selectionStateInfo.highlightedAgents;
-        let nextHighlightedAgents = [];
+        let nextHighlightedAgents: SelectionEntry[] = [];
         if (currentHighlightedAgents.some((a) => a.name === nameToToggle)) {
             nextHighlightedAgents = currentHighlightedAgents.filter(
                 (hiddenAgent) => hiddenAgent.name !== nameToToggle
@@ -446,7 +473,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         });
     }
 
-    public handleTrajectoryInfo(data): void {
+    public handleTrajectoryInfo(data: TrajectoryFileInfo): void {
         console.log("Trajectory info arrived", data);
         // NOTE: Currently incorrectly assumes initial time of 0
         const totalDuration = (data.totalSteps - 1) * data.timeStepSize;
@@ -455,7 +482,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             timeStep: data.timeStepSize,
             currentFrame: 0,
             currentTime: 0,
-            trajectoryTitle: data.trajectoryTitle
+                        trajectoryTitle: data.trajectoryTitle
         });
     }
 
@@ -535,6 +562,32 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 },
                 playbackFile
             );
+        } else if (playbackFile === "TEST_BINDING") {
+            simulariumController.setCameraType(true);
+            simulariumController.changeFile(
+                {
+                    clientSimulator: new BindingSimulator([
+                        { id: 0, count: 30, radius: 3, partners: [1, 2] },
+                        {
+                            id: 1,
+                            count: 300,
+                            radius: 1,
+                            partners: [0],
+                            kOn: 0.1,
+                            kOff: 0.5,
+                        },
+                        {
+                            id: 2,
+                            count: 300,
+                            radius: 1,
+                            partners: [0],
+                            kOn: 0.1,
+                            kOff: 0.5,
+                        },
+                    ]),
+                },
+                playbackFile
+            );
         } else if (playbackFile === "TEST_FIBERS") {
             simulariumController.changeFile(
                 {
@@ -609,14 +662,14 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         this.setState({ agentColors });
     };
 
-    public setColorSelectionInfo = (colorChanges) => {
+    public setColorSelectionInfo = (colorChange) => {
         this.setState({
             ...this.state,
             selectionStateInfo: {
                 hiddenAgents: this.state.selectionStateInfo.hiddenAgents,
                 highlightedAgents:
                     this.state.selectionStateInfo.highlightedAgents,
-                colorChanges: colorChanges,
+                colorChange: colorChange,
             },
         });
     };
@@ -630,6 +683,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         } 
     }
 
+    
+
     public render(): JSX.Element {
         if (this.state.filePending) {
             const fileType = this.state.filePending.type;
@@ -638,6 +693,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     {...this.state.filePending}
                     submitFile={(obj) => this.convertFile(obj, fileType)}
                     onReturned={this.clearPendingFile}
+                    submitDisabled={!this.state.serverHealthy}
                 />
             );
         }
@@ -645,7 +701,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             <div className="container" style={{ height: "90%", width: "75%" }}>
                 <select
                     onChange={(event) => {
+                        simulariumController.pause();
                         playbackFile = event.target.value;
+                        this.configureAndLoad();
                     }}
                     defaultValue={playbackFile}
                 >
@@ -697,10 +755,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     <option value="TEST_FIBERS">TEST FIBERS</option>
                     <option value="TEST_POINTS">TEST POINTS</option>
                     <option value="TEST_METABALLS">TEST METABALLS</option>
+                    <option value="TEST_BINDING">TEST BINDING</option>
                 </select>
-                <button onClick={() => this.configureAndLoad()}>
-                    Load model
-                </button>
+
                 <button onClick={() => this.translateAgent()}>
                     TranslateAgent
                 </button>

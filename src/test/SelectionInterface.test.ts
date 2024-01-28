@@ -23,12 +23,7 @@ const idMapping = {
 };
 
 const color = "";
-const initialColorChanges = [
-    {
-        agents: [],
-        color,
-    },
-];
+const initialColorChanges = null;
 
 describe("SelectionInterface module", () => {
     describe("decode", () => {
@@ -237,7 +232,7 @@ describe("SelectionInterface module", () => {
                     { name: "D", tags: [] },
                 ],
                 hiddenAgents: [],
-                colorChanges: initialColorChanges,
+                colorChange: initialColorChanges,
             };
             const ids = si.getHighlightedIds(selectionStateHighlight);
             const allAs = [0, 1, 2, 3];
@@ -257,7 +252,7 @@ describe("SelectionInterface module", () => {
                     { name: "D", tags: [""] },
                 ],
                 hiddenAgents: [],
-                colorChanges: initialColorChanges,
+                colorChange: initialColorChanges,
             };
             const ids = si.getHighlightedIds(selectionStateHighlight);
 
@@ -274,7 +269,7 @@ describe("SelectionInterface module", () => {
                     { name: "E", tags: ["t1000"] },
                 ],
                 hiddenAgents: [],
-                colorChanges: initialColorChanges,
+                colorChange: initialColorChanges,
             };
             const ids = si.getHighlightedIds(selectionStateHighlight);
 
@@ -287,7 +282,7 @@ describe("SelectionInterface module", () => {
             const selectionStateHighlight = {
                 highlightedAgents: [{ name: "E", tags: [""] }],
                 hiddenAgents: [],
-                colorChanges: initialColorChanges,
+                colorChange: initialColorChanges,
             };
             const ids = si.getHighlightedIds(selectionStateHighlight);
 
@@ -305,7 +300,7 @@ describe("SelectionInterface module", () => {
                     { name: "A", tags: [] },
                     { name: "C", tags: [] },
                 ],
-                colorChanges: initialColorChanges,
+                colorChange: initialColorChanges,
             };
             const ids = si.getHiddenIds(selectionStateHide);
 
@@ -321,7 +316,7 @@ describe("SelectionInterface module", () => {
                     { name: "A", tags: ["t1", "t2"] },
                     { name: "B", tags: ["t1"] },
                 ],
-                colorChanges: initialColorChanges,
+                colorChange: initialColorChanges,
             };
             const ids = si.getHiddenIds(selectionStateHide);
             expect(ids).toEqual([1, 2, 3, 5, 7]);
@@ -337,7 +332,7 @@ describe("SelectionInterface module", () => {
                     { name: "A", tags: [""] },
                     { name: "C", tags: ["", "t1", "t2"] },
                 ],
-                colorChanges: initialColorChanges,
+                colorChange: initialColorChanges,
             };
             const ids = si.getHiddenIds(selectionStateHide);
 
@@ -416,25 +411,6 @@ describe("SelectionInterface module", () => {
             expect(uiDisplayDataForD?.displayStates).not.toContainEqual(
                 unmodifiedDisplayState
             );
-        });
-    });
-
-    describe("updateAgentColors", () => {
-        test("it will update the entries with a new color", () => {
-            const agentIds = [0];
-            const newColor = "#111111";
-            const colorChanges = {
-                agents: [{ name: "A", tags: [] }],
-                color: newColor,
-            };
-            const si = new SelectionInterface();
-            si.parse(idMapping);
-            const uiDisplayData = si.getUIDisplayData();
-            const oldColors = si.getColorsForName("A");
-            expect(oldColors).not.toContain(newColor);
-            si.updateAgentColors(agentIds, colorChanges, uiDisplayData);
-            const colors = si.getColorsForName("A");
-            expect(colors).toContain(newColor);
         });
     });
 
@@ -539,11 +515,11 @@ describe("SelectionInterface module", () => {
             expect(uiDisplayDataForE?.color).toEqual("");
             si.setInitialAgentColors(uiDisplayData, colorList, setColorForIds);
             expect(uiDisplayDataForE?.color).toEqual("#00");
-            expect(setColorForIds).toHaveBeenCalledWith([13], 0);
+            expect(setColorForIds).toHaveBeenCalledWith([13], "#00");
         });
         test("If no user colors are provided all the ids for an entry will get a default color", () => {
             si.setInitialAgentColors(uiDisplayData, colorList, setColorForIds);
-            expect(setColorForIds).toHaveBeenCalledWith([13], 0);
+            expect(setColorForIds).toHaveBeenCalledWith([13], "#00");
         });
         test("if all the colors are the same, the parent entry will also get that color, even if no unmodified color set", () => {
             si.setInitialAgentColors(uiDisplayData, colorList, setColorForIds);
@@ -556,12 +532,11 @@ describe("SelectionInterface module", () => {
         test("If user colors are provided each id will be set with the new color", () => {
             si.setInitialAgentColors(uiDisplayData, colorList, setColorForIds);
             // the first new user color will be appended to the end of the list
-            const indexOfColorForA = defaultColorListLength;
             // these are all the agent A ids, each should get the first new color assigned
-            expect(setColorForIds).toHaveBeenCalledWith([0], indexOfColorForA);
-            expect(setColorForIds).toHaveBeenCalledWith([1], indexOfColorForA);
-            expect(setColorForIds).toHaveBeenCalledWith([2], indexOfColorForA);
-            expect(setColorForIds).toHaveBeenCalledWith([3], indexOfColorForA);
+            expect(setColorForIds).toHaveBeenCalledWith([0], agentColors.A);
+            expect(setColorForIds).toHaveBeenCalledWith([1], agentColors.A);
+            expect(setColorForIds).toHaveBeenCalledWith([2], agentColors.A);
+            expect(setColorForIds).toHaveBeenCalledWith([3], agentColors.A);
         });
     });
 });

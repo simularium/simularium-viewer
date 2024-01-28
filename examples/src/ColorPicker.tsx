@@ -1,5 +1,16 @@
 import React, { useState } from "react";
-import { SelectionEntry } from "../type-declarations/simularium/SelectionInterface";
+import { SelectionEntry, UIDisplayData } from "../../src";
+
+type ColorPickerProps = {
+    uiDisplayData: UIDisplayData;
+    particleTypeNames: string[];
+    agentColors: string[] | number[];
+    setColorSelectionInfo: (data: {
+        agent: SelectionEntry;
+        color: string;
+    }) => void;
+    updateAgentColorArray: (color: string) => void;
+};
 
 const ColorPicker = ({
     uiDisplayData,
@@ -7,7 +18,7 @@ const ColorPicker = ({
     agentColors,
     setColorSelectionInfo,
     updateAgentColorArray,
-}) => {
+}: ColorPickerProps): JSX.Element => {
     const [subAgents, setSubAgents] = useState([{ name: "", id: "" }]);
     const [selectedAgent, setSelectedAgent] = useState("");
     const [selectedColor, setSelectedColor] = useState("");
@@ -43,16 +54,14 @@ const ColorPicker = ({
             if (selectedSubagent === "<unmodified>") {
                 subAgent = [""];
             }
-            const entry: SelectionEntry[] = [
-                {
-                    name: selectedAgent,
-                    tags: subAgent,
-                },
-            ];
-            setColorSelectionInfo([{
-                agents: entry,
+            const entry: SelectionEntry = {
+                name: selectedAgent,
+                tags: subAgent,
+            };
+            setColorSelectionInfo({
+                agent: entry,
                 color: selectedColor,
-            }]);
+            });
         }
     };
 
@@ -71,7 +80,7 @@ const ColorPicker = ({
             <span>Color change agent selections:</span>
             <select id="agentSelect" onChange={handleAgentSelection}>
                 <option value=""> Select Agent</option>
-                {particleTypeNames.map((name) => (
+                {particleTypeNames.map((name: string) => (
                     <option key={name} value={name}>
                         {name}
                     </option>
@@ -110,8 +119,8 @@ const ColorPicker = ({
                 type="text"
                 placeholder="add Hex Color"
                 onChange={(event) => {
-                    console.log(event.target.value)
-                    setColorToAppend(event.target.value)}}
+                    setColorToAppend(event.target.value);
+                }}
             ></input>
             <button onClick={() => addColorToColorArray(colorToAppend)}>
                 Add color to color array

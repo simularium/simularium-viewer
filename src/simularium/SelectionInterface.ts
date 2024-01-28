@@ -1,6 +1,6 @@
 import { filter, find, uniq } from "lodash";
 import { EncodedTypeMapping } from "./types";
-import { convertColorNumberToString } from "../visGeometry/color-utils";
+import { convertColorNumberToString } from "../visGeometry/ColorHandler";
 
 // An individual entry parsed from an encoded name
 // The encoded names can be just a name or a name plus a
@@ -17,15 +17,15 @@ export interface SelectionEntry {
     tags: string[];
 }
 
-export interface ColorChanges {
-    agents: SelectionEntry[];
+export interface ColorChange {
+    agent: SelectionEntry;
     color: string;
 }
 
 export interface SelectionStateInfo {
     highlightedAgents: SelectionEntry[];
     hiddenAgents: SelectionEntry[];
-    colorChanges: ColorChanges[];
+    colorChange: ColorChange | null;
 }
 
 interface DisplayStateEntry {
@@ -284,29 +284,10 @@ class SelectionInterface {
         });
     }
 
-    public updateAgentColors(
-        agentIds: number[],
-        colorChanges: ColorChanges,
-        uiDisplayData: UIDisplayData
-    ): void {
-        colorChanges.agents.forEach((agentToUpdate) => {
-            for (const group of uiDisplayData) {
-                if (group.name === agentToUpdate.name) {
-                    this.updateUiDataColor(
-                        group.name,
-                        agentIds,
-                        colorChanges.color
-                    );
-                    break;
-                }
-            }
-        });
-    }
-
     public setInitialAgentColors(
         uiDisplayData: UIDisplayData,
         colors: (string | number)[],
-        setColorForIds: (ids: number[], colorIndex: number) => void
+        setColorForIds: (ids: number[], color: string | number) => void
     ): (string | number)[] {
         let defaultColorIndex = 0;
         uiDisplayData.forEach((group) => {
@@ -322,7 +303,7 @@ class SelectionInterface {
             if (!hasNewColors) {
                 // if no colors have been set by the user for this name,
                 // just give all states of this agent name the same color
-                setColorForIds(ids, defaultColorIndex);
+                setColorForIds(ids, colors[defaultColorIndex]);
                 this.updateUiDataColor(
                     group.name,
                     ids,
@@ -360,7 +341,7 @@ class SelectionInterface {
                     } else {
                         groupColorIndex = -1;
                     }
-                    setColorForIds([ids[index]], agentColorIndex);
+                    setColorForIds([ids[index]], colors[agentColorIndex]);
                 });
             }
             if (groupColorIndex > -1) {

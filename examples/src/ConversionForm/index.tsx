@@ -6,6 +6,7 @@ interface InputFormProps {
     template: { [key: string]: any };
     templateData: { [key: string]: any };
     type: string;
+    submitDisabled: boolean;
     submitFile: (data) => void;
     onReturned: () => void;
 }
@@ -59,7 +60,7 @@ class InputForm extends React.Component<InputFormProps> {
     }
 
     render() {
-        const { template, templateData, type } = this.props;
+        const { template, templateData, type, submitDisabled } = this.props;
         return (
             <div>
                 <h2>Enter display data for your {type} trajectory</h2>
@@ -78,7 +79,7 @@ class InputForm extends React.Component<InputFormProps> {
                         );
                     }
                 })}
-                <button type="submit" onClick={this.handleSubmit}>
+                <button type="submit" onClick={this.handleSubmit} disabled={submitDisabled}>
                     Submit
                 </button>
             </div>

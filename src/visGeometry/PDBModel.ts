@@ -416,7 +416,8 @@ class PDBModel {
     private async processPdbLod(n, sizes, allData) {
         // https://webpack.js.org/guides/web-workers/#syntax
         const worker = new Worker(
-            new URL("./workers/KMeansWorker", import.meta.url)
+            new URL("./workers/KMeansWorker", import.meta.url),
+            { type: "module" }
         );
         const kMeansWorkerClass = Comlink.wrap<KMeansWorkerType>(worker);
         const workerobj = await new kMeansWorkerClass();

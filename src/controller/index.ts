@@ -1,11 +1,10 @@
 import jsLogger from "js-logger";
 import { isEmpty, noop } from "lodash";
-import {
-    RemoteSimulator,
+import { VisData, RemoteSimulator } from "../simularium";
+import type {
     NetConnectionParams,
-    VisData,
-    VisDataMessage,
     TrajectoryFileInfo,
+    VisDataMessage,
 } from "../simularium";
 import { VisGeometry } from "../visGeometry";
 import {
@@ -234,7 +233,12 @@ export default class SimulariumController {
         fileType: TrajectoryType
     ): Promise<void> {
         try {
-            this.configureNetwork(netConnectionConfig);
+            if (
+                !(this.simulator && this.simulator.isConnectedToRemoteServer())
+            ) {
+                // Only configure network if we aren't already connected to the remote server
+                this.configureNetwork(netConnectionConfig);
+            }
             if (!(this.simulator instanceof RemoteSimulator)) {
                 throw new Error("Autoconversion requires a RemoteSimulator");
             }
@@ -334,7 +338,7 @@ export default class SimulariumController {
             throw new Error("File must be a .simularium file");
         }
 
-        if (geoAssets && geoAssets.length) {
+        if (geoAssets) {
             return this.changeFile({ simulariumFile, geoAssets }, fileName);
         } else {
             return this.changeFile({ simulariumFile }, fileName);
@@ -410,6 +414,20 @@ export default class SimulariumController {
 
     public getFile(): string {
         return this.playBackFile;
+    }
+
+    public checkServerHealth(
+        handler: () => void,
+        netConnectionConfig: NetConnectionParams
+    ): void {
+        if (!(this.simulator && this.simulator.isConnectedToRemoteServer())) {
+            // Only configure network if we aren't already connected to the remote server
+            this.configureNetwork(netConnectionConfig);
+        }
+        if (this.simulator instanceof RemoteSimulator) {
+            this.simulator.setHealthCheckHandler(handler);
+            this.simulator.checkServerHealth();
+        }
     }
 
     private setupMetricsCalculator(

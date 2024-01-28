@@ -6,8 +6,8 @@ import {
     WebsocketClient,
     NetMessageEnum,
     MessageEventLike,
-    NetMessage,
 } from "./WebsocketClient";
+import type { NetMessage, ErrorMessage } from "./WebsocketClient";
 import { ISimulator } from "./ISimulator";
 import { TrajectoryFileInfoV2, VisDataMessage } from "./types";
 import { TrajectoryType } from "../constants";
@@ -26,6 +26,7 @@ export class RemoteSimulator implements ISimulator {
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (NetMessage) => void;
     public onTrajectoryDataArrive: (NetMessage) => void;
+    public healthCheckHandler: () => void;
     protected lastRequestedFile: string;
     public handleError: (error: FrontEndError) => void | (() => void);
     protected useOctopus: boolean;
@@ -55,6 +56,9 @@ export class RemoteSimulator implements ISimulator {
         this.onTrajectoryDataArrive = () => {
             /* do nothing */
         };
+        this.healthCheckHandler = () => {
+            /* do nothing */
+        };
     }
 
     public setTrajectoryFileInfoHandler(
@@ -66,6 +70,10 @@ export class RemoteSimulator implements ISimulator {
         handler: (msg: VisDataMessage) => void
     ): void {
         this.onTrajectoryDataArrive = handler;
+    }
+
+    public setHealthCheckHandler(handler: () => void): void {
+        this.healthCheckHandler = handler;
     }
 
     public socketIsValid(): boolean {
@@ -134,6 +142,18 @@ export class RemoteSimulator implements ISimulator {
         // TODO: implement callback
     }
 
+    public onErrorMsg(msg: ErrorMessage): void {
+        this.logger.error(
+            "Error message of type ",
+            msg.errorCode,
+            " arrived: ",
+            msg.errorMsg
+        );
+        const error = new FrontEndError(msg.errorMsg, ErrorLevel.WARNING);
+        this.handleError(error);
+        // TODO: specific handling based on error code
+    }
+
     private registerBinaryMessageHandlers(): void {
         this.webSocketClient.addBinaryMessageHandler(
             NetMessageEnum.ID_VIS_DATA_ARRIVE,
@@ -171,6 +191,16 @@ export class RemoteSimulator implements ISimulator {
             NetMessageEnum.ID_MODEL_DEFINITION,
             (_msg) => this.onModelDefinitionArrive()
         );
+
+        this.webSocketClient.addJsonMessageHandler(
+            NetMessageEnum.ID_SERVER_HEALTHY_RESPONSE,
+            (_msg) => this.healthCheckHandler()
+        );
+
+        this.webSocketClient.addJsonMessageHandler(
+            NetMessageEnum.ID_ERROR_MSG,
+            (msg) => this.onErrorMsg(msg as ErrorMessage)
+        );
     }
 
     /**
@@ -182,6 +212,10 @@ export class RemoteSimulator implements ISimulator {
 
     public getIp(): string {
         return this.webSocketClient.getIp();
+    }
+
+    public isConnectedToRemoteServer(): boolean {
+        return this.socketIsValid();
     }
 
     public async connectToRemoteServer(): Promise<string> {
@@ -411,5 +445,22 @@ export class RemoteSimulator implements ISimulator {
             },
             "Convert trajectory output to simularium file format"
         );
+    }
+
+    public checkServerHealth(): Promise<void> {
+        return this.connectToRemoteServer()
+            .then(() => {
+                this.webSocketClient.sendWebSocketRequest(
+                    {
+                        msgType: NetMessageEnum.ID_CHECK_HEALTH_REQUEST,
+                    },
+                    "Request server health check"
+                );
+            })
+            .catch((e) => {
+                this.handleError(
+                    new FrontEndError(e.message, ErrorLevel.WARNING)
+                );
+            });
     }
 }
