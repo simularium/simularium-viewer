@@ -19,3 +19,4 @@ export { VisData } from "./VisData";
 export { ThreadUtil } from "./ThreadUtil";
 export { SelectionInterface } from "./SelectionInterface";
 export { Orchestrator } from "./orchestrator";
+export { StreamRecorder } from "./StreamRecorder";

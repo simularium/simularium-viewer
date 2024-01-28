@@ -18,7 +18,7 @@ declare global {
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const MediaStreamTrackProcessor = window.MediaStreamTrackProcessor;
 
-class StreamRecorder {
+export class StreamRecorder {
     private canvasEl: HTMLCanvasElement;
     private encoder: VideoEncoder;
     private frameCounter: number;
