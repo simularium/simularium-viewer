@@ -8,7 +8,7 @@
     "scripts": {
         "start": "npm run build && cd examples && npm run serve-example",
         "install-examples": "npm install && cd examples && npm install",
-        "gh-build": "npm-run-all processCSS && cd examples && npm run build-example",
+        "gh-build": "npm run processCSS && cd examples && npm run build-example",
         "lint": "eslint src --ext .ts,.tsx,.js,.jsx",
         "test": "jest --coverage",
         "typeCheck": "tsc -p tsconfig.json --noEmit",
