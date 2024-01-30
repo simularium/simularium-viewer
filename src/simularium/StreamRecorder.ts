@@ -1,35 +1,39 @@
 import { ArrayBufferTarget, Muxer } from "mp4-muxer";
-import { MediaStreamTrackProcessor as MediaStreamTrackProcessorType } from "@types/dom-mediacapture-transform";
+// import { MediaStreamTrackProcessor as MediaStreamTrackProcessorType } from "dom-mediacapture-transform";
 // TODO: the code below solves 2/3 typeCheck errors
 // but it doesn't solve the error on line 65
 // and it's hacky and incomplete, I'd appreciate guidance
 // during review on a better way to to do this.
 // The code runs and does the job with this error present...
 
-declare global {
-    interface HTMLCanvasElement {
-        captureStream(frameRate?: number): MediaStream;
-    }
-    interface Window {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        MediaStreamTrackProcessor: MediaStreamTrackProcessorType;
-    }
-}
+// declare global {
+//     interface HTMLCanvasElement {
+//         captureStream(frameRate?: number): MediaStream;
+//     }
+//     interface Window {
+//         // eslint-disable-next-line @typescript-eslint/naming-convention
+//         MediaStreamTrackProcessor: MediaStreamTrackProcessorType;
+//     }
+// }
 // eslint-disable-next-line @typescript-eslint/naming-convention
-const MediaStreamTrackProcessor = window.MediaStreamTrackProcessor;
+// const MediaStreamTrackProcessor = window.MediaStreamTrackProcessor;
+
+interface CanvasElement extends HTMLCanvasElement {
+    captureStream(frameRate?: number): MediaStream;
+}
 
 export class StreamRecorder {
-    private canvasEl: HTMLCanvasElement;
+    private canvasEl: CanvasElement;
     private encoder: VideoEncoder;
     private frameCounter: number;
 
-    private trackProcessor: MediaStreamTrackProcessorType;
+    private trackProcessor;
     private reader: ReadableStreamDefaultReader<VideoFrame> | null;
     private muxer?: Muxer<ArrayBufferTarget>;
     private isRecording: boolean;
     private trajectoryTitle: string;
 
-    constructor(canvasEl: HTMLCanvasElement, trajectoryTitle: string) {
+    constructor(canvasEl: CanvasElement, trajectoryTitle: string) {
         this.canvasEl = canvasEl;
         this.trajectoryTitle = trajectoryTitle;
         // VideoEncoder sends chunks of frame data to the muxer
@@ -64,9 +68,9 @@ export class StreamRecorder {
             };
 
             const stream = this.canvasEl.captureStream(fps);
-            const track = stream.getVideoTracks()[0];
+            const track: MediaStreamVideoTrack = stream.getVideoTracks()[0];
             // MediaStreamTrackProcessor makes the captured stream readable
-            this.trackProcessor = new MediaStreamTrackProcessor(track);
+            this.trackProcessor = new MediaStreamTrackProcessor({ track });
             this.reader = this.trackProcessor.readable.getReader();
 
             const { supported, config: supportedConfig } =
