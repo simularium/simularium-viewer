@@ -547,6 +547,10 @@ export default class SimulariumController {
         this.visGeometry?.setPanningMode(pan);
     }
 
+    public disablePan(): void {
+        this.visGeometry?.disablePan();
+    }
+
     public setFocusMode(focus: boolean): void {
         this.visGeometry?.setFocusMode(focus);
     }

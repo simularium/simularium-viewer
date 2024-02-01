@@ -638,6 +638,10 @@ class VisGeometry {
         }
     }
 
+    public disablePan(): void {
+        this.controls.enablePan = false;
+    }
+
     public setFocusMode(focus: boolean): void {
         this.focusMode = focus;
     }
