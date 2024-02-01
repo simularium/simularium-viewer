@@ -21,8 +21,8 @@ import SimulariumViewer, {
 /**
  * NOTE: if you are debugging an import/build issue
  * on the front end, you may need to switch to the
- * following import statements to reproduce the issue 
- * here. 
+ * following import statements to reproduce the issue
+ * here.
  */
 // import SimulariumViewer, {
 //     SimulariumController,
@@ -105,6 +105,8 @@ interface ViewerState {
         data: ISimulariumFile | null;
     } | null;
     serverHealthy: boolean;
+    isRecording: boolean;
+    trajectoryTitle: string;
 }
 
 interface BaseType {
@@ -136,9 +138,7 @@ interface InputParams {
     useOctopus: boolean;
 }
 
-const simulariumController = new SimulariumController(
-    {}
-);
+const simulariumController = new SimulariumController({});
 
 let currentFrame = 0;
 let currentTime = 0;
@@ -271,16 +271,18 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 file.name.includes(".simularium")
             );
             Promise.all(
-                filesArr.map((element, index): Promise<string | ISimulariumFile> => {
-                    if (index !== simulariumFileIndex) {
-                        // is async call
-                        return element.text();
-                    } else {
-                        return loadSimulariumFile(element);
+                filesArr.map(
+                    (element, index): Promise<string | ISimulariumFile> => {
+                        if (index !== simulariumFileIndex) {
+                            // is async call
+                            return element.text();
+                        } else {
+                            return loadSimulariumFile(element);
+                        }
                     }
-                })
+                )
             )
-                .then((parsedFiles : (ISimulariumFile | string)[]) => {
+                .then((parsedFiles: (ISimulariumFile | string)[]) => {
                     const simulariumFile = parsedFiles[
                         simulariumFileIndex
                     ] as ISimulariumFile;
@@ -383,7 +385,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             serverHealthy: false,
         });
         simulariumController.checkServerHealth(
-            this.onHealthCheckResponse, this.netConnectionSettings
+            this.onHealthCheckResponse,
+            this.netConnectionSettings
         );
     }
 
@@ -482,7 +485,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             timeStep: data.timeStepSize,
             currentFrame: 0,
             currentTime: 0,
-                        trajectoryTitle: data.trajectoryTitle
+            trajectoryTitle: data.trajectoryTitle,
         });
     }
 
@@ -680,10 +683,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             return this.state.trajectoryTitle;
         } else {
             return "simulation_movie";
-        } 
-    }
-
-    
+        }
+    };
 
     public render(): JSX.Element {
         if (this.state.filePending) {
@@ -954,7 +955,12 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     updateAgentColorArray={this.updateAgentColorArray}
                     setColorSelectionInfo={this.setColorSelectionInfo}
                 />
-                <RecordMovieComponent trajectoryTitle={this.getTrajectoryTitle()} />
+                <RecordMovieComponent
+                    trajectoryTitle={this.getTrajectoryTitle()}
+                    currentFrame={this.state.currentFrame}
+                    currentTime={this.state.currentTime}
+                    timeStep={this.state.timeStep}
+                />
                 <div className="viewer-container">
                     <SimulariumViewer
                         ref={this.viewerRef}

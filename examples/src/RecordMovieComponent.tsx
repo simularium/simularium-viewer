@@ -1,14 +1,20 @@
 import React, { useState, useEffect, useRef } from "react";
-import StreamRecorder from "../../src/simularium/StreamRecorder";
+import FrameRecorder from "../../src/simularium/FrameRecorder";
 
 interface RecordMovieComponentProps {
     trajectoryTitle: string;
+    currentFrame: number;
+    currentTime: number;
+    timeStep: number;
 }
 
 const RecordMovieComponent = ({
     trajectoryTitle,
+    currentFrame,
+    currentTime,
+    timeStep,
 }: RecordMovieComponentProps) => {
-    const recorderRef = useRef<StreamRecorder | null>(null);
+    const recorderRef = useRef<FrameRecorder | null>(null);
     const [isRecording, setIsRecording] = useState(false);
     let [recordingDuration, setRecordingDuration] = useState<number>(0);
     let [recordingStatus, setRecordingStatus] =
@@ -19,7 +25,7 @@ const RecordMovieComponent = ({
         // Access the existing canvas element
         const canvasEl = document.querySelector("canvas");
         if (canvasEl) {
-            recorderRef.current = new StreamRecorder(canvasEl, trajectoryTitle);
+            recorderRef.current = new FrameRecorder(canvasEl, trajectoryTitle, currentFrame, currentTime, timeStep);
         }
     }, [trajectoryTitle]);
 
