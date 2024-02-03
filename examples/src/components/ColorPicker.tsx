@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { SelectionEntry, UIDisplayData } from "../../src";
+import { SelectionEntry, UIDisplayData } from "../../../src";
 
 type ColorPickerProps = {
     uiDisplayData: UIDisplayData;

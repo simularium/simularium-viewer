@@ -21,8 +21,8 @@ import SimulariumViewer, {
 /**
  * NOTE: if you are debugging an import/build issue
  * on the front end, you may need to switch to the
- * following import statements to reproduce the issue 
- * here. 
+ * following import statements to reproduce the issue
+ * here.
  */
 // import SimulariumViewer, {
 //     SimulariumController,
@@ -32,14 +32,7 @@ import SimulariumViewer, {
 //     ErrorLevel,
 // } from "../es";
 import "../../style/style.css";
-import PointSimulator from "./simulators/PointSimulator";
-import BindingSimulator from "./simulators/BindingSimulator2D";
-import PointSimulatorLive from "./simulators/PointSimulatorLive";
-import PdbSimulator from "./simulators/PdbSimulator";
-import SinglePdbSimulator from "./simulators/SinglePdbSimulator";
-import CurveSimulator from "./simulators/CurveSimulator";
-import SingleCurveSimulator from "./simulators/SingleCurveSimulator";
-import ColorPicker from "./ColorPicker";
+import ColorPicker from "./components/ColorPicker";
 import {
     SMOLDYN_TEMPLATE,
     UI_BASE_TYPES,
@@ -48,7 +41,21 @@ import {
     UI_TEMPLATE_URL_ROOT,
 } from "./api-settings";
 import ConversionForm from "./ConversionForm";
-import MetaballSimulator from "./simulators/MetaballSimulator";
+import {
+    agentColors,
+    PLAYBACK_OPTIONS,
+    simulatorConfigurations,
+} from "./constants";
+import PlaybackControls from "./components/PlaybackControls";
+import { InputParams } from "tweakpane";
+import {
+    BaseType,
+    CustomType,
+    SimulariumFile,
+    SimulatorConfiguration,
+} from "./types";
+import Download from "./components/Download";
+import CameraControls from "./components/CameraControls";
 
 let playbackFile = "TEST_LIVEMODE_API";
 let queryStringFile = "";
@@ -57,26 +64,6 @@ if (urlParams.has("file")) {
     queryStringFile = urlParams.get("file") || "";
     playbackFile = queryStringFile;
 }
-
-const agentColors = [
-    "#fee34d",
-    "#f7b232",
-    "#bf5736",
-    "#94a7fc",
-    "#ce8ec9",
-    "#58606c",
-    "#0ba345",
-    "#9267cb",
-    "#81dbe6",
-    "#bd7800",
-    "#bbbb99",
-    "#5b79f0",
-    "#89a500",
-    "#da8692",
-    "#418463",
-    "#9f516c",
-    "#00aabf",
-];
 
 interface ViewerState {
     renderStyle: RenderStyle;
@@ -99,45 +86,11 @@ interface ViewerState {
         template: { [key: string]: any };
         templateData: { [key: string]: any };
     } | null;
-    simulariumFile: {
-        name: string;
-        data: ISimulariumFile | null;
-    } | null;
+    simulariumFile: SimulariumFile | null;
     serverHealthy: boolean;
 }
 
-interface BaseType {
-    isBaseType: true;
-    id: string;
-    data: string;
-    match: string;
-}
-
-export interface CustomParameters {
-    name: string;
-    data_type: string;
-    description: string;
-    required: boolean;
-    help: string;
-    options?: string[];
-}
-
-interface CustomType {
-    [key: string]: {
-        "python::module": string;
-        "python::object": string;
-        parameters: CustomParameters;
-    };
-}
-
-interface InputParams {
-    localBackendServer: boolean;
-    useOctopus: boolean;
-}
-
-const simulariumController = new SimulariumController(
-    {}
-);
+const controller = new SimulariumController({});
 
 let currentFrame = 0;
 let currentTime = 0;
@@ -268,16 +221,18 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 file.name.includes(".simularium")
             );
             Promise.all(
-                filesArr.map((element, index): Promise<string | ISimulariumFile> => {
-                    if (index !== simulariumFileIndex) {
-                        // is async call
-                        return element.text();
-                    } else {
-                        return loadSimulariumFile(element);
+                filesArr.map(
+                    (element, index): Promise<string | ISimulariumFile> => {
+                        if (index !== simulariumFileIndex) {
+                            // is async call
+                            return element.text();
+                        } else {
+                            return loadSimulariumFile(element);
+                        }
                     }
-                })
+                )
             )
-                .then((parsedFiles : (ISimulariumFile | string)[]) => {
+                .then((parsedFiles: (ISimulariumFile | string)[]) => {
                     const simulariumFile = parsedFiles[
                         simulariumFileIndex
                     ] as ISimulariumFile;
@@ -379,13 +334,14 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             },
             serverHealthy: false,
         });
-        simulariumController.checkServerHealth(
-            this.onHealthCheckResponse, this.netConnectionSettings
+        controller.checkServerHealth(
+            this.onHealthCheckResponse,
+            this.netConnectionSettings
         );
     }
 
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
-        simulariumController
+        controller
             .convertAndLoadTrajectory(this.netConnectionSettings, obj, fileType)
             .then(() => {
                 this.clearPendingFile();
@@ -406,7 +362,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         // if (!fileName.includes(".simularium")) {
         //     return new
         // }
-        return simulariumController
+        return controller
             .handleFileChange(simulariumFile, fileName, geoAssets)
             .catch(console.log);
     }
@@ -420,7 +376,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         currentTime = timeData.time;
         this.setState({ currentFrame, currentTime });
         if (this.state.pauseOn === currentFrame) {
-            simulariumController.pause();
+            controller.pause();
             this.setState({ pauseOn: -1 });
         }
     }
@@ -482,10 +438,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         });
     }
 
-    public handleScrubTime(event): void {
-        simulariumController.gotoTime(parseFloat(event.target.value));
-    }
-
     public handleUIDisplayData(uiDisplayData: UIDisplayData): void {
         console.log("uiDisplayData", uiDisplayData);
         const allTags = uiDisplayData.reduce(
@@ -510,20 +462,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         });
     }
 
-    public gotoNextFrame(): void {
-        simulariumController.gotoTime(
-            this.state.currentTime + this.state.timeStep
-        );
-    }
-
-    public gotoPreviousFrame(): void {
-        simulariumController.gotoTime(
-            this.state.currentTime - this.state.timeStep
-        );
-    }
-
     private translateAgent() {
-        simulariumController.sendUpdate({
+        controller.sendUpdate({
             data: {
                 agents: {
                     "1": {
@@ -540,82 +480,20 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     }
 
     private configureAndLoad() {
-        simulariumController.configureNetwork(this.netConnectionSettings);
+        controller.configureNetwork(this.netConnectionSettings);
+
         if (playbackFile.startsWith("http")) {
             return this.loadFromUrl(playbackFile);
         }
-        if (playbackFile === "TEST_LIVEMODE_API") {
-            simulariumController.changeFile(
+
+        const config: SimulatorConfiguration =
+            simulatorConfigurations[playbackFile];
+
+        if (config) {
+            if (config.action) config.action(controller); // todo the only config with an action currently takes in the controller...
+            controller.changeFile(
                 {
-                    clientSimulator: new PointSimulatorLive(4, 4),
-                },
-                playbackFile
-            );
-        } else if (playbackFile === "TEST_POINTS") {
-            simulariumController.changeFile(
-                {
-                    clientSimulator: new PointSimulator(8000, 4),
-                },
-                playbackFile
-            );
-        } else if (playbackFile === "TEST_BINDING") {
-            simulariumController.setCameraType(true);
-            simulariumController.changeFile(
-                {
-                    clientSimulator: new BindingSimulator([
-                        { id: 0, count: 30, radius: 3, partners: [1, 2] },
-                        {
-                            id: 1,
-                            count: 300,
-                            radius: 1,
-                            partners: [0],
-                            kOn: 0.1,
-                            kOff: 0.5,
-                        },
-                        {
-                            id: 2,
-                            count: 300,
-                            radius: 1,
-                            partners: [0],
-                            kOn: 0.1,
-                            kOff: 0.5,
-                        },
-                    ]),
-                },
-                playbackFile
-            );
-        } else if (playbackFile === "TEST_FIBERS") {
-            simulariumController.changeFile(
-                {
-                    clientSimulator: new CurveSimulator(1000, 4),
-                },
-                playbackFile
-            );
-        } else if (playbackFile === "TEST_SINGLE_FIBER") {
-            simulariumController.changeFile(
-                {
-                    clientSimulator: new SingleCurveSimulator(),
-                },
-                playbackFile
-            );
-        } else if (playbackFile === "TEST_PDB") {
-            simulariumController.changeFile(
-                {
-                    clientSimulator: new PdbSimulator(),
-                },
-                playbackFile
-            );
-        } else if (playbackFile === "TEST_SINGLE_PDB") {
-            simulariumController.changeFile(
-                {
-                    clientSimulator: new SinglePdbSimulator("3IRL"),
-                },
-                playbackFile
-            );
-        } else if (playbackFile === "TEST_METABALLS") {
-            simulariumController.changeFile(
-                {
-                    clientSimulator: new MetaballSimulator(),
+                    clientSimulator: config.clientSimulator,
                 },
                 playbackFile
             );
@@ -623,34 +501,13 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             this.setState({
                 simulariumFile: { name: playbackFile, data: null },
             });
-            simulariumController.changeFile(
+            controller.changeFile(
                 {
                     netConnectionSettings: this.netConnectionSettings,
                 },
                 playbackFile
             );
         }
-    }
-
-    private downloadFile() {
-        const { simulariumFile } = this.state;
-        if (!simulariumFile) {
-            return;
-        }
-        let href = "";
-        if (!simulariumFile.data) {
-            href = `https://aics-simularium-data.s3.us-east-2.amazonaws.com/trajectory/${simulariumFile.name}`;
-        } else {
-            href = URL.createObjectURL(simulariumFile.data.getAsBlob());
-        }
-        const downloadLink = document.createElement("a");
-        downloadLink.download = simulariumFile.name;
-        downloadLink.style.display = "none";
-        downloadLink.href = href;
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-        URL.revokeObjectURL(downloadLink.href);
     }
 
     public updateAgentColorArray = (color) => {
@@ -670,6 +527,34 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         });
     };
 
+    public renderStyleHandler = (): void => {
+        this.setState({
+            renderStyle:
+                this.state.renderStyle === RenderStyle.WEBGL1_FALLBACK
+                    ? RenderStyle.WEBGL2_PREFERRED
+                    : RenderStyle.WEBGL1_FALLBACK,
+        });
+    };
+
+    public showPathsHandler = (): void => {
+        this.setState({ showPaths: !this.state.showPaths });
+    };
+
+    public panModeHandler = (): void => {
+        this.panMode = !this.panMode;
+        controller.setPanningMode(this.panMode);
+    };
+
+    public focusModeHandler = (): void => {
+        this.focusMode = !this.focusMode;
+        controller.setFocusMode(this.focusMode);
+    };
+
+    public cameraTypeHandler = (): void => {
+        this.orthoMode = !this.orthoMode;
+        controller.setCameraType(this.orthoMode);
+    };
+
     public render(): JSX.Element {
         if (this.state.filePending) {
             const fileType = this.state.filePending.type;
@@ -686,100 +571,34 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             <div className="container" style={{ height: "90%", width: "75%" }}>
                 <select
                     onChange={(event) => {
-                        simulariumController.pause();
+                        controller.pause();
                         playbackFile = event.target.value;
                         this.configureAndLoad();
                     }}
                     defaultValue={playbackFile}
                 >
                     <option value={queryStringFile}>{queryStringFile}</option>
-                    <option value="TEST_LIVEMODE_API">
-                        TEST LIVE MODE API
-                    </option>
-                    <option value="actin012_3.h5">Actin 12_3</option>
-                    <option value="listeria_rocketbugs_normal_fine_2_filtered.simularium">
-                        listeria 01
-                    </option>
-                    <option value="kinesin002_01.h5">kinesin 002</option>
-                    <option value="microtubules038_10.h5">MT 38</option>
-                    <option value="microtubules_v2_shrinking.h5">M Tub</option>
-                    <option value="aster.cmo">Aster</option>
-                    <option value="microtubules30_1.h5">MT 30</option>
-                    <option value="endocytosis.simularium">Endocytosis</option>
-                    <option value="pc4covid19.simularium">COVIDLUNG</option>
-                    <option value="nanoparticle_wrapping.simularium">
-                        Nanoparticle wrapping
-                    </option>
-                    <option value="smoldyn_min1.simularium">
-                        Smoldyn min1
-                    </option>
-                    <option value="smoldyn_spine.simularium">
-                        Smoldyn spine
-                    </option>
-                    <option value="medyan_Chandrasekaran_2019_UNI_alphaA_0.1_MA_0.675.simularium">
-                        medyan 625
-                    </option>
-                    <option value="medyan_Chandrasekaran_2019_UNI_alphaA_0.1_MA_0.0225.simularium">
-                        medyan 0225
-                    </option>
-                    <option value="springsalad_condensate_formation_Below_Ksp.simularium">
-                        springsalad below ksp
-                    </option>
-                    <option value="springsalad_condensate_formation_At_Ksp.simularium">
-                        springsalad at ksp
-                    </option>
-                    <option value="springsalad_condensate_formation_Above_Ksp.simularium">
-                        springsalad above ksp
-                    </option>
-                    <option value="blood-plasma-1.0.simularium">
-                        blood plasma
-                    </option>
-                    <option value="TEST_SINGLE_PDB">TEST SINGLE PDB</option>
-                    <option value="TEST_PDB">TEST PDB</option>
-                    <option value="TEST_SINGLE_FIBER">TEST SINGLE FIBER</option>
-                    <option value="TEST_FIBERS">TEST FIBERS</option>
-                    <option value="TEST_POINTS">TEST POINTS</option>
-                    <option value="TEST_METABALLS">TEST METABALLS</option>
-                    <option value="TEST_BINDING">TEST BINDING</option>
+                    {PLAYBACK_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                            {option.label}
+                        </option>
+                    ))}
                 </select>
 
                 <button onClick={() => this.translateAgent()}>
                     TranslateAgent
                 </button>
-                <button onClick={() => simulariumController.clearFile()}>
-                    Clear
-                </button>
+                <button onClick={() => controller.clearFile()}>Clear</button>
                 <button onClick={() => this.loadSmoldynFile()}>
                     Load a smoldyn trajectory
                 </button>
                 <br />
-                <button onClick={() => simulariumController.resume()}>
-                    Play
-                </button>
-                <button onClick={() => simulariumController.pause()}>
-                    Pause
-                </button>
-                <button onClick={() => simulariumController.stop()}>
-                    stop
-                </button>
-                <button onClick={this.gotoPreviousFrame.bind(this)}>
-                    Previous Frame
-                </button>
-                <button onClick={this.gotoNextFrame.bind(this)}>
-                    Next Frame
-                </button>
-                <input
-                    name="slider"
-                    type="range"
-                    min={0}
-                    step={this.state.timeStep}
-                    value={this.state.currentTime}
-                    max={this.state.totalDuration}
-                    onChange={this.handleScrubTime}
+                <PlaybackControls
+                    controller={controller}
+                    timeStep={this.state.timeStep}
+                    currentTime={this.state.currentTime}
+                    totalDuration={this.state.totalDuration}
                 />
-                <label htmlFor="slider">
-                    {this.state.currentTime} / {this.state.totalDuration}
-                </label>
                 <br />
                 {this.state.particleTypeNames.map((id, i) => {
                     return (
@@ -836,77 +655,26 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     {this.state.hideAllAgents ? "Show all" : "Hide all"}
                 </button>
                 <br />
-                <button
-                    onClick={() =>
-                        this.setState({ showPaths: !this.state.showPaths })
-                    }
-                >
-                    ShowPaths
-                </button>
-                <button
-                    onClick={() =>
-                        this.setState({
-                            renderStyle:
-                                this.state.renderStyle ===
-                                RenderStyle.WEBGL1_FALLBACK
-                                    ? RenderStyle.WEBGL2_PREFERRED
-                                    : RenderStyle.WEBGL1_FALLBACK,
-                        })
-                    }
-                >
-                    Switch Render
-                </button>
-                <button onClick={() => simulariumController.resetCamera()}>
-                    Reset camera
-                </button>
-                <button onClick={() => simulariumController.centerCamera()}>
-                    center camera
-                </button>
-                <button onClick={() => simulariumController.reOrientCamera()}>
-                    starting orientation
-                </button>
-                <button onClick={() => simulariumController.zoomIn()}>+</button>
-                <button onClick={() => simulariumController.zoomOut()}>
-                    -
-                </button>
-                <button
-                    onClick={() => {
-                        this.panMode = !this.panMode;
-                        simulariumController.setPanningMode(this.panMode);
-                    }}
-                >
-                    Pan/Rotate Mode
-                </button>
-                <button
-                    onClick={() => {
-                        this.focusMode = !this.focusMode;
-                        simulariumController.setFocusMode(this.focusMode);
-                    }}
-                >
-                    Focus Mode
-                </button>
-                <button
-                    onClick={() => {
-                        this.orthoMode = !this.orthoMode;
-                        simulariumController.setCameraType(this.orthoMode);
-                    }}
-                >
-                    Camera mode
-                </button>
+                <CameraControls
+                    controller={controller}
+                    showPaths={this.showPathsHandler}
+                    setRenderStyle={this.renderStyleHandler}
+                    setPanMode={this.panModeHandler}
+                    setFocusMode={this.focusModeHandler}
+                    setCameraMode={this.cameraTypeHandler}
+                />
                 <br />
                 <button
                     onClick={() =>
-                        simulariumController.getMetrics(
-                            this.netConnectionSettings
-                        )
+                        controller.getMetrics(this.netConnectionSettings)
                     }
                 >
                     Get available metrics
                 </button>
-                <button onClick={this.downloadFile}>download</button>
+                <Download simulariumFile={this.state.simulariumFile} />
                 <button
                     onClick={() =>
-                        simulariumController.getPlotData(
+                        controller.getPlotData(
                             this.netConnectionSettings,
                             // TODO: allow user to select metrics based on results from
                             // the getMetrics() call
@@ -928,8 +696,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     Get plot data
                 </button>
                 <span>
-                    Tick interval length:{" "}
-                    {simulariumController.tickIntervalLength}
+                    Tick interval length: {controller.tickIntervalLength}
                 </span>
                 <br></br>
                 <ColorPicker
@@ -947,7 +714,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         width={this.state.width}
                         loggerLevel="debug"
                         onTimeChange={this.handleTimeChange.bind(this)}
-                        simulariumController={simulariumController}
+                        simulariumController={controller}
                         onJsonDataArrived={this.handleJsonMeshData}
                         showCameraControls={false}
                         onTrajectoryFileInfoChanged={this.handleTrajectoryInfo.bind(
