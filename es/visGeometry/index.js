@@ -603,6 +603,11 @@ var VisGeometry = /*#__PURE__*/function () {
       }
     }
   }, {
+    key: "setAllowViewPanning",
+    value: function setAllowViewPanning(allow) {
+      this.controls.enablePan = allow;
+    }
+  }, {
     key: "setFocusMode",
     value: function setFocusMode(focus) {
       this.focusMode = focus;

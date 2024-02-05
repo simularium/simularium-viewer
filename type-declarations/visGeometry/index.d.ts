@@ -100,6 +100,7 @@ declare class VisGeometry {
     zoomIn(): void;
     zoomOut(): void;
     setPanningMode(pan: boolean): void;
+    setAllowViewPanning(allow: boolean): void;
     setFocusMode(focus: boolean): void;
     getFollowObject(): number;
     setFollowObject(obj: number): void;

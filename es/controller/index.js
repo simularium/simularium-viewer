@@ -514,16 +514,22 @@ var SimulariumController = /*#__PURE__*/function () {
       (_this$visGeometry6 = this.visGeometry) === null || _this$visGeometry6 === void 0 || _this$visGeometry6.setPanningMode(pan);
     }
   }, {
+    key: "setAllowViewPanning",
+    value: function setAllowViewPanning(allow) {
+      var _this$visGeometry7;
+      (_this$visGeometry7 = this.visGeometry) === null || _this$visGeometry7 === void 0 || _this$visGeometry7.setAllowViewPanning(allow);
+    }
+  }, {
     key: "setFocusMode",
     value: function setFocusMode(focus) {
-      var _this$visGeometry7;
-      (_this$visGeometry7 = this.visGeometry) === null || _this$visGeometry7 === void 0 || _this$visGeometry7.setFocusMode(focus);
+      var _this$visGeometry8;
+      (_this$visGeometry8 = this.visGeometry) === null || _this$visGeometry8 === void 0 || _this$visGeometry8.setFocusMode(focus);
     }
   }, {
     key: "setCameraType",
     value: function setCameraType(ortho) {
-      var _this$visGeometry8;
-      (_this$visGeometry8 = this.visGeometry) === null || _this$visGeometry8 === void 0 || _this$visGeometry8.setCameraType(ortho);
+      var _this$visGeometry9;
+      (_this$visGeometry9 = this.visGeometry) === null || _this$visGeometry9 === void 0 || _this$visGeometry9.setCameraType(ortho);
     }
   }]);
   return SimulariumController;
