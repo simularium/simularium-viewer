@@ -166,8 +166,8 @@ const initialState: ViewerState = {
     filePending: null,
     simulariumFile: null,
     serverHealthy: false,
-        isRecording: false,
-    trajectoryTitle: ""
+    isRecording: false,
+    trajectoryTitle: "",
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
@@ -686,6 +686,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         }
     };
 
+    public setIsRecording = (isRecording: boolean) => {
+        this.setState({ ...this.state, isRecording: isRecording });
+    };
+
     public render(): JSX.Element {
         if (this.state.filePending) {
             const fileType = this.state.filePending.type;
@@ -956,10 +960,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     setColorSelectionInfo={this.setColorSelectionInfo}
                 />
                 <RecordMovieComponent
-                    trajectoryTitle={this.getTrajectoryTitle()}
-                    currentFrame={this.state.currentFrame}
-                    currentTime={this.state.currentTime}
-                    timeStep={this.state.timeStep}
+                    isRecording={this.state.isRecording}
+                    setIsRecording={this.setIsRecording}
                 />
                 <div className="viewer-container">
                     <SimulariumViewer
@@ -979,6 +981,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         onUIDisplayDataChanged={this.handleUIDisplayData.bind(
                             this
                         )}
+                        recording={this.state.isRecording}
                         loadInitialData={true}
                         agentColors={this.state.agentColors}
                         showPaths={this.state.showPaths}
