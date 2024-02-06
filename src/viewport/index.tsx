@@ -121,8 +121,7 @@ class Viewport extends React.Component<
         this.handleTimeChange = this.handleTimeChange.bind(this);
 
         this.visGeometry = new VisGeometry(loggerLevel);
-        this.recorder = new FrameRecorder(
-            () => {
+        this.recorder = new FrameRecorder(() => {
             return this.visGeometry.renderDom as HTMLCanvasElement;
         });
         this.props.simulariumController.visData.clearCache();
@@ -366,16 +365,10 @@ class Viewport extends React.Component<
             }
         }
         if (this.props.recording !== prevProps.recording) {
-                if (this.props.recording) {
-                    this.recorder = new FrameRecorder(() => {
-                        return this.visGeometry.renderDom as HTMLCanvasElement;
-                    }
-                    );
-                    this.recorder.start();
-                } else {
-                    if (this.recorder) {
-                    this.recorder.stop();
-                }
+            if (this.props.recording) {
+                this.recorder.start();
+            } else {
+                this.recorder.stop();
             }
         }
     }

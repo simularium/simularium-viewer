@@ -2,26 +2,18 @@ import { ArrayBufferTarget, Muxer } from "mp4-muxer";
 
 export class FrameRecorder {
     private getCanvas: () => HTMLCanvasElement | null;
-    private encoder: VideoEncoder;
+    private encoder: VideoEncoder | null;
     private muxer?: Muxer<ArrayBufferTarget>;
     public isRecording: boolean;
     private timeStamp: number;
-    private setUpCompleted: boolean;
 
     constructor(getCanvas: () => HTMLCanvasElement | null) {
         // VideoEncoder sends chunks of frame data to the muxer
-        this.encoder = new VideoEncoder({
-            output: (chunk, meta) => {
-                if (this.isRecording && this.muxer) {
-                    console.log("encoder output", chunk, meta);
-                    this.muxer?.addVideoChunk(chunk, meta);
-                }
-            },
-            error: this.handleError,
-        });
+        // was making one encoder here but it was leading a strange issue of stale canvas data
+        // nulling here since we are going to make a new one every time in setup()
         this.getCanvas = getCanvas;
+        this.encoder = null;
         this.isRecording = false;
-        this.setUpCompleted = false;
         this.timeStamp = 0;
     }
 
@@ -30,12 +22,17 @@ export class FrameRecorder {
     }
 
     async setup(): Promise<void> {
-        if (this.setUpCompleted) {
-            return;
-        }
         const canvas = this.getCanvas();
         if (canvas !== null) {
             try {
+                this.encoder = new VideoEncoder({
+                    output: (chunk, meta) => {
+                        if (this.isRecording && this.muxer) {
+                            this.muxer?.addVideoChunk(chunk, meta);
+                        }
+                    },
+                    error: this.handleError,
+                });
                 const config: VideoEncoderConfig = {
                     codec: "avc1.420028",
                     width: canvas.width,
@@ -47,9 +44,9 @@ export class FrameRecorder {
                     console.log("supported config", supportedConfig);
                     this.encoder.configure(config);
                 } else {
+                    // todo error handling
                     console.log("unsupported config");
                 }
-                console.log("encoder setup complete", this.encoder);
                 // Muxer will handle the conversion from raw video data to mp4
                 this.muxer = new Muxer({
                     target: new ArrayBufferTarget(),
@@ -59,9 +56,7 @@ export class FrameRecorder {
                         height: canvas.height,
                     },
                 });
-                console.log("muxer setup complete", this.muxer);
                 this.timeStamp = 0;
-                this.setUpCompleted = true;
             } catch (error) {
                 this.handleError(error as DOMException);
             }
@@ -69,14 +64,8 @@ export class FrameRecorder {
     }
 
     public async start(): Promise<void> {
-        //todo not always call set up on recorder but only when needed
-        if (this.setUpCompleted) {
-            this.isRecording = true;
-            return;
-        }
         try {
             await this.setup();
-            console.log("setup complete");
             this.isRecording = true;
         } catch (e) {
             console.log("setup failed", e);
@@ -95,7 +84,7 @@ export class FrameRecorder {
             return;
         }
         const durationMicroseconds = 1_000_000 / 60;
-        if (canvas) {
+        if (canvas && this.encoder) {
             const newFrame = new VideoFrame(canvas, {
                 timestamp: this.timeStamp,
                 duration: durationMicroseconds,
@@ -105,12 +94,19 @@ export class FrameRecorder {
                 // keyFrame: true,
             });
             newFrame.close();
+        } else {
+            // to do error hanlding
+            console.log("no canvas or encoder");
         }
 
         this.timeStamp += durationMicroseconds;
     }
 
     async onCompletedRecording(): Promise<void> {
+        if (!this.encoder) {
+            // todo error handling
+            return;
+        }
         await this.encoder.flush();
         if (!this.muxer) {
             throw new Error(
@@ -127,8 +123,6 @@ export class FrameRecorder {
         // this.download(this.trajectoryTitle + ".mp4", url);
         this.download("simularium.mp4", url);
         URL.revokeObjectURL(url);
-        this.setUpCompleted = false;
-        await this.setup();
     }
 
     private download(filename: string, url: string) {
