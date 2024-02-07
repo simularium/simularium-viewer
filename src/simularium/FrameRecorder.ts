@@ -96,16 +96,12 @@ export class FrameRecorder {
         }
         if (this.encoder) {
             if (this.encoder.encodeQueueSize > 2) {
-                console.log(
-                    "Dropping frame, too many frames in flight",
-                    this.encoder.encodeQueueSize
-                );
-                // Too many frames in flight, let's drop this frame.
+                console.log("Dropping frame, too many frames in flight");
                 return;
             }
             const canvas = this.getCanvas();
             if (canvas) {
-                // TODO animate() in viewport.tsx defines the frame rate at 60 should this be a shared constant?
+                // TODO animate() in viewport.tsx defines the frame rate at 60, should this be a shared constant?
                 // Add a keyframe every second: https://en.wikipedia.org/wiki/Key_frame
                 const keyFrame = this.frameIndex % 60 === 0;
                 const timestampMicroseconds =
@@ -135,9 +131,7 @@ export class FrameRecorder {
         this.muxer.finalize();
         const { buffer } = this.muxer.target;
 
-        // Create a blob from the muxer output and pass it to the handler
-        // Front end implementations can handle the blob in different ways,
-        // test bed viewer shows a method for downloading the file.
+        // Create a blob from the muxer output and pass it to the front end.
         const videoBlob = new Blob([buffer], { type: "video/mp4" });
         this.handleFile(videoBlob);
     }

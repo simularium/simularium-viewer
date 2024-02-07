@@ -21,8 +21,8 @@ import SimulariumViewer, {
 /**
  * NOTE: if you are debugging an import/build issue
  * on the front end, you may need to switch to the
- * following import statements to reproduce the issue
- * here.
+ * following import statements to reproduce the issue 
+ * here. 
  */
 // import SimulariumViewer, {
 //     SimulariumController,
@@ -107,7 +107,6 @@ interface ViewerState {
     serverHealthy: boolean;
     isRecording: boolean;
     trajectoryTitle: string;
-    videoBlob: Blob | null;
 }
 
 interface BaseType {
@@ -169,7 +168,6 @@ const initialState: ViewerState = {
     serverHealthy: false,
     isRecording: false,
     trajectoryTitle: "",
-    videoBlob: null,
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
@@ -281,8 +279,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         } else {
                             return loadSimulariumFile(element);
                         }
-                    }
-                )
+                    })
             )
                 .then((parsedFiles: (ISimulariumFile | string)[]) => {
                     const simulariumFile = parsedFiles[
