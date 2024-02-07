@@ -41,7 +41,7 @@ type ViewportProps = {
     selectionStateInfo: SelectionStateInfo;
     showCameraControls: boolean;
     onError?: (error: FrontEndError) => void;
-    disableCameraControls?: boolean;
+    stationaryViewport?: boolean;
 } & Partial<DefaultProps>;
 
 const defaultProps = {
@@ -53,7 +53,7 @@ const defaultProps = {
     hideAllAgents: false,
     showPaths: true,
     showBounds: true,
-    disableCameraControls: false,
+    stationaryViewport: false,
     agentColors: [
         0x6ac1e5, 0xff2200, 0xee7967, 0xff6600, 0xd94d49, 0xffaa00, 0xffcc00,
         0x00ccff, 0x00aaff, 0x8048f3, 0x07f4ec, 0x79bd8f, 0x8800ff, 0xaa00ff,
@@ -224,11 +224,11 @@ class Viewport extends React.Component<
             simulariumController,
             loadInitialData,
             onError,
-            disableCameraControls,
+            stationaryViewport,
         } = this.props;
         this.visGeometry.setCanvasOnTheDom(
             this.vdomRef.current,
-            disableCameraControls
+            stationaryViewport
         );
         if (backgroundColor !== undefined) {
             this.visGeometry.setBackgroundColor(backgroundColor);
@@ -487,7 +487,7 @@ class Viewport extends React.Component<
             event.offsetY
         );
         if (intersectedObject !== NO_AGENT) {
-            if (!this.props.disableCameraControls) {
+            if (!this.props.stationaryViewport) {
                 this.vdomRef.current.style.cursor = "pointer";
             }
         } else {
@@ -532,7 +532,7 @@ class Viewport extends React.Component<
             ) {
                 this.visGeometry.removePathForAgent(oldFollowObject);
             }
-            if (!this.props.disableCameraControls) {
+            if (!this.props.stationaryViewport) {
                 this.visGeometry.setFollowObject(intersectedObject);
             }
             this.visGeometry.addPathForAgent(intersectedObject);
