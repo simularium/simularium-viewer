@@ -95,7 +95,7 @@ export class FrameRecorder {
         // todo animate loop defines the frame rate at 60
         // should this be a shared constant?
         const keyFrame = this.frameIndex % 60 === 0;
-        const timestampMicroseconds = this.frameIndex * 1_000_000;
+        const timestampMicroseconds = (this.frameIndex / 60) * 1_000_000;
         const durationMicroseconds = 1_000_000 / 60;
         if (canvas && this.encoder) {
             const newFrame = new VideoFrame(canvas, {
