@@ -1,9 +1,17 @@
 import { ArrayBufferTarget, Muxer } from "mp4-muxer";
-import { ErrorLevel, FrontEndError } from "./FrontEndError";
 
+/**
+ * Records frames to an MP4 file using the WebCodecs API.
+ * Resulting file is passed to the front end implementation
+ * for download/use, via the handleFile() callback.
+ *
+ *
+ * Note that the VideoCodecs API is unavailable in some browsers, including Firefox,
+ * as of 2/6/2024.
+ */
 export class FrameRecorder {
     private getCanvas: () => HTMLCanvasElement | null;
-    private handleBlob: (videoBlob: Blob) => void;
+    private handleFile: (videoBlob: Blob) => void;
     private encoder: VideoEncoder | null;
     private muxer?: Muxer<ArrayBufferTarget>;
     public isRecording: boolean;
@@ -11,35 +19,34 @@ export class FrameRecorder {
 
     constructor(
         getCanvas: () => HTMLCanvasElement | null,
-        handleBlob: (videoBlob: Blob) => void
+        handleFile: (videoBlob: Blob) => void
     ) {
         this.getCanvas = getCanvas;
-        this.handleBlob = handleBlob;
+        this.handleFile = handleFile;
         this.encoder = null;
         this.isRecording = false;
         this.frameIndex = 0;
     }
 
-    private handleError(error: DOMException) {
-        console.error("Encoder error:", error);
-    }
-
-    async setup(): Promise<void> {
+    private async setup(): Promise<void> {
         const canvas = this.getCanvas();
-        if (canvas !== null) {
+        if (canvas) {
             try {
-                // VideoEncoder sends chunks of frame data to the muxer
-                // was making one encoder in the constructor but it was
-                // leading a bug of stale canvas frames with no data
-                // after the simularium file was changed
+                // VideoEncoder sends chunks of frame data to the muxer.
+                // Previously made one encoder in the constructor but
+                // making a new one during setup() prevents a bug where
+                // frames returned blank (stale canvas reference?)
                 this.encoder = new VideoEncoder({
                     output: (chunk, meta) => {
                         if (this.isRecording && this.muxer) {
                             this.muxer?.addVideoChunk(chunk, meta);
                         }
                     },
-                    error: this.handleError,
+                    error: (error) => {
+                        console.error("Encoder error:", error);
+                    },
                 });
+                // TODO should the codec be configurable or have fallback options?
                 const config: VideoEncoderConfig = {
                     codec: "avc1.420028",
                     width: canvas.width,
@@ -48,13 +55,9 @@ export class FrameRecorder {
                 const { supported, config: supportedConfig } =
                     await VideoEncoder.isConfigSupported(config);
                 if (supported && supportedConfig) {
-                    console.log("supported config", supportedConfig);
                     this.encoder.configure(config);
                 } else {
-                    throw new FrontEndError(
-                        "Unsupported video encoder configuration",
-                        ErrorLevel.ERROR
-                    );
+                    throw new Error("Unsupported video encoder configuration");
                 }
                 // Muxer will handle the conversion from raw video data to mp4
                 this.muxer = new Muxer({
@@ -67,7 +70,7 @@ export class FrameRecorder {
                 });
                 this.frameIndex = 0;
             } catch (error) {
-                this.handleError(error as DOMException);
+                throw new Error("Error setting up video encoder: " + error);
             }
         }
     }
@@ -87,51 +90,56 @@ export class FrameRecorder {
         await this.onCompletedRecording();
     }
 
-    public async onFrame(): Promise<void> {
-        const canvas = this.getCanvas();
+    public onFrame(): void {
         if (!this.isRecording) {
             return;
         }
-        // todo animate loop defines the frame rate at 60
-        // should this be a shared constant?
-        const keyFrame = this.frameIndex % 60 === 0;
-        const timestampMicroseconds = (this.frameIndex / 60) * 1_000_000;
-        const durationMicroseconds = 1_000_000 / 60;
-        if (canvas && this.encoder) {
-            const newFrame = new VideoFrame(canvas, {
-                timestamp: timestampMicroseconds,
-                duration: durationMicroseconds,
-            });
-            this.encoder.encode(newFrame, {
-                keyFrame,
-            });
-            newFrame.close();
+        if (this.encoder) {
+            if (this.encoder.encodeQueueSize > 2) {
+                console.log(
+                    "Dropping frame, too many frames in flight",
+                    this.encoder.encodeQueueSize
+                );
+                // Too many frames in flight, let's drop this frame.
+                return;
+            }
+            const canvas = this.getCanvas();
+            if (canvas) {
+                // TODO animate() in viewport.tsx defines the frame rate at 60 should this be a shared constant?
+                // Add a keyframe every second: https://en.wikipedia.org/wiki/Key_frame
+                const keyFrame = this.frameIndex % 60 === 0;
+                const timestampMicroseconds =
+                    (this.frameIndex / 60) * 1_000_000;
+                const durationMicroseconds = 1_000_000 / 60;
+                const newFrame = new VideoFrame(canvas, {
+                    timestamp: timestampMicroseconds,
+                    duration: durationMicroseconds,
+                });
+                this.encoder.encode(newFrame, {
+                    keyFrame,
+                });
+                newFrame.close();
+            }
+            this.frameIndex += 1;
         }
-
-        this.frameIndex += 1;
     }
 
-    async onCompletedRecording(): Promise<void> {
+    private async onCompletedRecording(): Promise<void> {
         if (!this.encoder) {
-            throw new FrontEndError(
-                "No encoder found to convert video",
-                ErrorLevel.ERROR,
-                "Something may have gone wrong internally during export setup."
-            );
-            return;
+            throw new Error("No encoder found to convert video");
         }
         await this.encoder.flush();
         if (!this.muxer) {
-            throw new Error(
-                "No muxer found to convert video. Something may have gone wrong internally during export setup."
-            );
+            throw new Error("No muxer found to convert video.");
         }
         this.muxer.finalize();
         const { buffer } = this.muxer.target;
 
-        // Create a blob from the muxer output and download it
+        // Create a blob from the muxer output and pass it to the handler
+        // Front end implementations can handle the blob in different ways,
+        // test bed viewer shows a method for downloading the file.
         const videoBlob = new Blob([buffer], { type: "video/mp4" });
-        this.handleBlob(videoBlob);
+        this.handleFile(videoBlob);
     }
 }
 

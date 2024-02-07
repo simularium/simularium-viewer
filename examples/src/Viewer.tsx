@@ -679,13 +679,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         });
     };
 
-    ////// DOWNLOAD MOVIES PROP ///////
-    public getTrajectoryTitle = (): string => {
-        if (this.state.trajectoryTitle) {
-            return this.state.trajectoryTitle;
-        } else {
-            return "simulation_movie";
-        }
+    ////// DOWNLOAD MOVIES PROPS AND FUNCTIONS //////
+    public getRecordedMovieTitle = (): string => {
+        return this.state.trajectoryTitle ? this.state.trajectoryTitle : "simularium";
     };
 
     public downloadMovie = (videoBlob: Blob, title?: string) => {
@@ -701,11 +697,12 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     };
 
     public onRecordedMovie = (videoBlob: Blob) => {
-        this.downloadMovie(videoBlob);
+        const title = this.getRecordedMovieTitle();
+        this.downloadMovie(videoBlob, title);
     };
 
     public setIsRecording = (isRecording: boolean) => {
-        this.setState({ ...this.state, isRecording: isRecording });
+        this.setState({ isRecording: isRecording });
     };
 
     public render(): JSX.Element {

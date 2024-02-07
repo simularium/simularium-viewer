@@ -617,7 +617,7 @@ class Viewport extends React.Component<
             this.stats.begin();
             this.visGeometry.render(totalElapsedTime);
             if (recording && this.recorder.isRecording) {
-                await this.recorder.onFrame();
+                this.recorder.onFrame();
             }
             this.stats.end();
             this.lastRenderTime = Date.now();
