@@ -7,7 +7,7 @@ export class FrameRecorder {
     private encoder: VideoEncoder | null;
     private muxer?: Muxer<ArrayBufferTarget>;
     public isRecording: boolean;
-    private timeStamp: number;
+    private frameIndex: number;
 
     constructor(
         getCanvas: () => HTMLCanvasElement | null,
@@ -20,7 +20,7 @@ export class FrameRecorder {
         this.handleBlob = handleBlob;
         this.encoder = null;
         this.isRecording = false;
-        this.timeStamp = 0;
+        this.frameIndex = 0;
     }
 
     private handleError(error: DOMException) {
@@ -64,7 +64,7 @@ export class FrameRecorder {
                         height: canvas.height,
                     },
                 });
-                this.timeStamp = 0;
+                this.frameIndex = 0;
             } catch (error) {
                 this.handleError(error as DOMException);
             }
@@ -91,20 +91,23 @@ export class FrameRecorder {
         if (!this.isRecording) {
             return;
         }
+        // todo animate loop defines the frame rate at 60
+        // should this be a shared constant?
+        const keyFrame = this.frameIndex % 60 === 0;
+        const timestampMicroseconds = this.frameIndex * 1_000_000;
         const durationMicroseconds = 1_000_000 / 60;
         if (canvas && this.encoder) {
             const newFrame = new VideoFrame(canvas, {
-                timestamp: this.timeStamp,
+                timestamp: timestampMicroseconds,
                 duration: durationMicroseconds,
             });
             this.encoder.encode(newFrame, {
-                // todo add keyframe support
-                // keyFrame: true,
+                keyFrame,
             });
             newFrame.close();
         }
 
-        this.timeStamp += durationMicroseconds;
+        this.frameIndex += 1;
     }
 
     async onCompletedRecording(): Promise<void> {
