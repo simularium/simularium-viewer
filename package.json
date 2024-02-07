@@ -99,8 +99,6 @@
         "@fortawesome/react-fontawesome": "^0.1.14",
         "@tweakpane/core": "^1.0.8",
         "@tweakpane/plugin-essentials": "^0.1.4",
-        "@types/dom-mediacapture-record": "^1.0.19",
-        "@types/dom-mediacapture-transform": "0.1.9",
         "@types/dom-webcodecs": "^0.1.8",
         "comlink": "^4.3.1",
         "js-logger": "^1.6.1",

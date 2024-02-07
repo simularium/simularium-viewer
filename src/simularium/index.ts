@@ -24,4 +24,3 @@ export { SelectionInterface } from "./SelectionInterface";
 export { Orchestrator } from "./orchestrator";
 export { default as VisTypes } from "./VisTypes";
 export { ClientMessageEnum } from "./localSimulators/IClientSimulatorImpl";
-export { StreamRecorder } from "./StreamRecorder";

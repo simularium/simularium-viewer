@@ -14,7 +14,7 @@
     "strict": true,
     "target": "ES6",
     "skipLibCheck": true,
-    "types": ["@types/dom-webcodecs", "@types/dom-mediacapture-record", "@types/jest", "@types/dom-mediacapture-transform"]
+    "types": ["@types/dom-webcodecs", "@types/jest"]
 
   },
   "files": [
