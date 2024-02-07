@@ -14,7 +14,7 @@
     "strict": true,
     "target": "ES6",
     "skipLibCheck": true,
-    "types": ["@types/dom-webcodecs", "@types/jest"]
+    "types": ["node", "@types/dom-webcodecs", "@types/jest"]
 
   },
   "files": [
