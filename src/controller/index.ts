@@ -523,6 +523,14 @@ export default class SimulariumController {
      * componentDidMount of the viewer, so as long as the dom is mounted
      * these functions will be callable.
      */
+    public cameraControlsEnabled(enabled: boolean): void {
+        if (enabled) {
+            this.visGeometry?.enableControls();
+        } else {
+            this.visGeometry?.disableControls();
+        }
+    }
+
     public zoomIn(): void {
         this.visGeometry?.zoomIn();
     }
