@@ -13,9 +13,6 @@ export class FrameRecorder {
         getCanvas: () => HTMLCanvasElement | null,
         handleBlob: (videoBlob: Blob) => void
     ) {
-        // VideoEncoder sends chunks of frame data to the muxer
-        // was making one encoder here but it was leading a strange issue of stale canvas data
-        // nulling here since we are going to make a new one every time in setup()
         this.getCanvas = getCanvas;
         this.handleBlob = handleBlob;
         this.encoder = null;
@@ -31,6 +28,10 @@ export class FrameRecorder {
         const canvas = this.getCanvas();
         if (canvas !== null) {
             try {
+                // VideoEncoder sends chunks of frame data to the muxer
+                // was making one encoder in the constructor but it was
+                // leading a bug of stale canvas frames with no data
+                // after the simularium file was changed
                 this.encoder = new VideoEncoder({
                     output: (chunk, meta) => {
                         if (this.isRecording && this.muxer) {
