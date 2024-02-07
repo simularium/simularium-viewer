@@ -365,7 +365,7 @@ class Viewport extends React.Component<
                 this.visGeometry.destroyGui();
             }
         }
-        if (this.props.recording !== prevProps.recording) {
+        if (this.props.recording !== prevProps.recording && this.recorder.supportedBrowser) {
             if (this.props.recording) {
                 this.recorder.start();
             } else {

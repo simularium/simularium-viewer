@@ -7,7 +7,8 @@ import { ArrayBufferTarget, Muxer } from "mp4-muxer";
  *
  *
  * Note that the VideoCodecs API is unavailable in some browsers, including Firefox,
- * as of 2/6/2024.
+ * as of 2/6/2024. Viewport will not call these methods on firefox.
+ *
  */
 export class FrameRecorder {
     private getCanvas: () => HTMLCanvasElement | null;
@@ -16,6 +17,7 @@ export class FrameRecorder {
     private muxer?: Muxer<ArrayBufferTarget>;
     public isRecording: boolean;
     private frameIndex: number;
+    public supportedBrowser: boolean;
 
     constructor(
         getCanvas: () => HTMLCanvasElement | null,
@@ -26,6 +28,7 @@ export class FrameRecorder {
         this.encoder = null;
         this.isRecording = false;
         this.frameIndex = 0;
+        this.supportedBrowser = !/firefox|fxios/i.test(navigator.userAgent);
     }
 
     private async setup(): Promise<void> {
