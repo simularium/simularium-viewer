@@ -107,6 +107,7 @@ interface ViewerState {
     serverHealthy: boolean;
     isRecording: boolean;
     trajectoryTitle: string;
+    videoBlob: Blob | null;
 }
 
 interface BaseType {
@@ -168,6 +169,7 @@ const initialState: ViewerState = {
     serverHealthy: false,
     isRecording: false,
     trajectoryTitle: "",
+    videoBlob: null,
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
@@ -686,6 +688,22 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         }
     };
 
+    public downloadMovie = (videoBlob: Blob, title?: string) => {
+        const url = URL.createObjectURL(videoBlob);
+        const filename = title ? title + ".mp4" : "simularium.mp4";
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = filename;
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+        URL.revokeObjectURL(url);
+    };
+
+    public onRecordedMovie = (videoBlob: Blob) => {
+        this.downloadMovie(videoBlob);
+    };
+
     public setIsRecording = (isRecording: boolean) => {
         this.setState({ ...this.state, isRecording: isRecording });
     };
@@ -982,6 +1000,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                             this
                         )}
                         recording={this.state.isRecording}
+                        onRecordedMovie={this.onRecordedMovie}
                         loadInitialData={true}
                         agentColors={this.state.agentColors}
                         showPaths={this.state.showPaths}

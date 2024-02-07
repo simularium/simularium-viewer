@@ -2,16 +2,21 @@ import { ArrayBufferTarget, Muxer } from "mp4-muxer";
 
 export class FrameRecorder {
     private getCanvas: () => HTMLCanvasElement | null;
+    private handleBlob: (videoBlob: Blob) => void;
     private encoder: VideoEncoder | null;
     private muxer?: Muxer<ArrayBufferTarget>;
     public isRecording: boolean;
     private timeStamp: number;
 
-    constructor(getCanvas: () => HTMLCanvasElement | null) {
+    constructor(
+        getCanvas: () => HTMLCanvasElement | null,
+        handleBlob: (videoBlob: Blob) => void
+    ) {
         // VideoEncoder sends chunks of frame data to the muxer
         // was making one encoder here but it was leading a strange issue of stale canvas data
         // nulling here since we are going to make a new one every time in setup()
         this.getCanvas = getCanvas;
+        this.handleBlob = handleBlob;
         this.encoder = null;
         this.isRecording = false;
         this.timeStamp = 0;
@@ -118,20 +123,7 @@ export class FrameRecorder {
 
         // Create a blob from the muxer output and download it
         const videoBlob = new Blob([buffer], { type: "video/mp4" });
-        const url = URL.createObjectURL(videoBlob);
-        // todo get correct file title
-        // this.download(this.trajectoryTitle + ".mp4", url);
-        this.download("simularium.mp4", url);
-        URL.revokeObjectURL(url);
-    }
-
-    private download(filename: string, url: string) {
-        const anchor = document.createElement("a");
-        anchor.href = url;
-        anchor.download = filename;
-        document.body.appendChild(anchor);
-        anchor.click();
-        document.body.removeChild(anchor);
+        this.handleBlob(videoBlob);
     }
 }
 

@@ -43,6 +43,7 @@ type ViewportProps = {
     showCameraControls: boolean;
     onError?: (error: FrontEndError) => void;
     recording: boolean;
+    onRecordedMovie: (blob: Blob) => void;
 } & Partial<DefaultProps>;
 
 const defaultProps = {
@@ -121,9 +122,6 @@ class Viewport extends React.Component<
         this.handleTimeChange = this.handleTimeChange.bind(this);
 
         this.visGeometry = new VisGeometry(loggerLevel);
-        this.recorder = new FrameRecorder(() => {
-            return this.visGeometry.renderDom as HTMLCanvasElement;
-        });
         this.props.simulariumController.visData.clearCache();
         this.visGeometry.createMaterials(props.agentColors);
         this.vdomRef = React.createRef();
@@ -154,6 +152,9 @@ class Viewport extends React.Component<
             },
             showRenderParamsGUI: false,
         };
+        this.recorder = new FrameRecorder(() => {
+            return this.visGeometry.renderDom as HTMLCanvasElement;
+        }, this.props.onRecordedMovie);
     }
 
     private onTrajectoryFileInfo(msg: TrajectoryFileInfoAny): void {
