@@ -1,4 +1,5 @@
 import { ArrayBufferTarget, Muxer } from "mp4-muxer";
+import { ErrorLevel, FrontEndError } from "./FrontEndError";
 
 export class FrameRecorder {
     private getCanvas: () => HTMLCanvasElement | null;
@@ -49,8 +50,10 @@ export class FrameRecorder {
                     console.log("supported config", supportedConfig);
                     this.encoder.configure(config);
                 } else {
-                    // todo error handling
-                    console.log("unsupported config");
+                    throw new FrontEndError(
+                        "Unsupported video encoder configuration",
+                        ErrorLevel.ERROR
+                    );
                 }
                 // Muxer will handle the conversion from raw video data to mp4
                 this.muxer = new Muxer({
@@ -99,9 +102,6 @@ export class FrameRecorder {
                 // keyFrame: true,
             });
             newFrame.close();
-        } else {
-            // to do error hanlding
-            console.log("no canvas or encoder");
         }
 
         this.timeStamp += durationMicroseconds;
@@ -109,7 +109,11 @@ export class FrameRecorder {
 
     async onCompletedRecording(): Promise<void> {
         if (!this.encoder) {
-            // todo error handling
+            throw new FrontEndError(
+                "No encoder found to convert video",
+                ErrorLevel.ERROR,
+                "Something may have gone wrong internally during export setup."
+            );
             return;
         }
         await this.encoder.flush();
