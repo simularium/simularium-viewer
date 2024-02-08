@@ -1,4 +1,5 @@
 import { ArrayBufferTarget, Muxer } from "mp4-muxer";
+import { DEFAULT_FRAME_RATE } from "../constants";
 
 /**
  * Records frames to an MP4 file using the WebCodecs API.
@@ -18,6 +19,7 @@ export class FrameRecorder {
     public isRecording: boolean;
     private frameIndex: number;
     public supportedBrowser: boolean;
+    private frameRate: number;
 
     constructor(
         getCanvas: () => HTMLCanvasElement | null,
@@ -29,6 +31,7 @@ export class FrameRecorder {
         this.isRecording = false;
         this.frameIndex = 0;
         this.supportedBrowser = !/firefox|fxios/i.test(navigator.userAgent);
+        this.frameRate = DEFAULT_FRAME_RATE;
     }
 
     private async setup(): Promise<void> {
@@ -49,7 +52,6 @@ export class FrameRecorder {
                         console.error("Encoder error:", error);
                     },
                 });
-                // TODO should the codec be configurable or have fallback options?
                 const config: VideoEncoderConfig = {
                     codec: "avc1.420028",
                     width: canvas.width,
@@ -104,12 +106,11 @@ export class FrameRecorder {
             }
             const canvas = this.getCanvas();
             if (canvas) {
-                // TODO animate() in viewport.tsx defines the frame rate at 60, should this be a shared constant?
                 // Add a keyframe every second: https://en.wikipedia.org/wiki/Key_frame
-                const keyFrame = this.frameIndex % 60 === 0;
+                const keyFrame = this.frameIndex % this.frameRate === 0;
                 const timestampMicroseconds =
-                    (this.frameIndex / 60) * 1_000_000;
-                const durationMicroseconds = 1_000_000 / 60;
+                    (this.frameIndex / this.frameRate) * 1_000_000;
+                const durationMicroseconds = 1_000_000 / this.frameRate;
                 const newFrame = new VideoFrame(canvas, {
                     timestamp: timestampMicroseconds,
                     duration: durationMicroseconds,

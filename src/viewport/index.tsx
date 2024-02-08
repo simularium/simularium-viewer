@@ -18,6 +18,7 @@ import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
 import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry";
 import { ColorChange } from "../simularium/SelectionInterface";
 import FrameRecorder from "../simularium/FrameRecorder";
+import { DEFAULT_FRAME_RATE } from "../constants";
 
 export type PropColor = string | number | [number, number, number];
 
@@ -585,7 +586,7 @@ class Viewport extends React.Component<
     public async animate(): Promise<void> {
         const { simulariumController, recording } = this.props;
         const { visData } = simulariumController;
-        const framesPerSecond = 60; // how often the view-port rendering is refreshed per second
+        const framesPerSecond = DEFAULT_FRAME_RATE; // how often the view-port rendering is refreshed per second
         const timePerFrame = 1000 / framesPerSecond; // the time interval at which to re-render
         const now = Date.now();
         const elapsedTime = now - this.lastRenderTime;
