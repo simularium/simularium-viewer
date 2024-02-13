@@ -30,7 +30,7 @@ export class FrameRecorder {
         this.encoder = null;
         this.isRecording = false;
         this.frameIndex = 0;
-        this.supportedBrowser = !/firefox|fxios/i.test(navigator.userAgent);
+        this.supportedBrowser = "VideoEncoder" in window;
         this.frameRate = DEFAULT_FRAME_RATE;
     }
 
