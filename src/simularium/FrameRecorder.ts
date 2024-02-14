@@ -49,7 +49,7 @@ export class FrameRecorder {
                         }
                     },
                     error: (error) => {
-                        console.error("Encoder error:", error);
+                        throw new Error("Encoder error: " + error);
                     },
                 });
                 const config: VideoEncoderConfig = {
