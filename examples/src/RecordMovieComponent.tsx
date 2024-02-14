@@ -9,9 +9,7 @@ const RecordMovieComponent = ({
     isRecording,
     setIsRecording,
 }: RecordMovieComponentProps) => {
-    let [recordingDuration, setRecordingDuration] = useState<number>(0);
-    let [recordingStatus, setRecordingStatus] =
-        useState<string>("Not recording");
+    let [recordingTimeElapsed, setRecordingTimeElapsed] = useState<number>(0);
     let [outputStatus, setOutputStatus] = useState<string>("");
 
     // this useEffect is a timer that updates the recording duration
@@ -19,7 +17,7 @@ const RecordMovieComponent = ({
         let intervalId;
         if (isRecording) {
             intervalId = setInterval(() => {
-                setRecordingDuration((prevTimer) => prevTimer + 1);
+                setRecordingTimeElapsed((prevTimer) => prevTimer + 1);
             }, 1000);
         }
         return () => {
@@ -28,16 +26,16 @@ const RecordMovieComponent = ({
     }, [isRecording]);
 
     const startRecording = async () => {
-        setRecordingStatus("Recording...");
+        if ("VideoEncoder" in window) {
         setOutputStatus("");
-        setIsRecording(true);
+        setIsRecording(true);}
+        else alert("VideoEncoder not supported in this browser")
     };
 
     const stopRecording = () => {
-        setRecordingStatus("Not recording");
         setOutputStatus("Recording complete");
         setIsRecording(false);
-        setRecordingDuration(0);
+        setRecordingTimeElapsed(0);
     };
 
     return (
@@ -48,10 +46,10 @@ const RecordMovieComponent = ({
             <button onClick={stopRecording} disabled={!isRecording}>
                 Stop Recording
             </button>
-            <div>{recordingStatus}</div>
+            <div>{isRecording ? "Recording..." : ""}</div>
             <div>
                 {isRecording
-                    ? "Recording duration:  " + recordingDuration + " seconds"
+                    ? "Recording duration:  " + recordingTimeElapsed + " seconds"
                     : ""}
             </div>
             <div>{outputStatus}</div>
