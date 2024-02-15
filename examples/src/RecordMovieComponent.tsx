@@ -12,14 +12,8 @@ const RecordMovieComponent = ({
     // recording time measured in seconds
     let [recordingTimeElapsed, setRecordingTimeElapsed] = useState<number>(0);
     let [outputStatus, setOutputStatus] = useState<string>("");
-    let [browserSupported, setBrowserSupported] = useState<boolean>(false);
 
-    useEffect(() => {
-        if ("VideoEncoder" in window) {
-            setBrowserSupported(true);
-        }
-    }
-    , []);
+    const browserSupported = "VideoEncoder" in window;
 
     // this useEffect is a timer that updates the recording duration
     useEffect(() => {
