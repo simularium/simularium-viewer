@@ -27,3 +27,5 @@ export const DEFAULT_CAMERA_SPEC: CameraSpec = {
 export const enum TrajectoryType {
     SMOLDYN = "Smoldyn",
 }
+
+export const DEFAULT_FRAME_RATE = 60; // frames per second

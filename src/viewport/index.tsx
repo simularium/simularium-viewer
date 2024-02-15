@@ -17,6 +17,8 @@ import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
 import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry";
 import { ColorChange } from "../simularium/SelectionInterface";
+import FrameRecorder from "../simularium/FrameRecorder";
+import { DEFAULT_FRAME_RATE } from "../constants";
 
 export type PropColor = string | number | [number, number, number];
 
@@ -41,6 +43,8 @@ type ViewportProps = {
     selectionStateInfo: SelectionStateInfo;
     showCameraControls: boolean;
     onError?: (error: FrontEndError) => void;
+    recording: boolean;
+    onRecordedMovie: (blob: Blob) => void;
 } & Partial<DefaultProps>;
 
 const defaultProps = {
@@ -59,6 +63,7 @@ const defaultProps = {
         0xff0000, 0xccff00, 0xaaff00, 0x88ff00, 0x00ffcc, 0x66ff00, 0x44ff00,
         0x22ff00, 0x00ffaa, 0x00ff88, 0x00ffaa, 0x00ffff, 0x0066ff,
     ] as string[] | number[],
+    recording: false,
 };
 
 type DefaultProps = typeof defaultProps;
@@ -90,6 +95,7 @@ class Viewport extends React.Component<
 > {
     private visGeometry: VisGeometry;
     private selectionInterface: SelectionInterface;
+    private recorder: FrameRecorder;
     private lastRenderTime: number;
     private startTime: number;
     private vdomRef: React.RefObject<HTMLDivElement>;
@@ -147,6 +153,9 @@ class Viewport extends React.Component<
             },
             showRenderParamsGUI: false,
         };
+        this.recorder = new FrameRecorder(() => {
+            return this.visGeometry.renderDom as HTMLCanvasElement;
+        }, this.props.onRecordedMovie);
     }
 
     private onTrajectoryFileInfo(msg: TrajectoryFileInfoAny): void {
@@ -355,6 +364,13 @@ class Viewport extends React.Component<
                 this.visGeometry.setupGui(this.vdomRef.current as HTMLElement);
             } else {
                 this.visGeometry.destroyGui();
+            }
+        }
+        if (this.props.recording !== prevProps.recording && this.recorder.supportedBrowser) {
+            if (this.props.recording) {
+                this.recorder.start();
+            } else {
+                this.recorder.stop();
             }
         }
     }
@@ -568,9 +584,9 @@ class Viewport extends React.Component<
     }
 
     public animate(): void {
-        const { simulariumController } = this.props;
+        const { simulariumController, recording } = this.props;
         const { visData } = simulariumController;
-        const framesPerSecond = 60; // how often the view-port rendering is refreshed per second
+        const framesPerSecond = DEFAULT_FRAME_RATE; // how often the view-port rendering is refreshed per second
         const timePerFrame = 1000 / framesPerSecond; // the time interval at which to re-render
         const now = Date.now();
         const elapsedTime = now - this.lastRenderTime;
@@ -601,6 +617,9 @@ class Viewport extends React.Component<
             }
             this.stats.begin();
             this.visGeometry.render(totalElapsedTime);
+            if (recording && this.recorder.isRecording) {
+                this.recorder.onFrame();
+            }
             this.stats.end();
             this.lastRenderTime = Date.now();
         }
