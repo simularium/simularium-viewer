@@ -33,7 +33,7 @@ import SimulariumViewer, {
 // } from "../es";
 import "../../style/style.css";
 import ColorPicker from "./components/ColorPicker";
-import RecordMovieComponent from "./RecordMovieComponent";
+import RecordMovieComponent from "./components/RecordMovieComponent";
 import {
     SMOLDYN_TEMPLATE,
     UI_BASE_TYPES,
