@@ -9,8 +9,17 @@ const RecordMovieComponent = ({
     isRecording,
     setIsRecording,
 }: RecordMovieComponentProps) => {
+    // recording time measured in seconds
     let [recordingTimeElapsed, setRecordingTimeElapsed] = useState<number>(0);
     let [outputStatus, setOutputStatus] = useState<string>("");
+    let [browserSupported, setBrowserSupported] = useState<boolean>(false);
+
+    useEffect(() => {
+        if ("VideoEncoder" in window) {
+            setBrowserSupported(true);
+        }
+    }
+    , []);
 
     // this useEffect is a timer that updates the recording duration
     useEffect(() => {
@@ -26,10 +35,8 @@ const RecordMovieComponent = ({
     }, [isRecording]);
 
     const startRecording = async () => {
-        if ("VideoEncoder" in window) {
         setOutputStatus("");
-        setIsRecording(true);}
-        else alert("VideoEncoder not supported in this browser")
+        setIsRecording(true);
     };
 
     const stopRecording = () => {
@@ -40,16 +47,25 @@ const RecordMovieComponent = ({
 
     return (
         <div>
-            <button onClick={startRecording} disabled={isRecording}>
+            <button
+                onClick={startRecording}
+                disabled={isRecording || !browserSupported}
+            >
                 Start Recording
             </button>
-            <button onClick={stopRecording} disabled={!isRecording}>
+            <button
+                onClick={stopRecording}
+                disabled={!isRecording || !browserSupported}
+            >
                 Stop Recording
-            </button>
+                </button>
             <div>{isRecording ? "Recording..." : ""}</div>
+            <div> {!browserSupported ? "Browser does not support recording" : ""} </div>
             <div>
                 {isRecording
-                    ? "Recording duration:  " + recordingTimeElapsed + " seconds"
+                    ? "Recording duration:  " +
+                      recordingTimeElapsed +
+                      " seconds"
                     : ""}
             </div>
             <div>{outputStatus}</div>
