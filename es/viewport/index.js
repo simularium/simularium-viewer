@@ -1,12 +1,12 @@
 import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
-import _assertThisInitialized from "@babel/runtime/helpers/assertThisInitialized";
-import _inherits from "@babel/runtime/helpers/inherits";
 import _possibleConstructorReturn from "@babel/runtime/helpers/possibleConstructorReturn";
 import _getPrototypeOf from "@babel/runtime/helpers/getPrototypeOf";
+import _assertThisInitialized from "@babel/runtime/helpers/assertThisInitialized";
+import _inherits from "@babel/runtime/helpers/inherits";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
-function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
-function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); return true; } catch (e) { return false; } }
+function _callSuper(t, o, e) { return o = _getPrototypeOf(o), _possibleConstructorReturn(t, _isNativeReflectConstruct() ? Reflect.construct(o, e || [], _getPrototypeOf(t).constructor) : o.apply(t, e)); }
+function _isNativeReflectConstruct() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct = function _isNativeReflectConstruct() { return !!t; })(); }
 import * as React from "react";
 import jsLogger from "js-logger";
 import Stats from "three/examples/jsm/libs/stats.module";
@@ -17,6 +17,8 @@ import { SelectionInterface } from "../simularium";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
 import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry";
+import FrameRecorder from "../simularium/FrameRecorder";
+import { DEFAULT_FRAME_RATE } from "../constants";
 var defaultProps = {
   renderStyle: RenderStyle.WEBGL2_PREFERRED,
   backgroundColor: [0, 0, 0],
@@ -26,7 +28,8 @@ var defaultProps = {
   hideAllAgents: false,
   showPaths: true,
   showBounds: true,
-  agentColors: [0x6ac1e5, 0xff2200, 0xee7967, 0xff6600, 0xd94d49, 0xffaa00, 0xffcc00, 0x00ccff, 0x00aaff, 0x8048f3, 0x07f4ec, 0x79bd8f, 0x8800ff, 0xaa00ff, 0xcc00ff, 0xff00cc, 0xff00aa, 0xff0088, 0xff0066, 0xff0044, 0xff0022, 0xff0000, 0xccff00, 0xaaff00, 0x88ff00, 0x00ffcc, 0x66ff00, 0x44ff00, 0x22ff00, 0x00ffaa, 0x00ff88, 0x00ffaa, 0x00ffff, 0x0066ff]
+  agentColors: [0x6ac1e5, 0xff2200, 0xee7967, 0xff6600, 0xd94d49, 0xffaa00, 0xffcc00, 0x00ccff, 0x00aaff, 0x8048f3, 0x07f4ec, 0x79bd8f, 0x8800ff, 0xaa00ff, 0xcc00ff, 0xff00cc, 0xff00aa, 0xff0088, 0xff0066, 0xff0044, 0xff0022, 0xff0000, 0xccff00, 0xaaff00, 0x88ff00, 0x00ffcc, 0x66ff00, 0x44ff00, 0x22ff00, 0x00ffaa, 0x00ff88, 0x00ffaa, 0x00ffff, 0x0066ff],
+  recording: false
 };
 // max time in milliseconds for a mouse/touch interaction to be considered a click;
 var MAX_CLICK_TIME = 300;
@@ -34,13 +37,13 @@ var MAX_CLICK_TIME = 300;
 var CLICK_TOLERANCE = 1e-4;
 var Viewport = /*#__PURE__*/function (_React$Component) {
   _inherits(Viewport, _React$Component);
-  var _super = _createSuper(Viewport);
   function Viewport(props) {
     var _this;
     _classCallCheck(this, Viewport);
-    _this = _super.call(this, props);
+    _this = _callSuper(this, Viewport, [props]);
     _defineProperty(_assertThisInitialized(_this), "visGeometry", void 0);
     _defineProperty(_assertThisInitialized(_this), "selectionInterface", void 0);
+    _defineProperty(_assertThisInitialized(_this), "recorder", void 0);
     _defineProperty(_assertThisInitialized(_this), "lastRenderTime", void 0);
     _defineProperty(_assertThisInitialized(_this), "startTime", void 0);
     _defineProperty(_assertThisInitialized(_this), "vdomRef", void 0);
@@ -197,6 +200,9 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
       },
       showRenderParamsGUI: false
     };
+    _this.recorder = new FrameRecorder(function () {
+      return _this.visGeometry.renderDom;
+    }, _this.props.onRecordedMovie);
     return _this;
   }
   _createClass(Viewport, [{
@@ -350,6 +356,13 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
           this.visGeometry.destroyGui();
         }
       }
+      if (this.props.recording !== prevProps.recording && this.recorder.supportedBrowser) {
+        if (this.props.recording) {
+          this.recorder.start();
+        } else {
+          this.recorder.stop();
+        }
+      }
     }
   }, {
     key: "addEventHandlersToCanvas",
@@ -433,9 +446,11 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
   }, {
     key: "animate",
     value: function animate() {
-      var simulariumController = this.props.simulariumController;
+      var _this$props4 = this.props,
+        simulariumController = _this$props4.simulariumController,
+        recording = _this$props4.recording;
       var visData = simulariumController.visData;
-      var framesPerSecond = 60; // how often the view-port rendering is refreshed per second
+      var framesPerSecond = DEFAULT_FRAME_RATE; // how often the view-port rendering is refreshed per second
       var timePerFrame = 1000 / framesPerSecond; // the time interval at which to re-render
       var now = Date.now();
       var elapsedTime = now - this.lastRenderTime;
@@ -462,6 +477,9 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
         }
         this.stats.begin();
         this.visGeometry.render(totalElapsedTime);
+        if (recording && this.recorder.isRecording) {
+          this.recorder.onFrame();
+        }
         this.stats.end();
         this.lastRenderTime = Date.now();
       }
@@ -493,10 +511,10 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
   }, {
     key: "render",
     value: function render() {
-      var _this$props4 = this.props,
-        width = _this$props4.width,
-        height = _this$props4.height,
-        showCameraControls = _this$props4.showCameraControls;
+      var _this$props5 = this.props,
+        width = _this$props5.width,
+        height = _this$props5.height,
+        showCameraControls = _this$props5.showCameraControls;
 
       // style is specified below so that the size
       // can be passed as a react property

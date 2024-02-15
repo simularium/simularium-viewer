@@ -27,3 +27,4 @@ export var TrajectoryType = /*#__PURE__*/function (TrajectoryType) {
   TrajectoryType["SMOLDYN"] = "Smoldyn";
   return TrajectoryType;
 }({});
+export var DEFAULT_FRAME_RATE = 60; // frames per second

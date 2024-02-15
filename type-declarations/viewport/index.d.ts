@@ -24,6 +24,8 @@ declare type ViewportProps = {
     selectionStateInfo: SelectionStateInfo;
     showCameraControls: boolean;
     onError?: (error: FrontEndError) => void;
+    recording: boolean;
+    onRecordedMovie: (blob: Blob) => void;
 } & Partial<DefaultProps>;
 declare const defaultProps: {
     renderStyle: RenderStyle;
@@ -35,6 +37,7 @@ declare const defaultProps: {
     showPaths: boolean;
     showBounds: boolean;
     agentColors: string[] | number[];
+    recording: boolean;
 };
 declare type DefaultProps = typeof defaultProps;
 interface Click {
@@ -53,6 +56,7 @@ export interface TimeData {
 declare class Viewport extends React.Component<ViewportProps & DefaultProps, ViewportState> {
     private visGeometry;
     private selectionInterface;
+    private recorder;
     private lastRenderTime;
     private startTime;
     private vdomRef;
@@ -71,6 +75,7 @@ declare class Viewport extends React.Component<ViewportProps & DefaultProps, Vie
         showPaths: boolean;
         showBounds: boolean;
         agentColors: string[] | number[];
+        recording: boolean;
     };
     private static isCustomEvent;
     constructor(props: ViewportProps & DefaultProps);
