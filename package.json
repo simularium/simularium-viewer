@@ -1,6 +1,6 @@
 {
     "name": "@aics/simularium-viewer",
-    "version": "3.6.4",
+    "version": "3.7.0",
     "description": "An npm package to view simulations.",
     "main": "es/index.js",
     "module": "es/index.js",
@@ -8,7 +8,7 @@
     "scripts": {
         "start": "npm run build && cd examples && npm run serve-example",
         "install-examples": "npm install && cd examples && npm install",
-        "gh-build": "npm-run-all processCSS build-example",
+        "gh-build": "npm run processCSS && cd examples && npm run build-example",
         "lint": "eslint src --ext .ts,.tsx,.js,.jsx",
         "test": "jest --coverage",
         "typeCheck": "tsc -p tsconfig.json --noEmit",
@@ -99,8 +99,10 @@
         "@fortawesome/react-fontawesome": "^0.1.14",
         "@tweakpane/core": "^1.0.8",
         "@tweakpane/plugin-essentials": "^0.1.4",
+        "@types/dom-webcodecs": "^0.1.8",
         "comlink": "^4.3.1",
         "js-logger": "^1.6.1",
+        "mp4-muxer": "^2.2.2",
         "parse-pdb": "^1.0.0",
         "si-prefix": "^0.2.0",
         "three": "^0.137.4",

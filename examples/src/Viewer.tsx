@@ -40,6 +40,7 @@ import SinglePdbSimulator from "./simulators/SinglePdbSimulator";
 import CurveSimulator from "./simulators/CurveSimulator";
 import SingleCurveSimulator from "./simulators/SingleCurveSimulator";
 import ColorPicker from "./ColorPicker";
+import RecordMovieComponent from "./RecordMovieComponent";
 import {
     SMOLDYN_TEMPLATE,
     UI_BASE_TYPES,
@@ -104,6 +105,8 @@ interface ViewerState {
         data: ISimulariumFile | null;
     } | null;
     serverHealthy: boolean;
+    isRecording: boolean;
+    trajectoryTitle: string;
 }
 
 interface BaseType {
@@ -135,9 +138,7 @@ interface InputParams {
     useOctopus: boolean;
 }
 
-const simulariumController = new SimulariumController(
-    {}
-);
+const simulariumController = new SimulariumController({});
 
 let currentFrame = 0;
 let currentTime = 0;
@@ -165,6 +166,8 @@ const initialState: ViewerState = {
     filePending: null,
     simulariumFile: null,
     serverHealthy: false,
+    isRecording: false,
+    trajectoryTitle: "",
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
@@ -268,16 +271,17 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 file.name.includes(".simularium")
             );
             Promise.all(
-                filesArr.map((element, index): Promise<string | ISimulariumFile> => {
-                    if (index !== simulariumFileIndex) {
-                        // is async call
-                        return element.text();
-                    } else {
-                        return loadSimulariumFile(element);
-                    }
-                })
+                filesArr.map(
+                    (element, index): Promise<string | ISimulariumFile> => {
+                        if (index !== simulariumFileIndex) {
+                            // is async call
+                            return element.text();
+                        } else {
+                            return loadSimulariumFile(element);
+                        }
+                    })
             )
-                .then((parsedFiles : (ISimulariumFile | string)[]) => {
+                .then((parsedFiles: (ISimulariumFile | string)[]) => {
                     const simulariumFile = parsedFiles[
                         simulariumFileIndex
                     ] as ISimulariumFile;
@@ -380,7 +384,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             serverHealthy: false,
         });
         simulariumController.checkServerHealth(
-            this.onHealthCheckResponse, this.netConnectionSettings
+            this.onHealthCheckResponse,
+            this.netConnectionSettings
         );
     }
 
@@ -479,6 +484,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             timeStep: data.timeStepSize,
             currentFrame: 0,
             currentTime: 0,
+            trajectoryTitle: data.trajectoryTitle,
         });
     }
 
@@ -668,6 +674,32 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 colorChange: colorChange,
             },
         });
+    };
+
+    ////// DOWNLOAD MOVIES PROPS AND FUNCTIONS //////
+    public getRecordedMovieTitle = (): string => {
+        return this.state.trajectoryTitle ? this.state.trajectoryTitle : "simularium";
+    };
+
+    public downloadMovie = (videoBlob: Blob, title?: string) => {
+        const url = URL.createObjectURL(videoBlob);
+        const filename = title ? title + ".mp4" : "simularium.mp4";
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = filename;
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+        URL.revokeObjectURL(url);
+    };
+
+    public onRecordedMovie = (videoBlob: Blob) => {
+        const title = this.getRecordedMovieTitle();
+        this.downloadMovie(videoBlob, title);
+    };
+
+    public setIsRecording = (isRecording: boolean) => {
+        this.setState({ isRecording: isRecording });
     };
 
     public render(): JSX.Element {
@@ -939,6 +971,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     updateAgentColorArray={this.updateAgentColorArray}
                     setColorSelectionInfo={this.setColorSelectionInfo}
                 />
+                <RecordMovieComponent
+                    isRecording={this.state.isRecording}
+                    setIsRecording={this.setIsRecording}
+                />
                 <div className="viewer-container">
                     <SimulariumViewer
                         ref={this.viewerRef}
@@ -957,6 +993,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         onUIDisplayDataChanged={this.handleUIDisplayData.bind(
                             this
                         )}
+                        recording={this.state.isRecording}
+                        onRecordedMovie={this.onRecordedMovie}
                         loadInitialData={true}
                         agentColors={this.state.agentColors}
                         showPaths={this.state.showPaths}
