@@ -15,7 +15,6 @@ export type {
 export type { ISimulariumFile } from "./simularium/ISimulariumFile";
 export type { TimeData } from "./viewport";
 export { GeometryDisplayType } from "./visGeometry/types";
-
 export { RenderStyle } from "./viewport";
 export { SimulariumController } from "./controller";
 export {
