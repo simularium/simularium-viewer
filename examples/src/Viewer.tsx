@@ -1000,6 +1000,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         showPaths={this.state.showPaths}
                         onError={this.onError}
                         backgroundColor={[0, 0, 0]}
+                        lockedCamera={false}
                     />
                 </div>
             </div>

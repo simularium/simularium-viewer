@@ -523,6 +523,7 @@ export default class SimulariumController {
      * componentDidMount of the viewer, so as long as the dom is mounted
      * these functions will be callable.
      */
+
     public zoomIn(): void {
         this.visGeometry?.zoomIn();
     }

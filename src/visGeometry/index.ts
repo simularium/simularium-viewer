@@ -731,7 +731,7 @@ class VisGeometry {
         this.updateScene(this.currentSceneAgents);
     }
 
-    private setupControls(): OrbitControls {
+    private setupControls(disableControls: boolean): void {
         this.controls = new OrbitControls(
             this.camera,
             this.threejsrenderer.domElement
@@ -747,7 +747,15 @@ class VisGeometry {
         this.setPanningMode(false);
         this.controls.saveState();
 
-        return this.controls;
+        if (disableControls) {
+            this.disableControls();
+        }
+        if (!disableControls) {
+            this.threejsrenderer.domElement.onmouseenter = () =>
+                this.enableControls();
+            this.threejsrenderer.domElement.onmouseleave = () =>
+                this.disableControls();
+        }
     }
 
     private updateControlsZoomBounds(): void {
@@ -845,7 +853,10 @@ class VisGeometry {
         return this.threejsrenderer;
     }
 
-    public reparent(parent?: HTMLElement | null): void {
+    public setCanvasOnTheDom(
+        parent: HTMLElement | null,
+        disableControls: boolean
+    ): void {
         if (parent === undefined || parent == null) {
             return;
         }
@@ -855,7 +866,7 @@ class VisGeometry {
         this.threejsrenderer = this.createWebGL();
         parent.appendChild(this.threejsrenderer.domElement);
         parent["data-has-simularium-viewer-canvas"] = true;
-        this.setupControls();
+        this.setupControls(disableControls);
 
         this.resize(
             Number(parent.dataset.width),
@@ -869,11 +880,6 @@ class VisGeometry {
             "style",
             "top: 0px; left: 0px"
         );
-
-        this.threejsrenderer.domElement.onmouseenter = () =>
-            this.enableControls();
-        this.threejsrenderer.domElement.onmouseleave = () =>
-            this.disableControls();
     }
 
     public disableControls(): void {
