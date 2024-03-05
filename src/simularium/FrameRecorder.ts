@@ -61,7 +61,7 @@ export class FrameRecorder {
                     height: roundedHeight,
                     framerate: this.frameRate,
                     bitrate: 1e7,
-                    bitrateMode: "constant",
+                    bitrateMode: "variable",
                     latencyMode: "realtime",
                 };
                 const { supported, config: supportedConfig } =
