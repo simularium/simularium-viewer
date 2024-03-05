@@ -53,7 +53,7 @@ export class FrameRecorder {
                     },
                 });
                 const config: VideoEncoderConfig = {
-                    codec: "av01.0.04M.08",
+                    codec: "avc1.420028",
                     width: canvas.width,
                     height: canvas.height,
                 };
@@ -68,7 +68,7 @@ export class FrameRecorder {
                 this.muxer = new Muxer({
                     target: new ArrayBufferTarget(),
                     video: {
-                        codec: "av1",
+                        codec: "avc",
                         width: canvas.width,
                         height: canvas.height,
                     },
