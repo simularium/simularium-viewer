@@ -24,6 +24,7 @@ declare type ViewportProps = {
     selectionStateInfo: SelectionStateInfo;
     showCameraControls: boolean;
     onError?: (error: FrontEndError) => void;
+    lockedCamera?: boolean;
     recording: boolean;
     onRecordedMovie: (blob: Blob) => void;
 } & Partial<DefaultProps>;
@@ -36,6 +37,7 @@ declare const defaultProps: {
     hideAllAgents: boolean;
     showPaths: boolean;
     showBounds: boolean;
+    lockedCamera: boolean;
     agentColors: string[] | number[];
     recording: boolean;
 };
@@ -74,6 +76,7 @@ declare class Viewport extends React.Component<ViewportProps & DefaultProps, Vie
         hideAllAgents: boolean;
         showPaths: boolean;
         showBounds: boolean;
+        lockedCamera: boolean;
         agentColors: string[] | number[];
         recording: boolean;
     };

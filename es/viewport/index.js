@@ -28,6 +28,7 @@ var defaultProps = {
   hideAllAgents: false,
   showPaths: true,
   showBounds: true,
+  lockedCamera: false,
   agentColors: [0x6ac1e5, 0xff2200, 0xee7967, 0xff6600, 0xd94d49, 0xffaa00, 0xffcc00, 0x00ccff, 0x00aaff, 0x8048f3, 0x07f4ec, 0x79bd8f, 0x8800ff, 0xaa00ff, 0xcc00ff, 0xff00cc, 0xff00aa, 0xff0088, 0xff0066, 0xff0044, 0xff0022, 0xff0000, 0xccff00, 0xaaff00, 0x88ff00, 0x00ffcc, 0x66ff00, 0x44ff00, 0x22ff00, 0x00ffaa, 0x00ff88, 0x00ffaa, 0x00ffff, 0x0066ff],
   recording: false
 };
@@ -161,7 +162,9 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
       }
       var intersectedObject = _this.visGeometry.hitTest(event.offsetX, event.offsetY);
       if (intersectedObject !== NO_AGENT) {
-        _this.vdomRef.current.style.cursor = "pointer";
+        if (!_this.props.lockedCamera) {
+          _this.vdomRef.current.style.cursor = "pointer";
+        }
       } else {
         _this.vdomRef.current.style.cursor = "default";
       }
@@ -258,8 +261,9 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
         backgroundColor = _this$props2.backgroundColor,
         simulariumController = _this$props2.simulariumController,
         loadInitialData = _this$props2.loadInitialData,
-        onError = _this$props2.onError;
-      this.visGeometry.reparent(this.vdomRef.current);
+        onError = _this$props2.onError,
+        lockedCamera = _this$props2.lockedCamera;
+      this.visGeometry.setCanvasOnTheDom(this.vdomRef.current, lockedCamera);
       if (backgroundColor !== undefined) {
         this.visGeometry.setBackgroundColor(backgroundColor);
       }
@@ -396,7 +400,9 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
         if (oldFollowObject !== intersectedObject && oldFollowObject !== NO_AGENT) {
           this.visGeometry.removePathForAgent(oldFollowObject);
         }
-        this.visGeometry.setFollowObject(intersectedObject);
+        if (!this.props.lockedCamera) {
+          this.visGeometry.setFollowObject(intersectedObject);
+        }
         this.visGeometry.addPathForAgent(intersectedObject);
       } else {
         if (oldFollowObject !== NO_AGENT) {
