@@ -3,11 +3,13 @@ import React, { useState, useEffect, useRef } from "react";
 interface RecordMovieComponentProps {
     isRecording: boolean;
     setIsRecording: (isRecording: boolean) => void;
+    isRecordingEnabled: boolean;
 }
 
 const RecordMovieComponent = ({
     isRecording,
     setIsRecording,
+    isRecordingEnabled,
 }: RecordMovieComponentProps) => {
     // recording time measured in seconds
     let [recordingTimeElapsed, setRecordingTimeElapsed] = useState<number>(0);
@@ -43,18 +45,30 @@ const RecordMovieComponent = ({
         <div>
             <button
                 onClick={startRecording}
-                disabled={isRecording || !browserSupported}
+                disabled={
+                    !isRecordingEnabled || isRecording || !browserSupported
+                }
             >
                 Start Recording
             </button>
             <button
                 onClick={stopRecording}
-                disabled={!isRecording || !browserSupported}
+                disabled={
+                    !isRecordingEnabled || !isRecording || !browserSupported
+                }
             >
                 Stop Recording
-                </button>
+            </button>
             <div>{isRecording ? "Recording..." : ""}</div>
-            <div> {!browserSupported ? "Browser does not support recording" : ""} </div>
+            <div>
+                {" "}
+                {!browserSupported
+                    ? "Browser does not support recording"
+                    : ""}{" "}
+                {!isRecordingEnabled
+                    ? "Recording is not enabled, provide a callback to enable feature"
+                    : ""}
+            </div>
             <div>
                 {isRecording
                     ? "Recording duration:  " +

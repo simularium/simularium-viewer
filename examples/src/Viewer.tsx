@@ -279,7 +279,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         } else {
                             return loadSimulariumFile(element);
                         }
-                    })
+                    }
+                )
             )
                 .then((parsedFiles: (ISimulariumFile | string)[]) => {
                     const simulariumFile = parsedFiles[
@@ -678,7 +679,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     ////// DOWNLOAD MOVIES PROPS AND FUNCTIONS //////
     public getRecordedMovieTitle = (): string => {
-        return this.state.trajectoryTitle ? this.state.trajectoryTitle : "simularium";
+        return this.state.trajectoryTitle
+            ? this.state.trajectoryTitle
+            : "simularium";
     };
 
     public downloadMovie = (videoBlob: Blob, title?: string) => {
@@ -700,6 +703,16 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public setIsRecording = (isRecording: boolean) => {
         this.setState({ isRecording: isRecording });
+    };
+
+    // Remove the Viewer's onRecordedMovie prop assigment to disable feature
+    private isRecordingEnabledInViewer = () => {
+        const viewerElement = this.viewerRef.current;
+        if (viewerElement) {
+            const viewerProps = viewerElement.props;
+            return !!viewerProps.onRecordedMovie;
+        }
+        return false;
     };
 
     public render(): JSX.Element {
@@ -974,6 +987,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 <RecordMovieComponent
                     isRecording={this.state.isRecording}
                     setIsRecording={this.setIsRecording}
+                    isRecordingEnabled={this.isRecordingEnabledInViewer()}
                 />
                 <div className="viewer-container">
                     <SimulariumViewer
