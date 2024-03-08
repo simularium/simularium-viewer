@@ -44,8 +44,8 @@ type ViewportProps = {
     showCameraControls: boolean;
     onError?: (error: FrontEndError) => void;
     lockedCamera?: boolean;
-    recording: boolean;
-    onRecordedMovie: (blob: Blob) => void;
+    recording?: boolean;
+    onRecordedMovie?: (blob: Blob) => void; // provide a callback to enable recording feature
 } & Partial<DefaultProps>;
 
 const defaultProps = {
@@ -97,7 +97,7 @@ class Viewport extends React.Component<
 > {
     private visGeometry: VisGeometry;
     private selectionInterface: SelectionInterface;
-    private recorder: FrameRecorder;
+    private recorder: FrameRecorder | null;
     private lastRenderTime: number;
     private startTime: number;
     private vdomRef: React.RefObject<HTMLDivElement>;
@@ -155,9 +155,12 @@ class Viewport extends React.Component<
             },
             showRenderParamsGUI: false,
         };
-        this.recorder = new FrameRecorder(() => {
-            return this.visGeometry.renderDom as HTMLCanvasElement;
-        }, this.props.onRecordedMovie);
+        if (this.props.onRecordedMovie === undefined) {
+            this.recorder = null;
+        } else {
+            this.recorder = new FrameRecorder(() => {
+                return this.visGeometry.renderDom as HTMLCanvasElement;
+            }, this.props.onRecordedMovie);}
     }
 
     private onTrajectoryFileInfo(msg: TrajectoryFileInfoAny): void {
@@ -372,7 +375,10 @@ class Viewport extends React.Component<
                 this.visGeometry.destroyGui();
             }
         }
-        if (this.props.recording !== prevProps.recording && this.recorder.supportedBrowser) {
+        if (
+            this.props.recording !== prevProps.recording &&
+            this.recorder?.supportedBrowser
+        ) {
             if (this.props.recording) {
                 this.recorder.start();
             } else {
@@ -627,7 +633,7 @@ class Viewport extends React.Component<
             }
             this.stats.begin();
             this.visGeometry.render(totalElapsedTime);
-            if (recording && this.recorder.isRecording) {
+            if (recording && this.recorder?.isRecording) {
                 this.recorder.onFrame();
             }
             this.stats.end();
