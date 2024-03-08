@@ -40,16 +40,18 @@ export var FrameRecorder = /*#__PURE__*/function () {
     value: function () {
       var _setup = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee() {
         var _this = this;
-        var canvas, config, _yield$VideoEncoder$i, supported, supportedConfig;
+        var canvas, evenWidth, evenHeight, config, _yield$VideoEncoder$i, supported, supportedConfig;
         return _regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) switch (_context.prev = _context.next) {
             case 0:
               canvas = this.getCanvas();
               if (!canvas) {
-                _context.next = 22;
+                _context.next = 24;
                 break;
               }
-              _context.prev = 2;
+              evenWidth = Math.ceil(canvas.width / 2) * 2;
+              evenHeight = Math.ceil(canvas.height / 2) * 2;
+              _context.prev = 4;
               // VideoEncoder sends chunks of frame data to the muxer.
               // Previously made one encoder in the constructor but
               // making a new one during setup() prevents a bug where
@@ -66,26 +68,32 @@ export var FrameRecorder = /*#__PURE__*/function () {
                 }
               });
               config = {
-                codec: "avc1.420028",
-                width: canvas.width,
-                height: canvas.height
+                // High profile, level 4. Could switch to lower level if latency seems to be an issue
+                // default bitrate mode "variable" is fine for our purposes, to value quality > file size
+                codec: "avc1.640028",
+                width: evenWidth,
+                height: evenHeight,
+                framerate: this.frameRate,
+                bitrate: 2.5e7,
+                // 25 Mbps
+                latencyMode: "realtime"
               };
-              _context.next = 7;
+              _context.next = 9;
               return VideoEncoder.isConfigSupported(config);
-            case 7:
+            case 9:
               _yield$VideoEncoder$i = _context.sent;
               supported = _yield$VideoEncoder$i.supported;
               supportedConfig = _yield$VideoEncoder$i.config;
               if (!(supported && supportedConfig)) {
-                _context.next = 14;
+                _context.next = 16;
                 break;
               }
               this.encoder.configure(config);
-              _context.next = 15;
+              _context.next = 17;
               break;
-            case 14:
+            case 16:
               throw new Error("Unsupported video encoder configuration");
-            case 15:
+            case 17:
               // Muxer will handle the conversion from raw video data to mp4
               this.muxer = new Muxer({
                 target: new ArrayBufferTarget(),
@@ -96,17 +104,17 @@ export var FrameRecorder = /*#__PURE__*/function () {
                 }
               });
               this.frameIndex = 0;
-              _context.next = 22;
+              _context.next = 24;
               break;
-            case 19:
-              _context.prev = 19;
-              _context.t0 = _context["catch"](2);
+            case 21:
+              _context.prev = 21;
+              _context.t0 = _context["catch"](4);
               throw new Error("Error setting up video encoder: " + _context.t0);
-            case 22:
+            case 24:
             case "end":
               return _context.stop();
           }
-        }, _callee, this, [[2, 19]]);
+        }, _callee, this, [[4, 21]]);
       }));
       function setup() {
         return _setup.apply(this, arguments);
