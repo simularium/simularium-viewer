@@ -45,7 +45,7 @@ type ViewportProps = {
     onError?: (error: FrontEndError) => void;
     lockedCamera?: boolean;
     recording?: boolean;
-    onRecordedMovie?: (blob: Blob) => void; // provide a callback to enable recording feature
+    onRecordedMovie?: (blob: Blob) => void; // provide a callback to enable recording
 } & Partial<DefaultProps>;
 
 const defaultProps = {

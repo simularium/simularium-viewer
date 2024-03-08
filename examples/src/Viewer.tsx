@@ -279,8 +279,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         } else {
                             return loadSimulariumFile(element);
                         }
-                    }
-                )
+                    })
             )
                 .then((parsedFiles: (ISimulariumFile | string)[]) => {
                     const simulariumFile = parsedFiles[
@@ -679,9 +678,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     ////// DOWNLOAD MOVIES PROPS AND FUNCTIONS //////
     public getRecordedMovieTitle = (): string => {
-        return this.state.trajectoryTitle
-            ? this.state.trajectoryTitle
-            : "simularium";
+        return this.state.trajectoryTitle ? this.state.trajectoryTitle : "simularium";
     };
 
     public downloadMovie = (videoBlob: Blob, title?: string) => {
