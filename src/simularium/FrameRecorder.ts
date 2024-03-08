@@ -37,6 +37,8 @@ export class FrameRecorder {
     private async setup(): Promise<void> {
         const canvas = this.getCanvas();
         if (canvas) {
+            const evenWidth = Math.ceil(canvas.width / 2) * 2;
+            const evenHeight = Math.ceil(canvas.height / 2) * 2;
             try {
                 // VideoEncoder sends chunks of frame data to the muxer.
                 // Previously made one encoder in the constructor but
@@ -53,9 +55,14 @@ export class FrameRecorder {
                     },
                 });
                 const config: VideoEncoderConfig = {
-                    codec: "avc1.420028",
-                    width: canvas.width,
-                    height: canvas.height,
+                    // High profile, level 4. Could switch to lower level if latency seems to be an issue
+                    // default bitrate mode "variable" is fine for our purposes, to value quality > file size
+                    codec: "avc1.640028",
+                    width: evenWidth,
+                    height: evenHeight,
+                    framerate: this.frameRate,
+                    bitrate: 2.5e7, // 25 Mbps
+                    latencyMode: "realtime",
                 };
                 const { supported, config: supportedConfig } =
                     await VideoEncoder.isConfigSupported(config);
