@@ -981,11 +981,12 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     updateAgentColorArray={this.updateAgentColorArray}
                     setColorSelectionInfo={this.setColorSelectionInfo}
                 />
-                <RecordMovieComponent
-                    isRecording={this.state.isRecording}
-                    setIsRecording={this.setIsRecording}
-                    isRecordingEnabled={this.isRecordingEnabledInViewer()}
-                />
+                {this.isRecordingEnabledInViewer() && (
+                    <RecordMovieComponent
+                        isRecording={this.state.isRecording}
+                        setIsRecording={this.setIsRecording}
+                    />
+                )}
                 <div className="viewer-container">
                     <SimulariumViewer
                         ref={this.viewerRef}
