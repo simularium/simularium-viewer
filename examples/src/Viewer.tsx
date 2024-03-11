@@ -106,6 +106,7 @@ interface ViewerState {
     } | null;
     serverHealthy: boolean;
     isRecording: boolean;
+    isRecordingEnabled: boolean;
     trajectoryTitle: string;
 }
 
@@ -167,6 +168,7 @@ const initialState: ViewerState = {
     simulariumFile: null,
     serverHealthy: false,
     isRecording: false,
+    isRecordingEnabled: true,
     trajectoryTitle: "",
 };
 
@@ -712,6 +714,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         return false;
     };
 
+    public setRecordingEnabled = (value: boolean): void => {
+        this.setState({ isRecordingEnabled: value });
+    }
+
     public render(): JSX.Element {
         if (this.state.filePending) {
             const fileType = this.state.filePending.type;
@@ -981,7 +987,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     updateAgentColorArray={this.updateAgentColorArray}
                     setColorSelectionInfo={this.setColorSelectionInfo}
                 />
-                {this.isRecordingEnabledInViewer() && (
+                <button onClick={() => this.setRecordingEnabled(!this.state.isRecordingEnabled)}>
+                    {this.state.isRecordingEnabled ? "Disable" : "Enable"} Recording
+                </button>
+                {this.state.isRecordingEnabled && (
                     <RecordMovieComponent
                         isRecording={this.state.isRecording}
                         setIsRecording={this.setIsRecording}
@@ -1006,7 +1015,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                             this
                         )}
                         recording={this.state.isRecording}
-                        onRecordedMovie={this.onRecordedMovie}
+                        onRecordedMovie={this.state.isRecordingEnabled ? this.onRecordedMovie : undefined}
                         loadInitialData={true}
                         agentColors={this.state.agentColors}
                         showPaths={this.state.showPaths}
