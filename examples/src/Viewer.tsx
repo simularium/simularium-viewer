@@ -704,16 +704,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         this.setState({ isRecording: isRecording });
     };
 
-    // Remove the Viewer's onRecordedMovie prop assigment to disable feature
-    private isRecordingEnabledInViewer = () => {
-        const viewerElement = this.viewerRef.current;
-        if (viewerElement) {
-            const viewerProps = viewerElement.props;
-            return !!viewerProps.onRecordedMovie;
-        }
-        return false;
-    };
-
     public setRecordingEnabled = (value: boolean): void => {
         this.setState({ isRecordingEnabled: value });
     }
