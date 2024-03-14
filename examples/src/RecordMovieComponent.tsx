@@ -1,3 +1,4 @@
+import { set } from "lodash";
 import React, { useState, useEffect } from "react";
 
 interface RecordMovieComponentProps {
@@ -11,8 +12,7 @@ const RecordMovieComponent = ({
 }: RecordMovieComponentProps): JSX.Element => {
     // recording time measured in seconds
     const [isRecording, setIsRecording] = useState<boolean>(false);
-    const [recordingTimeElapsed, setRecordingTimeElapsed] = useState<number>(0);
-    const [outputStatus, setOutputStatus] = useState<string>("");
+    const [recordingStartTime, setRecordingStartTime] = useState<number>(-1);
 
     const browserSupported = "VideoEncoder" in window;
 
@@ -20,38 +20,29 @@ const RecordMovieComponent = ({
     useEffect(() => {
         let intervalId;
         if (isRecording) {
-            intervalId = setInterval(() => {
-                setRecordingTimeElapsed((prevTimer) => prevTimer + 1);
-            }, 1000);
+            setRecordingStartTime(Date.now());
+            startRecordingHandler();
+        } else {
+            setRecordingStartTime(0);
+            stopRecordingHandler();
         }
         return () => {
             clearInterval(intervalId);
         };
     }, [isRecording]);
 
-    const startRecording = async () => {
-        setOutputStatus("");
-        setIsRecording(true);
-        startRecordingHandler();
-    };
 
-    const stopRecording = () => {
-        setOutputStatus("Recording complete");
-        setIsRecording(false);
-        setRecordingTimeElapsed(0);
-        stopRecordingHandler();
-    };
 
     return (
         <div>
             <button
-                onClick={startRecording}
+                onClick={() => setIsRecording(true)}
                 disabled={isRecording || !browserSupported}
             >
                 Start Recording
             </button>
             <button
-                onClick={stopRecording}
+                onClick={() => setIsRecording(false)}
                 disabled={!isRecording || !browserSupported}
             >
                 Stop Recording
@@ -62,12 +53,12 @@ const RecordMovieComponent = ({
             </div>
             <div>
                 {isRecording
-                    ? "Recording duration:  " +
-                      recordingTimeElapsed +
-                      " seconds"
+                    ? `Recording duration:  ${
+                          Date.now() - recordingStartTime
+                      } seconds`
                     : ""}
             </div>
-            <div>{outputStatus}</div>
+            <div>{recordingStartTime === 0 ? "Recording complete" : ""}</div>
         </div>
     );
 };
