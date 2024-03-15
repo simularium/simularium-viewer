@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "serve-example": "webpack serve --config webpack.dev.js",
+    "prebuild-example": "npm install",
     "build-example": "webpack --config webpack.dev.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
