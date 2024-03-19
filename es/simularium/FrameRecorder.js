@@ -44,14 +44,20 @@ export var FrameRecorder = /*#__PURE__*/function () {
         return _regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) switch (_context.prev = _context.next) {
             case 0:
+              if (this.supportedBrowser) {
+                _context.next = 2;
+                break;
+              }
+              throw new Error("Browser does not support video recording");
+            case 2:
               canvas = this.getCanvas();
               if (!canvas) {
-                _context.next = 24;
+                _context.next = 26;
                 break;
               }
               evenWidth = Math.ceil(canvas.width / 2) * 2;
               evenHeight = Math.ceil(canvas.height / 2) * 2;
-              _context.prev = 4;
+              _context.prev = 6;
               // VideoEncoder sends chunks of frame data to the muxer.
               // Previously made one encoder in the constructor but
               // making a new one during setup() prevents a bug where
@@ -78,22 +84,22 @@ export var FrameRecorder = /*#__PURE__*/function () {
                 // 25 Mbps
                 latencyMode: "realtime"
               };
-              _context.next = 9;
+              _context.next = 11;
               return VideoEncoder.isConfigSupported(config);
-            case 9:
+            case 11:
               _yield$VideoEncoder$i = _context.sent;
               supported = _yield$VideoEncoder$i.supported;
               supportedConfig = _yield$VideoEncoder$i.config;
               if (!(supported && supportedConfig)) {
-                _context.next = 16;
+                _context.next = 18;
                 break;
               }
               this.encoder.configure(config);
-              _context.next = 17;
+              _context.next = 19;
               break;
-            case 16:
+            case 18:
               throw new Error("Unsupported video encoder configuration");
-            case 17:
+            case 19:
               // Muxer will handle the conversion from raw video data to mp4
               this.muxer = new Muxer({
                 target: new ArrayBufferTarget(),
@@ -104,17 +110,17 @@ export var FrameRecorder = /*#__PURE__*/function () {
                 }
               });
               this.frameIndex = 0;
-              _context.next = 24;
+              _context.next = 26;
               break;
-            case 21:
-              _context.prev = 21;
-              _context.t0 = _context["catch"](4);
+            case 23:
+              _context.prev = 23;
+              _context.t0 = _context["catch"](6);
               throw new Error("Error setting up video encoder: " + _context.t0);
-            case 24:
+            case 26:
             case "end":
               return _context.stop();
           }
-        }, _callee, this, [[4, 21]]);
+        }, _callee, this, [[6, 23]]);
       }));
       function setup() {
         return _setup.apply(this, arguments);
@@ -128,23 +134,27 @@ export var FrameRecorder = /*#__PURE__*/function () {
         return _regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) switch (_context2.prev = _context2.next) {
             case 0:
-              _context2.prev = 0;
-              _context2.next = 3;
+              if (this.isRecording) {
+                _context2.next = 11;
+                break;
+              }
+              _context2.prev = 1;
+              _context2.next = 4;
               return this.setup();
-            case 3:
+            case 4:
               this.isRecording = true;
-              _context2.next = 10;
+              _context2.next = 11;
               break;
-            case 6:
-              _context2.prev = 6;
-              _context2.t0 = _context2["catch"](0);
+            case 7:
+              _context2.prev = 7;
+              _context2.t0 = _context2["catch"](1);
               console.log("setup failed", _context2.t0);
               return _context2.abrupt("return");
-            case 10:
+            case 11:
             case "end":
               return _context2.stop();
           }
-        }, _callee2, this, [[0, 6]]);
+        }, _callee2, this, [[1, 7]]);
       }));
       function start() {
         return _start.apply(this, arguments);
@@ -158,10 +168,14 @@ export var FrameRecorder = /*#__PURE__*/function () {
         return _regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) switch (_context3.prev = _context3.next) {
             case 0:
+              if (!this.isRecording) {
+                _context3.next = 4;
+                break;
+              }
               this.isRecording = false;
-              _context3.next = 3;
+              _context3.next = 4;
               return this.onCompletedRecording();
-            case 3:
+            case 4:
             case "end":
               return _context3.stop();
           }

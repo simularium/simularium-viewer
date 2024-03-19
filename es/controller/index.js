@@ -30,6 +30,8 @@ var SimulariumController = /*#__PURE__*/function () {
     _defineProperty(this, "tickIntervalLength", void 0);
     _defineProperty(this, "handleTrajectoryInfo", void 0);
     _defineProperty(this, "postConnect", void 0);
+    _defineProperty(this, "startRecording", void 0);
+    _defineProperty(this, "stopRecording", void 0);
     _defineProperty(this, "onError", void 0);
     _defineProperty(this, "networkEnabled", void 0);
     _defineProperty(this, "isPaused", void 0);
@@ -38,6 +40,12 @@ var SimulariumController = /*#__PURE__*/function () {
     this.visData = new VisData();
     this.tickIntervalLength = 0; // Will be overwritten when a trajectory is loaded
     this.postConnect = function () {
+      return noop;
+    };
+    this.startRecording = function () {
+      return noop;
+    };
+    this.stopRecording = function () {
       return noop;
     };
     this.handleTrajectoryInfo = function /*msg: TrajectoryFileInfo*/ () {

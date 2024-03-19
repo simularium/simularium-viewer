@@ -29,8 +29,7 @@ var defaultProps = {
   showPaths: true,
   showBounds: true,
   lockedCamera: false,
-  agentColors: [0x6ac1e5, 0xff2200, 0xee7967, 0xff6600, 0xd94d49, 0xffaa00, 0xffcc00, 0x00ccff, 0x00aaff, 0x8048f3, 0x07f4ec, 0x79bd8f, 0x8800ff, 0xaa00ff, 0xcc00ff, 0xff00cc, 0xff00aa, 0xff0088, 0xff0066, 0xff0044, 0xff0022, 0xff0000, 0xccff00, 0xaaff00, 0x88ff00, 0x00ffcc, 0x66ff00, 0x44ff00, 0x22ff00, 0x00ffaa, 0x00ff88, 0x00ffaa, 0x00ffff, 0x0066ff],
-  recording: false
+  agentColors: [0x6ac1e5, 0xff2200, 0xee7967, 0xff6600, 0xd94d49, 0xffaa00, 0xffcc00, 0x00ccff, 0x00aaff, 0x8048f3, 0x07f4ec, 0x79bd8f, 0x8800ff, 0xaa00ff, 0xcc00ff, 0xff00cc, 0xff00aa, 0xff0088, 0xff0066, 0xff0044, 0xff0022, 0xff0000, 0xccff00, 0xaaff00, 0x88ff00, 0x00ffcc, 0x66ff00, 0x44ff00, 0x22ff00, 0x00ffaa, 0x00ff88, 0x00ffaa, 0x00ffff, 0x0066ff]
 };
 // max time in milliseconds for a mouse/touch interaction to be considered a click;
 var MAX_CLICK_TIME = 300;
@@ -203,9 +202,13 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
       },
       showRenderParamsGUI: false
     };
-    _this.recorder = new FrameRecorder(function () {
-      return _this.visGeometry.renderDom;
-    }, _this.props.onRecordedMovie);
+    if (_this.props.onRecordedMovie === undefined) {
+      _this.recorder = null;
+    } else {
+      _this.recorder = new FrameRecorder(function () {
+        return _this.visGeometry.renderDom;
+      }, _this.props.onRecordedMovie);
+    }
     return _this;
   }
   _createClass(Viewport, [{
@@ -286,6 +289,8 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
           simulariumController.initializeTrajectoryFile();
         }
       };
+      simulariumController.startRecording = this.startRecording.bind(this);
+      simulariumController.stopRecording = this.stopRecording.bind(this);
       if (this.vdomRef.current) {
         this.vdomRef.current.addEventListener("timeChange", this.handleTimeChange, false);
       }
@@ -358,13 +363,6 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
           this.visGeometry.setupGui(this.vdomRef.current);
         } else {
           this.visGeometry.destroyGui();
-        }
-      }
-      if (this.props.recording !== prevProps.recording && this.recorder.supportedBrowser) {
-        if (this.props.recording) {
-          this.recorder.start();
-        } else {
-          this.recorder.stop();
         }
       }
     }
@@ -452,9 +450,7 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
   }, {
     key: "animate",
     value: function animate() {
-      var _this$props4 = this.props,
-        simulariumController = _this$props4.simulariumController,
-        recording = _this$props4.recording;
+      var simulariumController = this.props.simulariumController;
       var visData = simulariumController.visData;
       var framesPerSecond = DEFAULT_FRAME_RATE; // how often the view-port rendering is refreshed per second
       var timePerFrame = 1000 / framesPerSecond; // the time interval at which to re-render
@@ -462,6 +458,7 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
       var elapsedTime = now - this.lastRenderTime;
       var totalElapsedTime = now - this.startTime;
       if (elapsedTime > timePerFrame) {
+        var _this$recorder;
         if (simulariumController.isChangingFile) {
           this.visGeometry.render(totalElapsedTime);
           this.lastRenderTime = Date.now();
@@ -483,7 +480,7 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
         }
         this.stats.begin();
         this.visGeometry.render(totalElapsedTime);
-        if (recording && this.recorder.isRecording) {
+        if ((_this$recorder = this.recorder) !== null && _this$recorder !== void 0 && _this$recorder.isRecording) {
           this.recorder.onFrame();
         }
         this.stats.end();
@@ -515,12 +512,28 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
       }, "Starting orientation"));
     }
   }, {
+    key: "startRecording",
+    value: function startRecording() {
+      if (!this.recorder) {
+        return;
+      }
+      this.recorder.start();
+    }
+  }, {
+    key: "stopRecording",
+    value: function stopRecording() {
+      if (!this.recorder) {
+        return;
+      }
+      this.recorder.stop();
+    }
+  }, {
     key: "render",
     value: function render() {
-      var _this$props5 = this.props,
-        width = _this$props5.width,
-        height = _this$props5.height,
-        showCameraControls = _this$props5.showCameraControls;
+      var _this$props4 = this.props,
+        width = _this$props4.width,
+        height = _this$props4.height,
+        showCameraControls = _this$props4.showCameraControls;
 
       // style is specified below so that the size
       // can be passed as a react property

@@ -25,8 +25,7 @@ declare type ViewportProps = {
     showCameraControls: boolean;
     onError?: (error: FrontEndError) => void;
     lockedCamera?: boolean;
-    recording: boolean;
-    onRecordedMovie: (blob: Blob) => void;
+    onRecordedMovie?: (blob: Blob) => void;
 } & Partial<DefaultProps>;
 declare const defaultProps: {
     renderStyle: RenderStyle;
@@ -39,7 +38,6 @@ declare const defaultProps: {
     showBounds: boolean;
     lockedCamera: boolean;
     agentColors: string[] | number[];
-    recording: boolean;
 };
 declare type DefaultProps = typeof defaultProps;
 interface Click {
@@ -78,7 +76,6 @@ declare class Viewport extends React.Component<ViewportProps & DefaultProps, Vie
         showBounds: boolean;
         lockedCamera: boolean;
         agentColors: string[] | number[];
-        recording: boolean;
     };
     private static isCustomEvent;
     constructor(props: ViewportProps & DefaultProps);
@@ -104,6 +101,8 @@ declare class Viewport extends React.Component<ViewportProps & DefaultProps, Vie
     stopAnimate(): void;
     animate(): void;
     renderViewControls(): React.ReactElement;
+    startRecording(): void;
+    stopRecording(): void;
     render(): React.ReactElement<HTMLElement>;
 }
 export { RenderStyle };

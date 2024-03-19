@@ -31,6 +31,8 @@ export default class SimulariumController {
     tickIntervalLength: number;
     handleTrajectoryInfo: (TrajectoryFileInfo: any) => void;
     postConnect: () => void;
+    startRecording: () => void;
+    stopRecording: () => void;
     onError?: (error: FrontEndError) => void;
     private networkEnabled;
     private isPaused;
