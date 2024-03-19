@@ -35,6 +35,9 @@ export class FrameRecorder {
     }
 
     private async setup(): Promise<void> {
+        if (!this.supportedBrowser) {
+            throw new Error("Browser does not support video recording");
+        }
         const canvas = this.getCanvas();
         if (canvas) {
             const evenWidth = Math.ceil(canvas.width / 2) * 2;
@@ -88,18 +91,21 @@ export class FrameRecorder {
     }
 
     public async start(): Promise<void> {
-        try {
-            await this.setup();
-            this.isRecording = true;
-        } catch (e) {
-            console.log("setup failed", e);
-            return;
-        }
+        if (!this.isRecording)
+            try {
+                await this.setup();
+                this.isRecording = true;
+            } catch (e) {
+                console.log("setup failed", e);
+                return;
+            }
     }
 
     public async stop(): Promise<void> {
-        this.isRecording = false;
-        await this.onCompletedRecording();
+        if (this.isRecording) {
+            this.isRecording = false;
+            await this.onCompletedRecording();
+        }
     }
 
     public onFrame(): void {

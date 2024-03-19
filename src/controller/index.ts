@@ -52,6 +52,8 @@ export default class SimulariumController {
     public tickIntervalLength: number;
     public handleTrajectoryInfo: (TrajectoryFileInfo) => void;
     public postConnect: () => void;
+    public startRecording: () => void;
+    public stopRecording: () => void;
     public onError?: (error: FrontEndError) => void;
 
     private networkEnabled: boolean;
@@ -63,6 +65,8 @@ export default class SimulariumController {
         this.visData = new VisData();
         this.tickIntervalLength = 0; // Will be overwritten when a trajectory is loaded
         this.postConnect = () => noop;
+        this.startRecording = () => noop;
+        this.stopRecording = () => noop;
 
         this.handleTrajectoryInfo = (/*msg: TrajectoryFileInfo*/) => noop;
         this.onError = (/*errorMessage*/) => noop;

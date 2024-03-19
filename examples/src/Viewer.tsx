@@ -21,8 +21,8 @@ import SimulariumViewer, {
 /**
  * NOTE: if you are debugging an import/build issue
  * on the front end, you may need to switch to the
- * following import statements to reproduce the issue 
- * here. 
+ * following import statements to reproduce the issue
+ * here.
  */
 // import SimulariumViewer, {
 //     SimulariumController,
@@ -105,7 +105,7 @@ interface ViewerState {
         data: ISimulariumFile | null;
     } | null;
     serverHealthy: boolean;
-    isRecording: boolean;
+    isRecordingEnabled: boolean;
     trajectoryTitle: string;
 }
 
@@ -166,7 +166,7 @@ const initialState: ViewerState = {
     filePending: null,
     simulariumFile: null,
     serverHealthy: false,
-    isRecording: false,
+    isRecordingEnabled: true,
     trajectoryTitle: "",
 };
 
@@ -279,7 +279,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         } else {
                             return loadSimulariumFile(element);
                         }
-                    })
+                    }
+                )
             )
                 .then((parsedFiles: (ISimulariumFile | string)[]) => {
                     const simulariumFile = parsedFiles[
@@ -678,7 +679,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     ////// DOWNLOAD MOVIES PROPS AND FUNCTIONS //////
     public getRecordedMovieTitle = (): string => {
-        return this.state.trajectoryTitle ? this.state.trajectoryTitle : "simularium";
+        return this.state.trajectoryTitle
+            ? this.state.trajectoryTitle
+            : "simularium";
     };
 
     public downloadMovie = (videoBlob: Blob, title?: string) => {
@@ -698,8 +701,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         this.downloadMovie(videoBlob, title);
     };
 
-    public setIsRecording = (isRecording: boolean) => {
-        this.setState({ isRecording: isRecording });
+    public setRecordingEnabled = (value: boolean): void => {
+        this.setState({ isRecordingEnabled: value });
     };
 
     public render(): JSX.Element {
@@ -971,10 +974,24 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     updateAgentColorArray={this.updateAgentColorArray}
                     setColorSelectionInfo={this.setColorSelectionInfo}
                 />
-                <RecordMovieComponent
-                    isRecording={this.state.isRecording}
-                    setIsRecording={this.setIsRecording}
-                />
+                <button
+                    onClick={() =>
+                        this.setRecordingEnabled(!this.state.isRecordingEnabled)
+                    }
+                >
+                    {this.state.isRecordingEnabled ? "Disable" : "Enable"}{" "}
+                    Recording
+                </button>
+                {this.state.isRecordingEnabled && (
+                    <RecordMovieComponent
+                        startRecordingHandler={
+                            simulariumController.startRecording
+                        }
+                        stopRecordingHandler={
+                            simulariumController.stopRecording
+                        }
+                    />
+                )}
                 <div className="viewer-container">
                     <SimulariumViewer
                         ref={this.viewerRef}
@@ -993,8 +1010,11 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         onUIDisplayDataChanged={this.handleUIDisplayData.bind(
                             this
                         )}
-                        recording={this.state.isRecording}
-                        onRecordedMovie={this.onRecordedMovie}
+                        onRecordedMovie={
+                            this.state.isRecordingEnabled
+                                ? this.onRecordedMovie
+                                : undefined
+                        }
                         loadInitialData={true}
                         agentColors={this.state.agentColors}
                         showPaths={this.state.showPaths}
