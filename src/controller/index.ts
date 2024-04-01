@@ -54,6 +54,7 @@ export default class SimulariumController {
     public postConnect: () => void;
     public startRecording: () => void;
     public stopRecording: () => void;
+    public getFollowObject: (value: number) => void;
     public onError?: (error: FrontEndError) => void;
 
     private networkEnabled: boolean;
@@ -67,6 +68,7 @@ export default class SimulariumController {
         this.postConnect = () => noop;
         this.startRecording = () => noop;
         this.stopRecording = () => noop;
+        this.getFollowObject = () => noop;
 
         this.handleTrajectoryInfo = (/*msg: TrajectoryFileInfo*/) => noop;
         this.onError = (/*errorMessage*/) => noop;
@@ -115,6 +117,7 @@ export default class SimulariumController {
         this.centerCamera = this.centerCamera.bind(this);
         this.reOrientCamera = this.reOrientCamera.bind(this);
         this.setPanningMode = this.setPanningMode.bind(this);
+        this.getFollowObject = this.getFollowObject.bind(this);
         this.setFocusMode = this.setFocusMode.bind(this);
         this.convertAndLoadTrajectory =
             this.convertAndLoadTrajectory.bind(this);
@@ -562,6 +565,19 @@ export default class SimulariumController {
 
     public setCameraType(ortho: boolean): void {
         this.visGeometry?.setCameraType(ortho);
+    }
+
+    // public getFollowObject(): number {
+    //     const value = this.visGeometry?.getFollowObject() || -1;
+    //     console.log("getFollowObject in controller, visgeo?: ", !!this.visGeometry?.getFollowObject);
+    //     console.log("getFollowObject in controller, value: ", value);
+
+    //     // return this.visGeometry?.getFollowObject() || -1;
+    //     this.followObjectCallback(value);
+
+    public updateFollowObject(): void {
+        const value = this.visGeometry?.getFollowObject() || -1;
+        this.getFollowObject(value);
     }
 }
 

@@ -12,7 +12,7 @@ import {
     SelectionStateInfo,
     UIDisplayData,
 } from "../simularium";
-import { TrajectoryFileInfoAny } from "../simularium/types";
+import { AgentData, TrajectoryFileInfoAny } from "../simularium/types";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
 import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry";
@@ -45,6 +45,7 @@ type ViewportProps = {
     onError?: (error: FrontEndError) => void;
     lockedCamera?: boolean;
     onRecordedMovie?: (blob: Blob) => void; // providing this callback enables movie recording
+    followObjectCallback?: (newObject: number, oldObject: number, agentData: AgentData) => void;
 } & Partial<DefaultProps>;
 
 const defaultProps = {
@@ -214,6 +215,7 @@ class Viewport extends React.Component<
             }
         }
         const uiDisplayData = this.selectionInterface.getUIDisplayData();
+        console.log("uiDisplayData", uiDisplayData);
         onTrajectoryFileInfoChanged(trajectoryFileInfo);
         this.visGeometry.colorHandler.clearColorMapping();
 
@@ -531,6 +533,7 @@ class Viewport extends React.Component<
     }
 
     public onPickObject(posX: number, posY: number): void {
+        console.log("onPickObject");
         // TODO: intersect with scene's children not including lights?
         // can we select a smaller number of things to hit test?
         const oldFollowObject = this.visGeometry.getFollowObject();
@@ -539,6 +542,7 @@ class Viewport extends React.Component<
         const intersectedObject = this.visGeometry.hitTest(posX, posY);
         if (intersectedObject !== NO_AGENT) {
             this.hit = true;
+            console.log("hit");
             if (
                 oldFollowObject !== intersectedObject &&
                 oldFollowObject !== NO_AGENT
@@ -546,7 +550,10 @@ class Viewport extends React.Component<
                 this.visGeometry.removePathForAgent(oldFollowObject);
             }
             if (!this.props.lockedCamera) {
+                // the is a click on an object, where we should call the callback
+                console.log("setting followobject to intersectedObject");
                 this.visGeometry.setFollowObject(intersectedObject);
+           
             }
             this.visGeometry.addPathForAgent(intersectedObject);
         } else {
@@ -558,6 +565,18 @@ class Viewport extends React.Component<
             }
             this.visGeometry.setFollowObject(NO_AGENT);
         }
+             if (this.props.followObjectCallback) {
+                 console.log("should hit followObjectCallback");
+                 const agent = this.visGeometry.visAgentInstances.get(intersectedObject);
+                 if (!agent) {
+                     console.log("agent not found");
+                     return;
+                 }
+                 const agentData = agent.agentData;
+                 console.log("agentdData", agentData)
+                 const instanceID = agent?.agentData.instanceId;
+                 this.props.followObjectCallback(instanceID, oldFollowObject, agentData);
+             }
     }
 
     private handleTimeChange(e: Event): void {

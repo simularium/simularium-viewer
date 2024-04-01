@@ -1015,6 +1015,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                                 ? this.onRecordedMovie
                                 : undefined
                         }
+                        followObjectCallback={(newid, oldid, agentdata) => {console.log("followObjectCallback", newid, oldid, agentdata)}}
                         loadInitialData={true}
                         agentColors={this.state.agentColors}
                         showPaths={this.state.showPaths}

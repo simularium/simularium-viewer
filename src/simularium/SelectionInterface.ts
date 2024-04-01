@@ -65,6 +65,7 @@ class SelectionInterface {
     // If an onError can be caught by onError prop to viewer, will be
     // sent to the parent app
     public parse(idNameMapping: EncodedTypeMapping): void {
+        console.log("SelectionInterface parse, idNameMapping: ", idNameMapping);
         this.clear();
         if (!idNameMapping) {
             throw new Error(

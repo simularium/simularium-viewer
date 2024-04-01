@@ -647,6 +647,10 @@ class VisGeometry {
     }
 
     public getFollowObject(): number {
+        console.log(
+            "get follow object in visGeometry, follow object id: ",
+            this.followObjectId
+        );
         return this.followObjectId;
     }
 
@@ -657,6 +661,7 @@ class VisGeometry {
 
         if (this.followObjectId !== NO_AGENT) {
             const visAgent = this.visAgentInstances.get(this.followObjectId);
+
             if (!visAgent) {
                 console.error("NO AGENT FOR INSTANCE " + this.followObjectId);
             } else {
