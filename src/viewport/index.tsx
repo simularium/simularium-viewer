@@ -215,7 +215,7 @@ class Viewport extends React.Component<
         }
         const uiDisplayData = this.selectionInterface.getUIDisplayData();
         onTrajectoryFileInfoChanged(trajectoryFileInfo);
-        this.visGeometry.colorHandler.clearColorMapping();
+        this.visGeometry.colorHandler.resetDefaultColorsData(agentColors);
 
         const updatedColors = this.selectionInterface.setInitialAgentColors(
             uiDisplayData,
