@@ -196,6 +196,11 @@ class ColorHandler {
         const color = this.getColorById(colorId);
         return { color, colorId };
     }
+
+    public resetDefaultColorsData(defaultColors: (number | string)[]): void {
+        this.clearColorMapping();
+        this.updateColorArray(defaultColors);
+    }
 }
 
 export default ColorHandler;
