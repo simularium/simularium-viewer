@@ -194,6 +194,12 @@ var ColorHandler = /*#__PURE__*/function () {
         colorId: colorId
       };
     }
+  }, {
+    key: "resetDefaultColorsData",
+    value: function resetDefaultColorsData(defaultColors) {
+      this.clearColorMapping();
+      this.updateColorArray(defaultColors);
+    }
   }]);
   return ColorHandler;
 }();

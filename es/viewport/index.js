@@ -249,7 +249,7 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
       }
       var uiDisplayData = this.selectionInterface.getUIDisplayData();
       onTrajectoryFileInfoChanged(trajectoryFileInfo);
-      this.visGeometry.colorHandler.clearColorMapping();
+      this.visGeometry.colorHandler.resetDefaultColorsData(agentColors);
       var updatedColors = this.selectionInterface.setInitialAgentColors(uiDisplayData, agentColors, this.visGeometry.applyColorToAgents.bind(this.visGeometry));
       if (!isEqual(updatedColors, agentColors)) {
         this.visGeometry.createMaterials(updatedColors);

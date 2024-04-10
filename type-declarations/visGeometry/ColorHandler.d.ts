@@ -40,5 +40,6 @@ declare class ColorHandler {
         numberOfColors: number;
     };
     getColorInfoForAgentType(agentType: number): AgentColorInfo;
+    resetDefaultColorsData(defaultColors: (number | string)[]): void;
 }
 export default ColorHandler;
