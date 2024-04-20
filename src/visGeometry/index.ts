@@ -58,10 +58,15 @@ import {
 import { checkAndSanitizePath } from "../util";
 import ColorHandler from "./ColorHandler";
 
-import { Canvas3DContext, Canvas3D } from "molstar/lib/mol-canvas3d/canvas3d";
-import { AssetManager } from 'molstar/lib/mol-util/assets';
-import {Color as MColor } from "molstar/lib/mol-util/color";
+import {
+    Canvas3DContext,
+    Canvas3D,
+    Canvas3DParams,
+} from "molstar/lib/mol-canvas3d/canvas3d";
+import { AssetManager } from "molstar/lib/mol-util/assets";
+import { Color as MColor } from "molstar/lib/mol-util/color";
 import { setCanvasSize } from "molstar/lib/mol-canvas3d/util";
+import { ParamDefinition as PD } from "molstar/lib/mol-util/param-definition";
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 100000;
@@ -275,7 +280,13 @@ class VisGeometry {
         this.pathEndColor = this.backgroundColor.clone();
 
         this.canvas3d?.setProps({
-            renderer: { backgroundColor: MColor.fromRgb(this.backgroundColor.r, this.backgroundColor.g, this.backgroundColor.b) },
+            renderer: {
+                backgroundColor: MColor.fromRgb(
+                    this.backgroundColor.r,
+                    this.backgroundColor.g,
+                    this.backgroundColor.b
+                ),
+            },
             //camera: { mode: 'orthographic' }
         });
     }
@@ -730,10 +741,7 @@ class VisGeometry {
     }
 
     private setupControls(disableControls: boolean): void {
-        this.controls = new OrbitControls(
-            this.camera,
-            this.canvas
-        );
+        this.controls = new OrbitControls(this.camera, this.canvas);
         this.controls.addEventListener("change", () => {
             if (this.gui) {
                 this.gui.refresh();
@@ -815,21 +823,38 @@ class VisGeometry {
         this.camera = newCam;
     }
 
-    private createWebGL() {
-            this.renderStyle = RenderStyle.WEBGL2_PREFERRED;
-            this.supportsWebGL2Rendering = true;
-            const canvas = document.createElement("canvas");
-            setCanvasSize( canvas,            CANVAS_INITIAL_WIDTH,
-            CANVAS_INITIAL_HEIGHT
-            );
+    private createWebGL(parent: HTMLElement) {
+        this.renderStyle = RenderStyle.WEBGL2_PREFERRED;
+        this.supportsWebGL2Rendering = true;
+        const canvas = document.createElement("canvas");
+        parent.appendChild(canvas as HTMLElement);
+        parent["data-has-simularium-viewer-canvas"] = true;
 
-            const assetManager = new AssetManager();
+        setCanvasSize(
+            canvas,
+            Number(parent.dataset.width),
+            Number(parent.dataset.height)
+        ); //CANVAS_INITIAL_WIDTH, CANVAS_INITIAL_HEIGHT);
 
-            this.canvas3dContext = Canvas3DContext.fromCanvas(canvas, assetManager);
-            const canvas3d = Canvas3D.create(this.canvas3dContext, {renderer: { backgroundColor: MColor.fromRgb(this.backgroundColor.r, this.backgroundColor.g, this.backgroundColor.b) } });
-            canvas3d.animate();
-            this.canvas3d = canvas3d;
-            this.canvas = canvas;
+        const assetManager = new AssetManager();
+
+        this.canvas3dContext = Canvas3DContext.fromCanvas(canvas, assetManager);
+        const canvas3d = Canvas3D.create(
+            this.canvas3dContext,
+
+            PD.merge(Canvas3DParams, PD.getDefaultValues(Canvas3DParams), {
+                renderer: {
+                    backgroundColor: MColor.fromRgb(
+                        this.backgroundColor.r,
+                        this.backgroundColor.g,
+                        this.backgroundColor.b
+                    ),
+                },
+            })
+        );
+        canvas3d.animate();
+        this.canvas3d = canvas3d;
+        this.canvas = canvas;
 
         // set this up after the renderStyle has been set.
         this.constructInstancedFibers();
@@ -845,9 +870,7 @@ class VisGeometry {
         if (parent["data-has-simularium-viewer-canvas"]) {
             return;
         }
-        this.createWebGL();
-        parent.appendChild(this.canvas as HTMLElement);
-        parent["data-has-simularium-viewer-canvas"] = true;
+        this.createWebGL(parent);
         this.setupControls(disableControls);
 
         this.resize(
@@ -855,7 +878,15 @@ class VisGeometry {
             Number(parent.dataset.height)
         );
 
-        this.canvas3d?.setProps({renderer:{backgroundColor: MColor.fromRgb(this.backgroundColor.r, this.backgroundColor.g, this.backgroundColor.b)}});
+        this.canvas3d?.setProps({
+            renderer: {
+                backgroundColor: MColor.fromRgb(
+                    this.backgroundColor.r,
+                    this.backgroundColor.g,
+                    this.backgroundColor.b
+                ),
+            },
+        });
 
         (this.canvas as HTMLElement).setAttribute(
             "style",
@@ -917,7 +948,7 @@ class VisGeometry {
 
     public render(_time: number): void {
         if (this.visAgents.length === 0) {
-            this.threejsrenderer.clear();
+            //this.threejsrenderer.clear();
             return;
         }
 
@@ -984,44 +1015,47 @@ class VisGeometry {
                 }
             }
 
-            this.renderer.setMeshGroups(
-                this.instancedMeshGroup,
-                this.fibers,
-                meshTypes
-            );
-            this.renderer.setFollowedInstance(this.followObjectId);
+            // this.renderer.setMeshGroups(
+            //     this.instancedMeshGroup,
+            //     this.fibers,
+            //     meshTypes
+            // );
+            // this.renderer.setFollowedInstance(this.followObjectId);
+
             //get bounding box max dim
             const v = new Vector3();
             this.boundingBox.getSize(v);
             const maxDim = Math.max(v.x, v.y, v.z);
+
             // this.camera.zoom accounts for perspective vs ortho cameras
-            this.renderer.setNearFar(
-                this.boxNearZ,
-                this.boxFarZ,
-                maxDim,
-                this.camera.zoom
-            );
+            // this.renderer.setNearFar(
+            //     this.boxNearZ,
+            //     this.boxFarZ,
+            //     maxDim,
+            //     this.camera.zoom
+            // );
             this.boundingBoxMesh.visible = false;
             this.tickMarksMesh.visible = false;
             this.agentPathGroup.visible = false;
-            this.renderer.render(
-                this.threejsrenderer,
-                this.scene,
-                this.camera,
-                null
-            );
+
+            // this.renderer.render(
+            //     this.threejsrenderer,
+            //     this.scene,
+            //     this.camera,
+            //     null
+            // );
 
             // final pass, add extra stuff on top: bounding box and line paths
             this.boundingBoxMesh.visible = true;
             this.tickMarksMesh.visible = true;
             this.agentPathGroup.visible = true;
 
-            this.threejsrenderer.autoClear = false;
+            // this.threejsrenderer.autoClear = false;
             // hide everything except the wireframe and paths, and render with the standard renderer
             this.instancedMeshGroup.visible = false;
-            this.threejsrenderer.render(this.scene, this.camera);
+            // this.threejsrenderer.render(this.scene, this.camera);
             this.instancedMeshGroup.visible = true;
-            this.threejsrenderer.autoClear = true;
+            // this.threejsrenderer.autoClear = true;
 
             this.scene.autoUpdate = true;
         }
@@ -1039,16 +1073,17 @@ class VisGeometry {
     }
 
     public hitTest(offsetX: number, offsetY: number): number {
-        const size = new Vector2();
-        this.threejsrenderer.getSize(size);
-        {
-            // read from instance buffer pixel!
-            return this.renderer.hitTest(
-                this.threejsrenderer,
-                offsetX,
-                size.y - offsetY
-            );
-        }
+        return 0;
+        // const size = new Vector2();
+        // this.threejsrenderer.getSize(size);
+        // {
+        //     // read from instance buffer pixel!
+        //     return this.renderer.hitTest(
+        //         this.threejsrenderer,
+        //         offsetX,
+        //         size.y - offsetY
+        //     );
+        // }
     }
 
     private setAgentColors(): void {
@@ -1061,10 +1096,10 @@ class VisGeometry {
 
     public createMaterials(colors: (number | string)[]): void {
         const newColorData = this.colorHandler.updateColorArray(colors);
-        this.renderer.updateColors(
-            newColorData.numberOfColors,
-            newColorData.colorArray
-        );
+        // this.renderer.updateColors(
+        //     newColorData.numberOfColors,
+        //     newColorData.colorArray
+        // );
         this.setAgentColors();
     }
 
@@ -1076,10 +1111,10 @@ class VisGeometry {
             agentIds,
             color
         );
-        this.renderer.updateColors(
-            newColorData.numberOfColors,
-            newColorData.colorArray
-        );
+        // this.renderer.updateColors(
+        //     newColorData.numberOfColors,
+        //     newColorData.colorArray
+        // );
         this.updateScene(this.currentSceneAgents);
     }
 
