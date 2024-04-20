@@ -98,6 +98,7 @@
         "@types/dom-webcodecs": "^0.1.8",
         "comlink": "^4.3.1",
         "js-logger": "^1.6.1",
+        "molstar": "^4.1.0",
         "mp4-muxer": "^2.2.2",
         "parse-pdb": "^1.0.0",
         "si-prefix": "^0.2.0",

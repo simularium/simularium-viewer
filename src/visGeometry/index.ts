@@ -1,4 +1,3 @@
-import WEBGL from "three/examples/jsm/capabilities/WebGL.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import {
     Box3,
@@ -21,8 +20,6 @@ import {
     Spherical,
     Vector2,
     Vector3,
-    WebGLRenderer,
-    WebGLRendererParameters,
 } from "three";
 
 import { Pane } from "tweakpane";
@@ -48,9 +45,7 @@ import {
     PerspectiveCameraSpec,
 } from "../simularium/types";
 
-import SimulariumRenderer from "./rendering/SimulariumRenderer";
 import { InstancedFiberGroup } from "./rendering/InstancedFiber";
-import { LegacyRenderer } from "./rendering/LegacyRenderer";
 import GeometryStore from "./GeometryStore";
 import {
     AgentGeometry,
@@ -62,6 +57,11 @@ import {
 } from "./types";
 import { checkAndSanitizePath } from "../util";
 import ColorHandler from "./ColorHandler";
+
+import { Canvas3DContext, Canvas3D } from "molstar/lib/mol-canvas3d/canvas3d";
+import { AssetManager } from 'molstar/lib/mol-util/assets';
+import {Color as MColor } from "molstar/lib/mol-util/color";
+import { setCanvasSize } from "molstar/lib/mol-canvas3d/util";
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 100000;
@@ -103,6 +103,9 @@ const coordsToVector = ({ x, y, z }: Coordinates3d) => new Vector3(x, y, z);
 type Bounds = readonly [number, number, number, number, number, number];
 
 class VisGeometry {
+    private canvas3dContext?: Canvas3DContext;
+    private canvas3d?: Canvas3D;
+    private canvas?: HTMLCanvasElement;
     public onError: (error: FrontEndError) => void;
     public renderStyle: RenderStyle;
     public backgroundColor: Color;
@@ -119,8 +122,6 @@ class VisGeometry {
     public hiddenIds: number[];
     public agentPaths: Map<number, AgentPath>;
     public mlogger: ILogger;
-    // this is the threejs object that issues all the webgl calls
-    public threejsrenderer!: WebGLRenderer;
     public scene: Scene;
 
     public perspectiveCamera: PerspectiveCamera;
@@ -139,8 +140,6 @@ class VisGeometry {
     private boxFarZ: number;
 
     public colorHandler: ColorHandler;
-    public renderer: SimulariumRenderer;
-    public legacyRenderer: LegacyRenderer;
     public currentSceneAgents: AgentData[];
     public colorsData: Float32Array;
     public lightsGroup: Group;
@@ -193,12 +192,8 @@ class VisGeometry {
 
         this.fibers = new InstancedFiberGroup();
 
-        this.legacyRenderer = new LegacyRenderer();
-        this.renderer = new SimulariumRenderer();
-
         this.backgroundColor = DEFAULT_BACKGROUND_COLOR;
         this.pathEndColor = this.backgroundColor.clone();
-        this.renderer.setBackgroundColor(this.backgroundColor);
         this.colorHandler = new ColorHandler();
         // Set up scene
 
@@ -278,8 +273,11 @@ class VisGeometry {
                 : new Color(c);
         }
         this.pathEndColor = this.backgroundColor.clone();
-        this.renderer.setBackgroundColor(this.backgroundColor);
-        this.threejsrenderer.setClearColor(this.backgroundColor, 1);
+
+        this.canvas3d?.setProps({
+            renderer: { backgroundColor: MColor.fromRgb(this.backgroundColor.r, this.backgroundColor.g, this.backgroundColor.b) },
+            //camera: { mode: 'orthographic' }
+        });
     }
 
     /**
@@ -434,16 +432,16 @@ class VisGeometry {
                 event.value.b / 255.0,
             ]);
         });
-        this.gui.addButton({ title: "Capture Frame" }).on("click", () => {
-            this.render(0);
-            const dataUrl =
-                this.threejsrenderer.domElement.toDataURL("image/png");
-            const anchor = document.createElement("a");
-            anchor.href = dataUrl;
-            anchor.download = "screenshot.png";
-            anchor.click();
-            anchor.remove();
-        });
+        // this.gui.addButton({ title: "Capture Frame" }).on("click", () => {
+        //     this.render(0);
+        //     const dataUrl =
+        //         this.threejsrenderer.domElement.toDataURL("image/png");
+        //     const anchor = document.createElement("a");
+        //     anchor.href = dataUrl;
+        //     anchor.download = "screenshot.png";
+        //     anchor.click();
+        //     anchor.remove();
+        // });
         this.gui.addSeparator();
         const lodFolder = this.gui.addFolder({ title: "LoD", expanded: false });
         lodFolder
@@ -464,7 +462,7 @@ class VisGeometry {
             this.lodDistanceStops[2] = event.value;
             this.updateScene(this.currentSceneAgents);
         });
-        this.renderer.setupGui(this.gui);
+        //this.renderer.setupGui(this.gui);
     }
 
     public destroyGui(): void {
@@ -512,7 +510,7 @@ class VisGeometry {
     }
 
     public get renderDom(): HTMLElement {
-        return this.threejsrenderer.domElement;
+        return this.canvas as HTMLElement;
     }
 
     public handleCameraData(cameraDefault?: PerspectiveCameraSpec): void {
@@ -734,7 +732,7 @@ class VisGeometry {
     private setupControls(disableControls: boolean): void {
         this.controls = new OrbitControls(
             this.camera,
-            this.threejsrenderer.domElement
+            this.canvas
         );
         this.controls.addEventListener("change", () => {
             if (this.gui) {
@@ -751,9 +749,9 @@ class VisGeometry {
             this.disableControls();
         }
         if (!disableControls) {
-            this.threejsrenderer.domElement.onmouseenter = () =>
+            (this.canvas as HTMLElement).onmouseenter = () =>
                 this.enableControls();
-            this.threejsrenderer.domElement.onmouseleave = () =>
+            (this.canvas as HTMLElement).onmouseleave = () =>
                 this.disableControls();
         }
     }
@@ -780,8 +778,8 @@ class VisGeometry {
 
         this.updateOrthographicFrustum();
 
-        this.threejsrenderer.setSize(width, height);
-        this.renderer.resize(width, height);
+        setCanvasSize(this.canvas!, width, height); // TODO devicePixelRatio?
+        this.canvas3d?.handleResize();
     }
 
     public setCameraType(ortho: boolean): void {
@@ -817,40 +815,24 @@ class VisGeometry {
         this.camera = newCam;
     }
 
-    private createWebGL(): WebGLRenderer {
-        if (WEBGL.isWebGL2Available() === false) {
-            this.renderStyle = RenderStyle.WEBGL1_FALLBACK;
-            this.supportsWebGL2Rendering = false;
-            this.threejsrenderer = new WebGLRenderer({
-                premultipliedAlpha: false,
-            });
-        } else {
+    private createWebGL() {
             this.renderStyle = RenderStyle.WEBGL2_PREFERRED;
             this.supportsWebGL2Rendering = true;
             const canvas = document.createElement("canvas");
-            const context: WebGLRenderingContext = canvas.getContext("webgl2", {
-                alpha: false,
-            }) as WebGLRenderingContext;
+            setCanvasSize( canvas,            CANVAS_INITIAL_WIDTH,
+            CANVAS_INITIAL_HEIGHT
+            );
 
-            const rendererParams: WebGLRendererParameters = {
-                canvas: canvas,
-                context: context,
-                premultipliedAlpha: false,
-            };
-            this.threejsrenderer = new WebGLRenderer(rendererParams);
-        }
+            const assetManager = new AssetManager();
+
+            this.canvas3dContext = Canvas3DContext.fromCanvas(canvas, assetManager);
+            const canvas3d = Canvas3D.create(this.canvas3dContext, {renderer: { backgroundColor: MColor.fromRgb(this.backgroundColor.r, this.backgroundColor.g, this.backgroundColor.b) } });
+            canvas3d.animate();
+            this.canvas3d = canvas3d;
+            this.canvas = canvas;
 
         // set this up after the renderStyle has been set.
         this.constructInstancedFibers();
-
-        this.threejsrenderer.setSize(
-            CANVAS_INITIAL_WIDTH,
-            CANVAS_INITIAL_HEIGHT
-        ); // expected to change when reparented
-        this.threejsrenderer.setClearColor(this.backgroundColor, 1);
-        this.threejsrenderer.clear();
-
-        return this.threejsrenderer;
     }
 
     public setCanvasOnTheDom(
@@ -863,8 +845,8 @@ class VisGeometry {
         if (parent["data-has-simularium-viewer-canvas"]) {
             return;
         }
-        this.threejsrenderer = this.createWebGL();
-        parent.appendChild(this.threejsrenderer.domElement);
+        this.createWebGL();
+        parent.appendChild(this.canvas as HTMLElement);
         parent["data-has-simularium-viewer-canvas"] = true;
         this.setupControls(disableControls);
 
@@ -873,10 +855,9 @@ class VisGeometry {
             Number(parent.dataset.height)
         );
 
-        this.threejsrenderer.setClearColor(this.backgroundColor, 1.0);
-        this.threejsrenderer.clear();
+        this.canvas3d?.setProps({renderer:{backgroundColor: MColor.fromRgb(this.backgroundColor.r, this.backgroundColor.g, this.backgroundColor.b)}});
 
-        this.threejsrenderer.domElement.setAttribute(
+        (this.canvas as HTMLElement).setAttribute(
             "style",
             "top: 0px; left: 0px"
         );
@@ -973,10 +954,7 @@ class VisGeometry {
         // re-add fibers immediately
         this.instancedMeshGroup.add(this.fibers.getGroup());
 
-        if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
-            // meshes only.
-            this.threejsrenderer.render(this.scene, this.camera);
-        } else {
+        {
             this.setPdbLods();
 
             this.scene.updateMatrixWorld();
@@ -1063,13 +1041,7 @@ class VisGeometry {
     public hitTest(offsetX: number, offsetY: number): number {
         const size = new Vector2();
         this.threejsrenderer.getSize(size);
-        if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
-            const mouse = new Vector2(
-                (offsetX / size.x) * 2 - 1,
-                -(offsetY / size.y) * 2 + 1
-            );
-            return this.legacyRenderer.hitTest(mouse, this.camera);
-        } else {
+        {
             // read from instance buffer pixel!
             return this.renderer.hitTest(
                 this.threejsrenderer,
@@ -1417,14 +1389,7 @@ class VisGeometry {
         visAgent: VisAgent,
         pdbEntry: PDBModel
     ) {
-        if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
-            this.legacyRenderer.addPdb(
-                pdbEntry,
-                visAgent,
-                this.colorHandler.getColorInfoForAgentType(typeId).color,
-                this.lodDistanceStops
-            );
-        } else {
+        {
             // if the pdb doesn't have any lods yet then we can't draw with it.
             if (pdbEntry && pdbEntry.numLODs() > 0) {
                 // add to render list
@@ -1449,14 +1414,7 @@ class VisGeometry {
                 "MeshEntry is present but mesh unavailable. Not rendering agent."
             );
         }
-        if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
-            this.legacyRenderer.addMesh(
-                (meshGeom as Mesh).geometry,
-                visAgent,
-                radius * scale,
-                this.colorHandler.getColorInfoForAgentType(typeId).color
-            );
-        } else {
+        {
             if (meshEntry && meshEntry.instances) {
                 meshEntry.instances.addInstance(
                     agentData.x,
@@ -1483,13 +1441,7 @@ class VisGeometry {
         visAgent.updateFiber(agentData.subpoints);
         const scale = this.getScaleForId(typeId);
 
-        if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
-            this.legacyRenderer.addFiber(
-                visAgent,
-                agentData.cr * scale,
-                this.colorHandler.getColorInfoForAgentType(typeId).color
-            );
-        } else {
+        {
             // update/add to render list
             this.fibers.addInstance(
                 agentData.subpoints.length / 3,
@@ -1520,8 +1472,6 @@ class VisGeometry {
         let lastx = 0,
             lasty = 0,
             lastz = 0;
-
-        this.legacyRenderer.beginUpdate(this.scene);
 
         this.fibers.beginUpdate();
         this.geometryStore.forEachMesh((agentGeo) => {
@@ -1643,7 +1593,6 @@ class VisGeometry {
         this.geometryStore.forEachMesh((agentGeo) => {
             agentGeo.geometry.instances.endUpdate();
         });
-        this.legacyRenderer.endUpdate(this.scene);
     }
 
     public animateCamera(): void {
@@ -1847,8 +1796,6 @@ class VisGeometry {
     }
 
     public clearForNewTrajectory(): void {
-        this.legacyRenderer.beginUpdate(this.scene);
-        this.legacyRenderer.endUpdate(this.scene);
         this.resetMapping();
 
         // remove current scene agents.
@@ -1868,8 +1815,6 @@ class VisGeometry {
         // remove geometry from all visible scene groups.
         // Object3D.remove can be slow, and just doing it in-order here
         // is faster than doing it in the loop over all visAgents
-        this.legacyRenderer.beginUpdate(this.scene);
-        this.legacyRenderer.endUpdate(this.scene);
         for (let i = this.instancedMeshGroup.children.length - 1; i >= 0; i--) {
             this.instancedMeshGroup.remove(this.instancedMeshGroup.children[i]);
         }
