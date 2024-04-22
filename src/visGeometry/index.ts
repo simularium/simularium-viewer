@@ -527,7 +527,7 @@ class VisGeometry {
         if (cameraDefault) {
             this.cameraDefault = { ...cameraDefault, orthographic: false };
             this.updateOrthographicFrustum();
-            this.updateControlsZoomBounds();
+            //this.updateControlsZoomBounds();
         } else {
             this.logger.info(
                 "Using default camera settings since none were provided"
@@ -896,7 +896,7 @@ class VisGeometry {
 
     public disableControls(): void {
         //this.controls.enabled = false;
-        this.canvas3d?.setProps({ trackball: { enabled: false } });
+        //this.canvas3d?.setProps({ trackball: { enabled: false } });
     }
 
     public enableControls(): void {
@@ -953,7 +953,7 @@ class VisGeometry {
             return;
         }
 
-        this.controls.update();
+        //this.controls.update();
 
         this.animateCamera();
 
@@ -1390,10 +1390,10 @@ class VisGeometry {
         this.createTickMarks(volumeDimensions, boundsAsTuple);
         this.scene.add(this.boundingBoxMesh, this.tickMarksMesh);
 
-        if (this.controls) {
-            this.controls.maxDistance =
-                this.boundingBox.max.distanceTo(this.boundingBox.min) * 1.414;
-        }
+        // if (this.controls) {
+        //     this.controls.maxDistance =
+        //         this.boundingBox.max.distanceTo(this.boundingBox.min) * 1.414;
+        // }
     }
 
     public setScaleForId(id: number, scale: number): void {
@@ -1637,79 +1637,79 @@ class VisGeometry {
         const lerpRate = 0.2;
         const distanceBuffer = 0.002;
         const rotationBuffer = 0.01;
-        if (this.followObjectId !== NO_AGENT && this.focusMode) {
-            // keep camera at same distance from target.
-            const direction = new Vector3().subVectors(
-                this.camera.position,
-                this.controls.target
-            );
-            const distance = direction.length();
-            direction.normalize();
+        // if (this.followObjectId !== NO_AGENT && this.focusMode) {
+        //     // keep camera at same distance from target.
+        //     const direction = new Vector3().subVectors(
+        //         this.camera.position,
+        //         this.controls.target
+        //     );
+        //     const distance = direction.length();
+        //     direction.normalize();
 
-            const followedObject = this.visAgentInstances.get(
-                this.followObjectId
-            );
-            if (!followedObject) {
-                return;
-            }
-            const newTarget = followedObject.getFollowPosition();
+        //     const followedObject = this.visAgentInstances.get(
+        //         this.followObjectId
+        //     );
+        //     if (!followedObject) {
+        //         return;
+        //     }
+        //     const newTarget = followedObject.getFollowPosition();
 
-            // update controls target for orbiting
-            if (lerpTarget) {
-                this.controls.target.lerp(newTarget, lerpRate);
-            } else {
-                this.controls.target.copy(newTarget);
-            }
+        //     // update controls target for orbiting
+        //     if (lerpTarget) {
+        //         this.controls.target.lerp(newTarget, lerpRate);
+        //     } else {
+        //         this.controls.target.copy(newTarget);
+        //     }
 
-            // update new camera position
-            const newPosition = new Vector3();
-            newPosition.subVectors(
-                newTarget,
-                direction.multiplyScalar(-distance)
-            );
-            if (lerpPosition) {
-                this.camera.position.lerp(newPosition, lerpRate);
-            } else {
-                this.camera.position.copy(newPosition);
-            }
-        } else if (this.needToCenterCamera) {
-            this.controls.target.lerp(new Vector3(), lerpRate);
-            if (
-                this.controls.target.distanceTo(new Vector3()) < distanceBuffer
-            ) {
-                this.controls.target.copy(new Vector3());
-                this.needToCenterCamera = false;
-            }
-        } else if (this.needToReOrientCamera) {
-            this.controls.target.copy(new Vector3());
-            const { position } = this.camera;
-            const curDistanceFromCenter = this.rotateDistance;
-            const targetPosition = this.initCameraPosition
-                .clone()
-                .setLength(curDistanceFromCenter);
-            const currentPosition = position.clone();
+        //     // update new camera position
+        //     const newPosition = new Vector3();
+        //     newPosition.subVectors(
+        //         newTarget,
+        //         direction.multiplyScalar(-distance)
+        //     );
+        //     if (lerpPosition) {
+        //         this.camera.position.lerp(newPosition, lerpRate);
+        //     } else {
+        //         this.camera.position.copy(newPosition);
+        //     }
+        // } else if (this.needToCenterCamera) {
+        //     this.controls.target.lerp(new Vector3(), lerpRate);
+        //     if (
+        //         this.controls.target.distanceTo(new Vector3()) < distanceBuffer
+        //     ) {
+        //         this.controls.target.copy(new Vector3());
+        //         this.needToCenterCamera = false;
+        //     }
+        // } else if (this.needToReOrientCamera) {
+        //     this.controls.target.copy(new Vector3());
+        //     const { position } = this.camera;
+        //     const curDistanceFromCenter = this.rotateDistance;
+        //     const targetPosition = this.initCameraPosition
+        //         .clone()
+        //         .setLength(curDistanceFromCenter);
+        //     const currentPosition = position.clone();
 
-            const targetQuat = new Quaternion().setFromAxisAngle(
-                targetPosition,
-                0
-            );
-            const currentQuat = new Quaternion().copy(this.camera.quaternion);
-            const totalAngle = currentQuat.angleTo(targetQuat);
+        //     const targetQuat = new Quaternion().setFromAxisAngle(
+        //         targetPosition,
+        //         0
+        //     );
+        //     const currentQuat = new Quaternion().copy(this.camera.quaternion);
+        //     const totalAngle = currentQuat.angleTo(targetQuat);
 
-            const newAngle = lerpRate * totalAngle; // gives same value as using quanternion.slerp
-            const normal = currentPosition
-                .clone()
-                .cross(targetPosition)
-                .normalize();
+        //     const newAngle = lerpRate * totalAngle; // gives same value as using quanternion.slerp
+        //     const normal = currentPosition
+        //         .clone()
+        //         .cross(targetPosition)
+        //         .normalize();
 
-            this.camera.position.applyAxisAngle(normal, newAngle);
-            this.camera.lookAt(new Vector3());
+        //     this.camera.position.applyAxisAngle(normal, newAngle);
+        //     this.camera.lookAt(new Vector3());
 
-            // it doesnt seem to be able to get to zero, but this was small enough to look good
-            if (this.camera.position.angleTo(targetPosition) < rotationBuffer) {
-                this.needToReOrientCamera = false;
-            }
-        }
+        //     // it doesnt seem to be able to get to zero, but this was small enough to look good
+        //     if (this.camera.position.angleTo(targetPosition) < rotationBuffer) {
+        //         this.needToReOrientCamera = false;
+        //     }
+        // }
     }
 
     public findPathForAgent(id: number): AgentPath | null {

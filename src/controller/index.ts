@@ -529,11 +529,11 @@ export default class SimulariumController {
      */
 
     public zoomIn(): void {
-        this.visGeometry?.zoomIn();
+        //this.visGeometry?.zoomIn();
     }
 
     public zoomOut(): void {
-        this.visGeometry?.zoomOut();
+        //this.visGeometry?.zoomOut();
     }
 
     public resetCamera(): void {
