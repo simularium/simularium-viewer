@@ -1,4 +1,3 @@
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import {
     Box3,
     Box3Helper,
@@ -132,7 +131,6 @@ class VisGeometry {
     public perspectiveCamera: PerspectiveCamera;
     public orthographicCamera: OrthographicCamera;
     public camera: PerspectiveCamera | OrthographicCamera;
-    public controls!: OrbitControls;
 
     public dl: DirectionalLight;
     public hemiLight: HemisphereLight;
@@ -333,7 +331,7 @@ class VisGeometry {
         this.setCameraType(cameraSpec.orthographic);
         this.camera.position.copy(coordsToVector(cameraSpec.position));
         this.camera.up.copy(coordsToVector(cameraSpec.upVector));
-        this.controls.target.copy(coordsToVector(cameraSpec.lookAtPosition));
+        //this.controls.target.copy(coordsToVector(cameraSpec.lookAtPosition));
         if (cameraSpec.orthographic) {
             this.orthographicCamera.zoom = cameraSpec.zoom;
         }
@@ -345,7 +343,7 @@ class VisGeometry {
         };
         spec.position = this.camera.position.clone();
         spec.upVector = this.camera.up.clone();
-        spec.lookAtPosition = this.controls.target.clone();
+        //spec.lookAtPosition = this.controls.target.clone();
         spec.fovDegrees = this.perspectiveCamera.fov;
 
         spec.orthographic = !!(this.camera as OrthographicCamera)
@@ -369,7 +367,7 @@ class VisGeometry {
             get: (_, p) => this.camera[p],
         });
         fcam.addInput(cameraProxy, "position");
-        fcam.addInput(this.controls, "target");
+        // fcam.addInput(this.controls, "target");
         const fovInput = fcam.addInput(this.perspectiveCamera, "fov");
         fovInput.on("change", () => this.updateOrthographicFrustum());
 
@@ -542,7 +540,7 @@ class VisGeometry {
     // Called when a new file is loaded, the Clear button is clicked, or Reset Camera button is clicked
     public resetCamera(): void {
         this.followObjectId = NO_AGENT;
-        this.controls.reset();
+        //this.controls.reset();
         this.resetCameraPosition();
     }
 
@@ -562,7 +560,7 @@ class VisGeometry {
         // Reset lookat position
         const lookAtVector = coordsToVector(lookAtPosition);
         this.camera.lookAt(lookAtVector);
-        this.controls.target.copy(lookAtVector);
+        //this.controls.target.copy(lookAtVector);
 
         // Set fov (perspective) and frustum size (orthographic)
         this.perspectiveCamera.fov = fovDegrees;
@@ -581,74 +579,74 @@ class VisGeometry {
         this.rotateDistance = this.camera.position.distanceTo(new Vector3());
     }
 
-    private dolly(changeBy: number): void {
-        // TODO should we use the dolly method on OrbitControls here?
-        const { minDistance, maxDistance } = this.controls;
+    // private dolly(changeBy: number): void {
+    //     // TODO should we use the dolly method on OrbitControls here?
+    //     const { minDistance, maxDistance } = this.controls;
 
-        if ((this.camera as OrthographicCamera).isOrthographicCamera) {
-            // Orthographic camera: dolly using zoom
-            const defaultRadius = this.getDefaultOrbitRadius();
-            const newDistance = defaultRadius / this.camera.zoom + changeBy;
+    //     if ((this.camera as OrthographicCamera).isOrthographicCamera) {
+    //         // Orthographic camera: dolly using zoom
+    //         const defaultRadius = this.getDefaultOrbitRadius();
+    //         const newDistance = defaultRadius / this.camera.zoom + changeBy;
 
-            if (newDistance <= minDistance || newDistance >= maxDistance) {
-                return;
-            }
+    //         if (newDistance <= minDistance || newDistance >= maxDistance) {
+    //             return;
+    //         }
 
-            this.camera.zoom = defaultRadius / newDistance;
-        } else {
-            // Perspective camera: actually change position
-            const position = this.camera.position.clone();
-            const target = this.controls.target.clone();
-            const distance = position.distanceTo(target);
-            const newDistance = distance + changeBy;
+    //         this.camera.zoom = defaultRadius / newDistance;
+    //     } else {
+    //         // Perspective camera: actually change position
+    //         const position = this.camera.position.clone();
+    //         const target = this.controls.target.clone();
+    //         const distance = position.distanceTo(target);
+    //         const newDistance = distance + changeBy;
 
-            if (newDistance <= minDistance || newDistance >= maxDistance) {
-                return;
-            }
+    //         if (newDistance <= minDistance || newDistance >= maxDistance) {
+    //             return;
+    //         }
 
-            const newPosition = new Vector3()
-                .subVectors(position, target)
-                .setLength(newDistance);
-            this.camera.position.copy(
-                new Vector3().addVectors(newPosition, target)
-            );
-        }
+    //         const newPosition = new Vector3()
+    //             .subVectors(position, target)
+    //             .setLength(newDistance);
+    //         this.camera.position.copy(
+    //             new Vector3().addVectors(newPosition, target)
+    //         );
+    //     }
 
-        this.controls.update();
-    }
+    //     this.controls.update();
+    // }
 
-    public zoomIn(): void {
-        const changeBy = -CAMERA_DOLLY_STEP_SIZE;
-        this.dolly(changeBy);
-    }
+    // public zoomIn(): void {
+    //     const changeBy = -CAMERA_DOLLY_STEP_SIZE;
+    //     this.dolly(changeBy);
+    // }
 
-    public zoomOut(): void {
-        const changeBy = CAMERA_DOLLY_STEP_SIZE;
-        this.dolly(changeBy);
-    }
+    // public zoomOut(): void {
+    //     const changeBy = CAMERA_DOLLY_STEP_SIZE;
+    //     this.dolly(changeBy);
+    // }
 
     public setPanningMode(pan: boolean): void {
         if (!pan) {
-            this.controls.enablePan = true;
-            this.controls.enableRotate = true;
-            this.controls.mouseButtons = {
-                LEFT: MOUSE.ROTATE,
-                MIDDLE: MOUSE.DOLLY,
-                RIGHT: MOUSE.PAN,
-            };
+            // this.controls.enablePan = true;
+            // this.controls.enableRotate = true;
+            // this.controls.mouseButtons = {
+            //     LEFT: MOUSE.ROTATE,
+            //     MIDDLE: MOUSE.DOLLY,
+            //     RIGHT: MOUSE.PAN,
+            // };
         } else {
-            this.controls.enablePan = true;
-            this.controls.enableRotate = true;
-            this.controls.mouseButtons = {
-                LEFT: MOUSE.PAN,
-                MIDDLE: MOUSE.DOLLY,
-                RIGHT: MOUSE.ROTATE,
-            };
+            // this.controls.enablePan = true;
+            // this.controls.enableRotate = true;
+            // this.controls.mouseButtons = {
+            //     LEFT: MOUSE.PAN,
+            //     MIDDLE: MOUSE.DOLLY,
+            //     RIGHT: MOUSE.ROTATE,
+            // };
         }
     }
 
     public setAllowViewPanning(allow: boolean): void {
-        this.controls.enablePan = allow;
+        //        this.controls.enablePan = allow;
     }
 
     public setFocusMode(focus: boolean): void {
@@ -741,40 +739,38 @@ class VisGeometry {
     }
 
     private setupControls(disableControls: boolean): void {
-        this.controls = new OrbitControls(this.camera, this.canvas);
-        this.controls.addEventListener("change", () => {
-            if (this.gui) {
-                this.gui.refresh();
-            }
-        });
-
-        this.controls.zoomSpeed = 1.0;
-        this.updateControlsZoomBounds();
-        this.setPanningMode(false);
-        this.controls.saveState();
-
-        if (disableControls) {
-            this.disableControls();
-        }
-        if (!disableControls) {
-            (this.canvas as HTMLElement).onmouseenter = () =>
-                this.enableControls();
-            (this.canvas as HTMLElement).onmouseleave = () =>
-                this.disableControls();
-        }
+        // this.controls = new OrbitControls(this.camera, this.canvas);
+        // this.controls.addEventListener("change", () => {
+        //     if (this.gui) {
+        //         this.gui.refresh();
+        //     }
+        // });
+        // this.controls.zoomSpeed = 1.0;
+        // this.updateControlsZoomBounds();
+        // this.setPanningMode(false);
+        // this.controls.saveState();
+        // if (disableControls) {
+        //     this.disableControls();
+        // }
+        // if (!disableControls) {
+        //     (this.canvas as HTMLElement).onmouseenter = () =>
+        //         this.enableControls();
+        //     (this.canvas as HTMLElement).onmouseleave = () =>
+        //         this.disableControls();
+        // }
     }
 
-    private updateControlsZoomBounds(): void {
-        // Perspective camera limits - based on distance to target
-        // Calculate from default orbit radius
-        const orbitRadius = this.getDefaultOrbitRadius();
-        this.controls.minDistance = orbitRadius / MAX_ZOOM;
-        this.controls.maxDistance = orbitRadius / MIN_ZOOM;
+    // private updateControlsZoomBounds(): void {
+    //     // Perspective camera limits - based on distance to target
+    //     // Calculate from default orbit radius
+    //     const orbitRadius = this.getDefaultOrbitRadius();
+    //     this.controls.minDistance = orbitRadius / MAX_ZOOM;
+    //     this.controls.maxDistance = orbitRadius / MIN_ZOOM;
 
-        // Orthographic camera limits - based on zoom level
-        this.controls.maxZoom = MAX_ZOOM;
-        this.controls.minZoom = MIN_ZOOM;
-    }
+    //     // Orthographic camera limits - based on zoom level
+    //     this.controls.maxZoom = MAX_ZOOM;
+    //     this.controls.minZoom = MIN_ZOOM;
+    // }
 
     public resize(width: number, height: number): void {
         // at least 2x2 in size when resizing, to prevent bad buffer sizes
@@ -796,30 +792,34 @@ class VisGeometry {
             return;
         }
 
+        this.canvas3d?.setProps({
+            camera: { mode: ortho ? "orthographic" : "perspective" },
+        });
+
         // `OrbitControls` zooms `PerspectiveCamera`s by changing position to dolly
         // relative to the target, and `OrthographicCamera`s by setting zoom and
         // leaving position unchanged (keeping a constant distance to target).
 
-        const defaultOrbitRadius = this.getDefaultOrbitRadius();
-        const offset = this.camera.position.clone().sub(this.controls.target);
-        const spherical = new Spherical().setFromVector3(offset);
-        let zoom = 1;
+        // const defaultOrbitRadius = this.getDefaultOrbitRadius();
+        // const offset = this.camera.position.clone().sub(this.controls.target);
+        // const spherical = new Spherical().setFromVector3(offset);
+        // let zoom = 1;
 
-        if (ortho) {
-            // If switching to ortho, reset distance to target and convert it to zoom.
-            zoom = defaultOrbitRadius / spherical.radius;
-            spherical.radius = defaultOrbitRadius;
-        } else {
-            // If switching to perspective, convert zoom to new distance to target.
-            spherical.radius = defaultOrbitRadius / this.camera.zoom;
-        }
+        // if (ortho) {
+        //     // If switching to ortho, reset distance to target and convert it to zoom.
+        //     zoom = defaultOrbitRadius / spherical.radius;
+        //     spherical.radius = defaultOrbitRadius;
+        // } else {
+        //     // If switching to perspective, convert zoom to new distance to target.
+        //     spherical.radius = defaultOrbitRadius / this.camera.zoom;
+        // }
 
-        newCam.position.setFromSpherical(spherical).add(this.controls.target);
-        newCam.up.copy(this.camera.up);
-        newCam.zoom = zoom;
+        // newCam.position.setFromSpherical(spherical).add(this.controls.target);
+        // newCam.up.copy(this.camera.up);
+        // newCam.zoom = zoom;
 
-        this.controls.object = newCam;
-        this.controls.update();
+        // this.controls.object = newCam;
+        // this.controls.update();
         this.camera = newCam;
     }
 
@@ -895,11 +895,12 @@ class VisGeometry {
     }
 
     public disableControls(): void {
-        this.controls.enabled = false;
+        //this.controls.enabled = false;
+        this.canvas3d?.setProps({ trackball: { enabled: false } });
     }
 
     public enableControls(): void {
-        this.controls.enabled = true;
+        //this.controls.enabled = true;
     }
 
     private setPdbLods(): void {
@@ -948,7 +949,7 @@ class VisGeometry {
 
     public render(_time: number): void {
         if (this.visAgents.length === 0) {
-            //this.threejsrenderer.clear();
+            this.canvas3d?.clear();
             return;
         }
 
