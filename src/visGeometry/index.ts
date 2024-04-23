@@ -938,6 +938,7 @@ class VisGeometry {
                         // a scale value for LODs
                         0.25 + index * 0.25
                     );
+                    this.canvas3d?.add(pdbModel.getLODRepr(index));
                     break;
                 }
             }
@@ -1059,6 +1060,10 @@ class VisGeometry {
             // this.threejsrenderer.autoClear = true;
 
             this.scene.autoUpdate = true;
+
+            this.canvas3d?.commit();
+            this.canvas3d?.requestCameraReset();
+            this.canvas3d?.requestDraw();
         }
     }
 
@@ -1514,6 +1519,7 @@ class VisGeometry {
             agentGeo.geometry.instances.beginUpdate();
         });
         // these lists must be emptied on every scene update.
+        this.canvas3d?.clear();
         this.agentsWithPdbsToDraw = [];
         this.agentPdbsToDraw = [];
 

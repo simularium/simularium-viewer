@@ -2,6 +2,8 @@ import { BufferGeometry, Color, Object3D } from "three";
 import PDBModel from "./PDBModel";
 import { MRTShaders } from "./rendering/MultipassMaterials";
 
+import { Representation } from 'molstar/lib/mol-repr/representation';
+
 export interface GeometryInstanceContainer {
     replaceGeometry: (newGeometry: BufferGeometry, name: string) => void;
     getMesh: () => Object3D;
@@ -28,6 +30,7 @@ export interface MeshLoadRequest {
     mesh: Object3D;
     cancelled: boolean;
     instances: GeometryInstanceContainer;
+    repr: Representation.Any;
 }
 
 export enum GeometryDisplayType {

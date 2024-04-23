@@ -17,6 +17,14 @@ import KMeans from "./rendering/KMeans3d";
 import TaskQueue from "../simularium/TaskQueue";
 import { InstancedMesh, InstanceType } from "./rendering/InstancedMesh";
 
+import { Representation } from "molstar/lib/mol-repr/representation";
+import { createRenderObject } from "molstar/lib/mol-gl/render-object";
+import { SpheresBuilder } from "molstar/lib/mol-geo/geometry/spheres/spheres-builder";
+import { Color } from "molstar/lib/mol-util/color";
+import { ParamDefinition } from "molstar/lib/mol-util/param-definition";
+import { Spheres } from "molstar/lib/mol-geo/geometry/spheres/spheres";
+
+
 interface PDBAtom {
     serial?: number;
     name?: string;
@@ -63,6 +71,7 @@ type LevelOfDetail = {
     geometry: BufferGeometry;
     vertices: Float32Array;
     instances: InstancedMesh;
+    repr: Representation.Any;
 };
 
 class PDBModel {
@@ -286,6 +295,25 @@ class PDBModel {
         return allData;
     }
 
+    private spheresRepr(centers: Float32Array) {
+        const spheresBuilder = SpheresBuilder.create(centers.length/3,1);
+        for (let i = 0; i < centers.length; i += 3) {
+            spheresBuilder.add(centers[i], centers[i + 1], centers[i + 2], 0);
+        }
+
+        const spheres = spheresBuilder.getSpheres();
+    
+        const props = ParamDefinition.getDefaultValues(Spheres.Utils.Params);
+        const values = Spheres.Utils.createValuesSimple(spheres, {}, Color(0xFF0000), 1);
+        const state = Spheres.Utils.createRenderableState(props);
+        //state.colorOnly = true;
+        const renderObject = createRenderObject('spheres', values, state, -1);
+        console.log(renderObject);
+        const repr = Representation.fromRenderObject('spheres', renderObject);
+        return repr;
+    }
+
+
     private initializeLOD(): void {
         if (!this.pdb) {
             console.error("initializeLOD called with no pdb data");
@@ -311,8 +339,11 @@ class PDBModel {
         // fill LOD 0 with the raw points
         const lod0 = allData.slice();
         const geometry0 = this.createGPUBuffer(lod0);
+
+        const repr0 = this.spheresRepr(allData);
         this.lods.push({
             geometry: geometry0,
+            repr: repr0,
             vertices: lod0,
             instances: new InstancedMesh(
                 InstanceType.POINTS,
@@ -325,8 +356,11 @@ class PDBModel {
         for (let i = 1; i < this.lodSizes.length; ++i) {
             const lodData = KMeans.randomSeeds(this.lodSizes[i], allData);
             const geometry = this.createGPUBuffer(lodData);
+            const repr = this.spheresRepr(lodData);
+
             this.lods.push({
                 geometry: geometry,
+                repr: repr,
                 vertices: lodData,
                 instances: new InstancedMesh(
                     InstanceType.POINTS,
@@ -367,8 +401,10 @@ class PDBModel {
                 this.lods[lodIndex].instances.dispose();
             }
             const geometry = this.createGPUBuffer(retData[i]);
+            const repr = this.spheresRepr(retData[i]);
             this.lods[lodIndex] = {
                 geometry: geometry,
+                repr: repr,
                 vertices: retData[i],
                 instances: new InstancedMesh(
                     InstanceType.POINTS,
@@ -389,6 +425,12 @@ class PDBModel {
             index = this.lods.length - 1;
         }
         return this.lods[index].instances;
+    }
+    public getLODRepr(index: number): Representation.Any {
+        if (index < 0 || index >= this.lods.length) {
+            index = this.lods.length - 1;
+        }
+        return this.lods[index].repr;
     }
 
     public beginUpdate(): void {
