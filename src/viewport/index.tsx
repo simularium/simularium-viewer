@@ -310,6 +310,7 @@ class Viewport extends React.Component<
             showPaths,
             showBounds,
             selectionStateInfo,
+            lockedCamera,
         } = this.props;
 
         if (selectionStateInfo) {
@@ -368,6 +369,12 @@ class Viewport extends React.Component<
         }
         if (prevProps.height !== height || prevProps.width !== width) {
             this.visGeometry.resize(width, height);
+        }
+        if (prevProps.lockedCamera !== lockedCamera) {
+            this.visGeometry.setCanvasOnTheDom(
+                this.vdomRef.current,
+                lockedCamera
+            );
         }
         if (prevState.showRenderParamsGUI !== this.state.showRenderParamsGUI) {
             if (this.state.showRenderParamsGUI) {
@@ -547,8 +554,8 @@ class Viewport extends React.Component<
             }
             if (!this.props.lockedCamera) {
                 this.visGeometry.setFollowObject(intersectedObject);
+                this.visGeometry.addPathForAgent(intersectedObject);
             }
-            this.visGeometry.addPathForAgent(intersectedObject);
         } else {
             if (oldFollowObject !== NO_AGENT) {
                 this.visGeometry.removePathForAgent(oldFollowObject);
