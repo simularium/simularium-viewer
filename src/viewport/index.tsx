@@ -371,10 +371,7 @@ class Viewport extends React.Component<
             this.visGeometry.resize(width, height);
         }
         if (prevProps.lockedCamera !== lockedCamera) {
-            this.visGeometry.setCanvasOnTheDom(
-                this.vdomRef.current,
-                lockedCamera
-            );
+            this.visGeometry.toggleControls(lockedCamera);
         }
         if (prevState.showRenderParamsGUI !== this.state.showRenderParamsGUI) {
             if (this.state.showRenderParamsGUI) {
