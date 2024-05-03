@@ -116,6 +116,7 @@ declare class VisGeometry {
     setCameraType(ortho: boolean): void;
     private createWebGL;
     setCanvasOnTheDom(parent: HTMLElement | null, disableControls: boolean): void;
+    toggleControls(lockedCamera: boolean): void;
     disableControls(): void;
     enableControls(): void;
     private setPdbLods;

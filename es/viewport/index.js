@@ -320,7 +320,8 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
         hideAllAgents = _this$props3.hideAllAgents,
         showPaths = _this$props3.showPaths,
         showBounds = _this$props3.showBounds,
-        selectionStateInfo = _this$props3.selectionStateInfo;
+        selectionStateInfo = _this$props3.selectionStateInfo,
+        lockedCamera = _this$props3.lockedCamera;
       if (selectionStateInfo) {
         if (!isEqual(selectionStateInfo.highlightedAgents, prevProps.selectionStateInfo.highlightedAgents)) {
           var highlightedIds = this.selectionInterface.getHighlightedIds(selectionStateInfo);
@@ -357,6 +358,9 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
       }
       if (prevProps.height !== height || prevProps.width !== width) {
         this.visGeometry.resize(width, height);
+      }
+      if (prevProps.lockedCamera !== lockedCamera) {
+        this.visGeometry.toggleControls(lockedCamera);
       }
       if (prevState.showRenderParamsGUI !== this.state.showRenderParamsGUI) {
         if (this.state.showRenderParamsGUI) {
@@ -400,8 +404,8 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
         }
         if (!this.props.lockedCamera) {
           this.visGeometry.setFollowObject(intersectedObject);
+          this.visGeometry.addPathForAgent(intersectedObject);
         }
-        this.visGeometry.addPathForAgent(intersectedObject);
       } else {
         if (oldFollowObject !== NO_AGENT) {
           this.visGeometry.removePathForAgent(oldFollowObject);

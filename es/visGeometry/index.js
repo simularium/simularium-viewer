@@ -831,6 +831,15 @@ var VisGeometry = /*#__PURE__*/function () {
       this.threejsrenderer.domElement.setAttribute("style", "top: 0px; left: 0px");
     }
   }, {
+    key: "toggleControls",
+    value: function toggleControls(lockedCamera) {
+      if (lockedCamera) {
+        this.disableControls();
+      } else {
+        this.enableControls();
+      }
+    }
+  }, {
     key: "disableControls",
     value: function disableControls() {
       this.controls.enabled = false;
