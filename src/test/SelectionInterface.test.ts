@@ -340,6 +340,15 @@ describe("SelectionInterface module", () => {
         });
     });
 
+    describe("getParentColor", () => {
+        test("it returns an empty string if there are no colors set", () => {
+            const si = new SelectionInterface();
+            si.parse(idMapping);
+            const parentColor = si.getParentColor("E");
+            expect(parentColor).toEqual("");
+        });
+    });
+
     describe("getUIDisplayData", () => {
         test("Doesn't crash", () => {
             const si = new SelectionInterface();
