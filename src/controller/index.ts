@@ -415,12 +415,6 @@ export default class SimulariumController {
         });
     }
 
-    // converted files can assume the simulator connection has been made
-    // during the autoconversion process, except for removing the simulatorConnection code
-    // the function repeats the above function, but may be useful to have separated out
-    // as we debug further tweaks needed to receive converted files from Octopus
-    // if its stays this similar we could refactor changeFile above to account
-    // for the case of a converted file and remove this function.
     public changeToConvertedFile(newFileName: string): Promise<FileReturn> {
         this.isFileChanging = true;
         this.playBackFile = newFileName;
