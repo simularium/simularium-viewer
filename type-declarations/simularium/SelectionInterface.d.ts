@@ -39,6 +39,7 @@ declare class SelectionInterface {
     getHighlightedIds(info: SelectionStateInfo): number[];
     getHiddenIds(info: SelectionStateInfo): number[];
     clear(): void;
+    getParentColor(name: string): string;
     getUIDisplayData(): UIDisplayData;
     private updateUiDataColor;
     setInitialAgentColors(uiDisplayData: UIDisplayData, colors: (string | number)[], setColorForIds: (ids: number[], color: string | number) => void): (string | number)[];

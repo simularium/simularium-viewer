@@ -2,7 +2,7 @@ import _toConsumableArray from "@babel/runtime/helpers/toConsumableArray";
 import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
-import { filter, find, uniq } from "lodash";
+import { filter, find, map, uniq } from "lodash";
 import { convertColorNumberToString } from "../visGeometry/ColorHandler";
 
 // An individual entry parsed from an encoded name
@@ -207,6 +207,14 @@ var SelectionInterface = /*#__PURE__*/function () {
       this.entries = new Map();
     }
   }, {
+    key: "getParentColor",
+    value: function getParentColor(name) {
+      // wrapping in filter removes undefined values
+      var listOfUniqChildrenColors = filter(uniq(map(this.entries[name], "color")));
+      var color = listOfUniqChildrenColors.length === 1 ? listOfUniqChildrenColors[0] : "";
+      return color;
+    }
+  }, {
     key: "getUIDisplayData",
     value: function getUIDisplayData() {
       var _this4 = this;
@@ -238,7 +246,7 @@ var SelectionInterface = /*#__PURE__*/function () {
             displayStates.push(displayState);
           });
         });
-        var color = _this4.entries[name][0].color || "";
+        var color = _this4.getParentColor(name);
         return {
           name: name,
           displayStates: displayStates,
