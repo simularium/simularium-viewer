@@ -251,13 +251,16 @@ export default class SimulariumController {
             return Promise.reject(e);
         }
 
-        return this.simulator
-            .convertTrajectory(dataToConvert, fileType, providedFileName)
-            .then(() => {
-                if (this.simulator) {
-                    this.simulator.requestSingleFrame(0);
-                }
-            });
+        return this.simulator.convertTrajectory(
+            dataToConvert,
+            fileType,
+            providedFileName
+        );
+        // .then(() => {
+        //     if (this.simulator) {
+        //         this.simulator.requestSingleFrame(0);
+        //     }
+        // });
     }
 
     public pause(): void {
