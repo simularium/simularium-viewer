@@ -256,11 +256,6 @@ export default class SimulariumController {
             fileType,
             providedFileName
         );
-        // .then(() => {
-        //     if (this.simulator) {
-        //         this.simulator.requestSingleFrame(0);
-        //     }
-        // });
     }
 
     public pause(): void {
