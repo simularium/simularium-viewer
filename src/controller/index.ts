@@ -234,7 +234,8 @@ export default class SimulariumController {
     public convertAndLoadTrajectory(
         netConnectionConfig: NetConnectionParams,
         dataToConvert: Record<string, unknown>,
-        fileType: TrajectoryType
+        fileType: TrajectoryType,
+        providedFileName?: string
     ): Promise<void> {
         try {
             if (
@@ -251,7 +252,7 @@ export default class SimulariumController {
         }
 
         return this.simulator
-            .convertTrajectory(dataToConvert, fileType)
+            .convertTrajectory(dataToConvert, fileType, providedFileName)
             .then(() => {
                 if (this.simulator) {
                     this.simulator.requestSingleFrame(0);
@@ -371,7 +372,6 @@ export default class SimulariumController {
         // if (this.simulator) {
         //     this.simulator.disconnect();
         // }
-
         try {
             if (connectionParams) {
                 this.createSimulatorConnection(
@@ -393,6 +393,44 @@ export default class SimulariumController {
             this.networkEnabled = false;
             this.isPaused = false;
         }
+
+        // start the simulation paused and get first frame
+        if (this.simulator) {
+            return this.start()
+                .then(() => {
+                    if (this.simulator) {
+                        this.simulator.requestSingleFrame(0);
+                    }
+                })
+                .then(() => ({
+                    status: FILE_STATUS_SUCCESS,
+                }));
+        }
+
+        return Promise.reject({
+            status: FILE_STATUS_FAIL,
+        });
+    }
+
+    // converted files can assume the simulator connection has been made
+    // during the autoconversion process, except for removing the simulatorConnection code
+    // the function repeats the above function, but may be useful to have separated out
+    // as we debug further tweaks needed to receive converted files from Octopus
+    // if its stays this similar we could refactor changeFile above to account
+    // for the case of a converted file and remove this function.
+    public changeToConvertedFile(newFileName: string): Promise<FileReturn> {
+        this.isFileChanging = true;
+        this.playBackFile = newFileName;
+
+        if (this.simulator instanceof RemoteSimulator) {
+            this.simulator.handleError = () => noop;
+        }
+
+        this.visData.WaitForFrame(0);
+        this.visData.clearForNewTrajectory();
+        this.visData.cancelAllWorkers();
+
+        this.stop();
 
         // start the simulation paused and get first frame
         if (this.simulator) {
