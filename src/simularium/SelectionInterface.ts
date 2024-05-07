@@ -1,4 +1,4 @@
-import { filter, find, uniq } from "lodash";
+import { filter, find, map, uniq } from "lodash";
 import { EncodedTypeMapping } from "./types";
 import { convertColorNumberToString } from "../visGeometry/ColorHandler";
 
@@ -230,6 +230,18 @@ class SelectionInterface {
         this.entries = new Map<string, DecodedTypeEntry>();
     }
 
+    public getParentColor(name: string): string {
+        // wrapping in filter removes undefined values
+        const listOfUniqChildrenColors = filter(
+            uniq(map(this.entries[name], "color"))
+        );
+        const color =
+            listOfUniqChildrenColors.length === 1
+                ? listOfUniqChildrenColors[0]
+                : "";
+        return color;
+    }
+
     public getUIDisplayData(): UIDisplayData {
         return Object.keys(this.entries).map((name) => {
             const displayStates: DisplayStateEntry[] = [];
@@ -260,7 +272,9 @@ class SelectionInterface {
                     displayStates.push(displayState);
                 });
             });
-            const color = this.entries[name][0].color || "";
+
+            const color = this.getParentColor(name);
+
             return {
                 name,
                 displayStates,
