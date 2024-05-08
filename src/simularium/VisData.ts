@@ -2,6 +2,7 @@ import { difference } from "lodash";
 
 import { compareTimes } from "../util";
 
+import { MAX_CACHE_SIZE } from "../constants";
 import * as util from "./ThreadUtil";
 import {
     AGENT_OBJECT_KEYS,
@@ -389,6 +390,15 @@ class VisData {
         if (this.firstFrameTime === null) {
             this.firstFrameTime = frames.frameDataArray[0].time;
         }
+
+        if (this.frameDataCache.length > MAX_CACHE_SIZE) {
+            this.trimCacheHead(this.frameDataCache.length - MAX_CACHE_SIZE);
+        }
+    }
+
+    private trimCacheHead(nFrames: number): void {
+        this.frameCache.splice(0, nFrames);
+        this.frameDataCache.splice(0, nFrames);
     }
 
     private parseAgentsFromVisDataMessage(msg: VisDataMessage): void {
