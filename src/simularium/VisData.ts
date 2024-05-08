@@ -356,6 +356,10 @@ class VisData {
         this.lockedForFrame = true;
     }
 
+    public setMaxCacheLength(size: number): void {
+        this.maxCacheLength = size;
+    }
+
     public clearCache(): void {
         this.frameCache = [];
         this.frameDataCache = [];
@@ -605,10 +609,6 @@ class VisData {
         });
         const idsArr: number[] = [...idsInFrameData].sort() as number[];
         return difference(idsArr, idsInTypeMapping).sort();
-    }
-
-    public setMaxCacheLength(size: number): void {
-        this.maxCacheLength = size;
     }
 }
 
