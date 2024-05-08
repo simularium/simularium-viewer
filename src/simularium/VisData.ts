@@ -2,7 +2,7 @@ import { difference } from "lodash";
 
 import { compareTimes } from "../util";
 
-import { MAX_CACHE_SIZE } from "../constants";
+import { MAX_CACHE_LENGTH } from "../constants";
 import * as util from "./ThreadUtil";
 import {
     AGENT_OBJECT_KEYS,
@@ -24,6 +24,7 @@ const EOF_PHRASE: Uint8Array = new TextEncoder().encode(
 class VisData {
     private frameCache: AgentData[][];
     private frameDataCache: FrameData[];
+    private maxCacheLength: number;
     private webWorker: Worker | null;
 
     private frameToWaitFor: number;
@@ -264,6 +265,7 @@ class VisData {
         this.frameDataCache = [];
         this.firstFrameTime = null;
         this.cacheFrame = -1;
+        this.maxCacheLength = MAX_CACHE_LENGTH;
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
@@ -391,8 +393,10 @@ class VisData {
             this.firstFrameTime = frames.frameDataArray[0].time;
         }
 
-        if (this.frameDataCache.length > MAX_CACHE_SIZE) {
-            this.trimCacheHead(this.frameDataCache.length - MAX_CACHE_SIZE);
+        if (this.frameDataCache.length > this.maxCacheLength) {
+            this.trimCacheHead(
+                this.frameDataCache.length - this.maxCacheLength
+            );
         }
     }
 
@@ -601,6 +605,10 @@ class VisData {
         });
         const idsArr: number[] = [...idsInFrameData].sort() as number[];
         return difference(idsArr, idsInTypeMapping).sort();
+    }
+
+    public setMaxCacheLength(size: number): void {
+        this.maxCacheLength = size;
     }
 }
 

@@ -30,4 +30,4 @@ export const enum TrajectoryType {
 
 export const DEFAULT_FRAME_RATE = 60; // frames per second
 
-export const MAX_CACHE_SIZE = 2000;
+export const MAX_CACHE_LENGTH = 2000;

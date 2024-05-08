@@ -18,7 +18,7 @@ import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
 import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry";
 import { ColorChange } from "../simularium/SelectionInterface";
 import FrameRecorder from "../simularium/FrameRecorder";
-import { DEFAULT_FRAME_RATE } from "../constants";
+import { DEFAULT_FRAME_RATE, MAX_CACHE_LENGTH } from "../constants";
 
 export type PropColor = string | number | [number, number, number];
 
@@ -45,6 +45,7 @@ type ViewportProps = {
     onError?: (error: FrontEndError) => void;
     lockedCamera?: boolean;
     onRecordedMovie?: (blob: Blob) => void; // providing this callback enables movie recording
+    maxCacheLength?: number;
 } & Partial<DefaultProps>;
 
 const defaultProps = {
@@ -123,6 +124,9 @@ class Viewport extends React.Component<
         this.handleTimeChange = this.handleTimeChange.bind(this);
 
         this.visGeometry = new VisGeometry(loggerLevel);
+        this.props.simulariumController.visData.setMaxCacheLength(
+            this.props.maxCacheLength || MAX_CACHE_LENGTH
+        );
         this.props.simulariumController.visData.clearCache();
         this.visGeometry.createMaterials(props.agentColors);
         this.vdomRef = React.createRef();
