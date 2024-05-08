@@ -357,6 +357,9 @@ class VisData {
     }
 
     public setMaxCacheLength(size: number): void {
+        if (size < 1) {
+            throw new Error("Cache length must be at least 1");
+        }
         this.maxCacheLength = size;
     }
 

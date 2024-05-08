@@ -125,7 +125,7 @@ class Viewport extends React.Component<
 
         this.visGeometry = new VisGeometry(loggerLevel);
         this.props.simulariumController.visData.setMaxCacheLength(
-            this.props.maxCacheLength || MAX_CACHE_LENGTH
+            this.getValidCacheLength(this.props.maxCacheLength)
         );
         this.props.simulariumController.visData.clearCache();
         this.visGeometry.createMaterials(props.agentColors);
@@ -684,6 +684,14 @@ class Viewport extends React.Component<
             return;
         }
         this.recorder.stop();
+    }
+
+    private getValidCacheLength(cacheLength: number | undefined): number {
+        if (cacheLength === undefined) {
+            return MAX_CACHE_LENGTH;
+        }
+        // if zero or a negative number is provided, return 1 which is the minimum cache size
+        return cacheLength > 0 ? cacheLength : 1;
     }
 
     public render(): React.ReactElement<HTMLElement> {
