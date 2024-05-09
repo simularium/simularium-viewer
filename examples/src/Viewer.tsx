@@ -1,5 +1,6 @@
 import React from "react";
 import { isEqual, findIndex, map, reduce } from "lodash";
+import { v4 as uuidv4 } from "uuid";
 
 import type {
     ISimulariumFile,
@@ -391,10 +392,18 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     }
 
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
+        const fileName = uuidv4() + ".simularium";
         simulariumController
-            .convertAndLoadTrajectory(this.netConnectionSettings, obj, fileType)
+            .convertAndLoadTrajectory(this.netConnectionSettings, obj, fileType, fileName)
             .then(() => {
                 this.clearPendingFile();
+            })
+            .then(() => {
+                simulariumController.changeFile(
+                    { netConnectionSettings: this.netConnectionSettings, },
+                    fileName,
+                    true,
+                )
             })
             .catch((err) => {
                 console.error(err);
