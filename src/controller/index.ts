@@ -116,8 +116,7 @@ export default class SimulariumController {
         this.reOrientCamera = this.reOrientCamera.bind(this);
         this.setPanningMode = this.setPanningMode.bind(this);
         this.setFocusMode = this.setFocusMode.bind(this);
-        this.convertAndLoadTrajectory =
-            this.convertAndLoadTrajectory.bind(this);
+        this.convertTrajectory = this.convertTrajectory.bind(this);
         this.setCameraType = this.setCameraType.bind(this);
     }
 
@@ -231,7 +230,7 @@ export default class SimulariumController {
         }
     }
 
-    public convertAndLoadTrajectory(
+    public convertTrajectory(
         netConnectionConfig: NetConnectionParams,
         dataToConvert: Record<string, unknown>,
         fileType: TrajectoryType,

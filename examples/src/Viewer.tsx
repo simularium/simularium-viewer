@@ -394,7 +394,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
         const fileName = uuidv4() + ".simularium";
         simulariumController
-            .convertAndLoadTrajectory(this.netConnectionSettings, obj, fileType, fileName)
+            .convertTrajectory(this.netConnectionSettings, obj, fileType, fileName)
             .then(() => {
                 this.clearPendingFile();
             })
