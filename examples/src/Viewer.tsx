@@ -197,8 +197,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             };
         } else if (props.useOctopus) {
             this.netConnectionSettings = {
-                serverIp: "18.223.108.15",
-                serverPort: 8765,
+                serverIp: "staging-simularium-ecs.allencell.org",
+                serverPort: 443,
                 useOctopus: true,
                 secureConnection: true,
             };
