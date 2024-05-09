@@ -351,7 +351,8 @@ export default class SimulariumController {
     public changeFile(
         connectionParams: SimulatorConnectionParams,
         // TODO: push newFileName into connectionParams
-        newFileName: string
+        newFileName: string,
+        keepRemoteConnection: boolean = false
     ): Promise<FileReturn> {
         this.isFileChanging = true;
         this.playBackFile = newFileName;
@@ -370,59 +371,34 @@ export default class SimulariumController {
         // if (this.simulator) {
         //     this.simulator.disconnect();
         // }
-        try {
-            if (connectionParams) {
-                this.createSimulatorConnection(
-                    connectionParams.netConnectionSettings,
-                    connectionParams.clientSimulator,
-                    connectionParams.simulariumFile,
-                    connectionParams.geoAssets
-                );
-                this.networkEnabled = true; // This confuses me, because local files also go through this code path
-                this.isPaused = true;
-            } else {
-                // caught in following block, not sent to front end
-                throw new Error("incomplete simulator config provided");
+
+        // don't create simulator if client wants to keep remote simulator and the
+        // current simulator is a remote simulator
+        if (
+            !(keepRemoteConnection && this.simulator instanceof RemoteSimulator)
+        ) {
+            try {
+                if (connectionParams) {
+                    this.createSimulatorConnection(
+                        connectionParams.netConnectionSettings,
+                        connectionParams.clientSimulator,
+                        connectionParams.simulariumFile,
+                        connectionParams.geoAssets
+                    );
+                    this.networkEnabled = true; // This confuses me, because local files also go through this code path
+                    this.isPaused = true;
+                } else {
+                    // caught in following block, not sent to front end
+                    throw new Error("incomplete simulator config provided");
+                }
+            } catch (e) {
+                const error = e as Error;
+                this.simulator = undefined;
+                console.warn(error.message);
+                this.networkEnabled = false;
+                this.isPaused = false;
             }
-        } catch (e) {
-            const error = e as Error;
-            this.simulator = undefined;
-            console.warn(error.message);
-            this.networkEnabled = false;
-            this.isPaused = false;
         }
-
-        // start the simulation paused and get first frame
-        if (this.simulator) {
-            return this.start()
-                .then(() => {
-                    if (this.simulator) {
-                        this.simulator.requestSingleFrame(0);
-                    }
-                })
-                .then(() => ({
-                    status: FILE_STATUS_SUCCESS,
-                }));
-        }
-
-        return Promise.reject({
-            status: FILE_STATUS_FAIL,
-        });
-    }
-
-    public changeToConvertedFile(newFileName: string): Promise<FileReturn> {
-        this.isFileChanging = true;
-        this.playBackFile = newFileName;
-
-        if (this.simulator instanceof RemoteSimulator) {
-            this.simulator.handleError = () => noop;
-        }
-
-        this.visData.WaitForFrame(0);
-        this.visData.clearForNewTrajectory();
-        this.visData.cancelAllWorkers();
-
-        this.stop();
 
         // start the simulation paused and get first frame
         if (this.simulator) {
