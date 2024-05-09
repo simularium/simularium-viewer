@@ -351,7 +351,7 @@ export default class SimulariumController {
         connectionParams: SimulatorConnectionParams,
         // TODO: push newFileName into connectionParams
         newFileName: string,
-        keepRemoteConnection: boolean = false
+        keepRemoteConnection = false
     ): Promise<FileReturn> {
         this.isFileChanging = true;
         this.playBackFile = newFileName;
