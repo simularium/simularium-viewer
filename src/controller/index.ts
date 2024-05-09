@@ -287,23 +287,7 @@ export default class SimulariumController {
                 // else reset the local cache,
                 //  and play remotely from the desired simulation time
                 this.visData.clearCache();
-
-                // Instead of requesting from the backend the `time` passed into this
-                // function, we request (time - firstFrameTime) because the backend
-                // currently assumes the first frame of every trajectory is at time 0.
-                //
-                // TODO: Long term, we should decide on a better way to deal with this
-                // assumption: remove assumption from backend, perform this normalization
-                // in simulariumio, or something else? One way might be to require making
-                // firstFrameTime a part of TrajectoryFileInfo.
-                let firstFrameTime = this.visData.firstFrameTime;
-                if (firstFrameTime === null) {
-                    console.error(
-                        "VisData does not contain firstFrameTime, defaulting to 0"
-                    );
-                    firstFrameTime = 0;
-                }
-                this.simulator.gotoRemoteSimulationTime(time - firstFrameTime);
+                this.simulator.gotoRemoteSimulationTime(time);
             }
         }
     }
