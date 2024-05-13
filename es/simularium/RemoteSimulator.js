@@ -373,19 +373,20 @@ export var RemoteSimulator = /*#__PURE__*/function () {
     // Start autoconversion and roll right into the simulation
   }, {
     key: "convertTrajectory",
-    value: function convertTrajectory(dataToConvert, fileType) {
+    value: function convertTrajectory(dataToConvert, fileType, providedFileName) {
       var _this6 = this;
       return this.connectToRemoteServer().then(function () {
-        _this6.sendTrajectory(dataToConvert, fileType);
+        _this6.sendTrajectory(dataToConvert, fileType, providedFileName);
       })["catch"](function (e) {
         throw new FrontEndError(e.message, ErrorLevel.ERROR);
       });
     }
   }, {
     key: "sendTrajectory",
-    value: function sendTrajectory(dataToConvert, fileType) {
-      // Generate random file name for converted file to be stored on the server
-      var fileName = uuidv4() + ".simularium";
+    value: function sendTrajectory(dataToConvert, fileType, providedFileName) {
+      // Check for provided file name, and if none provided
+      // generate random file name for converted file to be stored on the server
+      var fileName = providedFileName !== undefined ? providedFileName : uuidv4() + ".simularium";
       this.lastRequestedFile = fileName;
       this.webSocketClient.sendWebSocketRequest({
         msgType: NetMessageEnum.ID_CONVERT_TRAJECTORY_FILE,

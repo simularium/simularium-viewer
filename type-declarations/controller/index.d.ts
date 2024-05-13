@@ -47,7 +47,7 @@ export default class SimulariumController {
     time(): number;
     stop(): void;
     sendUpdate(obj: Record<string, unknown>): void;
-    convertAndLoadTrajectory(netConnectionConfig: NetConnectionParams, dataToConvert: Record<string, unknown>, fileType: TrajectoryType): Promise<void>;
+    convertTrajectory(netConnectionConfig: NetConnectionParams, dataToConvert: Record<string, unknown>, fileType: TrajectoryType, providedFileName?: string): Promise<void>;
     pause(): void;
     paused(): boolean;
     initializeTrajectoryFile(): void;
@@ -58,7 +58,7 @@ export default class SimulariumController {
     handleFileChange(simulariumFile: ISimulariumFile, fileName: string, geoAssets?: {
         [key: string]: string;
     }): Promise<FileReturn>;
-    changeFile(connectionParams: SimulatorConnectionParams, newFileName: string): Promise<FileReturn>;
+    changeFile(connectionParams: SimulatorConnectionParams, newFileName: string, keepRemoteConnection?: boolean): Promise<FileReturn>;
     markFileChangeAsHandled(): void;
     getFile(): string;
     checkServerHealth(handler: () => void, netConnectionConfig: NetConnectionParams): void;

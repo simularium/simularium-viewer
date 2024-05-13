@@ -64,7 +64,7 @@ export declare class RemoteSimulator implements ISimulator {
     gotoRemoteSimulationTime(time: number): void;
     requestTrajectoryFileInfo(fileName: string): void;
     sendUpdate(obj: Record<string, unknown>): void;
-    convertTrajectory(dataToConvert: Record<string, unknown>, fileType: TrajectoryType): Promise<void>;
-    sendTrajectory(dataToConvert: Record<string, unknown>, fileType: TrajectoryType): void;
+    convertTrajectory(dataToConvert: Record<string, unknown>, fileType: TrajectoryType, providedFileName?: string): Promise<void>;
+    sendTrajectory(dataToConvert: Record<string, unknown>, fileType: TrajectoryType, providedFileName?: string): void;
     checkServerHealth(): Promise<void>;
 }

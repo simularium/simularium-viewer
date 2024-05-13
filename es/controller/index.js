@@ -89,7 +89,7 @@ var SimulariumController = /*#__PURE__*/function () {
     this.reOrientCamera = this.reOrientCamera.bind(this);
     this.setPanningMode = this.setPanningMode.bind(this);
     this.setFocusMode = this.setFocusMode.bind(this);
-    this.convertAndLoadTrajectory = this.convertAndLoadTrajectory.bind(this);
+    this.convertTrajectory = this.convertTrajectory.bind(this);
     this.setCameraType = this.setCameraType.bind(this);
   }
   _createClass(SimulariumController, [{
@@ -179,9 +179,8 @@ var SimulariumController = /*#__PURE__*/function () {
       }
     }
   }, {
-    key: "convertAndLoadTrajectory",
-    value: function convertAndLoadTrajectory(netConnectionConfig, dataToConvert, fileType) {
-      var _this4 = this;
+    key: "convertTrajectory",
+    value: function convertTrajectory(netConnectionConfig, dataToConvert, fileType, providedFileName) {
       try {
         if (!(this.simulator && this.simulator.isConnectedToRemoteServer())) {
           // Only configure network if we aren't already connected to the remote server
@@ -193,11 +192,7 @@ var SimulariumController = /*#__PURE__*/function () {
       } catch (e) {
         return Promise.reject(e);
       }
-      return this.simulator.convertTrajectory(dataToConvert, fileType).then(function () {
-        if (_this4.simulator) {
-          _this4.simulator.requestSingleFrame(0);
-        }
-      });
+      return this.simulator.convertTrajectory(dataToConvert, fileType, providedFileName);
     }
   }, {
     key: "pause",
@@ -298,7 +293,8 @@ var SimulariumController = /*#__PURE__*/function () {
     value: function changeFile(connectionParams,
     // TODO: push newFileName into connectionParams
     newFileName) {
-      var _this5 = this;
+      var _this4 = this;
+      var keepRemoteConnection = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
       this.isFileChanging = true;
       this.playBackFile = newFileName;
       if (this.simulator instanceof RemoteSimulator) {
@@ -316,28 +312,32 @@ var SimulariumController = /*#__PURE__*/function () {
       //     this.simulator.disconnect();
       // }
 
-      try {
-        if (connectionParams) {
-          this.createSimulatorConnection(connectionParams.netConnectionSettings, connectionParams.clientSimulator, connectionParams.simulariumFile, connectionParams.geoAssets);
-          this.networkEnabled = true; // This confuses me, because local files also go through this code path
-          this.isPaused = true;
-        } else {
-          // caught in following block, not sent to front end
-          throw new Error("incomplete simulator config provided");
+      // don't create simulator if client wants to keep remote simulator and the
+      // current simulator is a remote simulator
+      if (!(keepRemoteConnection && this.simulator instanceof RemoteSimulator)) {
+        try {
+          if (connectionParams) {
+            this.createSimulatorConnection(connectionParams.netConnectionSettings, connectionParams.clientSimulator, connectionParams.simulariumFile, connectionParams.geoAssets);
+            this.networkEnabled = true; // This confuses me, because local files also go through this code path
+            this.isPaused = true;
+          } else {
+            // caught in following block, not sent to front end
+            throw new Error("incomplete simulator config provided");
+          }
+        } catch (e) {
+          var _error = e;
+          this.simulator = undefined;
+          console.warn(_error.message);
+          this.networkEnabled = false;
+          this.isPaused = false;
         }
-      } catch (e) {
-        var _error = e;
-        this.simulator = undefined;
-        console.warn(_error.message);
-        this.networkEnabled = false;
-        this.isPaused = false;
       }
 
       // start the simulation paused and get first frame
       if (this.simulator) {
         return this.start().then(function () {
-          if (_this5.simulator) {
-            _this5.simulator.requestSingleFrame(0);
+          if (_this4.simulator) {
+            _this4.simulator.requestSingleFrame(0);
           }
         }).then(function () {
           return {
