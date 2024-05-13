@@ -2,7 +2,6 @@ import { difference } from "lodash";
 
 import { compareTimes } from "../util";
 
-import { MAX_CACHE_LENGTH } from "../constants";
 import * as util from "./ThreadUtil";
 import {
     AGENT_OBJECT_KEYS,
@@ -265,7 +264,7 @@ class VisData {
         this.frameDataCache = [];
         this.firstFrameTime = null;
         this.cacheFrame = -1;
-        this.maxCacheLength = MAX_CACHE_LENGTH;
+        this.maxCacheLength = -1;
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
@@ -356,11 +355,13 @@ class VisData {
         this.lockedForFrame = true;
     }
 
-    public setMaxCacheLength(size: number): void {
-        if (size < 1) {
-            throw new Error("Cache length must be at least 1");
+    public setMaxCacheLength(cacheLength: number | undefined): void {
+        if (cacheLength === undefined || cacheLength < 0) {
+            this.maxCacheLength = -1;
+            return;
         }
-        this.maxCacheLength = size;
+        // cache must have at least one frame
+        this.maxCacheLength = cacheLength > 0 ? cacheLength : 1;
     }
 
     public clearCache(): void {
@@ -400,7 +401,10 @@ class VisData {
             this.firstFrameTime = frames.frameDataArray[0].time;
         }
 
-        if (this.frameDataCache.length > this.maxCacheLength) {
+        if (
+            this.maxCacheLength > 0 &&
+            this.frameDataCache.length > this.maxCacheLength
+        ) {
             this.trimCacheHead(
                 this.frameDataCache.length - this.maxCacheLength
             );

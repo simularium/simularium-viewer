@@ -18,7 +18,7 @@ import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
 import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry";
 import { ColorChange } from "../simularium/SelectionInterface";
 import FrameRecorder from "../simularium/FrameRecorder";
-import { DEFAULT_FRAME_RATE, MAX_CACHE_LENGTH } from "../constants";
+import { DEFAULT_FRAME_RATE } from "../constants";
 
 export type PropColor = string | number | [number, number, number];
 
@@ -125,7 +125,7 @@ class Viewport extends React.Component<
 
         this.visGeometry = new VisGeometry(loggerLevel);
         this.props.simulariumController.visData.setMaxCacheLength(
-            this.getValidCacheLength(this.props.maxCacheLength)
+            this.props.maxCacheLength
         );
         this.props.simulariumController.visData.clearCache();
         this.visGeometry.createMaterials(props.agentColors);
@@ -684,14 +684,6 @@ class Viewport extends React.Component<
             return;
         }
         this.recorder.stop();
-    }
-
-    private getValidCacheLength(cacheLength: number | undefined): number {
-        if (cacheLength === undefined) {
-            return MAX_CACHE_LENGTH;
-        }
-        // if zero or a negative number is provided, return 1 which is the minimum cache size
-        return cacheLength > 0 ? cacheLength : 1;
     }
 
     public render(): React.ReactElement<HTMLElement> {
