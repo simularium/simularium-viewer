@@ -304,7 +304,8 @@ class VisGeometry {
         const minScreenRatio = 0.9;
 
         // To solve for max distance to keep minScreenRatio, determine the half-height of the bounding box at the center of
-        // the screen.
+        // the screen. Note that this is using the maximum RADIUS of the bounding box, not the Y-height. This way the whole
+        // bounding box should be in view, though this may misbehave on very long/wide/deep bounding boxes.
         const centerPoint = this.coordinateToVector3(lookAtPosition);
         const maxBoundingBoxRadius = this.boundingBox.getBoundingSphere(
             new Sphere(centerPoint)
