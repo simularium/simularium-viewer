@@ -75,10 +75,14 @@ declare class VisGeometry {
     constructor(loggerLevel: ILogLevel);
     setOnErrorCallBack(onError: (error: FrontEndError) => void): void;
     setBackgroundColor(c: string | number | [number, number, number] | undefined): void;
+    private coordinateToVector3;
     /**
-     * Derive the default distance from camera to target from `cameraDefault`.
+     * Derive the default distance from camera to target from `cameraDefault` and the current
+     * bounding box.
+     * By default, this will scale the camera's position to keep the objects at a minimum ratio
+     * of the vertical screen real estate (~90%) or closer based on the FOV.
      * Unless `cameraDefault` has been meaningfully changed by a call to
-     * `handleCameraData`, this will be equal to `DEFAULT_CAMERA_Z_POSITION`.
+     * `handleCameraData`, the view direction is calculated with `DEFAULT_CAMERA_Z_POSITION`.
      */
     private getDefaultOrbitRadius;
     /** Set frustum of `orthographicCamera` from fov/aspect of `perspectiveCamera */
