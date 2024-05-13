@@ -10,7 +10,7 @@ function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbol
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 import WEBGL from "three/examples/jsm/capabilities/WebGL.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { Box3, Box3Helper, BufferAttribute, BufferGeometry, Color, DirectionalLight, Group, HemisphereLight, LineBasicMaterial, LineSegments, MOUSE, OrthographicCamera, PerspectiveCamera, Quaternion, Scene, Sphere, Spherical, Vector2, Vector3, WebGLRenderer } from "three";
+import { Box3, Box3Helper, BufferAttribute, BufferGeometry, Color, DirectionalLight, Group, HemisphereLight, LineBasicMaterial, LineSegments, MOUSE, OrthographicCamera, PerspectiveCamera, Quaternion, Scene, Spherical, Vector2, Vector3, WebGLRenderer } from "three";
 import { Pane } from "tweakpane";
 import * as EssentialsPlugin from "@tweakpane/plugin-essentials";
 import jsLogger from "js-logger";
@@ -220,42 +220,19 @@ var VisGeometry = /*#__PURE__*/function () {
       this.renderer.setBackgroundColor(this.backgroundColor);
       this.threejsrenderer.setClearColor(this.backgroundColor, 1);
     }
-  }, {
-    key: "coordinateToVector3",
-    value: function coordinateToVector3(coord) {
-      return new Vector3(coord.x, coord.y, coord.z);
-    }
 
     /**
-     * Derive the default distance from camera to target from `cameraDefault` and the current
-     * bounding box.
-     * By default, this will scale the camera's position to keep the objects at a minimum ratio
-     * of the vertical screen real estate (~90%) or closer based on the FOV.
+     * Derive the default distance from camera to target from `cameraDefault`.
      * Unless `cameraDefault` has been meaningfully changed by a call to
-     * `handleCameraData`, the view direction is calculated with `DEFAULT_CAMERA_Z_POSITION`.
+     * `handleCameraData`, this will be equal to `DEFAULT_CAMERA_Z_POSITION`.
      */
   }, {
     key: "getDefaultOrbitRadius",
     value: function getDefaultOrbitRadius() {
       var _this$cameraDefault = this.cameraDefault,
         position = _this$cameraDefault.position,
-        lookAtPosition = _this$cameraDefault.lookAtPosition,
-        fovDegrees = _this$cameraDefault.fovDegrees;
-
-      // Determine the maximum distance the camera should be so that the objects take up a certain fraction of the screen
-      // (e.g., minScreenRatio=0.8 means the bounding box should take up at least 80% of the screen).
-      // This prevents bad camera starting positions from being too far from the objects on reset.
-      var minScreenRatio = 0.9;
-
-      // To solve for max distance to keep minScreenRatio, determine the half-height of the bounding box at the center of
-      // the screen.
-      var centerPoint = this.coordinateToVector3(lookAtPosition);
-      var maxBoundingBoxRadius = this.boundingBox.getBoundingSphere(new Sphere(centerPoint)).radius;
-      var halfVSize = maxBoundingBoxRadius / minScreenRatio;
-      var halfFovRadians = fovDegrees * Math.PI / 360;
-      var maxRadius = halfVSize / Math.tan(halfFovRadians);
-      var defaultRadius = coordsToVector(position).distanceTo(coordsToVector(lookAtPosition));
-      var radius = Math.min(defaultRadius, maxRadius);
+        lookAtPosition = _this$cameraDefault.lookAtPosition;
+      var radius = coordsToVector(position).distanceTo(coordsToVector(lookAtPosition));
       if (this.cameraDefault.orthographic) {
         return radius / this.cameraDefault.zoom;
       }
@@ -531,14 +508,10 @@ var VisGeometry = /*#__PURE__*/function () {
         upVector = _this$cameraDefault2.upVector,
         lookAtPosition = _this$cameraDefault2.lookAtPosition,
         fovDegrees = _this$cameraDefault2.fovDegrees;
-      var centerPoint = this.coordinateToVector3(lookAtPosition);
-      var cameraDistance = this.getDefaultOrbitRadius();
-      var cameraDirection = this.coordinateToVector3(position).sub(centerPoint).normalize();
-      var newCameraPosition = centerPoint.clone().add(cameraDirection.multiplyScalar(cameraDistance));
 
       // Reset camera position
-      this.camera.position.set(newCameraPosition.x, newCameraPosition.y, newCameraPosition.z);
-      this.initCameraPosition = newCameraPosition.clone();
+      this.camera.position.set(position.x, position.y, position.z);
+      this.initCameraPosition = this.camera.position.clone();
 
       // Reset up vector (needs to be a unit vector)
       var normalizedUpVector = coordsToVector(upVector).normalize();
