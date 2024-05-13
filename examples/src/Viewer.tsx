@@ -1,5 +1,6 @@
 import React from "react";
 import { isEqual, findIndex, map, reduce } from "lodash";
+import { v4 as uuidv4 } from "uuid";
 
 import type {
     ISimulariumFile,
@@ -197,8 +198,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             };
         } else if (props.useOctopus) {
             this.netConnectionSettings = {
-                serverIp: "18.223.108.15",
-                serverPort: 8765,
+                serverIp: "staging-simularium-ecs.allencell.org",
+                serverPort: 443,
                 useOctopus: true,
                 secureConnection: true,
             };
@@ -391,10 +392,18 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     }
 
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
+        const fileName = uuidv4() + ".simularium";
         simulariumController
-            .convertAndLoadTrajectory(this.netConnectionSettings, obj, fileType)
+            .convertTrajectory(this.netConnectionSettings, obj, fileType, fileName)
             .then(() => {
                 this.clearPendingFile();
+            })
+            .then(() => {
+                simulariumController.changeFile(
+                    { netConnectionSettings: this.netConnectionSettings, },
+                    fileName,
+                    true,
+                )
             })
             .catch((err) => {
                 console.error(err);

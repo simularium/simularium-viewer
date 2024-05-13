@@ -116,8 +116,7 @@ export default class SimulariumController {
         this.reOrientCamera = this.reOrientCamera.bind(this);
         this.setPanningMode = this.setPanningMode.bind(this);
         this.setFocusMode = this.setFocusMode.bind(this);
-        this.convertAndLoadTrajectory =
-            this.convertAndLoadTrajectory.bind(this);
+        this.convertTrajectory = this.convertTrajectory.bind(this);
         this.setCameraType = this.setCameraType.bind(this);
     }
 
@@ -231,10 +230,11 @@ export default class SimulariumController {
         }
     }
 
-    public convertAndLoadTrajectory(
+    public convertTrajectory(
         netConnectionConfig: NetConnectionParams,
         dataToConvert: Record<string, unknown>,
-        fileType: TrajectoryType
+        fileType: TrajectoryType,
+        providedFileName?: string
     ): Promise<void> {
         try {
             if (
@@ -250,13 +250,11 @@ export default class SimulariumController {
             return Promise.reject(e);
         }
 
-        return this.simulator
-            .convertTrajectory(dataToConvert, fileType)
-            .then(() => {
-                if (this.simulator) {
-                    this.simulator.requestSingleFrame(0);
-                }
-            });
+        return this.simulator.convertTrajectory(
+            dataToConvert,
+            fileType,
+            providedFileName
+        );
     }
 
     public pause(): void {
@@ -352,7 +350,8 @@ export default class SimulariumController {
     public changeFile(
         connectionParams: SimulatorConnectionParams,
         // TODO: push newFileName into connectionParams
-        newFileName: string
+        newFileName: string,
+        keepRemoteConnection = false
     ): Promise<FileReturn> {
         this.isFileChanging = true;
         this.playBackFile = newFileName;
@@ -372,26 +371,32 @@ export default class SimulariumController {
         //     this.simulator.disconnect();
         // }
 
-        try {
-            if (connectionParams) {
-                this.createSimulatorConnection(
-                    connectionParams.netConnectionSettings,
-                    connectionParams.clientSimulator,
-                    connectionParams.simulariumFile,
-                    connectionParams.geoAssets
-                );
-                this.networkEnabled = true; // This confuses me, because local files also go through this code path
-                this.isPaused = true;
-            } else {
-                // caught in following block, not sent to front end
-                throw new Error("incomplete simulator config provided");
+        // don't create simulator if client wants to keep remote simulator and the
+        // current simulator is a remote simulator
+        if (
+            !(keepRemoteConnection && this.simulator instanceof RemoteSimulator)
+        ) {
+            try {
+                if (connectionParams) {
+                    this.createSimulatorConnection(
+                        connectionParams.netConnectionSettings,
+                        connectionParams.clientSimulator,
+                        connectionParams.simulariumFile,
+                        connectionParams.geoAssets
+                    );
+                    this.networkEnabled = true; // This confuses me, because local files also go through this code path
+                    this.isPaused = true;
+                } else {
+                    // caught in following block, not sent to front end
+                    throw new Error("incomplete simulator config provided");
+                }
+            } catch (e) {
+                const error = e as Error;
+                this.simulator = undefined;
+                console.warn(error.message);
+                this.networkEnabled = false;
+                this.isPaused = false;
             }
-        } catch (e) {
-            const error = e as Error;
-            this.simulator = undefined;
-            console.warn(error.message);
-            this.networkEnabled = false;
-            this.isPaused = false;
         }
 
         // start the simulation paused and get first frame
