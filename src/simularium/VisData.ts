@@ -23,6 +23,7 @@ const EOF_PHRASE: Uint8Array = new TextEncoder().encode(
 class VisData {
     private frameCache: AgentData[][];
     private frameDataCache: FrameData[];
+    private cacheSize: number;
     private maxCacheLength: number;
     private webWorker: Worker | null;
 
@@ -262,6 +263,7 @@ class VisData {
         }
         this.frameCache = [];
         this.frameDataCache = [];
+        this.cacheSize = 0;
         this.firstFrameTime = null;
         this.cacheFrame = -1;
         this.maxCacheLength = -1;
@@ -367,6 +369,7 @@ class VisData {
     public clearCache(): void {
         this.frameCache = [];
         this.frameDataCache = [];
+        this.cacheSize = 0;
         this.cacheFrame = -1;
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
@@ -524,6 +527,7 @@ class VisData {
                     this.clearCache(); // new data has arrived
                 }
                 this.addFramesToCache(frames);
+                this.cacheSize += tmp.byteLength;
             } catch (err) {
                 // TODO: There are frequent errors due to a race condition that
                 // occurs when jumping to a new time if a partial frame is received
