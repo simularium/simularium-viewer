@@ -290,12 +290,13 @@ class VisGeometry {
     }
 
     /**
-     * Derive the default distance from camera to target from `cameraDefault` and the current
-     * bounding box.
-     * By default, this will scale the camera's position to keep the objects at a minimum ratio
-     * of the vertical screen real estate (~90%) or closer based on the FOV.
-     * Unless `cameraDefault` has been meaningfully changed by a call to
-     * `handleCameraData`, the view direction is calculated with `DEFAULT_CAMERA_Z_POSITION`.
+     * Derive the default distance from camera to target.
+     *
+     * By default, this will scale the camera's position to keep the object's bounding sphere at a
+     * minimum of 90% of the vertical screen real estate (~90%) or closer based on the FOV.
+     *
+     * If `cameraDefault` has been meaningfully changed by a call to `handleCameraData`,
+     * uses the `cameraDefault` and does not override the position.
      */
     private getDefaultOrbitRadius(): number {
         const { position, lookAtPosition, fovDegrees } = this.cameraDefault;
@@ -307,14 +308,13 @@ class VisGeometry {
         // If camera settings have not been provided, scale the default camera position to keep the objects at
         // a reasonable zoom level.
         if (!this.hasCustomCameraData) {
-            // Determine the maximum distance the camera should be so that the objects take up a certain fraction of the screen
-            // (e.g., minScreenRatio=0.8 means the bounding box should take up at least 80% of the screen).
+            // Determine the maximum distance the camera should be so that the object's bounding sphere
+            // takes up at least 90% of the screen.
             // This prevents bad camera starting positions from being too far from the objects on reset.
             const minScreenRatio = 0.9;
 
-            // To solve for max distance to keep minScreenRatio, determine the half-height of the bounding box at the center of
-            // the screen. Note that this is using the maximum RADIUS of the bounding box, not the Y-height. This way the whole
-            // bounding box should be in view, though this may misbehave on very long/wide/deep bounding boxes.
+            // To solve for max distance to keep minScreenRatio, determine the radius of the bounding sphere at the center of
+            // the screen.
             const centerPoint = coordsToVector(lookAtPosition);
             const maxBoundingBoxRadius = this.boundingBox.getBoundingSphere(
                 new Sphere(centerPoint)
