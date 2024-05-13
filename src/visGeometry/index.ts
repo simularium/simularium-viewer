@@ -18,6 +18,7 @@ import {
     PerspectiveCamera,
     Quaternion,
     Scene,
+    Sphere,
     Spherical,
     Vector2,
     Vector3,
@@ -282,16 +283,40 @@ class VisGeometry {
         this.threejsrenderer.setClearColor(this.backgroundColor, 1);
     }
 
+    private coordinateToVector3(coord: Coordinates3d): Vector3 {
+        return new Vector3(coord.x, coord.y, coord.z);
+    }
+
     /**
-     * Derive the default distance from camera to target from `cameraDefault`.
+     * Derive the default distance from camera to target from `cameraDefault` and the current
+     * bounding box.
+     * By default, this will scale the camera's position to keep the objects at a minimum ratio
+     * of the vertical screen real estate (~90%) or closer based on the FOV.
      * Unless `cameraDefault` has been meaningfully changed by a call to
-     * `handleCameraData`, this will be equal to `DEFAULT_CAMERA_Z_POSITION`.
+     * `handleCameraData`, the view direction is calculated with `DEFAULT_CAMERA_Z_POSITION`.
      */
     private getDefaultOrbitRadius(): number {
-        const { position, lookAtPosition } = this.cameraDefault;
-        const radius = coordsToVector(position).distanceTo(
+        const { position, lookAtPosition, fovDegrees } = this.cameraDefault;
+
+        // Determine the maximum distance the camera should be so that the objects take up a certain fraction of the screen
+        // (e.g., minScreenRatio=0.8 means the bounding box should take up at least 80% of the screen).
+        // This prevents bad camera starting positions from being too far from the objects on reset.
+        const minScreenRatio = 0.9;
+
+        // To solve for max distance to keep minScreenRatio, determine the half-height of the bounding box at the center of
+        // the screen.
+        const centerPoint = this.coordinateToVector3(lookAtPosition);
+        const maxBoundingBoxRadius = this.boundingBox.getBoundingSphere(
+            new Sphere(centerPoint)
+        ).radius;
+        const halfVSize = maxBoundingBoxRadius / minScreenRatio;
+        const halfFovRadians = (fovDegrees * Math.PI) / 360;
+        const maxRadius = halfVSize / Math.tan(halfFovRadians);
+
+        const defaultRadius = coordsToVector(position).distanceTo(
             coordsToVector(lookAtPosition)
         );
+        const radius = Math.min(defaultRadius, maxRadius);
 
         if (this.cameraDefault.orthographic) {
             return radius / this.cameraDefault.zoom;
@@ -542,9 +567,22 @@ class VisGeometry {
         const { position, upVector, lookAtPosition, fovDegrees } =
             this.cameraDefault;
 
+        const centerPoint = this.coordinateToVector3(lookAtPosition);
+        const cameraDistance = this.getDefaultOrbitRadius();
+        const cameraDirection = this.coordinateToVector3(position)
+            .sub(centerPoint)
+            .normalize();
+        const newCameraPosition = centerPoint
+            .clone()
+            .add(cameraDirection.multiplyScalar(cameraDistance));
+
         // Reset camera position
-        this.camera.position.set(position.x, position.y, position.z);
-        this.initCameraPosition = this.camera.position.clone();
+        this.camera.position.set(
+            newCameraPosition.x,
+            newCameraPosition.y,
+            newCameraPosition.z
+        );
+        this.initCameraPosition = newCameraPosition.clone();
 
         // Reset up vector (needs to be a unit vector)
         const normalizedUpVector = coordsToVector(upVector).normalize();
