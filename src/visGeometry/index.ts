@@ -31,7 +31,7 @@ import * as EssentialsPlugin from "@tweakpane/plugin-essentials";
 import { ButtonGridApi } from "@tweakpane/plugin-essentials/dist/types/button-grid/api/button-grid";
 import jsLogger from "js-logger";
 import { ILogger, ILogLevel } from "js-logger";
-import { cloneDeep, noop } from "lodash";
+import { cloneDeep, isEqual, noop } from "lodash";
 
 import VisAgent from "./VisAgent";
 import VisTypes from "../simularium/VisTypes";
@@ -39,7 +39,11 @@ import PDBModel from "./PDBModel";
 import AgentPath from "./agentPath";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
 
-import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC } from "../constants";
+import {
+    DEFAULT_CAMERA_Z_POSITION,
+    DEFAULT_CAMERA_SPEC,
+    DEFAULT_CAMERA_SPEC_PERSPECTIVE,
+} from "../constants";
 import {
     AgentData,
     AgentDisplayDataWithGeometry,
@@ -155,6 +159,7 @@ class VisGeometry {
     private rotateDistance: number;
     private initCameraPosition: Vector3;
     private cameraDefault: CameraSpec;
+    private hasCustomCameraData: boolean;
     private fibers: InstancedFiberGroup;
     private focusMode: boolean;
     public gui?: Pane;
@@ -231,6 +236,7 @@ class VisGeometry {
 
         // Set up cameras
 
+        this.hasCustomCameraData = false;
         this.cameraDefault = cloneDeep(DEFAULT_CAMERA_SPEC);
         const aspect = CANVAS_INITIAL_WIDTH / CANVAS_INITIAL_HEIGHT;
         this.perspectiveCamera = new PerspectiveCamera(
@@ -283,10 +289,6 @@ class VisGeometry {
         this.threejsrenderer.setClearColor(this.backgroundColor, 1);
     }
 
-    private coordinateToVector3(coord: Coordinates3d): Vector3 {
-        return new Vector3(coord.x, coord.y, coord.z);
-    }
-
     /**
      * Derive the default distance from camera to target from `cameraDefault` and the current
      * bounding box.
@@ -298,26 +300,31 @@ class VisGeometry {
     private getDefaultOrbitRadius(): number {
         const { position, lookAtPosition, fovDegrees } = this.cameraDefault;
 
-        // Determine the maximum distance the camera should be so that the objects take up a certain fraction of the screen
-        // (e.g., minScreenRatio=0.8 means the bounding box should take up at least 80% of the screen).
-        // This prevents bad camera starting positions from being too far from the objects on reset.
-        const minScreenRatio = 0.9;
-
-        // To solve for max distance to keep minScreenRatio, determine the half-height of the bounding box at the center of
-        // the screen. Note that this is using the maximum RADIUS of the bounding box, not the Y-height. This way the whole
-        // bounding box should be in view, though this may misbehave on very long/wide/deep bounding boxes.
-        const centerPoint = this.coordinateToVector3(lookAtPosition);
-        const maxBoundingBoxRadius = this.boundingBox.getBoundingSphere(
-            new Sphere(centerPoint)
-        ).radius;
-        const halfVSize = maxBoundingBoxRadius / minScreenRatio;
-        const halfFovRadians = (fovDegrees * Math.PI) / 360;
-        const maxRadius = halfVSize / Math.tan(halfFovRadians);
-
-        const defaultRadius = coordsToVector(position).distanceTo(
+        let radius = coordsToVector(position).distanceTo(
             coordsToVector(lookAtPosition)
         );
-        const radius = Math.min(defaultRadius, maxRadius);
+
+        // If camera settings have not been provided, scale the default camera position to keep the objects at
+        // a reasonable zoom level.
+        if (!this.hasCustomCameraData) {
+            // Determine the maximum distance the camera should be so that the objects take up a certain fraction of the screen
+            // (e.g., minScreenRatio=0.8 means the bounding box should take up at least 80% of the screen).
+            // This prevents bad camera starting positions from being too far from the objects on reset.
+            const minScreenRatio = 0.9;
+
+            // To solve for max distance to keep minScreenRatio, determine the half-height of the bounding box at the center of
+            // the screen. Note that this is using the maximum RADIUS of the bounding box, not the Y-height. This way the whole
+            // bounding box should be in view, though this may misbehave on very long/wide/deep bounding boxes.
+            const centerPoint = coordsToVector(lookAtPosition);
+            const maxBoundingBoxRadius = this.boundingBox.getBoundingSphere(
+                new Sphere(centerPoint)
+            ).radius;
+            const halfVSize = maxBoundingBoxRadius / minScreenRatio;
+            const halfFovRadians = (fovDegrees * Math.PI) / 360;
+            const maxRadius = halfVSize / Math.tan(halfFovRadians);
+
+            radius = Math.min(radius, maxRadius);
+        }
 
         if (this.cameraDefault.orthographic) {
             return radius / this.cameraDefault.zoom;
@@ -543,7 +550,11 @@ class VisGeometry {
 
     public handleCameraData(cameraDefault?: PerspectiveCameraSpec): void {
         // Get default camera transform values from data
-        if (cameraDefault) {
+        if (
+            cameraDefault &&
+            !isEqual(cameraDefault, DEFAULT_CAMERA_SPEC_PERSPECTIVE)
+        ) {
+            this.hasCustomCameraData = true;
             this.cameraDefault = { ...cameraDefault, orthographic: false };
             this.updateOrthographicFrustum();
             this.updateControlsZoomBounds();
@@ -568,9 +579,9 @@ class VisGeometry {
         const { position, upVector, lookAtPosition, fovDegrees } =
             this.cameraDefault;
 
-        const centerPoint = this.coordinateToVector3(lookAtPosition);
+        const centerPoint = coordsToVector(lookAtPosition);
         const cameraDistance = this.getDefaultOrbitRadius();
-        const cameraDirection = this.coordinateToVector3(position)
+        const cameraDirection = coordsToVector(position)
             .sub(centerPoint)
             .normalize();
         const newCameraPosition = centerPoint

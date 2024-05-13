@@ -1,5 +1,6 @@
 import { CameraSpec, PerspectiveCameraSpec } from "./simularium/types";
 
+// TODO: Position is being recomputed on the fly; consider removing these constants
 export const DEFAULT_CAMERA_Z_POSITION = 120;
 export const DEFAULT_CAMERA_SPEC_PERSPECTIVE: PerspectiveCameraSpec = {
     position: {
