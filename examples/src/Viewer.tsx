@@ -413,9 +413,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         const simulariumFile = fileName.includes(".simularium")
             ? trajectoryFile
             : null;
-        // if (!fileName.includes(".simularium")) {
-        //     return new
-        // }
         this.setState({ initialPlay: true})
         return simulariumController
             .handleFileChange(simulariumFile, fileName, geoAssets)
