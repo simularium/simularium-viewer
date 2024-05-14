@@ -20,7 +20,7 @@ const EOF_PHRASE: Uint8Array = new TextEncoder().encode(
     "\\EOFTHEFRAMEENDSHERE"
 );
 
-interface cacheFrameSizes {
+interface CacheFrameSizes {
     bytes: number;
     frameOffset: number;
 }
@@ -29,7 +29,7 @@ class VisData {
     private frameCache: AgentData[][];
     private frameDataCache: FrameData[];
     private cacheSize: number;
-    private cacheFrameSizes: cacheFrameSizes[];
+    private cacheFrameSizes: CacheFrameSizes[];
     private maxCacheLength: number;
     private maxCacheSize: number;
     private webWorker: Worker | null;
