@@ -607,7 +607,6 @@ class Viewport extends React.Component<
         const elapsedTime = now - this.lastRenderTime;
         const totalElapsedTime = now - this.startTime;
         if (elapsedTime > timePerFrame) {
-            // console.log("animate elapsed greater than time per frame check")
             if (simulariumController.isChangingFile) {
                 this.visGeometry.render(totalElapsedTime);
                 this.lastRenderTime = Date.now();
@@ -620,7 +619,6 @@ class Viewport extends React.Component<
             }
 
             if (visData.currentFrameData.time != this.lastRenderedAgentTime) {
-                // console.log("animate current frame data time not equal to last rendered agent time check")
                 const currentAgents = visData.currentFrame();
                 if (currentAgents.length > 0) {
                     this.dispatchUpdatedTime(visData.currentFrameData);
@@ -630,7 +628,6 @@ class Viewport extends React.Component<
             }
 
             if (!visData.atLatestFrame() && !simulariumController.paused()) {
-                // console.log("animate not at latest frame and not paused check")
                 visData.gotoNextFrame();
             }
             this.stats.begin();
