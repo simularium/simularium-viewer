@@ -416,9 +416,8 @@ class VisData {
 
     // Add parsed frames to the cache and save the timestamp of the first frame
     private addFramesToCache(frames: ParsedBundle): void {
-        if (this.cacheSize > this.maxCacheSize) {
-            this.bringCacheDownToSize();
-        }
+        const sizeToAdd = frames.cachedSize;
+        this.makeRoomInCache(sizeToAdd);
         Array.prototype.push.apply(this.frameDataCache, frames.frameDataArray);
         Array.prototype.push.apply(
             this.frameCache,
@@ -444,21 +443,25 @@ class VisData {
         }
     }
 
-    private bringCacheDownToSize(): void {
-        // taking the first two off because we are at limit and another frame is incoming
-        const nFrames =
-            this.cacheFrameSizes[0].frameOffset +
-            this.cacheFrameSizes[1].frameOffset;
-        const bytesToRemove =
-            this.cacheFrameSizes[0].bytes + this.cacheFrameSizes[1].bytes;
-        this.trimCacheHead(nFrames);
-        this.cacheSize -= bytesToRemove;
-        this.cacheFrameSizes.splice(0, 2);
+    private makeRoomInCache(sizeToAdd: number): void {
+        while (this.cacheSize + sizeToAdd > this.maxCacheSize) {
+            const nFramesToRemove = this.cacheFrameSizes[0].frameOffset;
+            const bytesToRemove = this.cacheFrameSizes[0].bytes;
+            this.trimCacheHead(nFramesToRemove);
+            this.cacheSize -= bytesToRemove;
+            this.cacheFrameSizes.shift();
+        }
     }
 
     private trimCacheHead(nFrames: number): void {
-        this.frameCache.splice(0, nFrames);
-        this.frameDataCache.splice(0, nFrames);
+        for (let i = 0; i < nFrames; i++) {
+            if (this.frameCache.length > 0) {
+                this.frameCache.shift();
+            }
+            if (this.frameDataCache.length > 0) {
+                this.frameDataCache.shift();
+            }
+        }
     }
 
     private parseAgentsFromVisDataMessage(msg: VisDataMessage): void {
