@@ -1030,6 +1030,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         onError={this.onError}
                         backgroundColor={[0, 0, 0]}
                         lockedCamera={false}
+                        maxCacheLength={2000}
                     />
                 </div>
             </div>

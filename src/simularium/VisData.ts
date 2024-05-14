@@ -1,6 +1,6 @@
 import { difference } from "lodash";
 
-import { compareTimes } from "../util";
+import { calculateCachedSize, compareTimes } from "../util";
 
 import * as util from "./ThreadUtil";
 import {
@@ -20,9 +20,18 @@ const EOF_PHRASE: Uint8Array = new TextEncoder().encode(
     "\\EOFTHEFRAMEENDSHERE"
 );
 
+interface CacheFrameSizes {
+    bytes: number;
+    frameOffset: number;
+}
+
 class VisData {
     private frameCache: AgentData[][];
     private frameDataCache: FrameData[];
+    private cacheSize: number;
+    private cacheFrameSizes: CacheFrameSizes[];
+    private maxCacheLength: number;
+    private maxCacheSize: number;
     private webWorker: Worker | null;
 
     private frameToWaitFor: number;
@@ -88,9 +97,15 @@ class VisData {
         }
         parsedAgentDataArray.push(parsedAgentData);
 
+        const cachedSize = calculateCachedSize(
+            parsedAgentDataArray,
+            frameDataArray
+        );
+
         return {
             parsedAgentDataArray,
             frameDataArray,
+            cachedSize,
         };
     }
 
@@ -229,9 +244,15 @@ class VisData {
             end = start;
         }
 
+        const cachedSize = calculateCachedSize(
+            parsedAgentDataArray,
+            frameDataArray
+        );
+
         return {
             parsedAgentDataArray,
             frameDataArray,
+            cachedSize,
         };
     }
 
@@ -261,8 +282,12 @@ class VisData {
         }
         this.frameCache = [];
         this.frameDataCache = [];
+        this.cacheSize = 0;
+        this.cacheFrameSizes = [];
         this.firstFrameTime = null;
         this.cacheFrame = -1;
+        this.maxCacheLength = -1;
+        this.maxCacheSize = 1000000; // todo define defaults / constants for different browser environments
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
@@ -353,9 +378,19 @@ class VisData {
         this.lockedForFrame = true;
     }
 
+    public setMaxCacheLength(cacheLength: number | undefined): void {
+        if (cacheLength === undefined || cacheLength < 0) {
+            this.maxCacheLength = -1;
+            return;
+        }
+        // cache must have at least one frame
+        this.maxCacheLength = cacheLength > 0 ? cacheLength : 1;
+    }
+
     public clearCache(): void {
         this.frameCache = [];
         this.frameDataCache = [];
+        this.cacheSize = 0;
         this.cacheFrame = -1;
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
@@ -381,13 +416,51 @@ class VisData {
 
     // Add parsed frames to the cache and save the timestamp of the first frame
     private addFramesToCache(frames: ParsedBundle): void {
+        const sizeToAdd = frames.cachedSize;
+        this.makeRoomInCache(sizeToAdd);
         Array.prototype.push.apply(this.frameDataCache, frames.frameDataArray);
         Array.prototype.push.apply(
             this.frameCache,
             frames.parsedAgentDataArray
         );
+        this.cacheSize += frames.cachedSize;
+        this.cacheFrameSizes.push({
+            bytes: frames.cachedSize,
+            frameOffset: frames.frameDataArray.length,
+        });
+
         if (this.firstFrameTime === null) {
             this.firstFrameTime = frames.frameDataArray[0].time;
+        }
+
+        if (
+            this.maxCacheLength > 0 &&
+            this.frameDataCache.length > this.maxCacheLength
+        ) {
+            this.trimCacheHead(
+                this.frameDataCache.length - this.maxCacheLength
+            );
+        }
+    }
+
+    private makeRoomInCache(sizeToAdd: number): void {
+        while (this.cacheSize + sizeToAdd > this.maxCacheSize) {
+            const nFramesToRemove = this.cacheFrameSizes[0].frameOffset;
+            const bytesToRemove = this.cacheFrameSizes[0].bytes;
+            this.trimCacheHead(nFramesToRemove);
+            this.cacheSize -= bytesToRemove;
+            this.cacheFrameSizes.shift();
+        }
+    }
+
+    private trimCacheHead(nFrames: number): void {
+        for (let i = 0; i < nFrames; i++) {
+            if (this.frameCache.length > 0) {
+                this.frameCache.shift();
+            }
+            if (this.frameDataCache.length > 0) {
+                this.frameDataCache.shift();
+            }
         }
     }
 

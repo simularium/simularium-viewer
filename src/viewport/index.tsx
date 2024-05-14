@@ -45,6 +45,7 @@ type ViewportProps = {
     onError?: (error: FrontEndError) => void;
     lockedCamera?: boolean;
     onRecordedMovie?: (blob: Blob) => void; // providing this callback enables movie recording
+    maxCacheLength?: number;
 } & Partial<DefaultProps>;
 
 const defaultProps = {
@@ -123,6 +124,9 @@ class Viewport extends React.Component<
         this.handleTimeChange = this.handleTimeChange.bind(this);
 
         this.visGeometry = new VisGeometry(loggerLevel);
+        this.props.simulariumController.visData.setMaxCacheLength(
+            this.props.maxCacheLength
+        );
         this.props.simulariumController.visData.clearCache();
         this.visGeometry.createMaterials(props.agentColors);
         this.vdomRef = React.createRef();
