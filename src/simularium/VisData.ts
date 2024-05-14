@@ -1,6 +1,6 @@
 import { difference } from "lodash";
 
-import { compareTimes } from "../util";
+import { calculateCachedSize, compareTimes } from "../util";
 
 import * as util from "./ThreadUtil";
 import {
@@ -97,9 +97,15 @@ class VisData {
         }
         parsedAgentDataArray.push(parsedAgentData);
 
+        const cachedSize = calculateCachedSize(
+            parsedAgentDataArray,
+            frameDataArray
+        );
+
         return {
             parsedAgentDataArray,
             frameDataArray,
+            cachedSize,
         };
     }
 
@@ -238,9 +244,15 @@ class VisData {
             end = start;
         }
 
+        const cachedSize = calculateCachedSize(
+            parsedAgentDataArray,
+            frameDataArray
+        );
+
         return {
             parsedAgentDataArray,
             frameDataArray,
+            cachedSize,
         };
     }
 
@@ -404,11 +416,20 @@ class VisData {
 
     // Add parsed frames to the cache and save the timestamp of the first frame
     private addFramesToCache(frames: ParsedBundle): void {
+        if (this.cacheSize > this.maxCacheSize) {
+            this.bringCacheDownToSize();
+        }
         Array.prototype.push.apply(this.frameDataCache, frames.frameDataArray);
         Array.prototype.push.apply(
             this.frameCache,
             frames.parsedAgentDataArray
         );
+        this.cacheSize += frames.cachedSize;
+        this.cacheFrameSizes.push({
+            bytes: frames.cachedSize,
+            frameOffset: frames.frameDataArray.length,
+        });
+
         if (this.firstFrameTime === null) {
             this.firstFrameTime = frames.frameDataArray[0].time;
         }
@@ -421,19 +442,18 @@ class VisData {
                 this.frameDataCache.length - this.maxCacheLength
             );
         }
-        if (this.cacheSize > this.maxCacheSize) {
-            this.bringCacheDownToSize();
-        }
     }
 
     private bringCacheDownToSize(): void {
-        while (this.cacheSize > this.maxCacheSize) {
-            const nFrames = this.cacheFrameSizes[0].frameOffset;
-            this.frameCache.splice(0, nFrames);
-            this.frameDataCache.splice(0, nFrames);
-            this.cacheSize -= this.cacheFrameSizes[0].bytes;
-            this.cacheFrameSizes.shift();
-        }
+        // taking the first two off because we are at limit and another frame is incoming
+        const nFrames =
+            this.cacheFrameSizes[0].frameOffset +
+            this.cacheFrameSizes[1].frameOffset;
+        const bytesToRemove =
+            this.cacheFrameSizes[0].bytes + this.cacheFrameSizes[1].bytes;
+        this.trimCacheHead(nFrames);
+        this.cacheSize -= bytesToRemove;
+        this.cacheFrameSizes.splice(0, 2);
     }
 
     private trimCacheHead(nFrames: number): void {
@@ -549,11 +569,6 @@ class VisData {
                     this.clearCache(); // new data has arrived
                 }
                 this.addFramesToCache(frames);
-                this.cacheFrameSizes.push({
-                    bytes: tmp.byteLength,
-                    frameOffset: frames.frameDataArray.length,
-                });
-                this.cacheSize += tmp.byteLength;
             } catch (err) {
                 // TODO: There are frequent errors due to a race condition that
                 // occurs when jumping to a new time if a partial frame is received

@@ -5,10 +5,12 @@ import {
     AGENT_OBJECT_KEYS,
 } from "./types";
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
+import { calculateCachedSize } from "../util";
 
 interface ParsedBundle {
     frameDataArray: FrameData[];
     parsedAgentDataArray: AgentData[][];
+    cachedSize: number;
 }
 
 /**
@@ -109,9 +111,15 @@ function parseVisDataMessage(visDataMsg: VisDataMessage): ParsedBundle {
         frameDataArray.push(frameData);
     });
 
+    const cachedSize = calculateCachedSize(
+        parsedAgentDataArray,
+        frameDataArray
+    );
+
     return {
         parsedAgentDataArray,
         frameDataArray,
+        cachedSize,
     };
 }
 
