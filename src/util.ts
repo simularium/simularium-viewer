@@ -83,8 +83,10 @@ export function calculateCachedSize(
     let totalSize = 0;
 
     // Calculate the size of parsedAgentDataArray
-    for (const parsedAgentData of parsedAgentDataArray) {
-        for (const agent of parsedAgentData) {
+    for (let i = 0; i < parsedAgentDataArray.length; ++i) {
+        const parsedAgentData = parsedAgentDataArray[i];
+        for (let j = 0; j < parsedAgentData.length; ++j) {
+            const agent = parsedAgentData[j];
             totalSize += 8 * 10; // 10 number properties in AgentData (excluding subpoints)
             totalSize += agent.subpoints.length * 8;
         }
