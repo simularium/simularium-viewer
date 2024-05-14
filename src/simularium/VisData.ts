@@ -20,11 +20,18 @@ const EOF_PHRASE: Uint8Array = new TextEncoder().encode(
     "\\EOFTHEFRAMEENDSHERE"
 );
 
+interface cacheFrameSizes {
+    bytes: number;
+    frameOffset: number;
+}
+
 class VisData {
     private frameCache: AgentData[][];
     private frameDataCache: FrameData[];
     private cacheSize: number;
+    private cacheFrameSizes: cacheFrameSizes[];
     private maxCacheLength: number;
+    private maxCacheSize: number;
     private webWorker: Worker | null;
 
     private frameToWaitFor: number;
@@ -264,9 +271,11 @@ class VisData {
         this.frameCache = [];
         this.frameDataCache = [];
         this.cacheSize = 0;
+        this.cacheFrameSizes = [];
         this.firstFrameTime = null;
         this.cacheFrame = -1;
         this.maxCacheLength = -1;
+        this.maxCacheSize = 1000000; // todo define defaults / constants for different browser environments
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
@@ -412,6 +421,19 @@ class VisData {
                 this.frameDataCache.length - this.maxCacheLength
             );
         }
+        if (this.cacheSize > this.maxCacheSize) {
+            this.bringCacheDownToSize();
+        }
+    }
+
+    private bringCacheDownToSize(): void {
+        while (this.cacheSize > this.maxCacheSize) {
+            const nFrames = this.cacheFrameSizes[0].frameOffset;
+            this.frameCache.splice(0, nFrames);
+            this.frameDataCache.splice(0, nFrames);
+            this.cacheSize -= this.cacheFrameSizes[0].bytes;
+            this.cacheFrameSizes.shift();
+        }
     }
 
     private trimCacheHead(nFrames: number): void {
@@ -527,6 +549,10 @@ class VisData {
                     this.clearCache(); // new data has arrived
                 }
                 this.addFramesToCache(frames);
+                this.cacheFrameSizes.push({
+                    bytes: tmp.byteLength,
+                    frameOffset: frames.frameDataArray.length,
+                });
                 this.cacheSize += tmp.byteLength;
             } catch (err) {
                 // TODO: There are frequent errors due to a race condition that
