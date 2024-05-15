@@ -108,6 +108,8 @@ interface ViewerState {
     serverHealthy: boolean;
     isRecordingEnabled: boolean;
     trajectoryTitle: string;
+    initialPlay: boolean;
+    firstFrameTime: number;
 }
 
 interface BaseType {
@@ -169,6 +171,8 @@ const initialState: ViewerState = {
     serverHealthy: false,
     isRecordingEnabled: true,
     trajectoryTitle: "",
+    initialPlay: true,
+    firstFrameTime: 0,
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
@@ -418,9 +422,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         const simulariumFile = fileName.includes(".simularium")
             ? trajectoryFile
             : null;
-        // if (!fileName.includes(".simularium")) {
-        //     return new
-        // }
+        this.setState({ initialPlay: true})
         return simulariumController
             .handleFileChange(simulariumFile, fileName, geoAssets)
             .catch(console.log);
@@ -433,6 +435,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     public handleTimeChange(timeData): void {
         currentFrame = timeData.frameNumber;
         currentTime = timeData.time;
+        if (this.state.initialPlay) {
+            this.setState({ initialPlay: false, firstFrameTime: currentTime });
+        }
         this.setState({ currentFrame, currentTime });
         if (this.state.pauseOn === currentFrame) {
             simulariumController.pause();
@@ -815,7 +820,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 <input
                     name="slider"
                     type="range"
-                    min={0}
+                    min={this.state.firstFrameTime}
                     step={this.state.timeStep}
                     value={this.state.currentTime}
                     max={this.state.totalDuration}
