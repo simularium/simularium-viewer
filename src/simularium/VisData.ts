@@ -34,7 +34,6 @@ class VisData {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     private _dragAndDropFileInfo: TrajectoryFileInfo | null;
 
-    public firstFrameTime: number | null;
     public timeStepSize: number;
 
     private static parseOneBinaryFrame(data: ArrayBuffer): ParsedBundle {
@@ -262,7 +261,6 @@ class VisData {
         }
         this.frameCache = [];
         this.frameDataCache = [];
-        this.firstFrameTime = null;
         this.cacheFrame = -1;
         this.maxCacheLength = -1;
         this._dragAndDropFileInfo = null;
@@ -376,7 +374,6 @@ class VisData {
 
     public clearForNewTrajectory(): void {
         this.clearCache();
-        this.firstFrameTime = null;
     }
 
     public cancelAllWorkers(): void {
@@ -397,10 +394,6 @@ class VisData {
             this.frameCache,
             frames.parsedAgentDataArray
         );
-        if (this.firstFrameTime === null) {
-            this.firstFrameTime = frames.frameDataArray[0].time;
-        }
-
         if (
             this.maxCacheLength > 0 &&
             this.frameDataCache.length > this.maxCacheLength
