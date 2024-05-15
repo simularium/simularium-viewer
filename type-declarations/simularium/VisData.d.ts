@@ -9,7 +9,6 @@ declare class VisData {
     private cacheFrame;
     private netBuffer;
     private _dragAndDropFileInfo;
-    firstFrameTime: number | null;
     timeStepSize: number;
     private static parseOneBinaryFrame;
     static parseBinary(data: ArrayBuffer): ParsedBundle;

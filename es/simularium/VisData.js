@@ -23,7 +23,6 @@ var VisData = /*#__PURE__*/function () {
     _defineProperty(this, "netBuffer", void 0);
     // eslint-disable-next-line @typescript-eslint/naming-convention
     _defineProperty(this, "_dragAndDropFileInfo", void 0);
-    _defineProperty(this, "firstFrameTime", void 0);
     _defineProperty(this, "timeStepSize", void 0);
     this.webWorker = null;
     if (util.ThreadUtil.browserSupportsWebWorkers()) {
@@ -31,7 +30,6 @@ var VisData = /*#__PURE__*/function () {
     }
     this.frameCache = [];
     this.frameDataCache = [];
-    this.firstFrameTime = null;
     this.cacheFrame = -1;
     this._dragAndDropFileInfo = null;
     this.frameToWaitFor = 0;
@@ -155,7 +153,6 @@ var VisData = /*#__PURE__*/function () {
     key: "clearForNewTrajectory",
     value: function clearForNewTrajectory() {
       this.clearCache();
-      this.firstFrameTime = null;
     }
   }, {
     key: "cancelAllWorkers",
@@ -173,9 +170,6 @@ var VisData = /*#__PURE__*/function () {
     value: function addFramesToCache(frames) {
       Array.prototype.push.apply(this.frameDataCache, frames.frameDataArray);
       Array.prototype.push.apply(this.frameCache, frames.parsedAgentDataArray);
-      if (this.firstFrameTime === null) {
-        this.firstFrameTime = frames.frameDataArray[0].time;
-      }
     }
   }, {
     key: "parseAgentsFromVisDataMessage",
