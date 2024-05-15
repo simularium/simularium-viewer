@@ -23,7 +23,7 @@ const EOF_PHRASE: Uint8Array = new TextEncoder().encode(
 class VisData {
     private frameCache: AgentData[][];
     private frameDataCache: FrameData[];
-    private maxCacheLength: number;
+    private implementCache: boolean;
     private webWorker: Worker | null;
 
     private frameToWaitFor: number;
@@ -243,6 +243,9 @@ class VisData {
 
         // event.data is of type ParsedBundle
         this.webWorker.onmessage = (event) => {
+            if (!this.implementCache) {
+                this.trimCacheHead();
+            }
             Array.prototype.push.apply(
                 this.frameDataCache,
                 event.data.frameDataArray
@@ -262,7 +265,7 @@ class VisData {
         this.frameCache = [];
         this.frameDataCache = [];
         this.cacheFrame = -1;
-        this.maxCacheLength = -1;
+        this.implementCache = true;
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
@@ -353,15 +356,6 @@ class VisData {
         this.lockedForFrame = true;
     }
 
-    public setMaxCacheLength(cacheLength: number | undefined): void {
-        if (cacheLength === undefined || cacheLength < 0) {
-            this.maxCacheLength = -1;
-            return;
-        }
-        // cache must have at least one frame
-        this.maxCacheLength = cacheLength > 0 ? cacheLength : 1;
-    }
-
     public clearCache(): void {
         this.frameCache = [];
         this.frameDataCache = [];
@@ -387,26 +381,27 @@ class VisData {
         }
     }
 
+    public setCachePreferences(implementCache: boolean): void {
+        this.implementCache = implementCache;
+    }
+
     // Add parsed frames to the cache and save the timestamp of the first frame
     private addFramesToCache(frames: ParsedBundle): void {
+        if (!this.implementCache) {
+            this.trimCacheHead();
+        }
         Array.prototype.push.apply(this.frameDataCache, frames.frameDataArray);
         Array.prototype.push.apply(
             this.frameCache,
             frames.parsedAgentDataArray
         );
-        if (
-            this.maxCacheLength > 0 &&
-            this.frameDataCache.length > this.maxCacheLength
-        ) {
-            this.trimCacheHead(
-                this.frameDataCache.length - this.maxCacheLength
-            );
-        }
     }
 
-    private trimCacheHead(nFrames: number): void {
-        this.frameCache.splice(0, nFrames);
-        this.frameDataCache.splice(0, nFrames);
+    private trimCacheHead(): void {
+        while (this.frameCache.length > 1) {
+            this.frameCache.shift();
+            this.frameDataCache.shift();
+        }
     }
 
     private parseAgentsFromVisDataMessage(msg: VisDataMessage): void {
