@@ -23,7 +23,7 @@ const EOF_PHRASE: Uint8Array = new TextEncoder().encode(
 class VisData {
     private frameCache: AgentData[][];
     private frameDataCache: FrameData[];
-    private implementCache: boolean;
+    private disableCache: boolean;
     private webWorker: Worker | null;
 
     private frameToWaitFor: number;
@@ -243,7 +243,7 @@ class VisData {
 
         // event.data is of type ParsedBundle
         this.webWorker.onmessage = (event) => {
-            if (!this.implementCache) {
+            if (this.disableCache) {
                 this.trimCacheHead();
             }
             Array.prototype.push.apply(
@@ -265,7 +265,7 @@ class VisData {
         this.frameCache = [];
         this.frameDataCache = [];
         this.cacheFrame = -1;
-        this.implementCache = true;
+        this.disableCache = false;
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
@@ -381,13 +381,13 @@ class VisData {
         }
     }
 
-    public setCachePreferences(implementCache: boolean): void {
-        this.implementCache = implementCache;
+    public setCachePreferences(disableCache: boolean): void {
+        this.disableCache = disableCache;
     }
 
     // Add parsed frames to the cache and save the timestamp of the first frame
     private addFramesToCache(frames: ParsedBundle): void {
-        if (!this.implementCache) {
+        if (this.disableCache) {
             this.trimCacheHead();
         }
         Array.prototype.push.apply(this.frameDataCache, frames.frameDataArray);

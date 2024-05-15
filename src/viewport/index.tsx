@@ -45,7 +45,7 @@ type ViewportProps = {
     onError?: (error: FrontEndError) => void;
     lockedCamera?: boolean;
     onRecordedMovie?: (blob: Blob) => void; // providing this callback enables movie recording
-    implementCache?: boolean;
+    disableCache?: boolean;
 } & Partial<DefaultProps>;
 
 const defaultProps = {
@@ -58,7 +58,7 @@ const defaultProps = {
     showPaths: true,
     showBounds: true,
     lockedCamera: false,
-    implementCache: true,
+    disableCache: true,
     agentColors: [
         0x6ac1e5, 0xff2200, 0xee7967, 0xff6600, 0xd94d49, 0xffaa00, 0xffcc00,
         0x00ccff, 0x00aaff, 0x8048f3, 0x07f4ec, 0x79bd8f, 0x8800ff, 0xaa00ff,
@@ -102,7 +102,7 @@ class Viewport extends React.Component<
     private startTime: number;
     private vdomRef: React.RefObject<HTMLDivElement>;
     private handlers: { [key: string]: (e: Event) => void };
-    private implementCache: boolean;
+    private disableCache: boolean;
 
     private hit: boolean;
     private animationRequestID: number;
@@ -126,10 +126,10 @@ class Viewport extends React.Component<
         this.handleTimeChange = this.handleTimeChange.bind(this);
 
         this.visGeometry = new VisGeometry(loggerLevel);
-        this.implementCache = props.implementCache;
+        this.disableCache = props.disableCache;
         this.props.simulariumController.visData.clearCache();
         this.props.simulariumController.visData.setCachePreferences(
-            this.implementCache
+            this.disableCache
         );
         this.visGeometry.createMaterials(props.agentColors);
         this.vdomRef = React.createRef();
@@ -244,10 +244,7 @@ class Viewport extends React.Component<
             onError,
             lockedCamera,
         } = this.props;
-        this.visGeometry.setCanvasOnTheDom(
-            this.vdomRef.current,
-            lockedCamera
-        );
+        this.visGeometry.setCanvasOnTheDom(this.vdomRef.current, lockedCamera);
         if (backgroundColor !== undefined) {
             this.visGeometry.setBackgroundColor(backgroundColor);
         }
