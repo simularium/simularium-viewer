@@ -381,8 +381,8 @@ class VisData {
         }
     }
 
-    public setCachePreferences(disableCache: boolean): void {
-        this.disableCache = disableCache;
+    public setCacheDisabled(cacheDisabled: boolean): void {
+        this.disableCache = cacheDisabled;
     }
 
     // Add parsed frames to the cache and save the timestamp of the first frame

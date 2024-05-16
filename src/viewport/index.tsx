@@ -128,7 +128,7 @@ class Viewport extends React.Component<
         this.visGeometry = new VisGeometry(loggerLevel);
         this.disableCache = props.disableCache;
         this.props.simulariumController.visData.clearCache();
-        this.props.simulariumController.visData.setCachePreferences(
+        this.props.simulariumController.visData.setCacheDisabled(
             this.disableCache
         );
         this.visGeometry.createMaterials(props.agentColors);
