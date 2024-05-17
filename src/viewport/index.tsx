@@ -102,7 +102,6 @@ class Viewport extends React.Component<
     private startTime: number;
     private vdomRef: React.RefObject<HTMLDivElement>;
     private handlers: { [key: string]: (e: Event) => void };
-    private disableCache: boolean;
 
     private hit: boolean;
     private animationRequestID: number;
@@ -126,10 +125,9 @@ class Viewport extends React.Component<
         this.handleTimeChange = this.handleTimeChange.bind(this);
 
         this.visGeometry = new VisGeometry(loggerLevel);
-        this.disableCache = props.disableCache;
         this.props.simulariumController.visData.clearCache();
         this.props.simulariumController.visData.setCacheDisabled(
-            this.disableCache
+            this.props.disableCache
         );
         this.visGeometry.createMaterials(props.agentColors);
         this.vdomRef = React.createRef();
