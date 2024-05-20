@@ -244,7 +244,9 @@ class VisData {
         // event.data is of type ParsedBundle
         this.webWorker.onmessage = (event) => {
             if (!this.enableCache) {
-                this.trimCacheHead();
+                this.frameDataCache = [...event.data.frameDataArray];
+                this.frameCache = [...event.data.parsedAgentDataArray];
+                return;
             }
             Array.prototype.push.apply(
                 this.frameDataCache,
@@ -396,20 +398,15 @@ class VisData {
     // Add parsed frames to the cache and save the timestamp of the first frame
     private addFramesToCache(frames: ParsedBundle): void {
         if (!this.enableCache) {
-            this.trimCacheHead();
+            this.frameDataCache = [...frames.frameDataArray];
+            this.frameCache = [...frames.parsedAgentDataArray];
+            return;
         }
         Array.prototype.push.apply(this.frameDataCache, frames.frameDataArray);
         Array.prototype.push.apply(
             this.frameCache,
             frames.parsedAgentDataArray
         );
-    }
-
-    private trimCacheHead(): void {
-        while (this.frameCache.length > 1) {
-            this.frameCache.shift();
-            this.frameDataCache.shift();
-        }
     }
 
     private parseAgentsFromVisDataMessage(msg: VisDataMessage): void {
