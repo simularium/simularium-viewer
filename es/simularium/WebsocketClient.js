@@ -43,7 +43,8 @@ export var NetMessageEnum = /*#__PURE__*/function (NetMessageEnum) {
   NetMessageEnum[NetMessageEnum["ID_ERROR_MSG"] = 21] = "ID_ERROR_MSG";
   NetMessageEnum[NetMessageEnum["ID_CHECK_HEALTH_REQUEST"] = 22] = "ID_CHECK_HEALTH_REQUEST";
   NetMessageEnum[NetMessageEnum["ID_SERVER_HEALTHY_RESPONSE"] = 23] = "ID_SERVER_HEALTHY_RESPONSE";
-  NetMessageEnum[NetMessageEnum["LENGTH"] = 24] = "LENGTH";
+  NetMessageEnum[NetMessageEnum["ID_CANCEL_CONVERSION"] = 24] = "ID_CANCEL_CONVERSION";
+  NetMessageEnum[NetMessageEnum["LENGTH"] = 25] = "LENGTH";
   return NetMessageEnum;
 }({});
 export var ServerErrorCodes = /*#__PURE__*/function (ServerErrorCodes) {

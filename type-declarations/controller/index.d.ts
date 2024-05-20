@@ -62,6 +62,7 @@ export default class SimulariumController {
     markFileChangeAsHandled(): void;
     getFile(): string;
     checkServerHealth(handler: () => void, netConnectionConfig: NetConnectionParams): void;
+    cancelConversion(): void;
     private setupMetricsCalculator;
     getMetrics(config: NetConnectionParams): Promise<void>;
     getPlotData(config: NetConnectionParams, requestedPlots: PlotConfig[]): Promise<void>;

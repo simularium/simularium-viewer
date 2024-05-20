@@ -38,7 +38,8 @@ export declare const enum NetMessageEnum {
     ID_ERROR_MSG = 21,
     ID_CHECK_HEALTH_REQUEST = 22,
     ID_SERVER_HEALTHY_RESPONSE = 23,
-    LENGTH = 24
+    ID_CANCEL_CONVERSION = 24,
+    LENGTH = 25
 }
 export declare const enum ServerErrorCodes {
     FILE_NOT_FOUND = 0,

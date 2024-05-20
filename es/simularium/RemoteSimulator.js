@@ -407,6 +407,15 @@ export var RemoteSimulator = /*#__PURE__*/function () {
         _this7.handleError(new FrontEndError(e.message, ErrorLevel.WARNING));
       });
     }
+  }, {
+    key: "cancelConversion",
+    value: function cancelConversion() {
+      this.webSocketClient.sendWebSocketRequest({
+        msgType: NetMessageEnum.ID_CANCEL_CONVERSION,
+        fileName: this.lastRequestedFile
+      }, "Cancel the requested autoconversion");
+      this.lastRequestedFile = "";
+    }
   }]);
   return RemoteSimulator;
 }();

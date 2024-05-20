@@ -358,6 +358,14 @@ var SimulariumController = /*#__PURE__*/function () {
       }
     }
   }, {
+    key: "cancelConversion",
+    value: function cancelConversion() {
+      // Only relevant if there is an active RemoteSimulator instance
+      if (this.simulator && this.simulator instanceof RemoteSimulator) {
+        this.simulator.cancelConversion();
+      }
+    }
+  }, {
     key: "setupMetricsCalculator",
     value: function setupMetricsCalculator(config) {
       var webSocketClient = this.remoteWebsocketClient && this.remoteWebsocketClient.socketIsValid() ? this.remoteWebsocketClient : new WebsocketClient(config, this.onError);
