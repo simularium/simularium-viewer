@@ -23,7 +23,7 @@ const EOF_PHRASE: Uint8Array = new TextEncoder().encode(
 class VisData {
     private frameCache: AgentData[][];
     private frameDataCache: FrameData[];
-    private disableCache: boolean;
+    private enableCache: boolean;
     private webWorker: Worker | null;
 
     private frameToWaitFor: number;
@@ -243,7 +243,7 @@ class VisData {
 
         // event.data is of type ParsedBundle
         this.webWorker.onmessage = (event) => {
-            if (this.disableCache) {
+            if (!this.enableCache) {
                 this.trimCacheHead();
             }
             Array.prototype.push.apply(
@@ -265,7 +265,7 @@ class VisData {
         this.frameCache = [];
         this.frameDataCache = [];
         this.cacheFrame = -1;
-        this.disableCache = false;
+        this.enableCache = true;
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
@@ -297,7 +297,7 @@ class VisData {
         // TODO: debug compareTimes
         // in the meantime, if we're not using the cache we know it's not
         // in there
-        if (this.disableCache) {
+        if (!this.enableCache) {
             return false;
         }
         if (this.frameDataCache.length < 1) {
@@ -389,13 +389,13 @@ class VisData {
         }
     }
 
-    public setCacheDisabled(cacheDisabled: boolean): void {
-        this.disableCache = cacheDisabled;
+    public setCacheEnabled(cacheEnabled: boolean): void {
+        this.enableCache = cacheEnabled;
     }
 
     // Add parsed frames to the cache and save the timestamp of the first frame
     private addFramesToCache(frames: ParsedBundle): void {
-        if (this.disableCache) {
+        if (!this.enableCache) {
             this.trimCacheHead();
         }
         Array.prototype.push.apply(this.frameDataCache, frames.frameDataArray);
