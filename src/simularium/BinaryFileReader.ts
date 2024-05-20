@@ -132,7 +132,7 @@ export default class BinaryFileReader implements ISimulariumFile {
         for (const block of this.header.blocks) {
             if (block.type === BlockTypeEnum.PLOT_DATA_JSON) {
                 const json = this.parseJsonBlock(block);
-                return json as Plot[];
+                return json.data as Plot[];
             }
         }
         return [];
@@ -264,6 +264,7 @@ export default class BinaryFileReader implements ISimulariumFile {
     }
 
     getPlotData(): Plot[] {
+        console.log("GET PLOT DATA BINARY", this.plotData);
         return this.plotData;
     }
 

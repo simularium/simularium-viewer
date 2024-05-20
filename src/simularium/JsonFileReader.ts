@@ -48,7 +48,7 @@ export default class JsonFileReader implements ISimulariumFile {
     }
 
     getPlotData(): Plot[] {
-        return this.simulariumFile.plotData;
+        return this.simulariumFile.plotData.data;
     }
 
     getAsBlob(): Blob {
