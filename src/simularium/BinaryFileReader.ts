@@ -264,7 +264,6 @@ export default class BinaryFileReader implements ISimulariumFile {
     }
 
     getPlotData(): Plot[] {
-        console.log("GET PLOT DATA BINARY", this.plotData);
         return this.plotData;
     }
 
