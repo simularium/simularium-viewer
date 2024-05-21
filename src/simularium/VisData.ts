@@ -294,11 +294,6 @@ class VisData {
      *   Functions to check update
      * */
     public hasLocalCacheForTime(time: number): boolean {
-        // this check seems to have some issues with the time comparison
-        // it returns true when it shouldn't
-        // TODO: debug compareTimes
-        // in the meantime, if we're not using the cache we know it's not
-        // in there
         if (!this.enableCache) {
             return false;
         }
