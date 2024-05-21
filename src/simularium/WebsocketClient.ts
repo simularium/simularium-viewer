@@ -56,6 +56,7 @@ export const enum NetMessageEnum {
     ID_ERROR_MSG = 21,
     ID_CHECK_HEALTH_REQUEST = 22,
     ID_SERVER_HEALTHY_RESPONSE = 23,
+    ID_CANCEL_CONVERSION = 24,
     // insert new values here before LENGTH
     LENGTH,
 }

@@ -423,6 +423,13 @@ export default class SimulariumController {
         }
     }
 
+    public cancelConversion(): void {
+        // Only relevant if there is an active RemoteSimulator instance
+        if (this.simulator && this.simulator instanceof RemoteSimulator) {
+            this.simulator.cancelConversion();
+        }
+    }
+
     private setupMetricsCalculator(
         config: NetConnectionParams
     ): RemoteMetricsCalculator {

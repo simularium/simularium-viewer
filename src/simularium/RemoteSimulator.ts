@@ -469,4 +469,15 @@ export class RemoteSimulator implements ISimulator {
                 );
             });
     }
+
+    public cancelConversion(): void {
+        this.webSocketClient.sendWebSocketRequest(
+            {
+                msgType: NetMessageEnum.ID_CANCEL_CONVERSION,
+                fileName: this.lastRequestedFile,
+            },
+            "Cancel the requested autoconversion"
+        );
+        this.lastRequestedFile = "";
+    }
 }
