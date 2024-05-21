@@ -16,6 +16,7 @@ var VisData = /*#__PURE__*/function () {
     _classCallCheck(this, VisData);
     _defineProperty(this, "frameCache", void 0);
     _defineProperty(this, "frameDataCache", void 0);
+    _defineProperty(this, "enableCache", void 0);
     _defineProperty(this, "webWorker", void 0);
     _defineProperty(this, "frameToWaitFor", void 0);
     _defineProperty(this, "lockedForFrame", void 0);
@@ -31,6 +32,7 @@ var VisData = /*#__PURE__*/function () {
     this.frameCache = [];
     this.frameDataCache = [];
     this.cacheFrame = -1;
+    this.enableCache = true;
     this._dragAndDropFileInfo = null;
     this.frameToWaitFor = 0;
     this.lockedForFrame = false;
@@ -49,6 +51,11 @@ var VisData = /*#__PURE__*/function () {
 
       // event.data is of type ParsedBundle
       this.webWorker.onmessage = function (event) {
+        if (!_this.enableCache) {
+          _this.frameDataCache = _toConsumableArray(event.data.frameDataArray);
+          _this.frameCache = _toConsumableArray(event.data.parsedAgentDataArray);
+          return;
+        }
         Array.prototype.push.apply(_this.frameDataCache, event.data.frameDataArray);
         Array.prototype.push.apply(_this.frameCache, event.data.parsedAgentDataArray);
       };
@@ -77,6 +84,10 @@ var VisData = /*#__PURE__*/function () {
   }, {
     key: "hasLocalCacheForTime",
     value: function hasLocalCacheForTime(time) {
+      // TODO: debug compareTimes
+      if (!this.enableCache) {
+        return false;
+      }
       if (this.frameDataCache.length < 1) {
         return false;
       }
@@ -163,11 +174,21 @@ var VisData = /*#__PURE__*/function () {
         this.setupWebWorker();
       }
     }
+  }, {
+    key: "setCacheEnabled",
+    value: function setCacheEnabled(cacheEnabled) {
+      this.enableCache = cacheEnabled;
+    }
 
     // Add parsed frames to the cache and save the timestamp of the first frame
   }, {
     key: "addFramesToCache",
     value: function addFramesToCache(frames) {
+      if (!this.enableCache) {
+        this.frameDataCache = _toConsumableArray(frames.frameDataArray);
+        this.frameCache = _toConsumableArray(frames.parsedAgentDataArray);
+        return;
+      }
       Array.prototype.push.apply(this.frameDataCache, frames.frameDataArray);
       Array.prototype.push.apply(this.frameCache, frames.parsedAgentDataArray);
     }

@@ -3,6 +3,7 @@ import type { ParsedBundle } from "./VisDataParse";
 declare class VisData {
     private frameCache;
     private frameDataCache;
+    private enableCache;
     private webWorker;
     private frameToWaitFor;
     private lockedForFrame;
@@ -30,6 +31,7 @@ declare class VisData {
     clearCache(): void;
     clearForNewTrajectory(): void;
     cancelAllWorkers(): void;
+    setCacheEnabled(cacheEnabled: boolean): void;
     private addFramesToCache;
     private parseAgentsFromVisDataMessage;
     parseAgentsFromLocalFileData(msg: VisDataMessage | ArrayBuffer): void;

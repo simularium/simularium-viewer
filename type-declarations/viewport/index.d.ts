@@ -26,6 +26,7 @@ declare type ViewportProps = {
     onError?: (error: FrontEndError) => void;
     lockedCamera?: boolean;
     onRecordedMovie?: (blob: Blob) => void;
+    disableCache?: boolean;
 } & Partial<DefaultProps>;
 declare const defaultProps: {
     renderStyle: RenderStyle;
@@ -37,6 +38,7 @@ declare const defaultProps: {
     showPaths: boolean;
     showBounds: boolean;
     lockedCamera: boolean;
+    disableCache: boolean;
     agentColors: string[] | number[];
 };
 declare type DefaultProps = typeof defaultProps;
@@ -75,6 +77,7 @@ declare class Viewport extends React.Component<ViewportProps & DefaultProps, Vie
         showPaths: boolean;
         showBounds: boolean;
         lockedCamera: boolean;
+        disableCache: boolean;
         agentColors: string[] | number[];
     };
     private static isCustomEvent;
