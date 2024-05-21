@@ -294,6 +294,7 @@ class VisData {
      *   Functions to check update
      * */
     public hasLocalCacheForTime(time: number): boolean {
+        // TODO: debug compareTimes
         if (!this.enableCache) {
             return false;
         }
