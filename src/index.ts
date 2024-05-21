@@ -11,6 +11,7 @@ export type {
     IClientSimulatorImpl,
     EncodedTypeMapping,
     VisDataMessage,
+    Plot,
 } from "./simularium";
 export type { ISimulariumFile } from "./simularium/ISimulariumFile";
 export type { TimeData } from "./viewport";

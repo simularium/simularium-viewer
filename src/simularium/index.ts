@@ -7,6 +7,7 @@ export type {
     ModelInfo,
     EncodedTypeMapping,
     SimulariumFileFormat,
+    Plot,
 } from "./types";
 
 export type {
