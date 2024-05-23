@@ -19,6 +19,7 @@ import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry";
 import { ColorChange } from "../simularium/SelectionInterface";
 import FrameRecorder from "../simularium/FrameRecorder";
 import { DEFAULT_FRAME_RATE } from "../constants";
+import { compareUIDataAndCreateColorChanges } from "../util";
 
 export type PropColor = string | number | [number, number, number];
 
@@ -46,6 +47,7 @@ type ViewportProps = {
     lockedCamera?: boolean;
     onRecordedMovie?: (blob: Blob) => void; // providing this callback enables movie recording
     disableCache?: boolean;
+    sessionUIData?: UIDisplayData;
 } & Partial<DefaultProps>;
 
 const defaultProps = {
@@ -313,6 +315,7 @@ class Viewport extends React.Component<
             showBounds,
             selectionStateInfo,
             lockedCamera,
+            sessionUIData,
         } = this.props;
 
         if (selectionStateInfo) {
@@ -381,6 +384,9 @@ class Viewport extends React.Component<
             } else {
                 this.visGeometry.destroyGui();
             }
+        }
+        if (sessionUIData && prevProps.sessionUIData !== sessionUIData) {
+            this.receiveSessionUIData(sessionUIData);
         }
     }
 
@@ -594,6 +600,16 @@ class Viewport extends React.Component<
             cancelAnimationFrame(this.animationRequestID);
             this.animationRequestID = 0;
         }
+    }
+
+    private receiveSessionUIData(newData: UIDisplayData): void {
+        const oldData = this.selectionInterface.getUIDisplayData();
+        if (isEqual(oldData, newData)) return;
+        
+        const colorChanges = compareUIDataAndCreateColorChanges(oldData, newData);
+        colorChanges.forEach((change) => {
+            this.changeAgentsColor(change);
+        });
     }
 
     public animate(): void {
