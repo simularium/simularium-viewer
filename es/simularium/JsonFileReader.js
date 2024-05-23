@@ -45,7 +45,7 @@ var JsonFileReader = /*#__PURE__*/function () {
   }, {
     key: "getPlotData",
     value: function getPlotData() {
-      return this.simulariumFile.plotData;
+      return this.simulariumFile.plotData.data;
     }
   }, {
     key: "getAsBlob",

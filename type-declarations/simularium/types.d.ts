@@ -54,7 +54,10 @@ export interface Plot {
     data: ScatterTrace[] | HistogramTrace[];
     layout?: Layout;
 }
-declare type CachedObservables = Plot[];
+declare type PlotData = {
+    version: number;
+    data: Plot[];
+};
 export interface AgentTypeVisData {
     displayType: GeometryDisplayType;
     url: string;
@@ -114,7 +117,7 @@ export declare type TrajectoryFileInfo = TrajectoryFileInfoV3;
 export interface SimulariumFileFormat {
     trajectoryInfo: TrajectoryFileInfo;
     spatialData: VisDataMessage;
-    plotData: CachedObservables;
+    plotData: PlotData;
 }
 export declare const FILE_STATUS_SUCCESS = "success";
 export declare const FILE_STATUS_FAIL = "fail";

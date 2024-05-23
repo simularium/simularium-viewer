@@ -137,7 +137,7 @@ var BinaryFileReader = /*#__PURE__*/function () {
           var block = _step3.value;
           if (block.type === BlockTypeEnum.PLOT_DATA_JSON) {
             var json = this.parseJsonBlock(block);
-            return json;
+            return json.data;
           }
         }
       } catch (err) {
