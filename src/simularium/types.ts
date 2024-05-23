@@ -58,7 +58,10 @@ export interface Plot {
     layout?: Layout;
 }
 
-type CachedObservables = Plot[];
+type PlotData = {
+    version: number;
+    data: Plot[];
+};
 
 export interface AgentTypeVisData {
     displayType: GeometryDisplayType;
@@ -133,7 +136,7 @@ export type TrajectoryFileInfo = TrajectoryFileInfoV3;
 export interface SimulariumFileFormat {
     trajectoryInfo: TrajectoryFileInfo;
     spatialData: VisDataMessage;
-    plotData: CachedObservables;
+    plotData: PlotData;
 }
 
 export const FILE_STATUS_SUCCESS = "success";
