@@ -1,5 +1,6 @@
 import React from "react";
 import { isEqual, findIndex, map, reduce } from "lodash";
+import { v4 as uuidv4 } from "uuid";
 
 import type {
     ISimulariumFile,
@@ -107,6 +108,8 @@ interface ViewerState {
     serverHealthy: boolean;
     isRecordingEnabled: boolean;
     trajectoryTitle: string;
+    initialPlay: boolean;
+    firstFrameTime: number;
 }
 
 interface BaseType {
@@ -168,6 +171,8 @@ const initialState: ViewerState = {
     serverHealthy: false,
     isRecordingEnabled: true,
     trajectoryTitle: "",
+    initialPlay: true,
+    firstFrameTime: 0,
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
@@ -197,8 +202,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             };
         } else if (props.useOctopus) {
             this.netConnectionSettings = {
-                serverIp: "18.223.108.15",
-                serverPort: 8765,
+                serverIp: "staging-simularium-ecs.allencell.org",
+                serverPort: 443,
                 useOctopus: true,
                 secureConnection: true,
             };
@@ -391,10 +396,18 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     }
 
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
+        const fileName = uuidv4() + ".simularium";
         simulariumController
-            .convertAndLoadTrajectory(this.netConnectionSettings, obj, fileType)
+            .convertTrajectory(this.netConnectionSettings, obj, fileType, fileName)
             .then(() => {
                 this.clearPendingFile();
+            })
+            .then(() => {
+                simulariumController.changeFile(
+                    { netConnectionSettings: this.netConnectionSettings, },
+                    fileName,
+                    true,
+                )
             })
             .catch((err) => {
                 console.error(err);
@@ -409,9 +422,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         const simulariumFile = fileName.includes(".simularium")
             ? trajectoryFile
             : null;
-        // if (!fileName.includes(".simularium")) {
-        //     return new
-        // }
+        this.setState({ initialPlay: true})
         return simulariumController
             .handleFileChange(simulariumFile, fileName, geoAssets)
             .catch(console.log);
@@ -424,6 +435,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     public handleTimeChange(timeData): void {
         currentFrame = timeData.frameNumber;
         currentTime = timeData.time;
+        if (this.state.initialPlay) {
+            this.setState({ initialPlay: false, firstFrameTime: currentTime });
+        }
         this.setState({ currentFrame, currentTime });
         if (this.state.pauseOn === currentFrame) {
             simulariumController.pause();
@@ -806,7 +820,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 <input
                     name="slider"
                     type="range"
-                    min={0}
+                    min={this.state.firstFrameTime}
                     step={this.state.timeStep}
                     value={this.state.currentTime}
                     max={this.state.totalDuration}
@@ -1022,6 +1036,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         onError={this.onError}
                         backgroundColor={[0, 0, 0]}
                         lockedCamera={false}
+                        disableCache={false}
                     />
                 </div>
             </div>

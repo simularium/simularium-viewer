@@ -45,6 +45,7 @@ type ViewportProps = {
     onError?: (error: FrontEndError) => void;
     lockedCamera?: boolean;
     onRecordedMovie?: (blob: Blob) => void; // providing this callback enables movie recording
+    disableCache?: boolean;
     followObjectCallback?: (newObject: number, oldObject: number, agentData: AgentData) => void;
 } & Partial<DefaultProps>;
 
@@ -58,6 +59,7 @@ const defaultProps = {
     showPaths: true,
     showBounds: true,
     lockedCamera: false,
+    disableCache: false,
     agentColors: [
         0x6ac1e5, 0xff2200, 0xee7967, 0xff6600, 0xd94d49, 0xffaa00, 0xffcc00,
         0x00ccff, 0x00aaff, 0x8048f3, 0x07f4ec, 0x79bd8f, 0x8800ff, 0xaa00ff,
@@ -125,6 +127,9 @@ class Viewport extends React.Component<
 
         this.visGeometry = new VisGeometry(loggerLevel);
         this.props.simulariumController.visData.clearCache();
+        this.props.simulariumController.visData.setCacheEnabled(
+            !this.props.disableCache
+        );
         this.visGeometry.createMaterials(props.agentColors);
         this.vdomRef = React.createRef();
         this.lastRenderTime = Date.now();
@@ -217,7 +222,7 @@ class Viewport extends React.Component<
         const uiDisplayData = this.selectionInterface.getUIDisplayData();
         console.log("uiDisplayData", uiDisplayData);
         onTrajectoryFileInfoChanged(trajectoryFileInfo);
-        this.visGeometry.colorHandler.clearColorMapping();
+        this.visGeometry.colorHandler.resetDefaultColorsData(agentColors);
 
         const updatedColors = this.selectionInterface.setInitialAgentColors(
             uiDisplayData,
@@ -239,10 +244,7 @@ class Viewport extends React.Component<
             onError,
             lockedCamera,
         } = this.props;
-        this.visGeometry.setCanvasOnTheDom(
-            this.vdomRef.current,
-            lockedCamera
-        );
+        this.visGeometry.setCanvasOnTheDom(this.vdomRef.current, lockedCamera);
         if (backgroundColor !== undefined) {
             this.visGeometry.setBackgroundColor(backgroundColor);
         }
@@ -312,6 +314,7 @@ class Viewport extends React.Component<
             showPaths,
             showBounds,
             selectionStateInfo,
+            lockedCamera,
         } = this.props;
 
         if (selectionStateInfo) {
@@ -370,6 +373,9 @@ class Viewport extends React.Component<
         }
         if (prevProps.height !== height || prevProps.width !== width) {
             this.visGeometry.resize(width, height);
+        }
+        if (prevProps.lockedCamera !== lockedCamera) {
+            this.visGeometry.toggleControls(lockedCamera);
         }
         if (prevState.showRenderParamsGUI !== this.state.showRenderParamsGUI) {
             if (this.state.showRenderParamsGUI) {
@@ -553,7 +559,7 @@ class Viewport extends React.Component<
                 // the is a click on an object, where we should call the callback
                 console.log("setting followobject to intersectedObject");
                 this.visGeometry.setFollowObject(intersectedObject);
-           
+                
             }
             this.visGeometry.addPathForAgent(intersectedObject);
         } else {

@@ -109,12 +109,12 @@ describe("binary simularium files", () => {
             typeMapping: {},
         };
 
-        const json2 = '{"baz":"bat"}';
+        const plotData = JSON.stringify({ data: { baz: "bat" } });
         const buffer = makeBinary(
             [
                 pad(new TextEncoder().encode(JSON.stringify(tjijson))),
                 pad(new ArrayBuffer(8)),
-                pad(new TextEncoder().encode(json2)),
+                pad(new TextEncoder().encode(plotData)),
             ],
             [1, 3, 2]
         );

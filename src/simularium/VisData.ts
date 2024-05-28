@@ -23,6 +23,7 @@ const EOF_PHRASE: Uint8Array = new TextEncoder().encode(
 class VisData {
     private frameCache: AgentData[][];
     private frameDataCache: FrameData[];
+    private enableCache: boolean;
     private webWorker: Worker | null;
 
     private frameToWaitFor: number;
@@ -33,7 +34,6 @@ class VisData {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     private _dragAndDropFileInfo: TrajectoryFileInfo | null;
 
-    public firstFrameTime: number | null;
     public timeStepSize: number;
 
     private static parseOneBinaryFrame(data: ArrayBuffer): ParsedBundle {
@@ -243,6 +243,11 @@ class VisData {
 
         // event.data is of type ParsedBundle
         this.webWorker.onmessage = (event) => {
+            if (!this.enableCache) {
+                this.frameDataCache = [...event.data.frameDataArray];
+                this.frameCache = [...event.data.parsedAgentDataArray];
+                return;
+            }
             Array.prototype.push.apply(
                 this.frameDataCache,
                 event.data.frameDataArray
@@ -261,8 +266,8 @@ class VisData {
         }
         this.frameCache = [];
         this.frameDataCache = [];
-        this.firstFrameTime = null;
         this.cacheFrame = -1;
+        this.enableCache = true;
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
@@ -289,6 +294,10 @@ class VisData {
      *   Functions to check update
      * */
     public hasLocalCacheForTime(time: number): boolean {
+        // TODO: debug compareTimes
+        if (!this.enableCache) {
+            return false;
+        }
         if (this.frameDataCache.length < 1) {
             return false;
         }
@@ -365,7 +374,6 @@ class VisData {
 
     public clearForNewTrajectory(): void {
         this.clearCache();
-        this.firstFrameTime = null;
     }
 
     public cancelAllWorkers(): void {
@@ -379,16 +387,22 @@ class VisData {
         }
     }
 
+    public setCacheEnabled(cacheEnabled: boolean): void {
+        this.enableCache = cacheEnabled;
+    }
+
     // Add parsed frames to the cache and save the timestamp of the first frame
     private addFramesToCache(frames: ParsedBundle): void {
+        if (!this.enableCache) {
+            this.frameDataCache = [...frames.frameDataArray];
+            this.frameCache = [...frames.parsedAgentDataArray];
+            return;
+        }
         Array.prototype.push.apply(this.frameDataCache, frames.frameDataArray);
         Array.prototype.push.apply(
             this.frameCache,
             frames.parsedAgentDataArray
         );
-        if (this.firstFrameTime === null) {
-            this.firstFrameTime = frames.frameDataArray[0].time;
-        }
     }
 
     private parseAgentsFromVisDataMessage(msg: VisDataMessage): void {

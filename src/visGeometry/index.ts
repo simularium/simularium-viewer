@@ -887,6 +887,14 @@ class VisGeometry {
         );
     }
 
+    public toggleControls(lockedCamera: boolean): void {
+        if (lockedCamera) {
+            this.disableControls();
+        } else {
+            this.enableControls();
+        }
+    }
+
     public disableControls(): void {
         this.controls.enabled = false;
     }
