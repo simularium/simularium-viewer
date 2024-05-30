@@ -272,12 +272,8 @@ class VisData {
         }
     }
 
-    public parseAgentsFromLocalFileData(
-        msg: VisDataMessage | ArrayBuffer
-    ): void {
+    public parseAgentsFromFrameData(msg: VisDataMessage | ArrayBuffer): void {
         if (msg instanceof ArrayBuffer) {
-            // Streamed binary data can have partial frames but
-            // drag and drop is assumed to provide whole frames.
             const frames = VisData.parseOneBinaryFrame(msg);
             if (
                 frames.frameDataArray.length > 0 &&
@@ -295,23 +291,18 @@ class VisData {
 
     public parseAgentsFromNetData(msg: VisDataMessage | ArrayBuffer): void {
         if (msg instanceof ArrayBuffer) {
+            // Streamed binary file data messages contain message type, file name
+            // length, and file name in header, which local file data messages
+            // do not. Once those parts are stripped out, processing is the same
             const floatView = new Float32Array(msg);
 
             const fileNameSize = Math.ceil(floatView[1] / 4);
             const dataStart = (2 + fileNameSize) * 4;
 
-            const frames = VisData.parseOneBinaryFrame(msg.slice(dataStart));
-            if (
-                frames.frameDataArray.length > 0 &&
-                frames.frameDataArray[0].frameNumber === 0
-            ) {
-                this.clearCache(); // new data has arrived
-            }
-            this.addFramesToCache(frames);
-            return;
+            msg = msg.slice(dataStart);
         }
 
-        this.parseAgentsFromVisDataMessage(msg);
+        this.parseAgentsFromFrameData(msg);
     }
 
     // for use w/ a drag-and-drop trajectory file
