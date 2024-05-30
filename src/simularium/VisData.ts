@@ -15,11 +15,6 @@ import { FrontEndError, ErrorLevel } from "./FrontEndError";
 import type { ParsedBundle } from "./VisDataParse";
 import { parseVisDataMessage } from "./VisDataParse";
 
-// must be utf-8 encoded
-const EOF_PHRASE: Uint8Array = new TextEncoder().encode(
-    "\\EOFTHEFRAMEENDSHERE"
-);
-
 class VisData {
     private frameCache: AgentData[][];
     private frameDataCache: FrameData[];
@@ -28,7 +23,6 @@ class VisData {
     private frameToWaitFor: number;
     private lockedForFrame: boolean;
     private cacheFrame: number;
-    private netBuffer: ArrayBuffer;
 
     // eslint-disable-next-line @typescript-eslint/naming-convention
     private _dragAndDropFileInfo: TrajectoryFileInfo | null;
@@ -93,147 +87,6 @@ class VisData {
         };
     }
 
-    public static parseBinary(data: ArrayBuffer): ParsedBundle {
-        const parsedAgentDataArray: AgentData[][] = [];
-        const frameDataArray: FrameData[] = [];
-
-        const byteView = new Uint8Array(data);
-        const length = byteView.length;
-        const lastEOF = length - EOF_PHRASE.length;
-        let end = 0;
-        let start = 0;
-
-        const frameDataView = new Float32Array(data);
-
-        while (end < lastEOF) {
-            // Find the next End of Frame signal
-            for (; end < length; end = end + 4) {
-                const curr = byteView.subarray(end, end + EOF_PHRASE.length);
-                if (curr.every((val, i) => val === EOF_PHRASE[i])) {
-                    break;
-                }
-            }
-
-            // contains Frame # | Time Stamp | # of Agents
-            const frameInfoView = frameDataView.subarray(
-                start / 4,
-                (start + 12) / 4
-            );
-
-            // contains parsable agents
-            const agentDataView = frameDataView.subarray(
-                (start + 12) / 4,
-                end / 4
-            );
-
-            const parsedFrameData = {
-                time: frameInfoView[1],
-                frameNumber: frameInfoView[0],
-            };
-            const expectedNumAgents = frameInfoView[2];
-            frameDataArray.push(parsedFrameData);
-
-            // Parse the frameData
-            const parsedAgentData: AgentData[] = [];
-            const nSubPointsIndex = AGENT_OBJECT_KEYS.findIndex(
-                (ele) => ele === "nSubPoints"
-            );
-
-            const parseOneAgent = (agentArray): AgentData => {
-                return agentArray.reduce(
-                    (agentData, cur, i) => {
-                        let key;
-                        if (AGENT_OBJECT_KEYS[i]) {
-                            key = AGENT_OBJECT_KEYS[i];
-                            agentData[key] = cur;
-                        } else if (
-                            i <
-                            agentArray.length + agentData.nSubPoints
-                        ) {
-                            agentData.subpoints.push(cur);
-                        }
-                        return agentData;
-                    },
-                    { subpoints: [] }
-                );
-            };
-
-            let dataIter = 0;
-            while (dataIter < agentDataView.length) {
-                const nSubPoints = agentDataView[dataIter + nSubPointsIndex];
-                if (
-                    !Number.isInteger(nSubPoints) ||
-                    !Number.isInteger(dataIter)
-                ) {
-                    throw new FrontEndError(
-                        "Your data is malformed, non-integer value found for num-subpoints.",
-                        ErrorLevel.ERROR,
-                        `Number of Subpoints: <pre>${nSubPoints}</pre>`
-                    );
-                    break;
-                }
-
-                // each array length is variable based on how many subpoints the agent has
-                const chunkLength = AGENT_OBJECT_KEYS.length + nSubPoints;
-                const remaining = agentDataView.length - dataIter;
-                if (remaining < chunkLength - 1) {
-                    const attemptedMapping = AGENT_OBJECT_KEYS.map(
-                        (name, index) =>
-                            `${name}: ${agentDataView[dataIter + index]}<br />`
-                    );
-                    // will be caught by controller.changeFile(...).catch()
-                    throw new FrontEndError(
-                        "Your data is malformed, non-integer value found for num-subpoints.",
-                        ErrorLevel.ERROR,
-                        `Example attempt to parse your data: <pre>${attemptedMapping.join(
-                            ""
-                        )}</pre>`
-                    );
-                }
-
-                const agentSubSetArray = agentDataView.subarray(
-                    dataIter,
-                    dataIter + chunkLength
-                );
-                if (agentSubSetArray.length < AGENT_OBJECT_KEYS.length) {
-                    const attemptedMapping = AGENT_OBJECT_KEYS.map(
-                        (name, index) =>
-                            `${name}: ${agentSubSetArray[index]}<br />`
-                    );
-                    // will be caught by controller.changeFile(...).catch()
-                    throw new FrontEndError(
-                        "Your data is malformed, there are less entries than expected for this agent.",
-                        ErrorLevel.ERROR,
-                        `Example attempt to parse your data: <pre>${attemptedMapping.join(
-                            ""
-                        )}</pre>`
-                    );
-                }
-
-                const agent = parseOneAgent(agentSubSetArray);
-                parsedAgentData.push(agent);
-                dataIter = dataIter + chunkLength;
-            }
-
-            const numParsedAgents = parsedAgentData.length;
-            if (numParsedAgents != expectedNumAgents) {
-                throw new FrontEndError(
-                    "Mismatch between expected num agents and parsed num agents, possible offset error"
-                );
-            }
-
-            parsedAgentDataArray.push(parsedAgentData);
-
-            start = end + EOF_PHRASE.length;
-            end = start;
-        }
-
-        return {
-            parsedAgentDataArray,
-            frameDataArray,
-        };
-    }
-
     private setupWebWorker() {
         this.webWorker = new Worker(
             new URL("../visGeometry/workers/visDataWorker", import.meta.url),
@@ -264,7 +117,6 @@ class VisData {
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
-        this.netBuffer = new ArrayBuffer(0);
         this.timeStepSize = 0;
     }
 
@@ -358,7 +210,6 @@ class VisData {
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
-        this.netBuffer = new ArrayBuffer(0);
     }
 
     public clearForNewTrajectory(): void {
@@ -449,80 +300,18 @@ class VisData {
             const fileNameSize = Math.ceil(floatView[1] / 4);
             const dataStart = (2 + fileNameSize) * 4;
 
-            this.parseBinaryNetData(msg as ArrayBuffer, dataStart);
+            const frames = VisData.parseOneBinaryFrame(msg.slice(dataStart));
+            if (
+                frames.frameDataArray.length > 0 &&
+                frames.frameDataArray[0].frameNumber === 0
+            ) {
+                this.clearCache(); // new data has arrived
+            }
+            this.addFramesToCache(frames);
             return;
         }
 
         this.parseAgentsFromVisDataMessage(msg);
-    }
-
-    private parseBinaryNetData(data: ArrayBuffer, dataStart: number) {
-        let eof = -1;
-
-        // find last '/eof' signal in new data
-        const byteView = new Uint8Array(data);
-
-        // walk backwards in order to find the last eofPhrase in the data
-        let index = byteView.length - EOF_PHRASE.length;
-        for (; index > 0; index = index - 4) {
-            const curr = byteView.subarray(index, index + EOF_PHRASE.length);
-            if (curr.every((val, i) => val === EOF_PHRASE[i])) {
-                eof = index;
-                break;
-            }
-        }
-
-        if (eof > dataStart) {
-            const frame = data.slice(dataStart, eof);
-
-            const tmp = new ArrayBuffer(
-                this.netBuffer.byteLength + frame.byteLength
-            );
-            new Uint8Array(tmp).set(new Uint8Array(this.netBuffer));
-            new Uint8Array(tmp).set(
-                new Uint8Array(frame),
-                this.netBuffer.byteLength
-            );
-
-            try {
-                const frames = VisData.parseBinary(tmp);
-                if (
-                    frames.frameDataArray.length > 0 &&
-                    frames.frameDataArray[0].frameNumber === 0
-                ) {
-                    this.clearCache(); // new data has arrived
-                }
-                this.addFramesToCache(frames);
-            } catch (err) {
-                // TODO: There are frequent errors due to a race condition that
-                // occurs when jumping to a new time if a partial frame is received
-                // after netBuffer is cleared. We don't want this to trigger a front
-                // end error, it's best to catch it here and just move on, as the
-                // issue should be contained to just one frame. When binary messages
-                // are updated to include frame num for partial frames in their header,
-                // we can ensure that netBuffer is being combined with the matching
-                // frame, and this try/catch can be removed
-                console.log(err);
-            }
-
-            // Save remaining data for later processing
-            const remainder = data.slice(eof + EOF_PHRASE.length);
-            this.netBuffer = new ArrayBuffer(remainder.byteLength);
-            new Uint8Array(this.netBuffer).set(new Uint8Array(remainder));
-        } else {
-            // Append the new data, and wait until eof
-            const frame = data.slice(dataStart, data.byteLength);
-            const tmp = new ArrayBuffer(
-                this.netBuffer.byteLength + frame.byteLength
-            );
-            new Uint8Array(tmp).set(new Uint8Array(this.netBuffer));
-            new Uint8Array(tmp).set(
-                new Uint8Array(frame),
-                this.netBuffer.byteLength
-            );
-
-            this.netBuffer = tmp;
-        }
     }
 
     // for use w/ a drag-and-drop trajectory file
