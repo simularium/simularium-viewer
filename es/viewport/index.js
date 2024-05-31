@@ -323,7 +323,8 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
         showPaths = _this$props3.showPaths,
         showBounds = _this$props3.showBounds,
         selectionStateInfo = _this$props3.selectionStateInfo,
-        lockedCamera = _this$props3.lockedCamera;
+        lockedCamera = _this$props3.lockedCamera,
+        disableCache = _this$props3.disableCache;
       if (selectionStateInfo) {
         if (!isEqual(selectionStateInfo.highlightedAgents, prevProps.selectionStateInfo.highlightedAgents)) {
           var highlightedIds = this.selectionInterface.getHighlightedIds(selectionStateInfo);
@@ -363,6 +364,9 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
       }
       if (prevProps.lockedCamera !== lockedCamera) {
         this.visGeometry.toggleControls(lockedCamera);
+      }
+      if (prevProps.disableCache !== disableCache) {
+        this.props.simulariumController.visData.setCacheEnabled(!disableCache);
       }
       if (prevState.showRenderParamsGUI !== this.state.showRenderParamsGUI) {
         if (this.state.showRenderParamsGUI) {
