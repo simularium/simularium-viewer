@@ -138,7 +138,6 @@ interface CustomType {
 
 interface InputParams {
     localBackendServer: boolean;
-    useOctopus: boolean;
 }
 
 const simulariumController = new SimulariumController({});
@@ -197,22 +196,11 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             this.netConnectionSettings = {
                 serverIp: "0.0.0.0",
                 serverPort: 8765,
-                useOctopus: props.useOctopus,
-                secureConnection: props.useOctopus,
-            };
-        } else if (props.useOctopus) {
-            this.netConnectionSettings = {
-                serverIp: "staging-simularium-ecs.allencell.org",
-                serverPort: 443,
-                useOctopus: true,
-                secureConnection: true,
             };
         } else {
             this.netConnectionSettings = {
-                serverIp: "staging-node1-agentviz-backend.cellexplore.net",
-                serverPort: 9002,
-                secureConnection: true,
-                useOctopus: false,
+                serverIp: "staging-simularium-ecs.allencell.org",
+                serverPort: 443,
             };
         }
     }

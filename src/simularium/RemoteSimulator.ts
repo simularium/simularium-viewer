@@ -19,8 +19,8 @@ const enum PlayBackType {
     // insert new values here before LENGTH
     LENGTH,
 }
-// a RemoteSimulator is a ISimulator that connects to the Simularium Engine
-// back end server and plays back a trajectory specified in the NetConnectionParams
+// a RemoteSimulator is a ISimulator that connects to the Octopus back end server
+// and plays back a trajectory specified in the NetConnectionParams
 export class RemoteSimulator implements ISimulator {
     public webSocketClient: WebsocketClient;
     protected logger: ILogger;
@@ -29,16 +29,13 @@ export class RemoteSimulator implements ISimulator {
     public healthCheckHandler: () => void;
     protected lastRequestedFile: string;
     public handleError: (error: FrontEndError) => void | (() => void);
-    protected useOctopus: boolean;
 
     public constructor(
         webSocketClient: WebsocketClient,
-        useOctopus: boolean,
         errorHandler?: (error: FrontEndError) => void
     ) {
         this.webSocketClient = webSocketClient;
         this.lastRequestedFile = "";
-        this.useOctopus = useOctopus;
         this.handleError =
             errorHandler ||
             (() => {
@@ -310,19 +307,10 @@ export class RemoteSimulator implements ISimulator {
 
     public startRemoteTrajectoryPlayback(fileName: string): Promise<void> {
         this.lastRequestedFile = fileName;
-        let jsonData;
-        if (this.useOctopus) {
-            jsonData = {
-                msgType: NetMessageEnum.ID_INIT_TRAJECTORY_FILE,
-                fileName: fileName,
-            };
-        } else {
-            jsonData = {
-                msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
-                mode: PlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
-                "file-name": fileName,
-            };
-        }
+        const jsonData = {
+            msgType: NetMessageEnum.ID_INIT_TRAJECTORY_FILE,
+            fileName: fileName,
+        };
 
         // begins a stream which will include a TrajectoryFileInfo and a series of VisDataMessages
         // Note that it is possible for the first vis data to arrive before the TrajectoryFileInfo...
