@@ -12,13 +12,6 @@ import { ISimulator } from "./ISimulator";
 import { TrajectoryFileInfoV2, VisDataMessage } from "./types";
 import { TrajectoryType } from "../constants";
 
-const enum PlayBackType {
-    ID_LIVE_SIMULATION = 0,
-    ID_PRE_RUN_SIMULATION = 1,
-    ID_TRAJECTORY_FILE_PLAYBACK = 2,
-    // insert new values here before LENGTH
-    LENGTH,
-}
 // a RemoteSimulator is a ISimulator that connects to the Octopus back end server
 // and plays back a trajectory specified in the NetConnectionParams
 export class RemoteSimulator implements ISimulator {
@@ -257,52 +250,16 @@ export class RemoteSimulator implements ISimulator {
 
     /**
      * WebSocket Simulation Control
-     *
-     * Simulation Run Modes:
-     *  Live : Results are sent as they are calculated
-     *  Pre-Run : All results are evaluated, then sent piecemeal
-     *  Trajectory File: No simulation run, stream a result file piecemeal
-     *
      */
     public startRemoteSimPreRun(
-        timeStep: number,
-        numTimeSteps: number
-    ): Promise<void> {
-        const jsonData = {
-            msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
-            mode: PlayBackType.ID_PRE_RUN_SIMULATION,
-            timeStep: timeStep,
-            numTimeSteps: numTimeSteps,
-        };
-
-        return this.connectToRemoteServer()
-            .then(() => {
-                this.webSocketClient.sendWebSocketRequest(
-                    jsonData,
-                    "Start Simulation Pre-Run"
-                );
-            })
-            .catch((e) => {
-                throw new FrontEndError(e.message, ErrorLevel.ERROR);
-            });
+        _timeStep: number,
+        _numTimeSteps: number
+    ): void {
+        // not implemented
     }
 
-    public startRemoteSimLive(): Promise<void> {
-        const jsonData = {
-            msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
-            mode: PlayBackType.ID_LIVE_SIMULATION,
-        };
-
-        return this.connectToRemoteServer()
-            .then(() => {
-                this.webSocketClient.sendWebSocketRequest(
-                    jsonData,
-                    "Start Simulation Live"
-                );
-            })
-            .catch((e) => {
-                throw new FrontEndError(e.message, ErrorLevel.ERROR);
-            });
+    public startRemoteSimLive(): void {
+        // not implemented
     }
 
     public startRemoteTrajectoryPlayback(fileName: string): Promise<void> {
@@ -363,7 +320,6 @@ export class RemoteSimulator implements ISimulator {
         this.webSocketClient.sendWebSocketRequest(
             {
                 msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
-                mode: PlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
                 frameNumber: startFrameNumber,
                 fileName: this.lastRequestedFile,
             },
