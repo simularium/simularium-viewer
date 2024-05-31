@@ -38,7 +38,11 @@ import PDBModel from "./PDBModel";
 import AgentPath from "./agentPath";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
 
-import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC } from "../constants";
+import {
+    DEFAULT_CAMERA_Z_POSITION,
+    DEFAULT_CAMERA_SPEC,
+    NULL_AGENT,
+} from "../constants";
 import {
     AgentData,
     AgentDisplayDataWithGeometry,
@@ -647,11 +651,15 @@ class VisGeometry {
     }
 
     public getFollowObject(): number {
-        console.log(
-            "get follow object in visGeometry, follow object id: ",
-            this.followObjectId
-        );
         return this.followObjectId;
+    }
+
+    public getFollowObjectData(): AgentData {
+        const data = this.visAgentInstances.get(this.followObjectId);
+        if (!data) {
+            return NULL_AGENT;
+        }
+        return data.agentData;
     }
 
     public setFollowObject(obj: number): void {
