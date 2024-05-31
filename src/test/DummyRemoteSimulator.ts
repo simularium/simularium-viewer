@@ -21,7 +21,7 @@ export class DummyRemoteSimulator extends RemoteSimulator {
 
     public constructor(opts: NetConnectionParams) {
         const webSocketClient = new WebsocketClient(opts);
-        super(webSocketClient, true);
+        super(webSocketClient);
         this.webSocketClient = webSocketClient;
 
         this.isStreamingData = false;
