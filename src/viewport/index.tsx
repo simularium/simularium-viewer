@@ -220,7 +220,6 @@ class Viewport extends React.Component<
             }
         }
         const uiDisplayData = this.selectionInterface.getUIDisplayData();
-        console.log("uiDisplayData", uiDisplayData);
         onTrajectoryFileInfoChanged(trajectoryFileInfo);
         this.visGeometry.colorHandler.resetDefaultColorsData(agentColors);
 
@@ -553,7 +552,6 @@ class Viewport extends React.Component<
         const intersectedObject = this.visGeometry.hitTest(posX, posY);
         if (intersectedObject !== NO_AGENT) {
             this.hit = true;
-            console.log("hit");
             if (
                 oldFollowObject !== intersectedObject &&
                 oldFollowObject !== NO_AGENT
@@ -562,8 +560,8 @@ class Viewport extends React.Component<
             }
             if (!this.props.lockedCamera) {
                 this.visGeometry.setFollowObject(intersectedObject);
+                this.visGeometry.addPathForAgent(intersectedObject);
             }
-            this.visGeometry.addPathForAgent(intersectedObject);
         } else {
             if (oldFollowObject !== NO_AGENT) {
                 this.visGeometry.removePathForAgent(oldFollowObject);
