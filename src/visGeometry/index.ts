@@ -669,7 +669,6 @@ class VisGeometry {
 
         if (this.followObjectId !== NO_AGENT) {
             const visAgent = this.visAgentInstances.get(this.followObjectId);
-
             if (!visAgent) {
                 console.error("NO AGENT FOR INSTANCE " + this.followObjectId);
             } else {
