@@ -46,7 +46,7 @@ type ViewportProps = {
     lockedCamera?: boolean;
     onRecordedMovie?: (blob: Blob) => void; // providing this callback enables movie recording
     disableCache?: boolean;
-    followObjectCallback?: (newObject: number, oldObject: number, agentData: AgentData) => void;
+    onFollowObjectChanged?: (agentData: AgentData) => void; // passes agent data about the followed agent to the front end
 } & Partial<DefaultProps>;
 
 const defaultProps = {
@@ -539,7 +539,6 @@ class Viewport extends React.Component<
     }
 
     public onPickObject(posX: number, posY: number): void {
-        console.log("onPickObject");
         // TODO: intersect with scene's children not including lights?
         // can we select a smaller number of things to hit test?
         const oldFollowObject = this.visGeometry.getFollowObject();
@@ -556,10 +555,7 @@ class Viewport extends React.Component<
                 this.visGeometry.removePathForAgent(oldFollowObject);
             }
             if (!this.props.lockedCamera) {
-                // the is a click on an object, where we should call the callback
-                console.log("setting followobject to intersectedObject");
                 this.visGeometry.setFollowObject(intersectedObject);
-                
             }
             this.visGeometry.addPathForAgent(intersectedObject);
         } else {
@@ -571,18 +567,13 @@ class Viewport extends React.Component<
             }
             this.visGeometry.setFollowObject(NO_AGENT);
         }
-             if (this.props.followObjectCallback) {
-                 console.log("should hit followObjectCallback");
-                 const agent = this.visGeometry.visAgentInstances.get(intersectedObject);
-                 if (!agent) {
-                     console.log("agent not found");
-                     return;
-                 }
-                 const agentData = agent.agentData;
-                 console.log("agentdData", agentData)
-                 const instanceID = agent?.agentData.instanceId;
-                 this.props.followObjectCallback(instanceID, oldFollowObject, agentData);
-             }
+        this.updateFollowObjectData();
+    }
+
+    private updateFollowObjectData(): void {
+        if (this.props.onFollowObjectChanged === undefined) return;
+        const data = this.visGeometry.getFollowObjectData();
+        this.props.onFollowObjectChanged(data);
     }
 
     private handleTimeChange(e: Event): void {
@@ -641,6 +632,7 @@ class Viewport extends React.Component<
                     this.dispatchUpdatedTime(visData.currentFrameData);
                     this.visGeometry.update(currentAgents);
                     this.lastRenderedAgentTime = visData.currentFrameData.time;
+                    this.updateFollowObjectData();
                 }
             }
 
