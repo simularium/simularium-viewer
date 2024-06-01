@@ -315,6 +315,7 @@ class Viewport extends React.Component<
             showBounds,
             selectionStateInfo,
             lockedCamera,
+            disableCache,
         } = this.props;
 
         if (selectionStateInfo) {
@@ -376,6 +377,11 @@ class Viewport extends React.Component<
         }
         if (prevProps.lockedCamera !== lockedCamera) {
             this.visGeometry.toggleControls(lockedCamera);
+        }
+        if (prevProps.disableCache !== disableCache) {
+            this.props.simulariumController.visData.setCacheEnabled(
+                !disableCache
+            );
         }
         if (prevState.showRenderParamsGUI !== this.state.showRenderParamsGUI) {
             if (this.state.showRenderParamsGUI) {
