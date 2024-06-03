@@ -1,5 +1,4 @@
 import { AgentData, FrameData, TrajectoryFileInfo, EncodedTypeMapping, VisDataMessage } from "./types";
-import type { ParsedBundle } from "./VisDataParse";
 declare class VisData {
     private frameCache;
     private frameDataCache;
@@ -8,11 +7,9 @@ declare class VisData {
     private frameToWaitFor;
     private lockedForFrame;
     private cacheFrame;
-    private netBuffer;
     private _dragAndDropFileInfo;
     timeStepSize: number;
     private static parseOneBinaryFrame;
-    static parseBinary(data: ArrayBuffer): ParsedBundle;
     private setupWebWorker;
     constructor();
     get currentFrameData(): FrameData;
@@ -34,9 +31,8 @@ declare class VisData {
     setCacheEnabled(cacheEnabled: boolean): void;
     private addFramesToCache;
     private parseAgentsFromVisDataMessage;
-    parseAgentsFromLocalFileData(msg: VisDataMessage | ArrayBuffer): void;
+    parseAgentsFromFrameData(msg: VisDataMessage | ArrayBuffer): void;
     parseAgentsFromNetData(msg: VisDataMessage | ArrayBuffer): void;
-    private parseBinaryNetData;
     cacheJSON(visDataMsg: VisDataMessage): void;
     set dragAndDropFileInfo(fileInfo: TrajectoryFileInfo | null);
     get dragAndDropFileInfo(): TrajectoryFileInfo | null;

@@ -8,9 +8,6 @@ import * as util from "./ThreadUtil";
 import { AGENT_OBJECT_KEYS } from "./types";
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
 import { parseVisDataMessage } from "./VisDataParse";
-
-// must be utf-8 encoded
-var EOF_PHRASE = new TextEncoder().encode("\\EOFTHEFRAMEENDSHERE");
 var VisData = /*#__PURE__*/function () {
   function VisData() {
     _classCallCheck(this, VisData);
@@ -21,7 +18,6 @@ var VisData = /*#__PURE__*/function () {
     _defineProperty(this, "frameToWaitFor", void 0);
     _defineProperty(this, "lockedForFrame", void 0);
     _defineProperty(this, "cacheFrame", void 0);
-    _defineProperty(this, "netBuffer", void 0);
     // eslint-disable-next-line @typescript-eslint/naming-convention
     _defineProperty(this, "_dragAndDropFileInfo", void 0);
     _defineProperty(this, "timeStepSize", void 0);
@@ -36,7 +32,6 @@ var VisData = /*#__PURE__*/function () {
     this._dragAndDropFileInfo = null;
     this.frameToWaitFor = 0;
     this.lockedForFrame = false;
-    this.netBuffer = new ArrayBuffer(0);
     this.timeStepSize = 0;
   }
 
@@ -158,7 +153,6 @@ var VisData = /*#__PURE__*/function () {
       this._dragAndDropFileInfo = null;
       this.frameToWaitFor = 0;
       this.lockedForFrame = false;
-      this.netBuffer = new ArrayBuffer(0);
     }
   }, {
     key: "clearForNewTrajectory",
@@ -226,11 +220,9 @@ var VisData = /*#__PURE__*/function () {
       }
     }
   }, {
-    key: "parseAgentsFromLocalFileData",
-    value: function parseAgentsFromLocalFileData(msg) {
+    key: "parseAgentsFromFrameData",
+    value: function parseAgentsFromFrameData(msg) {
       if (msg instanceof ArrayBuffer) {
-        // Streamed binary data can have partial frames but
-        // drag and drop is assumed to provide whole frames.
         var frames = VisData.parseOneBinaryFrame(msg);
         if (frames.frameDataArray.length > 0 && frames.frameDataArray[0].frameNumber === 0) {
           this.clearCache(); // new data has arrived
@@ -246,68 +238,15 @@ var VisData = /*#__PURE__*/function () {
     key: "parseAgentsFromNetData",
     value: function parseAgentsFromNetData(msg) {
       if (msg instanceof ArrayBuffer) {
+        // Streamed binary file data messages contain message type, file name
+        // length, and file name in header, which local file data messages
+        // do not. Once those parts are stripped out, processing is the same
         var floatView = new Float32Array(msg);
         var fileNameSize = Math.ceil(floatView[1] / 4);
         var dataStart = (2 + fileNameSize) * 4;
-        this.parseBinaryNetData(msg, dataStart);
-        return;
+        msg = msg.slice(dataStart);
       }
-      this.parseAgentsFromVisDataMessage(msg);
-    }
-  }, {
-    key: "parseBinaryNetData",
-    value: function parseBinaryNetData(data, dataStart) {
-      var eof = -1;
-
-      // find last '/eof' signal in new data
-      var byteView = new Uint8Array(data);
-
-      // walk backwards in order to find the last eofPhrase in the data
-      var index = byteView.length - EOF_PHRASE.length;
-      for (; index > 0; index = index - 4) {
-        var curr = byteView.subarray(index, index + EOF_PHRASE.length);
-        if (curr.every(function (val, i) {
-          return val === EOF_PHRASE[i];
-        })) {
-          eof = index;
-          break;
-        }
-      }
-      if (eof > dataStart) {
-        var frame = data.slice(dataStart, eof);
-        var tmp = new ArrayBuffer(this.netBuffer.byteLength + frame.byteLength);
-        new Uint8Array(tmp).set(new Uint8Array(this.netBuffer));
-        new Uint8Array(tmp).set(new Uint8Array(frame), this.netBuffer.byteLength);
-        try {
-          var frames = VisData.parseBinary(tmp);
-          if (frames.frameDataArray.length > 0 && frames.frameDataArray[0].frameNumber === 0) {
-            this.clearCache(); // new data has arrived
-          }
-          this.addFramesToCache(frames);
-        } catch (err) {
-          // TODO: There are frequent errors due to a race condition that
-          // occurs when jumping to a new time if a partial frame is received
-          // after netBuffer is cleared. We don't want this to trigger a front
-          // end error, it's best to catch it here and just move on, as the
-          // issue should be contained to just one frame. When binary messages
-          // are updated to include frame num for partial frames in their header,
-          // we can ensure that netBuffer is being combined with the matching
-          // frame, and this try/catch can be removed
-          console.log(err);
-        }
-
-        // Save remaining data for later processing
-        var remainder = data.slice(eof + EOF_PHRASE.length);
-        this.netBuffer = new ArrayBuffer(remainder.byteLength);
-        new Uint8Array(this.netBuffer).set(new Uint8Array(remainder));
-      } else {
-        // Append the new data, and wait until eof
-        var _frame = data.slice(dataStart, data.byteLength);
-        var _tmp = new ArrayBuffer(this.netBuffer.byteLength + _frame.byteLength);
-        new Uint8Array(_tmp).set(new Uint8Array(this.netBuffer));
-        new Uint8Array(_tmp).set(new Uint8Array(_frame), this.netBuffer.byteLength);
-        this.netBuffer = _tmp;
-      }
+      this.parseAgentsFromFrameData(msg);
     }
 
     // for use w/ a drag-and-drop trajectory file
@@ -416,108 +355,6 @@ var VisData = /*#__PURE__*/function () {
         parsedAgentData.push(agentData);
       }
       parsedAgentDataArray.push(parsedAgentData);
-      return {
-        parsedAgentDataArray: parsedAgentDataArray,
-        frameDataArray: frameDataArray
-      };
-    }
-  }, {
-    key: "parseBinary",
-    value: function parseBinary(data) {
-      var parsedAgentDataArray = [];
-      var frameDataArray = [];
-      var byteView = new Uint8Array(data);
-      var length = byteView.length;
-      var lastEOF = length - EOF_PHRASE.length;
-      var end = 0;
-      var start = 0;
-      var frameDataView = new Float32Array(data);
-      var _loop = function _loop() {
-        // Find the next End of Frame signal
-        for (; end < length; end = end + 4) {
-          var curr = byteView.subarray(end, end + EOF_PHRASE.length);
-          if (curr.every(function (val, i) {
-            return val === EOF_PHRASE[i];
-          })) {
-            break;
-          }
-        }
-
-        // contains Frame # | Time Stamp | # of Agents
-        var frameInfoView = frameDataView.subarray(start / 4, (start + 12) / 4);
-
-        // contains parsable agents
-        var agentDataView = frameDataView.subarray((start + 12) / 4, end / 4);
-        var parsedFrameData = {
-          time: frameInfoView[1],
-          frameNumber: frameInfoView[0]
-        };
-        var expectedNumAgents = frameInfoView[2];
-        frameDataArray.push(parsedFrameData);
-
-        // Parse the frameData
-        var parsedAgentData = [];
-        var nSubPointsIndex = AGENT_OBJECT_KEYS.findIndex(function (ele) {
-          return ele === "nSubPoints";
-        });
-        var parseOneAgent = function parseOneAgent(agentArray) {
-          return agentArray.reduce(function (agentData, cur, i) {
-            var key;
-            if (AGENT_OBJECT_KEYS[i]) {
-              key = AGENT_OBJECT_KEYS[i];
-              agentData[key] = cur;
-            } else if (i < agentArray.length + agentData.nSubPoints) {
-              agentData.subpoints.push(cur);
-            }
-            return agentData;
-          }, {
-            subpoints: []
-          });
-        };
-        var dataIter = 0;
-        var _loop2 = function _loop2() {
-          var nSubPoints = agentDataView[dataIter + nSubPointsIndex];
-          if (!Number.isInteger(nSubPoints) || !Number.isInteger(dataIter)) {
-            throw new FrontEndError("Your data is malformed, non-integer value found for num-subpoints.", ErrorLevel.ERROR, "Number of Subpoints: <pre>".concat(nSubPoints, "</pre>"));
-            return 1; // break
-          }
-
-          // each array length is variable based on how many subpoints the agent has
-          var chunkLength = AGENT_OBJECT_KEYS.length + nSubPoints;
-          var remaining = agentDataView.length - dataIter;
-          if (remaining < chunkLength - 1) {
-            var attemptedMapping = AGENT_OBJECT_KEYS.map(function (name, index) {
-              return "".concat(name, ": ").concat(agentDataView[dataIter + index], "<br />");
-            });
-            // will be caught by controller.changeFile(...).catch()
-            throw new FrontEndError("Your data is malformed, non-integer value found for num-subpoints.", ErrorLevel.ERROR, "Example attempt to parse your data: <pre>".concat(attemptedMapping.join(""), "</pre>"));
-          }
-          var agentSubSetArray = agentDataView.subarray(dataIter, dataIter + chunkLength);
-          if (agentSubSetArray.length < AGENT_OBJECT_KEYS.length) {
-            var _attemptedMapping = AGENT_OBJECT_KEYS.map(function (name, index) {
-              return "".concat(name, ": ").concat(agentSubSetArray[index], "<br />");
-            });
-            // will be caught by controller.changeFile(...).catch()
-            throw new FrontEndError("Your data is malformed, there are less entries than expected for this agent.", ErrorLevel.ERROR, "Example attempt to parse your data: <pre>".concat(_attemptedMapping.join(""), "</pre>"));
-          }
-          var agent = parseOneAgent(agentSubSetArray);
-          parsedAgentData.push(agent);
-          dataIter = dataIter + chunkLength;
-        };
-        while (dataIter < agentDataView.length) {
-          if (_loop2()) break;
-        }
-        var numParsedAgents = parsedAgentData.length;
-        if (numParsedAgents != expectedNumAgents) {
-          throw new FrontEndError("Mismatch between expected num agents and parsed num agents, possible offset error");
-        }
-        parsedAgentDataArray.push(parsedAgentData);
-        start = end + EOF_PHRASE.length;
-        end = start;
-      };
-      while (end < lastEOF) {
-        _loop();
-      }
       return {
         parsedAgentDataArray: parsedAgentDataArray,
         frameDataArray: frameDataArray

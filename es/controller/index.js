@@ -104,7 +104,7 @@ var SimulariumController = /*#__PURE__*/function () {
         if (this.visGeometry && geoAssets && !isEmpty(geoAssets)) {
           this.visGeometry.geometryStore.cacheLocalAssets(geoAssets);
         }
-        this.simulator.setTrajectoryDataHandler(this.visData.parseAgentsFromLocalFileData.bind(this.visData));
+        this.simulator.setTrajectoryDataHandler(this.visData.parseAgentsFromFrameData.bind(this.visData));
       } else if (netConnectionConfig) {
         var webSocketClient = new WebsocketClient(netConnectionConfig, this.onError);
         this.remoteWebsocketClient = webSocketClient;
