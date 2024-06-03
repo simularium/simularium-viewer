@@ -14,6 +14,7 @@ import {
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
 import type { ParsedBundle } from "./VisDataParse";
 import { parseVisDataMessage } from "./VisDataParse";
+import { NULL_AGENT } from "../constants";
 
 // must be utf-8 encoded
 const EOF_PHRASE: Uint8Array = new TextEncoder().encode(
@@ -53,20 +54,8 @@ class VisData {
         const parsedAgentData: AgentData[] = [];
         let j = AGENTS_OFFSET;
         for (let i = 0; i < expectedNumAgents; i++) {
-            const agentData: AgentData = {
-                //TODO use visType in AgentData and convert from "vis-type" here at parse time
-                "vis-type": -1,
-                instanceId: -1,
-                type: -1,
-                x: 0,
-                y: 0,
-                z: 0,
-                xrot: 0,
-                yrot: 0,
-                zrot: 0,
-                cr: 0,
-                subpoints: [],
-            };
+            //TODO use visType in AgentData and convert from "vis-type" here at parse time
+            const agentData: AgentData = NULL_AGENT;
 
             for (let k = 0; k < AGENT_OBJECT_KEYS.length; ++k) {
                 agentData[AGENT_OBJECT_KEYS[k]] = floatView[j++];
