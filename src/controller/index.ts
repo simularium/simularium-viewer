@@ -140,7 +140,7 @@ export default class SimulariumController {
                 this.visGeometry.geometryStore.cacheLocalAssets(geoAssets);
             }
             this.simulator.setTrajectoryDataHandler(
-                this.visData.parseAgentsFromLocalFileData.bind(this.visData)
+                this.visData.parseAgentsFromFrameData.bind(this.visData)
             );
         } else if (netConnectionConfig) {
             const webSocketClient = new WebsocketClient(
