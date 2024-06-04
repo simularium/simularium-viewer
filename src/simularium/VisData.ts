@@ -48,7 +48,6 @@ class VisData {
         let j = AGENTS_OFFSET;
         for (let i = 0; i < expectedNumAgents; i++) {
             const agentData: AgentData = {
-                //TODO use visType in AgentData and convert from "vis-type" here at parse time
                 visType: -1,
                 instanceId: -1,
                 type: -1,
