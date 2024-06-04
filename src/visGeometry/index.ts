@@ -650,16 +650,16 @@ class VisGeometry {
         this.focusMode = focus;
     }
 
-    public getFollowObject(): number {
-        return this.followObjectId;
-    }
-
-    public getFollowObjectData(): AgentData {
-        const data = this.visAgentInstances.get(this.followObjectId);
+    public getObjectData(id: number): AgentData {
+        const data = this.visAgentInstances.get(id);
         if (!data) {
             return NULL_AGENT;
         }
         return data.agentData;
+    }
+
+    public getFollowObject(): number {
+        return this.followObjectId;
     }
 
     public setFollowObject(obj: number): void {

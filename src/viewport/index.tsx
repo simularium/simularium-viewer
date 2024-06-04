@@ -576,7 +576,8 @@ class Viewport extends React.Component<
 
     private updateFollowObjectData(): void {
         if (this.props.onFollowObjectChanged === undefined) return;
-        const data = this.visGeometry.getFollowObjectData();
+        const id = this.visGeometry.getFollowObject();
+        const data = this.visGeometry.getObjectData(id);
         this.props.onFollowObjectChanged(data);
     }
 
