@@ -54,6 +54,7 @@ function parseVisDataMessage(visDataMsg: VisDataMessage): ParsedBundle {
                     let key;
                     if (AGENT_OBJECT_KEYS[i]) {
                         key = AGENT_OBJECT_KEYS[i];
+                        key === "vis-type" ? (key = "visType") : key;
                         agentData[key] = cur;
                     } else if (i < agentArray.length + agentData.nSubPoints) {
                         agentData.subpoints.push(cur);

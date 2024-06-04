@@ -1550,7 +1550,7 @@ class VisGeometry {
         }
 
         agents.forEach((agentData) => {
-            const visType = agentData["vis-type"];
+            const visType = agentData.visType;
             const instanceId = agentData.instanceId;
             const typeId = agentData.type;
             lastx = agentData.x;

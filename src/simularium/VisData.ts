@@ -49,7 +49,7 @@ class VisData {
         for (let i = 0; i < expectedNumAgents; i++) {
             const agentData: AgentData = {
                 //TODO use visType in AgentData and convert from "vis-type" here at parse time
-                "vis-type": -1,
+                visType: -1,
                 instanceId: -1,
                 type: -1,
                 x: 0,
@@ -63,7 +63,9 @@ class VisData {
             };
 
             for (let k = 0; k < AGENT_OBJECT_KEYS.length; ++k) {
-                agentData[AGENT_OBJECT_KEYS[k]] = floatView[j++];
+                const key = AGENT_OBJECT_KEYS[k];
+                const targetKey = key === "vis-type" ? "visType" : key;
+                agentData[targetKey] = floatView[j++];
             }
             const nSubPoints = agentData["nSubPoints"];
             if (!Number.isInteger(nSubPoints)) {

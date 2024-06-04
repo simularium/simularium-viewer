@@ -31,7 +31,7 @@ export default class VisAgent {
             yrot: 0,
             zrot: 0,
             instanceId: NO_AGENT,
-            "vis-type": VisTypes.ID_VIS_TYPE_DEFAULT,
+            visType: VisTypes.ID_VIS_TYPE_DEFAULT,
             type: 0,
             cr: 1.0,
             subpoints: [],
@@ -62,7 +62,7 @@ export default class VisAgent {
             yrot: 0,
             zrot: 0,
             instanceId: NO_AGENT,
-            "vis-type": VisTypes.ID_VIS_TYPE_DEFAULT,
+            visType: VisTypes.ID_VIS_TYPE_DEFAULT,
             type: 0,
             cr: 1.0,
             subpoints: [],
@@ -165,7 +165,7 @@ export default class VisAgent {
             this.agentData.z
         );
         if (
-            this.agentData["vis-type"] === VisTypes.ID_VIS_TYPE_FIBER &&
+            this.agentData.visType === VisTypes.ID_VIS_TYPE_FIBER &&
             this.fiberCurve
         ) {
             return this.fiberCurve.getPoint(0.5).add(pos);
