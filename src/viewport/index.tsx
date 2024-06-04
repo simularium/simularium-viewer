@@ -45,6 +45,7 @@ type ViewportProps = {
     onError?: (error: FrontEndError) => void;
     lockedCamera?: boolean;
     onRecordedMovie?: (blob: Blob) => void; // providing this callback enables movie recording
+    disableCache?: boolean;
     maxCacheLength?: number;
 } & Partial<DefaultProps>;
 
@@ -58,6 +59,7 @@ const defaultProps = {
     showPaths: true,
     showBounds: true,
     lockedCamera: false,
+    disableCache: false,
     agentColors: [
         0x6ac1e5, 0xff2200, 0xee7967, 0xff6600, 0xd94d49, 0xffaa00, 0xffcc00,
         0x00ccff, 0x00aaff, 0x8048f3, 0x07f4ec, 0x79bd8f, 0x8800ff, 0xaa00ff,
@@ -128,6 +130,9 @@ class Viewport extends React.Component<
             this.props.maxCacheLength
         );
         this.props.simulariumController.visData.clearCache();
+        this.props.simulariumController.visData.setCacheEnabled(
+            !this.props.disableCache
+        );
         this.visGeometry.createMaterials(props.agentColors);
         this.vdomRef = React.createRef();
         this.lastRenderTime = Date.now();
@@ -241,10 +246,7 @@ class Viewport extends React.Component<
             onError,
             lockedCamera,
         } = this.props;
-        this.visGeometry.setCanvasOnTheDom(
-            this.vdomRef.current,
-            lockedCamera
-        );
+        this.visGeometry.setCanvasOnTheDom(this.vdomRef.current, lockedCamera);
         if (backgroundColor !== undefined) {
             this.visGeometry.setBackgroundColor(backgroundColor);
         }
@@ -315,6 +317,7 @@ class Viewport extends React.Component<
             showBounds,
             selectionStateInfo,
             lockedCamera,
+            disableCache,
         } = this.props;
 
         if (selectionStateInfo) {
@@ -376,6 +379,11 @@ class Viewport extends React.Component<
         }
         if (prevProps.lockedCamera !== lockedCamera) {
             this.visGeometry.toggleControls(lockedCamera);
+        }
+        if (prevProps.disableCache !== disableCache) {
+            this.props.simulariumController.visData.setCacheEnabled(
+                !disableCache
+            );
         }
         if (prevState.showRenderParamsGUI !== this.state.showRenderParamsGUI) {
             if (this.state.showRenderParamsGUI) {

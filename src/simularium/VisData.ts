@@ -15,11 +15,6 @@ import { FrontEndError, ErrorLevel } from "./FrontEndError";
 import type { ParsedBundle } from "./VisDataParse";
 import { parseVisDataMessage } from "./VisDataParse";
 
-// must be utf-8 encoded
-const EOF_PHRASE: Uint8Array = new TextEncoder().encode(
-    "\\EOFTHEFRAMEENDSHERE"
-);
-
 interface CacheFrameSizes {
     bytes: number;
     frameOffset: number;
@@ -28,6 +23,7 @@ interface CacheFrameSizes {
 class VisData {
     private frameCache: AgentData[][];
     private frameDataCache: FrameData[];
+    private enableCache: boolean;
     private cacheSize: number;
     private cacheFrameSizes: CacheFrameSizes[];
     private maxCacheLength: number;
@@ -37,12 +33,10 @@ class VisData {
     private frameToWaitFor: number;
     private lockedForFrame: boolean;
     private cacheFrame: number;
-    private netBuffer: ArrayBuffer;
 
     // eslint-disable-next-line @typescript-eslint/naming-convention
     private _dragAndDropFileInfo: TrajectoryFileInfo | null;
 
-    public firstFrameTime: number | null;
     public timeStepSize: number;
 
     private static parseOneBinaryFrame(data: ArrayBuffer): ParsedBundle {
@@ -244,15 +238,9 @@ class VisData {
             end = start;
         }
 
-        const cachedSize = calculateCachedSize(
-            parsedAgentDataArray,
-            frameDataArray
-        );
-
         return {
             parsedAgentDataArray,
             frameDataArray,
-            cachedSize,
         };
     }
 
@@ -264,6 +252,11 @@ class VisData {
 
         // event.data is of type ParsedBundle
         this.webWorker.onmessage = (event) => {
+            if (!this.enableCache) {
+                this.frameDataCache = [...event.data.frameDataArray];
+                this.frameCache = [...event.data.parsedAgentDataArray];
+                return;
+            }
             Array.prototype.push.apply(
                 this.frameDataCache,
                 event.data.frameDataArray
@@ -291,7 +284,6 @@ class VisData {
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
-        this.netBuffer = new ArrayBuffer(0);
         this.timeStepSize = 0;
     }
 
@@ -314,6 +306,10 @@ class VisData {
      *   Functions to check update
      * */
     public hasLocalCacheForTime(time: number): boolean {
+        // TODO: debug compareTimes
+        if (!this.enableCache) {
+            return false;
+        }
         if (this.frameDataCache.length < 1) {
             return false;
         }
@@ -395,12 +391,10 @@ class VisData {
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
-        this.netBuffer = new ArrayBuffer(0);
     }
 
     public clearForNewTrajectory(): void {
         this.clearCache();
-        this.firstFrameTime = null;
     }
 
     public cancelAllWorkers(): void {
@@ -414,8 +408,17 @@ class VisData {
         }
     }
 
+    public setCacheEnabled(cacheEnabled: boolean): void {
+        this.enableCache = cacheEnabled;
+    }
+
     // Add parsed frames to the cache and save the timestamp of the first frame
     private addFramesToCache(frames: ParsedBundle): void {
+        if (!this.enableCache) {
+            this.frameDataCache = [...frames.frameDataArray];
+            this.frameCache = [...frames.parsedAgentDataArray];
+            return;
+        }
         const sizeToAdd = frames.cachedSize;
         this.makeRoomInCache(sizeToAdd);
         Array.prototype.push.apply(this.frameDataCache, frames.frameDataArray);
@@ -500,12 +503,8 @@ class VisData {
         }
     }
 
-    public parseAgentsFromLocalFileData(
-        msg: VisDataMessage | ArrayBuffer
-    ): void {
+    public parseAgentsFromFrameData(msg: VisDataMessage | ArrayBuffer): void {
         if (msg instanceof ArrayBuffer) {
-            // Streamed binary data can have partial frames but
-            // drag and drop is assumed to provide whole frames.
             const frames = VisData.parseOneBinaryFrame(msg);
             if (
                 frames.frameDataArray.length > 0 &&
@@ -523,85 +522,18 @@ class VisData {
 
     public parseAgentsFromNetData(msg: VisDataMessage | ArrayBuffer): void {
         if (msg instanceof ArrayBuffer) {
+            // Streamed binary file data messages contain message type, file name
+            // length, and file name in header, which local file data messages
+            // do not. Once those parts are stripped out, processing is the same
             const floatView = new Float32Array(msg);
 
             const fileNameSize = Math.ceil(floatView[1] / 4);
             const dataStart = (2 + fileNameSize) * 4;
 
-            this.parseBinaryNetData(msg as ArrayBuffer, dataStart);
-            return;
+            msg = msg.slice(dataStart);
         }
 
-        this.parseAgentsFromVisDataMessage(msg);
-    }
-
-    private parseBinaryNetData(data: ArrayBuffer, dataStart: number) {
-        let eof = -1;
-
-        // find last '/eof' signal in new data
-        const byteView = new Uint8Array(data);
-
-        // walk backwards in order to find the last eofPhrase in the data
-        let index = byteView.length - EOF_PHRASE.length;
-        for (; index > 0; index = index - 4) {
-            const curr = byteView.subarray(index, index + EOF_PHRASE.length);
-            if (curr.every((val, i) => val === EOF_PHRASE[i])) {
-                eof = index;
-                break;
-            }
-        }
-
-        if (eof > dataStart) {
-            const frame = data.slice(dataStart, eof);
-
-            const tmp = new ArrayBuffer(
-                this.netBuffer.byteLength + frame.byteLength
-            );
-            new Uint8Array(tmp).set(new Uint8Array(this.netBuffer));
-            new Uint8Array(tmp).set(
-                new Uint8Array(frame),
-                this.netBuffer.byteLength
-            );
-
-            try {
-                const frames = VisData.parseBinary(tmp);
-                if (
-                    frames.frameDataArray.length > 0 &&
-                    frames.frameDataArray[0].frameNumber === 0
-                ) {
-                    this.clearCache(); // new data has arrived
-                }
-                this.addFramesToCache(frames);
-            } catch (err) {
-                // TODO: There are frequent errors due to a race condition that
-                // occurs when jumping to a new time if a partial frame is received
-                // after netBuffer is cleared. We don't want this to trigger a front
-                // end error, it's best to catch it here and just move on, as the
-                // issue should be contained to just one frame. When binary messages
-                // are updated to include frame num for partial frames in their header,
-                // we can ensure that netBuffer is being combined with the matching
-                // frame, and this try/catch can be removed
-                console.log(err);
-            }
-
-            // Save remaining data for later processing
-            const remainder = data.slice(eof + EOF_PHRASE.length);
-            this.netBuffer = new ArrayBuffer(remainder.byteLength);
-            new Uint8Array(this.netBuffer).set(new Uint8Array(remainder));
-        } else {
-            // Append the new data, and wait until eof
-            const frame = data.slice(dataStart, data.byteLength);
-            const tmp = new ArrayBuffer(
-                this.netBuffer.byteLength + frame.byteLength
-            );
-            new Uint8Array(tmp).set(new Uint8Array(this.netBuffer));
-            new Uint8Array(tmp).set(
-                new Uint8Array(frame),
-                this.netBuffer.byteLength
-            );
-
-            this.netBuffer = tmp;
-        }
+        this.parseAgentsFromFrameData(msg);
     }
 
     // for use w/ a drag-and-drop trajectory file

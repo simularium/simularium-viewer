@@ -418,11 +418,12 @@ export class RemoteSimulator implements ISimulator {
     // Start autoconversion and roll right into the simulation
     public convertTrajectory(
         dataToConvert: Record<string, unknown>,
-        fileType: TrajectoryType
+        fileType: TrajectoryType,
+        providedFileName?: string
     ): Promise<void> {
         return this.connectToRemoteServer()
             .then(() => {
-                this.sendTrajectory(dataToConvert, fileType);
+                this.sendTrajectory(dataToConvert, fileType, providedFileName);
             })
             .catch((e) => {
                 throw new FrontEndError(e.message, ErrorLevel.ERROR);
@@ -431,10 +432,15 @@ export class RemoteSimulator implements ISimulator {
 
     public sendTrajectory(
         dataToConvert: Record<string, unknown>,
-        fileType: TrajectoryType
+        fileType: TrajectoryType,
+        providedFileName?: string
     ): void {
-        // Generate random file name for converted file to be stored on the server
-        const fileName = uuidv4() + ".simularium";
+        // Check for provided file name, and if none provided
+        // generate random file name for converted file to be stored on the server
+        const fileName =
+            providedFileName !== undefined
+                ? providedFileName
+                : uuidv4() + ".simularium";
         this.lastRequestedFile = fileName;
         this.webSocketClient.sendWebSocketRequest(
             {
@@ -462,5 +468,16 @@ export class RemoteSimulator implements ISimulator {
                     new FrontEndError(e.message, ErrorLevel.WARNING)
                 );
             });
+    }
+
+    public cancelConversion(): void {
+        this.webSocketClient.sendWebSocketRequest(
+            {
+                msgType: NetMessageEnum.ID_CANCEL_CONVERSION,
+                fileName: this.lastRequestedFile,
+            },
+            "Cancel the requested autoconversion"
+        );
+        this.lastRequestedFile = "";
     }
 }
