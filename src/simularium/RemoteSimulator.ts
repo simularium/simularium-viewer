@@ -12,7 +12,7 @@ import { ISimulator } from "./ISimulator";
 import { TrajectoryFileInfoV2, VisDataMessage } from "./types";
 import { TrajectoryType } from "../constants";
 
-// a RemoteSimulator is a ISimulator that connects to the Octopus back end server
+// a RemoteSimulator is a ISimulator that connects to the Octopus backend server
 // and plays back a trajectory specified in the NetConnectionParams
 export class RemoteSimulator implements ISimulator {
     public webSocketClient: WebsocketClient;
