@@ -26,7 +26,6 @@ class VisData {
     private enableCache: boolean;
     private cacheSize: number;
     private cacheFrameSizes: CacheFrameSizes[];
-    private maxCacheLength: number;
     private maxCacheSize: number;
     private webWorker: Worker | null;
 
@@ -103,147 +102,6 @@ class VisData {
         };
     }
 
-    public static parseBinary(data: ArrayBuffer): ParsedBundle {
-        const parsedAgentDataArray: AgentData[][] = [];
-        const frameDataArray: FrameData[] = [];
-
-        const byteView = new Uint8Array(data);
-        const length = byteView.length;
-        const lastEOF = length - EOF_PHRASE.length;
-        let end = 0;
-        let start = 0;
-
-        const frameDataView = new Float32Array(data);
-
-        while (end < lastEOF) {
-            // Find the next End of Frame signal
-            for (; end < length; end = end + 4) {
-                const curr = byteView.subarray(end, end + EOF_PHRASE.length);
-                if (curr.every((val, i) => val === EOF_PHRASE[i])) {
-                    break;
-                }
-            }
-
-            // contains Frame # | Time Stamp | # of Agents
-            const frameInfoView = frameDataView.subarray(
-                start / 4,
-                (start + 12) / 4
-            );
-
-            // contains parsable agents
-            const agentDataView = frameDataView.subarray(
-                (start + 12) / 4,
-                end / 4
-            );
-
-            const parsedFrameData = {
-                time: frameInfoView[1],
-                frameNumber: frameInfoView[0],
-            };
-            const expectedNumAgents = frameInfoView[2];
-            frameDataArray.push(parsedFrameData);
-
-            // Parse the frameData
-            const parsedAgentData: AgentData[] = [];
-            const nSubPointsIndex = AGENT_OBJECT_KEYS.findIndex(
-                (ele) => ele === "nSubPoints"
-            );
-
-            const parseOneAgent = (agentArray): AgentData => {
-                return agentArray.reduce(
-                    (agentData, cur, i) => {
-                        let key;
-                        if (AGENT_OBJECT_KEYS[i]) {
-                            key = AGENT_OBJECT_KEYS[i];
-                            agentData[key] = cur;
-                        } else if (
-                            i <
-                            agentArray.length + agentData.nSubPoints
-                        ) {
-                            agentData.subpoints.push(cur);
-                        }
-                        return agentData;
-                    },
-                    { subpoints: [] }
-                );
-            };
-
-            let dataIter = 0;
-            while (dataIter < agentDataView.length) {
-                const nSubPoints = agentDataView[dataIter + nSubPointsIndex];
-                if (
-                    !Number.isInteger(nSubPoints) ||
-                    !Number.isInteger(dataIter)
-                ) {
-                    throw new FrontEndError(
-                        "Your data is malformed, non-integer value found for num-subpoints.",
-                        ErrorLevel.ERROR,
-                        `Number of Subpoints: <pre>${nSubPoints}</pre>`
-                    );
-                    break;
-                }
-
-                // each array length is variable based on how many subpoints the agent has
-                const chunkLength = AGENT_OBJECT_KEYS.length + nSubPoints;
-                const remaining = agentDataView.length - dataIter;
-                if (remaining < chunkLength - 1) {
-                    const attemptedMapping = AGENT_OBJECT_KEYS.map(
-                        (name, index) =>
-                            `${name}: ${agentDataView[dataIter + index]}<br />`
-                    );
-                    // will be caught by controller.changeFile(...).catch()
-                    throw new FrontEndError(
-                        "Your data is malformed, non-integer value found for num-subpoints.",
-                        ErrorLevel.ERROR,
-                        `Example attempt to parse your data: <pre>${attemptedMapping.join(
-                            ""
-                        )}</pre>`
-                    );
-                }
-
-                const agentSubSetArray = agentDataView.subarray(
-                    dataIter,
-                    dataIter + chunkLength
-                );
-                if (agentSubSetArray.length < AGENT_OBJECT_KEYS.length) {
-                    const attemptedMapping = AGENT_OBJECT_KEYS.map(
-                        (name, index) =>
-                            `${name}: ${agentSubSetArray[index]}<br />`
-                    );
-                    // will be caught by controller.changeFile(...).catch()
-                    throw new FrontEndError(
-                        "Your data is malformed, there are less entries than expected for this agent.",
-                        ErrorLevel.ERROR,
-                        `Example attempt to parse your data: <pre>${attemptedMapping.join(
-                            ""
-                        )}</pre>`
-                    );
-                }
-
-                const agent = parseOneAgent(agentSubSetArray);
-                parsedAgentData.push(agent);
-                dataIter = dataIter + chunkLength;
-            }
-
-            const numParsedAgents = parsedAgentData.length;
-            if (numParsedAgents != expectedNumAgents) {
-                throw new FrontEndError(
-                    "Mismatch between expected num agents and parsed num agents, possible offset error"
-                );
-            }
-
-            parsedAgentDataArray.push(parsedAgentData);
-
-            start = end + EOF_PHRASE.length;
-            end = start;
-        }
-
-        return {
-            parsedAgentDataArray,
-            frameDataArray,
-        };
-    }
-
     private setupWebWorker() {
         this.webWorker = new Worker(
             new URL("../visGeometry/workers/visDataWorker", import.meta.url),
@@ -275,12 +133,12 @@ class VisData {
         }
         this.frameCache = [];
         this.frameDataCache = [];
+        this.cacheFrame = -1;
+        this.enableCache = true;
         this.cacheSize = 0;
         this.cacheFrameSizes = [];
-        this.firstFrameTime = null;
         this.cacheFrame = -1;
-        this.maxCacheLength = -1;
-        this.maxCacheSize = 1000000; // todo define defaults / constants for different browser environments
+        this.maxCacheSize = 10000000; // todo define defaults / constants for different browser environments
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
@@ -420,6 +278,7 @@ class VisData {
             return;
         }
         const sizeToAdd = frames.cachedSize;
+        // console.log("cache frame sizes prior to make room call: ", this.cacheFrameSizes)
         this.makeRoomInCache(sizeToAdd);
         Array.prototype.push.apply(this.frameDataCache, frames.frameDataArray);
         Array.prototype.push.apply(
@@ -427,44 +286,35 @@ class VisData {
             frames.parsedAgentDataArray
         );
         this.cacheSize += frames.cachedSize;
+        // console.log("cache size: ", this.cacheSize)
+        // console.log("frame cache size: ", frames.cachedSize);
         this.cacheFrameSizes.push({
             bytes: frames.cachedSize,
             frameOffset: frames.frameDataArray.length,
         });
-
-        if (this.firstFrameTime === null) {
-            this.firstFrameTime = frames.frameDataArray[0].time;
-        }
-
-        if (
-            this.maxCacheLength > 0 &&
-            this.frameDataCache.length > this.maxCacheLength
-        ) {
-            this.trimCacheHead(
-                this.frameDataCache.length - this.maxCacheLength
-            );
-        }
     }
 
     private makeRoomInCache(sizeToAdd: number): void {
         while (this.cacheSize + sizeToAdd > this.maxCacheSize) {
-            const nFramesToRemove = this.cacheFrameSizes[0].frameOffset;
             const bytesToRemove = this.cacheFrameSizes[0].bytes;
-            this.trimCacheHead(nFramesToRemove);
-            this.cacheSize -= bytesToRemove;
+            this.frameCache.shift();
+            this.frameDataCache.shift();
             this.cacheFrameSizes.shift();
+            this.cacheSize -= bytesToRemove;
         }
-    }
 
-    private trimCacheHead(nFrames: number): void {
-        for (let i = 0; i < nFrames; i++) {
-            if (this.frameCache.length > 0) {
-                this.frameCache.shift();
-            }
-            if (this.frameDataCache.length > 0) {
-                this.frameDataCache.shift();
-            }
-        }
+        // code below is worse in practice regarding hangup and playback speed
+        // if (this.cacheSize + sizeToAdd > this.maxCacheSize) {
+        //     console.log("making room in cache");
+        //     this.frameCache = [this.frameCache[this.frameCache.length - 1]];
+        //     this.frameDataCache = [
+        //         this.frameDataCache[this.frameDataCache.length - 1],
+        //     ];
+        //     this.cacheFrameSizes = [
+        //         this.cacheFrameSizes[this.cacheFrameSizes.length - 1],
+        //     ];
+        //     this.cacheSize = this.cacheFrameSizes[0].bytes;
+        // }
     }
 
     private parseAgentsFromVisDataMessage(msg: VisDataMessage): void {
