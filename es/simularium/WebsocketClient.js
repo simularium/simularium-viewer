@@ -67,7 +67,6 @@ export var WebsocketClient = /*#__PURE__*/function () {
     _defineProperty(this, "webSocket", void 0);
     _defineProperty(this, "serverIp", void 0);
     _defineProperty(this, "serverPort", void 0);
-    _defineProperty(this, "secureConnection", void 0);
     _defineProperty(this, "connectionTimeWaited", void 0);
     _defineProperty(this, "connectionRetries", void 0);
     _defineProperty(this, "jsonMessageHandlers", void 0);
@@ -79,7 +78,6 @@ export var WebsocketClient = /*#__PURE__*/function () {
     this.binaryMessageHandlers = new Map();
     this.serverIp = opts && opts.serverIp ? opts.serverIp : "localhost";
     this.serverPort = opts && opts.serverPort ? opts.serverPort : 9002;
-    this.secureConnection = opts && opts.secureConnection !== undefined ? opts.secureConnection : true;
     this.connectionTimeWaited = 0;
     this.connectionRetries = 0;
     this.handleError = errorHandler || function () {
@@ -205,7 +203,7 @@ export var WebsocketClient = /*#__PURE__*/function () {
   }, {
     key: "getIp",
     value: function getIp() {
-      return "".concat(this.secureConnection ? "wss" : "ws", "://").concat(this.serverIp, ":").concat(this.serverPort, "/");
+      return "wss://".concat(this.serverIp, ":").concat(this.serverPort, "/");
     }
   }, {
     key: "waitForWebSocket",

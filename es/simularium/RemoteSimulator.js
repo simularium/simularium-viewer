@@ -7,16 +7,10 @@ import jsLogger from "js-logger";
 import { v4 as uuidv4 } from "uuid";
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
 import { NetMessageEnum } from "./WebsocketClient";
-var PlayBackType = /*#__PURE__*/function (PlayBackType) {
-  PlayBackType[PlayBackType["ID_LIVE_SIMULATION"] = 0] = "ID_LIVE_SIMULATION";
-  PlayBackType[PlayBackType["ID_PRE_RUN_SIMULATION"] = 1] = "ID_PRE_RUN_SIMULATION";
-  PlayBackType[PlayBackType["ID_TRAJECTORY_FILE_PLAYBACK"] = 2] = "ID_TRAJECTORY_FILE_PLAYBACK";
-  PlayBackType[PlayBackType["LENGTH"] = 3] = "LENGTH";
-  return PlayBackType;
-}(PlayBackType || {}); // a RemoteSimulator is a ISimulator that connects to the Simularium Engine
-// back end server and plays back a trajectory specified in the NetConnectionParams
+// a RemoteSimulator is a ISimulator that connects to the Octopus backend server
+// and plays back a trajectory specified in the NetConnectionParams
 export var RemoteSimulator = /*#__PURE__*/function () {
-  function RemoteSimulator(webSocketClient, useOctopus, errorHandler) {
+  function RemoteSimulator(webSocketClient, errorHandler) {
     _classCallCheck(this, RemoteSimulator);
     _defineProperty(this, "webSocketClient", void 0);
     _defineProperty(this, "logger", void 0);
@@ -25,10 +19,8 @@ export var RemoteSimulator = /*#__PURE__*/function () {
     _defineProperty(this, "healthCheckHandler", void 0);
     _defineProperty(this, "lastRequestedFile", void 0);
     _defineProperty(this, "handleError", void 0);
-    _defineProperty(this, "useOctopus", void 0);
     this.webSocketClient = webSocketClient;
     this.lastRequestedFile = "";
-    this.useOctopus = useOctopus;
     this.handleError = errorHandler || function () {
       /* do nothing */
     };
@@ -242,66 +234,31 @@ export var RemoteSimulator = /*#__PURE__*/function () {
 
     /**
      * WebSocket Simulation Control
-     *
-     * Simulation Run Modes:
-     *  Live : Results are sent as they are calculated
-     *  Pre-Run : All results are evaluated, then sent piecemeal
-     *  Trajectory File: No simulation run, stream a result file piecemeal
-     *
      */
   }, {
     key: "startRemoteSimPreRun",
-    value: function startRemoteSimPreRun(timeStep, numTimeSteps) {
-      var _this3 = this;
-      var jsonData = {
-        msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
-        mode: PlayBackType.ID_PRE_RUN_SIMULATION,
-        timeStep: timeStep,
-        numTimeSteps: numTimeSteps
-      };
-      return this.connectToRemoteServer().then(function () {
-        _this3.webSocketClient.sendWebSocketRequest(jsonData, "Start Simulation Pre-Run");
-      })["catch"](function (e) {
-        throw new FrontEndError(e.message, ErrorLevel.ERROR);
-      });
+    value: function startRemoteSimPreRun(_timeStep, _numTimeSteps) {
+      // not implemented
     }
   }, {
     key: "startRemoteSimLive",
     value: function startRemoteSimLive() {
-      var _this4 = this;
-      var jsonData = {
-        msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
-        mode: PlayBackType.ID_LIVE_SIMULATION
-      };
-      return this.connectToRemoteServer().then(function () {
-        _this4.webSocketClient.sendWebSocketRequest(jsonData, "Start Simulation Live");
-      })["catch"](function (e) {
-        throw new FrontEndError(e.message, ErrorLevel.ERROR);
-      });
+      // not implemented
     }
   }, {
     key: "startRemoteTrajectoryPlayback",
     value: function startRemoteTrajectoryPlayback(fileName) {
-      var _this5 = this;
+      var _this3 = this;
       this.lastRequestedFile = fileName;
-      var jsonData;
-      if (this.useOctopus) {
-        jsonData = {
-          msgType: NetMessageEnum.ID_INIT_TRAJECTORY_FILE,
-          fileName: fileName
-        };
-      } else {
-        jsonData = {
-          msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
-          mode: PlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
-          "file-name": fileName
-        };
-      }
+      var jsonData = {
+        msgType: NetMessageEnum.ID_INIT_TRAJECTORY_FILE,
+        fileName: fileName
+      };
 
       // begins a stream which will include a TrajectoryFileInfo and a series of VisDataMessages
       // Note that it is possible for the first vis data to arrive before the TrajectoryFileInfo...
       return this.connectToRemoteServer().then(function () {
-        _this5.webSocketClient.sendWebSocketRequest(jsonData, "Start Trajectory File Playback");
+        _this3.webSocketClient.sendWebSocketRequest(jsonData, "Start Trajectory File Playback");
       })["catch"](function (error) {
         throw new FrontEndError(error.message, ErrorLevel.ERROR);
       });
@@ -338,7 +295,6 @@ export var RemoteSimulator = /*#__PURE__*/function () {
     value: function requestSingleFrame(startFrameNumber) {
       this.webSocketClient.sendWebSocketRequest({
         msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
-        mode: PlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
         frameNumber: startFrameNumber,
         fileName: this.lastRequestedFile
       }, "Request Single Frame");
@@ -374,9 +330,9 @@ export var RemoteSimulator = /*#__PURE__*/function () {
   }, {
     key: "convertTrajectory",
     value: function convertTrajectory(dataToConvert, fileType, providedFileName) {
-      var _this6 = this;
+      var _this4 = this;
       return this.connectToRemoteServer().then(function () {
-        _this6.sendTrajectory(dataToConvert, fileType, providedFileName);
+        _this4.sendTrajectory(dataToConvert, fileType, providedFileName);
       })["catch"](function (e) {
         throw new FrontEndError(e.message, ErrorLevel.ERROR);
       });
@@ -398,13 +354,13 @@ export var RemoteSimulator = /*#__PURE__*/function () {
   }, {
     key: "checkServerHealth",
     value: function checkServerHealth() {
-      var _this7 = this;
+      var _this5 = this;
       return this.connectToRemoteServer().then(function () {
-        _this7.webSocketClient.sendWebSocketRequest({
+        _this5.webSocketClient.sendWebSocketRequest({
           msgType: NetMessageEnum.ID_CHECK_HEALTH_REQUEST
         }, "Request server health check");
       })["catch"](function (e) {
-        _this7.handleError(new FrontEndError(e.message, ErrorLevel.WARNING));
+        _this5.handleError(new FrontEndError(e.message, ErrorLevel.WARNING));
       });
     }
   }, {

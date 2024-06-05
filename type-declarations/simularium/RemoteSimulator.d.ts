@@ -13,8 +13,7 @@ export declare class RemoteSimulator implements ISimulator {
     healthCheckHandler: () => void;
     protected lastRequestedFile: string;
     handleError: (error: FrontEndError) => void | (() => void);
-    protected useOctopus: boolean;
-    constructor(webSocketClient: WebsocketClient, useOctopus: boolean, errorHandler?: (error: FrontEndError) => void);
+    constructor(webSocketClient: WebsocketClient, errorHandler?: (error: FrontEndError) => void);
     setTrajectoryFileInfoHandler(handler: (msg: TrajectoryFileInfoV2) => void): void;
     setTrajectoryDataHandler(handler: (msg: VisDataMessage) => void): void;
     setHealthCheckHandler(handler: () => void): void;
@@ -47,15 +46,9 @@ export declare class RemoteSimulator implements ISimulator {
     sendModelDefinition(model: string): void;
     /**
      * WebSocket Simulation Control
-     *
-     * Simulation Run Modes:
-     *  Live : Results are sent as they are calculated
-     *  Pre-Run : All results are evaluated, then sent piecemeal
-     *  Trajectory File: No simulation run, stream a result file piecemeal
-     *
      */
-    startRemoteSimPreRun(timeStep: number, numTimeSteps: number): Promise<void>;
-    startRemoteSimLive(): Promise<void>;
+    startRemoteSimPreRun(_timeStep: number, _numTimeSteps: number): void;
+    startRemoteSimLive(): void;
     startRemoteTrajectoryPlayback(fileName: string): Promise<void>;
     pauseRemoteSim(): void;
     resumeRemoteSim(): void;
