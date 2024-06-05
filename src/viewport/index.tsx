@@ -176,6 +176,7 @@ class Viewport extends React.Component<
             onUIDisplayDataChanged,
             onError,
             agentColors,
+            sessionUIData,
         } = this.props;
 
         // Update TrajectoryFileInfo format to latest version
@@ -234,6 +235,9 @@ class Viewport extends React.Component<
         }
 
         onUIDisplayDataChanged(this.selectionInterface.getUIDisplayData());
+        if (sessionUIData) {
+            this.receiveSessionUIData(sessionUIData);
+        }
     }
 
     public componentDidMount(): void {
@@ -390,9 +394,6 @@ class Viewport extends React.Component<
             } else {
                 this.visGeometry.destroyGui();
             }
-        }
-        if (sessionUIData && prevProps.sessionUIData !== sessionUIData) {
-            this.receiveSessionUIData(sessionUIData);
         }
     }
 
@@ -610,9 +611,13 @@ class Viewport extends React.Component<
 
     private receiveSessionUIData(newData: UIDisplayData): void {
         const oldData = this.selectionInterface.getUIDisplayData();
-        if (isEqual(oldData, newData)) return;
-        
-        const colorChanges = compareUIDataAndCreateColorChanges(oldData, newData);
+        // possible that is equal is expensive, and we might as well just run through everything
+        if (isEqual(oldData, newData)) return; 
+
+        const colorChanges = compareUIDataAndCreateColorChanges(
+            oldData,
+            newData
+        );
         colorChanges.forEach((change) => {
             this.changeAgentsColor(change);
         });
