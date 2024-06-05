@@ -88,7 +88,8 @@ export const compareUIDataAndCreateColorChanges = (
         );
 
         if (!oldAgent) {
-            throw new Error(`Agent ${agent.name} not found in old data`);
+            console.log(`Agent ${agent.name} not found in old data`);
+            return [];
         }
 
         if (oldAgent.color !== agent.color) {
@@ -104,7 +105,10 @@ export const compareUIDataAndCreateColorChanges = (
             );
 
             if (!oldState) {
-                throw new Error(`Agent ${newState.name} not found in old data`);
+                console.log(
+                    `Agent state ${newState.name} not found in old data`
+                );
+                return [];
             }
 
             if (newState.color !== oldState.color) {
