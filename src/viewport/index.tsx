@@ -12,7 +12,7 @@ import {
     SelectionStateInfo,
     UIDisplayData,
 } from "../simularium";
-import { TrajectoryFileInfoAny } from "../simularium/types";
+import { AgentData, TrajectoryFileInfoAny } from "../simularium/types";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
 import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry";
@@ -46,6 +46,7 @@ type ViewportProps = {
     lockedCamera?: boolean;
     onRecordedMovie?: (blob: Blob) => void; // providing this callback enables movie recording
     disableCache?: boolean;
+    onFollowObjectChanged?: (agentData: AgentData) => void; // passes agent data about the followed agent to the front end
 } & Partial<DefaultProps>;
 
 const defaultProps = {
@@ -570,6 +571,14 @@ class Viewport extends React.Component<
             }
             this.visGeometry.setFollowObject(NO_AGENT);
         }
+        this.updateFollowObjectData();
+    }
+
+    private updateFollowObjectData(): void {
+        if (this.props.onFollowObjectChanged === undefined) return;
+        const id = this.visGeometry.getFollowObject();
+        const data = this.visGeometry.getObjectData(id);
+        this.props.onFollowObjectChanged(data);
     }
 
     private handleTimeChange(e: Event): void {
@@ -628,6 +637,7 @@ class Viewport extends React.Component<
                     this.dispatchUpdatedTime(visData.currentFrameData);
                     this.visGeometry.update(currentAgents);
                     this.lastRenderedAgentTime = visData.currentFrameData.time;
+                    this.updateFollowObjectData();
                 }
             }
 

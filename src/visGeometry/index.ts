@@ -38,7 +38,11 @@ import PDBModel from "./PDBModel";
 import AgentPath from "./agentPath";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
 
-import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC } from "../constants";
+import {
+    DEFAULT_CAMERA_Z_POSITION,
+    DEFAULT_CAMERA_SPEC,
+    NULL_AGENT,
+} from "../constants";
 import {
     AgentData,
     AgentDisplayDataWithGeometry,
@@ -644,6 +648,14 @@ class VisGeometry {
 
     public setFocusMode(focus: boolean): void {
         this.focusMode = focus;
+    }
+
+    public getObjectData(id: number): AgentData {
+        const data = this.visAgentInstances.get(id);
+        if (!data) {
+            return NULL_AGENT;
+        }
+        return data.agentData;
     }
 
     public getFollowObject(): number {
