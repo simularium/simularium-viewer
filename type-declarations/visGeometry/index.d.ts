@@ -102,6 +102,7 @@ declare class VisGeometry {
     setPanningMode(pan: boolean): void;
     setAllowViewPanning(allow: boolean): void;
     setFocusMode(focus: boolean): void;
+    getObjectData(id: number): AgentData;
     getFollowObject(): number;
     setFollowObject(obj: number): void;
     unfollow(): void;

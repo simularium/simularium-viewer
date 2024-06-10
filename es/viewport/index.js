@@ -421,6 +421,15 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
         }
         this.visGeometry.setFollowObject(NO_AGENT);
       }
+      this.updateFollowObjectData();
+    }
+  }, {
+    key: "updateFollowObjectData",
+    value: function updateFollowObjectData() {
+      if (this.props.onFollowObjectChanged === undefined) return;
+      var id = this.visGeometry.getFollowObject();
+      var data = this.visGeometry.getObjectData(id);
+      this.props.onFollowObjectChanged(data);
     }
   }, {
     key: "handleTimeChange",
@@ -483,6 +492,7 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
             this.dispatchUpdatedTime(visData.currentFrameData);
             this.visGeometry.update(currentAgents);
             this.lastRenderedAgentTime = visData.currentFrameData.time;
+            this.updateFollowObjectData();
           }
         }
         if (!visData.atLatestFrame() && !simulariumController.paused()) {

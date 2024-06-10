@@ -1,6 +1,7 @@
 import * as React from "react";
 import SimulariumController from "../controller";
 import { TrajectoryFileInfo, SelectionStateInfo, UIDisplayData } from "../simularium";
+import { AgentData } from "../simularium/types";
 import { FrontEndError } from "../simularium/FrontEndError";
 import { RenderStyle } from "../visGeometry";
 import { ColorChange } from "../simularium/SelectionInterface";
@@ -27,6 +28,7 @@ declare type ViewportProps = {
     lockedCamera?: boolean;
     onRecordedMovie?: (blob: Blob) => void;
     disableCache?: boolean;
+    onFollowObjectChanged?: (agentData: AgentData) => void;
 } & Partial<DefaultProps>;
 declare const defaultProps: {
     renderStyle: RenderStyle;
@@ -98,6 +100,7 @@ declare class Viewport extends React.Component<ViewportProps & DefaultProps, Vie
     addEventHandlersToCanvas(): void;
     removeEventHandlersFromCanvas(): void;
     onPickObject(posX: number, posY: number): void;
+    private updateFollowObjectData;
     private handleTimeChange;
     private dispatchUpdatedTime;
     changeAgentsColor(colorChange: ColorChange): void;
