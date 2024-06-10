@@ -69,3 +69,8 @@ export interface AgentColorInfo {
     color: Color;
     colorId: number;
 }
+
+export interface ColorSetting {
+    agentIds: number[];
+    color: string | number;
+}

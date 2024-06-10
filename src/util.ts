@@ -1,7 +1,6 @@
 import type { ISimulariumFile } from "./simularium/ISimulariumFile";
 import JsonFileReader from "./simularium/JsonFileReader";
 import BinaryFileReader from "./simularium/BinaryFileReader";
-import { ColorChange, UIDisplayData } from "./simularium";
 
 export const compareTimes = (
     time1: number,
@@ -75,50 +74,3 @@ export function loadSimulariumFile(file: Blob): Promise<ISimulariumFile> {
             }
         });
 }
-
-export const compareUIDataAndCreateColorChanges = (
-    oldData: UIDisplayData,
-    newData: UIDisplayData
-): ColorChange[] => {
-    const changes: ColorChange[] = [];
-
-    newData.forEach((agent) => {
-        const oldAgent = oldData.find(
-            (oldAgent) => oldAgent.name === agent.name
-        );
-
-        if (!oldAgent) {
-            console.log(`Agent ${agent.name} not found in old data`);
-            return [];
-        }
-
-        if (oldAgent.color !== agent.color) {
-            changes.push({
-                agent: { name: agent.name, tags: [] },
-                color: agent.color,
-            });
-        }
-
-        agent.displayStates.forEach((newState) => {
-            const oldState = oldAgent.displayStates.find(
-                (state) => state.name === newState.name
-            );
-
-            if (!oldState) {
-                console.log(
-                    `Agent state ${newState.name} not found in old data`
-                );
-                return [];
-            }
-
-            if (newState.color !== oldState.color) {
-                changes.push({
-                    agent: { name: agent.name, tags: [newState.name] },
-                    color: newState.color,
-                });
-            }
-        });
-    });
-
-    return changes;
-};

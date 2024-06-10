@@ -1,6 +1,7 @@
 import { filter, find, map, uniq } from "lodash";
 import { EncodedTypeMapping } from "./types";
 import { convertColorNumberToString } from "../visGeometry/ColorHandler";
+import { ColorSetting } from "../visGeometry/types";
 
 // An individual entry parsed from an encoded name
 // The encoded names can be just a name or a name plus a
@@ -301,7 +302,7 @@ class SelectionInterface {
     public setInitialAgentColors(
         uiDisplayData: UIDisplayData,
         colors: (string | number)[],
-        setColorForIds: (ids: number[], color: string | number) => void
+        setColorForIds: (setting: ColorSetting) => void
     ): (string | number)[] {
         let defaultColorIndex = 0;
         uiDisplayData.forEach((group) => {
@@ -317,7 +318,10 @@ class SelectionInterface {
             if (!hasNewColors) {
                 // if no colors have been set by the user for this name,
                 // just give all states of this agent name the same color
-                setColorForIds(ids, colors[defaultColorIndex]);
+                setColorForIds({
+                    agentIds: ids,
+                    color: colors[defaultColorIndex],
+                });
                 this.updateUiDataColor(
                     group.name,
                     ids,
@@ -355,7 +359,10 @@ class SelectionInterface {
                     } else {
                         groupColorIndex = -1;
                     }
-                    setColorForIds([ids[index]], colors[agentColorIndex]);
+                    setColorForIds({
+                        agentIds: [ids[index]],
+                        color: colors[agentColorIndex],
+                    });
                 });
             }
             if (groupColorIndex > -1) {
@@ -376,6 +383,50 @@ class SelectionInterface {
         });
         return colors;
     }
+
+    // when applying color changes or settings, keep entries in sync
+    // it is the SSOT for UiDisplayData
+    public updateAgentColors(setting: ColorSetting): void {
+        const { agentIds, color } = setting;
+        const newColor = convertColorNumberToString(color);
+        agentIds.forEach((id) => {
+            Object.values(this.entries).forEach((entry) => {
+                entry.forEach((displayState) => {
+                    if (displayState.id === id) {
+                        displayState.color = newColor;
+                    }
+                });
+            });
+        });
+    }
+
+    // seems like a util
+    public deriveColorSettingsFromUIData = (
+        uiData: UIDisplayData
+    ): ColorSetting[] => {
+        const settings: ColorSetting[] = [];
+
+        uiData.forEach((agent) => {
+            settings.push({
+                agentIds: this.getAgentIdsByNamesAndTags([
+                    { name: agent.name, tags: [] },
+                ]),
+                color: agent.color,
+            });
+            // }
+
+            agent.displayStates.forEach((newState) => {
+                settings.push({
+                    agentIds: this.getAgentIdsByNamesAndTags([
+                        { name: agent.name, tags: [newState.name] },
+                    ]),
+                    color: newState.color,
+                });
+            });
+        });
+
+        return settings;
+    };
 }
 
 export { SelectionInterface };
