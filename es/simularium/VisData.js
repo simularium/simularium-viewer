@@ -2,6 +2,8 @@ import _toConsumableArray from "@babel/runtime/helpers/toConsumableArray";
 import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 import { difference } from "lodash";
 import { compareTimes } from "../util";
 import * as util from "./ThreadUtil";
@@ -328,7 +330,7 @@ var VisData = /*#__PURE__*/function () {
       var j = AGENTS_OFFSET;
       for (var i = 0; i < expectedNumAgents; i++) {
         //TODO use visType in AgentData and convert from "vis-type" here at parse time
-        var agentData = NULL_AGENT;
+        var agentData = _objectSpread({}, NULL_AGENT);
         for (var k = 0; k < AGENT_OBJECT_KEYS.length; ++k) {
           agentData[AGENT_OBJECT_KEYS[k]] = floatView[j++];
         }
