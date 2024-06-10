@@ -62,9 +62,7 @@ class VisData {
             };
 
             for (let k = 0; k < AGENT_OBJECT_KEYS.length; ++k) {
-                const key = AGENT_OBJECT_KEYS[k];
-                const targetKey = key === "vis-type" ? "visType" : key;
-                agentData[targetKey] = floatView[j++];
+                agentData[AGENT_OBJECT_KEYS[k]] = floatView[j++];
             }
             const nSubPoints = agentData["nSubPoints"];
             if (!Number.isInteger(nSubPoints)) {

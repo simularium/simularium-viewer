@@ -126,7 +126,7 @@ describe("VisData module", () => {
     describe("VisData parse", () => {
         test("it returns an array of objects of agent data and time stamp data", () => {
             const testData = [
-                10, //"vis-type",
+                10, //"visType",
                 15, //"instanceId",
                 20, //"type",
                 30, //"x",
@@ -179,7 +179,7 @@ describe("VisData module", () => {
         });
         test("it throws an error if number of supoints does not match the nSubpoints value", () => {
             const tooShort = [
-                10, //"vis-type",
+                10, //"visType",
                 15, //"instanceId",
                 20, //"type",
                 30, //"x",
@@ -209,7 +209,7 @@ describe("VisData module", () => {
                 fileName: "",
             };
             const tooLong = [
-                10, //"vis-type",
+                10, //"visType",
                 15, //"instanceId",
                 20, //"type",
                 30, //"x",
