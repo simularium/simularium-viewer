@@ -49,7 +49,7 @@ class VisData {
         let j = AGENTS_OFFSET;
         for (let i = 0; i < expectedNumAgents; i++) {
             //TODO use visType in AgentData and convert from "vis-type" here at parse time
-            const agentData: AgentData = NULL_AGENT;
+            const agentData: AgentData = { ...NULL_AGENT };
 
             for (let k = 0; k < AGENT_OBJECT_KEYS.length; ++k) {
                 agentData[AGENT_OBJECT_KEYS[k]] = floatView[j++];
