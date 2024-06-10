@@ -26,7 +26,6 @@ export interface ColorChange {
 export interface SelectionStateInfo {
     highlightedAgents: SelectionEntry[];
     hiddenAgents: SelectionEntry[];
-    colorChange: ColorChange | null;
 }
 
 interface DisplayStateEntry {
