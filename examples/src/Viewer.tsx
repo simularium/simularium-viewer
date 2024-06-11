@@ -8,7 +8,7 @@ import type {
     SelectionStateInfo,
     SelectionEntry,
 } from "../../type-declarations";
-import { NULL_AGENT, TrajectoryType } from "../../src/constants";
+import { createNullAgent, TrajectoryType } from "../../src/constants";
 import SimulariumViewer, {
     SimulariumController,
     RenderStyle,
@@ -175,7 +175,7 @@ const initialState: ViewerState = {
     trajectoryTitle: "",
     initialPlay: true,
     firstFrameTime: 0,
-    followObjectData: NULL_AGENT,
+    followObjectData: createNullAgent(),
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
