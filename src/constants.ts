@@ -34,16 +34,18 @@ export const enum TrajectoryType {
 
 export const DEFAULT_FRAME_RATE = 60; // frames per second
 
-export const NULL_AGENT: AgentData = {
-    "vis-type": -1,
-    instanceId: -1,
-    type: -1,
-    x: 0,
-    y: 0,
-    z: 0,
-    xrot: 0,
-    yrot: 0,
-    zrot: 0,
-    cr: 0,
-    subpoints: [],
+export const createNullAgent = (): AgentData => {
+    return {
+        "vis-type": -1,
+        instanceId: -1,
+        type: -1,
+        x: 0,
+        y: 0,
+        z: 0,
+        xrot: 0,
+        yrot: 0,
+        zrot: 0,
+        cr: 0,
+        subpoints: [],
+    };
 };
