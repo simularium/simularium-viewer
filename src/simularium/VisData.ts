@@ -48,7 +48,6 @@ class VisData {
         const parsedAgentData: AgentData[] = [];
         let j = AGENTS_OFFSET;
         for (let i = 0; i < expectedNumAgents; i++) {
-            //TODO use visType in AgentData and convert from "vis-type" here at parse time
             const agentData: AgentData = nullAgent();
 
             for (let k = 0; k < AGENT_OBJECT_KEYS.length; ++k) {

@@ -36,7 +36,7 @@ export const DEFAULT_FRAME_RATE = 60; // frames per second
 
 export const nullAgent = (): AgentData => {
     return {
-        "vis-type": -1,
+        visType: -1,
         instanceId: -1,
         type: -1,
         x: 0,
