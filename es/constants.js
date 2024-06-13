@@ -31,7 +31,7 @@ export var DEFAULT_FRAME_RATE = 60; // frames per second
 
 export var nullAgent = function nullAgent() {
   return {
-    "vis-type": -1,
+    visType: -1,
     instanceId: -1,
     type: -1,
     x: 0,

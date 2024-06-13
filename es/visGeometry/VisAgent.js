@@ -24,7 +24,7 @@ var VisAgent = /*#__PURE__*/function () {
       yrot: 0,
       zrot: 0,
       instanceId: NO_AGENT,
-      "vis-type": VisTypes.ID_VIS_TYPE_DEFAULT,
+      visType: VisTypes.ID_VIS_TYPE_DEFAULT,
       type: 0,
       cr: 1.0,
       subpoints: []
@@ -55,7 +55,7 @@ var VisAgent = /*#__PURE__*/function () {
         yrot: 0,
         zrot: 0,
         instanceId: NO_AGENT,
-        "vis-type": VisTypes.ID_VIS_TYPE_DEFAULT,
+        visType: VisTypes.ID_VIS_TYPE_DEFAULT,
         type: 0,
         cr: 1.0,
         subpoints: []
@@ -149,7 +149,7 @@ var VisAgent = /*#__PURE__*/function () {
     key: "getFollowPosition",
     value: function getFollowPosition() {
       var pos = new Vector3(this.agentData.x, this.agentData.y, this.agentData.z);
-      if (this.agentData["vis-type"] === VisTypes.ID_VIS_TYPE_FIBER && this.fiberCurve) {
+      if (this.agentData.visType === VisTypes.ID_VIS_TYPE_FIBER && this.fiberCurve) {
         return this.fiberCurve.getPoint(0.5).add(pos);
       } else {
         return pos;

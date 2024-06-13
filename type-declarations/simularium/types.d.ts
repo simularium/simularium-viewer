@@ -140,7 +140,7 @@ export interface AgentData {
     yrot: number;
     zrot: number;
     instanceId: number;
-    ["vis-type"]: number;
+    visType: number;
     type: number;
     cr: number;
     subpoints: number[];

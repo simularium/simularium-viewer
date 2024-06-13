@@ -327,7 +327,6 @@ var VisData = /*#__PURE__*/function () {
       var parsedAgentData = [];
       var j = AGENTS_OFFSET;
       for (var i = 0; i < expectedNumAgents; i++) {
-        //TODO use visType in AgentData and convert from "vis-type" here at parse time
         var agentData = nullAgent();
         for (var k = 0; k < AGENT_OBJECT_KEYS.length; ++k) {
           agentData[AGENT_OBJECT_KEYS[k]] = floatView[j++];

@@ -1322,7 +1322,7 @@ var VisGeometry = /*#__PURE__*/function () {
         visAgent.hideAndDeactivate();
       }
       agents.forEach(function (agentData) {
-        var visType = agentData["vis-type"];
+        var visType = agentData.visType;
         var instanceId = agentData.instanceId;
         var typeId = agentData.type;
         lastx = agentData.x;
