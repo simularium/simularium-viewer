@@ -8,7 +8,7 @@ import type {
     SelectionStateInfo,
     SelectionEntry,
 } from "../../type-declarations";
-import { TrajectoryType } from "../../src/constants";
+import { nullAgent, TrajectoryType } from "../../src/constants";
 import SimulariumViewer, {
     SimulariumController,
     RenderStyle,
@@ -33,6 +33,7 @@ import SimulariumViewer, {
 //     ErrorLevel,
 // } from "../es";
 import "../../style/style.css";
+import { AgentData } from "../../type-declarations/simularium/types";
 import PointSimulator from "./simulators/PointSimulator";
 import BindingSimulator from "./simulators/BindingSimulator2D";
 import PointSimulatorLive from "./simulators/PointSimulatorLive";
@@ -51,6 +52,7 @@ import {
 } from "./api-settings";
 import ConversionForm from "./ConversionForm";
 import MetaballSimulator from "./simulators/MetaballSimulator";
+import AgentMetadata from "./AgentMetadata";
 
 let playbackFile = "TEST_LIVEMODE_API";
 let queryStringFile = "";
@@ -110,6 +112,7 @@ interface ViewerState {
     trajectoryTitle: string;
     initialPlay: boolean;
     firstFrameTime: number;
+    followObjectData: AgentData;
 }
 
 interface BaseType {
@@ -138,7 +141,6 @@ interface CustomType {
 
 interface InputParams {
     localBackendServer: boolean;
-    useOctopus: boolean;
 }
 
 const simulariumController = new SimulariumController({});
@@ -173,6 +175,7 @@ const initialState: ViewerState = {
     trajectoryTitle: "",
     initialPlay: true,
     firstFrameTime: 0,
+    followObjectData: nullAgent(),
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
@@ -197,22 +200,11 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             this.netConnectionSettings = {
                 serverIp: "0.0.0.0",
                 serverPort: 8765,
-                useOctopus: props.useOctopus,
-                secureConnection: props.useOctopus,
-            };
-        } else if (props.useOctopus) {
-            this.netConnectionSettings = {
-                serverIp: "staging-simularium-ecs.allencell.org",
-                serverPort: 443,
-                useOctopus: true,
-                secureConnection: true,
             };
         } else {
             this.netConnectionSettings = {
-                serverIp: "staging-node1-agentviz-backend.cellexplore.net",
-                serverPort: 9002,
-                secureConnection: true,
-                useOctopus: false,
+                serverIp: "staging-simularium-ecs.allencell.org",
+                serverPort: 443,
             };
         }
     }
@@ -398,16 +390,21 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
         const fileName = uuidv4() + ".simularium";
         simulariumController
-            .convertTrajectory(this.netConnectionSettings, obj, fileType, fileName)
+            .convertTrajectory(
+                this.netConnectionSettings,
+                obj,
+                fileType,
+                fileName
+            )
             .then(() => {
                 this.clearPendingFile();
             })
             .then(() => {
                 simulariumController.changeFile(
-                    { netConnectionSettings: this.netConnectionSettings, },
+                    { netConnectionSettings: this.netConnectionSettings },
                     fileName,
-                    true,
-                )
+                    true
+                );
             })
             .catch((err) => {
                 console.error(err);
@@ -422,7 +419,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         const simulariumFile = fileName.includes(".simularium")
             ? trajectoryFile
             : null;
-        this.setState({ initialPlay: true})
+        this.setState({ initialPlay: true });
         return simulariumController
             .handleFileChange(simulariumFile, fileName, geoAssets)
             .catch(console.log);
@@ -719,6 +716,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         this.setState({ isRecordingEnabled: value });
     };
 
+    public handleFollowObjectData = (agentData: AgentData) => {
+        this.setState({ followObjectData: agentData });
+    };
+
     public render(): JSX.Element {
         if (this.state.filePending) {
             const fileType = this.state.filePending.type;
@@ -1006,6 +1007,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         }
                     />
                 )}
+                <AgentMetadata agentData={this.state.followObjectData} />
                 <div className="viewer-container">
                     <SimulariumViewer
                         ref={this.viewerRef}
@@ -1029,6 +1031,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                                 ? this.onRecordedMovie
                                 : undefined
                         }
+                        onFollowObjectChanged={this.handleFollowObjectData.bind(
+                            this
+                        )}
                         loadInitialData={true}
                         agentColors={this.state.agentColors}
                         showPaths={this.state.showPaths}
