@@ -6,4 +6,4 @@ export declare const enum TrajectoryType {
     SMOLDYN = "Smoldyn"
 }
 export declare const DEFAULT_FRAME_RATE = 60;
-export declare const NULL_AGENT: AgentData;
+export declare const nullAgent: () => AgentData;

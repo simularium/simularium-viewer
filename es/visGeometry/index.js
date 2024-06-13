@@ -19,7 +19,7 @@ import VisAgent from "./VisAgent";
 import VisTypes from "../simularium/VisTypes";
 import AgentPath from "./agentPath";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
-import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC, NULL_AGENT } from "../constants";
+import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC, nullAgent } from "../constants";
 import SimulariumRenderer from "./rendering/SimulariumRenderer";
 import { InstancedFiberGroup } from "./rendering/InstancedFiber";
 import { LegacyRenderer } from "./rendering/LegacyRenderer";
@@ -617,7 +617,7 @@ var VisGeometry = /*#__PURE__*/function () {
     value: function getObjectData(id) {
       var data = this.visAgentInstances.get(id);
       if (!data) {
-        return NULL_AGENT;
+        return nullAgent();
       }
       return data.agentData;
     }

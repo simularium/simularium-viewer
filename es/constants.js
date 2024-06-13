@@ -29,16 +29,18 @@ export var TrajectoryType = /*#__PURE__*/function (TrajectoryType) {
 }({});
 export var DEFAULT_FRAME_RATE = 60; // frames per second
 
-export var NULL_AGENT = {
-  "vis-type": -1,
-  instanceId: -1,
-  type: -1,
-  x: 0,
-  y: 0,
-  z: 0,
-  xrot: 0,
-  yrot: 0,
-  zrot: 0,
-  cr: 0,
-  subpoints: []
+export var nullAgent = function nullAgent() {
+  return {
+    "vis-type": -1,
+    instanceId: -1,
+    type: -1,
+    x: 0,
+    y: 0,
+    z: 0,
+    xrot: 0,
+    yrot: 0,
+    zrot: 0,
+    cr: 0,
+    subpoints: []
+  };
 };
