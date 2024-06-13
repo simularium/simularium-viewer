@@ -41,7 +41,7 @@ import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
 import {
     DEFAULT_CAMERA_Z_POSITION,
     DEFAULT_CAMERA_SPEC,
-    createNullAgent,
+    nullAgent,
 } from "../constants";
 import {
     AgentData,
@@ -653,7 +653,7 @@ class VisGeometry {
     public getObjectData(id: number): AgentData {
         const data = this.visAgentInstances.get(id);
         if (!data) {
-            return createNullAgent();
+            return nullAgent();
         }
         return data.agentData;
     }
