@@ -1,4 +1,4 @@
-import { create, difference } from "lodash";
+import { difference } from "lodash";
 
 import { compareTimes } from "../util";
 
