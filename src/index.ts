@@ -28,5 +28,6 @@ export {
 } from "./simularium";
 export { compareTimes, loadSimulariumFile } from "./util";
 export { DEFAULT_CAMERA_SPEC } from "./constants";
+export { AgentData } from "./simularium/types";
 
 export default Viewport;

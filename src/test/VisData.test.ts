@@ -47,7 +47,7 @@ const parsedData = [
             subpoints: [],
             type: 7,
             instanceId: 0,
-            "vis-type": 1000,
+            visType: 1000,
             x: 1,
             xrot: 0,
             y: 1,
@@ -63,7 +63,7 @@ const parsedData = [
             subpoints: [],
             type: 7,
             instanceId: 0,
-            "vis-type": 1000,
+            visType: 1000,
             x: 2,
             xrot: 0,
             y: 2,
@@ -79,7 +79,7 @@ const parsedData = [
             subpoints: [],
             type: 7,
             instanceId: 0,
-            "vis-type": 1000,
+            visType: 1000,
             x: 3,
             xrot: 0,
             y: 3,
@@ -95,7 +95,7 @@ const parsedData = [
             subpoints: [],
             type: 7,
             instanceId: 0,
-            "vis-type": 1000,
+            visType: 1000,
             x: 4,
             xrot: 0,
             y: 4,
@@ -111,7 +111,7 @@ const parsedData = [
             subpoints: [],
             type: 7,
             instanceId: 0,
-            "vis-type": 1000,
+            visType: 1000,
             x: 5,
             xrot: 0,
             y: 5,
@@ -126,7 +126,7 @@ describe("VisData module", () => {
     describe("VisData parse", () => {
         test("it returns an array of objects of agent data and time stamp data", () => {
             const testData = [
-                10, //"vis-type",
+                10, //"visType",
                 15, //"instanceId",
                 20, //"type",
                 30, //"x",
@@ -166,7 +166,7 @@ describe("VisData module", () => {
                         subpoints: [60, 61, 62], //"subpoint-1", "subpoint-2", "subpoint-3"],
                         type: 20, //"type",
                         instanceId: 15, //"instanceId",
-                        "vis-type": 10, //"vis-type",
+                        visType: 10, //"visType",
                         x: 30, //"x",
                         xrot: 40, //"xrot",
                         y: 31, //"y",
@@ -179,7 +179,7 @@ describe("VisData module", () => {
         });
         test("it throws an error if number of supoints does not match the nSubpoints value", () => {
             const tooShort = [
-                10, //"vis-type",
+                10, //"visType",
                 15, //"instanceId",
                 20, //"type",
                 30, //"x",
@@ -209,7 +209,7 @@ describe("VisData module", () => {
                 fileName: "",
             };
             const tooLong = [
-                10, //"vis-type",
+                10, //"visType",
                 15, //"instanceId",
                 20, //"type",
                 30, //"x",
@@ -272,7 +272,7 @@ describe("VisData module", () => {
                     subpoints: [],
                     type: 7,
                     instanceId: 0,
-                    "vis-type": 1000,
+                    visType: 1000,
                     x: 1,
                     xrot: 0,
                     y: 1,

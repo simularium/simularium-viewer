@@ -154,8 +154,7 @@ export interface FileReturn {
 
 // IMPORTANT: Order of this array needs to perfectly match the incoming data.
 export const AGENT_OBJECT_KEYS = [
-    // TODO: convert "vis-type" to visType at parse time
-    "vis-type",
+    "visType",
     "instanceId",
     "type",
     "x",
@@ -179,7 +178,7 @@ export interface AgentData {
     yrot: number;
     zrot: number;
     instanceId: number;
-    ["vis-type"]: number;
+    visType: number;
     type: number;
     cr: number;
     subpoints: number[];
