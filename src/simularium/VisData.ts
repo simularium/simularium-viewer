@@ -220,14 +220,14 @@ class VisData {
         this.lockedForFrame = true;
     }
 
-    public setMaxCacheLength(cacheLength: number | undefined): void {
-        if (cacheLength === undefined || cacheLength < 0) {
-            this.maxCacheLength = -1;
-            return;
-        }
-        // cache must have at least one frame
-        this.maxCacheLength = cacheLength > 0 ? cacheLength : 1;
-    }
+    // public setMaxCacheLength(cacheLength: number | undefined): void {
+    //     if (cacheLength === undefined || cacheLength < 0) {
+    //         this.maxCacheLength = -1;
+    //         return;
+    //     }
+    //     // cache must have at least one frame
+    //     this.maxCacheLength = cacheLength > 0 ? cacheLength : 1;
+    // }
 
     public clearCache(): void {
         this.frameCache = [];

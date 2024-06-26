@@ -127,9 +127,9 @@ class Viewport extends React.Component<
         this.handleTimeChange = this.handleTimeChange.bind(this);
 
         this.visGeometry = new VisGeometry(loggerLevel);
-        this.props.simulariumController.visData.setMaxCacheLength(
-            this.props.maxCacheLength
-        );
+        // this.props.simulariumController.visData.setMaxCacheLength(
+        //     this.props.maxCacheLength
+        // );
         this.props.simulariumController.visData.clearCache();
         this.props.simulariumController.visData.setCacheEnabled(
             !this.props.disableCache
