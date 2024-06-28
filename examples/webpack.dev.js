@@ -28,7 +28,6 @@ module.exports = {
             ],
         }),
         new webpack.DefinePlugin({
-            SIMULARIUM_USE_OCTOPUS: Boolean(process.env.npm_config_octopus),
             SIMULARIUM_USE_LOCAL_BACKEND: Boolean(process.env.npm_config_localserver),
         }),
     ],

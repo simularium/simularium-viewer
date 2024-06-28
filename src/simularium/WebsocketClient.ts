@@ -80,15 +80,12 @@ export const CONNECTION_FAIL_MSG =
 export interface NetConnectionParams {
     serverIp?: string;
     serverPort?: number;
-    secureConnection?: boolean;
-    useOctopus?: boolean;
 }
 
 export class WebsocketClient {
     private webSocket: WebSocket | null;
     private serverIp: string;
     private serverPort: number;
-    private secureConnection: boolean;
     public connectionTimeWaited: number;
     public connectionRetries: number;
     protected jsonMessageHandlers: Map<NetMessageEnum, (NetMessage) => void>;
@@ -114,10 +111,6 @@ export class WebsocketClient {
         >();
         this.serverIp = opts && opts.serverIp ? opts.serverIp : "localhost";
         this.serverPort = opts && opts.serverPort ? opts.serverPort : 9002;
-        this.secureConnection =
-            opts && opts.secureConnection !== undefined
-                ? opts.secureConnection
-                : true;
         this.connectionTimeWaited = 0;
         this.connectionRetries = 0;
         this.handleError =
@@ -260,9 +253,7 @@ export class WebsocketClient {
     }
 
     public getIp(): string {
-        return `${this.secureConnection ? "wss" : "ws"}://${this.serverIp}:${
-            this.serverPort
-        }/`;
+        return `wss://${this.serverIp}:${this.serverPort}/`;
     }
 
     public async waitForWebSocket(timeout: number): Promise<boolean> {
