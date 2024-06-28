@@ -15,10 +15,15 @@ import {
 import { AgentData, TrajectoryFileInfoAny } from "../simularium/types";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
-import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry";
+import {
+    RenderStyle,
+    VisGeometry,
+    NO_AGENT,
+} from "../visGeometry";
 import { ColorChange } from "../simularium/SelectionInterface";
 import FrameRecorder from "../simularium/FrameRecorder";
 import { DEFAULT_FRAME_RATE } from "../constants";
+import { ColorSetting } from "../visGeometry/types";
 
 export type PropColor = string | number | [number, number, number];
 
@@ -35,7 +40,10 @@ type ViewportProps = {
     onTrajectoryFileInfoChanged: (
         cachedData: TrajectoryFileInfo
     ) => void | undefined;
-    onUIDisplayDataChanged: (data: UIDisplayData) => void | undefined;
+    onUIDisplayDataChanged: (
+        data: UIDisplayData,
+        setDefault?: boolean
+    ) => void | undefined;
     loadInitialData: boolean;
     hideAllAgents: boolean;
     showPaths: boolean;
@@ -47,6 +55,7 @@ type ViewportProps = {
     onRecordedMovie?: (blob: Blob) => void; // providing this callback enables movie recording
     disableCache?: boolean;
     onFollowObjectChanged?: (agentData: AgentData) => void; // passes agent data about the followed agent to the front end
+    sessionUIData?: UIDisplayData;
 } & Partial<DefaultProps>;
 
 const defaultProps = {
@@ -175,6 +184,7 @@ class Viewport extends React.Component<
             onUIDisplayDataChanged,
             onError,
             agentColors,
+            sessionUIData,
         } = this.props;
 
         // Update TrajectoryFileInfo format to latest version
@@ -231,8 +241,13 @@ class Viewport extends React.Component<
         if (!isEqual(updatedColors, agentColors)) {
             this.visGeometry.createMaterials(updatedColors);
         }
-
-        onUIDisplayDataChanged(this.selectionInterface.getUIDisplayData());
+        onUIDisplayDataChanged(
+            this.selectionInterface.getUIDisplayData(),
+            /* set default UI Data: */ true
+        );
+        if (sessionUIData) {
+            this.handleColorSettings(sessionUIData);
+        }
     }
 
     public componentDidMount(): void {
@@ -272,6 +287,10 @@ class Viewport extends React.Component<
         };
         simulariumController.startRecording = this.startRecording.bind(this);
         simulariumController.stopRecording = this.stopRecording.bind(this);
+        simulariumController.handleColorSettings =
+            this.handleColorSettings.bind(this);
+        simulariumController.handleColorChange =
+            this.handleColorChange.bind(this);
 
         if (this.vdomRef.current) {
             this.vdomRef.current.addEventListener(
@@ -339,15 +358,6 @@ class Viewport extends React.Component<
                 const hiddenIds =
                     this.selectionInterface.getHiddenIds(selectionStateInfo);
                 this.visGeometry.setVisibleByIds(hiddenIds);
-            }
-            if (
-                !isEqual(
-                    selectionStateInfo.colorChange,
-                    prevProps.selectionStateInfo.colorChange
-                ) &&
-                selectionStateInfo.colorChange !== null
-            ) {
-                this.changeAgentsColor(selectionStateInfo.colorChange);
             }
         }
 
@@ -596,12 +606,31 @@ class Viewport extends React.Component<
         }
     }
 
-    public changeAgentsColor(colorChange: ColorChange): void {
-        const { agent, color } = colorChange;
-        const agentIds = this.selectionInterface.getAgentIdsByNamesAndTags([
-            agent,
-        ]);
-        this.visGeometry.applyColorToAgents(agentIds, color);
+    public changeAgentsColor(colorSettings: ColorSetting[]): void {
+        const { onUIDisplayDataChanged } = this.props;
+        colorSettings.forEach((setting) => {
+            this.visGeometry.applyColorToAgents(setting);
+            this.selectionInterface.updateAgentColors(setting);
+        });
+        onUIDisplayDataChanged(this.selectionInterface.getUIDisplayData());
+    }
+
+    public handleColorChange(colorChange: ColorChange): void {
+        const colorSetting = {
+            agentIds: this.selectionInterface.getAgentIdsByNamesAndTags([
+                colorChange.agent,
+            ]),
+            color: colorChange.color,
+        };
+        this.changeAgentsColor([colorSetting]);
+    }
+
+    private handleColorSettings(newData: UIDisplayData): void {
+        const oldData = this.selectionInterface.getUIDisplayData();
+        if (isEqual(oldData, newData)) return;
+        const colorSettings =
+            this.selectionInterface.deriveColorSettingsFromUIData(newData);
+        this.changeAgentsColor(colorSettings);
     }
 
     public stopAnimate(): void {

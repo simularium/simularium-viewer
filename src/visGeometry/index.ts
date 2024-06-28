@@ -58,6 +58,7 @@ import { LegacyRenderer } from "./rendering/LegacyRenderer";
 import GeometryStore from "./GeometryStore";
 import {
     AgentGeometry,
+    ColorSetting,
     GeometryDisplayType,
     GeometryInstanceContainer,
     MeshGeometry,
@@ -1116,10 +1117,8 @@ class VisGeometry {
         this.setAgentColors();
     }
 
-    public applyColorToAgents(
-        agentIds: number[],
-        color: string | number
-    ): void {
+    public applyColorToAgents(setting: ColorSetting): void {
+        const { agentIds, color } = setting;
         const newColorData = this.colorHandler.setColorForAgentTypes(
             agentIds,
             color
