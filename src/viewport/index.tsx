@@ -610,7 +610,7 @@ class Viewport extends React.Component<
         const { onUIDisplayDataChanged } = this.props;
         colorSettings.forEach((setting) => {
             this.visGeometry.applyColorToAgents(setting);
-            this.selectionInterface.updateAgentColors(setting);
+            this.selectionInterface.updateUiDataColor(setting.agentIds, setting.color, setting.name);
         });
         onUIDisplayDataChanged(this.selectionInterface.getUIDisplayData());
     }
@@ -621,6 +621,7 @@ class Viewport extends React.Component<
                 colorChange.agent,
             ]),
             color: colorChange.color,
+            name: colorChange.agent.name
         };
         this.changeAgentsColor([colorSetting]);
     }

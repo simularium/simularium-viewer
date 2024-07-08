@@ -283,19 +283,31 @@ class SelectionInterface {
         });
     }
 
-    private updateUiDataColor(
-        agentName: string,
+    // to do this is blended version of two functions
+    // could maybe be optimized and typing adjusted/done better
+    public updateUiDataColor(
         idsToUpdate: number[],
-        color: number | string
+        color: number | string,
+        agentName?: string
     ): void {
         const newColor = convertColorNumberToString(color);
-        const entry = this.entries[agentName];
-        // if no display state update parent color
-        entry.forEach((displayState) => {
-            if (idsToUpdate.includes(displayState.id)) {
-                displayState.color = newColor;
-            }
-        });
+        if (agentName !== undefined) {
+            const entry = this.entries[agentName];
+            // if no display state update parent color
+            entry.forEach((displayState) => {
+                if (idsToUpdate.includes(displayState.id)) {
+                    displayState.color = newColor;
+                }
+            });
+        } else {
+            Object.values(this.entries).forEach((entry) => {
+                entry.forEach((displayState) => {
+                    if (idsToUpdate.includes(displayState.id)) {
+                        displayState.color = newColor;
+                    }
+                });
+            });
+        }
     }
 
     public setInitialAgentColors(
@@ -322,9 +334,9 @@ class SelectionInterface {
                     color: colors[defaultColorIndex],
                 });
                 this.updateUiDataColor(
-                    group.name,
                     ids,
-                    colors[defaultColorIndex]
+                    colors[defaultColorIndex],
+                    group.name
                 );
             } else {
                 // otherwise, we need to update any user defined colors
@@ -345,9 +357,9 @@ class SelectionInterface {
                     } else {
                         // need update the display data with the default color being used
                         this.updateUiDataColor(
-                            group.name,
                             [ids[index]],
-                            colors[groupColorIndex]
+                            colors[groupColorIndex],
+                            group.name
                         );
                     }
                     // if the user used all the same colors for all states of this agent,
@@ -383,22 +395,6 @@ class SelectionInterface {
         return colors;
     }
 
-    // when applying color changes or settings, keep entries in sync
-    // it is the SSOT for UiDisplayData
-    public updateAgentColors(setting: ColorSetting): void {
-        const { agentIds, color } = setting;
-        const newColor = convertColorNumberToString(color);
-        agentIds.forEach((id) => {
-            Object.values(this.entries).forEach((entry) => {
-                entry.forEach((displayState) => {
-                    if (displayState.id === id) {
-                        displayState.color = newColor;
-                    }
-                });
-            });
-        });
-    }
-
     // seems like a util
     public deriveColorSettingsFromUIData = (
         uiData: UIDisplayData
@@ -411,6 +407,7 @@ class SelectionInterface {
                     { name: agent.name, tags: [] },
                 ]),
                 color: agent.color,
+                name: agent.name,
             });
             // }
 
@@ -420,6 +417,7 @@ class SelectionInterface {
                         { name: agent.name, tags: [newState.name] },
                     ]),
                     color: newState.color,
+                    name: newState.name,
                 });
             });
         });
