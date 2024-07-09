@@ -192,7 +192,9 @@ class LinkedListCache {
         this.numFrames++;
         // linked list to do: trim cache if necessary
         this.size += data.size;
-        this.trimCache();
+        if (this.size > this.maxSize) {
+            this.trimCache();
+        }
     }
     // addLast method
     public addLast(data: CachedFrame): void {
@@ -211,7 +213,9 @@ class LinkedListCache {
         this.numFrames++;
         // linked list to do: trim cache if necessary
         this.size += data.size;
-        this.trimCache();
+        if (this.size > this.maxSize) {
+            this.trimCache();
+        }
     }
     // remove method
     public remove(node: LinkedListNode): void {
@@ -250,9 +254,11 @@ class LinkedListCache {
 
     // Helper method to trim the cache if it exceeds the max size
     private trimCache(): void {
+        console.log("trimming cache");
         while (this.size > this.maxSize && this.tail) {
             this.removeFirst();
         }
+        console.log("cache size: ", this.size, "numFrames: ", this.numFrames);
     }
 
     public clear(): void {
@@ -357,7 +363,7 @@ class VisData {
         if (util.ThreadUtil.browserSupportsWebWorkers()) {
             this.setupWebWorker();
         } // linked list to do work on cache trimming
-        this.linkedListCache = new LinkedListCache(100000000000); // prop is a max size
+        this.linkedListCache = new LinkedListCache(1000000); // prop is a max size
         this.currentCacheFrame = -1; // linked list to do should this be 0?
         this.enableCache = true;
         this.maxCacheSize = 10000000; // todo define defaults / constants for different browser environments
