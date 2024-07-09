@@ -133,21 +133,12 @@ class LinkedListCache {
         return this.tail ? this.tail.data : null;
     }
 
+    // linked list to do check if this is working well
     public getLastFrameNumber(): number {
         if (this.tail && this.tail.data.frameData) {
-            console.log(
-                "animate getLastFrameNumber tail and tail.data.frameData are true returning frame number, tail",
-                this.tail,
-                "head",
-                this.head,
-                "this.tail.data.frameData.frameNumber",
-                this.tail.data.frameData.frameNumber
-            );
             return this.tail.data.frameData.frameNumber;
         }
-        console.log("animate getLastFrameNumber returning -1");
         return -1;
-        // return this.tail ? this.tail.data.frameData.frameNumber : -1;
     }
 
     public getLastFrameTime(): number {
@@ -427,7 +418,7 @@ class VisData {
 
         const frameNumber =
             this.linkedListCache.getFrameAtTime(time)?.frameData.frameNumber;
-
+        console.log("gotoTime frameNumber: ", frameNumber);
         if (frameNumber !== undefined) {
             this.currentCacheFrame = frameNumber;
         }
@@ -461,15 +452,9 @@ class VisData {
         );
     }
 
+    // linked list to do is this sufficient?
     public gotoNextFrame(): void {
-        console.log(
-            "animate in vis data gotoNextFrame, currentCacheFrame: ",
-            this.currentCacheFrame,
-            "atLatestFrame: ",
-            this.atLatestFrame()
-        );
         if (!this.atLatestFrame()) {
-            console.log("animate incrementing currentCacheFrame");
             this.currentCacheFrame += 1;
         }
     }
