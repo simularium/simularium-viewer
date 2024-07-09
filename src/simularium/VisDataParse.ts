@@ -6,6 +6,7 @@ import {
 } from "./types";
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
 import { calculateCachedSize } from "../util";
+import { CachedFrame } from "./VisData";
 
 interface ParsedBundle {
     frameDataArray: FrameData[];
@@ -40,9 +41,12 @@ interface ParsedBundle {
  *   of the application, since network latency is a major bottle-neck)
  * */
 
-function parseVisDataMessage(visDataMsg: VisDataMessage): ParsedBundle {
-    const parsedAgentDataArray: AgentData[][] = [];
-    const frameDataArray: FrameData[] = [];
+function parseVisDataMessage(visDataMsg: VisDataMessage): CachedFrame {
+    const cachedFrame: CachedFrame = {
+        agentData: [],
+        frameData: { frameNumber: 0, time: 0 },
+        size: 0,
+    };
     visDataMsg.bundleData.forEach((frame) => {
         const visData = frame.data;
         const parsedAgentData: AgentData[] = [];
@@ -107,20 +111,13 @@ function parseVisDataMessage(visDataMsg: VisDataMessage): ParsedBundle {
             frameNumber: frame.frameNumber,
         };
 
-        parsedAgentDataArray.push(parsedAgentData);
-        frameDataArray.push(frameData);
+        const cachedSize = calculateCachedSize(parsedAgentData);
+        cachedFrame.agentData = parsedAgentData;
+        cachedFrame.frameData = frameData;
+
+        cachedFrame.size = cachedSize;
     });
-
-    const cachedSize = calculateCachedSize(
-        parsedAgentDataArray,
-        frameDataArray
-    );
-
-    return {
-        parsedAgentDataArray,
-        frameDataArray,
-        cachedSize,
-    };
+    return cachedFrame;
 }
 
 export { parseVisDataMessage };

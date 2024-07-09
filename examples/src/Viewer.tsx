@@ -1041,7 +1041,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         backgroundColor={[0, 0, 0]}
                         lockedCamera={false}
                         disableCache={false}
-                        maxCacheLength={2000}
+                        // maxCacheLength={2000} // linked list to do test cache trimming
                     />
                 </div>
             </div>

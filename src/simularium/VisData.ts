@@ -1,6 +1,6 @@
 import { difference } from "lodash";
 
-import { calculateCachedSize, compareTimes } from "../util";
+import { calculateCachedSize } from "../util";
 
 import * as util from "./ThreadUtil";
 import {
@@ -12,36 +12,306 @@ import {
     VisDataMessage,
 } from "./types";
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
-import type { ParsedBundle } from "./VisDataParse";
 import { parseVisDataMessage } from "./VisDataParse";
 import { nullAgent } from "../constants";
 
-interface CacheFrameSizes {
-    bytes: number;
-    frameOffset: number;
+export interface CachedFrame {
+    agentData: AgentData[];
+    frameData: FrameData;
+    size: number;
+}
+
+interface LinkedListNode {
+    data: CachedFrame;
+    next: LinkedListNode | null;
+    prev: LinkedListNode | null;
+}
+
+class LinkedListCache {
+    public head: LinkedListNode | null;
+    public tail: LinkedListNode | null;
+    public numFrames: number;
+    public size: number;
+    public maxSize: number;
+    public cacheEnabled: boolean;
+
+    public constructor(maxSize: number, cacheEnabled = true) {
+        this.head = null;
+        this.tail = null;
+        this.numFrames = 0;
+        this.size = 0;
+        this.maxSize = maxSize;
+        this.cacheEnabled = cacheEnabled;
+    }
+
+    public walkList(cb: (arg: any) => void): void {
+        let currentNode = this.head;
+        while (currentNode) {
+            cb(currentNode);
+            currentNode = currentNode.next;
+        }
+    }
+
+    public length(): number {
+        return this.numFrames;
+    }
+
+    public isEmpty(): boolean {
+        return this.numFrames === 0 && this.head === null && this.tail === null;
+    }
+
+    public hasFrames(): boolean {
+        return this.numFrames > 0 && this.head !== null;
+    }
+    // contains method
+    public containsFrame(frameNumber: number): boolean {
+        let currentNode = this.head;
+        while (currentNode) {
+            if (currentNode.data.frameData.frameNumber === frameNumber) {
+                return true;
+            }
+            currentNode = currentNode.next;
+        }
+        return false;
+    }
+
+    public containsTime(time: number): boolean {
+        let currentNode = this.head;
+        // linked list to do
+        // make this more performant by first checking if time is between the head time and tail time
+        // then either just return true
+        // or do the while loop to be certain
+        while (currentNode) {
+            if (currentNode.data.frameData.time === time) {
+                return true;
+            }
+            currentNode = currentNode.next;
+        }
+        return false;
+    }
+    public getFrameAtTime(time: number): CachedFrame | null {
+        let currentNode = this.head;
+        while (currentNode) {
+            if (currentNode.data.frameData.time === time) {
+                return currentNode.data;
+            }
+            currentNode = currentNode.next;
+        }
+        return null;
+    }
+    // get method (by frame number)
+    // getFirst method
+    public getFirst(): CachedFrame | null {
+        console.log("in cache getFirst, this.head", this.head);
+        console.log("in cache getFirst, this.head.data", this.head?.data);
+        return this.head ? this.head.data : null;
+    }
+
+    public getFirstFrameNumber(): number {
+        return this.head ? this.head.data.frameData.frameNumber : -1;
+    }
+
+    public getFirstFrameTime(): number {
+        return this.head ? this.head.data.frameData.time : -1;
+    }
+
+    public getFrameAtFrameNumber(frameNumber: number): CachedFrame | null {
+        let currentNode = this.head;
+        while (currentNode) {
+            if (currentNode.data.frameData?.frameNumber !== undefined) {
+                if (currentNode.data.frameData.frameNumber == frameNumber) {
+                    return currentNode.data;
+                }
+            }
+            currentNode = currentNode.next;
+        }
+        return null;
+    }
+
+    // getLast method
+    public getLast(): CachedFrame | null {
+        return this.tail ? this.tail.data : null;
+    }
+
+    public getLastFrameNumber(): number {
+        if (this.tail && this.tail.data.frameData) {
+            console.log(
+                "animate getLastFrameNumber tail and tail.data.frameData are true returning frame number, tail",
+                this.tail,
+                "head",
+                this.head,
+                "this.tail.data.frameData.frameNumber",
+                this.tail.data.frameData.frameNumber
+            );
+            return this.tail.data.frameData.frameNumber;
+        }
+        console.log("animate getLastFrameNumber returning -1");
+        return -1;
+        // return this.tail ? this.tail.data.frameData.frameNumber : -1;
+    }
+
+    public getLastFrameTime(): number {
+        return this.tail ? this.tail.data.frameData.time : -1;
+    }
+
+    // addNode method
+    // if !this.enableCache, the argument is the only node in the cache
+    // if this.enableCache, the argument is added to the end of the cache
+    // if there is no head, the argument is the head and tail
+    // if there is a head, the argument is added to the end of the cache
+    public addFrame(data: CachedFrame): void {
+        // if cache is diabled
+        // or there is no head
+        // or the incoming frame is frame 0
+        // clear
+        // add first
+
+        // otherwise
+        // add last
+        // can we assume that there is a head?
+        console.log("in cache addFrame, data: ", data);
+        if (
+            !this.cacheEnabled ||
+            !this.head ||
+            data.frameData.frameNumber === 0
+        ) {
+            this.clear();
+            this.addFirst(data);
+        } else {
+            this.addLast(data);
+        }
+        // if (!this.cacheEnabled) {
+        //     this.replaceWithSingle(data);
+        // } else {
+        //     if (!this.head) {
+        //         this.addFirst(data);
+        //     } else {
+        //         this.addLast(data);
+        //     }
+        // }
+    }
+
+    // addFirst method
+    public addFirst(data: CachedFrame): void {
+        const newNode: LinkedListNode = {
+            data,
+            next: this.head,
+            prev: null,
+        };
+        if (this.head) {
+            this.head.prev = newNode;
+        }
+        this.head = newNode;
+        if (!this.tail) {
+            this.tail = newNode;
+        }
+        this.numFrames++;
+        // linked list to do: trim cache if necessary
+        this.size += data.size;
+        this.trimCache();
+    }
+    // addLast method
+    public addLast(data: CachedFrame): void {
+        const newNode: LinkedListNode = {
+            data,
+            next: null,
+            prev: this.tail,
+        };
+        if (this.tail) {
+            this.tail.next = newNode;
+        }
+        this.tail = newNode;
+        if (!this.head) {
+            this.head = newNode;
+        }
+        this.numFrames++;
+        // linked list to do: trim cache if necessary
+        this.size += data.size;
+        this.trimCache();
+    }
+    // remove method
+    public remove(node: LinkedListNode): void {
+        if (node.prev) {
+            node.prev.next = node.next;
+        } else {
+            this.head = node.next;
+        }
+        if (node.next) {
+            node.next.prev = node.prev;
+        } else {
+            this.tail = node.prev;
+        }
+        this.numFrames--;
+        this.size -= node.data.size;
+    }
+    // removeFirst method
+    public removeFirst(): CachedFrame | null {
+        if (!this.head) {
+            return null;
+        }
+        const data = this.head.data;
+        this.remove(this.head);
+        return data;
+    }
+    // removeLast method
+    public removeLast(): CachedFrame | null {
+        if (!this.tail) {
+            return null;
+        }
+        const data = this.tail.data;
+        this.remove(this.tail);
+        return data;
+    }
+    // indexOf method
+
+    // Helper method to trim the cache if it exceeds the max size
+    private trimCache(): void {
+        while (this.size > this.maxSize && this.tail) {
+            this.removeFirst();
+        }
+    }
+
+    public clear(): void {
+        this.head = null;
+        this.tail = null;
+        this.numFrames = 0;
+        this.size = 0;
+    }
+
+    // Method to replace existing cache contents with a single CachedData element
+    public replaceWithSingle(data: CachedFrame): void {
+        // Clear the cache
+        this.head = null;
+        this.tail = null;
+        this.numFrames = 0;
+        this.size = 0;
+
+        // Add the new data as the only element in the cache
+        this.addFirst(data);
+    }
 }
 
 class VisData {
-    private frameCache: AgentData[][];
-    private frameDataCache: FrameData[];
+    private linkedListCache: LinkedListCache;
     private enableCache: boolean;
-    private cacheSize: number;
-    private cacheFrameSizes: CacheFrameSizes[];
     private maxCacheSize: number;
     private webWorker: Worker | null;
 
     private frameToWaitFor: number;
     private lockedForFrame: boolean;
-    private cacheFrame: number;
-
+    // private cacheFrame: number; // to do linked list would this make more sense as current frame?
+    private currentCacheFrame: number;
     // eslint-disable-next-line @typescript-eslint/naming-convention
     private _dragAndDropFileInfo: TrajectoryFileInfo | null;
 
     public timeStepSize: number;
 
-    private static parseOneBinaryFrame(data: ArrayBuffer): ParsedBundle {
-        const parsedAgentDataArray: AgentData[][] = [];
-        const frameDataArray: FrameData[] = [];
+    private static parseOneBinaryFrame(data: ArrayBuffer): CachedFrame {
+        const cachedFrame: CachedFrame = {
+            agentData: [],
+            frameData: { frameNumber: 0, time: 0 },
+            size: 0,
+        };
         const floatView = new Float32Array(data);
         const intView = new Uint32Array(data);
         const parsedFrameData = {
@@ -49,7 +319,6 @@ class VisData {
             frameNumber: floatView[0],
         };
         const expectedNumAgents = intView[2];
-        frameDataArray.push(parsedFrameData);
 
         const AGENTS_OFFSET = 3;
 
@@ -76,18 +345,15 @@ class VisData {
             }
             parsedAgentData.push(agentData);
         }
-        parsedAgentDataArray.push(parsedAgentData);
 
-        const cachedSize = calculateCachedSize(
-            parsedAgentDataArray,
-            frameDataArray
-        );
+        // linked list to do: don't use the extra array wrappers anymore
+        const cachedSize = calculateCachedSize(parsedAgentData);
+        // linked list to do: is this efficient?
+        cachedFrame.agentData = parsedAgentData;
+        cachedFrame.frameData = parsedFrameData;
+        cachedFrame.size = cachedSize;
 
-        return {
-            parsedAgentDataArray,
-            frameDataArray,
-            cachedSize,
-        };
+        return cachedFrame;
     }
 
     private setupWebWorker() {
@@ -95,22 +361,10 @@ class VisData {
             new URL("../visGeometry/workers/visDataWorker", import.meta.url),
             { type: "module" }
         );
-
-        // event.data is of type ParsedBundle
+        // linked list version
+        // linked list to do make sure event is of type CachedData
         this.webWorker.onmessage = (event) => {
-            if (!this.enableCache) {
-                this.frameDataCache = [...event.data.frameDataArray];
-                this.frameCache = [...event.data.parsedAgentDataArray];
-                return;
-            }
-            Array.prototype.push.apply(
-                this.frameDataCache,
-                event.data.frameDataArray
-            );
-            Array.prototype.push.apply(
-                this.frameCache,
-                event.data.parsedAgentDataArray
-            );
+            this.linkedListCache.addFrame(event.data);
         };
     }
 
@@ -118,14 +372,10 @@ class VisData {
         this.webWorker = null;
         if (util.ThreadUtil.browserSupportsWebWorkers()) {
             this.setupWebWorker();
-        }
-        this.frameCache = [];
-        this.frameDataCache = [];
-        this.cacheFrame = -1;
+        } // linked list to do work on cache trimming
+        this.linkedListCache = new LinkedListCache(100000000000); // prop is a max size
+        this.currentCacheFrame = -1; // linked list to do should this be 0?
         this.enableCache = true;
-        this.cacheSize = 0;
-        this.cacheFrameSizes = [];
-        this.cacheFrame = -1;
         this.maxCacheSize = 10000000; // todo define defaults / constants for different browser environments
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
@@ -133,82 +383,94 @@ class VisData {
         this.timeStepSize = 0;
     }
 
-    //get time() { return this.cacheFrame < this.frameDataCache.length ? this.frameDataCache[this.cacheFrame] : -1 }
+    // linked list version
+    // to do linked list this is a mess
     public get currentFrameData(): FrameData {
-        if (this.frameDataCache.length > 0) {
-            if (this.cacheFrame < 0) {
-                return this.frameDataCache[0];
-            } else if (this.cacheFrame >= this.frameDataCache.length) {
-                return this.frameDataCache[this.frameDataCache.length - 1];
+        let currentData: CachedFrame | null = null;
+        if (
+            this.linkedListCache.hasFrames() &&
+            this.linkedListCache.head !== null
+        ) {
+            // to do linked list hasFrames() should be doing the null check
+            if (this.currentCacheFrame < 0) {
+                return { frameNumber: 0, time: 0 };
+            } else if (
+                this.currentCacheFrame >=
+                this.linkedListCache.getLastFrameNumber()
+            ) {
+                if (this.linkedListCache.tail) {
+                    currentData = this.linkedListCache.getLast();
+                }
             } else {
-                return this.frameDataCache[this.cacheFrame];
+                currentData = this.linkedListCache.getFrameAtFrameNumber(
+                    this.currentCacheFrame
+                );
             }
         }
-
-        return { frameNumber: 0, time: 0 };
+        return currentData !== null
+            ? currentData.frameData
+            : { frameNumber: 0, time: 0 };
     }
 
     /**
      *   Functions to check update
      * */
     public hasLocalCacheForTime(time: number): boolean {
-        // TODO: debug compareTimes
         if (!this.enableCache) {
             return false;
         }
-        if (this.frameDataCache.length < 1) {
-            return false;
-        }
-
-        const firstFrameTime = this.frameDataCache[0].time;
-        const lastFrameTime =
-            this.frameDataCache[this.frameDataCache.length - 1].time;
-
-        const notLessThanFirstFrameTime =
-            compareTimes(time, firstFrameTime, this.timeStepSize) !== -1;
-        const notGreaterThanLastFrameTime =
-            compareTimes(time, lastFrameTime, this.timeStepSize) !== 1;
-        return notLessThanFirstFrameTime && notGreaterThanLastFrameTime;
+        return this.linkedListCache.containsTime(time);
     }
 
     public gotoTime(time: number): void {
-        this.cacheFrame = -1;
+        this.currentCacheFrame = -1;
 
-        // Find the index of the frame that has the time matching our target time
-        const frameNumber = this.frameDataCache.findIndex((frameData) => {
-            return compareTimes(frameData.time, time, this.timeStepSize) === 0;
-        });
+        const frameNumber =
+            this.linkedListCache.getFrameAtTime(time)?.frameData.frameNumber;
 
-        // frameNumber is -1 if findIndex() above doesn't find a match
-        if (frameNumber !== -1) {
-            this.cacheFrame = frameNumber;
+        if (frameNumber !== undefined) {
+            this.currentCacheFrame = frameNumber;
         }
     }
 
     public atLatestFrame(): boolean {
-        if (this.cacheFrame === -1 && this.frameCache.length > 0) {
+        // linked list to do these checks are not precise, needs work
+        if (
+            this.currentCacheFrame === -1 &&
+            this.linkedListCache.head !== null &&
+            this.linkedListCache.head.next !== null
+        ) {
             return false;
         }
-
-        return this.cacheFrame >= this.frameCache.length - 1;
+        const lastFrame = this.linkedListCache.getLastFrameNumber();
+        return this.currentCacheFrame >= lastFrame;
     }
 
+    // linked list to do this whole function needs to be thought through clearly
     public currentFrame(): AgentData[] {
-        if (this.frameCache.length === 0) {
+        if (this.linkedListCache.isEmpty()) {
             return [];
-        } else if (this.cacheFrame === -1) {
-            this.cacheFrame = 0;
-            return this.frameCache[0];
+        } else if (this.currentCacheFrame === -1) {
+            // linked list to do, what do we do here?
+            console.log("vis data currentFrame() current cache frame is -1");
+            // this.currentCacheFrame = 0;
         }
-
-        return this.cacheFrame < this.frameCache.length
-            ? this.frameCache[this.cacheFrame]
-            : Array<AgentData>();
+        return (
+            this.linkedListCache.getFrameAtFrameNumber(this.currentCacheFrame)
+                ?.agentData || Array<AgentData>()
+        );
     }
 
     public gotoNextFrame(): void {
+        console.log(
+            "animate in vis data gotoNextFrame, currentCacheFrame: ",
+            this.currentCacheFrame,
+            "atLatestFrame: ",
+            this.atLatestFrame()
+        );
         if (!this.atLatestFrame()) {
-            this.cacheFrame = this.cacheFrame + 1;
+            console.log("animate incrementing currentCacheFrame");
+            this.currentCacheFrame += 1;
         }
     }
 
@@ -216,6 +478,10 @@ class VisData {
      * Data management
      * */
     public WaitForFrame(frameNumber: number): void {
+        console.log(
+            "waitforframe called by changefile waiting for frame: ",
+            frameNumber
+        );
         this.frameToWaitFor = frameNumber;
         this.lockedForFrame = true;
     }
@@ -229,11 +495,9 @@ class VisData {
         this.maxCacheSize = cacheLength > 0 ? cacheLength : 1;
     }
 
+    // linked list to do make sure we are still covering all these bases when we "clear"
     public clearCache(): void {
-        this.frameCache = [];
-        this.frameDataCache = [];
-        this.cacheSize = 0;
-        this.cacheFrame = -1;
+        this.currentCacheFrame = -1;
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
@@ -258,53 +522,6 @@ class VisData {
         this.enableCache = cacheEnabled;
     }
 
-    // Add parsed frames to the cache and save the timestamp of the first frame
-    private addFramesToCache(frames: ParsedBundle): void {
-        if (!this.enableCache) {
-            this.frameDataCache = [...frames.frameDataArray];
-            this.frameCache = [...frames.parsedAgentDataArray];
-            return;
-        }
-        const sizeToAdd = frames.cachedSize;
-        // console.log("cache frame sizes prior to make room call: ", this.cacheFrameSizes)
-        this.makeRoomInCache(sizeToAdd);
-        Array.prototype.push.apply(this.frameDataCache, frames.frameDataArray);
-        Array.prototype.push.apply(
-            this.frameCache,
-            frames.parsedAgentDataArray
-        );
-        this.cacheSize += frames.cachedSize;
-        // console.log("cache size: ", this.cacheSize)
-        // console.log("frame cache size: ", frames.cachedSize);
-        this.cacheFrameSizes.push({
-            bytes: frames.cachedSize,
-            frameOffset: frames.frameDataArray.length,
-        });
-    }
-
-    private makeRoomInCache(sizeToAdd: number): void {
-        while (this.cacheSize + sizeToAdd > this.maxCacheSize) {
-            const bytesToRemove = this.cacheFrameSizes[0].bytes;
-            this.frameCache.shift();
-            this.frameDataCache.shift();
-            this.cacheFrameSizes.shift();
-            this.cacheSize -= bytesToRemove;
-        }
-
-        // code below is worse in practice regarding hangup and playback speed
-        // if (this.cacheSize + sizeToAdd > this.maxCacheSize) {
-        //     console.log("making room in cache");
-        //     this.frameCache = [this.frameCache[this.frameCache.length - 1]];
-        //     this.frameDataCache = [
-        //         this.frameDataCache[this.frameDataCache.length - 1],
-        //     ];
-        //     this.cacheFrameSizes = [
-        //         this.cacheFrameSizes[this.cacheFrameSizes.length - 1],
-        //     ];
-        //     this.cacheSize = this.cacheFrameSizes[0].bytes;
-        // }
-    }
-
     private parseAgentsFromVisDataMessage(msg: VisDataMessage): void {
         /**
          *   visDataMsg = {
@@ -323,6 +540,9 @@ class VisData {
             if (visDataMsg.bundleData[0].frameNumber !== this.frameToWaitFor) {
                 // This object is waiting for a frame with a specified frame number
                 //  and  the arriving frame didn't match it
+                console.log(
+                    "changeFIle the frame number didn't match the frame to wait for"
+                );
                 return;
             } else {
                 this.lockedForFrame = false;
@@ -336,25 +556,29 @@ class VisData {
         ) {
             this.webWorker.postMessage(visDataMsg);
         } else {
-            const frames = parseVisDataMessage(visDataMsg);
-            this.addFramesToCache(frames);
+            // to do linked list can this be more than one frame?
+            const frame = parseVisDataMessage(visDataMsg);
+            this.linkedListCache.addFrame(frame);
         }
     }
 
     public parseAgentsFromFrameData(msg: VisDataMessage | ArrayBuffer): void {
         if (msg instanceof ArrayBuffer) {
-            const frames = VisData.parseOneBinaryFrame(msg);
+            const frame = VisData.parseOneBinaryFrame(msg);
             if (
-                frames.frameDataArray.length > 0 &&
-                frames.frameDataArray[0].frameNumber === 0
+                // linked list to do
+                // this isn't actually the same check as before, its asking if there is agent dat awhich we maybe shuoldnt do
+                frame.agentData.length > 0 &&
+                // this is asking if the first frame in the new data is frame 0
+                frame.frameData.frameNumber === 0
             ) {
                 this.clearCache(); // new data has arrived
             }
-            this.addFramesToCache(frames);
+            this.linkedListCache.addFrame(frame);
             return;
         }
 
-        // handle VisDataMessage
+        // linked list to do: handle VisDataMessage properly
         this.parseAgentsFromVisDataMessage(msg);
     }
 
@@ -374,18 +598,19 @@ class VisData {
         this.parseAgentsFromFrameData(msg);
     }
 
-    // for use w/ a drag-and-drop trajectory file
-    //  save a file for playback
-    // will be caught by controller.changeFile(...).catch()
+    // // for use w/ a drag-and-drop trajectory file
+    // //  save a file for playback
+    // // will be caught by controller.changeFile(...).catch()
+    // linked list to do confirm this is still used and working
     public cacheJSON(visDataMsg: VisDataMessage): void {
-        if (this.frameCache.length > 0) {
+        if (!this.linkedListCache.isEmpty()) {
             throw new Error(
                 "cache not cleared before cacheing a new drag-and-drop file"
             );
         }
-
-        const frames = parseVisDataMessage(visDataMsg);
-        this.addFramesToCache(frames);
+        // linked list to do can this be more than one frame?
+        const frame = parseVisDataMessage(visDataMsg);
+        this.linkedListCache.addFrame(frame);
     }
 
     public set dragAndDropFileInfo(fileInfo: TrajectoryFileInfo | null) {
@@ -414,7 +639,7 @@ class VisData {
     }
 
     // will be caught by controller.changeFile(...).catch()
-    // TODO: check if this code is still used
+    // linked list to do TODO: check if this code is still used
     public checkTypeMapping(typeMappingFromFile: EncodedTypeMapping): number[] {
         if (!typeMappingFromFile) {
             throw new Error(
@@ -424,13 +649,15 @@ class VisData {
         const idsInFrameData = new Set();
         const idsInTypeMapping = Object.keys(typeMappingFromFile).map(Number);
 
-        if (this.frameCache.length === 0) {
+        if (this.linkedListCache.isEmpty()) {
             console.log("no data to check type mapping against");
             return [];
         }
 
-        this.frameCache.forEach((element) => {
-            element.map((agent) => idsInFrameData.add(agent.type));
+        // this is calling the (element) func on each agentdata[]
+        // so i need to call currentNode.data.agentData.map... on each node
+        this.linkedListCache.walkList((node) => {
+            node.data.agentData.map((agent) => idsInFrameData.add(agent.type));
         });
         const idsArr: number[] = [...idsInFrameData].sort() as number[];
         return difference(idsArr, idsInTypeMapping).sort();

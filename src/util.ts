@@ -1,7 +1,7 @@
 import type { ISimulariumFile } from "./simularium/ISimulariumFile";
 import JsonFileReader from "./simularium/JsonFileReader";
 import BinaryFileReader from "./simularium/BinaryFileReader";
-import { AgentData, FrameData } from "./simularium/types";
+import { AgentData } from "./simularium/types";
 
 export const compareTimes = (
     time1: number,
@@ -76,23 +76,15 @@ export function loadSimulariumFile(file: Blob): Promise<ISimulariumFile> {
         });
 }
 
-export function calculateCachedSize(
-    parsedAgentDataArray: AgentData[][],
-    frameDataArray: FrameData[]
-): number {
+export function calculateCachedSize(parsedAgentData: AgentData[]): number {
     let totalSize = 0;
 
     // Calculate the size of parsedAgentDataArray
-    for (let i = 0; i < parsedAgentDataArray.length; ++i) {
-        const parsedAgentData = parsedAgentDataArray[i];
-        for (let j = 0; j < parsedAgentData.length; ++j) {
-            const agent = parsedAgentData[j];
-            totalSize += 8 * 10; // 10 number properties in AgentData (excluding subpoints)
-            totalSize += agent.subpoints.length * 8;
-        }
+    for (let j = 0; j < parsedAgentData.length; ++j) {
+        const agent = parsedAgentData[j];
+        totalSize += 8 * 10; // 10 number properties in AgentData (excluding subpoints)
+        totalSize += agent.subpoints.length * 8;
     }
 
-    totalSize += frameDataArray.length * 16;
-
-    return totalSize;
+    return (totalSize += 16); // should always be 16 bytes bceause its just one frame per message with octopus
 }

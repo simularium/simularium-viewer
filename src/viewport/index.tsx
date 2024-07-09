@@ -639,7 +639,7 @@ class Viewport extends React.Component<
                 const currentAgents = visData.currentFrame();
                 if (currentAgents.length > 0) {
                     this.dispatchUpdatedTime(visData.currentFrameData);
-                    this.visGeometry.update(currentAgents);
+                    this.visGeometry.update(currentAgents, true /* might be new data */);
                     this.lastRenderedAgentTime = visData.currentFrameData.time;
                     this.updateFollowObjectData();
                 }

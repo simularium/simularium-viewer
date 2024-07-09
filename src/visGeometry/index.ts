@@ -1530,8 +1530,14 @@ class VisGeometry {
     /**
      *   Update Scene
      **/
-    private updateScene(agents: AgentData[]): void {
-        this.currentSceneAgents = agents;
+    private updateScene(
+        agents: AgentData[],
+        possibleNewAgentData?: boolean
+    ): void {
+        // console.log("update scene, agents: ", agents, possibleNewAgentData);
+        // if (possibleNewAgentData) {
+        //     this.currentSceneAgents = agents;
+        // }
 
         // values for updating agent path
         let dx = 0,
@@ -1903,8 +1909,8 @@ class VisGeometry {
         }
     }
 
-    public update(agents: AgentData[]): void {
-        this.updateScene(agents);
+    public update(agents: AgentData[], possiblyNewAgentData?: boolean): void {
+        this.updateScene(agents, possiblyNewAgentData);
     }
 }
 
