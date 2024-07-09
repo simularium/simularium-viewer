@@ -52,27 +52,12 @@ class LinkedListCache {
         }
     }
 
-    public length(): number {
-        return this.numFrames;
-    }
-
     public isEmpty(): boolean {
         return this.numFrames === 0 && this.head === null && this.tail === null;
     }
 
     public hasFrames(): boolean {
         return this.numFrames > 0 && this.head !== null;
-    }
-    // contains method
-    public containsFrame(frameNumber: number): boolean {
-        let currentNode = this.head;
-        while (currentNode) {
-            if (currentNode.data.frameData.frameNumber === frameNumber) {
-                return true;
-            }
-            currentNode = currentNode.next;
-        }
-        return false;
     }
 
     public containsTime(time: number): boolean {
@@ -81,8 +66,6 @@ class LinkedListCache {
         // make this more performant by first checking if time is between the head time and tail time
         // then either just return true
         // or do the while loop to be certain\
-
-        //linked list to do (and main?) cache frames when advancing forward frame by frame?
 
         // linked list to do
         // code below is a precise but slow check
@@ -94,6 +77,7 @@ class LinkedListCache {
         }
         return false;
     }
+
     public getFrameAtTime(time: number): CachedFrame | null {
         let currentNode = this.head;
         while (currentNode) {
@@ -148,21 +132,7 @@ class LinkedListCache {
         return this.tail ? this.tail.data.frameData.time : -1;
     }
 
-    // addNode method
-    // if !this.enableCache, the argument is the only node in the cache
-    // if this.enableCache, the argument is added to the end of the cache
-    // if there is no head, the argument is the head and tail
-    // if there is a head, the argument is added to the end of the cache
     public addFrame(data: CachedFrame): void {
-        // if cache is diabled
-        // or there is no head
-        // or the incoming frame is frame 0
-        // clear
-        // add first
-
-        // otherwise
-        // add last
-        // can we assume that there is a head?
         if (
             !this.cacheEnabled ||
             !this.head ||
@@ -250,15 +220,12 @@ class LinkedListCache {
         this.remove(this.tail);
         return data;
     }
-    // indexOf method
 
     // Helper method to trim the cache if it exceeds the max size
     private trimCache(): void {
-        console.log("trimming cache");
         while (this.size > this.maxSize && this.tail) {
             this.removeFirst();
         }
-        console.log("cache size: ", this.size, "numFrames: ", this.numFrames);
     }
 
     public clear(): void {
