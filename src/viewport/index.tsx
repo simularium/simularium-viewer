@@ -180,7 +180,7 @@ class Viewport extends React.Component<
             onError,
             agentColors,
         } = this.props;
-
+        console.log("onTrajectoryFileInfo", msg);
         // Update TrajectoryFileInfo format to latest version
         const trajectoryFileInfo: TrajectoryFileInfo =
             updateTrajectoryFileInfoFormat(msg, onError);
@@ -639,7 +639,10 @@ class Viewport extends React.Component<
                 const currentAgents = visData.currentFrame();
                 if (currentAgents.length > 0) {
                     this.dispatchUpdatedTime(visData.currentFrameData);
-                    this.visGeometry.update(currentAgents, true /* might be new data */);
+                    this.visGeometry.update(
+                        currentAgents,
+                        true /* might be new data */
+                    );
                     this.lastRenderedAgentTime = visData.currentFrameData.time;
                     this.updateFollowObjectData();
                 }

@@ -80,7 +80,12 @@ class LinkedListCache {
         // linked list to do
         // make this more performant by first checking if time is between the head time and tail time
         // then either just return true
-        // or do the while loop to be certain
+        // or do the while loop to be certain\
+
+        //linked list to do (and main?) cache frames when advancing forward frame by frame?
+
+        // linked list to do
+        // code below is a precise but slow check
         while (currentNode) {
             if (currentNode.data.frameData.time === time) {
                 return true;
@@ -102,8 +107,6 @@ class LinkedListCache {
     // get method (by frame number)
     // getFirst method
     public getFirst(): CachedFrame | null {
-        console.log("in cache getFirst, this.head", this.head);
-        console.log("in cache getFirst, this.head.data", this.head?.data);
         return this.head ? this.head.data : null;
     }
 
@@ -160,7 +163,6 @@ class LinkedListCache {
         // otherwise
         // add last
         // can we assume that there is a head?
-        console.log("in cache addFrame, data: ", data);
         if (
             !this.cacheEnabled ||
             !this.head ||
@@ -171,15 +173,6 @@ class LinkedListCache {
         } else {
             this.addLast(data);
         }
-        // if (!this.cacheEnabled) {
-        //     this.replaceWithSingle(data);
-        // } else {
-        //     if (!this.head) {
-        //         this.addFirst(data);
-        //     } else {
-        //         this.addLast(data);
-        //     }
-        // }
     }
 
     // addFirst method
@@ -283,7 +276,7 @@ class LinkedListCache {
 }
 
 class VisData {
-    private linkedListCache: LinkedListCache;
+    public linkedListCache: LinkedListCache;
     private enableCache: boolean;
     private maxCacheSize: number;
     private webWorker: Worker | null;
@@ -414,7 +407,8 @@ class VisData {
     }
 
     public gotoTime(time: number): void {
-        this.currentCacheFrame = -1;
+        console.log("gototime visdata");
+        // this.currentCacheFrame = -1;
 
         const frameNumber =
             this.linkedListCache.getFrameAtTime(time)?.frameData.frameNumber;
@@ -425,16 +419,11 @@ class VisData {
     }
 
     public atLatestFrame(): boolean {
-        // linked list to do these checks are not precise, needs work
-        if (
-            this.currentCacheFrame === -1 &&
-            this.linkedListCache.head !== null &&
-            this.linkedListCache.head.next !== null
-        ) {
-            return false;
-        }
-        const lastFrame = this.linkedListCache.getLastFrameNumber();
-        return this.currentCacheFrame >= lastFrame;
+        // linked list to do does this work everywhere it needs to
+        // does it look like an old paradigm?
+        return (
+            this.currentCacheFrame >= this.linkedListCache.getLastFrameNumber()
+        );
     }
 
     // linked list to do this whole function needs to be thought through clearly
@@ -442,9 +431,10 @@ class VisData {
         if (this.linkedListCache.isEmpty()) {
             return [];
         } else if (this.currentCacheFrame === -1) {
-            // linked list to do, what do we do here?
-            console.log("vis data currentFrame() current cache frame is -1");
-            // this.currentCacheFrame = 0;
+            // linked list to do, is this right? if we are calling this we are in animate loop
+            // which means trajectory is loaded, and so we should go to 0 frame and not be at -1
+            // but is it the right place to do it?
+            this.currentCacheFrame = 0;
         }
         return (
             this.linkedListCache.getFrameAtFrameNumber(this.currentCacheFrame)
@@ -463,10 +453,6 @@ class VisData {
      * Data management
      * */
     public WaitForFrame(frameNumber: number): void {
-        console.log(
-            "waitforframe called by changefile waiting for frame: ",
-            frameNumber
-        );
         this.frameToWaitFor = frameNumber;
         this.lockedForFrame = true;
     }
@@ -482,6 +468,7 @@ class VisData {
 
     // linked list to do make sure we are still covering all these bases when we "clear"
     public clearCache(): void {
+        this.linkedListCache.clear();
         this.currentCacheFrame = -1;
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
@@ -525,9 +512,6 @@ class VisData {
             if (visDataMsg.bundleData[0].frameNumber !== this.frameToWaitFor) {
                 // This object is waiting for a frame with a specified frame number
                 //  and  the arriving frame didn't match it
-                console.log(
-                    "changeFIle the frame number didn't match the frame to wait for"
-                );
                 return;
             } else {
                 this.lockedForFrame = false;
