@@ -57,8 +57,6 @@ export default class SimulariumController {
     public startRecording: () => void;
     public stopRecording: () => void;
     public onError?: (error: FrontEndError) => void;
-    public handleColorSettings?: (settings: UIDisplayData) => void;
-    public handleColorChange?: (colorChange: ColorChange) => void;
 
     private networkEnabled: boolean;
     private isPaused: boolean;
@@ -74,8 +72,6 @@ export default class SimulariumController {
 
         this.handleTrajectoryInfo = (/*msg: TrajectoryFileInfo*/) => noop;
         this.onError = (/*errorMessage*/) => noop;
-        this.handleColorSettings = (/*settings: ColorSetting[]*/) => noop;
-        this.handleColorChange = (/*colorChange: ColorChange*/) => noop;
 
         // might only be used in unit testing
         // TODO: change test so controller isn't initialized with a remoteSimulator
@@ -124,8 +120,6 @@ export default class SimulariumController {
         this.setFocusMode = this.setFocusMode.bind(this);
         this.convertTrajectory = this.convertTrajectory.bind(this);
         this.setCameraType = this.setCameraType.bind(this);
-        this.applyColorSettings = this.applyColorSettings.bind(this);
-        this.applyColorChange = this.applyColorChange.bind(this);
     }
 
     private createSimulatorConnection(
@@ -562,14 +556,6 @@ export default class SimulariumController {
 
     public setCameraType(ortho: boolean): void {
         this.visGeometry?.setCameraType(ortho);
-    }
-
-    public applyColorSettings(uiData: UIDisplayData): void {
-        this.handleColorSettings?.(uiData);
-    }
-
-    public applyColorChange(colorChange: ColorChange): void {
-        this.handleColorChange?.(colorChange);
     }
 }
 
