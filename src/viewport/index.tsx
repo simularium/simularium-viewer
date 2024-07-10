@@ -15,12 +15,7 @@ import {
 import { AgentData, TrajectoryFileInfoAny } from "../simularium/types";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
-import {
-    RenderStyle,
-    VisGeometry,
-    NO_AGENT,
-} from "../visGeometry";
-import { ColorChange } from "../simularium/SelectionInterface";
+import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry";
 import FrameRecorder from "../simularium/FrameRecorder";
 import { DEFAULT_FRAME_RATE } from "../constants";
 import { ColorSetting } from "../visGeometry/types";
@@ -41,8 +36,7 @@ type ViewportProps = {
         cachedData: TrajectoryFileInfo
     ) => void | undefined;
     onUIDisplayDataChanged: (
-        data: UIDisplayData,
-        setDefault?: boolean
+        data: UIDisplayData
     ) => void | undefined;
     loadInitialData: boolean;
     hideAllAgents: boolean;
@@ -242,12 +236,8 @@ class Viewport extends React.Component<
             this.visGeometry.createMaterials(updatedColors);
         }
         onUIDisplayDataChanged(
-            this.selectionInterface.getUIDisplayData(),
-            /* set default UI Data: */ true
+            this.selectionInterface.getUIDisplayData()
         );
-        if (sessionUIData) {
-            this.handleColorSettings(sessionUIData);
-        }
     }
 
     public componentDidMount(): void {
@@ -287,10 +277,6 @@ class Viewport extends React.Component<
         };
         simulariumController.startRecording = this.startRecording.bind(this);
         simulariumController.stopRecording = this.stopRecording.bind(this);
-        simulariumController.handleColorSettings =
-            this.handleColorSettings.bind(this);
-        simulariumController.handleColorChange =
-            this.handleColorChange.bind(this);
 
         if (this.vdomRef.current) {
             this.vdomRef.current.addEventListener(
@@ -358,6 +344,15 @@ class Viewport extends React.Component<
                 const hiddenIds =
                     this.selectionInterface.getHiddenIds(selectionStateInfo);
                 this.visGeometry.setVisibleByIds(hiddenIds);
+            }
+            if (
+                !isEqual(
+                    selectionStateInfo.colorSettings,
+                    prevProps.selectionStateInfo.colorSettings
+                ) &&
+                selectionStateInfo.colorSettings.length > 0
+            ) {
+                this.handleColorSettings(selectionStateInfo.colorSettings);
             }
         }
 
@@ -607,28 +602,22 @@ class Viewport extends React.Component<
     }
 
     public changeAgentsColor(colorSettings: ColorSetting[]): void {
-        const { onUIDisplayDataChanged } = this.props;
+        if (colorSettings.length === 0) {
+            return;
+        }
         colorSettings.forEach((setting) => {
             this.visGeometry.applyColorToAgents(setting);
-            this.selectionInterface.updateUiDataColor(setting.agentIds, setting.color, setting.name);
+            this.selectionInterface.updateUiDataColor(
+                setting.agentIds,
+                setting.color,
+                setting.name
+            );
         });
-        onUIDisplayDataChanged(this.selectionInterface.getUIDisplayData());
-    }
-
-    public handleColorChange(colorChange: ColorChange): void {
-        const colorSetting = {
-            agentIds: this.selectionInterface.getAgentIdsByNamesAndTags([
-                colorChange.agent,
-            ]),
-            color: colorChange.color,
-            name: colorChange.agent.name
-        };
-        this.changeAgentsColor([colorSetting]);
     }
 
     private handleColorSettings(newData: UIDisplayData): void {
-        const oldData = this.selectionInterface.getUIDisplayData();
-        if (isEqual(oldData, newData)) return;
+        // color sessions to do: 
+        // only process necessary changes
         const colorSettings =
             this.selectionInterface.deriveColorSettingsFromUIData(newData);
         this.changeAgentsColor(colorSettings);

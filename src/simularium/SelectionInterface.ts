@@ -26,6 +26,7 @@ export interface ColorChange {
 export interface SelectionStateInfo {
     highlightedAgents: SelectionEntry[];
     hiddenAgents: SelectionEntry[];
+    colorSettings: UIDisplayData;
 }
 
 interface DisplayStateEntry {
