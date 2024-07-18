@@ -283,31 +283,19 @@ class SelectionInterface {
         });
     }
 
-    // to do this is blended version of two functions
-    // could maybe be optimized and typing adjusted/done better
-    public updateUiDataColor(
+    private updateUiDataColor(
+        agentName: string,
         idsToUpdate: number[],
-        color: number | string,
-        agentName?: string
+        color: number | string
     ): void {
         const newColor = convertColorNumberToString(color);
-        if (agentName !== undefined) {
-            const entry = this.entries[agentName];
-            // if no display state update parent color
-            entry.forEach((displayState) => {
-                if (idsToUpdate.includes(displayState.id)) {
-                    displayState.color = newColor;
-                }
-            });
-        } else {
-            Object.values(this.entries).forEach((entry) => {
-                entry.forEach((displayState) => {
-                    if (idsToUpdate.includes(displayState.id)) {
-                        displayState.color = newColor;
-                    }
-                });
-            });
-        }
+        const entry = this.entries[agentName];
+        // if no display state update parent color
+        entry.forEach((displayState) => {
+            if (idsToUpdate.includes(displayState.id)) {
+                displayState.color = newColor;
+            }
+        });
     }
 
     public setInitialAgentColors(
@@ -331,9 +319,9 @@ class SelectionInterface {
                 // just give all states of this agent name the same color
                 setColorForIds(ids, colors[defaultColorIndex]);
                 this.updateUiDataColor(
+                    group.name,
                     ids,
-                    colors[defaultColorIndex],
-                    group.name
+                    colors[defaultColorIndex]
                 );
             } else {
                 // otherwise, we need to update any user defined colors
@@ -354,6 +342,7 @@ class SelectionInterface {
                     } else {
                         // need update the display data with the default color being used
                         this.updateUiDataColor(
+                            group.name,
                             [ids[index]],
                             colors[groupColorIndex]
                         );

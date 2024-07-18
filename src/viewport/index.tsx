@@ -603,10 +603,6 @@ class Viewport extends React.Component<
                 setting.agentIds,
                 setting.color
             );
-            this.selectionInterface.updateUiDataColor(
-                setting.agentIds,
-                setting.color
-            );
         });
     }
 
