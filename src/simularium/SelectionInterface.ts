@@ -301,7 +301,7 @@ class SelectionInterface {
     public setInitialAgentColors(
         uiDisplayData: UIDisplayData,
         colors: (string | number)[],
-        setColorForIds: (agentIds: number[], color: string | number) => void
+        setColorForIds: (ids: number[], color: string | number) => void
     ): (string | number)[] {
         let defaultColorIndex = 0;
         uiDisplayData.forEach((group) => {
@@ -383,13 +383,13 @@ class SelectionInterface {
         agentIds: number[];
         color: string | number;
     }[] => {
-        const settings: {
+        const colorAssignments: {
             agentIds: number[];
             color: string | number;
         }[] = [];
 
         uiData.forEach((agent) => {
-            settings.push({
+            colorAssignments.push({
                 agentIds: this.getAgentIdsByNamesAndTags([
                     { name: agent.name, tags: [] },
                 ]),
@@ -397,7 +397,7 @@ class SelectionInterface {
             });
 
             agent.displayStates.forEach((newState) => {
-                settings.push({
+                colorAssignments.push({
                     agentIds: this.getAgentIdsByNamesAndTags([
                         { name: agent.name, tags: [newState.name] },
                     ]),
@@ -406,7 +406,7 @@ class SelectionInterface {
             });
         });
 
-        return settings;
+        return colorAssignments;
     };
 }
 
