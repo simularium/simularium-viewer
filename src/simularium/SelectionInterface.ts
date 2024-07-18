@@ -394,12 +394,10 @@ class SelectionInterface {
     ): {
         agentIds: number[];
         color: string | number;
-        name?: string;
     }[] => {
         const settings: {
             agentIds: number[];
             color: string | number;
-            name?: string;
         }[] = [];
 
         uiData.forEach((agent) => {
@@ -408,7 +406,6 @@ class SelectionInterface {
                     { name: agent.name, tags: [] },
                 ]),
                 color: agent.color,
-                name: agent.name,
             });
 
             agent.displayStates.forEach((newState) => {
