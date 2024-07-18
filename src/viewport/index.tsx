@@ -600,7 +600,7 @@ class Viewport extends React.Component<
             return;
         }
         const colorSettings =
-            this.selectionInterface.deriveColorSettingsFromUIData(newData);
+            this.selectionInterface.getIdsAndColorsFromUIData(newData);
         colorSettings.forEach((setting) => {
             this.visGeometry.applyColorToAgents(
                 setting.agentIds,

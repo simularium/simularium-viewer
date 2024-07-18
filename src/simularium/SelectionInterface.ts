@@ -388,8 +388,7 @@ class SelectionInterface {
         return colors;
     }
 
-    // seems like a util
-    public deriveColorSettingsFromUIData = (
+    public getIdsAndColorsFromUIData = (
         uiData: UIDisplayData
     ): {
         agentIds: number[];
