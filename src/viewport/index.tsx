@@ -230,6 +230,7 @@ class Viewport extends React.Component<
         if (!isEqual(updatedColors, agentColors)) {
             this.visGeometry.createMaterials(updatedColors);
         }
+
         onUIDisplayDataChanged(this.selectionInterface.getUIDisplayData());
     }
 
