@@ -341,12 +341,12 @@ class Viewport extends React.Component<
             }
             if (
                 !isEqual(
-                    selectionStateInfo.colorSettings,
-                    prevProps.selectionStateInfo.colorSettings
+                    selectionStateInfo.appliedColors,
+                    prevProps.selectionStateInfo.appliedColors
                 ) &&
-                selectionStateInfo.colorSettings.length > 0
+                selectionStateInfo.appliedColors.length > 0
             ) {
-                this.changeAgentsColor(selectionStateInfo.colorSettings);
+                this.changeAgentsColor(selectionStateInfo.appliedColors);
             }
         }
 
