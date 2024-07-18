@@ -1117,8 +1117,10 @@ class VisGeometry {
         this.setAgentColors();
     }
 
-    public applyColorToAgents(setting: ColorSetting): void {
-        const { agentIds, color } = setting;
+    public applyColorToAgents(
+        agentIds: number[],
+        color: string | number
+    ): void {
         const newColorData = this.colorHandler.setColorForAgentTypes(
             agentIds,
             color

@@ -35,9 +35,7 @@ type ViewportProps = {
     onTrajectoryFileInfoChanged: (
         cachedData: TrajectoryFileInfo
     ) => void | undefined;
-    onUIDisplayDataChanged: (
-        data: UIDisplayData
-    ) => void | undefined;
+    onUIDisplayDataChanged: (data: UIDisplayData) => void | undefined;
     loadInitialData: boolean;
     hideAllAgents: boolean;
     showPaths: boolean;
@@ -235,9 +233,7 @@ class Viewport extends React.Component<
         if (!isEqual(updatedColors, agentColors)) {
             this.visGeometry.createMaterials(updatedColors);
         }
-        onUIDisplayDataChanged(
-            this.selectionInterface.getUIDisplayData()
-        );
+        onUIDisplayDataChanged(this.selectionInterface.getUIDisplayData());
     }
 
     public componentDidMount(): void {
@@ -352,7 +348,7 @@ class Viewport extends React.Component<
                 ) &&
                 selectionStateInfo.colorSettings.length > 0
             ) {
-                this.handleColorSettings(selectionStateInfo.colorSettings);
+                this.changeAgentsColor(selectionStateInfo.colorSettings);
             }
         }
 
@@ -601,26 +597,25 @@ class Viewport extends React.Component<
         }
     }
 
-    public changeAgentsColor(colorSettings: ColorSetting[]): void {
-        if (colorSettings.length === 0) {
+    public changeAgentsColor(newData: UIDisplayData): void {
+        console.log("changeAgentsColor, newData", newData);
+        if (newData.length === 0) {
             return;
         }
+        const colorSettings =
+            this.selectionInterface.deriveColorSettingsFromUIData(newData);
+console.log("colorSettings in changeAgentsColor", colorSettings);
         colorSettings.forEach((setting) => {
-            this.visGeometry.applyColorToAgents(setting);
+            this.visGeometry.applyColorToAgents(
+                setting.agentIds,
+                setting.color
+            );
             this.selectionInterface.updateUiDataColor(
                 setting.agentIds,
                 setting.color,
                 setting.name
             );
         });
-    }
-
-    private handleColorSettings(newData: UIDisplayData): void {
-        // color sessions to do: 
-        // only process necessary changes
-        const colorSettings =
-            this.selectionInterface.deriveColorSettingsFromUIData(newData);
-        this.changeAgentsColor(colorSettings);
     }
 
     public stopAnimate(): void {

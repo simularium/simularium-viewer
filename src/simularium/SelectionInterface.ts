@@ -314,7 +314,7 @@ class SelectionInterface {
     public setInitialAgentColors(
         uiDisplayData: UIDisplayData,
         colors: (string | number)[],
-        setColorForIds: (setting: ColorSetting) => void
+        setColorForIds: (agentIds: number[], color: string | number) => void
     ): (string | number)[] {
         let defaultColorIndex = 0;
         uiDisplayData.forEach((group) => {
@@ -330,10 +330,7 @@ class SelectionInterface {
             if (!hasNewColors) {
                 // if no colors have been set by the user for this name,
                 // just give all states of this agent name the same color
-                setColorForIds({
-                    agentIds: ids,
-                    color: colors[defaultColorIndex],
-                });
+                setColorForIds(ids, colors[defaultColorIndex]);
                 this.updateUiDataColor(
                     ids,
                     colors[defaultColorIndex],
@@ -359,8 +356,7 @@ class SelectionInterface {
                         // need update the display data with the default color being used
                         this.updateUiDataColor(
                             [ids[index]],
-                            colors[groupColorIndex],
-                            group.name
+                            colors[groupColorIndex]
                         );
                     }
                     // if the user used all the same colors for all states of this agent,
@@ -371,10 +367,7 @@ class SelectionInterface {
                     } else {
                         groupColorIndex = -1;
                     }
-                    setColorForIds({
-                        agentIds: [ids[index]],
-                        color: colors[agentColorIndex],
-                    });
+                    setColorForIds([ids[index]], colors[agentColorIndex]);
                 });
             }
             if (groupColorIndex > -1) {
@@ -410,7 +403,6 @@ class SelectionInterface {
                 color: agent.color,
                 name: agent.name,
             });
-            // }
 
             agent.displayStates.forEach((newState) => {
                 settings.push({
@@ -418,7 +410,6 @@ class SelectionInterface {
                         { name: agent.name, tags: [newState.name] },
                     ]),
                     color: newState.color,
-                    name: newState.name,
                 });
             });
         });
