@@ -2,10 +2,8 @@ import jsLogger from "js-logger";
 import { isEmpty, noop } from "lodash";
 import { VisData, RemoteSimulator } from "../simularium";
 import type {
-    ColorChange,
     NetConnectionParams,
     TrajectoryFileInfo,
-    UIDisplayData,
     VisDataMessage,
 } from "../simularium";
 import { VisGeometry } from "../visGeometry";

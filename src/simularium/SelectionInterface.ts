@@ -1,7 +1,6 @@
 import { filter, find, map, uniq } from "lodash";
 import { EncodedTypeMapping } from "./types";
 import { convertColorNumberToString } from "../visGeometry/ColorHandler";
-import { ColorSetting } from "../visGeometry/types";
 
 // An individual entry parsed from an encoded name
 // The encoded names can be just a name or a name plus a
@@ -392,8 +391,16 @@ class SelectionInterface {
     // seems like a util
     public deriveColorSettingsFromUIData = (
         uiData: UIDisplayData
-    ): ColorSetting[] => {
-        const settings: ColorSetting[] = [];
+    ): {
+        agentIds: number[];
+        color: string | number;
+        name?: string;
+    }[] => {
+        const settings: {
+            agentIds: number[];
+            color: string | number;
+            name?: string;
+        }[] = [];
 
         uiData.forEach((agent) => {
             settings.push({

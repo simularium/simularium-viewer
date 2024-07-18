@@ -18,7 +18,6 @@ import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
 import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry";
 import FrameRecorder from "../simularium/FrameRecorder";
 import { DEFAULT_FRAME_RATE } from "../constants";
-import { ColorSetting } from "../visGeometry/types";
 
 export type PropColor = string | number | [number, number, number];
 
@@ -47,7 +46,6 @@ type ViewportProps = {
     onRecordedMovie?: (blob: Blob) => void; // providing this callback enables movie recording
     disableCache?: boolean;
     onFollowObjectChanged?: (agentData: AgentData) => void; // passes agent data about the followed agent to the front end
-    sessionUIData?: UIDisplayData;
 } & Partial<DefaultProps>;
 
 const defaultProps = {
@@ -176,7 +174,6 @@ class Viewport extends React.Component<
             onUIDisplayDataChanged,
             onError,
             agentColors,
-            sessionUIData,
         } = this.props;
 
         // Update TrajectoryFileInfo format to latest version
@@ -598,13 +595,11 @@ class Viewport extends React.Component<
     }
 
     public changeAgentsColor(newData: UIDisplayData): void {
-        console.log("changeAgentsColor, newData", newData);
         if (newData.length === 0) {
             return;
         }
         const colorSettings =
             this.selectionInterface.deriveColorSettingsFromUIData(newData);
-console.log("colorSettings in changeAgentsColor", colorSettings);
         colorSettings.forEach((setting) => {
             this.visGeometry.applyColorToAgents(
                 setting.agentIds,

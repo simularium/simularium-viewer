@@ -58,7 +58,6 @@ import { LegacyRenderer } from "./rendering/LegacyRenderer";
 import GeometryStore from "./GeometryStore";
 import {
     AgentGeometry,
-    ColorSetting,
     GeometryDisplayType,
     GeometryInstanceContainer,
     MeshGeometry,
