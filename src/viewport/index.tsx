@@ -596,9 +596,6 @@ class Viewport extends React.Component<
     }
 
     public changeAgentsColor(newData: UIDisplayData): void {
-        if (newData.length === 0) {
-            return;
-        }
         const colorSettings =
             this.selectionInterface.getIdsAndColorsFromUIData(newData);
         colorSettings.forEach((setting) => {
@@ -608,7 +605,7 @@ class Viewport extends React.Component<
             );
             this.selectionInterface.updateUiDataColor(
                 setting.agentIds,
-                setting.color,
+                setting.color
             );
         });
     }
