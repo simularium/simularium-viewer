@@ -1,14 +1,11 @@
 import React, { useState } from "react";
-import { SelectionEntry, UIDisplayData } from "../../src";
+import { UIDisplayData } from "../../src";
 
 type ColorPickerProps = {
     uiDisplayData: UIDisplayData;
     particleTypeNames: string[];
     agentColors: string[] | number[];
-    setColorSelectionInfo: (data: {
-        agent: SelectionEntry;
-        color: string;
-    }) => void;
+    setColorSelectionInfo: (data: UIDisplayData) => void;
     updateAgentColorArray: (color: string) => void;
 };
 
@@ -54,14 +51,28 @@ const ColorPicker = ({
             if (selectedSubagent === "<unmodified>") {
                 subAgent = [""];
             }
-            const entry: SelectionEntry = {
-                name: selectedAgent,
-                tags: subAgent,
-            };
-            setColorSelectionInfo({
-                agent: entry,
-                color: selectedColor,
+            const appliedColors = uiDisplayData.map((agent) => {
+                const newAgent = { ...agent };
+                if (agent.name === selectedAgent) {
+                    if (subAgent.includes("")) {
+                        newAgent.color = selectedColor;
+                    }
+                    const newDisplayStates = agent.displayStates.map(
+                        (state: any) => {
+                            if (subAgent.includes(state.id)) {
+                                return {
+                                    ...state,
+                                    color: selectedColor,
+                                };
+                            }
+                            return state;
+                        }
+                    );
+                    newAgent.displayStates = newDisplayStates;
+                }
+                return newAgent;
             });
+            setColorSelectionInfo(appliedColors);
         }
     };
 
