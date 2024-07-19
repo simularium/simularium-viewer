@@ -376,38 +376,6 @@ class SelectionInterface {
         });
         return colors;
     }
-
-    public getIdsAndColorsFromUIData = (
-        uiData: UIDisplayData
-    ): {
-        agentIds: number[];
-        color: string | number;
-    }[] => {
-        const colorAssignments: {
-            agentIds: number[];
-            color: string | number;
-        }[] = [];
-
-        uiData.forEach((agent) => {
-            colorAssignments.push({
-                agentIds: this.getAgentIdsByNamesAndTags([
-                    { name: agent.name, tags: [] },
-                ]),
-                color: agent.color,
-            });
-
-            agent.displayStates.forEach((newState) => {
-                colorAssignments.push({
-                    agentIds: this.getAgentIdsByNamesAndTags([
-                        { name: agent.name, tags: [newState.name] },
-                    ]),
-                    color: newState.color,
-                });
-            });
-        });
-
-        return colorAssignments;
-    };
 }
 
 export { SelectionInterface };
