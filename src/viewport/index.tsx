@@ -597,20 +597,20 @@ class Viewport extends React.Component<
 
     public changeAgentsColor(appliedColors: UIDisplayData): void {
         appliedColors.forEach((agent) => {
-            this.visGeometry.applyColorToAgents(
-                this.selectionInterface.getAgentIdsByNamesAndTags([
+            const agentIds = this.selectionInterface.getAgentIdsByNamesAndTags([
                     { name: agent.name, tags: [] },
-                ]),
+                ]);
+            this.visGeometry.applyColorToAgents(
+                agentIds,
                 agent.color
             );
 
             agent.displayStates.forEach((state) => {
-                this.visGeometry.applyColorToAgents(
+                const stateIds =
                     this.selectionInterface.getAgentIdsByNamesAndTags([
                         { name: agent.name, tags: [state.name] },
-                    ]),
-                    state.color
-                );
+                    ]);
+                this.visGeometry.applyColorToAgents(stateIds, state.color);
             });
         });
     }
