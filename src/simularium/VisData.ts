@@ -27,72 +27,6 @@ interface LinkedListNode {
     prev: LinkedListNode | null;
 }
 
-const nullNode = () => {
-    return {
-        data: nullFrame(),
-        next: null,
-        prev: null,
-    };
-};
-
-const nullFrame = () => {
-    return {
-        agentData: [],
-        frameData: { frameNumber: 0, time: 0 },
-        size: 0,
-    };
-};
-
-class FramePool {
-    private pool: LinkedListNode[];
-    private size: number;
-    private growthFactor: number;
-
-    constructor(initialSize: number = 10, growthFactor: number = 1.5) {
-        this.pool = [];
-        this.size = initialSize;
-        this.growthFactor = growthFactor;
-        this.initialize();
-    }
-
-    private initialize(): void {
-        for (let i = 0; i < this.size; i++) {
-            this.pool.push(this.createNode());
-        }
-    }
-
-    private createNode(): LinkedListNode {
-        return {
-            data: nullFrame(),
-            next: null,
-            prev: null,
-        };
-    }
-
-    public acquire(): LinkedListNode {
-        if (this.pool.length === 0) {
-            this.grow();
-        }
-        return this.pool.pop()!;
-    }
-
-    public release(node: LinkedListNode): void {
-        node.data = nullFrame();
-        node.next = null;
-        node.prev = null;
-        this.pool.push(node);
-    }
-
-    private grow(): void {
-        console.log("growing pool");
-        const growBy = Math.floor(this.size * (this.growthFactor - 1));
-        for (let i = 0; i < growBy; i++) {
-            this.pool.push(this.createNode());
-        }
-        this.size += growBy;
-    }
-}
-
 class LinkedListCache {
     public head: LinkedListNode | null;
     public tail: LinkedListNode | null;
@@ -101,7 +35,6 @@ class LinkedListCache {
     public maxSize: number;
     public cacheEnabled: boolean;
     public cacheSizeLimited: boolean;
-    public framePool: FramePool;
 
     public constructor(maxSize = -1, cacheEnabled = true) {
         this.head = null;
@@ -111,7 +44,6 @@ class LinkedListCache {
         this.maxSize = maxSize;
         this.cacheEnabled = cacheEnabled;
         this.cacheSizeLimited = maxSize > 0;
-        this.framePool = new FramePool();
     }
 
     public walkList(cb: (arg: any) => void): void {
@@ -215,17 +147,13 @@ class LinkedListCache {
         }
     }
 
-    // public checkPoolForNode(): LinkedListNode {
-    //     const node = this.framePool.pop();
-    //     return node !== undefined ? node : nullNode();
-    // }
-
     // addFirst method
     public addFirst(data: CachedFrame): void {
-        // const newNode = this.checkPoolForNode();
-        const newNode = this.framePool.acquire();
-        newNode.data = data;
-        newNode.next = this.head;
+        const newNode: LinkedListNode = {
+            data,
+            next: this.head,
+            prev: null,
+        };
         if (this.head) {
             this.head.prev = newNode;
         }
@@ -242,10 +170,11 @@ class LinkedListCache {
     }
     // addLast method
     public addLast(data: CachedFrame): void {
-        // const newNode = this.checkPoolForNode();
-        const newNode = this.framePool.acquire();
-        newNode.data = data;
-        newNode.prev = this.tail;
+        const newNode: LinkedListNode = {
+            data,
+            next: null,
+            prev: this.tail,
+        };
         if (this.tail) {
             this.tail.next = newNode;
         }
@@ -272,11 +201,8 @@ class LinkedListCache {
         } else {
             this.tail = node.prev;
         }
-        node = nullNode();
-        // this.framePool.push(node);
-        this.size -= node.data.size;
-        this.framePool.release(node);
         this.numFrames--;
+        this.size -= node.data.size;
     }
     // removeFirst method
     public removeFirst(): CachedFrame | null {
@@ -299,18 +225,13 @@ class LinkedListCache {
 
     // Helper method to trim the cache if it exceeds the max size
     private trimCache(): void {
-        console.log("trimming cache");
         while (this.size > this.maxSize && this.tail) {
             this.removeFirst();
         }
     }
 
     public clear(): void {
-        while (this.head) {
-            const next = this.head.next;
-            this.framePool.release(this.head);
-            this.head = next;
-        }
+        this.head = null;
         this.tail = null;
         this.numFrames = 0;
         this.size = 0;
@@ -411,8 +332,7 @@ class VisData {
         if (util.ThreadUtil.browserSupportsWebWorkers()) {
             this.setupWebWorker();
         } // linked list to do work on cache trimming
-        this.linkedListCache = new LinkedListCache(1000000); // linked list to do this needs to receive the actual prop for its size or nothing (Default should be -1)
-        // this.linkedListCache = new LinkedListCache(-1)
+        this.linkedListCache = new LinkedListCache(); // linked list to do this needs to receive the actual prop for its size or nothing (Default should be -1)
         this.currentCacheFrame = -1; // linked list to do should this be 0?
         this.enableCache = true;
         this.maxCacheSize = 10000000; // todo define defaults / constants for different browser environments
