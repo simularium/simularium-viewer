@@ -64,13 +64,9 @@ class LinkedListCache {
 
     public containsTime(time: number): boolean {
         let currentNode = this.head;
-        // linked list to do
-        // make this more performant by first checking if time is between the head time and tail time
-        // then either just return true
-        // or do the while loop to be certain
-
-        // linked list to do
-        // code below is a precise but slow check
+        if (time < this.getFirstFrameTime() || time > this.getLastFrameTime()) {
+            return false;
+        }
         while (currentNode) {
             if (currentNode.data.frameData.time === time) {
                 return true;
@@ -332,10 +328,13 @@ class VisData {
         if (util.ThreadUtil.browserSupportsWebWorkers()) {
             this.setupWebWorker();
         } // linked list to do work on cache trimming
-        this.linkedListCache = new LinkedListCache(); // linked list to do this needs to receive the actual prop for its size or nothing (Default should be -1)
         this.currentCacheFrame = -1; // linked list to do should this be 0?
         this.enableCache = true;
         this.maxCacheSize = 10000000; // todo define defaults / constants for different browser environments
+        this.linkedListCache = new LinkedListCache(
+            this.maxCacheSize,
+            this.enableCache
+        ); // linked list to do this needs to receive the actual prop for its size or nothing (Default should be -1)
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
