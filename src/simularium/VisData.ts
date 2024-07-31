@@ -27,6 +27,22 @@ interface LinkedListNode {
     prev: LinkedListNode | null;
 }
 
+const nullNode = () => {
+    return {
+        data: nullFrame(),
+        next: null,
+        prev: null,
+    };
+};
+
+const nullFrame = () => {
+    return {
+        agentData: [],
+        frameData: { frameNumber: 0, time: 0 },
+        size: 0,
+    };
+};
+
 class LinkedListCache {
     public head: LinkedListNode | null;
     public tail: LinkedListNode | null;
@@ -35,6 +51,7 @@ class LinkedListCache {
     public maxSize: number;
     public cacheEnabled: boolean;
     public cacheSizeLimited: boolean;
+    public framePool: LinkedListNode[];
 
     public constructor(maxSize = -1, cacheEnabled = true) {
         this.head = null;
@@ -44,6 +61,7 @@ class LinkedListCache {
         this.maxSize = maxSize;
         this.cacheEnabled = cacheEnabled;
         this.cacheSizeLimited = maxSize > 0;
+        this.framePool = [];
     }
 
     public walkList(cb: (arg: any) => void): void {
@@ -147,13 +165,16 @@ class LinkedListCache {
         }
     }
 
+    public checkPoolForNode(): LinkedListNode {
+        const node = this.framePool.pop();
+        return node !== undefined ? node : nullNode();
+    }
+
     // addFirst method
     public addFirst(data: CachedFrame): void {
-        const newNode: LinkedListNode = {
-            data,
-            next: this.head,
-            prev: null,
-        };
+        const newNode = this.checkPoolForNode();
+        newNode.data = data;
+        newNode.next = this.head;
         if (this.head) {
             this.head.prev = newNode;
         }
@@ -170,11 +191,9 @@ class LinkedListCache {
     }
     // addLast method
     public addLast(data: CachedFrame): void {
-        const newNode: LinkedListNode = {
-            data,
-            next: null,
-            prev: this.tail,
-        };
+        const newNode = this.checkPoolForNode();
+        newNode.data = data;
+        newNode.prev = this.tail;
         if (this.tail) {
             this.tail.next = newNode;
         }
@@ -201,6 +220,8 @@ class LinkedListCache {
         } else {
             this.tail = node.prev;
         }
+        node = nullNode();
+        this.framePool.push(node);
         this.numFrames--;
         this.size -= node.data.size;
     }
@@ -235,6 +256,7 @@ class LinkedListCache {
         this.tail = null;
         this.numFrames = 0;
         this.size = 0;
+        this.framePool = [];
     }
 
     // Method to replace existing cache contents with a single CachedData element
@@ -332,7 +354,7 @@ class VisData {
         if (util.ThreadUtil.browserSupportsWebWorkers()) {
             this.setupWebWorker();
         } // linked list to do work on cache trimming
-        this.linkedListCache = new LinkedListCache(); // linked list to do this needs to receive the actual prop for its size or nothing (Default should be -1)
+        this.linkedListCache = new LinkedListCache(1000000); // linked list to do this needs to receive the actual prop for its size or nothing (Default should be -1)
         this.currentCacheFrame = -1; // linked list to do should this be 0?
         this.enableCache = true;
         this.maxCacheSize = 10000000; // todo define defaults / constants for different browser environments
