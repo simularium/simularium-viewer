@@ -34,14 +34,16 @@ class LinkedListCache {
     public size: number;
     public maxSize: number;
     public cacheEnabled: boolean;
+    public cacheSizeLimited: boolean;
 
-    public constructor(maxSize: number, cacheEnabled = true) {
+    public constructor(maxSize = -1, cacheEnabled = true) {
         this.head = null;
         this.tail = null;
         this.numFrames = 0;
         this.size = 0;
         this.maxSize = maxSize;
         this.cacheEnabled = cacheEnabled;
+        this.cacheSizeLimited = maxSize > 0;
     }
 
     public walkList(cb: (arg: any) => void): void {
@@ -65,7 +67,7 @@ class LinkedListCache {
         // linked list to do
         // make this more performant by first checking if time is between the head time and tail time
         // then either just return true
-        // or do the while loop to be certain\
+        // or do the while loop to be certain
 
         // linked list to do
         // code below is a precise but slow check
@@ -162,7 +164,7 @@ class LinkedListCache {
         this.numFrames++;
         // linked list to do: trim cache if necessary
         this.size += data.size;
-        if (this.size > this.maxSize) {
+        if (this.cacheSizeLimited && this.size > this.maxSize) {
             this.trimCache();
         }
     }
@@ -183,7 +185,7 @@ class LinkedListCache {
         this.numFrames++;
         // linked list to do: trim cache if necessary
         this.size += data.size;
-        if (this.size > this.maxSize) {
+        if (this.cacheSizeLimited && this.size > this.maxSize) {
             this.trimCache();
         }
     }
@@ -330,7 +332,7 @@ class VisData {
         if (util.ThreadUtil.browserSupportsWebWorkers()) {
             this.setupWebWorker();
         } // linked list to do work on cache trimming
-        this.linkedListCache = new LinkedListCache(1000000); // prop is a max size
+        this.linkedListCache = new LinkedListCache(); // linked list to do this needs to receive the actual prop for its size or nothing (Default should be -1)
         this.currentCacheFrame = -1; // linked list to do should this be 0?
         this.enableCache = true;
         this.maxCacheSize = 10000000; // todo define defaults / constants for different browser environments
