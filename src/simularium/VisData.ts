@@ -221,6 +221,7 @@ class LinkedListCache {
 
     // Helper method to trim the cache if it exceeds the max size
     private trimCache(): void {
+        console.log("trimming cache");
         while (this.size > this.maxSize && this.tail) {
             this.removeFirst();
         }
