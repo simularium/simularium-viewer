@@ -8,6 +8,7 @@ export type {
     EncodedTypeMapping,
     SimulariumFileFormat,
     Plot,
+    AgentData,
 } from "./types";
 
 export type {

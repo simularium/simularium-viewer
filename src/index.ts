@@ -12,6 +12,7 @@ export type {
     EncodedTypeMapping,
     VisDataMessage,
     Plot,
+    AgentData,
 } from "./simularium";
 export type { ISimulariumFile } from "./simularium/ISimulariumFile";
 export type { TimeData } from "./viewport";
@@ -28,6 +29,5 @@ export {
 } from "./simularium";
 export { compareTimes, loadSimulariumFile } from "./util";
 export { DEFAULT_CAMERA_SPEC } from "./constants";
-export { AgentData } from "./simularium/types";
 
 export default Viewport;
