@@ -16,6 +16,7 @@ import { AgentData, TrajectoryFileInfoAny } from "../simularium/types";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
 import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry";
+import { ColorAssignment } from "../visGeometry/types";
 import FrameRecorder from "../simularium/FrameRecorder";
 import { DEFAULT_FRAME_RATE } from "../constants";
 
@@ -596,23 +597,21 @@ class Viewport extends React.Component<
     }
 
     public changeAgentsColor(appliedColors: UIDisplayData): void {
+        const changes: ColorAssignment[] = [];
         appliedColors.forEach((agent) => {
             const agentIds = this.selectionInterface.getAgentIdsByNamesAndTags([
                     { name: agent.name, tags: [] },
                 ]);
-            this.visGeometry.applyColorToAgents(
-                agentIds,
-                agent.color
-            );
-
+            changes.push({ agentIds, color: agent.color });
             agent.displayStates.forEach((state) => {
                 const stateIds =
                     this.selectionInterface.getAgentIdsByNamesAndTags([
                         { name: agent.name, tags: [state.name] },
                     ]);
-                this.visGeometry.applyColorToAgents(stateIds, state.color);
+                changes.push({ agentIds: stateIds, color: state.color });
             });
         });
+        this.visGeometry.applyColorToAgents(changes);
     }
 
     public stopAnimate(): void {

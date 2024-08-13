@@ -1,6 +1,7 @@
 import { filter, find, map, uniq } from "lodash";
 import { EncodedTypeMapping } from "./types";
 import { convertColorNumberToString } from "../visGeometry/ColorHandler";
+import { ColorAssignment } from "../visGeometry/types";
 
 // An individual entry parsed from an encoded name
 // The encoded names can be just a name or a name plus a
@@ -301,9 +302,10 @@ class SelectionInterface {
     public setInitialAgentColors(
         uiDisplayData: UIDisplayData,
         colors: (string | number)[],
-        setColorForIds: (ids: number[], color: string | number) => void
+        setColorForIds: (colorAssignments: ColorAssignment[]) => void
     ): (string | number)[] {
         let defaultColorIndex = 0;
+        const colorAssignments: ColorAssignment[] = [];
         uiDisplayData.forEach((group) => {
             // the color for the whole grouping for this entry.name
             let groupColorIndex = defaultColorIndex;
@@ -317,7 +319,10 @@ class SelectionInterface {
             if (!hasNewColors) {
                 // if no colors have been set by the user for this name,
                 // just give all states of this agent name the same color
-                setColorForIds(ids, colors[defaultColorIndex]);
+                colorAssignments.push({
+                    agentIds: ids,
+                    color: colors[defaultColorIndex],
+                });
                 this.updateUiDataColor(
                     group.name,
                     ids,
@@ -355,7 +360,10 @@ class SelectionInterface {
                     } else {
                         groupColorIndex = -1;
                     }
-                    setColorForIds([ids[index]], colors[agentColorIndex]);
+                    colorAssignments.push({
+                        agentIds: [ids[index]],
+                        color: colors[agentColorIndex],
+                    });
                 });
             }
             if (groupColorIndex > -1) {
@@ -374,6 +382,7 @@ class SelectionInterface {
                 defaultColorIndex++;
             }
         });
+        setColorForIds(colorAssignments);
         return colors;
     }
 }
