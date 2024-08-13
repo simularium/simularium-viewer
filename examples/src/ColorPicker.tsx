@@ -59,7 +59,10 @@ const ColorPicker = ({
                     }
                     const newDisplayStates = agent.displayStates.map(
                         (state: any) => {
-                            if (subAgent.includes(state.id)) {
+                            if (
+                                subAgent.includes(state.id) ||
+                                !subAgent.length
+                            ) {
                                 return {
                                     ...state,
                                     color: selectedColor,
