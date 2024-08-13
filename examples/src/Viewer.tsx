@@ -97,7 +97,6 @@ interface ViewerState {
     showPaths: boolean;
     timeStep: number;
     totalDuration: number;
-    uiDisplayData: UIDisplayData;
     filePending: {
         type: TrajectoryType;
         template: { [key: string]: any };
@@ -162,7 +161,6 @@ const initialState: ViewerState = {
     showPaths: true,
     timeStep: 1,
     totalDuration: 100,
-    uiDisplayData: [],
     selectionStateInfo: {
         highlightedAgents: [],
         hiddenAgents: [],
@@ -517,14 +515,13 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             []
         );
         const uniqueTags: string[] = [...new Set(allTags)];
-        if (isEqual(uiDisplayData, this.state.uiDisplayData)) {
+        if (isEqual(uiDisplayData, this.state.selectionStateInfo.appliedColors)) {
             return;
         }
         this.setState({
             particleTypeNames: uiDisplayData.map((a) => a.name),
-            uiDisplayData: uiDisplayData,
             particleTypeTags: uniqueTags,
-            selectionStateInfo: initialState.selectionStateInfo,
+            selectionStateInfo: {...initialState.selectionStateInfo, appliedColors: uiDisplayData},
         });
     }
 
@@ -679,7 +676,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     public setColorSelectionInfo = (appliedColors) => {
         this.setState({
             ...this.state,
-            uiDisplayData: appliedColors,
             selectionStateInfo: {
                 hiddenAgents: this.state.selectionStateInfo.hiddenAgents,
                 highlightedAgents:
@@ -984,7 +980,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 </span>
                 <br></br>
                 <ColorPicker
-                    uiDisplayData={this.state.uiDisplayData}
+                    uiDisplayData={this.state.selectionStateInfo.appliedColors}
                     particleTypeNames={this.state.particleTypeNames}
                     agentColors={this.state.agentColors}
                     updateAgentColorArray={this.updateAgentColorArray}
