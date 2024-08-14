@@ -42,10 +42,13 @@ import {
     DEFAULT_CAMERA_Z_POSITION,
     DEFAULT_CAMERA_SPEC,
     nullAgent,
+    AGENT_HEADER_SIZE,
 } from "../constants";
 import {
+    AGENT_OBJECT_KEYS,
     AgentData,
     AgentDisplayDataWithGeometry,
+    CachedFrame,
     CameraSpec,
     Coordinates3d,
     EncodedTypeMapping,
@@ -64,7 +67,7 @@ import {
     MeshLoadRequest,
     PDBGeometry,
 } from "./types";
-import { checkAndSanitizePath } from "../util";
+import { checkAndSanitizePath, nullCachedFrame } from "../util";
 import ColorHandler from "./ColorHandler";
 
 const MAX_PATH_LEN = 32;
@@ -145,7 +148,7 @@ class VisGeometry {
     public colorHandler: ColorHandler;
     public renderer: SimulariumRenderer;
     public legacyRenderer: LegacyRenderer;
-    public currentSceneAgents: AgentData[];
+    public currentSceneAgents: CachedFrame;
     public colorsData: Float32Array;
     public lightsGroup: Group;
     public agentPathGroup: Group;
@@ -256,7 +259,7 @@ class VisGeometry {
         this.tickIntervalLength = 0;
         this.boxNearZ = 0;
         this.boxFarZ = 100;
-        this.currentSceneAgents = [];
+        this.currentSceneAgents = nullCachedFrame();
         this.colorsData = new Float32Array(0);
         this.lodBias = 0;
         this.lodDistanceStops = [100, 200, 400, Number.MAX_VALUE];
@@ -1530,14 +1533,10 @@ class VisGeometry {
     /**
      *   Update Scene
      **/
-    private updateScene(
-        agents: AgentData[],
-        possibleNewAgentData?: boolean
-    ): void {
-        // console.log("update scene, agents: ", agents, possibleNewAgentData);
-        // if (possibleNewAgentData) {
-        //     this.currentSceneAgents = agents;
-        // }
+    private updateScene(frameData: CachedFrame): void {
+        this.currentSceneAgents = frameData;
+        const view = new Float32Array(frameData.data);
+        const agentCount = frameData.agentCount;
 
         // values for updating agent path
         let dx = 0,
@@ -1548,51 +1547,44 @@ class VisGeometry {
             lastz = 0;
 
         this.legacyRenderer.beginUpdate(this.scene);
-
         this.fibers.beginUpdate();
         this.geometryStore.forEachMesh((agentGeo) => {
             agentGeo.geometry.instances.beginUpdate();
         });
-        // these lists must be emptied on every scene update.
+
+        // Clear draw lists
         this.agentsWithPdbsToDraw = [];
         this.agentPdbsToDraw = [];
 
-        // First, mark ALL inactive and invisible.
-        // Note this implies a memory leak of sorts:
-        // the number of agent instances can only grow during one trajectory run.
-        // We just hide the unused ones.
-        // Worst case is if each frame uses completely different (incrementing) instance ids.
-        for (let i = 0; i < MAX_MESHES && i < this.visAgents.length; i += 1) {
-            const visAgent = this.visAgents[i];
-            visAgent.hideAndDeactivate();
+        // Mark all agents as inactive and invisible
+        for (let i = 0; i < MAX_MESHES && i < this.visAgents.length; i++) {
+            this.visAgents[i].hideAndDeactivate();
         }
-
-        agents.forEach((agentData) => {
+        // to do this is a naming conflict
+        let offset = AGENT_HEADER_SIZE;
+        for (let i = 0; i < agentCount; i++) {
+            const agentData = this.getAgentDataFromBuffer(view, offset);
             const visType = agentData.visType;
             const instanceId = agentData.instanceId;
             const typeId = agentData.type;
+
             lastx = agentData.x;
             lasty = agentData.y;
             lastz = agentData.z;
 
-            // look up last agent with this instanceId.
             let visAgent = this.visAgentInstances.get(instanceId);
 
             const path = this.findPathForAgent(instanceId);
-            if (path) {
-                if (visAgent) {
-                    lastx = visAgent.agentData.x;
-                    lasty = visAgent.agentData.y;
-                    lastz = visAgent.agentData.z;
-                }
+            if (path && visAgent) {
+                lastx = visAgent.agentData.x;
+                lasty = visAgent.agentData.y;
+                lastz = visAgent.agentData.z;
             }
 
             if (!visAgent) {
                 visAgent = this.createAgent();
                 visAgent.agentData.instanceId = instanceId;
-                //visAgent.mesh.userData = { id: instanceId };
                 this.visAgentInstances.set(instanceId, visAgent);
-                // set hidden so that it is revealed later in this function:
                 visAgent.hidden = true;
             }
 
@@ -1603,7 +1595,6 @@ class VisGeometry {
             }
 
             visAgent.active = true;
-
             // update the agent!
             visAgent.agentData = agentData;
 
@@ -1615,13 +1606,13 @@ class VisGeometry {
             const isHidden = this.hiddenIds.includes(visAgent.agentData.type);
             visAgent.setHidden(isHidden);
             if (visAgent.hidden) {
-                return;
+                offset = this.getNextAgentOffset(view, offset);
+                continue;
             }
 
             visAgent.setColor(
                 this.colorHandler.getColorInfoForAgentType(typeId)
             );
-
             // if not fiber...
             if (visType === VisTypes.ID_VIS_TYPE_DEFAULT) {
                 const response = this.getGeoForAgentType(typeId);
@@ -1629,7 +1620,8 @@ class VisGeometry {
                     this.logger.warn(
                         `No mesh nor pdb available for ${typeId}? Should be unreachable code`
                     );
-                    return;
+                    offset = this.getNextAgentOffset(view, offset);
+                    continue;
                 }
                 const { geometry, displayType } = response;
                 if (geometry && displayType === GeometryDisplayType.PDB) {
@@ -1663,13 +1655,41 @@ class VisGeometry {
             } else if (visType === VisTypes.ID_VIS_TYPE_FIBER) {
                 this.addFiberToDrawList(typeId, visAgent, agentData);
             }
-        });
+
+            offset = this.getNextAgentOffset(view, offset);
+        }
 
         this.fibers.endUpdate();
         this.geometryStore.forEachMesh((agentGeo) => {
             agentGeo.geometry.instances.endUpdate();
         });
         this.legacyRenderer.endUpdate(this.scene);
+    }
+
+    private getAgentDataFromBuffer(
+        view: Float32Array,
+        offset: number
+    ): AgentData {
+        const agentData: AgentData = nullAgent();
+        for (let i = 0; i < AGENT_OBJECT_KEYS.length; i++) {
+            agentData[AGENT_OBJECT_KEYS[i]] = view[offset + i];
+        }
+        const nSubPoints = agentData["nSubPoints"];
+        agentData.subpoints = Array.from(
+            view.subarray(
+                offset + AGENT_OBJECT_KEYS.length,
+                offset + AGENT_OBJECT_KEYS.length + nSubPoints
+            )
+        );
+        return agentData;
+    }
+
+    private getNextAgentOffset(
+        view: Float32Array,
+        currentOffset: number
+    ): number {
+        const nSubPoints = view[currentOffset + AGENT_OBJECT_KEYS.length - 1];
+        return currentOffset + AGENT_OBJECT_KEYS.length + nSubPoints;
     }
 
     public animateCamera(): void {
@@ -1880,7 +1900,7 @@ class VisGeometry {
         // remove current scene agents.
         this.visAgentInstances.clear();
         this.visAgents = [];
-        this.currentSceneAgents = [];
+        this.currentSceneAgents = nullCachedFrame();
 
         this.dehighlight();
     }
@@ -1909,8 +1929,8 @@ class VisGeometry {
         }
     }
 
-    public update(agents: AgentData[], possiblyNewAgentData?: boolean): void {
-        this.updateScene(agents, possiblyNewAgentData);
+    public update(agents: CachedFrame): void {
+        this.updateScene(agents);
     }
 }
 

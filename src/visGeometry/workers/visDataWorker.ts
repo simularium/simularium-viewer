@@ -5,13 +5,8 @@ self.addEventListener(
     "message",
     (e: MessageEvent) => {
         const visDataMsg = e.data;
-        const { agentData, frameData, size } = parseVisDataMessage(visDataMsg);
-
-        postMessage({
-            agentData,
-            frameData,
-            size,
-        });
+        const frameData = parseVisDataMessage(visDataMsg);
+        postMessage(frameData);
     },
     false
 );

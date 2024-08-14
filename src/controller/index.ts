@@ -211,7 +211,7 @@ export default class SimulariumController {
     }
 
     public time(): number {
-        return this.visData.currentFrameData.time;
+        return this.visData.currentFrameData;
     }
 
     public stop(): void {

@@ -635,15 +635,15 @@ class Viewport extends React.Component<
                 return;
             }
 
-            if (visData.currentFrameData.time != this.lastRenderedAgentTime) {
+            if (visData.currentFrameData != this.lastRenderedAgentTime) {
                 const currentAgents = visData.currentFrame();
-                if (currentAgents.length > 0) {
+                if (
+                    currentAgents?.agentCount !== undefined &&
+                    currentAgents?.agentCount > 0
+                ) {
                     this.dispatchUpdatedTime(visData.currentFrameData);
-                    this.visGeometry.update(
-                        currentAgents,
-                        true /* might be new data */
-                    );
-                    this.lastRenderedAgentTime = visData.currentFrameData.time;
+                    this.visGeometry.update(currentAgents);
+                    this.lastRenderedAgentTime = visData.currentFrameData;
                     this.updateFollowObjectData();
                 }
             }
