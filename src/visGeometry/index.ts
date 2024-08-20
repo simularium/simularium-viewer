@@ -148,7 +148,7 @@ class VisGeometry {
     public colorHandler: ColorHandler;
     public renderer: SimulariumRenderer;
     public legacyRenderer: LegacyRenderer;
-    public currentSceneAgents: CachedFrame;
+    public currentSceneData: CachedFrame;
     public colorsData: Float32Array;
     public lightsGroup: Group;
     public agentPathGroup: Group;
@@ -259,7 +259,7 @@ class VisGeometry {
         this.tickIntervalLength = 0;
         this.boxNearZ = 0;
         this.boxFarZ = 100;
-        this.currentSceneAgents = nullCachedFrame();
+        this.currentSceneData = nullCachedFrame();
         this.colorsData = new Float32Array(0);
         this.lodBias = 0;
         this.lodDistanceStops = [100, 200, 400, Number.MAX_VALUE];
@@ -457,19 +457,19 @@ class VisGeometry {
             .addInput(settings, "lodBias", { min: 0, max: 4, step: 1 })
             .on("change", (event) => {
                 this.lodBias = event.value;
-                this.updateScene(this.currentSceneAgents);
+                this.updateScene(this.currentSceneData);
             });
         lodFolder.addInput(settings, "lod0").on("change", (event) => {
             this.lodDistanceStops[0] = event.value;
-            this.updateScene(this.currentSceneAgents);
+            this.updateScene(this.currentSceneData);
         });
         lodFolder.addInput(settings, "lod1").on("change", (event) => {
             this.lodDistanceStops[1] = event.value;
-            this.updateScene(this.currentSceneAgents);
+            this.updateScene(this.currentSceneData);
         });
         lodFolder.addInput(settings, "lod2").on("change", (event) => {
             this.lodDistanceStops[2] = event.value;
-            this.updateScene(this.currentSceneAgents);
+            this.updateScene(this.currentSceneData);
         });
         this.renderer.setupGui(this.gui);
     }
@@ -499,7 +499,7 @@ class VisGeometry {
             this.constructInstancedFibers();
         }
 
-        this.updateScene(this.currentSceneAgents);
+        this.updateScene(this.currentSceneData);
     }
 
     private constructInstancedFibers() {
@@ -688,7 +688,7 @@ class VisGeometry {
                 visAgent.setFollowed(true);
             }
         }
-        this.updateScene(this.currentSceneAgents);
+        this.updateScene(this.currentSceneData);
     }
 
     public unfollow(): void {
@@ -697,12 +697,12 @@ class VisGeometry {
 
     public setVisibleByIds(hiddenIds: number[]): void {
         this.hiddenIds = hiddenIds;
-        this.updateScene(this.currentSceneAgents);
+        this.updateScene(this.currentSceneData);
     }
 
     public setHighlightByIds(ids: number[]): void {
         this.highlightedIds = ids;
-        this.updateScene(this.currentSceneAgents);
+        this.updateScene(this.currentSceneData);
     }
 
     public dehighlight(): void {
@@ -743,7 +743,7 @@ class VisGeometry {
             }
         }
 
-        this.updateScene(this.currentSceneAgents);
+        this.updateScene(this.currentSceneData);
     }
 
     private setupControls(disableControls: boolean): void {
@@ -1131,7 +1131,7 @@ class VisGeometry {
             newColorData.numberOfColors,
             newColorData.colorArray
         );
-        this.updateScene(this.currentSceneAgents);
+        this.updateScene(this.currentSceneData);
     }
 
     /**
@@ -1221,7 +1221,7 @@ class VisGeometry {
                     this.logger.info(reason);
                 });
         });
-        this.updateScene(this.currentSceneAgents);
+        this.updateScene(this.currentSceneData);
     }
 
     public setTickIntervalLength(axisLength: number): void {
@@ -1533,8 +1533,11 @@ class VisGeometry {
     /**
      *   Update Scene
      **/
+    //todo currentSceneData isn't really accurately named anymore
+    // if we are passing in a whole cached frame, it should be currentFrame or something like that
+    // or currentSceneData
     private updateScene(frameData: CachedFrame): void {
-        this.currentSceneAgents = frameData;
+        this.currentSceneData = frameData;
         const view = new Float32Array(frameData.data);
         const agentCount = frameData.agentCount;
 
@@ -1900,7 +1903,7 @@ class VisGeometry {
         // remove current scene agents.
         this.visAgentInstances.clear();
         this.visAgents = [];
-        this.currentSceneAgents = nullCachedFrame();
+        this.currentSceneData = nullCachedFrame();
 
         this.dehighlight();
     }

@@ -27,9 +27,6 @@ class VisData {
 
     public timeStepSize: number;
 
-    private static HEADER_SIZE = 3; // frameNumber, time, agentCount
-    private static AGENT_HEADER_SIZE = 7; // x, y, z, visType, type, instanceId, nSubPoints
-
     private static parseOneBinaryFrame(data: ArrayBuffer): CachedFrame {
         const floatView = new Float32Array(data);
         const intView = new Uint32Array(data);
@@ -80,9 +77,9 @@ class VisData {
             this.setupWebWorker();
         } // linked list to do work on cache trimming
         this.currentCacheFrame = -1; // linked list to do should this be 0?
-        this.enableCache = false;
-        // this.maxCacheSize = 10000000; // todo define defaults / constants for different browser environments
-        this.maxCacheSize = -1;
+        this.enableCache = true;
+        this.maxCacheSize = 10000000; // todo define defaults / constants for different browser environments
+        // this.maxCacheSize = -1;
         this.linkedListCache = new LinkedListCache(
             this.maxCacheSize,
             this.enableCache
