@@ -1,4 +1,5 @@
 import { EncodedTypeMapping } from "./types";
+import { ColorAssignment } from "../visGeometry/types";
 export interface SelectionEntry {
     name: string;
     tags: string[];
@@ -10,7 +11,7 @@ export interface ColorChange {
 export interface SelectionStateInfo {
     highlightedAgents: SelectionEntry[];
     hiddenAgents: SelectionEntry[];
-    colorChange: ColorChange | null;
+    appliedColors: UIDisplayData;
 }
 interface DisplayStateEntry {
     name: string;
@@ -42,7 +43,7 @@ declare class SelectionInterface {
     getParentColor(name: string): string;
     getUIDisplayData(): UIDisplayData;
     private updateUiDataColor;
-    setInitialAgentColors(uiDisplayData: UIDisplayData, colors: (string | number)[], setColorForIds: (ids: number[], color: string | number) => void): (string | number)[];
+    setInitialAgentColors(uiDisplayData: UIDisplayData, colors: (string | number)[], setColorForIds: (colorAssignments: ColorAssignment[]) => void): (string | number)[];
 }
 export { SelectionInterface };
 export default SelectionInterface;

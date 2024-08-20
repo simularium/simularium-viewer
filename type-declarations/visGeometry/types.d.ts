@@ -42,3 +42,7 @@ export interface AgentColorInfo {
     color: Color;
     colorId: number;
 }
+export interface ColorAssignment {
+    agentIds: number[];
+    color: string | number;
+}

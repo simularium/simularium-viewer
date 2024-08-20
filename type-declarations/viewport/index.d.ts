@@ -4,7 +4,6 @@ import { TrajectoryFileInfo, SelectionStateInfo, UIDisplayData } from "../simula
 import { AgentData } from "../simularium/types";
 import { FrontEndError } from "../simularium/FrontEndError";
 import { RenderStyle } from "../visGeometry";
-import { ColorChange } from "../simularium/SelectionInterface";
 export declare type PropColor = string | number | [number, number, number];
 declare type ViewportProps = {
     renderStyle: RenderStyle;
@@ -103,7 +102,7 @@ declare class Viewport extends React.Component<ViewportProps & DefaultProps, Vie
     private updateFollowObjectData;
     private handleTimeChange;
     private dispatchUpdatedTime;
-    changeAgentsColor(colorChange: ColorChange): void;
+    changeAgentsColor(appliedColors: UIDisplayData): void;
     stopAnimate(): void;
     animate(): void;
     renderViewControls(): React.ReactElement;

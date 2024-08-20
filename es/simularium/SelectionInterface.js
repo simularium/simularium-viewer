@@ -271,6 +271,7 @@ var SelectionInterface = /*#__PURE__*/function () {
     value: function setInitialAgentColors(uiDisplayData, colors, setColorForIds) {
       var _this5 = this;
       var defaultColorIndex = 0;
+      var colorAssignments = [];
       uiDisplayData.forEach(function (group) {
         // the color for the whole grouping for this entry.name
         var groupColorIndex = defaultColorIndex;
@@ -284,7 +285,10 @@ var SelectionInterface = /*#__PURE__*/function () {
         if (!hasNewColors) {
           // if no colors have been set by the user for this name,
           // just give all states of this agent name the same color
-          setColorForIds(ids, colors[defaultColorIndex]);
+          colorAssignments.push({
+            agentIds: ids,
+            color: colors[defaultColorIndex]
+          });
           _this5.updateUiDataColor(group.name, ids, colors[defaultColorIndex]);
         } else {
           // otherwise, we need to update any user defined colors
@@ -314,7 +318,10 @@ var SelectionInterface = /*#__PURE__*/function () {
             } else {
               groupColorIndex = -1;
             }
-            setColorForIds([ids[index]], colors[agentColorIndex]);
+            colorAssignments.push({
+              agentIds: [ids[index]],
+              color: colors[agentColorIndex]
+            });
           });
         }
         if (groupColorIndex > -1) {
@@ -328,6 +335,7 @@ var SelectionInterface = /*#__PURE__*/function () {
           defaultColorIndex++;
         }
       });
+      setColorForIds(colorAssignments);
       return colors;
     }
   }]);

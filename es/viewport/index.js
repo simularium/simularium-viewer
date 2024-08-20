@@ -334,8 +334,8 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
           var hiddenIds = this.selectionInterface.getHiddenIds(selectionStateInfo);
           this.visGeometry.setVisibleByIds(hiddenIds);
         }
-        if (!isEqual(selectionStateInfo.colorChange, prevProps.selectionStateInfo.colorChange) && selectionStateInfo.colorChange !== null) {
-          this.changeAgentsColor(selectionStateInfo.colorChange);
+        if (!isEqual(selectionStateInfo.appliedColors, prevProps.selectionStateInfo.appliedColors) && selectionStateInfo.appliedColors.length > 0) {
+          this.changeAgentsColor(selectionStateInfo.appliedColors);
         }
       }
 
@@ -452,11 +452,30 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
     }
   }, {
     key: "changeAgentsColor",
-    value: function changeAgentsColor(colorChange) {
-      var agent = colorChange.agent,
-        color = colorChange.color;
-      var agentIds = this.selectionInterface.getAgentIdsByNamesAndTags([agent]);
-      this.visGeometry.applyColorToAgents(agentIds, color);
+    value: function changeAgentsColor(appliedColors) {
+      var _this5 = this;
+      var changes = [];
+      appliedColors.forEach(function (agent) {
+        var agentIds = _this5.selectionInterface.getAgentIdsByNamesAndTags([{
+          name: agent.name,
+          tags: []
+        }]);
+        changes.push({
+          agentIds: agentIds,
+          color: agent.color
+        });
+        agent.displayStates.forEach(function (state) {
+          var stateIds = _this5.selectionInterface.getAgentIdsByNamesAndTags([{
+            name: agent.name,
+            tags: [state.name]
+          }]);
+          changes.push({
+            agentIds: stateIds,
+            color: state.color
+          });
+        });
+      });
+      this.visGeometry.applyColorToAgents(changes);
     }
   }, {
     key: "stopAnimate",

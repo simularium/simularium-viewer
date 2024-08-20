@@ -10,7 +10,7 @@ import { AgentData, EncodedTypeMapping, PerspectiveCameraSpec } from "../simular
 import SimulariumRenderer from "./rendering/SimulariumRenderer";
 import { LegacyRenderer } from "./rendering/LegacyRenderer";
 import GeometryStore from "./GeometryStore";
-import { GeometryDisplayType, MeshLoadRequest } from "./types";
+import { ColorAssignment, GeometryDisplayType, MeshLoadRequest } from "./types";
 import ColorHandler from "./ColorHandler";
 declare const NO_AGENT = -1;
 export declare enum RenderStyle {
@@ -126,7 +126,7 @@ declare class VisGeometry {
     hitTest(offsetX: number, offsetY: number): number;
     private setAgentColors;
     createMaterials(colors: (number | string)[]): void;
-    applyColorToAgents(agentIds: number[], color: string | number): void;
+    applyColorToAgents(colorAssignments: ColorAssignment[]): void;
     /**
      *   Data Management
      */

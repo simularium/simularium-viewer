@@ -1032,9 +1032,12 @@ var VisGeometry = /*#__PURE__*/function () {
     }
   }, {
     key: "applyColorToAgents",
-    value: function applyColorToAgents(agentIds, color) {
-      var newColorData = this.colorHandler.setColorForAgentTypes(agentIds, color);
-      this.renderer.updateColors(newColorData.numberOfColors, newColorData.colorArray);
+    value: function applyColorToAgents(colorAssignments) {
+      var _this4 = this;
+      colorAssignments.forEach(function (color) {
+        var newColorData = _this4.colorHandler.setColorForAgentTypes(color.agentIds, color.color);
+        _this4.renderer.updateColors(newColorData.numberOfColors, newColorData.colorArray);
+      });
       this.updateScene(this.currentSceneAgents);
     }
 
@@ -1068,7 +1071,7 @@ var VisGeometry = /*#__PURE__*/function () {
   }, {
     key: "setGeometryData",
     value: function setGeometryData(typeMapping) {
-      var _this4 = this;
+      var _this5 = this;
       this.logger.info("Received type mapping data: ", typeMapping);
       Object.keys(typeMapping).forEach(function (id) {
         var entry = typeMapping[id];
@@ -1077,11 +1080,11 @@ var VisGeometry = /*#__PURE__*/function () {
           displayType = _entry$geometry.displayType;
         var lookupKey = url ? checkAndSanitizePath(url) : displayType;
         // map id --> lookupKey
-        _this4.visGeomMap.set(Number(id), lookupKey);
+        _this5.visGeomMap.set(Number(id), lookupKey);
         // get geom for lookupKey,
         // will only load each geometry once, so may return nothing
         // if the same geometry is assigned to more than one agent
-        _this4.geometryStore.mapKeyToGeom(Number(id), entry.geometry).then(function (newGeometryLoaded) {
+        _this5.geometryStore.mapKeyToGeom(Number(id), entry.geometry).then(function (newGeometryLoaded) {
           if (!newGeometryLoaded) {
             // no new geometry to load
             return;
@@ -1091,25 +1094,25 @@ var VisGeometry = /*#__PURE__*/function () {
             geometry = newGeometryLoaded.geometry,
             errorMessage = newGeometryLoaded.errorMessage;
           var newDisplayType = returnedDisplayType || displayType;
-          _this4.onNewRuntimeGeometryType(lookupKey, newDisplayType, geometry);
+          _this5.onNewRuntimeGeometryType(lookupKey, newDisplayType, geometry);
           // handle additional async update to LOD for pdbs
           if (newDisplayType === GeometryDisplayType.PDB && geometry) {
             var pdbModel = geometry;
             return pdbModel.generateLOD().then(function () {
-              _this4.logger.info("Finished loading pdb LODs: ", lookupKey);
-              _this4.onNewRuntimeGeometryType(lookupKey, newDisplayType, geometry);
+              _this5.logger.info("Finished loading pdb LODs: ", lookupKey);
+              _this5.onNewRuntimeGeometryType(lookupKey, newDisplayType, geometry);
             });
           }
           // if returned with a resolve, but has an error message,
           // the error was handled, and the geometry was replaced with a sphere
           // but still good to tell the user about it.
           if (errorMessage) {
-            _this4.onError(new FrontEndError(errorMessage, ErrorLevel.WARNING));
-            _this4.logger.info(errorMessage);
+            _this5.onError(new FrontEndError(errorMessage, ErrorLevel.WARNING));
+            _this5.logger.info(errorMessage);
           }
         })["catch"](function (reason) {
-          _this4.onError(new FrontEndError(reason));
-          _this4.logger.info(reason);
+          _this5.onError(new FrontEndError(reason));
+          _this5.logger.info(reason);
         });
       });
       this.updateScene(this.currentSceneAgents);
@@ -1293,7 +1296,7 @@ var VisGeometry = /*#__PURE__*/function () {
   }, {
     key: "updateScene",
     value: function updateScene(agents) {
-      var _this5 = this;
+      var _this6 = this;
       this.currentSceneAgents = agents;
 
       // values for updating agent path
@@ -1330,8 +1333,8 @@ var VisGeometry = /*#__PURE__*/function () {
         lastz = agentData.z;
 
         // look up last agent with this instanceId.
-        var visAgent = _this5.visAgentInstances.get(instanceId);
-        var path = _this5.findPathForAgent(instanceId);
+        var visAgent = _this6.visAgentInstances.get(instanceId);
+        var path = _this6.findPathForAgent(instanceId);
         if (path) {
           if (visAgent) {
             lastx = visAgent.agentData.x;
@@ -1340,53 +1343,53 @@ var VisGeometry = /*#__PURE__*/function () {
           }
         }
         if (!visAgent) {
-          visAgent = _this5.createAgent();
+          visAgent = _this6.createAgent();
           visAgent.agentData.instanceId = instanceId;
           //visAgent.mesh.userData = { id: instanceId };
-          _this5.visAgentInstances.set(instanceId, visAgent);
+          _this6.visAgentInstances.set(instanceId, visAgent);
           // set hidden so that it is revealed later in this function:
           visAgent.hidden = true;
         }
         if (visAgent.agentData.instanceId !== instanceId) {
-          _this5.logger.warn("incoming instance id ".concat(instanceId, " mismatched with visagent ").concat(visAgent.agentData.instanceId));
+          _this6.logger.warn("incoming instance id ".concat(instanceId, " mismatched with visagent ").concat(visAgent.agentData.instanceId));
         }
         visAgent.active = true;
 
         // update the agent!
         visAgent.agentData = agentData;
-        var isHighlighted = _this5.highlightedIds.includes(visAgent.agentData.type);
+        var isHighlighted = _this6.highlightedIds.includes(visAgent.agentData.type);
         visAgent.setHighlighted(isHighlighted);
-        var isHidden = _this5.hiddenIds.includes(visAgent.agentData.type);
+        var isHidden = _this6.hiddenIds.includes(visAgent.agentData.type);
         visAgent.setHidden(isHidden);
         if (visAgent.hidden) {
           return;
         }
-        visAgent.setColor(_this5.colorHandler.getColorInfoForAgentType(typeId));
+        visAgent.setColor(_this6.colorHandler.getColorInfoForAgentType(typeId));
 
         // if not fiber...
         if (visType === VisTypes.ID_VIS_TYPE_DEFAULT) {
-          var response = _this5.getGeoForAgentType(typeId);
+          var response = _this6.getGeoForAgentType(typeId);
           if (!response) {
-            _this5.logger.warn("No mesh nor pdb available for ".concat(typeId, "? Should be unreachable code"));
+            _this6.logger.warn("No mesh nor pdb available for ".concat(typeId, "? Should be unreachable code"));
             return;
           }
           var geometry = response.geometry,
             displayType = response.displayType;
           if (geometry && displayType === GeometryDisplayType.PDB) {
             var pdbEntry = geometry;
-            _this5.addPdbToDrawList(typeId, visAgent, pdbEntry);
+            _this6.addPdbToDrawList(typeId, visAgent, pdbEntry);
           } else {
             var meshEntry = geometry;
-            _this5.addMeshToDrawList(typeId, visAgent, meshEntry, agentData);
+            _this6.addMeshToDrawList(typeId, visAgent, meshEntry, agentData);
           }
           dx = agentData.x - lastx;
           dy = agentData.y - lasty;
           dz = agentData.z - lastz;
           if (path) {
-            _this5.addPointToPath(path, agentData.x, agentData.y, agentData.z, dx, dy, dz);
+            _this6.addPointToPath(path, agentData.x, agentData.y, agentData.z, dx, dy, dz);
           }
         } else if (visType === VisTypes.ID_VIS_TYPE_FIBER) {
-          _this5.addFiberToDrawList(typeId, visAgent, agentData);
+          _this6.addFiberToDrawList(typeId, visAgent, agentData);
         }
       });
       this.fibers.endUpdate();
