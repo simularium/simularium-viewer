@@ -635,7 +635,7 @@ class Viewport extends React.Component<
                 return;
             }
 
-            if (visData.currentFrameData != this.lastRenderedAgentTime) {
+            if (visData.currentFrameData.time != this.lastRenderedAgentTime) {
                 const currentAgents = visData.currentFrame();
                 if (
                     currentAgents?.agentCount !== undefined &&
@@ -643,7 +643,7 @@ class Viewport extends React.Component<
                 ) {
                     this.dispatchUpdatedTime(visData.currentFrameData);
                     this.visGeometry.update(currentAgents);
-                    this.lastRenderedAgentTime = visData.currentFrameData;
+                    this.lastRenderedAgentTime = visData.currentFrameData.time;
                     this.updateFollowObjectData();
                 }
             }

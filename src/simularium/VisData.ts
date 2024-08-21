@@ -1,6 +1,7 @@
 import { difference } from "lodash";
 
 import { nullCachedFrame } from "../util";
+import { TimeData } from "../viewport";
 
 import * as util from "./ThreadUtil";
 import {
@@ -75,15 +76,15 @@ class VisData {
         this.webWorker = null;
         if (util.ThreadUtil.browserSupportsWebWorkers()) {
             this.setupWebWorker();
-        } // linked list to do work on cache trimming
-        this.currentCacheFrame = -1; // linked list to do should this be 0?
+        }
+        this.currentCacheFrame = -1;
         this.enableCache = true;
-        this.maxCacheSize = 10000000; // todo define defaults / constants for different browser environments
-        // this.maxCacheSize = -1;
+        // this.maxCacheSize = 10000000; // todo define defaults / constants for different browser environments
+        this.maxCacheSize = -1;
         this.linkedListCache = new LinkedListCache(
             this.maxCacheSize,
             this.enableCache
-        ); // linked list to do this needs to receive the actual prop for its size or nothing (Default should be -1)
+        );
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
@@ -93,7 +94,7 @@ class VisData {
     // linked list version
     // to do linked list this is a mess
     // to do for CachedFrame seems its always returning the time so going enforce that for now
-    public get currentFrameData(): number {
+    public get currentFrameData(): TimeData {
         let currentData: CachedFrame | null = null;
         if (
             this.linkedListCache.hasFrames() &&
@@ -101,7 +102,7 @@ class VisData {
         ) {
             // to do linked list hasFrames() should be doing the null check
             if (this.currentCacheFrame < 0) {
-                return 0;
+                return { frameNumber: 0, time: 0 };
             } else if (
                 this.currentCacheFrame >=
                 this.linkedListCache.getLastFrameNumber()
@@ -115,7 +116,9 @@ class VisData {
                 );
             }
         }
-        return currentData !== null ? currentData.time : 0;
+        return currentData !== null
+            ? { frameNumber: currentData.frameNumber, time: currentData.time }
+            : { frameNumber: 0, time: 0 };
     }
 
     /**
