@@ -121,6 +121,7 @@ class VisGeometry {
     public followObjectId: number;
     public visAgents: VisAgent[];
     public visAgentInstances: Map<number, VisAgent>;
+    private availableAgentPool: VisAgent[] = [];
     public fixLightsToCamera: boolean;
     public highlightedIds: number[];
     public hiddenIds: number[];
@@ -189,6 +190,7 @@ class VisGeometry {
         this.followObjectId = NO_AGENT;
         this.visAgents = [];
         this.visAgentInstances = new Map<number, VisAgent>();
+        this.availableAgentPool = [];
         this.fixLightsToCamera = true;
         this.highlightedIds = [];
         this.hiddenIds = [];
@@ -1533,9 +1535,6 @@ class VisGeometry {
     /**
      *   Update Scene
      **/
-    //todo currentSceneData isn't really accurately named anymore
-    // if we are passing in a whole cached frame, it should be currentFrame or something like that
-    // or currentSceneData
     private updateScene(frameData: CachedFrame): void {
         this.currentSceneData = frameData;
         const view = new Float32Array(frameData.data);
@@ -1565,6 +1564,7 @@ class VisGeometry {
         }
         // to do this is a naming conflict
         let offset = AGENT_HEADER_SIZE;
+        const newVisAgentInstances = new Map<number, VisAgent>();
         for (let i = 0; i < agentCount; i++) {
             const agentData = this.getAgentDataFromBuffer(view, offset);
             const visType = agentData.visType;
@@ -1585,7 +1585,11 @@ class VisGeometry {
             }
 
             if (!visAgent) {
-                visAgent = this.createAgent();
+                if (this.availableAgentPool.length > 0) {
+                    visAgent = this.availableAgentPool.pop() as VisAgent;
+                } else {
+                    visAgent = this.createAgent();
+                }
                 visAgent.agentData.instanceId = instanceId;
                 this.visAgentInstances.set(instanceId, visAgent);
                 visAgent.hidden = true;
@@ -1658,9 +1662,16 @@ class VisGeometry {
             } else if (visType === VisTypes.ID_VIS_TYPE_FIBER) {
                 this.addFiberToDrawList(typeId, visAgent, agentData);
             }
-
+            newVisAgentInstances.set(instanceId, visAgent);
             offset = this.getNextAgentOffset(view, offset);
         }
+        for (const [key, visAgent] of this.visAgentInstances) {
+            if (!newVisAgentInstances.has(key)) {
+                visAgent.resetAgent();
+                this.availableAgentPool.push(visAgent);
+            }
+        }
+        this.visAgentInstances = newVisAgentInstances;
 
         this.fibers.endUpdate();
         this.geometryStore.forEachMesh((agentGeo) => {

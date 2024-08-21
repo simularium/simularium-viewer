@@ -47,6 +47,18 @@ export default class VisAgent {
         this.fiberCurve = undefined;
     }
 
+    public resetAgent(): void {
+        // below is resetting only the minimal set of properties
+        // updateScene explicitly sets the following properties:
+        // agentData (possibly that subppoints dont get reset)
+        // and hidden, active, highlightred, and color
+
+        this.active = false;
+        this.hidden = false;
+        this.followed = false;
+        this.fiberCurve = undefined;
+    }
+
     public resetMesh(): void {
         this.followed = false;
         this.highlighted = false;
