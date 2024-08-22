@@ -1,5 +1,4 @@
 import Viewport from "./viewport";
-import { AgentData } from "./simularium/types";
 
 export type {
     SelectionStateInfo,

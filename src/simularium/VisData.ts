@@ -21,8 +21,8 @@ class VisData {
 
     private frameToWaitFor: number;
     private lockedForFrame: boolean;
-    // private cacheFrame: number; // to do linked list would this make more sense as current frame?
-    private currentCacheFrame: number;
+
+    private currentFrameNumber: number;
     // eslint-disable-next-line @typescript-eslint/naming-convention
     private _dragAndDropFileInfo: TrajectoryFileInfo | null;
 
@@ -43,29 +43,11 @@ class VisData {
         return frameData;
     }
 
-    // to do are we getting the size correctly above? is it that simple?
-    // private static calculateFrameSize(data: ArrayBuffer): number {
-    //     const floatView = new Float32Array(data);
-    //     const agentCount = floatView[2];
-    //     let totalSize = this.HEADER_SIZE * 4; // Header size in bytes
-
-    //     let offset = this.HEADER_SIZE;
-    //     for (let i = 0; i < agentCount; i++) {
-    //         offset += this.AGENT_HEADER_SIZE;
-    //         const nSubPoints = floatView[offset - 1];
-    //         offset += nSubPoints;
-    //         totalSize += (this.AGENT_HEADER_SIZE + nSubPoints) * 4; // Size in bytes
-    //     }
-
-    //     return totalSize;
-    // }
-
     private setupWebWorker() {
         this.webWorker = new Worker(
             new URL("../visGeometry/workers/visDataWorker", import.meta.url),
             { type: "module" }
         );
-        // linked list version
         // linked list to do make sure event is of type CachedData
         this.webWorker.onmessage = (event) => {
             this.linkedListCache.addFrame(event.data);
@@ -77,7 +59,7 @@ class VisData {
         if (util.ThreadUtil.browserSupportsWebWorkers()) {
             this.setupWebWorker();
         }
-        this.currentCacheFrame = -1;
+        this.currentFrameNumber = -1;
         this.enableCache = true;
         // this.maxCacheSize = 10000000; // todo define defaults / constants for different browser environments
         this.maxCacheSize = -1;
@@ -91,34 +73,25 @@ class VisData {
         this.timeStepSize = 0;
     }
 
-    // linked list version
-    // to do linked list this is a mess
-    // to do for CachedFrame seems its always returning the time so going enforce that for now
     public get currentFrameData(): TimeData {
-        let currentData: CachedFrame | null = null;
-        if (
-            this.linkedListCache.hasFrames() &&
-            this.linkedListCache.head !== null
-        ) {
-            // to do linked list hasFrames() should be doing the null check
-            if (this.currentCacheFrame < 0) {
-                return { frameNumber: 0, time: 0 };
-            } else if (
-                this.currentCacheFrame >=
-                this.linkedListCache.getLastFrameNumber()
-            ) {
-                if (this.linkedListCache.tail) {
-                    currentData = this.linkedListCache.getLast();
-                }
-            } else {
-                currentData = this.linkedListCache.getFrameAtFrameNumber(
-                    this.currentCacheFrame
-                );
-            }
+        if (!this.linkedListCache.hasFrames()) {
+            return { frameNumber: 0, time: 0 };
         }
-        return currentData !== null
-            ? { frameNumber: currentData.frameNumber, time: currentData.time }
-            : { frameNumber: 0, time: 0 };
+
+        let currentData: CachedFrame | null = null;
+
+        if (this.currentFrameNumber < 0) {
+            currentData = this.linkedListCache.getFirst();
+            if (currentData) {
+                this.gotoTime(currentData.time);
+            }
+        } else {
+            currentData = this.linkedListCache.getFrameAtFrameNumber(
+                this.currentFrameNumber
+            );
+        }
+
+        return currentData || { frameNumber: 0, time: 0 };
     }
 
     /**
@@ -132,43 +105,34 @@ class VisData {
     }
 
     public gotoTime(time: number): void {
-        console.log("gototime visdata");
-        // this.currentCacheFrame = -1;
-
         const frameNumber =
             this.linkedListCache.getFrameAtTime(time)?.frameNumber;
         console.log("gotoTime frameNumber: ", frameNumber);
         if (frameNumber !== undefined) {
-            this.currentCacheFrame = frameNumber;
+            this.currentFrameNumber = frameNumber;
         }
     }
 
     public atLatestFrame(): boolean {
-        // linked list to do does this work everywhere it needs to
-        // does it look like an old paradigm?
         return (
-            this.currentCacheFrame >= this.linkedListCache.getLastFrameNumber()
+            this.currentFrameNumber >= this.linkedListCache.getLastFrameNumber()
         );
     }
 
-    // linked list to do this whole function needs to be thought through clearly
     public currentFrame(): CachedFrame | null {
         if (this.linkedListCache.isEmpty()) {
-            // return null;
             return nullCachedFrame();
-        } else if (this.currentCacheFrame === -1) {
-            // If we're calling this, we are likely in the animate loop,
-            // which means the trajectory is loaded, so we should go to frame 0.
-            this.currentCacheFrame = 0;
+        } else if (this.currentFrameNumber === -1) {
+            this.currentFrameNumber = 0;
         }
 
         const frame = this.linkedListCache.getFrameAtFrameNumber(
-            this.currentCacheFrame
+            this.currentFrameNumber
         );
 
         if (!frame) {
             console.warn(
-                `No frame data found for frame number ${this.currentCacheFrame}`
+                `No frame data found for frame number ${this.currentFrameNumber}`
             );
             return nullCachedFrame();
         }
@@ -179,7 +143,7 @@ class VisData {
     // linked list to do is this sufficient?
     public gotoNextFrame(): void {
         if (!this.atLatestFrame()) {
-            this.currentCacheFrame += 1;
+            this.currentFrameNumber += 1;
         }
     }
 
@@ -203,7 +167,7 @@ class VisData {
     // linked list to do make sure we are still covering all these bases when we "clear"
     public clearCache(): void {
         this.linkedListCache.clear();
-        this.currentCacheFrame = -1;
+        this.currentFrameNumber = -1;
         this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
