@@ -2,7 +2,7 @@ import { CachedFrame, LinkedListNode } from "./types";
 
 // todo go over naming and whether it should be in this file...
 // review all methods for their necessity and their efficiency
-export class LinkedListCache {
+class LinkedListCache {
     public head: LinkedListNode | null;
     public tail: LinkedListNode | null;
     public numFrames: number;
@@ -216,3 +216,6 @@ export class LinkedListCache {
         this.addFirst(data);
     }
 }
+
+export { LinkedListCache };
+export default LinkedListCache;
