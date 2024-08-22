@@ -93,16 +93,12 @@ class LinkedListCache {
         return this.tail ? this.tail.data : null;
     }
 
-    // linked list to do check if this is working well
     public getLastFrameNumber(): number {
-        if (this.tail && this.tail.data) {
-            return this.tail.data.frameNumber;
-        }
-        return -1;
+        return this.tail?.data.frameNumber || -1;
     }
 
     public getLastFrameTime(): number {
-        return this.tail ? this.tail.data.time : -1;
+        return this.tail?.data.time || -1;
     }
 
     public addFrame(data: CachedFrame): void {
@@ -128,7 +124,7 @@ class LinkedListCache {
             this.tail = newNode;
         }
         this.numFrames++;
-        // linked list to do: trim cache if necessary
+
         this.size += data.size;
         if (this.cacheSizeLimited && this.size > this.maxSize) {
             this.trimCache();
@@ -149,7 +145,7 @@ class LinkedListCache {
             this.head = newNode;
         }
         this.numFrames++;
-        // linked list to do: trim cache if necessary
+
         this.size += data.size;
         if (this.cacheSizeLimited && this.size > this.maxSize) {
             this.trimCache();

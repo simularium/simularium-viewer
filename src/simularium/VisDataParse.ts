@@ -119,7 +119,7 @@ import { FrontEndError, ErrorLevel } from "./FrontEndError";
 //     "nSubPoints",
 // ];
 const HEADER_SIZE = 3; // frameNumber, time, agentCount
-const AGENT_HEADER_SIZE = AGENT_OBJECT_KEYS.length;
+const FRAME_DATA_SIZE = AGENT_OBJECT_KEYS.length;
 
 function parseVisDataMessage(visDataMsg: VisDataMessage): CachedFrame {
     // Assuming visDataMsg.bundleData has only one frame for simplicity
@@ -136,14 +136,14 @@ function parseVisDataMessage(visDataMsg: VisDataMessage): CachedFrame {
     // Write header data
     view[0] = frame.frameNumber;
     view[1] = frame.time;
-    view[2] = frame.data.length / (AGENT_HEADER_SIZE + 1); // Estimating agent count
+    view[2] = frame.data.length / (FRAME_DATA_SIZE + 1); // Estimating agent count
 
     let writeIndex = HEADER_SIZE;
     let readIndex = 0;
 
     while (readIndex < frame.data.length) {
         // Copy agent data
-        for (let i = 0; i < AGENT_HEADER_SIZE; i++) {
+        for (let i = 0; i < FRAME_DATA_SIZE; i++) {
             view[writeIndex++] = frame.data[readIndex++];
         }
 
@@ -182,10 +182,10 @@ function calculateBufferSize(data: number[]): number {
     let index = 0;
 
     while (index < data.length) {
-        size += AGENT_HEADER_SIZE * 4; // Agent header size in bytes
-        const nSubPoints = data[index + AGENT_HEADER_SIZE - 1];
+        size += FRAME_DATA_SIZE * 4; // Agent header size in bytes
+        const nSubPoints = data[index + FRAME_DATA_SIZE - 1];
         size += nSubPoints * 4; // Subpoints size in bytes
-        index += AGENT_HEADER_SIZE + nSubPoints;
+        index += FRAME_DATA_SIZE + nSubPoints;
     }
 
     return size;

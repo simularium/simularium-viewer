@@ -47,7 +47,7 @@ type ViewportProps = {
     onRecordedMovie?: (blob: Blob) => void; // providing this callback enables movie recording
     disableCache?: boolean;
     onFollowObjectChanged?: (agentData: AgentData) => void; // passes agent data about the followed agent to the front end
-    maxCacheLength?: number;
+    maxCacheSize?: number;
 } & Partial<DefaultProps>;
 
 const defaultProps = {
@@ -127,8 +127,8 @@ class Viewport extends React.Component<
         this.handleTimeChange = this.handleTimeChange.bind(this);
 
         this.visGeometry = new VisGeometry(loggerLevel);
-        this.props.simulariumController.visData.setMaxCacheLength(
-            this.props.maxCacheLength
+        this.props.simulariumController.visData.setMaxCacheSize(
+            this.props.maxCacheSize
         );
         this.props.simulariumController.visData.clearCache();
         this.props.simulariumController.visData.setCacheEnabled(

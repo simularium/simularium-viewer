@@ -380,7 +380,6 @@ export default class SimulariumController {
         }
 
         // start the simulation paused and get first frame
-        // linked list to do, confused here, it says "start sim paused" but this.start() sets isPaused to false
         if (this.simulator) {
             return this.start()
                 .then(() => {

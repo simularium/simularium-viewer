@@ -1562,7 +1562,7 @@ class VisGeometry {
         for (let i = 0; i < MAX_MESHES && i < this.visAgents.length; i++) {
             this.visAgents[i].hideAndDeactivate();
         }
-        // to do this is a naming conflict
+
         let offset = AGENT_HEADER_SIZE;
         const newVisAgentInstances = new Map<number, VisAgent>();
         for (let i = 0; i < agentCount; i++) {

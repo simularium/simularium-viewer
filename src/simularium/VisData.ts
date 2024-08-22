@@ -48,7 +48,6 @@ class VisData {
             new URL("../visGeometry/workers/visDataWorker", import.meta.url),
             { type: "module" }
         );
-        // linked list to do make sure event is of type CachedData
         this.webWorker.onmessage = (event) => {
             this.linkedListCache.addFrame(event.data);
         };
@@ -60,8 +59,14 @@ class VisData {
             this.setupWebWorker();
         }
         this.currentFrameNumber = -1;
+        /**
+         * if cache is not enabled only one current frame is ever stored
+         * if cache is enabled and maxSize is -1, unlimited frames are stored
+         * if cache is enabled and maxSize is set above -1, cache will be trimmed to below setting before adding frames
+         * if a maxCacheSize prop has been provided, it will override this value
+         */
         this.enableCache = true;
-        // this.maxCacheSize = 10000000; // todo define defaults / constants for different browser environments
+        // this.maxCacheSize = 10000000;
         this.maxCacheSize = -1;
         this.linkedListCache = new LinkedListCache(
             this.maxCacheSize,
@@ -140,7 +145,6 @@ class VisData {
         return frame;
     }
 
-    // linked list to do is this sufficient?
     public gotoNextFrame(): void {
         if (!this.atLatestFrame()) {
             this.currentFrameNumber += 1;
@@ -155,7 +159,7 @@ class VisData {
         this.lockedForFrame = true;
     }
 
-    public setMaxCacheLength(cacheLength: number | undefined): void {
+    public setMaxCacheSize(cacheLength: number | undefined): void {
         if (cacheLength === undefined || cacheLength < 0) {
             this.maxCacheSize = -1;
             return;
@@ -164,7 +168,6 @@ class VisData {
         this.maxCacheSize = cacheLength > 0 ? cacheLength : 1;
     }
 
-    // linked list to do make sure we are still covering all these bases when we "clear"
     public clearCache(): void {
         this.linkedListCache.clear();
         this.currentFrameNumber = -1;
@@ -223,7 +226,6 @@ class VisData {
         ) {
             this.webWorker.postMessage(visDataMsg);
         } else {
-            // to do linked list can this be more than one frame?
             const frame = parseVisDataMessage(visDataMsg);
             this.linkedListCache.addFrame(frame);
         }
@@ -232,20 +234,13 @@ class VisData {
     public parseAgentsFromFrameData(msg: VisDataMessage | ArrayBuffer): void {
         if (msg instanceof ArrayBuffer) {
             const frame = VisData.parseOneBinaryFrame(msg);
-            if (
-                // linked list to do
-                // this isn't actually the same check as before, its asking if there is agent dat awhich we maybe shuoldnt do
-                // frame.agentData.length > 0 &&
-                // this is asking if the first frame in the new data is frame 0
-                frame.frameNumber === 0
-            ) {
+            if (frame.frameNumber === 0) {
                 this.clearCache(); // new data has arrived
             }
             this.linkedListCache.addFrame(frame);
             return;
         }
 
-        // linked list to do: handle VisDataMessage properly
         this.parseAgentsFromVisDataMessage(msg);
     }
 
@@ -268,14 +263,12 @@ class VisData {
     // // for use w/ a drag-and-drop trajectory file
     // //  save a file for playback
     // // will be caught by controller.changeFile(...).catch()
-    // linked list to do confirm this is still used and working
     public cacheJSON(visDataMsg: VisDataMessage): void {
         if (!this.linkedListCache.isEmpty()) {
             throw new Error(
                 "cache not cleared before cacheing a new drag-and-drop file"
             );
         }
-        // linked list to do can this be more than one frame?
         const frame = parseVisDataMessage(visDataMsg);
         this.linkedListCache.addFrame(frame);
     }
@@ -306,7 +299,6 @@ class VisData {
     }
 
     // will be caught by controller.changeFile(...).catch()
-    // linked list to do TODO: check if this code is still used
     public checkTypeMapping(typeMappingFromFile: EncodedTypeMapping): number[] {
         if (!typeMappingFromFile) {
             throw new Error(
