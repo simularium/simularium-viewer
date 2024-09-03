@@ -16,7 +16,7 @@ import { AgentData, TrajectoryFileInfoAny } from "../simularium/types";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
 import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry";
-import { ColorChange } from "../simularium/SelectionInterface";
+import { ColorAssignment } from "../visGeometry/types";
 import FrameRecorder from "../simularium/FrameRecorder";
 import { DEFAULT_FRAME_RATE } from "../constants";
 
@@ -346,12 +346,12 @@ class Viewport extends React.Component<
             }
             if (
                 !isEqual(
-                    selectionStateInfo.colorChange,
-                    prevProps.selectionStateInfo.colorChange
+                    selectionStateInfo.appliedColors,
+                    prevProps.selectionStateInfo.appliedColors
                 ) &&
-                selectionStateInfo.colorChange !== null
+                selectionStateInfo.appliedColors.length > 0
             ) {
-                this.changeAgentsColor(selectionStateInfo.colorChange);
+                this.changeAgentsColor(selectionStateInfo.appliedColors);
             }
         }
 
@@ -600,12 +600,22 @@ class Viewport extends React.Component<
         }
     }
 
-    public changeAgentsColor(colorChange: ColorChange): void {
-        const { agent, color } = colorChange;
-        const agentIds = this.selectionInterface.getAgentIdsByNamesAndTags([
-            agent,
-        ]);
-        this.visGeometry.applyColorToAgents(agentIds, color);
+    public changeAgentsColor(appliedColors: UIDisplayData): void {
+        const changes: ColorAssignment[] = [];
+        appliedColors.forEach((agent) => {
+            const agentIds = this.selectionInterface.getAgentIdsByNamesAndTags([
+                    { name: agent.name, tags: [] },
+                ]);
+            changes.push({ agentIds, color: agent.color });
+            agent.displayStates.forEach((state) => {
+                const stateIds =
+                    this.selectionInterface.getAgentIdsByNamesAndTags([
+                        { name: agent.name, tags: [state.name] },
+                    ]);
+                changes.push({ agentIds: stateIds, color: state.color });
+            });
+        });
+        this.visGeometry.applyColorToAgents(changes);
     }
 
     public stopAnimate(): void {
