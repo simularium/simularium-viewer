@@ -497,13 +497,6 @@ export default class SimulariumController {
         this.visData.clearCache();
     }
 
-    public get dragAndDropFileInfo(): TrajectoryFileInfo | null {
-        return this.visData.dragAndDropFileInfo;
-    }
-    public set dragAndDropFileInfo(fileInfo: TrajectoryFileInfo | null) {
-        this.visData.dragAndDropFileInfo = fileInfo;
-    }
-
     public set trajFileInfoCallback(
         callback: (msg: TrajectoryFileInfo) => void
     ) {
