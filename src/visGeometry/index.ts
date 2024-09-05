@@ -1133,7 +1133,7 @@ class VisGeometry {
                 newColorData.colorArray
             );
         });
-        this.updateScene(this.currentSceneAgents);
+        this.updateScene(this.currentSceneData);
     }
 
     /**

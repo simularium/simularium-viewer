@@ -1,20 +1,13 @@
-import { difference } from "lodash";
-
 import { nullCachedFrame } from "../util";
 import { TimeData } from "../viewport";
 
 import * as util from "./ThreadUtil";
-import {
-    TrajectoryFileInfo,
-    EncodedTypeMapping,
-    VisDataMessage,
-    CachedFrame,
-} from "./types";
+import { VisDataMessage, CachedFrame } from "./types";
 import { parseVisDataMessage } from "./VisDataParse";
-import { LinkedListCache } from "./VisDataCache";
+import { VisDataCache } from "./VisDataCache";
 
 class VisData {
-    public linkedListCache: LinkedListCache;
+    public frameCache: VisDataCache;
     private enableCache: boolean;
     private maxCacheSize: number;
     private webWorker: Worker | null;
@@ -23,8 +16,6 @@ class VisData {
     private lockedForFrame: boolean;
 
     private currentFrameNumber: number;
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    private _dragAndDropFileInfo: TrajectoryFileInfo | null;
 
     public timeStepSize: number;
 
@@ -49,7 +40,7 @@ class VisData {
             { type: "module" }
         );
         this.webWorker.onmessage = (event) => {
-            this.linkedListCache.addFrame(event.data);
+            this.frameCache.addFrame(event.data);
         };
     }
 
@@ -66,32 +57,27 @@ class VisData {
          * if a maxCacheSize prop has been provided, it will override this value
          */
         this.enableCache = true;
-        // this.maxCacheSize = 10000000;
         this.maxCacheSize = -1;
-        this.linkedListCache = new LinkedListCache(
-            this.maxCacheSize,
-            this.enableCache
-        );
-        this._dragAndDropFileInfo = null;
+        this.frameCache = new VisDataCache(this.maxCacheSize, this.enableCache);
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
         this.timeStepSize = 0;
     }
 
     public get currentFrameData(): TimeData {
-        if (!this.linkedListCache.hasFrames()) {
+        if (!this.frameCache.hasFrames()) {
             return { frameNumber: 0, time: 0 };
         }
 
         let currentData: CachedFrame | null = null;
 
         if (this.currentFrameNumber < 0) {
-            currentData = this.linkedListCache.getFirst();
+            currentData = this.frameCache.getFirstFrame();
             if (currentData) {
                 this.gotoTime(currentData.time);
             }
         } else {
-            currentData = this.linkedListCache.getFrameAtFrameNumber(
+            currentData = this.frameCache.getFrameAtFrameNumber(
                 this.currentFrameNumber
             );
         }
@@ -106,12 +92,11 @@ class VisData {
         if (!this.enableCache) {
             return false;
         }
-        return this.linkedListCache.containsTime(time);
+        return this.frameCache.containsTime(time);
     }
 
     public gotoTime(time: number): void {
-        const frameNumber =
-            this.linkedListCache.getFrameAtTime(time)?.frameNumber;
+        const frameNumber = this.frameCache.getFrameAtTime(time)?.frameNumber;
         console.log("gotoTime frameNumber: ", frameNumber);
         if (frameNumber !== undefined) {
             this.currentFrameNumber = frameNumber;
@@ -119,19 +104,17 @@ class VisData {
     }
 
     public atLatestFrame(): boolean {
-        return (
-            this.currentFrameNumber >= this.linkedListCache.getLastFrameNumber()
-        );
+        return this.currentFrameNumber >= this.frameCache.getLastFrameNumber();
     }
 
     public currentFrame(): CachedFrame | null {
-        if (this.linkedListCache.isEmpty()) {
+        if (!this.frameCache.hasFrames()) {
             return nullCachedFrame();
         } else if (this.currentFrameNumber === -1) {
             this.currentFrameNumber = 0;
         }
 
-        const frame = this.linkedListCache.getFrameAtFrameNumber(
+        const frame = this.frameCache.getFrameAtFrameNumber(
             this.currentFrameNumber
         );
 
@@ -169,9 +152,8 @@ class VisData {
     }
 
     public clearCache(): void {
-        this.linkedListCache.clear();
+        this.frameCache.clear();
         this.currentFrameNumber = -1;
-        this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
     }
@@ -219,15 +201,14 @@ class VisData {
                 this.frameToWaitFor = 0;
             }
         }
-
+        const parsedMsg: CachedFrame = parseVisDataMessage(visDataMsg);
         if (
             util.ThreadUtil.browserSupportsWebWorkers() &&
             this.webWorker !== null
         ) {
-            this.webWorker.postMessage(visDataMsg);
+            this.webWorker.postMessage(parsedMsg);
         } else {
-            const frame = parseVisDataMessage(visDataMsg);
-            this.linkedListCache.addFrame(frame);
+            this.frameCache.addFrame(parsedMsg);
         }
     }
 
@@ -237,10 +218,9 @@ class VisData {
             if (frame.frameNumber === 0) {
                 this.clearCache(); // new data has arrived
             }
-            this.linkedListCache.addFrame(frame);
+            this.frameCache.addFrame(frame);
             return;
         }
-
         this.parseAgentsFromVisDataMessage(msg);
     }
 
@@ -258,68 +238,6 @@ class VisData {
         }
 
         this.parseAgentsFromFrameData(msg);
-    }
-
-    // // for use w/ a drag-and-drop trajectory file
-    // //  save a file for playback
-    // // will be caught by controller.changeFile(...).catch()
-    public cacheJSON(visDataMsg: VisDataMessage): void {
-        if (!this.linkedListCache.isEmpty()) {
-            throw new Error(
-                "cache not cleared before cacheing a new drag-and-drop file"
-            );
-        }
-        const frame = parseVisDataMessage(visDataMsg);
-        this.linkedListCache.addFrame(frame);
-    }
-
-    public set dragAndDropFileInfo(fileInfo: TrajectoryFileInfo | null) {
-        if (!fileInfo) return;
-        // NOTE: this may be a temporary check as we're troubleshooting new file formats
-        const missingIds = this.checkTypeMapping(fileInfo.typeMapping);
-
-        if (missingIds.length) {
-            const include = confirm(
-                `Your file typeMapping is missing names for the following type ids: ${missingIds}. Do you want to include them in the interactive interface?`
-            );
-            if (include) {
-                missingIds.forEach((id) => {
-                    fileInfo.typeMapping[id] = { name: id.toString() };
-                });
-            }
-        }
-        this._dragAndDropFileInfo = fileInfo;
-    }
-
-    public get dragAndDropFileInfo(): TrajectoryFileInfo | null {
-        if (!this._dragAndDropFileInfo) {
-            return null;
-        }
-        return this._dragAndDropFileInfo;
-    }
-
-    // will be caught by controller.changeFile(...).catch()
-    public checkTypeMapping(typeMappingFromFile: EncodedTypeMapping): number[] {
-        if (!typeMappingFromFile) {
-            throw new Error(
-                "data needs 'typeMapping' object to display agent controls"
-            );
-        }
-        const idsInFrameData = new Set();
-        const idsInTypeMapping = Object.keys(typeMappingFromFile).map(Number);
-
-        if (this.linkedListCache.isEmpty()) {
-            console.log("no data to check type mapping against");
-            return [];
-        }
-
-        // this is calling the (element) func on each agentdata[]
-        // so i need to call currentNode.data.agentData.map... on each node
-        this.linkedListCache.walkList((node) => {
-            node.data.agentData.map((agent) => idsInFrameData.add(agent.type));
-        });
-        const idsArr: number[] = [...idsInFrameData].sort() as number[];
-        return difference(idsArr, idsInTypeMapping).sort();
     }
 }
 
