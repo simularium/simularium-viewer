@@ -489,10 +489,6 @@ export default class SimulariumController {
         }
     }
 
-    public cacheJSON(json: VisDataMessage): void {
-        this.visData.cacheJSON(json);
-    }
-
     public clearLocalCache(): void {
         this.visData.clearCache();
     }

@@ -307,20 +307,6 @@ class VisData {
 
         this.parseAgentsFromFrameData(msg);
     }
-
-    // for use w/ a drag-and-drop trajectory file
-    //  save a file for playback
-    // will be caught by controller.changeFile(...).catch()
-    public cacheJSON(visDataMsg: VisDataMessage): void {
-        if (this.frameCache.length > 0) {
-            throw new Error(
-                "cache not cleared before cacheing a new drag-and-drop file"
-            );
-        }
-
-        const frames = parseVisDataMessage(visDataMsg);
-        this.addFramesToCache(frames);
-    }
 }
 
 export { VisData };
