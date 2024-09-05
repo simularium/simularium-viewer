@@ -1,5 +1,3 @@
-import { difference } from "lodash";
-
 import { compareTimes } from "../util";
 
 import * as util from "./ThreadUtil";
@@ -7,8 +5,6 @@ import {
     AGENT_OBJECT_KEYS,
     AgentData,
     FrameData,
-    TrajectoryFileInfo,
-    EncodedTypeMapping,
     VisDataMessage,
 } from "./types";
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
