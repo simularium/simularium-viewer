@@ -1,8 +1,6 @@
+import { ErrorLevel, FrontEndError } from "./FrontEndError";
 import { CachedFrame, LinkedListNode } from "./types";
-
-// todo go over naming and whether it should be in this file...
-// review all methods for their necessity and their efficiency
-class LinkedListCache {
+class VisDataCache {
     public head: LinkedListNode | null;
     public tail: LinkedListNode | null;
     public numFrames: number;
@@ -21,16 +19,11 @@ class LinkedListCache {
         this.cacheSizeLimited = maxSize > 0;
     }
 
-    public walkList(cb: (arg: any) => void): void {
-        let currentNode = this.head;
-        while (currentNode) {
-            cb(currentNode);
-            currentNode = currentNode.next;
-        }
-    }
-
-    public isEmpty(): boolean {
-        return this.numFrames === 0 && this.head === null && this.tail === null;
+    private frameAccessError(msg?: string) {
+        return new FrontEndError(
+            `Error accessing frame. ${msg}`,
+            ErrorLevel.WARNING
+        );
     }
 
     public hasFrames(): boolean {
@@ -61,22 +54,23 @@ class LinkedListCache {
         }
         return null;
     }
-    // get method (by frame number)
-    // getFirst method
-    public getFirst(): CachedFrame | null {
-        return this.head ? this.head.data : null;
-    }
 
-    public getFirstFrameNumber(): number {
-        return this.head ? this.head.data.frameNumber : -1;
+    public getFirstFrame(): CachedFrame {
+        if (!this.head) {
+            throw this.frameAccessError("No data in cache.");
+        }
+        return this.head.data;
     }
 
     public getFirstFrameTime(): number {
         return this.head ? this.head.data.time : -1;
     }
 
-    public getFrameAtFrameNumber(frameNumber: number): CachedFrame | null {
+    public getFrameAtFrameNumber(frameNumber: number): CachedFrame {
         let currentNode = this.head;
+        if (!this.head) {
+            throw this.frameAccessError("No data in cache.");
+        }
         while (currentNode) {
             if (currentNode.data.frameNumber !== undefined) {
                 if (currentNode.data.frameNumber == frameNumber) {
@@ -85,12 +79,16 @@ class LinkedListCache {
             }
             currentNode = currentNode.next;
         }
-        return null;
+        throw this.frameAccessError(
+            "Frame not found at provided frame number."
+        );
     }
 
-    // getLast method
-    public getLast(): CachedFrame | null {
-        return this.tail ? this.tail.data : null;
+    public getLastFrame(): CachedFrame {
+        if (!this.tail) {
+            throw this.frameAccessError(" No data in cache.");
+        }
+        return this.tail.data;
     }
 
     public getLastFrameNumber(): number {
@@ -99,15 +97,6 @@ class LinkedListCache {
 
     public getLastFrameTime(): number {
         return this.tail?.data.time || -1;
-    }
-
-    public addFrame(data: CachedFrame): void {
-        if (!this.cacheEnabled || !this.head || data.frameNumber === 0) {
-            this.clear();
-            this.addFirst(data);
-        } else {
-            this.addLast(data);
-        }
     }
 
     public addFirst(data: CachedFrame): void {
@@ -130,7 +119,7 @@ class LinkedListCache {
             this.trimCache();
         }
     }
-    // addLast method
+
     public addLast(data: CachedFrame): void {
         const newNode: LinkedListNode = {
             data,
@@ -151,7 +140,16 @@ class LinkedListCache {
             this.trimCache();
         }
     }
-    // remove method
+
+    public addFrame(data: CachedFrame): void {
+        if (!this.cacheEnabled || !this.head || data.frameNumber === 0) {
+            this.clear();
+            this.addFirst(data);
+        } else {
+            this.addLast(data);
+        }
+    }
+
     public remove(node: LinkedListNode): void {
         if (node.prev) {
             node.prev.next = node.next;
@@ -166,28 +164,15 @@ class LinkedListCache {
         this.numFrames--;
         this.size -= node.data.size;
     }
-    // removeFirst method
-    public removeFirst(): CachedFrame | null {
+
+    public removeFirst(): void {
         if (!this.head) {
-            return null;
+            throw this.frameAccessError("No data in cache.");
         }
-        const data = this.head.data;
         this.remove(this.head);
-        return data;
-    }
-    // removeLast method
-    public removeLast(): CachedFrame | null {
-        if (!this.tail) {
-            return null;
-        }
-        const data = this.tail.data;
-        this.remove(this.tail);
-        return data;
     }
 
-    // Helper method to trim the cache if it exceeds the max size
-    private trimCache(): void {
-        console.log("trimming cache");
+    public trimCache(): void {
         while (this.size > this.maxSize && this.tail) {
             this.removeFirst();
         }
@@ -199,19 +184,6 @@ class LinkedListCache {
         this.numFrames = 0;
         this.size = 0;
     }
-
-    // Method to replace existing cache contents with a single CachedData element
-    public replaceWithSingle(data: CachedFrame): void {
-        // Clear the cache
-        this.head = null;
-        this.tail = null;
-        this.numFrames = 0;
-        this.size = 0;
-
-        // Add the new data as the only element in the cache
-        this.addFirst(data);
-    }
 }
 
-export { LinkedListCache };
-export default LinkedListCache;
+export { VisDataCache };
