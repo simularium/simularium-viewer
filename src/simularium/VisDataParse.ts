@@ -56,10 +56,7 @@ function parseVisDataMessage(visDataMsg: VisDataMessage): CachedFrame {
         if (--readIndex + nSubPoints > frame.data.length) {
             throw new FrontEndError(
                 "Your data is malformed, there are too few entries.",
-                ErrorLevel.ERROR,
-                `Attempted to read ${nSubPoints} subpoints, but only ${
-                    frame.data.length - readIndex
-                } entries remain.`
+                ErrorLevel.ERROR
             );
         }
 
@@ -106,4 +103,4 @@ function calculateBufferSize(data: number[]): number {
     return size;
 }
 
-export { parseVisDataMessage };
+export { parseVisDataMessage, calculateBufferSize };
