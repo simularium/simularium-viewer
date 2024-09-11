@@ -31,12 +31,7 @@ class VisDataCache {
         this.cacheSizeLimited = this.maxSize > 0;
 
         if (settings) {
-            if (settings.maxSize !== undefined) {
-                this.maxSize = settings.maxSize;
-                this.cacheSizeLimited = settings.maxSize > 0;
-            }
-            if (settings.cacheEnabled !== undefined)
-                this.cacheEnabled = settings.cacheEnabled;
+            this.changeSettings(settings);
         }
     }
 
@@ -206,9 +201,7 @@ class VisDataCache {
             this.tail = newNode;
         }
         this.numFrames++;
-
         this.size += data.size;
-
         if (this.cacheSizeLimited && this.size > this.maxSize) {
             this.trimCache();
         }
@@ -233,10 +226,7 @@ class VisDataCache {
         if (this.numFrames === 0 || !this.head || !this.tail) {
             throw this.frameAccessError("No data in cache.");
         }
-        if (this.numFrames === 1 && node.next === node.prev) {
-            this.clear();
-        }
-        if (node.next === node && node.prev === node) {
+        if (this.numFrames == 1 && node.next === node && node.prev === node) {
             // Only one node in the cache, so clear it
             this.clear();
             return;

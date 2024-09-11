@@ -150,17 +150,19 @@ class VisData {
         cacheEnabled?: boolean;
         maxCacheSize?: number;
     }): void {
-        const { cacheEnabled, maxCacheSize: cacheLength } = options;
+        const { cacheEnabled, maxCacheSize } = options;
         if (cacheEnabled !== undefined) {
             this.frameCache.changeSettings({ cacheEnabled: cacheEnabled });
         }
-
-        if (cacheLength === undefined || cacheLength < 0) {
+        if (maxCacheSize === undefined) {
+            return;
+        }
+        if (maxCacheSize < 0) {
             this.frameCache.changeSettings({ maxSize: -1 });
             return;
         }
         // cache must have at least one frame
-        const newCacheSize = cacheLength > 0 ? cacheLength : 1;
+        const newCacheSize = maxCacheSize > 0 ? maxCacheSize : 1;
         this.frameCache.changeSettings({ maxSize: newCacheSize });
     }
 
