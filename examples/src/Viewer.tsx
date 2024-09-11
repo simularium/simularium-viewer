@@ -388,21 +388,16 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
         const fileName = uuidv4() + ".simularium";
         simulariumController
-            .convertTrajectory(
-                this.netConnectionSettings,
-                obj,
-                fileType,
-                fileName
-            )
+            .convertTrajectory(this.netConnectionSettings, obj, fileType, fileName)
             .then(() => {
                 this.clearPendingFile();
             })
             .then(() => {
                 simulariumController.changeFile(
-                    { netConnectionSettings: this.netConnectionSettings },
+                    { netConnectionSettings: this.netConnectionSettings, },
                     fileName,
-                    true
-                );
+                    true,
+                )
             })
             .catch((err) => {
                 console.error(err);
@@ -417,7 +412,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         const simulariumFile = fileName.includes(".simularium")
             ? trajectoryFile
             : null;
-        this.setState({ initialPlay: true });
+        this.setState({ initialPlay: true})
         return simulariumController
             .handleFileChange(simulariumFile, fileName, geoAssets)
             .catch(console.log);
