@@ -60,49 +60,42 @@ class VisDataCache {
         return this.numFrames > 0 && this.head !== null;
     }
 
-    public containsTime(time: number): boolean {
-        let currentNode = this.head;
-        if (time < this.getFirstFrameTime() || time > this.getLastFrameTime()) {
-            return false;
-        }
+    /**
+     * Walks the cache looking for node that satisfies condition
+     * returns the node if found, otherwise returns null,
+     * starts at head if firstNode is not provided.
+     */
+    private walkLinkedList(
+        condition: (data: LinkedListNode) => boolean,
+        firstNode?: LinkedListNode
+    ): LinkedListNode | null {
+        let currentNode = firstNode || this.head;
         while (currentNode) {
-            if (currentNode.data.time === time) {
-                return true;
+            if (condition(currentNode)) {
+                return currentNode;
             }
             currentNode = currentNode.next;
         }
-        return false;
+        return null;
+    }
+
+    public containsTime(time: number): boolean {
+        if (time < this.getFirstFrameTime() || time > this.getLastFrameTime()) {
+            return false;
+        }
+        return !!this.walkLinkedList((node) => node.data.time === time);
     }
 
     public containsFrameAtFrameNumber(frameNumber: number): boolean {
-        let currentNode = this.head;
-        if (currentNode?.data.frameNumber === frameNumber) {
-            return true;
-        }
         if (
             frameNumber < this.getFirstFrameNumber() ||
             frameNumber > this.getLastFrameNumber()
         ) {
             return false;
         }
-        while (currentNode) {
-            if (currentNode.data.frameNumber === frameNumber) {
-                return true;
-            }
-            currentNode = currentNode.next;
-        }
-        return false;
-    }
-
-    public getFrameAtTime(time: number): CachedFrame | null {
-        let currentNode = this.head;
-        while (currentNode) {
-            if (currentNode.data.time === time) {
-                return currentNode.data;
-            }
-            currentNode = currentNode.next;
-        }
-        return null;
+        return !!this.walkLinkedList(
+            (node) => node.data.frameNumber === frameNumber
+        );
     }
 
     public getFirstFrame(): CachedFrame {
@@ -120,24 +113,6 @@ class VisDataCache {
         return this.head ? this.head.data.time : -1;
     }
 
-    public getFrameAtFrameNumber(frameNumber: number): CachedFrame {
-        let currentNode = this.head;
-        if (!this.head) {
-            throw this.frameAccessError("No data in cache.");
-        }
-        while (currentNode) {
-            if (currentNode.data.frameNumber !== undefined) {
-                if (currentNode.data.frameNumber == frameNumber) {
-                    return currentNode.data;
-                }
-            }
-            currentNode = currentNode.next;
-        }
-        throw this.frameAccessError(
-            `Frame not found at provided frame number. Attempting to access frame ${frameNumber}.`
-        );
-    }
-
     public getLastFrame(): CachedFrame {
         if (!this.tail) {
             throw this.frameAccessError(" No data in cache.");
@@ -151,6 +126,32 @@ class VisDataCache {
 
     public getLastFrameTime(): number {
         return this.tail?.data.time || -1;
+    }
+
+    private getFrameAtTimeOrFrameNumber(
+        condition: "time" | "frameNumber",
+        value: number
+    ): CachedFrame {
+        if (!this.head) {
+            throw this.frameAccessError("No data in cache.");
+        }
+        const frame = this.walkLinkedList(
+            (node) => node.data[condition] === value
+        );
+        if (frame) {
+            return frame.data;
+        }
+        throw this.frameAccessError(
+            `Frame not found at provided ${condition}. Attempting to access frame ${value}.`
+        );
+    }
+
+    public getFrameAtTime(time: number): CachedFrame {
+        return this.getFrameAtTimeOrFrameNumber("time", time);
+    }
+
+    public getFrameAtFrameNumber(frameNumber: number): CachedFrame {
+        return this.getFrameAtTimeOrFrameNumber("frameNumber", frameNumber);
     }
 
     public assignSingleFrameToCache(data: CachedFrame): void {

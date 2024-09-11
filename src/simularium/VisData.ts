@@ -1,7 +1,6 @@
 import { noop } from "lodash";
 
 import { nullCachedFrame } from "../util";
-import { TimeData } from "../viewport";
 
 import * as util from "./ThreadUtil";
 import { VisDataMessage, CachedFrame } from "./types";
@@ -98,10 +97,6 @@ class VisData {
 
     public atLatestFrame(): boolean {
         return this.currentFrameNumber >= this.frameCache.getLastFrameNumber();
-    }
-
-    public get currentVisDataFrameNumber(): number {
-        return this.currentFrameNumber;
     }
 
     public gotoNextFrame(): void {
