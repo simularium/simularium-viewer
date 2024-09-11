@@ -4,6 +4,7 @@ export type {
     SelectionStateInfo,
     UIDisplayData,
     VisDataFrame,
+    ColorChange,
     SelectionEntry,
     TrajectoryFileInfo,
     NetConnectionParams,
