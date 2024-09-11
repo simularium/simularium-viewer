@@ -59,8 +59,9 @@ class VisData {
         this.onError = noop;
     }
 
-    public setOnErrorCallback(callback: (error: FrontEndError) => void): void {
-        this.onError = callback;
+    public setOnError(onError: (error: FrontEndError) => void): void {
+        this.onError = onError;
+        this.frameCache.setOnError(onError);
     }
 
     public get currentFrameData(): CachedFrame {

@@ -132,9 +132,7 @@ class Viewport extends React.Component<
             maxCacheSize: props.maxCacheSize,
         });
         if (props.onError) {
-            this.props.simulariumController.visData.setOnErrorCallback(
-                props.onError
-            );
+            this.props.simulariumController.visData.setOnError(props.onError);
         }
         this.props.simulariumController.visData.clearCache();
         this.visGeometry.createMaterials(props.agentColors);

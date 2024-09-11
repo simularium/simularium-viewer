@@ -1,5 +1,7 @@
+import { noop } from "lodash";
 import { ErrorLevel, FrontEndError } from "./FrontEndError";
 import { CachedFrame, LinkedListNode } from "./types";
+import { nullCachedFrame } from "../util";
 
 interface VisDataCacheSettings {
     maxSize: number;
@@ -14,6 +16,8 @@ class VisDataCache {
     public maxSize: number;
     public cacheEnabled: boolean;
     public cacheSizeLimited: boolean;
+
+    public onError: (error: FrontEndError) => void;
 
     constructor(settings?: Partial<VisDataCacheSettings>) {
         /**
@@ -30,16 +34,11 @@ class VisDataCache {
         this.cacheEnabled = true;
         this.cacheSizeLimited = this.maxSize > 0;
 
+        this.onError = noop;
+
         if (settings) {
             this.changeSettings(settings);
         }
-    }
-
-    private frameAccessError(msg?: string) {
-        return new FrontEndError(
-            `Error accessing frame. ${msg}`,
-            ErrorLevel.WARNING
-        );
     }
 
     public changeSettings(options: {
@@ -54,6 +53,20 @@ class VisDataCache {
             this.maxSize = maxSize;
             this.cacheSizeLimited = maxSize > 0;
         }
+    }
+
+    public setOnError(onError: (error: FrontEndError) => void): void {
+        this.onError = onError;
+    }
+
+    private frameAccessError(msg?: string): CachedFrame {
+        this.onError(
+            new FrontEndError(
+                `Error accessing frame. ${msg}`,
+                ErrorLevel.WARNING
+            )
+        );
+        return nullCachedFrame();
     }
 
     public hasFrames(): boolean {
@@ -100,7 +113,7 @@ class VisDataCache {
 
     public getFirstFrame(): CachedFrame {
         if (!this.head) {
-            throw this.frameAccessError("No data in cache.");
+            return this.frameAccessError("No data in cache.");
         }
         return this.head.data;
     }
@@ -115,7 +128,7 @@ class VisDataCache {
 
     public getLastFrame(): CachedFrame {
         if (!this.tail) {
-            throw this.frameAccessError(" No data in cache.");
+            return this.frameAccessError(" No data in cache.");
         }
         return this.tail.data;
     }
@@ -133,7 +146,7 @@ class VisDataCache {
         value: number
     ): CachedFrame {
         if (!this.head) {
-            throw this.frameAccessError("No data in cache.");
+            return this.frameAccessError("No data in cache.");
         }
         const frame = this.walkLinkedList(
             (node) => node.data[condition] === value
@@ -141,7 +154,7 @@ class VisDataCache {
         if (frame) {
             return frame.data;
         }
-        throw this.frameAccessError(
+        return this.frameAccessError(
             `Frame not found at provided ${condition}. Attempting to access frame ${value}.`
         );
     }
@@ -225,7 +238,8 @@ class VisDataCache {
 
     public remove(node: LinkedListNode): void {
         if (this.numFrames === 0 || !this.head || !this.tail) {
-            throw this.frameAccessError("No data in cache.");
+            this.frameAccessError("No data in cache.");
+            return;
         }
         if (this.numFrames == 1 && node.next === node && node.prev === node) {
             // Only one node in the cache, so clear it
@@ -234,10 +248,9 @@ class VisDataCache {
         }
 
         if (node === this.head) {
-            // Removing the head
             this.head = node.next;
             if (this.head !== null) {
-                this.head.prev = this.tail; // Maintain circularity
+                this.head.prev = this.tail;
             }
             if (this.tail !== null) {
                 this.tail.next = this.head;

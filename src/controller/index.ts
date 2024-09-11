@@ -67,7 +67,7 @@ export default class SimulariumController {
         this.handleTrajectoryInfo = (/*msg: TrajectoryFileInfo*/) => noop;
         this.onError = (/*errorMessage*/) => noop;
         if (this.onError) {
-            this.visData.setOnErrorCallback(this.onError);
+            this.visData.setOnError(this.onError);
         }
 
         // might only be used in unit testing
