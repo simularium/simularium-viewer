@@ -110,7 +110,7 @@ class VisDataCache {
     }
 
     public getFirstFrameTime(): number {
-        return this.head ? this.head.data.time : -1;
+        return this.head?.data.time || -1;
     }
 
     public getLastFrame(): CachedFrame {
