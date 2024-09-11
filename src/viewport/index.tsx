@@ -12,11 +12,11 @@ import {
     SelectionStateInfo,
     UIDisplayData,
 } from "../simularium";
-import { TrajectoryFileInfoAny } from "../simularium/types";
+import { AgentData, TrajectoryFileInfoAny } from "../simularium/types";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
 import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry";
-import { ColorChange } from "../simularium/SelectionInterface";
+import { ColorAssignment } from "../visGeometry/types";
 import FrameRecorder from "../simularium/FrameRecorder";
 import { DEFAULT_FRAME_RATE } from "../constants";
 
@@ -46,6 +46,7 @@ type ViewportProps = {
     lockedCamera?: boolean;
     onRecordedMovie?: (blob: Blob) => void; // providing this callback enables movie recording
     disableCache?: boolean;
+    onFollowObjectChanged?: (agentData: AgentData) => void; // passes agent data about the followed agent to the front end
 } & Partial<DefaultProps>;
 
 const defaultProps = {
@@ -341,12 +342,12 @@ class Viewport extends React.Component<
             }
             if (
                 !isEqual(
-                    selectionStateInfo.colorChange,
-                    prevProps.selectionStateInfo.colorChange
+                    selectionStateInfo.appliedColors,
+                    prevProps.selectionStateInfo.appliedColors
                 ) &&
-                selectionStateInfo.colorChange !== null
+                selectionStateInfo.appliedColors.length > 0
             ) {
-                this.changeAgentsColor(selectionStateInfo.colorChange);
+                this.changeAgentsColor(selectionStateInfo.appliedColors);
             }
         }
 
@@ -570,6 +571,14 @@ class Viewport extends React.Component<
             }
             this.visGeometry.setFollowObject(NO_AGENT);
         }
+        this.updateFollowObjectData();
+    }
+
+    private updateFollowObjectData(): void {
+        if (this.props.onFollowObjectChanged === undefined) return;
+        const id = this.visGeometry.getFollowObject();
+        const data = this.visGeometry.getObjectData(id);
+        this.props.onFollowObjectChanged(data);
     }
 
     private handleTimeChange(e: Event): void {
@@ -587,12 +596,22 @@ class Viewport extends React.Component<
         }
     }
 
-    public changeAgentsColor(colorChange: ColorChange): void {
-        const { agent, color } = colorChange;
-        const agentIds = this.selectionInterface.getAgentIdsByNamesAndTags([
-            agent,
-        ]);
-        this.visGeometry.applyColorToAgents(agentIds, color);
+    public changeAgentsColor(appliedColors: UIDisplayData): void {
+        const changes: ColorAssignment[] = [];
+        appliedColors.forEach((agent) => {
+            const agentIds = this.selectionInterface.getAgentIdsByNamesAndTags([
+                    { name: agent.name, tags: [] },
+                ]);
+            changes.push({ agentIds, color: agent.color });
+            agent.displayStates.forEach((state) => {
+                const stateIds =
+                    this.selectionInterface.getAgentIdsByNamesAndTags([
+                        { name: agent.name, tags: [state.name] },
+                    ]);
+                changes.push({ agentIds: stateIds, color: state.color });
+            });
+        });
+        this.visGeometry.applyColorToAgents(changes);
     }
 
     public stopAnimate(): void {
@@ -628,6 +647,7 @@ class Viewport extends React.Component<
                     this.dispatchUpdatedTime(visData.currentFrameData);
                     this.visGeometry.update(currentAgents);
                     this.lastRenderedAgentTime = visData.currentFrameData.time;
+                    this.updateFollowObjectData();
                 }
             }
 

@@ -12,6 +12,7 @@ export type {
     EncodedTypeMapping,
     VisDataMessage,
     Plot,
+    AgentData,
 } from "./simularium";
 export type { ISimulariumFile } from "./simularium/ISimulariumFile";
 export type { TimeData } from "./viewport";

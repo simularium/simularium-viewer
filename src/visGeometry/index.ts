@@ -38,7 +38,11 @@ import PDBModel from "./PDBModel";
 import AgentPath from "./agentPath";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
 
-import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC } from "../constants";
+import {
+    DEFAULT_CAMERA_Z_POSITION,
+    DEFAULT_CAMERA_SPEC,
+    nullAgent,
+} from "../constants";
 import {
     AgentData,
     AgentDisplayDataWithGeometry,
@@ -54,6 +58,7 @@ import { LegacyRenderer } from "./rendering/LegacyRenderer";
 import GeometryStore from "./GeometryStore";
 import {
     AgentGeometry,
+    ColorAssignment,
     GeometryDisplayType,
     GeometryInstanceContainer,
     MeshGeometry,
@@ -646,6 +651,14 @@ class VisGeometry {
         this.focusMode = focus;
     }
 
+    public getObjectData(id: number): AgentData {
+        const data = this.visAgentInstances.get(id);
+        if (!data) {
+            return nullAgent();
+        }
+        return data.agentData;
+    }
+
     public getFollowObject(): number {
         return this.followObjectId;
     }
@@ -1104,18 +1117,17 @@ class VisGeometry {
         this.setAgentColors();
     }
 
-    public applyColorToAgents(
-        agentIds: number[],
-        color: string | number
-    ): void {
-        const newColorData = this.colorHandler.setColorForAgentTypes(
-            agentIds,
-            color
-        );
-        this.renderer.updateColors(
-            newColorData.numberOfColors,
-            newColorData.colorArray
-        );
+    public applyColorToAgents(colorAssignments: ColorAssignment[]): void {
+        colorAssignments.forEach((color) => {
+            const newColorData = this.colorHandler.setColorForAgentTypes(
+                color.agentIds,
+                color.color
+            );
+            this.renderer.updateColors(
+                newColorData.numberOfColors,
+                newColorData.colorArray
+            );
+        });
         this.updateScene(this.currentSceneAgents);
     }
 
@@ -1550,7 +1562,7 @@ class VisGeometry {
         }
 
         agents.forEach((agentData) => {
-            const visType = agentData["vis-type"];
+            const visType = agentData.visType;
             const instanceId = agentData.instanceId;
             const typeId = agentData.type;
             lastx = agentData.x;

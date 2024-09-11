@@ -8,7 +8,7 @@ import type {
     SelectionStateInfo,
     SelectionEntry,
 } from "../../type-declarations";
-import { TrajectoryType } from "../../src/constants";
+import { nullAgent, TrajectoryType } from "../../src/constants";
 import SimulariumViewer, {
     SimulariumController,
     RenderStyle,
@@ -33,6 +33,7 @@ import SimulariumViewer, {
 //     ErrorLevel,
 // } from "../es";
 import "../../style/style.css";
+import { AgentData } from "../../type-declarations/simularium/types";
 import PointSimulator from "./simulators/PointSimulator";
 import BindingSimulator from "./simulators/BindingSimulator2D";
 import PointSimulatorLive from "./simulators/PointSimulatorLive";
@@ -52,6 +53,7 @@ import {
 } from "./api-settings";
 import ConversionForm from "./ConversionForm";
 import MetaballSimulator from "./simulators/MetaballSimulator";
+import AgentMetadata from "./AgentMetadata";
 
 let playbackFile = "TEST_LIVEMODE_API";
 let queryStringFile = "";
@@ -96,7 +98,6 @@ interface ViewerState {
     showPaths: boolean;
     timeStep: number;
     totalDuration: number;
-    uiDisplayData: UIDisplayData;
     filePending: {
         type: TrajectoryType;
         template: { [key: string]: any };
@@ -111,6 +112,7 @@ interface ViewerState {
     trajectoryTitle: string;
     initialPlay: boolean;
     firstFrameTime: number;
+    followObjectData: AgentData;
 }
 
 interface BaseType {
@@ -160,11 +162,10 @@ const initialState: ViewerState = {
     showPaths: true,
     timeStep: 1,
     totalDuration: 100,
-    uiDisplayData: [],
     selectionStateInfo: {
         highlightedAgents: [],
         hiddenAgents: [],
-        colorChange: null,
+        appliedColors: [],
     },
     filePending: null,
     simulariumFile: null,
@@ -173,6 +174,7 @@ const initialState: ViewerState = {
     trajectoryTitle: "",
     initialPlay: true,
     firstFrameTime: 0,
+    followObjectData: nullAgent(),
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
@@ -514,14 +516,13 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             []
         );
         const uniqueTags: string[] = [...new Set(allTags)];
-        if (isEqual(uiDisplayData, this.state.uiDisplayData)) {
+        if (isEqual(uiDisplayData, this.state.selectionStateInfo.appliedColors)) {
             return;
         }
         this.setState({
             particleTypeNames: uiDisplayData.map((a) => a.name),
-            uiDisplayData: uiDisplayData,
             particleTypeTags: uniqueTags,
-            selectionStateInfo: initialState.selectionStateInfo,
+            selectionStateInfo: {...initialState.selectionStateInfo, appliedColors: uiDisplayData},
         });
     }
 
@@ -680,14 +681,14 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         this.setState({ agentColors });
     };
 
-    public setColorSelectionInfo = (colorChange) => {
+    public setColorSelectionInfo = (appliedColors) => {
         this.setState({
             ...this.state,
             selectionStateInfo: {
                 hiddenAgents: this.state.selectionStateInfo.hiddenAgents,
                 highlightedAgents:
                     this.state.selectionStateInfo.highlightedAgents,
-                colorChange: colorChange,
+                appliedColors: appliedColors,
             },
         });
     };
@@ -718,6 +719,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public setRecordingEnabled = (value: boolean): void => {
         this.setState({ isRecordingEnabled: value });
+    };
+
+    public handleFollowObjectData = (agentData: AgentData) => {
+        this.setState({ followObjectData: agentData });
     };
 
     public render(): JSX.Element {
@@ -984,7 +989,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 </span>
                 <br></br>
                 <ColorPicker
-                    uiDisplayData={this.state.uiDisplayData}
+                    uiDisplayData={this.state.selectionStateInfo.appliedColors}
                     particleTypeNames={this.state.particleTypeNames}
                     agentColors={this.state.agentColors}
                     updateAgentColorArray={this.updateAgentColorArray}
@@ -1008,6 +1013,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         }
                     />
                 )}
+                <AgentMetadata agentData={this.state.followObjectData} />
                 <div className="viewer-container">
                     <SimulariumViewer
                         ref={this.viewerRef}
@@ -1031,6 +1037,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                                 ? this.onRecordedMovie
                                 : undefined
                         }
+                        onFollowObjectChanged={this.handleFollowObjectData.bind(
+                            this
+                        )}
                         loadInitialData={true}
                         agentColors={this.state.agentColors}
                         showPaths={this.state.showPaths}
