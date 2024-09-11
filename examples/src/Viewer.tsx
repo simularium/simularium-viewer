@@ -40,6 +40,7 @@ import PointSimulatorLive from "./simulators/PointSimulatorLive";
 import PdbSimulator from "./simulators/PdbSimulator";
 import SinglePdbSimulator from "./simulators/SinglePdbSimulator";
 import CurveSimulator from "./simulators/CurveSimulator";
+import VolumeSimulator from "./simulators/VolumeSimulator";
 import SingleCurveSimulator from "./simulators/SingleCurveSimulator";
 import ColorPicker from "./ColorPicker";
 import RecordMovieComponent from "./RecordMovieComponent";
@@ -388,16 +389,21 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
         const fileName = uuidv4() + ".simularium";
         simulariumController
-            .convertTrajectory(this.netConnectionSettings, obj, fileType, fileName)
+            .convertTrajectory(
+                this.netConnectionSettings,
+                obj,
+                fileType,
+                fileName
+            )
             .then(() => {
                 this.clearPendingFile();
             })
             .then(() => {
                 simulariumController.changeFile(
-                    { netConnectionSettings: this.netConnectionSettings, },
+                    { netConnectionSettings: this.netConnectionSettings },
                     fileName,
-                    true,
-                )
+                    true
+                );
             })
             .catch((err) => {
                 console.error(err);
@@ -412,7 +418,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         const simulariumFile = fileName.includes(".simularium")
             ? trajectoryFile
             : null;
-        this.setState({ initialPlay: true})
+        this.setState({ initialPlay: true });
         return simulariumController
             .handleFileChange(simulariumFile, fileName, geoAssets)
             .catch(console.log);
@@ -629,6 +635,13 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 },
                 playbackFile
             );
+        } else if (playbackFile === "TEST_VOLUME") {
+            simulariumController.changeFile(
+                {
+                    clientSimulator: new VolumeSimulator(),
+                },
+                playbackFile
+            );
         } else {
             this.setState({
                 simulariumFile: { name: playbackFile, data: null },
@@ -783,6 +796,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     <option value="TEST_POINTS">TEST POINTS</option>
                     <option value="TEST_METABALLS">TEST METABALLS</option>
                     <option value="TEST_BINDING">TEST BINDING</option>
+                    <option value="TEST_VOLUME">TEST VOLUME</option>
                 </select>
 
                 <button onClick={() => this.translateAgent()}>
