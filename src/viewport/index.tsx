@@ -127,13 +127,16 @@ class Viewport extends React.Component<
         this.handleTimeChange = this.handleTimeChange.bind(this);
 
         this.visGeometry = new VisGeometry(loggerLevel);
-        this.props.simulariumController.visData.setMaxCacheSize(
-            this.props.maxCacheSize
-        );
+        this.props.simulariumController.visData.setCacheSettings({
+            cacheEnabled: !props.disableCache,
+            maxCacheSize: props.maxCacheSize,
+        });
+        if (props.onError) {
+            this.props.simulariumController.visData.setOnErrorCallback(
+                props.onError
+            );
+        }
         this.props.simulariumController.visData.clearCache();
-        this.props.simulariumController.visData.setCacheEnabled(
-            !this.props.disableCache
-        );
         this.visGeometry.createMaterials(props.agentColors);
         this.vdomRef = React.createRef();
         this.lastRenderTime = Date.now();
@@ -382,9 +385,9 @@ class Viewport extends React.Component<
             this.visGeometry.toggleControls(lockedCamera);
         }
         if (prevProps.disableCache !== disableCache) {
-            this.props.simulariumController.visData.setCacheEnabled(
-                !disableCache
-            );
+            this.props.simulariumController.visData.setCacheSettings({
+                cacheEnabled: !disableCache,
+            });
         }
         if (prevState.showRenderParamsGUI !== this.state.showRenderParamsGUI) {
             if (this.state.showRenderParamsGUI) {
@@ -604,8 +607,8 @@ class Viewport extends React.Component<
         const changes: ColorAssignment[] = [];
         appliedColors.forEach((agent) => {
             const agentIds = this.selectionInterface.getAgentIdsByNamesAndTags([
-                    { name: agent.name, tags: [] },
-                ]);
+                { name: agent.name, tags: [] },
+            ]);
             changes.push({ agentIds, color: agent.color });
             agent.displayStates.forEach((state) => {
                 const stateIds =
@@ -644,7 +647,6 @@ class Viewport extends React.Component<
 
                 return;
             }
-
             if (visData.currentFrameData.time != this.lastRenderedAgentTime) {
                 const currentAgents = visData.currentFrame();
                 if (

@@ -8,8 +8,6 @@ import { VisDataCache } from "./VisDataCache";
 
 class VisData {
     public frameCache: VisDataCache;
-    private enableCache: boolean;
-    private maxCacheSize: number;
     private webWorker: Worker | null;
 
     private frameToWaitFor: number;
@@ -50,15 +48,7 @@ class VisData {
             this.setupWebWorker();
         }
         this.currentFrameNumber = -1;
-        /**
-         * if cache is not enabled only one current frame is ever stored
-         * if cache is enabled and maxSize is -1, unlimited frames are stored
-         * if cache is enabled and maxSize is set above -1, cache will be trimmed to below setting before adding frames
-         * if a maxCacheSize prop has been provided, it will override this value
-         */
-        this.enableCache = true;
-        this.maxCacheSize = -1;
-        this.frameCache = new VisDataCache(this.maxCacheSize, this.enableCache);
+        this.frameCache = new VisDataCache();
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
         this.timeStepSize = 0;
@@ -89,15 +79,11 @@ class VisData {
      *   Functions to check update
      * */
     public hasLocalCacheForTime(time: number): boolean {
-        if (!this.enableCache) {
-            return false;
-        }
         return this.frameCache.containsTime(time);
     }
 
     public gotoTime(time: number): void {
         const frameNumber = this.frameCache.getFrameAtTime(time)?.frameNumber;
-        console.log("gotoTime frameNumber: ", frameNumber);
         if (frameNumber !== undefined) {
             this.currentFrameNumber = frameNumber;
         }
@@ -142,13 +128,22 @@ class VisData {
         this.lockedForFrame = true;
     }
 
-    public setMaxCacheSize(cacheLength: number | undefined): void {
+    public setCacheSettings(options: {
+        cacheEnabled?: boolean;
+        maxCacheSize?: number;
+    }): void {
+        const { cacheEnabled, maxCacheSize: cacheLength } = options;
+        if (cacheEnabled !== undefined) {
+            this.frameCache.changeSettings({ cacheEnabled: cacheEnabled });
+        }
+
         if (cacheLength === undefined || cacheLength < 0) {
-            this.maxCacheSize = -1;
+            this.frameCache.changeSettings({ maxSize: -1 });
             return;
         }
         // cache must have at least one frame
-        this.maxCacheSize = cacheLength > 0 ? cacheLength : 1;
+        const newCacheSize = cacheLength > 0 ? cacheLength : 1;
+        this.frameCache.changeSettings({ maxSize: newCacheSize });
     }
 
     public clearCache(): void {
@@ -171,10 +166,6 @@ class VisData {
             this.webWorker.terminate();
             this.setupWebWorker();
         }
-    }
-
-    public setCacheEnabled(cacheEnabled: boolean): void {
-        this.enableCache = cacheEnabled;
     }
 
     private parseAgentsFromVisDataMessage(msg: VisDataMessage): void {

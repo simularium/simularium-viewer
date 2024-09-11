@@ -45,7 +45,6 @@ import {
     AGENT_HEADER_SIZE,
 } from "../constants";
 import {
-    AGENT_OBJECT_KEYS,
     AgentData,
     AgentDisplayDataWithGeometry,
     CachedFrame,
@@ -68,7 +67,12 @@ import {
     MeshLoadRequest,
     PDBGeometry,
 } from "./types";
-import { checkAndSanitizePath, nullCachedFrame } from "../util";
+import {
+    checkAndSanitizePath,
+    getAgentDataFromBuffer,
+    getNextAgentOffset,
+    nullCachedFrame,
+} from "../util";
 import ColorHandler from "./ColorHandler";
 
 const MAX_PATH_LEN = 32;
@@ -1566,7 +1570,7 @@ class VisGeometry {
         let offset = AGENT_HEADER_SIZE;
         const newVisAgentInstances = new Map<number, VisAgent>();
         for (let i = 0; i < agentCount; i++) {
-            const agentData = this.getAgentDataFromBuffer(view, offset);
+            const agentData = getAgentDataFromBuffer(view, offset);
             const visType = agentData.visType;
             const instanceId = agentData.instanceId;
             const typeId = agentData.type;
@@ -1613,7 +1617,7 @@ class VisGeometry {
             const isHidden = this.hiddenIds.includes(visAgent.agentData.type);
             visAgent.setHidden(isHidden);
             if (visAgent.hidden) {
-                offset = this.getNextAgentOffset(view, offset);
+                offset = getNextAgentOffset(view, offset);
                 continue;
             }
 
@@ -1627,7 +1631,7 @@ class VisGeometry {
                     this.logger.warn(
                         `No mesh nor pdb available for ${typeId}? Should be unreachable code`
                     );
-                    offset = this.getNextAgentOffset(view, offset);
+                    offset = getNextAgentOffset(view, offset);
                     continue;
                 }
                 const { geometry, displayType } = response;
@@ -1663,7 +1667,7 @@ class VisGeometry {
                 this.addFiberToDrawList(typeId, visAgent, agentData);
             }
             newVisAgentInstances.set(instanceId, visAgent);
-            offset = this.getNextAgentOffset(view, offset);
+            offset = getNextAgentOffset(view, offset);
         }
         for (const [key, visAgent] of this.visAgentInstances) {
             if (!newVisAgentInstances.has(key)) {
@@ -1678,32 +1682,6 @@ class VisGeometry {
             agentGeo.geometry.instances.endUpdate();
         });
         this.legacyRenderer.endUpdate(this.scene);
-    }
-
-    private getAgentDataFromBuffer(
-        view: Float32Array,
-        offset: number
-    ): AgentData {
-        const agentData: AgentData = nullAgent();
-        for (let i = 0; i < AGENT_OBJECT_KEYS.length; i++) {
-            agentData[AGENT_OBJECT_KEYS[i]] = view[offset + i];
-        }
-        const nSubPoints = agentData["nSubPoints"];
-        agentData.subpoints = Array.from(
-            view.subarray(
-                offset + AGENT_OBJECT_KEYS.length,
-                offset + AGENT_OBJECT_KEYS.length + nSubPoints
-            )
-        );
-        return agentData;
-    }
-
-    private getNextAgentOffset(
-        view: Float32Array,
-        currentOffset: number
-    ): number {
-        const nSubPoints = view[currentOffset + AGENT_OBJECT_KEYS.length - 1];
-        return currentOffset + AGENT_OBJECT_KEYS.length + nSubPoints;
     }
 
     public animateCamera(): void {

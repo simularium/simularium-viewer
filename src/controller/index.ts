@@ -70,6 +70,9 @@ export default class SimulariumController {
 
         this.handleTrajectoryInfo = (/*msg: TrajectoryFileInfo*/) => noop;
         this.onError = (/*errorMessage*/) => noop;
+        if (this.onError) {
+            this.visData.setOnErrorCallback(this.onError);
+        }
 
         // might only be used in unit testing
         // TODO: change test so controller isn't initialized with a remoteSimulator

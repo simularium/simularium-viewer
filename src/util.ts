@@ -1,7 +1,8 @@
 import type { ISimulariumFile } from "./simularium/ISimulariumFile";
 import JsonFileReader from "./simularium/JsonFileReader";
 import BinaryFileReader from "./simularium/BinaryFileReader";
-import { AgentData, CachedFrame } from "./simularium/types";
+import { AGENT_OBJECT_KEYS, AgentData, CachedFrame } from "./simularium/types";
+import { nullAgent } from "./constants";
 
 export const compareTimes = (
     time1: number,
@@ -97,4 +98,30 @@ export const nullCachedFrame = (): CachedFrame => {
         agentCount: -1,
         size: -1,
     };
+};
+
+export const getAgentDataFromBuffer = (
+    view: Float32Array,
+    offset: number
+): AgentData => {
+    const agentData: AgentData = nullAgent();
+    for (let i = 0; i < AGENT_OBJECT_KEYS.length; i++) {
+        agentData[AGENT_OBJECT_KEYS[i]] = view[offset + i];
+    }
+    const nSubPoints = agentData["nSubPoints"];
+    agentData.subpoints = Array.from(
+        view.subarray(
+            offset + AGENT_OBJECT_KEYS.length,
+            offset + AGENT_OBJECT_KEYS.length + nSubPoints
+        )
+    );
+    return agentData;
+};
+
+export const getNextAgentOffset = (
+    view: Float32Array,
+    currentOffset: number
+): number => {
+    const nSubPoints = view[currentOffset + AGENT_OBJECT_KEYS.length - 1];
+    return currentOffset + AGENT_OBJECT_KEYS.length + nSubPoints;
 };
