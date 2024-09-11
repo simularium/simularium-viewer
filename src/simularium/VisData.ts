@@ -1,3 +1,5 @@
+import { noop } from "lodash";
+
 import { nullCachedFrame } from "../util";
 import { TimeData } from "../viewport";
 
@@ -5,6 +7,7 @@ import * as util from "./ThreadUtil";
 import { VisDataMessage, CachedFrame } from "./types";
 import { parseVisDataMessage } from "./VisDataParse";
 import { VisDataCache } from "./VisDataCache";
+import { ErrorLevel, FrontEndError } from "./FrontEndError";
 
 class VisData {
     public frameCache: VisDataCache;
@@ -13,9 +16,10 @@ class VisData {
     private frameToWaitFor: number;
     private lockedForFrame: boolean;
 
-    private currentFrameNumber: number;
+    protected currentFrameNumber: number;
 
     public timeStepSize: number;
+    public onError: (error: FrontEndError) => void;
 
     private static parseOneBinaryFrame(data: ArrayBuffer): CachedFrame {
         const floatView = new Float32Array(data);
@@ -38,7 +42,7 @@ class VisData {
             { type: "module" }
         );
         this.webWorker.onmessage = (event) => {
-            this.frameCache.addFrame(event.data);
+            this.addFrameToCache(event.data);
         };
     }
 
@@ -52,6 +56,12 @@ class VisData {
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
         this.timeStepSize = 0;
+
+        this.onError = noop;
+    }
+
+    public setOnErrorCallback(callback: (error: FrontEndError) => void): void {
+        this.onError = callback;
     }
 
     public get currentFrameData(): TimeData {
@@ -66,10 +76,14 @@ class VisData {
             if (currentData) {
                 this.gotoTime(currentData.time);
             }
-        } else {
+        } else if (
+            this.frameCache.containsFrameAtFrameNumber(this.currentFrameNumber)
+        ) {
             currentData = this.frameCache.getFrameAtFrameNumber(
                 this.currentFrameNumber
             );
+        } else {
+            currentData = this.frameCache.getLastFrame();
         }
 
         return currentData || { frameNumber: 0, time: 0 };
@@ -91,6 +105,10 @@ class VisData {
 
     public atLatestFrame(): boolean {
         return this.currentFrameNumber >= this.frameCache.getLastFrameNumber();
+    }
+
+    public get currentVisDataFrameNumber(): number {
+        return this.currentFrameNumber;
     }
 
     public currentFrame(): CachedFrame | null {
@@ -194,12 +212,24 @@ class VisData {
         }
         const parsedMsg: CachedFrame = parseVisDataMessage(visDataMsg);
         if (
+            this.frameCache.cacheSizeLimited &&
+            parsedMsg.size > this.frameCache.maxSize
+        ) {
+            this.onError(
+                new FrontEndError(
+                    `Frame size exceeds cache size: ${parsedMsg.size} > ${this.frameCache.maxSize}`,
+                    ErrorLevel.ERROR
+                )
+            );
+            return;
+        }
+        if (
             util.ThreadUtil.browserSupportsWebWorkers() &&
             this.webWorker !== null
         ) {
             this.webWorker.postMessage(parsedMsg);
         } else {
-            this.frameCache.addFrame(parsedMsg);
+            this.addFrameToCache(parsedMsg);
         }
     }
 
@@ -209,7 +239,7 @@ class VisData {
             if (frame.frameNumber === 0) {
                 this.clearCache(); // new data has arrived
             }
-            this.frameCache.addFrame(frame);
+            this.addFrameToCache(frame);
             return;
         }
         this.parseAgentsFromVisDataMessage(msg);
@@ -229,6 +259,22 @@ class VisData {
         }
 
         this.parseAgentsFromFrameData(msg);
+    }
+
+    private addFrameToCache(frame: CachedFrame): void {
+        if (
+            this.frameCache.cacheSizeLimited &&
+            frame.size > this.frameCache.maxSize
+        ) {
+            this.onError(
+                new FrontEndError(
+                    `Frame size exceeds cache size: ${frame.size} > ${this.frameCache.maxSize}`,
+                    ErrorLevel.ERROR
+                )
+            );
+            return;
+        }
+        this.frameCache.addFrame(frame);
     }
 }
 

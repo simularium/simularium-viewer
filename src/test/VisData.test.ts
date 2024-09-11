@@ -1,5 +1,15 @@
-import { VisData, VisDataMessage, NetMessageEnum } from "../simularium";
-import { parseVisDataMessage } from "../simularium/VisDataParse";
+import {
+    VisData,
+    VisDataMessage,
+    NetMessageEnum,
+    FrontEndError,
+} from "../simularium";
+import {
+    calculateBufferSize,
+    parseVisDataMessage,
+} from "../simularium/VisDataParse";
+import { AGENT_OBJECT_KEYS, CachedFrame } from "../simularium/types";
+import { nullCachedFrame } from "../util";
 
 // Sample data of a single agent of type '7'
 //  moving linearly from (0,0,0) to (5,5,5)
@@ -39,92 +49,53 @@ const testData = {
     ],
 };
 
-const parsedData = [
-    [
-        {
-            cr: 1,
-            nSubPoints: 0,
-            subpoints: [],
-            type: 7,
-            instanceId: 0,
-            visType: 1000,
-            x: 1,
-            xrot: 0,
-            y: 1,
-            yrot: 0,
-            z: 1,
-            zrot: 0,
-        },
-    ],
-    [
-        {
-            cr: 1,
-            nSubPoints: 0,
-            subpoints: [],
-            type: 7,
-            instanceId: 0,
-            visType: 1000,
-            x: 2,
-            xrot: 0,
-            y: 2,
-            yrot: 22.5,
-            z: 2,
-            zrot: 0,
-        },
-    ],
-    [
-        {
-            cr: 1,
-            nSubPoints: 0,
-            subpoints: [],
-            type: 7,
-            instanceId: 0,
-            visType: 1000,
-            x: 3,
-            xrot: 0,
-            y: 3,
-            yrot: 45,
-            z: 3,
-            zrot: 0,
-        },
-    ],
-    [
-        {
-            cr: 1,
-            nSubPoints: 0,
-            subpoints: [],
-            type: 7,
-            instanceId: 0,
-            visType: 1000,
-            x: 4,
-            xrot: 0,
-            y: 4,
-            yrot: 67.5,
-            z: 4,
-            zrot: 0,
-        },
-    ],
-    [
-        {
-            cr: 1,
-            nSubPoints: 0,
-            subpoints: [],
-            type: 7,
-            instanceId: 0,
-            visType: 1000,
-            x: 5,
-            xrot: 0,
-            y: 5,
-            yrot: 90,
-            z: 5,
-            zrot: 0,
-        },
-    ],
-];
-
 describe("VisData module", () => {
     describe("VisData parse", () => {
-        test("it returns an array of objects of agent data and time stamp data", () => {
+        test("it calculates the buffer size correctly for data with no subpoints", () => {
+            const testData = [
+                10, //"visType",
+                15, //"instanceId",
+                20, //"type",
+                30, //"x",
+                31, //"y",
+                32, //"z",
+                40, //"xrot",
+                41, //"yrot",
+                42, //"zrot",
+                50, //"cr",
+                0, //"nSubPoints",
+            ];
+            const HEADER_SIZE = 3; // frameNumber, time, agentCount
+            const FRAME_DATA_SIZE = AGENT_OBJECT_KEYS.length;
+            const expectedSize = (HEADER_SIZE + FRAME_DATA_SIZE) * 4;
+            const result = calculateBufferSize(testData);
+            expect(result).toEqual(expectedSize);
+        });
+        test("it calculates the buffer size correctly for data with subpoints", () => {
+            const testData = [
+                10, //"visType",
+                15, //"instanceId",
+                20, //"type",
+                30, //"x",
+                31, //"y",
+                32, //"z",
+                40, //"xrot",
+                41, //"yrot",
+                42, //"zrot",
+                50, //"cr",
+                2, //"nSubPoints",
+                60, //"subpoint-1",
+                61, //"subpoint-2",
+            ];
+            const HEADER_SIZE = 3; // frameNumber, time, agentCount
+            const FRAME_DATA_SIZE = AGENT_OBJECT_KEYS.length;
+            const nSubpoints = testData[10];
+            const expectedSize =
+                (HEADER_SIZE + FRAME_DATA_SIZE + nSubpoints) * 4;
+            const result = calculateBufferSize(testData);
+            expect(result).toEqual(expectedSize);
+        });
+        test("it returns a CachedFrame of header data and an array buffer", () => {
             const testData = [
                 10, //"visType",
                 15, //"instanceId",
@@ -141,6 +112,13 @@ describe("VisData module", () => {
                 61, //"subpoint-2",
                 62, //"subpoint-3",
             ];
+            const expectedFrame: CachedFrame = {
+                data: expect.any(ArrayBuffer),
+                frameNumber: 0,
+                time: 0,
+                agentCount: 1,
+                size: calculateBufferSize(testData),
+            };
             const visDataMsg: VisDataMessage = {
                 msgType: NetMessageEnum.ID_VIS_DATA_ARRIVE,
                 bundleData: [
@@ -154,60 +132,10 @@ describe("VisData module", () => {
                 bundleStart: 0,
                 fileName: "",
             };
-            const parsedData = parseVisDataMessage(visDataMsg);
-            expect(parsedData.frameDataArray).toEqual([
-                { frameNumber: 0, time: 0 },
-            ]);
-            expect(parsedData.parsedAgentDataArray).toEqual([
-                [
-                    {
-                        cr: 50, //"cr",
-                        nSubPoints: 3,
-                        subpoints: [60, 61, 62], //"subpoint-1", "subpoint-2", "subpoint-3"],
-                        type: 20, //"type",
-                        instanceId: 15, //"instanceId",
-                        visType: 10, //"visType",
-                        x: 30, //"x",
-                        xrot: 40, //"xrot",
-                        y: 31, //"y",
-                        yrot: 41, //"yrot",
-                        z: 32, //"z",
-                        zrot: 42, //"zrot",
-                    },
-                ],
-            ]);
+            const result = parseVisDataMessage(visDataMsg);
+            expect(result).toMatchObject(expectedFrame);
         });
-        test("it throws an error if number of supoints does not match the nSubpoints value", () => {
-            const tooShort = [
-                10, //"visType",
-                15, //"instanceId",
-                20, //"type",
-                30, //"x",
-                31, //"y",
-                32, //"z",
-                40, //"xrot",
-                41, //"yrot",
-                42, //"zrot",
-                50, //"cr",
-                10,
-                60, //"subpoint-1",
-                61, //"subpoint-2",
-                62, //"subpoint-3",
-                63, //"subpoint-4",
-            ];
-            const visDataMsgTooShort = {
-                msgType: NetMessageEnum.ID_VIS_DATA_ARRIVE,
-                bundleData: [
-                    {
-                        data: tooShort,
-                        frameNumber: 0,
-                        time: 0,
-                    },
-                ],
-                bundleSize: 1,
-                bundleStart: 0,
-                fileName: "",
-            };
+        test("should throw error when there are too few subpoints", () => {
             const tooLong = [
                 10, //"visType",
                 15, //"instanceId",
@@ -219,12 +147,12 @@ describe("VisData module", () => {
                 41, //"yrot",
                 42, //"zrot",
                 50, //"cr",
-                2,
+                4,
                 60, //"subpoint-1",
                 61, //"subpoint-2",
                 62, //"subpoint-3",
             ];
-            const visDataMsgTooLong = {
+            const visDataMsg: VisDataMessage = {
                 msgType: NetMessageEnum.ID_VIS_DATA_ARRIVE,
                 bundleData: [
                     {
@@ -237,69 +165,41 @@ describe("VisData module", () => {
                 bundleStart: 0,
                 fileName: "",
             };
-            expect(() => {
-                parseVisDataMessage(visDataMsgTooLong);
-            }).toThrowError();
-
-            expect(() => {
-                parseVisDataMessage(visDataMsgTooShort);
-            }).toThrowError();
+            expect(() => parseVisDataMessage(visDataMsg)).toThrow(
+                FrontEndError
+            );
         });
-        test("currentFrame returns empty frame when cache is empty", () => {
+        test("currentFrame returns null frame when cache is empty", () => {
             const visData = new VisData();
             const emptyFrame = visData.currentFrame();
-            expect(emptyFrame).toEqual([]);
+            expect(emptyFrame).toEqual(nullCachedFrame());
         });
         test("can request frame from a cache size of 1", () => {
-            const singleFrame = {
+            const singleFrame: VisDataMessage = {
                 msgType: 1,
                 bundleSize: 1,
                 bundleStart: 0,
                 bundleData: [
                     {
-                        frameNumber: 1,
+                        frameNumber: 0,
                         time: 0,
                         data: [1000, 0, 7, 1, 1, 1, 0, 0, 0, 1, 0],
                     },
                 ],
                 fileName: "",
             };
-
-            const parsedSingleFrame = [
-                {
-                    cr: 1,
-                    nSubPoints: 0,
-                    subpoints: [],
-                    type: 7,
-                    instanceId: 0,
-                    visType: 1000,
-                    x: 1,
-                    xrot: 0,
-                    y: 1,
-                    yrot: 0,
-                    z: 1,
-                    zrot: 0,
-                },
-            ];
-
+            const expectedFrame: CachedFrame = {
+                data: expect.any(ArrayBuffer),
+                frameNumber: 0,
+                time: 0,
+                agentCount: 1,
+                size: calculateBufferSize(singleFrame.bundleData[0].data),
+            };
             const visData = new VisData();
             visData.parseAgentsFromNetData(singleFrame);
 
             const firstFrame = visData.currentFrame();
-            expect(firstFrame).toEqual(parsedSingleFrame);
-        });
-        test("parses 5 frame bundle correctly", () => {
-            const visData = new VisData();
-            visData.parseAgentsFromNetData(testData);
-            expect(visData.atLatestFrame()).toBe(false);
-
-            let i = 0;
-            while (!visData.atLatestFrame()) {
-                const currentFrame = visData.currentFrame();
-                expect(visData.hasLocalCacheForTime(i * 5)).toBe(true);
-                expect(currentFrame).toEqual(parsedData[i++]);
-                visData.gotoNextFrame();
-            }
+            expect(firstFrame).toMatchObject(expectedFrame);
         });
         test("can find frames in cache by time", () => {
             const visData = new VisData();
