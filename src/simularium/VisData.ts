@@ -64,29 +64,22 @@ class VisData {
         this.onError = callback;
     }
 
-    public get currentFrameData(): TimeData {
+    public get currentFrameData(): CachedFrame {
+        let currentData: CachedFrame = nullCachedFrame();
         if (!this.frameCache.hasFrames()) {
-            return { frameNumber: 0, time: 0 };
+            return currentData;
         }
-
-        let currentData: CachedFrame | null = null;
-
         if (this.currentFrameNumber < 0) {
             currentData = this.frameCache.getFirstFrame();
-            if (currentData) {
-                this.gotoTime(currentData.time);
-            }
+            this.currentFrameNumber = currentData.frameNumber;
         } else if (
             this.frameCache.containsFrameAtFrameNumber(this.currentFrameNumber)
         ) {
             currentData = this.frameCache.getFrameAtFrameNumber(
                 this.currentFrameNumber
             );
-        } else {
-            currentData = this.frameCache.getLastFrame();
         }
-
-        return currentData || { frameNumber: 0, time: 0 };
+        return currentData;
     }
 
     /**
@@ -109,27 +102,6 @@ class VisData {
 
     public get currentVisDataFrameNumber(): number {
         return this.currentFrameNumber;
-    }
-
-    public currentFrame(): CachedFrame | null {
-        if (!this.frameCache.hasFrames()) {
-            return nullCachedFrame();
-        } else if (this.currentFrameNumber === -1) {
-            this.currentFrameNumber = 0;
-        }
-
-        const frame = this.frameCache.getFrameAtFrameNumber(
-            this.currentFrameNumber
-        );
-
-        if (!frame) {
-            console.warn(
-                `No frame data found for frame number ${this.currentFrameNumber}`
-            );
-            return nullCachedFrame();
-        }
-
-        return frame;
     }
 
     public gotoNextFrame(): void {

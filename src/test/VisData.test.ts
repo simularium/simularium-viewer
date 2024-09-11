@@ -171,7 +171,7 @@ describe("VisData module", () => {
         });
         test("currentFrame returns null frame when cache is empty", () => {
             const visData = new VisData();
-            const emptyFrame = visData.currentFrame();
+            const emptyFrame = visData.currentFrameData;
             expect(emptyFrame).toEqual(nullCachedFrame());
         });
         test("can request frame from a cache size of 1", () => {
@@ -198,7 +198,7 @@ describe("VisData module", () => {
             const visData = new VisData();
             visData.parseAgentsFromNetData(singleFrame);
 
-            const firstFrame = visData.currentFrame();
+            const firstFrame = visData.currentFrameData;
             expect(firstFrame).toMatchObject(expectedFrame);
         });
         test("can find frames in cache by time", () => {
