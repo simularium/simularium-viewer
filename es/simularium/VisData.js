@@ -2,7 +2,6 @@ import _toConsumableArray from "@babel/runtime/helpers/toConsumableArray";
 import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
-import { difference } from "lodash";
 import { compareTimes } from "../util";
 import * as util from "./ThreadUtil";
 import { AGENT_OBJECT_KEYS } from "./types";
@@ -19,8 +18,6 @@ var VisData = /*#__PURE__*/function () {
     _defineProperty(this, "frameToWaitFor", void 0);
     _defineProperty(this, "lockedForFrame", void 0);
     _defineProperty(this, "cacheFrame", void 0);
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    _defineProperty(this, "_dragAndDropFileInfo", void 0);
     _defineProperty(this, "timeStepSize", void 0);
     this.webWorker = null;
     if (util.ThreadUtil.browserSupportsWebWorkers()) {
@@ -30,7 +27,6 @@ var VisData = /*#__PURE__*/function () {
     this.frameDataCache = [];
     this.cacheFrame = -1;
     this.enableCache = true;
-    this._dragAndDropFileInfo = null;
     this.frameToWaitFor = 0;
     this.lockedForFrame = false;
     this.timeStepSize = 0;
@@ -151,7 +147,6 @@ var VisData = /*#__PURE__*/function () {
       this.frameCache = [];
       this.frameDataCache = [];
       this.cacheFrame = -1;
-      this._dragAndDropFileInfo = null;
       this.frameToWaitFor = 0;
       this.lockedForFrame = false;
     }
@@ -248,67 +243,6 @@ var VisData = /*#__PURE__*/function () {
         msg = msg.slice(dataStart);
       }
       this.parseAgentsFromFrameData(msg);
-    }
-
-    // for use w/ a drag-and-drop trajectory file
-    //  save a file for playback
-    // will be caught by controller.changeFile(...).catch()
-  }, {
-    key: "cacheJSON",
-    value: function cacheJSON(visDataMsg) {
-      if (this.frameCache.length > 0) {
-        throw new Error("cache not cleared before cacheing a new drag-and-drop file");
-      }
-      var frames = parseVisDataMessage(visDataMsg);
-      this.addFramesToCache(frames);
-    }
-  }, {
-    key: "dragAndDropFileInfo",
-    get: function get() {
-      if (!this._dragAndDropFileInfo) {
-        return null;
-      }
-      return this._dragAndDropFileInfo;
-    }
-
-    // will be caught by controller.changeFile(...).catch()
-    // TODO: check if this code is still used
-    ,
-    set: function set(fileInfo) {
-      if (!fileInfo) return;
-      // NOTE: this may be a temporary check as we're troubleshooting new file formats
-      var missingIds = this.checkTypeMapping(fileInfo.typeMapping);
-      if (missingIds.length) {
-        var include = confirm("Your file typeMapping is missing names for the following type ids: ".concat(missingIds, ". Do you want to include them in the interactive interface?"));
-        if (include) {
-          missingIds.forEach(function (id) {
-            fileInfo.typeMapping[id] = {
-              name: id.toString()
-            };
-          });
-        }
-      }
-      this._dragAndDropFileInfo = fileInfo;
-    }
-  }, {
-    key: "checkTypeMapping",
-    value: function checkTypeMapping(typeMappingFromFile) {
-      if (!typeMappingFromFile) {
-        throw new Error("data needs 'typeMapping' object to display agent controls");
-      }
-      var idsInFrameData = new Set();
-      var idsInTypeMapping = Object.keys(typeMappingFromFile).map(Number);
-      if (this.frameCache.length === 0) {
-        console.log("no data to check type mapping against");
-        return [];
-      }
-      this.frameCache.forEach(function (element) {
-        element.map(function (agent) {
-          return idsInFrameData.add(agent.type);
-        });
-      });
-      var idsArr = _toConsumableArray(idsInFrameData).sort();
-      return difference(idsArr, idsInTypeMapping).sort();
     }
   }], [{
     key: "parseOneBinaryFrame",

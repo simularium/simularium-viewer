@@ -447,22 +447,9 @@ var SimulariumController = /*#__PURE__*/function () {
       }
     }
   }, {
-    key: "cacheJSON",
-    value: function cacheJSON(json) {
-      this.visData.cacheJSON(json);
-    }
-  }, {
     key: "clearLocalCache",
     value: function clearLocalCache() {
       this.visData.clearCache();
-    }
-  }, {
-    key: "dragAndDropFileInfo",
-    get: function get() {
-      return this.visData.dragAndDropFileInfo;
-    },
-    set: function set(fileInfo) {
-      this.visData.dragAndDropFileInfo = fileInfo;
     }
   }, {
     key: "trajFileInfoCallback",

@@ -1,5 +1,5 @@
 import { VisData, RemoteSimulator } from "../simularium";
-import type { NetConnectionParams, TrajectoryFileInfo, VisDataMessage } from "../simularium";
+import type { NetConnectionParams, TrajectoryFileInfo } from "../simularium";
 import { VisGeometry } from "../visGeometry";
 import { FileReturn, PlotConfig } from "../simularium/types";
 import { IClientSimulatorImpl } from "../simularium/localSimulators/IClientSimulatorImpl";
@@ -67,10 +67,7 @@ export default class SimulariumController {
     getMetrics(config: NetConnectionParams): Promise<void>;
     getPlotData(config: NetConnectionParams, requestedPlots: PlotConfig[]): Promise<void>;
     disableNetworkCommands(): void;
-    cacheJSON(json: VisDataMessage): void;
     clearLocalCache(): void;
-    get dragAndDropFileInfo(): TrajectoryFileInfo | null;
-    set dragAndDropFileInfo(fileInfo: TrajectoryFileInfo | null);
     set trajFileInfoCallback(callback: (msg: TrajectoryFileInfo) => void);
     /**
      * Camera controls
