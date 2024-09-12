@@ -60,17 +60,19 @@ class VisDataCache {
     }
 
     private frameAccessError(msg?: string): CachedFrame {
-        this.onError(
-            new FrontEndError(
-                `Error accessing frame. ${msg}`,
-                ErrorLevel.WARNING
-            )
+        const error = new FrontEndError(
+            `Error accessing frame: ${msg}`,
+            ErrorLevel.WARNING
         );
+        if (this.onError) {
+            this.onError(error);
+            throw error;
+        }
         return nullCachedFrame();
     }
 
     public hasFrames(): boolean {
-        return this.numFrames > 0 && this.head !== null;
+        return this.numFrames > 0 && this.head !== null && this.tail !== null;
     }
 
     /**
@@ -174,46 +176,25 @@ class VisDataCache {
             prev: null,
         };
 
-        newNode.next = newNode;
-        newNode.prev = newNode;
         this.head = newNode;
         this.tail = newNode;
         this.size = data.size;
         this.numFrames = 1;
     }
 
-    public addFirst(data: CachedFrame): void {
+    public addFrameToEndOfCache(data: CachedFrame): void {
         const newNode: LinkedListNode = {
             data,
             next: null,
             prev: null,
         };
-        if (this.head !== null && this.tail !== null) {
-            newNode.next = this.head;
-            newNode.prev = this.tail;
-
-            this.head.prev = newNode;
-            this.tail.next = newNode;
-            this.head = newNode;
+        if (!this.hasFrames()) {
+            this.assignSingleFrameToCache(data);
+            return;
         }
-        this.numFrames++;
-        this.size += data.size;
-        if (this.cacheSizeLimited && this.size > this.maxSize) {
-            this.trimCache();
-        }
-    }
-
-    public addLast(data: CachedFrame): void {
-        const newNode: LinkedListNode = {
-            data,
-            next: null,
-            prev: null,
-        };
-        if (this.tail !== null) {
-            newNode.prev = this.tail;
-            this.tail.next = newNode;
-            this.tail = newNode;
-        }
+        newNode.prev = this.tail;
+        this.tail!.next = newNode;
+        this.tail = newNode;
         this.numFrames++;
         this.size += data.size;
         if (this.cacheSizeLimited && this.size > this.maxSize) {
@@ -222,75 +203,48 @@ class VisDataCache {
     }
 
     public addFrame(data: CachedFrame): void {
-        if (!this.cacheEnabled || (!this.head && !this.tail)) {
-            this.assignSingleFrameToCache(data);
-            return;
-        }
         if (this.cacheSizeLimited && this.size + data.size > this.maxSize) {
             this.trimCache(data.size);
         }
-        if (this.head) {
-            this.addLast(data);
-        } else {
-            this.addFirst(data);
+        if (this.hasFrames() && this.cacheEnabled) {
+            this.addFrameToEndOfCache(data);
+            return;
         }
+        this.assignSingleFrameToCache(data);
     }
 
-    public remove(node: LinkedListNode): void {
+    // generalized to remove any node, but in theory
+    // we should only be removing the head when we trim the cache
+    // under current assumptions
+    public removeNode(node: LinkedListNode): void {
         if (this.numFrames === 0 || !this.head || !this.tail) {
             this.frameAccessError("No data in cache.");
             return;
         }
-        if (this.numFrames == 1 && node.next === node && node.prev === node) {
-            // Only one node in the cache, so clear it
+        if (this.numFrames === 1 && this.head === this.tail) {
             this.clear();
             return;
         }
-
         if (node === this.head) {
             this.head = node.next;
-            if (this.head !== null) {
-                this.head.prev = this.tail;
-            }
-            if (this.tail !== null) {
-                this.tail.next = this.head;
-            }
+            this.head!.prev = null;
         } else if (node === this.tail) {
-            // Removing the tail
             this.tail = node.prev;
-            if (this.tail !== null) {
-                this.tail.next = this.head; // Maintain circularity
-            }
-            if (this.head !== null) {
-                this.head.prev = this.tail;
-            }
+            this.tail!.next = null;
         } else {
-            // Removing a middle node, adjust the surrounding nodes
-            if (node.prev !== null) {
-                node.prev.next = node.next;
-            }
-            if (node.next !== null) {
-                node.next.prev = node.prev;
-            }
+            node.prev!.next = node.next;
+            node.next!.prev = node.prev;
         }
         this.numFrames--;
         this.size -= node.data.size;
     }
 
-    public removeFirst(): void {
-        if (!this.head) {
-            throw this.frameAccessError("No data in cache.");
-        }
-        this.remove(this.head);
-    }
-
     public trimCache(incomingDataSize?: number): void {
         while (
             this.hasFrames() &&
-            this.size + (incomingDataSize || 0) > this.maxSize &&
-            this.tail
+            this.size + (incomingDataSize || 0) > this.maxSize
         ) {
-            this.removeFirst();
+            this.removeNode(this.head!);
         }
     }
 
