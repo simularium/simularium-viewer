@@ -4,10 +4,6 @@ export interface SelectionEntry {
     name: string;
     tags: string[];
 }
-export interface ColorChange {
-    agent: SelectionEntry;
-    color: string;
-}
 export interface SelectionStateInfo {
     highlightedAgents: SelectionEntry[];
     hiddenAgents: SelectionEntry[];

@@ -1,5 +1,5 @@
 import Viewport from "./viewport";
-export type { SelectionStateInfo, UIDisplayData, VisDataFrame, ColorChange, SelectionEntry, TrajectoryFileInfo, NetConnectionParams, IClientSimulatorImpl, EncodedTypeMapping, VisDataMessage, Plot, AgentData, } from "./simularium";
+export type { SelectionStateInfo, UIDisplayData, VisDataFrame, SelectionEntry, TrajectoryFileInfo, NetConnectionParams, IClientSimulatorImpl, EncodedTypeMapping, VisDataMessage, Plot, AgentData, } from "./simularium";
 export type { ISimulariumFile } from "./simularium/ISimulariumFile";
 export type { TimeData } from "./viewport";
 export { GeometryDisplayType } from "./visGeometry/types";
