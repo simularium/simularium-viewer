@@ -5,13 +5,13 @@ const HEADER_SIZE = 3; // frameNumber, time, agentCount
 const FRAME_DATA_SIZE = AGENT_OBJECT_KEYS.length;
 
 /**
- * This function takes in a VisDataMessage and walks the data
- * counting the agents and converting number[] to ArrayBuffer
+ * This function serves as a translation layer, it takes in a VisDataMessage
+ * and walks the data counting the agents and converting the number[] to ArrayBuffer
  * in order to generate a CachedFrame.
  *
- * This is used in loading local JSON files, and in the rare case
- * that JSON is sent from the backend. Parsing number[] to ArrayBuffer
- * and then again later to AgentData is a low concern for performance
+ * This is used for loading local JSON files, and in the rare case
+ * that JSON is sent from the backend. Parsing twice (number[] to ArrayBuffer,
+ * ArrayBuffer to AgentData) is a low concern for performance
  * as local files will automatically pre-cache frames and not deal with
  * network latency.
  *
