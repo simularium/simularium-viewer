@@ -1,7 +1,5 @@
-import { noop } from "lodash";
 import { ErrorLevel, FrontEndError } from "./FrontEndError";
 import { CachedFrame, LinkedListNode } from "./types";
-import { nullCachedFrame } from "../util";
 
 interface VisDataCacheSettings {
     maxSize: number;
@@ -17,8 +15,6 @@ class VisDataCache {
     public cacheEnabled: boolean;
     public cacheSizeLimited: boolean;
 
-    public onError: (error: FrontEndError) => void;
-
     constructor(settings?: Partial<VisDataCacheSettings>) {
         /**
          * maxSize of negative one means no limit on cache size
@@ -33,8 +29,6 @@ class VisDataCache {
         this.maxSize = -1;
         this.cacheEnabled = true;
         this.cacheSizeLimited = this.maxSize > 0;
-
-        this.onError = noop;
 
         if (settings) {
             this.changeSettings(settings);
@@ -55,20 +49,11 @@ class VisDataCache {
         }
     }
 
-    public setOnError(onError: (error: FrontEndError) => void): void {
-        this.onError = onError;
-    }
-
     private frameAccessError(msg?: string): CachedFrame {
-        const error = new FrontEndError(
+        throw new FrontEndError(
             `Error accessing frame: ${msg}`,
             ErrorLevel.WARNING
         );
-        if (this.onError) {
-            this.onError(error);
-            throw error;
-        }
-        return nullCachedFrame();
     }
 
     public hasFrames(): boolean {
@@ -192,13 +177,15 @@ class VisDataCache {
             this.assignSingleFrameToCache(data);
             return;
         }
-        newNode.prev = this.tail;
-        this.tail!.next = newNode;
-        this.tail = newNode;
-        this.numFrames++;
-        this.size += data.size;
-        if (this.cacheSizeLimited && this.size > this.maxSize) {
-            this.trimCache();
+        if (this.tail) {
+            newNode.prev = this.tail;
+            this.tail.next = newNode;
+            this.tail = newNode;
+            this.numFrames++;
+            this.size += data.size;
+            if (this.cacheSizeLimited && this.size > this.maxSize) {
+                this.trimCache();
+            }
         }
     }
 
@@ -225,15 +212,15 @@ class VisDataCache {
             this.clear();
             return;
         }
-        if (node === this.head) {
+        if (node === this.head && node.next !== null) {
             this.head = node.next;
-            this.head!.prev = null;
-        } else if (node === this.tail) {
+            this.head.prev = null;
+        } else if (node === this.tail && node.prev !== null) {
             this.tail = node.prev;
-            this.tail!.next = null;
-        } else {
-            node.prev!.next = node.next;
-            node.next!.prev = node.prev;
+            this.tail.next = null;
+        } else if (node.prev !== null && node.next !== null) {
+            node.prev.next = node.next;
+            node.next.prev = node.prev;
         }
         this.numFrames--;
         this.size -= node.data.size;
@@ -242,9 +229,10 @@ class VisDataCache {
     public trimCache(incomingDataSize?: number): void {
         while (
             this.hasFrames() &&
-            this.size + (incomingDataSize || 0) > this.maxSize
+            this.size + (incomingDataSize || 0) > this.maxSize &&
+            this.head !== null
         ) {
-            this.removeNode(this.head!);
+            this.removeNode(this.head);
         }
     }
 

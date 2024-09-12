@@ -61,7 +61,6 @@ class VisData {
 
     public setOnError(onError: (error: FrontEndError) => void): void {
         this.onError = onError;
-        this.frameCache.setOnError(onError);
     }
 
     public get currentFrameData(): CachedFrame {
