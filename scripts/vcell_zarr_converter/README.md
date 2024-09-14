@@ -26,4 +26,4 @@
 
 ## Running the Script
 Input dir will default to /vcelldata, and output will default to /output/ouput.ome.zarr
-`python convertvcellzarrbioio.py`
+`python convert_vcell_test_data.py`
