@@ -106,7 +106,7 @@ export default class VolumeSim implements IClientSimulatorImpl {
                             this.size[0] * this.size[0] +
                                 this.size[1] * this.size[1] +
                                 this.size[2] * this.size[2]
-                        ) * Math.tan(0.5 * FOV_DEGREES * DEGREES_TO_RADIANS),
+                        ) / Math.tan(0.5 * FOV_DEGREES * DEGREES_TO_RADIANS),
                 },
                 lookAtPosition: {
                     x: 0,
