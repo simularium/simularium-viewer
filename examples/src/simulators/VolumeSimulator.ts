@@ -1,3 +1,4 @@
+import { GeometryDisplayType } from "../../../src";
 import {
     IClientSimulatorImpl,
     ClientMessageEnum,
@@ -8,36 +9,47 @@ import {
     VisDataMessage,
 } from "../../../src/simularium/types";
 import VisTypes from "../../../src/simularium/VisTypes";
-import { GeometryDisplayType } from "../../../src/visGeometry/types";
 
-export default class PdbSim implements IClientSimulatorImpl {
-    pdbType: string;
-    size: [number, number, number];
+const FOV_DEGREES = 75;
+const DEGREES_TO_RADIANS = 3.14159265 / 180.0;
+
+export default class VolumeSim implements IClientSimulatorImpl {
     agentdata: number[];
+    size: [number, number, number];
 
-    constructor(pdbType: string) {
-        this.pdbType = pdbType;
+    constructor() {
+        this.agentdata = [
+            // AGENT 1 ("volume")
+            VisTypes.ID_VIS_TYPE_DEFAULT, // vis type - TODO swap to volume when/if available
+            0, // instance id
+            0, // type
+            0, // x
+            0, // y
+            0, // z
+            0, // rx
+            0, // ry
+            0, // rz
+            10.0, // collision radius
+            0, // subpoints
+
+            // AGENT 2 (sphere, to test volume-mesh intersection)
+            VisTypes.ID_VIS_TYPE_DEFAULT, // vis type
+            1, // instance id
+            1, // type
+            0, // x
+            0, // y
+            6, // z
+            0, // rx
+            0, // ry
+            0, // rz
+            5.0, // collision radius
+            0, // subpoints
+        ];
         this.size = [25, 25, 25];
-        // 11 is the number of numbers for each agent
-        this.agentdata = new Array(11);
     }
 
-    public update(_dt: number): VisDataMessage {
-        // fill agent data.
-
-        this.agentdata[0] = VisTypes.ID_VIS_TYPE_DEFAULT; // vis type
-        this.agentdata[1] = 0; // instance id
-        this.agentdata[2] = 0; // type
-        this.agentdata[3] = 0; // x
-        this.agentdata[4] = 0; // y
-        this.agentdata[5] = 0; // z
-        this.agentdata[6] = 0; // rx
-        this.agentdata[7] = 0; // ry
-        this.agentdata[8] = 0; // rz
-        this.agentdata[9] = 1.0; // collision radius
-        this.agentdata[10] = 0; // subpoints
-        const frameData: VisDataMessage = {
-            // TODO get msgType out of here
+    update(_dt: number): VisDataMessage {
+        return {
             msgType: ClientMessageEnum.ID_VIS_DATA_ARRIVE,
             bundleStart: 0,
             bundleSize: 1, // frames
@@ -50,30 +62,35 @@ export default class PdbSim implements IClientSimulatorImpl {
             ],
             fileName: "hello world",
         };
-        return frameData;
     }
-
-    public getInfo(): TrajectoryFileInfo {
+    getInfo(): TrajectoryFileInfo {
         const typeMapping: EncodedTypeMapping = {
             [0]: {
-                name: this.pdbType,
+                name: "volume",
                 geometry: {
-                    displayType: GeometryDisplayType.PDB,
-                    url: this.pdbType,
-                    color: "ffffff",
+                    // TODO swap with volume display type when available
+                    displayType: GeometryDisplayType.SPHERE,
+                    url: "",
+                    color: "ffff00",
+                },
+            },
+            [1]: {
+                name: "sphere",
+                geometry: {
+                    displayType: GeometryDisplayType.SPHERE,
+                    url: "",
+                    color: "ff0000",
                 },
             },
         };
-        const FOV_DEGREES = 75;
-        const DEGREES_TO_RADIANS = 3.14159265 / 180.0;
+
         return {
             // TODO get msgType and connId out of here
             connId: "hello world",
             msgType: ClientMessageEnum.ID_TRAJECTORY_FILE_INFO,
-            version: 2,
+            version: 3,
             timeStepSize: 1,
             totalSteps: 1,
-            // bounding volume dimensions
             size: {
                 x: this.size[0],
                 y: this.size[1],
@@ -83,8 +100,8 @@ export default class PdbSim implements IClientSimulatorImpl {
                 position: {
                     x: 0,
                     y: 0,
+                    // set a z value that will roughly frame the bounding box within our camera field of view
                     z:
-                        // set a z value that will roughly frame the bounding box within our camera field of view
                         Math.sqrt(
                             this.size[0] * this.size[0] +
                                 this.size[1] * this.size[1] +
@@ -103,7 +120,7 @@ export default class PdbSim implements IClientSimulatorImpl {
                 },
                 fovDegrees: FOV_DEGREES,
             },
-            typeMapping: typeMapping,
+            typeMapping,
             spatialUnits: {
                 magnitude: 1,
                 name: "m",
@@ -115,7 +132,7 @@ export default class PdbSim implements IClientSimulatorImpl {
         };
     }
 
-    updateSimulationState(data: Record<string, unknown>) {
+    updateSimulationState(_data: Record<string, unknown>) {
         // no op
     }
 }
