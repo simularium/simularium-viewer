@@ -1,3 +1,15 @@
+"""
+Python Script for Converting vcell test data into valid OME-ZARR
+## CD into this directory
+`cd scripts/vcell_zarr_converter`
+## Activate preferred virtual environment
+## Install dependencies:
+`pip install zarr numpy bioio`
+## Run: `python convert_vcell_test_data.py`
+Input dir will default to ./vcelldata
+Output dir will default to ./output/output.ome.zarr
+"""
+
 import os
 import zarr
 import numpy as np
