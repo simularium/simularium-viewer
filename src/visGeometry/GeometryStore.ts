@@ -383,26 +383,26 @@ class GeometryStore {
         });
     }
 
-    private attemptToLoadGeometry(
+    /**
+     * Load new geometry if necessary, ie this geometry hasn't already
+     * been loaded or attempted and failed to be loaded.
+     *
+     * If it's already been attempted, or is already in the registry,
+     * this will return Promise<undefined>
+     *
+     * Otherwise, it first checks the cache, and then tries to load via
+     * a url. If provided a url and the loading fails, the geometry is replaced
+     * by default geometry (sphere), and the user is notified.
+     */
+    private async attemptToLoadGeometry(
         urlOrPath: string,
         displayType: GeometryDisplayType
     ): Promise<PDBModel | MeshLoadRequest | undefined> {
-        /**
-         * Load new geometry if necessary, ie this geometry hasn't already
-         * been loaded or attempted and failed to be loaded.
-         *
-         * If it's already been attempted, or is already in the registry,
-         * this will return Promise<undefined>
-         *
-         * Otherwise, it first checks the cache, and then tries to load via
-         * a url. If provided a url and the loading fails, the geometry is replaced
-         * by default geometry (sphere), and the user is notified.
-         */
         if (this._cachedAssets.has(urlOrPath)) {
             // if it's in the cached assets, parse the data
             // store it in the registry, and return it
             const file = this._cachedAssets.get(urlOrPath);
-            let geometry;
+            let geometry: PDBModel | MeshLoadRequest | undefined;
             if (file && displayType === GeometryDisplayType.PDB) {
                 const pdbModel = new PDBModel(urlOrPath);
                 pdbModel.parse(file, getFileExtension(urlOrPath));
@@ -421,11 +421,9 @@ class GeometryStore {
             this._cachedAssets.delete(urlOrPath);
             if (!geometry) {
                 // will replace geom in registry is sphere
-                return Promise.reject(
-                    `Tried to load from cache ${urlOrPath}, but something went wrong, check that the file formats provided match the displayType`
-                );
+                throw `Tried to load from cache ${urlOrPath}, but something went wrong, check that the file formats provided match the displayType`;
             }
-            return Promise.resolve(geometry);
+            return geometry;
         } else if (
             !this._registry.has(urlOrPath) &&
             !this._geoLoadAttempted.get(urlOrPath)
@@ -433,23 +431,16 @@ class GeometryStore {
             this._geoLoadAttempted.set(urlOrPath, true);
             switch (displayType) {
                 case GeometryDisplayType.PDB:
-                    return this.fetchPdb(urlOrPath).then((pdbModel) => {
-                        return pdbModel;
-                    });
+                    return await this.fetchPdb(urlOrPath);
                 case GeometryDisplayType.OBJ:
                     return this.fetchObj(urlOrPath);
                 default:
                     // will replace geom in registry is sphere
-                    return Promise.reject(
-                        `Don't know how to load this geometry: 
-                        ${displayType},
-                        ${urlOrPath}`
-                    );
+                    throw `Don't know how to load this geometry: ${displayType}, ${urlOrPath}`;
             }
         }
         // already loaded or attempted to load this geometry
-        // still want to return a promise
-        return Promise.resolve(undefined);
+        return undefined;
     }
 
     public async mapKeyToGeom(
@@ -497,33 +488,33 @@ class GeometryStore {
                     GeometryDisplayType.SPHERE
                 );
             }
-            return Promise.resolve({ geometry });
+            return { geometry };
         } else {
             // Handle request for non primitive geometry
             const lookupKey = checkAndSanitizePath(url);
-            return this.attemptToLoadGeometry(lookupKey, displayType)
-                .then((geometry) => {
-                    if (geometry) {
-                        return {
-                            geometry,
-                        };
-                    }
-                })
-                .catch((e) => {
-                    // if anything goes wrong, add a new sphere to the registry
-                    // using this same lookup key
-                    const geometry = this.createNewSphereGeometry(lookupKey);
-                    this.setGeometryInRegistry(
-                        lookupKey,
-                        geometry,
-                        GeometryDisplayType.SPHERE
-                    );
-                    return Promise.resolve({
-                        geometry,
-                        displayType: GeometryDisplayType.SPHERE,
-                        errorMessage: e,
-                    });
-                });
+            try {
+                const geometry = await this.attemptToLoadGeometry(
+                    lookupKey,
+                    displayType
+                );
+                if (geometry) {
+                    return { geometry };
+                }
+            } catch (e) {
+                // if anything goes wrong, add a new sphere to the registry
+                // using this same lookup key
+                const geometry = this.createNewSphereGeometry(lookupKey);
+                this.setGeometryInRegistry(
+                    lookupKey,
+                    geometry,
+                    GeometryDisplayType.SPHERE
+                );
+                return {
+                    geometry,
+                    displayType: GeometryDisplayType.SPHERE,
+                    errorMessage: e as string,
+                };
+            }
         }
     }
 }
