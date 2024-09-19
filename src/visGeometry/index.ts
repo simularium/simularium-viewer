@@ -1157,7 +1157,7 @@ class VisGeometry {
 
     private setGeometryData(typeMapping: EncodedTypeMapping): void {
         this.logger.info("Received type mapping data: ", typeMapping);
-        Object.keys(typeMapping).forEach((id) => {
+        Object.keys(typeMapping).forEach(async (id) => {
             const entry: AgentDisplayDataWithGeometry = typeMapping[id];
             const { url, displayType } = entry.geometry;
             const lookupKey = url ? checkAndSanitizePath(url) : displayType;
@@ -1166,57 +1166,44 @@ class VisGeometry {
             // get geom for lookupKey,
             // will only load each geometry once, so may return nothing
             // if the same geometry is assigned to more than one agent
-            this.geometryStore
-                .mapKeyToGeom(Number(id), entry.geometry)
-                .then((newGeometryLoaded) => {
-                    if (!newGeometryLoaded) {
-                        // no new geometry to load
-                        return;
-                    }
-                    // will only have a returned displayType if it changed.
-                    const {
-                        displayType: returnedDisplayType,
-                        geometry,
-                        errorMessage,
-                    } = newGeometryLoaded;
-                    const newDisplayType = returnedDisplayType || displayType;
+            const newGeometryLoaded = await this.geometryStore.mapKeyToGeom(
+                Number(id),
+                entry.geometry
+            );
+
+            if (!newGeometryLoaded) {
+                // no new geometry to load
+                return;
+            }
+            // will only have a returned displayType if it changed.
+            const {
+                displayType: returnedDisplayType,
+                geometry,
+                errorMessage,
+            } = newGeometryLoaded;
+            const newDisplayType = returnedDisplayType || displayType;
+            this.onNewRuntimeGeometryType(lookupKey, newDisplayType, geometry);
+            // handle additional async update to LOD for pdbs
+            if (newDisplayType === GeometryDisplayType.PDB && geometry) {
+                const pdbModel = geometry as PDBModel;
+                return pdbModel.generateLOD().then(() => {
+                    this.logger.info("Finished loading pdb LODs: ", lookupKey);
                     this.onNewRuntimeGeometryType(
                         lookupKey,
                         newDisplayType,
                         geometry
                     );
-                    // handle additional async update to LOD for pdbs
-                    if (
-                        newDisplayType === GeometryDisplayType.PDB &&
-                        geometry
-                    ) {
-                        const pdbModel = geometry as PDBModel;
-                        return pdbModel.generateLOD().then(() => {
-                            this.logger.info(
-                                "Finished loading pdb LODs: ",
-                                lookupKey
-                            );
-                            this.onNewRuntimeGeometryType(
-                                lookupKey,
-                                newDisplayType,
-                                geometry
-                            );
-                        });
-                    }
-                    // if returned with a resolve, but has an error message,
-                    // the error was handled, and the geometry was replaced with a sphere
-                    // but still good to tell the user about it.
-                    if (errorMessage) {
-                        this.onError(
-                            new FrontEndError(errorMessage, ErrorLevel.WARNING)
-                        );
-                        this.logger.info(errorMessage);
-                    }
-                })
-                .catch((reason) => {
-                    this.onError(new FrontEndError(reason));
-                    this.logger.info(reason);
                 });
+            }
+            // if returned with a resolve, but has an error message,
+            // the error was handled, and the geometry was replaced with a sphere
+            // but still good to tell the user about it.
+            if (errorMessage) {
+                this.onError(
+                    new FrontEndError(errorMessage, ErrorLevel.WARNING)
+                );
+                this.logger.info(errorMessage);
+            }
         });
         this.updateScene(this.currentSceneAgents);
     }
