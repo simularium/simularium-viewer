@@ -417,7 +417,9 @@ class GeometryStore {
             this._cachedAssets.delete(urlOrPath);
             if (!geometry) {
                 // will replace geom in registry is sphere
-                throw `Tried to load from cache ${urlOrPath}, but something went wrong, check that the file formats provided match the displayType`;
+                throw new Error(
+                    `Tried to load from cache ${urlOrPath}, but something went wrong, check that the file formats provided match the displayType`
+                );
             }
             return geometry;
         } else if (
@@ -432,7 +434,9 @@ class GeometryStore {
                     return this.fetchObj(urlOrPath);
                 default:
                     // will replace geom in registry is sphere
-                    throw `Don't know how to load this geometry: ${displayType}, ${urlOrPath}`;
+                    throw new Error(
+                        `Don't know how to load this geometry: ${displayType}, ${urlOrPath}`
+                    );
             }
         }
         // already loaded or attempted to load this geometry
@@ -508,7 +512,7 @@ class GeometryStore {
                 return {
                     geometry,
                     displayType: GeometryDisplayType.SPHERE,
-                    errorMessage: e as string,
+                    errorMessage: (e as Error)?.message || (e as string),
                 };
             }
         }
