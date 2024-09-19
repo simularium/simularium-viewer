@@ -1186,14 +1186,13 @@ class VisGeometry {
             // handle additional async update to LOD for pdbs
             if (newDisplayType === GeometryDisplayType.PDB && geometry) {
                 const pdbModel = geometry as PDBModel;
-                return pdbModel.generateLOD().then(() => {
-                    this.logger.info("Finished loading pdb LODs: ", lookupKey);
-                    this.onNewRuntimeGeometryType(
-                        lookupKey,
-                        newDisplayType,
-                        geometry
-                    );
-                });
+                await pdbModel.generateLOD();
+                this.logger.info("Finished loading pdb LODs: ", lookupKey);
+                this.onNewRuntimeGeometryType(
+                    lookupKey,
+                    newDisplayType,
+                    geometry
+                );
             }
             // if returned with a resolve, but has an error message,
             // the error was handled, and the geometry was replaced with a sphere
