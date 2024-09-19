@@ -207,7 +207,7 @@ class GeometryStore {
         });
     }
 
-    private fetchPdb(url: string): Promise<PDBModel | undefined> {
+    private async fetchPdb(url: string): Promise<PDBModel | undefined> {
         /** Downloads a PDB from an external source */
 
         const pdbModel = new PDBModel(url);
@@ -224,49 +224,45 @@ class GeometryStore {
             // If so, then we don't need to do this second try and we can always use .cif.
             actualUrl = `https://files.rcsb.org/download/${pdbID}-assembly1.cif`;
         }
-        return fetch(actualUrl)
-            .then((response) => {
-                if (response.ok) {
-                    return response.text();
-                } else if (pdbID) {
-                    // try again as pdb
-                    actualUrl = `https://files.rcsb.org/download/${pdbID}.pdb1`;
-                    return fetch(actualUrl).then((response) => {
-                        if (!response.ok) {
-                            // error will be caught by the function that calls this
-                            throw new Error(
-                                `Failed to fetch ${pdbModel.filePath} from ${actualUrl}`
-                            );
-                        }
-                        return response.text();
-                    });
-                } else {
-                    // error will be caught by function that calls this
-                    throw new Error(
-                        `Failed to fetch ${pdbModel.filePath} from ${url}`
-                    );
-                }
-            })
-            .then((data) => {
-                if (pdbModel.cancelled) {
-                    this._registry.delete(url);
-                    return Promise.resolve(undefined);
-                }
-                pdbModel.parse(data, getFileExtension(actualUrl));
-                const pdbEntry = this._registry.get(url);
-                if (pdbEntry && pdbEntry.geometry === pdbModel) {
-                    this.mlogger.info("Finished downloading pdb: ", url);
-                    return pdbModel;
-                } else {
-                    // This seems like some kind of terrible error if we get here.
-                    // Alternatively, we could try re-adding the registry entry.
-                    // Or reject.
-                    this.mlogger.warn(
-                        `After download, GeometryStore PDB entry not found for ${url}`
-                    );
-                    return Promise.resolve(undefined);
-                }
-            });
+
+        let data: string;
+        const response = await fetch(actualUrl);
+        if (response.ok) {
+            data = await response.text();
+        } else if (pdbID) {
+            // try again as pdb
+            actualUrl = `https://files.rcsb.org/download/${pdbID}.pdb1`;
+            const response = await fetch(actualUrl);
+            if (!response.ok) {
+                // error will be caught by the function that calls this
+                throw new Error(
+                    `Failed to fetch ${pdbModel.filePath} from ${actualUrl}`
+                );
+            }
+            data = await response.text();
+        } else {
+            // error will be caught by function that calls this
+            throw new Error(`Failed to fetch ${pdbModel.filePath} from ${url}`);
+        }
+
+        if (pdbModel.cancelled) {
+            this._registry.delete(url);
+            return undefined;
+        }
+        pdbModel.parse(data, getFileExtension(actualUrl));
+        const pdbEntry = this._registry.get(url);
+        if (pdbEntry && pdbEntry.geometry === pdbModel) {
+            this.mlogger.info("Finished downloading pdb: ", url);
+            return pdbModel;
+        } else {
+            // This seems like some kind of terrible error if we get here.
+            // Alternatively, we could try re-adding the registry entry.
+            // Or reject.
+            this.mlogger.warn(
+                `After download, GeometryStore PDB entry not found for ${url}`
+            );
+            return undefined;
+        }
     }
 
     private prepMeshRegistryForNewObj(meshName: string): void {
