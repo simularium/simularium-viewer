@@ -370,11 +370,11 @@ class GeometryStore {
                     (error) => {
                         // if the request fails, leave agent as a sphere by default
                         this.mlogger.warn("Failed to load mesh: ", error, url);
-                        return reject(`Failed to load mesh: ${url}`);
+                        reject(`Failed to load mesh: ${url}`);
                     }
                 );
             } catch {
-                return reject(`Failed to load mesh: ${url}`);
+                reject(`Failed to load mesh: ${url}`);
             }
         });
     }
@@ -431,7 +431,7 @@ class GeometryStore {
                 case GeometryDisplayType.PDB:
                     return await this.fetchPdb(urlOrPath);
                 case GeometryDisplayType.OBJ:
-                    return this.fetchObj(urlOrPath);
+                    return await this.fetchObj(urlOrPath);
                 default:
                     // will replace geom in registry is sphere
                     throw new Error(
