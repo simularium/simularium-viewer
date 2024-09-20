@@ -1,6 +1,7 @@
 import { forEach } from "lodash";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import jsLogger, { ILogger, ILogLevel } from "js-logger";
+import { createVolumeLoader, LoadSpec } from "@aics/volume-viewer";
 import {
     BufferGeometry,
     Object3D,
@@ -23,6 +24,7 @@ import {
     MeshLoadRequest,
 } from "./types";
 import { MetaballMesh } from "./rendering/MetaballMesh";
+import VolumeModel from "./VolumeModel";
 
 export const DEFAULT_MESH_NAME = "SPHERE";
 
@@ -68,7 +70,8 @@ class GeometryStore {
         }
         if (
             displayType === GeometryDisplayType.PDB ||
-            displayType === GeometryDisplayType.OBJ
+            displayType === GeometryDisplayType.OBJ ||
+            displayType === GeometryDisplayType.VOLUME
         ) {
             return false;
         }
@@ -379,6 +382,15 @@ class GeometryStore {
         });
     }
 
+    private async fetchVolume(url: string): Promise<VolumeModel> {
+        // TODO should this be in a worker? Are we already in a worker here?
+        //   Should this class get a `VolumeLoaderContext` going?
+        const loader = await createVolumeLoader(url);
+        // TODO onChannelLoaded callback?
+        const volume = await loader.createVolume(new LoadSpec());
+        return new VolumeModel(volume);
+    }
+
     /**
      * Load new geometry if necessary, ie this geometry hasn't already
      * been loaded or attempted and failed to be loaded.
@@ -393,7 +405,7 @@ class GeometryStore {
     private async attemptToLoadGeometry(
         urlOrPath: string,
         displayType: GeometryDisplayType
-    ): Promise<PDBModel | MeshLoadRequest | undefined> {
+    ): Promise<PDBModel | MeshLoadRequest | VolumeModel | undefined> {
         if (this._cachedAssets.has(urlOrPath)) {
             // if it's in the cached assets, parse the data
             // store it in the registry, and return it
@@ -432,6 +444,8 @@ class GeometryStore {
                     return await this.fetchPdb(urlOrPath);
                 case GeometryDisplayType.OBJ:
                     return await this.fetchObj(urlOrPath);
+                case GeometryDisplayType.VOLUME:
+                    return await this.fetchVolume(urlOrPath);
                 default:
                     // will replace geom in registry is sphere
                     throw new Error(
