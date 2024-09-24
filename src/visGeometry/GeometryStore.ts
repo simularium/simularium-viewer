@@ -127,7 +127,10 @@ class GeometryStore {
         // forEach method for manipulating ThreeJs Mesh objects
         this._registry.forEach((value) => {
             const { displayType } = value;
-            if (displayType !== GeometryDisplayType.PDB) {
+            if (
+                displayType !== GeometryDisplayType.PDB &&
+                displayType !== GeometryDisplayType.VOLUME
+            ) {
                 const agentGeo = value as MeshGeometry;
                 iteratee(agentGeo);
             }
@@ -388,7 +391,9 @@ class GeometryStore {
         const loader = await createVolumeLoader(url);
         // TODO onChannelLoaded callback?
         const volume = await loader.createVolume(new LoadSpec());
-        return new VolumeModel(volume);
+        const model = new VolumeModel(volume);
+        this.setGeometryInRegistry(url, model, GeometryDisplayType.VOLUME);
+        return model;
     }
 
     /**
