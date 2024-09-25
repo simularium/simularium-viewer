@@ -51,7 +51,7 @@
         "@types/lodash": "^4.14.175",
         "@types/react": "^18.2.46",
         "@types/react-dom": "^18.2.18",
-        "@types/three": "^0.137.0",
+        "@types/three": "^0.144.0",
         "@typescript-eslint/eslint-plugin": "~4.29.0",
         "@typescript-eslint/parser": "~4.29.0",
         "acorn": "^8.7.0",
@@ -104,7 +104,7 @@
         "mp4-muxer": "^2.2.2",
         "parse-pdb": "^1.0.0",
         "si-prefix": "^0.2.0",
-        "three": "^0.137.4",
+        "three": "^0.144.0",
         "tweakpane": "^3.0.7"
     }
 }
