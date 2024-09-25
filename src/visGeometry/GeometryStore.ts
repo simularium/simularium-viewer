@@ -388,11 +388,12 @@ class GeometryStore {
     private async fetchVolume(url: string): Promise<VolumeModel> {
         // TODO should this be in a worker? Are we already in a worker here?
         //   Should this class get a `VolumeLoaderContext` going?
+        const model = new VolumeModel();
+        this.setGeometryInRegistry(url, model, GeometryDisplayType.VOLUME);
         const loader = await createVolumeLoader(url);
         // TODO onChannelLoaded callback?
         const volume = await loader.createVolume(new LoadSpec());
-        const model = new VolumeModel(volume);
-        this.setGeometryInRegistry(url, model, GeometryDisplayType.VOLUME);
+        model.setImage(volume);
         return model;
     }
 
