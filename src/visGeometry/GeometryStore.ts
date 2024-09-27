@@ -207,7 +207,7 @@ class GeometryStore {
         });
     }
 
-    private fetchPdb(url: string): Promise<PDBModel | undefined> {
+    private async fetchPdb(url: string): Promise<PDBModel | undefined> {
         /** Downloads a PDB from an external source */
 
         const pdbModel = new PDBModel(url);
@@ -224,49 +224,45 @@ class GeometryStore {
             // If so, then we don't need to do this second try and we can always use .cif.
             actualUrl = `https://files.rcsb.org/download/${pdbID}-assembly1.cif`;
         }
-        return fetch(actualUrl)
-            .then((response) => {
-                if (response.ok) {
-                    return response.text();
-                } else if (pdbID) {
-                    // try again as pdb
-                    actualUrl = `https://files.rcsb.org/download/${pdbID}.pdb1`;
-                    return fetch(actualUrl).then((response) => {
-                        if (!response.ok) {
-                            // error will be caught by the function that calls this
-                            throw new Error(
-                                `Failed to fetch ${pdbModel.filePath} from ${actualUrl}`
-                            );
-                        }
-                        return response.text();
-                    });
-                } else {
-                    // error will be caught by function that calls this
-                    throw new Error(
-                        `Failed to fetch ${pdbModel.filePath} from ${url}`
-                    );
-                }
-            })
-            .then((data) => {
-                if (pdbModel.cancelled) {
-                    this._registry.delete(url);
-                    return Promise.resolve(undefined);
-                }
-                pdbModel.parse(data, getFileExtension(actualUrl));
-                const pdbEntry = this._registry.get(url);
-                if (pdbEntry && pdbEntry.geometry === pdbModel) {
-                    this.mlogger.info("Finished downloading pdb: ", url);
-                    return pdbModel;
-                } else {
-                    // This seems like some kind of terrible error if we get here.
-                    // Alternatively, we could try re-adding the registry entry.
-                    // Or reject.
-                    this.mlogger.warn(
-                        `After download, GeometryStore PDB entry not found for ${url}`
-                    );
-                    return Promise.resolve(undefined);
-                }
-            });
+
+        let data: string;
+        const response = await fetch(actualUrl);
+        if (response.ok) {
+            data = await response.text();
+        } else if (pdbID) {
+            // try again as pdb
+            actualUrl = `https://files.rcsb.org/download/${pdbID}.pdb1`;
+            const response = await fetch(actualUrl);
+            if (!response.ok) {
+                // error will be caught by the function that calls this
+                throw new Error(
+                    `Failed to fetch ${pdbModel.filePath} from ${actualUrl}`
+                );
+            }
+            data = await response.text();
+        } else {
+            // error will be caught by function that calls this
+            throw new Error(`Failed to fetch ${pdbModel.filePath} from ${url}`);
+        }
+
+        if (pdbModel.cancelled) {
+            this._registry.delete(url);
+            return undefined;
+        }
+        pdbModel.parse(data, getFileExtension(actualUrl));
+        const pdbEntry = this._registry.get(url);
+        if (pdbEntry && pdbEntry.geometry === pdbModel) {
+            this.mlogger.info("Finished downloading pdb: ", url);
+            return pdbModel;
+        } else {
+            // This seems like some kind of terrible error if we get here.
+            // Alternatively, we could try re-adding the registry entry.
+            // Or reject.
+            this.mlogger.warn(
+                `After download, GeometryStore PDB entry not found for ${url}`
+            );
+            return undefined;
+        }
     }
 
     private prepMeshRegistryForNewObj(meshName: string): void {
@@ -374,35 +370,35 @@ class GeometryStore {
                     (error) => {
                         // if the request fails, leave agent as a sphere by default
                         this.mlogger.warn("Failed to load mesh: ", error, url);
-                        return reject(`Failed to load mesh: ${url}`);
+                        reject(`Failed to load mesh: ${url}`);
                     }
                 );
             } catch {
-                return reject(`Failed to load mesh: ${url}`);
+                reject(`Failed to load mesh: ${url}`);
             }
         });
     }
 
-    private attemptToLoadGeometry(
+    /**
+     * Load new geometry if necessary, ie this geometry hasn't already
+     * been loaded or attempted and failed to be loaded.
+     *
+     * If it's already been attempted, or is already in the registry,
+     * this will return Promise<undefined>
+     *
+     * Otherwise, it first checks the cache, and then tries to load via
+     * a url. If provided a url and the loading fails, the geometry is replaced
+     * by default geometry (sphere), and the user is notified.
+     */
+    private async attemptToLoadGeometry(
         urlOrPath: string,
         displayType: GeometryDisplayType
     ): Promise<PDBModel | MeshLoadRequest | undefined> {
-        /**
-         * Load new geometry if necessary, ie this geometry hasn't already
-         * been loaded or attempted and failed to be loaded.
-         *
-         * If it's already been attempted, or is already in the registry,
-         * this will return Promise<undefined>
-         *
-         * Otherwise, it first checks the cache, and then tries to load via
-         * a url. If provided a url and the loading fails, the geometry is replaced
-         * by default geometry (sphere), and the user is notified.
-         */
         if (this._cachedAssets.has(urlOrPath)) {
             // if it's in the cached assets, parse the data
             // store it in the registry, and return it
             const file = this._cachedAssets.get(urlOrPath);
-            let geometry;
+            let geometry: PDBModel | MeshLoadRequest | undefined;
             if (file && displayType === GeometryDisplayType.PDB) {
                 const pdbModel = new PDBModel(urlOrPath);
                 pdbModel.parse(file, getFileExtension(urlOrPath));
@@ -421,11 +417,11 @@ class GeometryStore {
             this._cachedAssets.delete(urlOrPath);
             if (!geometry) {
                 // will replace geom in registry is sphere
-                return Promise.reject(
+                throw new Error(
                     `Tried to load from cache ${urlOrPath}, but something went wrong, check that the file formats provided match the displayType`
                 );
             }
-            return Promise.resolve(geometry);
+            return geometry;
         } else if (
             !this._registry.has(urlOrPath) &&
             !this._geoLoadAttempted.get(urlOrPath)
@@ -433,23 +429,18 @@ class GeometryStore {
             this._geoLoadAttempted.set(urlOrPath, true);
             switch (displayType) {
                 case GeometryDisplayType.PDB:
-                    return this.fetchPdb(urlOrPath).then((pdbModel) => {
-                        return pdbModel;
-                    });
+                    return await this.fetchPdb(urlOrPath);
                 case GeometryDisplayType.OBJ:
-                    return this.fetchObj(urlOrPath);
+                    return await this.fetchObj(urlOrPath);
                 default:
                     // will replace geom in registry is sphere
-                    return Promise.reject(
-                        `Don't know how to load this geometry: 
-                        ${displayType},
-                        ${urlOrPath}`
+                    throw new Error(
+                        `Don't know how to load this geometry: ${displayType}, ${urlOrPath}`
                     );
             }
         }
         // already loaded or attempted to load this geometry
-        // still want to return a promise
-        return Promise.resolve(undefined);
+        return undefined;
     }
 
     public async mapKeyToGeom(
@@ -497,33 +488,33 @@ class GeometryStore {
                     GeometryDisplayType.SPHERE
                 );
             }
-            return Promise.resolve({ geometry });
+            return { geometry };
         } else {
             // Handle request for non primitive geometry
             const lookupKey = checkAndSanitizePath(url);
-            return this.attemptToLoadGeometry(lookupKey, displayType)
-                .then((geometry) => {
-                    if (geometry) {
-                        return {
-                            geometry,
-                        };
-                    }
-                })
-                .catch((e) => {
-                    // if anything goes wrong, add a new sphere to the registry
-                    // using this same lookup key
-                    const geometry = this.createNewSphereGeometry(lookupKey);
-                    this.setGeometryInRegistry(
-                        lookupKey,
-                        geometry,
-                        GeometryDisplayType.SPHERE
-                    );
-                    return Promise.resolve({
-                        geometry,
-                        displayType: GeometryDisplayType.SPHERE,
-                        errorMessage: e,
-                    });
-                });
+            try {
+                const geometry = await this.attemptToLoadGeometry(
+                    lookupKey,
+                    displayType
+                );
+                if (geometry) {
+                    return { geometry };
+                }
+            } catch (e) {
+                // if anything goes wrong, add a new sphere to the registry
+                // using this same lookup key
+                const geometry = this.createNewSphereGeometry(lookupKey);
+                this.setGeometryInRegistry(
+                    lookupKey,
+                    geometry,
+                    GeometryDisplayType.SPHERE
+                );
+                return {
+                    geometry,
+                    displayType: GeometryDisplayType.SPHERE,
+                    errorMessage: (e as Error)?.message || (e as string),
+                };
+            }
         }
     }
 }
