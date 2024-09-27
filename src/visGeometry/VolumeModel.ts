@@ -23,7 +23,8 @@ export default class VolumeModel {
         if (this.image) {
             this.image.setTranslation(new Vector3(data.x, data.y, data.z));
             this.image.setRotation(new Euler(data.xrot, data.yrot, data.zrot));
-            this.image.setScale(new Vector3(data.cr, data.cr, data.cr));
+            const r = data.cr * 2;
+            this.image.setScale(new Vector3(r, r, r));
         }
     }
 
