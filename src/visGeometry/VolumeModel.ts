@@ -32,6 +32,7 @@ export default class VolumeModel {
     }
 
     public tempGetBoundingBoxObject(): Box3Helper | undefined {
+        this.image?.setShowBoundingBox(true);
         return (this.image?.volumeRendering as TempRayMarchedVolume)?.boxHelper;
     }
 }
