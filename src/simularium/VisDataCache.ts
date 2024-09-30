@@ -7,13 +7,13 @@ interface VisDataCacheSettings {
 }
 
 class VisDataCache {
-    public head: CacheNode | null;
-    public tail: CacheNode | null;
+    private head: CacheNode | null;
+    private tail: CacheNode | null;
     public numFrames: number;
     public size: number;
-    public maxSize: number;
-    public cacheEnabled: boolean;
-    public cacheSizeLimited: boolean;
+    private _maxSize: number;
+    private _cacheEnabled: boolean;
+    private _cacheSizeLimited: boolean;
 
     constructor(settings?: Partial<VisDataCacheSettings>) {
         /**
@@ -26,9 +26,9 @@ class VisDataCache {
         this.tail = null;
         this.numFrames = 0;
         this.size = 0;
-        this.maxSize = -1;
-        this.cacheEnabled = true;
-        this.cacheSizeLimited = this.maxSize > 0;
+        this._maxSize = -1;
+        this._cacheEnabled = true;
+        this._cacheSizeLimited = this._maxSize > 0;
 
         if (settings) {
             this.changeSettings(settings);
@@ -41,12 +41,24 @@ class VisDataCache {
     }): void {
         const { maxSize, cacheEnabled } = options;
         if (cacheEnabled !== undefined) {
-            this.cacheEnabled = cacheEnabled;
+            this._cacheEnabled = cacheEnabled;
         }
         if (maxSize !== undefined) {
-            this.maxSize = maxSize;
-            this.cacheSizeLimited = maxSize > 0;
+            this._maxSize = maxSize;
+            this._cacheSizeLimited = maxSize > 0;
         }
+    }
+
+    public get maxSize(): number {
+        return this._maxSize;
+    }
+
+    public get cacheEnabled(): boolean {
+        return this._cacheEnabled;
+    }
+
+    public get cacheSizeLimited(): boolean {
+        return this._cacheSizeLimited;
     }
 
     private frameAccessError(msg?: string): CachedFrame {
@@ -183,17 +195,17 @@ class VisDataCache {
             this.tail = newNode;
             this.numFrames++;
             this.size += data.size;
-            if (this.cacheSizeLimited && this.size > this.maxSize) {
+            if (this._cacheSizeLimited && this.size > this._maxSize) {
                 this.trimCache();
             }
         }
     }
 
     public addFrame(data: CachedFrame): void {
-        if (this.cacheSizeLimited && this.size + data.size > this.maxSize) {
+        if (this._cacheSizeLimited && this.size + data.size > this._maxSize) {
             this.trimCache(data.size);
         }
-        if (this.hasFrames() && this.cacheEnabled) {
+        if (this.hasFrames() && this._cacheEnabled) {
             this.addFrameToEndOfCache(data);
             return;
         }
@@ -229,7 +241,7 @@ class VisDataCache {
     public trimCache(incomingDataSize?: number): void {
         while (
             this.hasFrames() &&
-            this.size + (incomingDataSize || 0) > this.maxSize &&
+            this.size + (incomingDataSize || 0) > this._maxSize &&
             this.head !== null
         ) {
             this.removeNode(this.head);

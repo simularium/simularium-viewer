@@ -43,7 +43,6 @@ describe("VisDataCache", () => {
         const cache = new VisDataCache({ cacheEnabled: false });
         cache.addFrame(testFrame0);
         cache.addFrame(testFrame1);
-        expect(cache.head && cache.tail).toBeTruthy();
         expect(cache.getFirstFrame()).toEqual(testFrame1);
         expect(cache.getLastFrame()).toEqual(testFrame1);
         expect(cache.numFrames).toEqual(1);
@@ -51,7 +50,6 @@ describe("VisDataCache", () => {
     it("clears cache and adds first frame if addFrame is called and cache is empty", () => {
         const cache = new VisDataCache();
         cache.addFrame(testFrame0);
-        expect(cache.head && cache.tail).toBeTruthy();
         expect(cache.getFirstFrame()).toEqual(testFrame0);
         expect(cache.getLastFrame()).toEqual(testFrame0);
         expect(cache.numFrames).toEqual(1);
@@ -61,7 +59,6 @@ describe("VisDataCache", () => {
         const cache = new VisDataCache({ cacheEnabled: true });
         cache.addFrame(testFrame0);
         cache.addFrame(testFrame1);
-        expect(cache.head && cache.tail).toBeTruthy();
         expect(cache.getFirstFrame()).toEqual(testFrame0);
         expect(cache.getLastFrame()).toEqual(testFrame1);
         expect(cache.numFrames).toEqual(2);
@@ -73,24 +70,9 @@ describe("VisDataCache", () => {
             maxSize: dummyFrameSize * 2 + 1,
         });
         cache.addFrame(testFrame0);
-        console.log(
-            "head and tail after frame 1 added, head:",
-            cache.head?.data.frameNumber,
-            "tail: ",
-            cache.tail?.data.frameNumber
-        );
         cache.addFrame(testFrame1);
         cache.addFrame(testFrame2);
-        console.log(
-            "head and tail after frame 2 added, head:",
-            cache.head?.data.frameNumber,
-            "tail: ",
-            cache.tail?.data.frameNumber
-        );
-        console.log("cache size:", cache.size, "maxSize:", cache.maxSize);
         expect(cache.maxSize).toEqual(dummyFrameSize * 2 + 1);
-        expect(cache.head).toBeTruthy();
-        expect(cache.tail).toBeTruthy();
         expect(cache.getFirstFrame()).toEqual(testFrame1);
         expect(cache.getLastFrame()).toEqual(testFrame2);
         expect(cache.numFrames).toEqual(2);
@@ -105,9 +87,6 @@ describe("VisDataCache", () => {
         cache.addFrame(testFrame1);
         cache.addFrame(testFrame2);
         expect(cache.maxSize).toEqual(dummyFrameSize * 2 + 1);
-        expect(cache.head).toBeTruthy();
-        expect(cache.tail).toBeTruthy();
-        console.log("cache", cache);
         expect(cache.getFirstFrame()).toEqual(testFrame1);
         expect(cache.getLastFrame()).toEqual(testFrame2);
         expect(cache.numFrames).toEqual(2);
@@ -147,8 +126,6 @@ describe("VisDataCache", () => {
         const cache = new VisDataCache();
         cache.addFrame(testFrame0);
         cache.clear();
-        expect(cache.head).toEqual(null);
-        expect(cache.tail).toEqual(null);
         expect(cache.numFrames).toEqual(0);
     });
 });
