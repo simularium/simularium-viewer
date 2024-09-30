@@ -1001,7 +1001,7 @@ class VisGeometry {
             this.setPdbLods();
 
             this.scene.updateMatrixWorld();
-            this.scene.autoUpdate = false;
+            this.scene.matrixAutoUpdate = false;
 
             // collect up the meshes that have > 0 instances
             const meshTypes: GeometryInstanceContainer[] = [];
@@ -1066,7 +1066,7 @@ class VisGeometry {
             this.instancedMeshGroup.visible = true;
             this.threejsrenderer.autoClear = true;
 
-            this.scene.autoUpdate = true;
+            this.scene.matrixAutoUpdate = true;
         }
     }
 
