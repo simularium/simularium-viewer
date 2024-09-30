@@ -40,7 +40,7 @@ function parseVisDataMessage(visDataMsg: VisDataMessage): CachedFrame {
         let readIndex = offset;
         if (currentAgentData.length < chunkLength) {
             throw new FrontEndError(
-                "Your data is malformed, there are too few entries.",
+                `Your data is malformed, there are too few entries. Found ${currentAgentData.length} entries, expected ${chunkLength}.`,
                 ErrorLevel.ERROR
             );
         }
@@ -55,7 +55,9 @@ function parseVisDataMessage(visDataMsg: VisDataMessage): CachedFrame {
         // Validate data integrity
         if (--readIndex + nSubPoints > frame.data.length) {
             throw new FrontEndError(
-                "Your data is malformed, there are too few entries.",
+                `Your data is malformed, there are too few entries. Found ${
+                    frame.data.length
+                }, expected ${readIndex + nSubPoints}.`,
                 ErrorLevel.ERROR
             );
         }
