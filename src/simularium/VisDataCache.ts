@@ -1,5 +1,5 @@
 import { ErrorLevel, FrontEndError } from "./FrontEndError";
-import { CachedFrame, LinkedListNode } from "./types";
+import { CachedFrame, CacheNode } from "./types";
 
 interface VisDataCacheSettings {
     maxSize: number;
@@ -7,8 +7,8 @@ interface VisDataCacheSettings {
 }
 
 class VisDataCache {
-    public head: LinkedListNode | null;
-    public tail: LinkedListNode | null;
+    public head: CacheNode | null;
+    public tail: CacheNode | null;
     public numFrames: number;
     public size: number;
     public maxSize: number;
@@ -66,9 +66,9 @@ class VisDataCache {
      * starts at head if firstNode is not provided.
      */
     private walkLinkedList(
-        condition: (data: LinkedListNode) => boolean,
-        firstNode?: LinkedListNode
-    ): LinkedListNode | null {
+        condition: (data: CacheNode) => boolean,
+        firstNode?: CacheNode
+    ): CacheNode | null {
         let currentNode = firstNode || this.head;
         while (currentNode) {
             if (condition(currentNode)) {
@@ -155,7 +155,7 @@ class VisDataCache {
     }
 
     public assignSingleFrameToCache(data: CachedFrame): void {
-        const newNode: LinkedListNode = {
+        const newNode: CacheNode = {
             data,
             next: null,
             prev: null,
@@ -168,7 +168,7 @@ class VisDataCache {
     }
 
     public addFrameToEndOfCache(data: CachedFrame): void {
-        const newNode: LinkedListNode = {
+        const newNode: CacheNode = {
             data,
             next: null,
             prev: null,
@@ -203,7 +203,7 @@ class VisDataCache {
     // generalized to remove any node, but in theory
     // we should only be removing the head when we trim the cache
     // under current assumptions
-    public removeNode(node: LinkedListNode): void {
+    public removeNode(node: CacheNode): void {
         if (this.numFrames === 0 || !this.head || !this.tail) {
             this.frameAccessError("No data in cache.");
             return;

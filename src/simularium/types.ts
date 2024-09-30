@@ -204,8 +204,8 @@ export interface CachedFrame {
     size: number;
 }
 
-export interface LinkedListNode {
+export interface CacheNode {
     data: CachedFrame;
-    next: LinkedListNode | null;
-    prev: LinkedListNode | null;
+    next: CacheNode | null;
+    prev: CacheNode | null;
 }
