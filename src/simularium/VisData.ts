@@ -15,7 +15,7 @@ class VisData {
     private frameToWaitFor: number;
     private lockedForFrame: boolean;
 
-    protected currentFrameNumber: number;
+    private currentFrameNumber: number;
 
     public timeStepSize: number;
     public onError: (error: FrontEndError) => void;
