@@ -3,6 +3,7 @@ import JsonFileReader from "./simularium/JsonFileReader";
 import BinaryFileReader from "./simularium/BinaryFileReader";
 import { AGENT_OBJECT_KEYS, AgentData, CachedFrame } from "./simularium/types";
 import { BYTES_PER_AGENT, BYTE_SIZE_64_BIT_NUM, nullAgent } from "./constants";
+import { FrontEndError } from "./simularium";
 
 export const compareTimes = (
     time1: number,
@@ -104,11 +105,27 @@ export const getAgentDataFromBuffer = (
     view: Float32Array,
     offset: number
 ): AgentData => {
+    // Check if the buffer has enough data for the AGENT_OBJECT_KEYS
+    if (offset + AGENT_OBJECT_KEYS.length > view.length) {
+        throw new FrontEndError(
+            "Invalid offset: Not enough data in the buffer for agent data."
+        );
+    }
     const agentData: AgentData = nullAgent();
     for (let i = 0; i < AGENT_OBJECT_KEYS.length; i++) {
         agentData[AGENT_OBJECT_KEYS[i]] = view[offset + i];
     }
     const nSubPoints = agentData["nSubPoints"];
+
+    // Check if the buffer has enough data for subpoints
+    const subpointsStart = offset + AGENT_OBJECT_KEYS.length;
+    const subpointsEnd = subpointsStart + nSubPoints;
+
+    if (subpointsEnd > view.length) {
+        throw new FrontEndError(
+            "Invalid offset: Not enough data in the buffer for subpoints."
+        );
+    }
     agentData.subpoints = Array.from(
         view.subarray(
             offset + AGENT_OBJECT_KEYS.length,

@@ -1,3 +1,4 @@
+import { FrontEndError } from "../simularium";
 import {
     checkAndSanitizePath,
     compareTimes,
@@ -213,6 +214,49 @@ describe("util", () => {
                     nSubPoints: 2,
                     subpoints: [63, 64], //"subpoint-1", "subpoint-2"
                 });
+            });
+            test("it throws an error if the data doesn't have the right shape", () => {
+                // Test with not enough data for the agent object keys
+                const invalidTestData = [
+                    10,
+                    15,
+                    20,
+                    30,
+                    31,
+                    32,
+                    40,
+                    41, // Missing other values like zrot, cr, nSubPoints, etc.
+                ];
+                const view = new Float32Array(invalidTestData);
+
+                // Expect the function to throw an error when trying to parse this invalid data
+                expect(() => getAgentDataFromBuffer(view, 0)).toThrow(
+                    FrontEndError
+                );
+            });
+
+            test("it throws an error if the subpoints exceed available data", () => {
+                const incompleteSubpointsTestData = [
+                    10, //"visType",
+                    15, //"instanceId",
+                    20, //"type",
+                    30, //"x",
+                    31, //"y",
+                    32, //"z",
+                    40, //"xrot",
+                    41, //"yrot",
+                    42, //"zrot",
+                    50, //"cr",
+                    3, //"nSubPoints"
+                    60, //"subpoint-1",
+                    61, // Missing "subpoint-3"
+                ];
+                const view = new Float32Array(incompleteSubpointsTestData);
+
+                // Expect the function to throw an error because there aren't enough subpoints
+                expect(() => getAgentDataFromBuffer(view, 0)).toThrow(
+                    FrontEndError
+                );
             });
         });
     });
