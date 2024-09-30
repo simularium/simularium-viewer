@@ -1,7 +1,7 @@
 import { VisDataMessage, AGENT_OBJECT_KEYS, CachedFrame } from "./types";
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
+import { AGENT_HEADER_SIZE } from "../constants";
 
-const HEADER_SIZE = 3; // frameNumber, time, agentCount
 const FRAME_DATA_SIZE = AGENT_OBJECT_KEYS.length;
 
 /**
@@ -36,7 +36,7 @@ function parseVisDataMessage(visDataMsg: VisDataMessage): CachedFrame {
     let offset = 0;
     let currentAgentData = visData.slice(offset, offset + chunkLength);
     while (currentAgentData.length) {
-        let writeIndex = HEADER_SIZE + offset;
+        let writeIndex = AGENT_HEADER_SIZE + offset;
         let readIndex = offset;
         if (currentAgentData.length < chunkLength) {
             throw new FrontEndError(
@@ -90,7 +90,7 @@ function parseVisDataMessage(visDataMsg: VisDataMessage): CachedFrame {
 }
 
 function calculateBufferSize(data: number[]): number {
-    let size = HEADER_SIZE * 4; // Header size in bytes
+    let size = AGENT_HEADER_SIZE * 4; // Header size in bytes
     let index = 0;
 
     while (index < data.length) {
