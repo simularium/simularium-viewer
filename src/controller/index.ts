@@ -1,11 +1,7 @@
 import jsLogger from "js-logger";
 import { isEmpty, noop } from "lodash";
 import { VisData, RemoteSimulator } from "../simularium";
-import type {
-    NetConnectionParams,
-    TrajectoryFileInfo,
-    VisDataMessage,
-} from "../simularium";
+import type { NetConnectionParams, TrajectoryFileInfo } from "../simularium";
 import { VisGeometry } from "../visGeometry";
 import {
     FileReturn,
@@ -489,19 +485,8 @@ export default class SimulariumController {
         }
     }
 
-    public cacheJSON(json: VisDataMessage): void {
-        this.visData.cacheJSON(json);
-    }
-
     public clearLocalCache(): void {
         this.visData.clearCache();
-    }
-
-    public get dragAndDropFileInfo(): TrajectoryFileInfo | null {
-        return this.visData.dragAndDropFileInfo;
-    }
-    public set dragAndDropFileInfo(fileInfo: TrajectoryFileInfo | null) {
-        this.visData.dragAndDropFileInfo = fileInfo;
     }
 
     public set trajFileInfoCallback(
