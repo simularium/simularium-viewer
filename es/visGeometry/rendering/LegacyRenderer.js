@@ -1,7 +1,7 @@
 import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
-import { Color, MeshLambertMaterial, MeshBasicMaterial, TubeBufferGeometry, Group, LOD, Mesh, PointsMaterial, Raycaster } from "three";
+import { Color, MeshLambertMaterial, MeshBasicMaterial, TubeGeometry, Group, LOD, Mesh, PointsMaterial, Raycaster } from "three";
 var FOLLOW_COLOR = new Color(0xffff00);
 var HIGHLIGHT_COLOR = new Color(0xffffff);
 
@@ -42,7 +42,7 @@ var LegacyRenderer = /*#__PURE__*/function () {
         return;
       }
       // expensive
-      var fibergeometry = new TubeBufferGeometry(visAgent.fiberCurve, 4 * (visAgent.fiberCurve.points.length - 1),
+      var fibergeometry = new TubeGeometry(visAgent.fiberCurve, 4 * (visAgent.fiberCurve.points.length - 1),
       // 4 segments per control point
       scale * 0.5, 8,
       // could reduce this with depth?

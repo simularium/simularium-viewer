@@ -6,7 +6,7 @@ import _regeneratorRuntime from "@babel/runtime/regenerator";
 import { forEach } from "lodash";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import jsLogger from "js-logger";
-import { Object3D, Mesh, SphereBufferGeometry, BoxBufferGeometry } from "three";
+import { Object3D, Mesh, SphereGeometry, BoxGeometry } from "three";
 import { checkAndSanitizePath, getFileExtension } from "../util";
 import PDBModel from "./PDBModel";
 import { InstancedMesh, InstanceType } from "./rendering/InstancedMesh";
@@ -434,8 +434,8 @@ var GeometryStore = /*#__PURE__*/function () {
   }]);
   return GeometryStore;
 }();
-_defineProperty(GeometryStore, "sphereGeometry", new SphereBufferGeometry(1, 32, 32));
-_defineProperty(GeometryStore, "cubeGeometry", new BoxBufferGeometry(1, 1, 1));
+_defineProperty(GeometryStore, "sphereGeometry", new SphereGeometry(1, 32, 32));
+_defineProperty(GeometryStore, "cubeGeometry", new BoxGeometry(1, 1, 1));
 _defineProperty(GeometryStore, "shouldLoadPrimitive", function (displayType, url) {
   if (!url) {
     // if there isn't an url to load, even if they selected PDB or OBJ

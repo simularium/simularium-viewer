@@ -19,7 +19,7 @@ export interface UIDisplayEntry {
     displayStates: DisplayStateEntry[];
     color: string;
 }
-export declare type UIDisplayData = UIDisplayEntry[];
+export type UIDisplayData = UIDisplayEntry[];
 declare class SelectionInterface {
     private entries;
     constructor();

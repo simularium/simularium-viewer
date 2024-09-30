@@ -932,7 +932,7 @@ var VisGeometry = /*#__PURE__*/function () {
       } else {
         this.setPdbLods();
         this.scene.updateMatrixWorld();
-        this.scene.autoUpdate = false;
+        this.scene.matrixAutoUpdate = false;
 
         // collect up the meshes that have > 0 instances
         var meshTypes = [];
@@ -987,7 +987,7 @@ var VisGeometry = /*#__PURE__*/function () {
         this.threejsrenderer.render(this.scene, this.camera);
         this.instancedMeshGroup.visible = true;
         this.threejsrenderer.autoClear = true;
-        this.scene.autoUpdate = true;
+        this.scene.matrixAutoUpdate = true;
       }
     }
   }, {

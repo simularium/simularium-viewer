@@ -12,7 +12,7 @@ export interface ErrorMessage extends NetMessage {
 interface SimulariumEvent {
     data: string;
 }
-export declare type MessageEventLike = SimulariumEvent | MessageEvent;
+export type MessageEventLike = SimulariumEvent | MessageEvent;
 export declare const enum NetMessageEnum {
     ID_UNDEFINED_WEB_REQUEST = 0,
     ID_VIS_DATA_ARRIVE = 1,

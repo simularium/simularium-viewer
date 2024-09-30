@@ -1,4 +1,4 @@
-import { IUniform, Mesh, OrthographicCamera, PlaneBufferGeometry, Scene, ShaderMaterial, WebGLRenderer, WebGLRenderTarget } from "three";
+import { IUniform, Mesh, OrthographicCamera, PlaneGeometry, Scene, ShaderMaterial, WebGLRenderer, WebGLRenderTarget } from "three";
 interface RenderToBufferParams {
     fragmentShader: string;
     uniforms: {
@@ -10,7 +10,7 @@ interface RenderToBufferParams {
 }
 declare class RenderToBuffer {
     scene: Scene;
-    geometry: PlaneBufferGeometry;
+    geometry: PlaneGeometry;
     material: ShaderMaterial;
     camera: OrthographicCamera;
     mesh: Mesh;

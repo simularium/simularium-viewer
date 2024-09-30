@@ -1,7 +1,7 @@
 import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
-import { FloatType, Mesh, NearestFilter, OrthographicCamera, PlaneBufferGeometry, RGBAFormat, Scene, ShaderMaterial, Vector2, WebGLRenderTarget } from "three";
+import { FloatType, Mesh, NearestFilter, OrthographicCamera, PlaneGeometry, RGBAFormat, Scene, ShaderMaterial, Vector2, WebGLRenderTarget } from "three";
 var HitTestHelper = /*#__PURE__*/function () {
   function HitTestHelper() {
     _classCallCheck(this, HitTestHelper);
@@ -23,7 +23,7 @@ var HitTestHelper = /*#__PURE__*/function () {
     this.hitTestCamera = new OrthographicCamera();
     this.hitTestVertexShader = "\n  \n    void main() {\n      gl_Position = vec4(position, 1.0);\n    }\n    ";
     this.hitTestFragmentShader = "\n    uniform vec2 pixel;\n    uniform sampler2D objectIdTexture;\n\n    void main() {\n      gl_FragColor = texture(objectIdTexture, pixel);\n    }\n    ";
-    this.hitTestMesh = new Mesh(new PlaneBufferGeometry(2, 2), new ShaderMaterial({
+    this.hitTestMesh = new Mesh(new PlaneGeometry(2, 2), new ShaderMaterial({
       vertexShader: this.hitTestVertexShader,
       fragmentShader: this.hitTestFragmentShader,
       depthWrite: false,

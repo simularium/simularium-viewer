@@ -22,7 +22,7 @@ export interface PerspectiveCameraSpec {
     upVector: Coordinates3d;
     fovDegrees: number;
 }
-export declare type CameraSpec = PerspectiveCameraSpec & ({
+export type CameraSpec = PerspectiveCameraSpec & ({
     orthographic: false;
 } | {
     orthographic: true;
@@ -54,7 +54,7 @@ export interface Plot {
     data: ScatterTrace[] | HistogramTrace[];
     layout?: Layout;
 }
-declare type PlotData = {
+type PlotData = {
     version: number;
     data: Plot[];
 };
@@ -112,8 +112,8 @@ export interface TrajectoryFileInfoV3 extends TrajectoryFileInfoV2 {
     modelInfo?: ModelInfo;
     trajectoryTitle?: string;
 }
-export declare type TrajectoryFileInfoAny = TrajectoryFileInfoV1 | TrajectoryFileInfoV2;
-export declare type TrajectoryFileInfo = TrajectoryFileInfoV3;
+export type TrajectoryFileInfoAny = TrajectoryFileInfoV1 | TrajectoryFileInfoV2;
+export type TrajectoryFileInfo = TrajectoryFileInfoV3;
 export interface SimulariumFileFormat {
     trajectoryInfo: TrajectoryFileInfo;
     spatialData: VisDataMessage;
@@ -121,9 +121,9 @@ export interface SimulariumFileFormat {
 }
 export declare const FILE_STATUS_SUCCESS = "success";
 export declare const FILE_STATUS_FAIL = "fail";
-declare type FileStatusSuccess = typeof FILE_STATUS_SUCCESS;
-declare type FileStatusFail = typeof FILE_STATUS_FAIL;
-export declare type FileStatus = FileStatusSuccess | FileStatusFail;
+type FileStatusSuccess = typeof FILE_STATUS_SUCCESS;
+type FileStatusFail = typeof FILE_STATUS_FAIL;
+export type FileStatus = FileStatusSuccess | FileStatusFail;
 export interface FileReturn {
     status: FileStatus;
     message?: string;

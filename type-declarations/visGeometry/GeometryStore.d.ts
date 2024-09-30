@@ -1,10 +1,10 @@
 import { ILogger, ILogLevel } from "js-logger";
-import { SphereBufferGeometry, BoxBufferGeometry } from "three";
+import { SphereGeometry, BoxGeometry } from "three";
 import PDBModel from "./PDBModel";
 import { AgentTypeVisData } from "../simularium/types";
 import { AgentGeometry, GeometryStoreLoadResponse, MeshGeometry } from "./types";
 export declare const DEFAULT_MESH_NAME = "SPHERE";
-declare type Registry = Map<string, AgentGeometry>;
+type Registry = Map<string, AgentGeometry>;
 declare class GeometryStore {
     /**
      * Stores Key --> GeometryData Map
@@ -26,8 +26,8 @@ declare class GeometryStore {
     private _cachedAssets;
     private _registry;
     mlogger: ILogger;
-    static sphereGeometry: SphereBufferGeometry;
-    static cubeGeometry: BoxBufferGeometry;
+    static sphereGeometry: SphereGeometry;
+    static cubeGeometry: BoxGeometry;
     private static shouldLoadPrimitive;
     constructor(loggerLevel?: ILogLevel);
     reset(): void;

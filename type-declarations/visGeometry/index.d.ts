@@ -17,7 +17,7 @@ export declare enum RenderStyle {
     WEBGL1_FALLBACK = 0,
     WEBGL2_PREFERRED = 1
 }
-declare type Bounds = readonly [number, number, number, number, number, number];
+type Bounds = readonly [number, number, number, number, number, number];
 declare class VisGeometry {
     onError: (error: FrontEndError) => void;
     renderStyle: RenderStyle;

@@ -4,8 +4,8 @@ import { TrajectoryFileInfo, SelectionStateInfo, UIDisplayData } from "../simula
 import { AgentData } from "../simularium/types";
 import { FrontEndError } from "../simularium/FrontEndError";
 import { RenderStyle } from "../visGeometry";
-export declare type PropColor = string | number | [number, number, number];
-declare type ViewportProps = {
+export type PropColor = string | number | [number, number, number];
+type ViewportProps = {
     renderStyle: RenderStyle;
     backgroundColor?: PropColor;
     agentColors?: number[] | string[];
@@ -42,7 +42,7 @@ declare const defaultProps: {
     disableCache: boolean;
     agentColors: string[] | number[];
 };
-declare type DefaultProps = typeof defaultProps;
+type DefaultProps = typeof defaultProps;
 interface Click {
     x: number;
     y: number;

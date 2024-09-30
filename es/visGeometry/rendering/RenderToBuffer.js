@@ -1,7 +1,7 @@
 import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
-import { Mesh, OrthographicCamera, PlaneBufferGeometry, Scene, ShaderMaterial } from "three";
+import { Mesh, OrthographicCamera, PlaneGeometry, Scene, ShaderMaterial } from "three";
 var RenderToBuffer = /*#__PURE__*/function () {
   function RenderToBuffer(paramsObj) {
     _classCallCheck(this, RenderToBuffer);
@@ -14,7 +14,7 @@ var RenderToBuffer = /*#__PURE__*/function () {
     // fragmentShader
     // uniforms
     this.scene = new Scene();
-    this.geometry = new PlaneBufferGeometry(2, 2);
+    this.geometry = new PlaneGeometry(2, 2);
 
     // augment uniforms (and shader source?)
     this.material = new ShaderMaterial({
