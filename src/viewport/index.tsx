@@ -181,7 +181,6 @@ class Viewport extends React.Component<
             onError,
             agentColors,
         } = this.props;
-        console.log("onTrajectoryFileInfo", msg);
         // Update TrajectoryFileInfo format to latest version
         const trajectoryFileInfo: TrajectoryFileInfo =
             updateTrajectoryFileInfoFormat(msg, onError);
