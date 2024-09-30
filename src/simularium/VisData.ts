@@ -184,12 +184,7 @@ class VisData {
             this.frameCache.cacheSizeLimited &&
             parsedMsg.size > this.frameCache.maxSize
         ) {
-            this.onError(
-                new FrontEndError(
-                    `Frame size exceeds cache size: ${parsedMsg.size} > ${this.frameCache.maxSize}`,
-                    ErrorLevel.ERROR
-                )
-            );
+            this.frameExceedsCacheSizeError(parsedMsg.size);
             return;
         }
         if (
@@ -235,15 +230,19 @@ class VisData {
             this.frameCache.cacheSizeLimited &&
             frame.size > this.frameCache.maxSize
         ) {
-            this.onError(
-                new FrontEndError(
-                    `Frame size exceeds cache size: ${frame.size} > ${this.frameCache.maxSize}`,
-                    ErrorLevel.ERROR
-                )
-            );
+            this.frameExceedsCacheSizeError(frame.size);
             return;
         }
         this.frameCache.addFrame(frame);
+    }
+
+    private frameExceedsCacheSizeError(frameSize: number): void {
+        this.onError(
+            new FrontEndError(
+                `Frame size exceeds cache size: ${frameSize} > ${this.frameCache.maxSize}`,
+                ErrorLevel.ERROR
+            )
+        );
     }
 }
 
