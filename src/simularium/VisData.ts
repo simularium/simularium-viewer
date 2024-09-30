@@ -1,5 +1,3 @@
-import { difference } from "lodash";
-
 import { compareTimes } from "../util";
 
 import * as util from "./ThreadUtil";
@@ -7,8 +5,6 @@ import {
     AGENT_OBJECT_KEYS,
     AgentData,
     FrameData,
-    TrajectoryFileInfo,
-    EncodedTypeMapping,
     VisDataMessage,
 } from "./types";
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
@@ -25,9 +21,6 @@ class VisData {
     private frameToWaitFor: number;
     private lockedForFrame: boolean;
     private cacheFrame: number;
-
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    private _dragAndDropFileInfo: TrajectoryFileInfo | null;
 
     public timeStepSize: number;
 
@@ -109,7 +102,6 @@ class VisData {
         this.frameDataCache = [];
         this.cacheFrame = -1;
         this.enableCache = true;
-        this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
         this.timeStepSize = 0;
@@ -206,7 +198,6 @@ class VisData {
         this.frameCache = [];
         this.frameDataCache = [];
         this.cacheFrame = -1;
-        this._dragAndDropFileInfo = null;
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
     }
@@ -311,68 +302,6 @@ class VisData {
         }
 
         this.parseAgentsFromFrameData(msg);
-    }
-
-    // for use w/ a drag-and-drop trajectory file
-    //  save a file for playback
-    // will be caught by controller.changeFile(...).catch()
-    public cacheJSON(visDataMsg: VisDataMessage): void {
-        if (this.frameCache.length > 0) {
-            throw new Error(
-                "cache not cleared before cacheing a new drag-and-drop file"
-            );
-        }
-
-        const frames = parseVisDataMessage(visDataMsg);
-        this.addFramesToCache(frames);
-    }
-
-    public set dragAndDropFileInfo(fileInfo: TrajectoryFileInfo | null) {
-        if (!fileInfo) return;
-        // NOTE: this may be a temporary check as we're troubleshooting new file formats
-        const missingIds = this.checkTypeMapping(fileInfo.typeMapping);
-
-        if (missingIds.length) {
-            const include = confirm(
-                `Your file typeMapping is missing names for the following type ids: ${missingIds}. Do you want to include them in the interactive interface?`
-            );
-            if (include) {
-                missingIds.forEach((id) => {
-                    fileInfo.typeMapping[id] = { name: id.toString() };
-                });
-            }
-        }
-        this._dragAndDropFileInfo = fileInfo;
-    }
-
-    public get dragAndDropFileInfo(): TrajectoryFileInfo | null {
-        if (!this._dragAndDropFileInfo) {
-            return null;
-        }
-        return this._dragAndDropFileInfo;
-    }
-
-    // will be caught by controller.changeFile(...).catch()
-    // TODO: check if this code is still used
-    public checkTypeMapping(typeMappingFromFile: EncodedTypeMapping): number[] {
-        if (!typeMappingFromFile) {
-            throw new Error(
-                "data needs 'typeMapping' object to display agent controls"
-            );
-        }
-        const idsInFrameData = new Set();
-        const idsInTypeMapping = Object.keys(typeMappingFromFile).map(Number);
-
-        if (this.frameCache.length === 0) {
-            console.log("no data to check type mapping against");
-            return [];
-        }
-
-        this.frameCache.forEach((element) => {
-            element.map((agent) => idsInFrameData.add(agent.type));
-        });
-        const idsArr: number[] = [...idsInFrameData].sort() as number[];
-        return difference(idsArr, idsInTypeMapping).sort();
     }
 }
 
