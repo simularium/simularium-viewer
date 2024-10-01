@@ -1,3 +1,4 @@
+import { compareTimes } from "../util";
 import { ErrorLevel, FrontEndError } from "./FrontEndError";
 import { CachedFrame, CacheNode } from "./types";
 
@@ -92,6 +93,12 @@ class VisDataCache {
     }
 
     public containsTime(time: number): boolean {
+        if (
+            compareTimes(time, this.getFirstFrameTime(), 0.1) === -1 ||
+            compareTimes(time, this.getLastFrameTime(), 0.1) === 1
+        ) {
+            return false;
+        }
         if (time < this.getFirstFrameTime() || time > this.getLastFrameTime()) {
             return false;
         }

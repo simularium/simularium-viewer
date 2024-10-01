@@ -127,9 +127,9 @@ class Viewport extends React.Component<
         this.handleTimeChange = this.handleTimeChange.bind(this);
 
         this.visGeometry = new VisGeometry(loggerLevel);
-        this.props.simulariumController.visData.setCacheSettings({
+        this.props.simulariumController.visData.frameCache.changeSettings({
             cacheEnabled: !props.disableCache,
-            maxCacheSize: props.maxCacheSize,
+            maxSize: props.maxCacheSize,
         });
         if (props.onError) {
             this.props.simulariumController.visData.setOnError(props.onError);
@@ -382,7 +382,7 @@ class Viewport extends React.Component<
             this.visGeometry.toggleControls(lockedCamera);
         }
         if (prevProps.disableCache !== disableCache) {
-            this.props.simulariumController.visData.setCacheSettings({
+            this.props.simulariumController.visData.frameCache.changeSettings({
                 cacheEnabled: !disableCache,
             });
         }

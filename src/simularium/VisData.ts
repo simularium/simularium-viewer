@@ -113,26 +113,6 @@ class VisData {
         this.lockedForFrame = true;
     }
 
-    public setCacheSettings(options: {
-        cacheEnabled?: boolean;
-        maxCacheSize?: number;
-    }): void {
-        const { cacheEnabled, maxCacheSize } = options;
-        if (cacheEnabled !== undefined) {
-            this.frameCache.changeSettings({ cacheEnabled: cacheEnabled });
-        }
-        if (maxCacheSize === undefined) {
-            return;
-        }
-        if (maxCacheSize < 0) {
-            this.frameCache.changeSettings({ maxSize: -1 });
-            return;
-        }
-        // cache must have at least one frame
-        const newCacheSize = maxCacheSize > 0 ? maxCacheSize : 1;
-        this.frameCache.changeSettings({ maxSize: newCacheSize });
-    }
-
     public clearCache(): void {
         this.frameCache.clear();
         this.currentFrameNumber = -1;
