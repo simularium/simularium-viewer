@@ -4,14 +4,15 @@ import { Volume, VolumeDrawable } from "@aics/volume-viewer";
 
 import { AgentData } from "../simularium/types";
 
-// TEMPORARY HACK to make things typecheck
+// TEMPORARY HACK to make things typecheck. TODO remove!
 import { VolumeRenderImpl } from "@aics/volume-viewer/es/types/VolumeRenderImpl";
 interface TempRayMarchedVolume extends VolumeRenderImpl {
     boxHelper: Box3Helper;
 }
 
 export default class VolumeModel {
-    // TODO what to do with this?
+    // TODO what to do with this `cancelled` property? Type check fails without it.
+    // When should it be set, if ever; what should it be used for, if anything?
     public cancelled = false;
     private image?: VolumeDrawable;
 
