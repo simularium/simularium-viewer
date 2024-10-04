@@ -35,6 +35,7 @@ import { cloneDeep, noop } from "lodash";
 import VisAgent from "./VisAgent";
 import VisTypes from "../simularium/VisTypes";
 import PDBModel from "./PDBModel";
+import VolumeModel from "./VolumeModel";
 import AgentPath from "./agentPath";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
 
@@ -151,6 +152,7 @@ class VisGeometry {
     public lightsGroup: Group;
     public agentPathGroup: Group;
     public instancedMeshGroup: Group;
+    public tempVolumeGroup: Group; // TODO remove
     private supportsWebGL2Rendering: boolean;
     private lodBias: number;
     private lodDistanceStops: number[];
@@ -217,6 +219,9 @@ class VisGeometry {
         this.instancedMeshGroup = new Group();
         this.instancedMeshGroup.name = "instanced meshes for agents";
         this.scene.add(this.instancedMeshGroup);
+        this.tempVolumeGroup = new Group();
+        this.tempVolumeGroup.name = "volumes";
+        this.scene.add(this.tempVolumeGroup);
 
         this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
 
@@ -716,7 +721,7 @@ class VisGeometry {
     public onNewRuntimeGeometryType(
         geoName: string,
         displayType: GeometryDisplayType,
-        data: PDBModel | MeshLoadRequest
+        data: PDBModel | MeshLoadRequest | VolumeModel
     ): void {
         // find all typeIds for this meshName
         const typeIds = this.getAllTypeIdsForGeometryName(geoName);
@@ -990,6 +995,9 @@ class VisGeometry {
         for (let i = this.instancedMeshGroup.children.length - 1; i >= 0; i--) {
             this.instancedMeshGroup.remove(this.instancedMeshGroup.children[i]);
         }
+        for (let i = this.tempVolumeGroup.children.length - 1; i >= 0; i--) {
+            this.tempVolumeGroup.remove(this.tempVolumeGroup.children[i]);
+        }
 
         // re-add fibers immediately
         this.instancedMeshGroup.add(this.fibers.getGroup());
@@ -1007,15 +1015,7 @@ class VisGeometry {
             const meshTypes: GeometryInstanceContainer[] = [];
             for (const entry of this.geometryStore.registry.values()) {
                 const { displayType } = entry;
-                if (displayType !== GeometryDisplayType.PDB) {
-                    const meshEntry = entry as MeshGeometry;
-                    if (meshEntry.geometry.instances.instanceCount() > 0) {
-                        meshTypes.push(meshEntry.geometry.instances);
-                        this.instancedMeshGroup.add(
-                            meshEntry.geometry.instances.getMesh()
-                        );
-                    }
-                } else {
+                if (displayType === GeometryDisplayType.PDB) {
                     const pdbEntry = entry as PDBGeometry;
                     for (let i = 0; i < pdbEntry.geometry.numLODs(); ++i) {
                         const lod = pdbEntry.geometry.getLOD(i);
@@ -1023,6 +1023,19 @@ class VisGeometry {
                             meshTypes.push(lod);
                             this.instancedMeshGroup.add(lod.getMesh());
                         }
+                    }
+                } else if (displayType === GeometryDisplayType.VOLUME) {
+                    const volObject = entry.geometry.tempGetBoundingBoxObject();
+                    if (volObject) {
+                        this.tempVolumeGroup.add(volObject);
+                    }
+                } else {
+                    const meshEntry = entry as MeshGeometry;
+                    if (meshEntry.geometry.instances.instanceCount() > 0) {
+                        meshTypes.push(meshEntry.geometry.instances);
+                        this.instancedMeshGroup.add(
+                            meshEntry.geometry.instances.getMesh()
+                        );
                     }
                 }
             }
@@ -1047,6 +1060,7 @@ class VisGeometry {
             this.boundingBoxMesh.visible = false;
             this.tickMarksMesh.visible = false;
             this.agentPathGroup.visible = false;
+            this.tempVolumeGroup.visible = false;
             this.renderer.render(
                 this.threejsrenderer,
                 this.scene,
@@ -1058,6 +1072,7 @@ class VisGeometry {
             this.boundingBoxMesh.visible = true;
             this.tickMarksMesh.visible = true;
             this.agentPathGroup.visible = true;
+            this.tempVolumeGroup.visible = true;
 
             this.threejsrenderer.autoClear = false;
             // hide everything except the wireframe and paths, and render with the standard renderer
@@ -1613,14 +1628,15 @@ class VisGeometry {
                 }
                 const { geometry, displayType } = response;
                 if (geometry && displayType === GeometryDisplayType.PDB) {
-                    const pdbEntry = geometry as PDBModel;
-                    this.addPdbToDrawList(typeId, visAgent, pdbEntry);
+                    this.addPdbToDrawList(typeId, visAgent, geometry);
+                } else if (displayType === GeometryDisplayType.VOLUME) {
+                    // Hmm... is anyone gonna want to instance a volume?
+                    geometry.setAgentData(agentData);
                 } else {
-                    const meshEntry = geometry as MeshLoadRequest;
                     this.addMeshToDrawList(
                         typeId,
                         visAgent,
-                        meshEntry,
+                        geometry as MeshLoadRequest,
                         agentData
                     );
                 }

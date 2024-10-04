@@ -1,6 +1,7 @@
 import { BufferGeometry, Color, Object3D } from "three";
 import PDBModel from "./PDBModel";
 import { MRTShaders } from "./rendering/MultipassMaterials";
+import VolumeModel from "./VolumeModel";
 
 export interface GeometryInstanceContainer {
     replaceGeometry: (newGeometry: BufferGeometry, name: string) => void;
@@ -35,6 +36,7 @@ export enum GeometryDisplayType {
     OBJ = "OBJ",
     SPHERE = "SPHERE",
     CUBE = "CUBE",
+    VOLUME = "VOLUME",
     GIZMO = "GIZMO",
     SPHERE_GROUP = "SPHERE_GROUP",
 }
@@ -57,11 +59,16 @@ export interface MeshGeometry {
         | PrimitiveDisplayType;
 }
 
-export type AgentGeometry = PDBGeometry | MeshGeometry;
+export interface VolumeGeometry {
+    geometry: VolumeModel;
+    displayType: GeometryDisplayType.VOLUME;
+}
+
+export type AgentGeometry = PDBGeometry | MeshGeometry | VolumeGeometry;
 
 export interface GeometryStoreLoadResponse {
     displayType?: GeometryDisplayType;
-    geometry: MeshLoadRequest | PDBModel;
+    geometry: MeshLoadRequest | PDBModel | VolumeModel;
     errorMessage?: string;
 }
 
