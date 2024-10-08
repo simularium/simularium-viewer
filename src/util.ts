@@ -2,7 +2,7 @@ import type { ISimulariumFile } from "./simularium/ISimulariumFile";
 import JsonFileReader from "./simularium/JsonFileReader";
 import BinaryFileReader from "./simularium/BinaryFileReader";
 import { AGENT_OBJECT_KEYS, AgentData, CachedFrame } from "./simularium/types";
-import { BYTES_PER_AGENT, BYTE_SIZE_64_BIT_NUM, nullAgent } from "./constants";
+import { nullAgent } from "./constants";
 import { FrontEndError } from "./simularium";
 
 export const compareTimes = (
@@ -76,19 +76,6 @@ export function loadSimulariumFile(file: Blob): Promise<ISimulariumFile> {
                 return new BinaryFileReader(fileContents as ArrayBuffer);
             }
         });
-}
-
-export function calculateCachedSize(parsedAgentData: AgentData[]): number {
-    let totalSize = 0;
-
-    // Calculate the size of parsedAgentDataArray
-    for (let j = 0; j < parsedAgentData.length; ++j) {
-        const agent = parsedAgentData[j];
-        totalSize += BYTES_PER_AGENT; // 10 number properties in AgentData (excluding subpoints)
-        totalSize += agent.subpoints.length * BYTE_SIZE_64_BIT_NUM;
-    }
-
-    return (totalSize += 16); // should always be 16 bytes bceause its just one frame per message with octopus
 }
 
 export const nullCachedFrame = (): CachedFrame => {
