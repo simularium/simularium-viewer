@@ -147,16 +147,14 @@ class VisDataCache {
         return this.tail?.data.time || -1;
     }
 
-    private getFrameAtTimeOrFrameNumber(
-        condition: "time" | "frameNumber",
+    private getFrameAtCondition(
+        condition: (data: CacheNode) => boolean,
         value: number
     ): CachedFrame {
         if (!this.head) {
             return this.frameAccessError("No data in cache.");
         }
-        const frame = this.walkLinkedList(
-            (node) => node.data[condition] === value
-        );
+        const frame = this.walkLinkedList(condition);
         if (frame) {
             return frame.data;
         }
@@ -166,11 +164,17 @@ class VisDataCache {
     }
 
     public getFrameAtTime(time: number): CachedFrame {
-        return this.getFrameAtTimeOrFrameNumber("time", time);
+        return this.getFrameAtCondition(
+            (node) => compareTimes(node.data.time, time, 0) === 0,
+            time
+        );
     }
 
     public getFrameAtFrameNumber(frameNumber: number): CachedFrame {
-        return this.getFrameAtTimeOrFrameNumber("frameNumber", frameNumber);
+        return this.getFrameAtCondition(
+            (node) => node.data["frameNumber"] === frameNumber,
+            frameNumber
+        );
     }
 
     public assignSingleFrameToCache(data: CachedFrame): void {
