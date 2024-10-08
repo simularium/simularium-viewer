@@ -31,6 +31,11 @@ export default class VolumeModel {
             );
             const r = data.cr * 2;
             this.drawable.setScale(new Vector3(r, r, r));
+            // Volume agent data may use subpoint 0 as time
+            const time = data.subpoints?.length > 0 ? data.subpoints[0] : 0;
+            if (this.volume && this.volume.loadSpec.time !== time) {
+                this.volume.updateRequiredData({ time });
+            }
         }
     }
 
