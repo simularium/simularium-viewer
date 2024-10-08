@@ -7,6 +7,7 @@ import { VisDataMessage, CachedFrame } from "./types";
 import { parseVisDataMessage } from "./VisDataParse";
 import { VisDataCache } from "./VisDataCache";
 import { ErrorLevel, FrontEndError } from "./FrontEndError";
+import { BYTE_SIZE_64_BIT_NUM } from "../constants";
 
 class VisData {
     public frameCache: VisDataCache;
@@ -23,14 +24,16 @@ class VisData {
     private static parseOneBinaryFrame(data: ArrayBuffer): CachedFrame {
         const floatView = new Float32Array(data);
         const intView = new Uint32Array(data);
-
         const frameData: CachedFrame = {
             data: data,
             frameNumber: floatView[0],
             time: floatView[1],
             agentCount: intView[2],
-            size: data.byteLength + 8 * 4,
+            size: 0,
         };
+        const numMetadataFields = Object.keys(frameData).length - 1; // exclude "data" field
+        frameData.size =
+            data.byteLength + numMetadataFields * BYTE_SIZE_64_BIT_NUM;
 
         return frameData;
     }
