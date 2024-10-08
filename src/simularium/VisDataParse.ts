@@ -97,7 +97,8 @@ function calculateBufferSize(data: number[]): number {
 
     while (index < data.length) {
         size += FRAME_DATA_SIZE * 4; // Agent header size in bytes
-        const nSubPoints = data[index + FRAME_DATA_SIZE - 1];
+        const nSubPoints =
+            data[index + AGENT_OBJECT_KEYS.indexOf("nSubPoints")];
         size += nSubPoints * 4; // Subpoints size in bytes
         index += FRAME_DATA_SIZE + nSubPoints;
     }
