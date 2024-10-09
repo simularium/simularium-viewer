@@ -1025,9 +1025,9 @@ class VisGeometry {
                         }
                     }
                 } else if (displayType === GeometryDisplayType.VOLUME) {
-                    const volObject = entry.geometry.tempGetBoundingBoxObject();
-                    if (volObject) {
-                        this.tempVolumeGroup.add(volObject);
+                    const volObj = entry.geometry.getObject3D();
+                    if (volObj) {
+                        this.tempVolumeGroup.add(volObj);
                     }
                 } else {
                     const meshEntry = entry as MeshGeometry;

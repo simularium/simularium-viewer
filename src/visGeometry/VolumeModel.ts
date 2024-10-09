@@ -4,12 +4,6 @@ import { Volume, VolumeDrawable } from "@aics/volume-viewer";
 
 import { AgentData } from "../simularium/types";
 
-// TEMPORARY HACK to make things typecheck. TODO remove!
-import { VolumeRenderImpl } from "@aics/volume-viewer/es/types/VolumeRenderImpl";
-interface TempRayMarchedVolume extends VolumeRenderImpl {
-    boxHelper: Box3Helper;
-}
-
 export default class VolumeModel {
     // TODO what to do with this `cancelled` property? Type check fails without it.
     // When should it be set, if ever; what should it be used for, if anything?
@@ -44,13 +38,10 @@ export default class VolumeModel {
     }
 
     public getObject3D(): Object3D | undefined {
-        return this.drawable?.sceneRoot;
-    }
-
-    public tempGetBoundingBoxObject(): Box3Helper | undefined {
+        // TODO showing bounding box for debugging purposes.
+        //   Do we want it on by default in production?
         this.drawable?.setShowBoundingBox(true);
-        return (this.drawable?.volumeRendering as TempRayMarchedVolume)
-            ?.boxHelper;
+        return this.drawable?.sceneRoot;
     }
 
     // METHODS FROM `VolumeDataObserver` in volume-viewer
