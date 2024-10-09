@@ -23,6 +23,10 @@ export default class VolumeModel {
         this.volume.addVolumeDataObserver(this);
     }
 
+    public loadInitialData(): void {
+        this.volume?.loader?.loadVolumeData(this.volume);
+    }
+
     public setAgentData(data: AgentData): void {
         if (this.drawable) {
             this.drawable.setTranslation(new Vector3(data.x, data.y, data.z));

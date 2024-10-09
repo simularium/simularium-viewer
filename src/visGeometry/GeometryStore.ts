@@ -405,6 +405,7 @@ class GeometryStore {
         // TODO onChannelLoaded callback?
         const volume = await loader.createVolume(new LoadSpec());
         model.setImage(volume);
+        model.loadInitialData();
         return model;
     }
 
