@@ -1009,6 +1009,9 @@ class VisGeometry {
             orthoScale: this.controls.zoomO,
         };
 
+        const canvasWidth = this.threejsrenderer.domElement.width;
+        const canvasHeight = this.threejsrenderer.domElement.height;
+
         // re-add fibers immediately
         this.instancedMeshGroup.add(this.fibers.getGroup());
 
@@ -1037,7 +1040,11 @@ class VisGeometry {
                 } else if (displayType === GeometryDisplayType.VOLUME) {
                     const volObj = entry.geometry.getObject3D();
                     if (volObj) {
-                        entry.geometry.onBeforeRender(volRenderContext);
+                        entry.geometry.onBeforeRender(
+                            volRenderContext,
+                            canvasWidth,
+                            canvasHeight
+                        );
                         this.tempVolumeGroup.add(volObj);
                     }
                 } else {

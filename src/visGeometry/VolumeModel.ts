@@ -1,10 +1,10 @@
 import { Euler, Object3D, Vector3 } from "three";
 
 import {
+    HasThreeJsContext,
     Lut,
     Volume,
     VolumeDrawable,
-    HasThreeJsContext,
 } from "@aics/volume-viewer";
 
 import { AgentData } from "../simularium/types";
@@ -40,6 +40,10 @@ export default class VolumeModel {
         this.volume = volumeObject;
         this.drawable = new VolumeDrawable(this.volume, {});
         this.volume.addVolumeDataObserver(this);
+        this.drawable.setBrightness(0.7);
+        this.drawable.setGamma(0.15, 0.9, 1.0);
+        this.drawable.setDensity(0.7);
+        this.drawable.setMaxProjectMode(true);
     }
 
     public setAgentData(data: AgentData): void {
@@ -79,7 +83,6 @@ export default class VolumeModel {
 
     public onChannelLoaded(vol: Volume, channelIndex: number): void {
         if (this.drawable) {
-            console.log("load", channelIndex);
             const isEnabled = this.channelsEnabled[channelIndex];
             this.drawable.setVolumeChannelEnabled(channelIndex, isEnabled);
             this.drawable.updateScale();
@@ -93,14 +96,22 @@ export default class VolumeModel {
             }
             this.drawable.updateLuts();
             this.drawable.fuse();
-            if (this.drawable && channelIndex === 0) {
-                console.log(this.drawable);
-            }
         }
     }
 
-    public onBeforeRender(context: HasThreeJsContext): void {
-        this.drawable?.onAnimate(context);
+    public onBeforeRender(
+        context: HasThreeJsContext,
+        width: number,
+        height: number
+    ): void {
+        if (this.drawable) {
+            this.drawable.setResolution(width, height);
+            this.drawable.onAnimate(context);
+        }
+    }
+
+    public setSize(width: number, height: number): void {
+        this.drawable?.setResolution(width, height);
     }
 
     // METHODS FROM `VolumeDataObserver` in volume-viewer
