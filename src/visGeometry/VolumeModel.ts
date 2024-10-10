@@ -43,7 +43,6 @@ export default class VolumeModel {
         this.drawable.setBrightness(0.7);
         this.drawable.setGamma(0.15, 0.9, 1.0);
         this.drawable.setDensity(0.7);
-        this.drawable.setMaxProjectMode(true);
     }
 
     public setAgentData(data: AgentData): void {
