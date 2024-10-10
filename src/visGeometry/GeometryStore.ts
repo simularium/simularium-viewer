@@ -386,12 +386,13 @@ class GeometryStore {
     }
 
     /** Don't start a volume load worker until we know we need it */
-    private getVolumeLoaderContext(): VolumeLoaderContext {
+    private async getVolumeLoaderContext(): Promise<VolumeLoaderContext> {
         if (!this.volumeLoaderContext) {
             // TODO this is missing optional config properties:
             //   `maxCacheSize`, `maxActiveRequests`, `maxLowPriorityRequests`.
             //   Do we want to set our own values for these?
             this.volumeLoaderContext = new VolumeLoaderContext();
+            await this.volumeLoaderContext.onOpen();
         }
         return this.volumeLoaderContext;
     }
@@ -401,9 +402,10 @@ class GeometryStore {
         //   Should this class get a `VolumeLoaderContext` going?
         const model = new VolumeModel();
         this.setGeometryInRegistry(url, model, GeometryDisplayType.VOLUME);
-        const loader = await this.getVolumeLoaderContext().createLoader(url);
-        // TODO onChannelLoaded callback?
-        const volume = await loader.createVolume(new LoadSpec());
+        const context = await this.getVolumeLoaderContext();
+        const loader = await context.createLoader(url);
+        const loadCallback = model.onChannelLoaded.bind(model);
+        const volume = await loader.createVolume(new LoadSpec(), loadCallback);
         model.setImage(volume);
         model.loadInitialData();
         return model;
