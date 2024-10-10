@@ -68,6 +68,7 @@ import {
 } from "./types";
 import { checkAndSanitizePath } from "../util";
 import ColorHandler from "./ColorHandler";
+import { HasThreeJsContext } from "@aics/volume-viewer";
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 100000;
@@ -999,6 +1000,15 @@ class VisGeometry {
             this.tempVolumeGroup.remove(this.tempVolumeGroup.children[i]);
         }
 
+        const volRenderContext: HasThreeJsContext = {
+            camera: this.camera,
+            // if not for `renderer` already being used for
+            // `SimulariumRenderer`, we could use `this` below.
+            renderer: this.threejsrenderer,
+            // equivalent prop to TrackballControls.scale as far as I can tell?
+            orthoScale: this.controls.zoomO,
+        };
+
         // re-add fibers immediately
         this.instancedMeshGroup.add(this.fibers.getGroup());
 
@@ -1027,6 +1037,7 @@ class VisGeometry {
                 } else if (displayType === GeometryDisplayType.VOLUME) {
                     const volObj = entry.geometry.getObject3D();
                     if (volObj) {
+                        entry.geometry.onBeforeRender(volRenderContext);
                         this.tempVolumeGroup.add(volObj);
                     }
                 } else {
