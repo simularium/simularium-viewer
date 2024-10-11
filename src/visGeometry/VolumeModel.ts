@@ -74,9 +74,6 @@ export default class VolumeModel {
     }
 
     public getObject3D(): Object3D | undefined {
-        // TODO showing bounding box for debugging purposes.
-        //   Do we want it on by default in production? Probably not?
-        this.drawable?.setShowBoundingBox(true);
         return this.drawable?.sceneRoot;
     }
 
@@ -101,9 +98,15 @@ export default class VolumeModel {
     public onBeforeRender(
         context: HasThreeJsContext,
         width: number,
-        height: number
+        height: number,
+        orthoScale: number | undefined
     ): void {
         if (this.drawable) {
+            const isOrtho = orthoScale !== undefined;
+            this.drawable.setIsOrtho(isOrtho);
+            if (isOrtho) {
+                this.drawable.setOrthoScale(orthoScale);
+            }
             this.drawable.setResolution(width, height);
             this.drawable.onAnimate(context);
         }

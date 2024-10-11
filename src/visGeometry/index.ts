@@ -1040,10 +1040,16 @@ class VisGeometry {
                 } else if (displayType === GeometryDisplayType.VOLUME) {
                     const volObj = entry.geometry.getObject3D();
                     if (volObj) {
+                        const isOrtho = (this.camera as OrthographicCamera)
+                            .isOrthographicCamera;
+                        const orthoScale = isOrtho
+                            ? this.camera.zoom
+                            : undefined;
                         entry.geometry.onBeforeRender(
                             volRenderContext,
                             canvasWidth,
-                            canvasHeight
+                            canvasHeight,
+                            orthoScale
                         );
                         this.tempVolumeGroup.add(volObj);
                     }
