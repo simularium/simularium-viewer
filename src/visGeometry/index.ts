@@ -68,6 +68,7 @@ import {
 } from "./types";
 import { checkAndSanitizePath } from "../util";
 import ColorHandler from "./ColorHandler";
+import { HasThreeJsContext } from "@aics/volume-viewer";
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 100000;
@@ -152,7 +153,7 @@ class VisGeometry {
     public lightsGroup: Group;
     public agentPathGroup: Group;
     public instancedMeshGroup: Group;
-    public tempVolumeGroup: Group; // TODO remove
+    public volumeGroup: Group; // TODO remove
     private supportsWebGL2Rendering: boolean;
     private lodBias: number;
     private lodDistanceStops: number[];
@@ -219,9 +220,9 @@ class VisGeometry {
         this.instancedMeshGroup = new Group();
         this.instancedMeshGroup.name = "instanced meshes for agents";
         this.scene.add(this.instancedMeshGroup);
-        this.tempVolumeGroup = new Group();
-        this.tempVolumeGroup.name = "volumes";
-        this.scene.add(this.tempVolumeGroup);
+        this.volumeGroup = new Group();
+        this.volumeGroup.name = "volumes";
+        this.scene.add(this.volumeGroup);
 
         this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
 
@@ -995,9 +996,19 @@ class VisGeometry {
         for (let i = this.instancedMeshGroup.children.length - 1; i >= 0; i--) {
             this.instancedMeshGroup.remove(this.instancedMeshGroup.children[i]);
         }
-        for (let i = this.tempVolumeGroup.children.length - 1; i >= 0; i--) {
-            this.tempVolumeGroup.remove(this.tempVolumeGroup.children[i]);
+        for (let i = this.volumeGroup.children.length - 1; i >= 0; i--) {
+            this.volumeGroup.remove(this.volumeGroup.children[i]);
         }
+
+        const volRenderContext: HasThreeJsContext = {
+            camera: this.camera,
+            // if not for `renderer` already being used for
+            // `SimulariumRenderer`, we could use `this` below.
+            renderer: this.threejsrenderer,
+        };
+
+        const canvasWidth = this.threejsrenderer.domElement.width;
+        const canvasHeight = this.threejsrenderer.domElement.height;
 
         // re-add fibers immediately
         this.instancedMeshGroup.add(this.fibers.getGroup());
@@ -1025,9 +1036,20 @@ class VisGeometry {
                         }
                     }
                 } else if (displayType === GeometryDisplayType.VOLUME) {
-                    const volObject = entry.geometry.tempGetBoundingBoxObject();
-                    if (volObject) {
-                        this.tempVolumeGroup.add(volObject);
+                    const volObj = entry.geometry.getObject3D();
+                    if (volObj) {
+                        const isOrtho = (this.camera as OrthographicCamera)
+                            .isOrthographicCamera;
+                        const orthoScale = isOrtho
+                            ? 1 / this.camera.zoom
+                            : undefined;
+                        entry.geometry.onBeforeRender(
+                            volRenderContext,
+                            canvasWidth,
+                            canvasHeight,
+                            orthoScale
+                        );
+                        this.volumeGroup.add(volObj);
                     }
                 } else {
                     const meshEntry = entry as MeshGeometry;
@@ -1060,7 +1082,7 @@ class VisGeometry {
             this.boundingBoxMesh.visible = false;
             this.tickMarksMesh.visible = false;
             this.agentPathGroup.visible = false;
-            this.tempVolumeGroup.visible = false;
+            this.volumeGroup.visible = false;
             this.renderer.render(
                 this.threejsrenderer,
                 this.scene,
@@ -1072,7 +1094,7 @@ class VisGeometry {
             this.boundingBoxMesh.visible = true;
             this.tickMarksMesh.visible = true;
             this.agentPathGroup.visible = true;
-            this.tempVolumeGroup.visible = true;
+            this.volumeGroup.visible = true;
 
             this.threejsrenderer.autoClear = false;
             // hide everything except the wireframe and paths, and render with the standard renderer
