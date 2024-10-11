@@ -42,7 +42,7 @@ export default class VolumeSim implements IClientSimulatorImpl {
             1, // type
             0, // x
             0, // y
-            6, // z
+            3, // z
             0, // rx
             0, // ry
             0, // rz
