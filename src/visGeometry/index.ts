@@ -1005,8 +1005,6 @@ class VisGeometry {
             // if not for `renderer` already being used for
             // `SimulariumRenderer`, we could use `this` below.
             renderer: this.threejsrenderer,
-            // equivalent prop to TrackballControls.scale as far as I can tell?
-            orthoScale: this.controls.zoomO,
         };
 
         const canvasWidth = this.threejsrenderer.domElement.width;
@@ -1043,7 +1041,7 @@ class VisGeometry {
                         const isOrtho = (this.camera as OrthographicCamera)
                             .isOrthographicCamera;
                         const orthoScale = isOrtho
-                            ? this.camera.zoom
+                            ? 1 / this.camera.zoom
                             : undefined;
                         entry.geometry.onBeforeRender(
                             volRenderContext,
