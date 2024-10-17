@@ -59,7 +59,7 @@ class VisDataCache {
         return this._maxSize !== Infinity;
     }
 
-    private frameAccessError(msg?: string): CachedFrame {
+    private static frameAccessError(msg?: string): never {
         throw new FrontEndError(
             `Error accessing frame: ${msg}`,
             ErrorLevel.WARNING
@@ -116,7 +116,7 @@ class VisDataCache {
 
     public getFirstFrame(): CachedFrame {
         if (!this.head) {
-            return this.frameAccessError("No data in cache.");
+            VisDataCache.frameAccessError("No data in cache.");
         }
         return this.head.data;
     }
@@ -131,7 +131,7 @@ class VisDataCache {
 
     public getLastFrame(): CachedFrame {
         if (!this.tail) {
-            return this.frameAccessError(" No data in cache.");
+            VisDataCache.frameAccessError(" No data in cache.");
         }
         return this.tail.data;
     }
@@ -149,13 +149,13 @@ class VisDataCache {
         value: number
     ): CachedFrame {
         if (!this.head) {
-            return this.frameAccessError("No data in cache.");
+            VisDataCache.frameAccessError("No data in cache.");
         }
         const frame = this.findInLinkedList(condition);
         if (frame) {
             return frame.data;
         }
-        return this.frameAccessError(
+        VisDataCache.frameAccessError(
             `Frame not found at provided ${condition}. Attempting to access frame ${value}.`
         );
     }
@@ -174,7 +174,7 @@ class VisDataCache {
         );
     }
 
-    public assignSingleFrameToCache(data: CachedFrame): void {
+    private assignSingleFrameToCache(data: CachedFrame): void {
         const newNode: CacheNode = {
             data,
             next: null,
@@ -187,7 +187,7 @@ class VisDataCache {
         this.numFrames = 1;
     }
 
-    public addFrameToEndOfCache(data: CachedFrame): void {
+    private addFrameToEndOfCache(data: CachedFrame): void {
         const newNode: CacheNode = {
             data,
             next: null,
@@ -223,10 +223,9 @@ class VisDataCache {
     // generalized to remove any node, but in theory
     // we should only be removing the head when we trim the cache
     // under current assumptions
-    public removeNode(node: CacheNode): void {
+    private removeNode(node: CacheNode): void {
         if (this.numFrames === 0 || !this.head || !this.tail) {
-            this.frameAccessError("No data in cache.");
-            return;
+            VisDataCache.frameAccessError("No data in cache.");
         }
         if (this.numFrames === 1 && this.head === this.tail) {
             this.clear();
@@ -246,7 +245,7 @@ class VisDataCache {
         this.size -= node.data.size;
     }
 
-    public trimCache(incomingDataSize?: number): void {
+    private trimCache(incomingDataSize?: number): void {
         while (
             this.hasFrames() &&
             this.size + (incomingDataSize || 0) > this._maxSize &&
