@@ -77,11 +77,10 @@ export class DummyRemoteSimulator extends RemoteSimulator {
             return;
         }
 
-        const bundleSize = 1;
         const msg: NetMessage = JSON.parse(
             this.getDataBundle(this.frameCounter)
         );
-        this.frameCounter += bundleSize;
+        this.frameCounter++;
         this.onJsonIdVisDataArrive(msg);
     }
 
