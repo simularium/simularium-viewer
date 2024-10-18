@@ -103,10 +103,10 @@ describe("VisDataCache", () => {
         cache.addFrame(testFrame1);
         expect(cache.containsTime(3)).toEqual(false);
     });
-    it("throws an error if trying to access frames when head is null", () => {
+    it("returns undefined when head is null", () => {
         const cache = new VisDataCache();
-        expect(() => cache.getFirstFrame()).toThrowError();
-        expect(() => cache.getLastFrame()).toThrowError();
+        expect(cache.getFirstFrame()).toEqual(undefined);
+        expect(cache.getLastFrame()).toEqual(undefined);
     });
     it("returns -1 for first and last frame numbers and time if head or tail is null ", () => {
         const cache = new VisDataCache();

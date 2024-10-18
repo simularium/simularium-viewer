@@ -1,5 +1,4 @@
 import { compareTimes } from "../util";
-import { ErrorLevel, FrontEndError } from "./FrontEndError";
 import { CachedFrame, CacheNode } from "./types";
 
 interface VisDataCacheSettings {
@@ -59,13 +58,6 @@ class VisDataCache {
         return this._maxSize !== Infinity;
     }
 
-    private static frameAccessError(msg?: string): never {
-        throw new FrontEndError(
-            `Error accessing frame: ${msg}`,
-            ErrorLevel.WARNING
-        );
-    }
-
     public hasFrames(): boolean {
         return this.numFrames > 0 && this.head !== null && this.tail !== null;
     }
@@ -78,7 +70,7 @@ class VisDataCache {
     private findInLinkedList(
         condition: (data: CacheNode) => boolean,
         firstNode?: CacheNode
-    ): CacheNode | null {
+    ): CacheNode | undefined {
         let currentNode = firstNode || this.head;
         while (currentNode) {
             if (condition(currentNode)) {
@@ -86,7 +78,6 @@ class VisDataCache {
             }
             currentNode = currentNode.next;
         }
-        return null;
     }
 
     public containsTime(time: number): boolean {
@@ -114,11 +105,8 @@ class VisDataCache {
         );
     }
 
-    public getFirstFrame(): CachedFrame {
-        if (!this.head) {
-            VisDataCache.frameAccessError("No data in cache.");
-        }
-        return this.head.data;
+    public getFirstFrame(): CachedFrame | undefined {
+        return this.head?.data;
     }
 
     public getFirstFrameNumber(): number {
@@ -129,11 +117,8 @@ class VisDataCache {
         return this.head?.data.time || -1;
     }
 
-    public getLastFrame(): CachedFrame {
-        if (!this.tail) {
-            VisDataCache.frameAccessError(" No data in cache.");
-        }
-        return this.tail.data;
+    public getLastFrame(): CachedFrame | undefined {
+        return this.tail?.data;
     }
 
     public getLastFrameNumber(): number {
@@ -145,33 +130,37 @@ class VisDataCache {
     }
 
     private getFrameAtCondition(
-        condition: (data: CacheNode) => boolean,
-        value: number
-    ): CachedFrame {
+        condition: (data: CacheNode) => boolean
+    ): CachedFrame | undefined {
         if (!this.head) {
-            VisDataCache.frameAccessError("No data in cache.");
+            return;
         }
         const frame = this.findInLinkedList(condition);
         if (frame) {
             return frame.data;
         }
-        VisDataCache.frameAccessError(
-            `Frame not found at provided ${condition}. Attempting to access frame ${value}.`
-        );
     }
 
-    public getFrameAtTime(time: number): CachedFrame {
-        return this.getFrameAtCondition(
-            (node) => compareTimes(node.data.time, time, 0) === 0,
-            time
+    public getFrameAtTime(time: number): CachedFrame | undefined {
+        // return this.getFrameAtCondition(
+        //     (node) => compareTimes(node.data.time, time, 0) === 0,
+        //     time
+        // );
+        const frame = this.getFrameAtCondition(
+            (node) => compareTimes(node.data.time, time, 0) === 0
         );
+        return frame ? frame : undefined;
     }
 
-    public getFrameAtFrameNumber(frameNumber: number): CachedFrame {
-        return this.getFrameAtCondition(
-            (node) => node.data["frameNumber"] === frameNumber,
-            frameNumber
+    public getFrameAtFrameNumber(frameNumber: number): CachedFrame | undefined {
+        // return this.getFrameAtCondition(
+        //     (node) => node.data["frameNumber"] === frameNumber,
+        //     frameNumber
+        // );
+        const frame = this.getFrameAtCondition(
+            (node) => node.data["frameNumber"] === frameNumber
         );
+        return frame ? frame : undefined;
     }
 
     private assignSingleFrameToCache(data: CachedFrame): void {
@@ -225,7 +214,7 @@ class VisDataCache {
     // under current assumptions
     private removeNode(node: CacheNode): void {
         if (this.numFrames === 0 || !this.head || !this.tail) {
-            VisDataCache.frameAccessError("No data in cache.");
+            return;
         }
         if (this.numFrames === 1 && this.head === this.tail) {
             this.clear();
