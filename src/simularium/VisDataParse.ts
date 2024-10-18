@@ -48,9 +48,13 @@ function parseVisDataMessage(visDataMsg: VisDataMessage): CachedFrame {
         agentCount++;
 
         // Copy agent data
-        for (let i = 0; i < FRAME_DATA_SIZE; i++) {
-            view[writeIndex++] = frame.data[readIndex++];
-        }
+        const agentData = frame.data.slice(
+            readIndex,
+            readIndex + FRAME_DATA_SIZE
+        );
+        view.set(agentData, writeIndex);
+        readIndex += FRAME_DATA_SIZE;
+        writeIndex += FRAME_DATA_SIZE;
 
         // Validate data integrity
         if (--readIndex + nSubPoints > frame.data.length) {
@@ -63,9 +67,10 @@ function parseVisDataMessage(visDataMsg: VisDataMessage): CachedFrame {
         }
 
         // Copy subpoints
-        for (let i = 0; i < nSubPoints; i++) {
-            view[writeIndex++] = frame.data[readIndex++];
-        }
+        const subpoints = frame.data.slice(readIndex, readIndex + nSubPoints);
+        view.set(subpoints, writeIndex);
+        readIndex += nSubPoints;
+        writeIndex += nSubPoints;
 
         // Adjust offsets relative to next agent's # of subpoints
         offset += chunkLength;
