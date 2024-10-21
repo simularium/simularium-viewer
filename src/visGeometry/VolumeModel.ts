@@ -18,6 +18,7 @@ export default class VolumeModel {
     private drawable?: VolumeDrawable;
     private volume?: Volume;
     private channelsEnabled: boolean[] = [];
+    private scale = 1;
 
     private setEnabledChannels(channels: number[]): void {
         if (!this.volume || !this.drawable) {
@@ -53,8 +54,10 @@ export default class VolumeModel {
             this.drawable.setRotation(
                 new Euler(data.xrot, data.yrot, data.zrot)
             );
-            const r = data.cr * 2;
-            this.drawable.setScale(new Vector3(r, r, r));
+            this.scale = data.cr * 2;
+            this.drawable.setScale(
+                new Vector3(this.scale, this.scale, this.scale)
+            );
             // Always defined if `drawable` is, but ts doesn't know that.
             if (this.volume) {
                 // Volume agent data may use subpoint 0 as time
@@ -106,7 +109,9 @@ export default class VolumeModel {
             const isOrtho = orthoScale !== undefined;
             this.drawable.setIsOrtho(isOrtho);
             if (isOrtho) {
-                this.drawable.setOrthoScale(orthoScale);
+                this.drawable.setOrthoScale(
+                    (orthoScale * this.scale) / (height / width)
+                );
             }
             this.drawable.setResolution(width, height);
         }
