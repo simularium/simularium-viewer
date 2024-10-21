@@ -47,6 +47,13 @@ export default class VisAgent {
         this.fiberCurve = undefined;
     }
 
+    public resetAgent(): void {
+        this.active = false;
+        this.hidden = false;
+        this.followed = false;
+        this.fiberCurve = undefined;
+    }
+
     public resetMesh(): void {
         this.followed = false;
         this.highlighted = false;

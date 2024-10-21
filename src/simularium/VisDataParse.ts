@@ -1,119 +1,114 @@
-import {
-    FrameData,
-    VisDataMessage,
-    AgentData,
-    AGENT_OBJECT_KEYS,
-} from "./types";
+import { VisDataMessage, AGENT_OBJECT_KEYS, CachedFrame } from "./types";
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
+import { AGENT_HEADER_SIZE } from "../constants";
 
-interface ParsedBundle {
-    frameDataArray: FrameData[];
-    parsedAgentDataArray: AgentData[][];
-}
+const FRAME_DATA_SIZE = AGENT_OBJECT_KEYS.length;
 
 /**
- *   Parses a stream of data sent from the backend
+ * This function serves as a translation layer, it takes in a VisDataMessage
+ * and walks the data counting the agents and converting the number[] to ArrayBuffer
+ * in order to generate a CachedFrame.
  *
- *   To minimize bandwidth, traits/objects are not packed
- *   1-1; what arrives is an array of float values
+ * This is used for loading local JSON files, and in the rare case
+ * that JSON is sent from the backend. Parsing twice (number[] to ArrayBuffer,
+ * ArrayBuffer to AgentData) is a low concern for performance
+ * as local files will automatically pre-cache frames and not deal with
+ * network latency.
  *
- *   For instance for:
- *   entity = (
- *        trait1 : 4,
- *        trait2 : 5,
- *        trait3 : 6,
- *    ) ...
- *
- *   what arrives will be:
- *       [...,4,5,6,...]
- *
- *   The traits are assumed to be variable in length,
- *   and the alorithm to decode them needs to the reverse
- *   of the algorithm that packed them on the backend
- *
- *   This is more convuluted than sending the JSON objects themselves,
- *   however these frames arrive multiple times per second. Even a naive
- *   packing reduces the packet size by ~50%, reducing how much needs to
- *   paid for network bandwith (and improving the quality & responsiveness
- *   of the application, since network latency is a major bottle-neck)
- * */
+ * todo: VisDataMessage.bundleData should only ever be a single frame
+ * regardless of whether or not the data is JSON or binary, so we
+ * should be able to adjust the typing of VisDataMessage to reflect that.
+ */
 
-function parseVisDataMessage(visDataMsg: VisDataMessage): ParsedBundle {
-    const parsedAgentDataArray: AgentData[][] = [];
-    const frameDataArray: FrameData[] = [];
-    visDataMsg.bundleData.forEach((frame) => {
-        const visData = frame.data;
-        const parsedAgentData: AgentData[] = [];
-        const nSubPointsIndex = AGENT_OBJECT_KEYS.findIndex(
-            (ele) => ele === "nSubPoints"
-        );
+function parseVisDataMessage(visDataMsg: VisDataMessage): CachedFrame {
+    const frame = visDataMsg.bundleData[0];
+    const visData = [...frame.data];
 
-        const parseOneAgent = (agentArray): AgentData => {
-            return agentArray.reduce(
-                (agentData, cur, i) => {
-                    let key;
-                    if (AGENT_OBJECT_KEYS[i]) {
-                        key = AGENT_OBJECT_KEYS[i];
-                        agentData[key] = cur;
-                    } else if (i < agentArray.length + agentData.nSubPoints) {
-                        agentData.subpoints.push(cur);
-                    }
-                    return agentData;
-                },
-                { subpoints: [] }
+    let nSubPoints = visData[AGENT_OBJECT_KEYS.indexOf("nSubPoints")];
+    let chunkLength = FRAME_DATA_SIZE + nSubPoints;
+
+    // make ArrayBuffer from number[] to use in cache
+    const totalSize = calculateBufferSize(frame.data);
+    const buffer = new ArrayBuffer(totalSize);
+    const view = new Float32Array(buffer);
+
+    let agentCount = 0;
+    let offset = 0;
+    let currentAgentData = visData.slice(offset, offset + chunkLength);
+    while (currentAgentData.length) {
+        let writeIndex = AGENT_HEADER_SIZE + offset;
+        let readIndex = offset;
+        if (currentAgentData.length < chunkLength) {
+            throw new FrontEndError(
+                `Your data is malformed, there are too few entries. Found ${currentAgentData.length} entries, expected ${chunkLength}.`,
+                ErrorLevel.ERROR
             );
-        };
-
-        while (visData.length) {
-            const nSubPoints = visData[nSubPointsIndex];
-            const chunkLength = AGENT_OBJECT_KEYS.length + nSubPoints; // each array length is variable based on how many subpoints the agent has
-            if (visData.length < chunkLength) {
-                const attemptedMapping = AGENT_OBJECT_KEYS.map(
-                    (name, index) => `${name}: ${visData[index]}<br />`
-                );
-                // will be caught by controller.changeFile(...).catch()
-                throw new FrontEndError(
-                    "Your data is malformed, there are too few entries.",
-                    ErrorLevel.ERROR,
-                    `Example attempt to parse your data: <pre>${attemptedMapping.join(
-                        ""
-                    )}</pre>`
-                );
-            }
-
-            const agentSubSetArray = visData.splice(0, chunkLength); // cut off the array of 1 agent data from front of the array;
-            if (agentSubSetArray.length < AGENT_OBJECT_KEYS.length) {
-                const attemptedMapping = AGENT_OBJECT_KEYS.map(
-                    (name, index) => `${name}: ${agentSubSetArray[index]}<br />`
-                );
-                // will be caught by controller.changeFile(...).catch()
-                throw new FrontEndError(
-                    "Your data is malformed, there are less entries than expected for this agent. ",
-                    ErrorLevel.ERROR,
-                    `Example attempt to parse your data: <pre>${attemptedMapping.join(
-                        ""
-                    )}</pre>`
-                );
-            }
-
-            const agent = parseOneAgent(agentSubSetArray);
-            parsedAgentData.push(agent);
         }
 
-        const frameData: FrameData = {
-            time: frame.time,
-            frameNumber: frame.frameNumber,
-        };
+        agentCount++;
 
-        parsedAgentDataArray.push(parsedAgentData);
-        frameDataArray.push(frameData);
-    });
+        // Copy agent data
+        const agentData = frame.data.slice(
+            readIndex,
+            readIndex + FRAME_DATA_SIZE
+        );
+        view.set(agentData, writeIndex);
+        readIndex += FRAME_DATA_SIZE;
+        writeIndex += FRAME_DATA_SIZE;
 
-    return {
-        parsedAgentDataArray,
-        frameDataArray,
+        // Validate data integrity
+        if (--readIndex + nSubPoints > frame.data.length) {
+            throw new FrontEndError(
+                `Your data is malformed, there are too few entries. Found ${
+                    frame.data.length
+                }, expected ${readIndex + nSubPoints}.`,
+                ErrorLevel.ERROR
+            );
+        }
+
+        // Copy subpoints
+        const subpoints = frame.data.slice(readIndex, readIndex + nSubPoints);
+        view.set(subpoints, writeIndex);
+        readIndex += nSubPoints;
+        writeIndex += nSubPoints;
+
+        // Adjust offsets relative to next agent's # of subpoints
+        offset += chunkLength;
+        nSubPoints = visData[offset + AGENT_OBJECT_KEYS.indexOf("nSubPoints")];
+        chunkLength = FRAME_DATA_SIZE + nSubPoints;
+        currentAgentData = visData.slice(offset, offset + chunkLength);
+    }
+
+    // Write header data
+    view[0] = frame.frameNumber;
+    view[1] = frame.time;
+    view[2] = agentCount;
+
+    const arrayBuffer: ArrayBuffer = view.buffer;
+    const frameData: CachedFrame = {
+        data: arrayBuffer,
+        frameNumber: frame.frameNumber,
+        time: frame.time,
+        agentCount: agentCount,
+        size: totalSize,
     };
+
+    return frameData;
 }
 
-export { parseVisDataMessage };
-export type { ParsedBundle };
+function calculateBufferSize(data: number[]): number {
+    let size = AGENT_HEADER_SIZE * 4; // Header size in bytes
+    let index = 0;
+
+    while (index < data.length) {
+        size += FRAME_DATA_SIZE * 4; // Agent header size in bytes
+        const nSubPoints =
+            data[index + AGENT_OBJECT_KEYS.indexOf("nSubPoints")];
+        size += nSubPoints * 4; // Subpoints size in bytes
+        index += FRAME_DATA_SIZE + nSubPoints;
+    }
+
+    return size;
+}
+
+export { parseVisDataMessage, calculateBufferSize };

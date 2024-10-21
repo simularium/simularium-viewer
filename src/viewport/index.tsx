@@ -47,6 +47,7 @@ type ViewportProps = {
     onRecordedMovie?: (blob: Blob) => void; // providing this callback enables movie recording
     disableCache?: boolean;
     onFollowObjectChanged?: (agentData: AgentData) => void; // passes agent data about the followed agent to the front end
+    maxCacheSize?: number;
 } & Partial<DefaultProps>;
 
 const defaultProps = {
@@ -126,10 +127,14 @@ class Viewport extends React.Component<
         this.handleTimeChange = this.handleTimeChange.bind(this);
 
         this.visGeometry = new VisGeometry(loggerLevel);
+        this.props.simulariumController.visData.frameCache.changeSettings({
+            cacheEnabled: !props.disableCache,
+            maxSize: props.maxCacheSize,
+        });
+        if (props.onError) {
+            this.props.simulariumController.visData.setOnError(props.onError);
+        }
         this.props.simulariumController.visData.clearCache();
-        this.props.simulariumController.visData.setCacheEnabled(
-            !this.props.disableCache
-        );
         this.visGeometry.createMaterials(props.agentColors);
         this.vdomRef = React.createRef();
         this.lastRenderTime = Date.now();
@@ -176,7 +181,6 @@ class Viewport extends React.Component<
             onError,
             agentColors,
         } = this.props;
-
         // Update TrajectoryFileInfo format to latest version
         const trajectoryFileInfo: TrajectoryFileInfo =
             updateTrajectoryFileInfoFormat(msg, onError);
@@ -378,9 +382,9 @@ class Viewport extends React.Component<
             this.visGeometry.toggleControls(lockedCamera);
         }
         if (prevProps.disableCache !== disableCache) {
-            this.props.simulariumController.visData.setCacheEnabled(
-                !disableCache
-            );
+            this.props.simulariumController.visData.frameCache.changeSettings({
+                cacheEnabled: !disableCache,
+            });
         }
         if (prevState.showRenderParamsGUI !== this.state.showRenderParamsGUI) {
             if (this.state.showRenderParamsGUI) {
@@ -600,8 +604,8 @@ class Viewport extends React.Component<
         const changes: ColorAssignment[] = [];
         appliedColors.forEach((agent) => {
             const agentIds = this.selectionInterface.getAgentIdsByNamesAndTags([
-                    { name: agent.name, tags: [] },
-                ]);
+                { name: agent.name, tags: [] },
+            ]);
             changes.push({ agentIds, color: agent.color });
             agent.displayStates.forEach((state) => {
                 const stateIds =
@@ -640,13 +644,15 @@ class Viewport extends React.Component<
 
                 return;
             }
-
-            if (visData.currentFrameData.time != this.lastRenderedAgentTime) {
-                const currentAgents = visData.currentFrame();
-                if (currentAgents.length > 0) {
-                    this.dispatchUpdatedTime(visData.currentFrameData);
-                    this.visGeometry.update(currentAgents);
-                    this.lastRenderedAgentTime = visData.currentFrameData.time;
+            const currentFrame = visData.currentFrameData;
+            if (currentFrame.time != this.lastRenderedAgentTime) {
+                if (currentFrame.agentCount > 0) {
+                    this.dispatchUpdatedTime({
+                        time: currentFrame.time,
+                        frameNumber: currentFrame.frameNumber,
+                    });
+                    this.visGeometry.update(currentFrame);
+                    this.lastRenderedAgentTime = currentFrame.time;
                     this.updateFollowObjectData();
                 }
             }

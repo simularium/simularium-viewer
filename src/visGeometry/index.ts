@@ -42,10 +42,12 @@ import {
     DEFAULT_CAMERA_Z_POSITION,
     DEFAULT_CAMERA_SPEC,
     nullAgent,
+    AGENT_HEADER_SIZE,
 } from "../constants";
 import {
     AgentData,
     AgentDisplayDataWithGeometry,
+    CachedFrame,
     CameraSpec,
     Coordinates3d,
     EncodedTypeMapping,
@@ -65,7 +67,12 @@ import {
     MeshLoadRequest,
     PDBGeometry,
 } from "./types";
-import { checkAndSanitizePath } from "../util";
+import {
+    checkAndSanitizePath,
+    getAgentDataFromBuffer,
+    getNextAgentOffset,
+    nullCachedFrame,
+} from "../util";
 import ColorHandler from "./ColorHandler";
 
 const MAX_PATH_LEN = 32;
@@ -119,6 +126,7 @@ class VisGeometry {
     public followObjectId: number;
     public visAgents: VisAgent[];
     public visAgentInstances: Map<number, VisAgent>;
+    private availableAgentPool: VisAgent[] = [];
     public fixLightsToCamera: boolean;
     public highlightedIds: number[];
     public hiddenIds: number[];
@@ -146,7 +154,7 @@ class VisGeometry {
     public colorHandler: ColorHandler;
     public renderer: SimulariumRenderer;
     public legacyRenderer: LegacyRenderer;
-    public currentSceneAgents: AgentData[];
+    public currentSceneData: CachedFrame;
     public colorsData: Float32Array;
     public lightsGroup: Group;
     public agentPathGroup: Group;
@@ -187,6 +195,7 @@ class VisGeometry {
         this.followObjectId = NO_AGENT;
         this.visAgents = [];
         this.visAgentInstances = new Map<number, VisAgent>();
+        this.availableAgentPool = [];
         this.fixLightsToCamera = true;
         this.highlightedIds = [];
         this.hiddenIds = [];
@@ -257,7 +266,7 @@ class VisGeometry {
         this.tickIntervalLength = 0;
         this.boxNearZ = 0;
         this.boxFarZ = 100;
-        this.currentSceneAgents = [];
+        this.currentSceneData = nullCachedFrame();
         this.colorsData = new Float32Array(0);
         this.lodBias = 0;
         this.lodDistanceStops = [100, 200, 400, Number.MAX_VALUE];
@@ -455,19 +464,19 @@ class VisGeometry {
             .addInput(settings, "lodBias", { min: 0, max: 4, step: 1 })
             .on("change", (event) => {
                 this.lodBias = event.value;
-                this.updateScene(this.currentSceneAgents);
+                this.updateScene(this.currentSceneData);
             });
         lodFolder.addInput(settings, "lod0").on("change", (event) => {
             this.lodDistanceStops[0] = event.value;
-            this.updateScene(this.currentSceneAgents);
+            this.updateScene(this.currentSceneData);
         });
         lodFolder.addInput(settings, "lod1").on("change", (event) => {
             this.lodDistanceStops[1] = event.value;
-            this.updateScene(this.currentSceneAgents);
+            this.updateScene(this.currentSceneData);
         });
         lodFolder.addInput(settings, "lod2").on("change", (event) => {
             this.lodDistanceStops[2] = event.value;
-            this.updateScene(this.currentSceneAgents);
+            this.updateScene(this.currentSceneData);
         });
         this.renderer.setupGui(this.gui);
     }
@@ -497,7 +506,7 @@ class VisGeometry {
             this.constructInstancedFibers();
         }
 
-        this.updateScene(this.currentSceneAgents);
+        this.updateScene(this.currentSceneData);
     }
 
     private constructInstancedFibers() {
@@ -686,7 +695,7 @@ class VisGeometry {
                 visAgent.setFollowed(true);
             }
         }
-        this.updateScene(this.currentSceneAgents);
+        this.updateScene(this.currentSceneData);
     }
 
     public unfollow(): void {
@@ -695,12 +704,12 @@ class VisGeometry {
 
     public setVisibleByIds(hiddenIds: number[]): void {
         this.hiddenIds = hiddenIds;
-        this.updateScene(this.currentSceneAgents);
+        this.updateScene(this.currentSceneData);
     }
 
     public setHighlightByIds(ids: number[]): void {
         this.highlightedIds = ids;
-        this.updateScene(this.currentSceneAgents);
+        this.updateScene(this.currentSceneData);
     }
 
     public dehighlight(): void {
@@ -741,7 +750,7 @@ class VisGeometry {
             }
         }
 
-        this.updateScene(this.currentSceneAgents);
+        this.updateScene(this.currentSceneData);
     }
 
     private setupControls(disableControls: boolean): void {
@@ -1128,7 +1137,7 @@ class VisGeometry {
                 newColorData.colorArray
             );
         });
-        this.updateScene(this.currentSceneAgents);
+        this.updateScene(this.currentSceneData);
     }
 
     /**
@@ -1218,7 +1227,7 @@ class VisGeometry {
                     this.logger.info(reason);
                 });
         });
-        this.updateScene(this.currentSceneAgents);
+        this.updateScene(this.currentSceneData);
     }
 
     public setTickIntervalLength(axisLength: number): void {
@@ -1530,8 +1539,10 @@ class VisGeometry {
     /**
      *   Update Scene
      **/
-    private updateScene(agents: AgentData[]): void {
-        this.currentSceneAgents = agents;
+    private updateScene(frameData: CachedFrame): void {
+        this.currentSceneData = frameData;
+        const view = new Float32Array(frameData.data);
+        const agentCount = frameData.agentCount;
 
         // values for updating agent path
         let dx = 0,
@@ -1542,51 +1553,49 @@ class VisGeometry {
             lastz = 0;
 
         this.legacyRenderer.beginUpdate(this.scene);
-
         this.fibers.beginUpdate();
         this.geometryStore.forEachMesh((agentGeo) => {
             agentGeo.geometry.instances.beginUpdate();
         });
-        // these lists must be emptied on every scene update.
+
+        // Clear draw lists
         this.agentsWithPdbsToDraw = [];
         this.agentPdbsToDraw = [];
 
-        // First, mark ALL inactive and invisible.
-        // Note this implies a memory leak of sorts:
-        // the number of agent instances can only grow during one trajectory run.
-        // We just hide the unused ones.
-        // Worst case is if each frame uses completely different (incrementing) instance ids.
-        for (let i = 0; i < MAX_MESHES && i < this.visAgents.length; i += 1) {
-            const visAgent = this.visAgents[i];
-            visAgent.hideAndDeactivate();
+        // Mark all agents as inactive and invisible
+        for (let i = 0; i < MAX_MESHES && i < this.visAgents.length; i++) {
+            this.visAgents[i].hideAndDeactivate();
         }
 
-        agents.forEach((agentData) => {
+        let offset = AGENT_HEADER_SIZE;
+        const newVisAgentInstances = new Map<number, VisAgent>();
+        for (let i = 0; i < agentCount; i++) {
+            const agentData = getAgentDataFromBuffer(view, offset);
             const visType = agentData.visType;
             const instanceId = agentData.instanceId;
             const typeId = agentData.type;
+
             lastx = agentData.x;
             lasty = agentData.y;
             lastz = agentData.z;
 
-            // look up last agent with this instanceId.
             let visAgent = this.visAgentInstances.get(instanceId);
 
             const path = this.findPathForAgent(instanceId);
-            if (path) {
-                if (visAgent) {
-                    lastx = visAgent.agentData.x;
-                    lasty = visAgent.agentData.y;
-                    lastz = visAgent.agentData.z;
-                }
+            if (path && visAgent) {
+                lastx = visAgent.agentData.x;
+                lasty = visAgent.agentData.y;
+                lastz = visAgent.agentData.z;
             }
 
             if (!visAgent) {
-                visAgent = this.createAgent();
+                if (this.availableAgentPool.length > 0) {
+                    visAgent = this.availableAgentPool.pop() as VisAgent;
+                } else {
+                    visAgent = this.createAgent();
+                }
                 visAgent.agentData.instanceId = instanceId;
-                //visAgent.mesh.userData = { id: instanceId };
                 this.visAgentInstances.set(instanceId, visAgent);
-                // set hidden so that it is revealed later in this function:
                 visAgent.hidden = true;
             }
 
@@ -1597,7 +1606,6 @@ class VisGeometry {
             }
 
             visAgent.active = true;
-
             // update the agent!
             visAgent.agentData = agentData;
 
@@ -1609,13 +1617,13 @@ class VisGeometry {
             const isHidden = this.hiddenIds.includes(visAgent.agentData.type);
             visAgent.setHidden(isHidden);
             if (visAgent.hidden) {
-                return;
+                offset = getNextAgentOffset(view, offset);
+                continue;
             }
 
             visAgent.setColor(
                 this.colorHandler.getColorInfoForAgentType(typeId)
             );
-
             // if not fiber...
             if (visType === VisTypes.ID_VIS_TYPE_DEFAULT) {
                 const response = this.getGeoForAgentType(typeId);
@@ -1623,7 +1631,8 @@ class VisGeometry {
                     this.logger.warn(
                         `No mesh nor pdb available for ${typeId}? Should be unreachable code`
                     );
-                    return;
+                    offset = getNextAgentOffset(view, offset);
+                    continue;
                 }
                 const { geometry, displayType } = response;
                 if (geometry && displayType === GeometryDisplayType.PDB) {
@@ -1657,7 +1666,16 @@ class VisGeometry {
             } else if (visType === VisTypes.ID_VIS_TYPE_FIBER) {
                 this.addFiberToDrawList(typeId, visAgent, agentData);
             }
-        });
+            newVisAgentInstances.set(instanceId, visAgent);
+            offset = getNextAgentOffset(view, offset);
+        }
+        for (const [key, visAgent] of this.visAgentInstances) {
+            if (!newVisAgentInstances.has(key)) {
+                visAgent.resetAgent();
+                this.availableAgentPool.push(visAgent);
+            }
+        }
+        this.visAgentInstances = newVisAgentInstances;
 
         this.fibers.endUpdate();
         this.geometryStore.forEachMesh((agentGeo) => {
@@ -1874,7 +1892,7 @@ class VisGeometry {
         // remove current scene agents.
         this.visAgentInstances.clear();
         this.visAgents = [];
-        this.currentSceneAgents = [];
+        this.currentSceneData = nullCachedFrame();
 
         this.dehighlight();
     }
@@ -1903,7 +1921,7 @@ class VisGeometry {
         }
     }
 
-    public update(agents: AgentData[]): void {
+    public update(agents: CachedFrame): void {
         this.updateScene(agents);
     }
 }
