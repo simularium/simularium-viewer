@@ -38,39 +38,32 @@ export class DummyRemoteSimulator extends RemoteSimulator {
         setInterval(this.broadcast.bind(this), 200);
     }
 
-    private getDataBundle(frameNumber: number, bundleSize: number): string {
+    private getDataBundle(frameNumber: number): string {
         const msg: VisDataMessage = {
             msgType: NetMessageEnum.ID_VIS_DATA_ARRIVE,
             bundleStart: frameNumber,
-            bundleSize: bundleSize,
+            bundleSize: 1, // backend only sends one frame at a time now
             bundleData: [],
             fileName: this.lastRequestedFile,
         };
-
-        const bundleData: VisDataFrame[] = [];
-        for (let i = 0; i < bundleSize; i++) {
-            const data: VisDataFrame = {
-                frameNumber: frameNumber,
-                time: frameNumber * this.timeStep,
-                data: [
-                    1000,
-                    0,
-                    43,
-                    Math.cos(frameNumber / 4) * 5,
-                    Math.sin(frameNumber / 4) * 5,
-                    0,
-                    0,
-                    0,
-                    10,
-                    1,
-                    0,
-                ],
-            };
-            bundleData.push(data);
-            frameNumber++;
-        }
-
-        msg.bundleData = bundleData;
+        const data: VisDataFrame = {
+            frameNumber: frameNumber,
+            time: frameNumber,
+            data: [
+                1000,
+                0,
+                43,
+                Math.cos(frameNumber / 4) * 5,
+                Math.sin(frameNumber / 4) * 5,
+                0,
+                0,
+                0,
+                10,
+                1,
+                0,
+            ],
+        };
+        msg.bundleData.push(data);
         return JSON.stringify(msg);
     }
 
@@ -84,11 +77,10 @@ export class DummyRemoteSimulator extends RemoteSimulator {
             return;
         }
 
-        const bundleSize = 5;
         const msg: NetMessage = JSON.parse(
-            this.getDataBundle(this.frameCounter, bundleSize)
+            this.getDataBundle(this.frameCounter)
         );
-        this.frameCounter += bundleSize;
+        this.frameCounter++;
         this.onJsonIdVisDataArrive(msg);
     }
 
@@ -149,7 +141,7 @@ export class DummyRemoteSimulator extends RemoteSimulator {
             this.onTrajectoryFileInfoArrive({ data: JSON.stringify(tfi) });
 
             // Send the first frame of data
-            const msg: NetMessage = JSON.parse(this.getDataBundle(0, 1));
+            const msg: NetMessage = JSON.parse(this.getDataBundle(0));
             this.frameCounter++;
             this.onJsonIdVisDataArrive(msg);
         }, this.commandLatencyMS);
@@ -159,7 +151,7 @@ export class DummyRemoteSimulator extends RemoteSimulator {
         setTimeout(() => {
             this.frameCounter = frameNumber;
 
-            const msg: NetMessage = JSON.parse(this.getDataBundle(0, 1));
+            const msg: NetMessage = JSON.parse(this.getDataBundle(frameNumber));
             this.frameCounter;
             this.onJsonIdVisDataArrive(msg);
         }, this.commandLatencyMS);
@@ -170,7 +162,7 @@ export class DummyRemoteSimulator extends RemoteSimulator {
             this.frameCounter = time / this.timeStep;
 
             const msg: NetMessage = JSON.parse(
-                this.getDataBundle(this.frameCounter, 1)
+                this.getDataBundle(this.frameCounter)
             );
             this.frameCounter++;
             this.onJsonIdVisDataArrive(msg);
