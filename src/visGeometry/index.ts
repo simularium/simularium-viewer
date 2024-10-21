@@ -68,7 +68,6 @@ import {
 } from "./types";
 import { checkAndSanitizePath } from "../util";
 import ColorHandler from "./ColorHandler";
-import { HasThreeJsContext } from "@aics/volume-viewer";
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 100000;
@@ -1000,15 +999,6 @@ class VisGeometry {
             this.tempVolumeGroup.remove(this.tempVolumeGroup.children[i]);
         }
 
-        const volRenderContext: HasThreeJsContext = {
-            camera: this.camera,
-            // if not for `renderer` already being used for
-            // `SimulariumRenderer`, we could use `this` below.
-            renderer: this.threejsrenderer,
-            // equivalent prop to TrackballControls.scale as far as I can tell?
-            orthoScale: this.controls.zoomO,
-        };
-
         const canvasWidth = this.threejsrenderer.domElement.width;
         const canvasHeight = this.threejsrenderer.domElement.height;
 
@@ -1043,13 +1033,16 @@ class VisGeometry {
                         const isOrtho = (this.camera as OrthographicCamera)
                             .isOrthographicCamera;
                         const orthoScale = isOrtho
-                            ? this.camera.zoom
+                            ? 0.5 / this.camera.zoom
                             : undefined;
-                        entry.geometry.onBeforeRender(
-                            volRenderContext,
+                        entry.geometry.setViewportSize(
                             canvasWidth,
                             canvasHeight,
                             orthoScale
+                        );
+                        entry.geometry.onBeforeRender(
+                            this.threejsrenderer,
+                            this.camera
                         );
                         this.tempVolumeGroup.add(volObj);
                     }

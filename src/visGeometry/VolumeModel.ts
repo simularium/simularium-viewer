@@ -1,11 +1,13 @@
-import { Euler, Object3D, Vector3 } from "three";
-
 import {
-    HasThreeJsContext,
-    Lut,
-    Volume,
-    VolumeDrawable,
-} from "@aics/volume-viewer";
+    Euler,
+    Object3D,
+    OrthographicCamera,
+    PerspectiveCamera,
+    Vector3,
+    WebGLRenderer,
+} from "three";
+
+import { Lut, Volume, VolumeDrawable } from "@aics/volume-viewer";
 
 import { AgentData } from "../simularium/types";
 
@@ -77,7 +79,7 @@ export default class VolumeModel {
         return this.drawable?.sceneRoot;
     }
 
-    public onChannelLoaded(vol: Volume, channelIndex: number): void {
+    public onChannelLoaded(_vol: Volume, channelIndex: number): void {
         if (this.drawable) {
             const isEnabled = this.channelsEnabled[channelIndex];
             this.drawable.setVolumeChannelEnabled(channelIndex, isEnabled);
@@ -95,11 +97,10 @@ export default class VolumeModel {
         }
     }
 
-    public onBeforeRender(
-        context: HasThreeJsContext,
+    public setViewportSize(
         width: number,
         height: number,
-        orthoScale: number | undefined
+        orthoScale?: number
     ): void {
         if (this.drawable) {
             const isOrtho = orthoScale !== undefined;
@@ -108,8 +109,14 @@ export default class VolumeModel {
                 this.drawable.setOrthoScale(orthoScale);
             }
             this.drawable.setResolution(width, height);
-            this.drawable.onAnimate(context);
         }
+    }
+
+    public onBeforeRender(
+        renderer: WebGLRenderer,
+        camera: PerspectiveCamera | OrthographicCamera
+    ): void {
+        this.drawable?.onAnimate(renderer, camera, undefined);
     }
 
     public setSize(width: number, height: number): void {
