@@ -2,7 +2,6 @@ import { noop } from "lodash";
 
 import { nullCachedFrame } from "../util";
 
-import * as util from "./ThreadUtil";
 import { VisDataMessage, CachedFrame } from "./types";
 import { parseVisDataMessage } from "./VisDataParse";
 import { VisDataCache } from "./VisDataCache";
@@ -11,7 +10,6 @@ import { BYTE_SIZE_64_BIT_NUM } from "../constants";
 
 class VisData {
     public frameCache: VisDataCache;
-    private webWorker: Worker | null;
 
     private frameToWaitFor: number;
     private lockedForFrame: boolean;
@@ -38,21 +36,7 @@ class VisData {
         return frameData;
     }
 
-    private setupWebWorker() {
-        this.webWorker = new Worker(
-            new URL("../visGeometry/workers/visDataWorker", import.meta.url),
-            { type: "module" }
-        );
-        this.webWorker.onmessage = (event) => {
-            this.addFrameToCache(event.data);
-        };
-    }
-
     public constructor() {
-        this.webWorker = null;
-        if (util.ThreadUtil.browserSupportsWebWorkers()) {
-            this.setupWebWorker();
-        }
         this.currentFrameNumber = -1;
         this.frameCache = new VisDataCache();
         this.frameToWaitFor = 0;
@@ -130,17 +114,6 @@ class VisData {
         this.clearCache();
     }
 
-    public cancelAllWorkers(): void {
-        // we need to be able to terminate any queued work in the worker during trajectory changeovers
-        if (
-            util.ThreadUtil.browserSupportsWebWorkers() &&
-            this.webWorker !== null
-        ) {
-            this.webWorker.terminate();
-            this.setupWebWorker();
-        }
-    }
-
     private parseAgentsFromVisDataMessage(msg: VisDataMessage): void {
         /**
          *   visDataMsg = {
@@ -173,14 +146,7 @@ class VisData {
             this.frameExceedsCacheSizeError(parsedMsg.size);
             return;
         }
-        if (
-            util.ThreadUtil.browserSupportsWebWorkers() &&
-            this.webWorker !== null
-        ) {
-            this.webWorker.postMessage(parsedMsg);
-        } else {
-            this.addFrameToCache(parsedMsg);
-        }
+        this.addFrameToCache(parsedMsg);
     }
 
     public parseAgentsFromFrameData(msg: VisDataMessage | ArrayBuffer): void {
