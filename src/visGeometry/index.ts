@@ -1033,7 +1033,8 @@ class VisGeometry {
                         const isOrtho = (this.camera as OrthographicCamera)
                             .isOrthographicCamera;
                         const orthoScale = isOrtho
-                            ? 1 / this.camera.zoom
+                            ? (this.camera as OrthographicCamera).top /
+                              this.camera.zoom
                             : undefined;
                         entry.geometry.setViewportSize(
                             canvasWidth,

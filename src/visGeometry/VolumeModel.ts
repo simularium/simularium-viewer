@@ -109,9 +109,7 @@ export default class VolumeModel {
             const isOrtho = orthoScale !== undefined;
             this.drawable.setIsOrtho(isOrtho);
             if (isOrtho) {
-                this.drawable.setOrthoScale(
-                    (orthoScale * this.scale) / (height / width)
-                );
+                this.drawable.setOrthoScale(orthoScale);
             }
             this.drawable.setResolution(width, height);
         }
