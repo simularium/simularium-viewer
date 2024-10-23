@@ -30,7 +30,11 @@ export default class VolumeSim implements IClientSimulatorImpl {
             0, // ry
             0, // rz
             10.0, // collision radius
-            0, // subpoints
+            4, // subpoints
+            0,
+            0,
+            1,
+            2,
 
             // AGENT 2 (sphere, to test volume-mesh intersection)
             VisTypes.ID_VIS_TYPE_DEFAULT, // vis type
@@ -38,7 +42,7 @@ export default class VolumeSim implements IClientSimulatorImpl {
             1, // type
             0, // x
             0, // y
-            6, // z
+            3, // z
             0, // rx
             0, // ry
             0, // rz
