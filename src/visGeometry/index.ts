@@ -106,6 +106,11 @@ function removeByName(group: Group, name: string): void {
 
 const coordsToVector = ({ x, y, z }: Coordinates3d) => new Vector3(x, y, z);
 
+export const isOrthographicCamera = (
+    def: PerspectiveCamera | OrthographicCamera
+): def is OrthographicCamera =>
+    def && !!(def as OrthographicCamera).isOrthographicCamera;
+
 type Bounds = readonly [number, number, number, number, number, number];
 
 class VisGeometry {
@@ -1030,11 +1035,8 @@ class VisGeometry {
                 } else if (displayType === GeometryDisplayType.VOLUME) {
                     const volObj = entry.geometry.getObject3D();
                     if (volObj) {
-                        const isOrtho = (this.camera as OrthographicCamera)
-                            .isOrthographicCamera;
-                        const orthoScale = isOrtho
-                            ? (this.camera as OrthographicCamera).top /
-                              this.camera.zoom
+                        const orthoScale = isOrthographicCamera(this.camera)
+                            ? this.camera.top / this.camera.zoom
                             : undefined;
                         entry.geometry.setViewportSize(
                             canvasWidth,
