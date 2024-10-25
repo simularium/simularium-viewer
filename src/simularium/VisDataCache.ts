@@ -78,6 +78,7 @@ class VisDataCache {
             }
             currentNode = currentNode.next;
         }
+        return undefined;
     }
 
     public containsTime(time: number): boolean {
@@ -142,10 +143,6 @@ class VisDataCache {
     }
 
     public getFrameAtTime(time: number): CachedFrame | undefined {
-        // return this.getFrameAtCondition(
-        //     (node) => compareTimes(node.data.time, time, 0) === 0,
-        //     time
-        // );
         const frame = this.getFrameAtCondition(
             (node) => compareTimes(node.data.time, time, 0) === 0
         );
@@ -153,10 +150,6 @@ class VisDataCache {
     }
 
     public getFrameAtFrameNumber(frameNumber: number): CachedFrame | undefined {
-        // return this.getFrameAtCondition(
-        //     (node) => node.data["frameNumber"] === frameNumber,
-        //     frameNumber
-        // );
         const frame = this.getFrameAtCondition(
             (node) => node.data["frameNumber"] === frameNumber
         );
