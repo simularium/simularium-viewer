@@ -9,3 +9,9 @@ style
 .vscode
 coverage
 dev-build
+__pycache__/
+*.pyc
+venv/
+env/
+*/venv/
+*/env/

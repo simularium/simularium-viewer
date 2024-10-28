@@ -338,7 +338,6 @@ export default class SimulariumController {
 
         this.visData.WaitForFrame(0);
         this.visData.clearForNewTrajectory();
-        this.visData.cancelAllWorkers();
 
         this.stop();
 

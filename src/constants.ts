@@ -49,3 +49,8 @@ export const nullAgent = (): AgentData => {
         subpoints: [],
     };
 };
+
+// the size of the header before the agent data in the binary file
+export const AGENT_HEADER_SIZE = 3; // frameNumber, time, agentCount
+
+export const BYTE_SIZE_64_BIT_NUM = 8;
