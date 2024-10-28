@@ -290,7 +290,6 @@ var SimulariumController = /*#__PURE__*/function () {
       }
       this.visData.WaitForFrame(0);
       this.visData.clearForNewTrajectory();
-      this.visData.cancelAllWorkers();
       this.stop();
 
       // Do I still need this? test...

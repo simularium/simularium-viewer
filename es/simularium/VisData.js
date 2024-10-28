@@ -3,7 +3,6 @@ import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import { noop } from "lodash";
 import { nullCachedFrame } from "../util";
-import * as util from "./ThreadUtil";
 import { parseVisDataMessage } from "./VisDataParse";
 import { VisDataCache } from "./VisDataCache";
 import { ErrorLevel, FrontEndError } from "./FrontEndError";
@@ -12,16 +11,11 @@ var VisData = /*#__PURE__*/function () {
   function VisData() {
     _classCallCheck(this, VisData);
     _defineProperty(this, "frameCache", void 0);
-    _defineProperty(this, "webWorker", void 0);
     _defineProperty(this, "frameToWaitFor", void 0);
     _defineProperty(this, "lockedForFrame", void 0);
     _defineProperty(this, "currentFrameNumber", void 0);
     _defineProperty(this, "timeStepSize", void 0);
     _defineProperty(this, "onError", void 0);
-    this.webWorker = null;
-    if (util.ThreadUtil.browserSupportsWebWorkers()) {
-      this.setupWebWorker();
-    }
     this.currentFrameNumber = -1;
     this.frameCache = new VisDataCache();
     this.frameToWaitFor = 0;
@@ -30,17 +24,6 @@ var VisData = /*#__PURE__*/function () {
     this.onError = noop;
   }
   _createClass(VisData, [{
-    key: "setupWebWorker",
-    value: function setupWebWorker() {
-      var _this = this;
-      this.webWorker = new Worker(new URL("../visGeometry/workers/visDataWorker", import.meta.url), {
-        type: "module"
-      });
-      this.webWorker.onmessage = function (event) {
-        _this.addFrameToCache(event.data);
-      };
-    }
-  }, {
     key: "setOnError",
     value: function setOnError(onError) {
       this.onError = onError;
@@ -119,15 +102,6 @@ var VisData = /*#__PURE__*/function () {
       this.clearCache();
     }
   }, {
-    key: "cancelAllWorkers",
-    value: function cancelAllWorkers() {
-      // we need to be able to terminate any queued work in the worker during trajectory changeovers
-      if (util.ThreadUtil.browserSupportsWebWorkers() && this.webWorker !== null) {
-        this.webWorker.terminate();
-        this.setupWebWorker();
-      }
-    }
-  }, {
     key: "parseAgentsFromVisDataMessage",
     value: function parseAgentsFromVisDataMessage(msg) {
       /**
@@ -158,11 +132,7 @@ var VisData = /*#__PURE__*/function () {
         this.frameExceedsCacheSizeError(parsedMsg.size);
         return;
       }
-      if (util.ThreadUtil.browserSupportsWebWorkers() && this.webWorker !== null) {
-        this.webWorker.postMessage(parsedMsg);
-      } else {
-        this.addFrameToCache(parsedMsg);
-      }
+      this.addFrameToCache(parsedMsg);
     }
   }, {
     key: "parseAgentsFromFrameData",

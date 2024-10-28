@@ -3,14 +3,12 @@ import { VisDataCache } from "./VisDataCache";
 import { FrontEndError } from "./FrontEndError";
 declare class VisData {
     frameCache: VisDataCache;
-    private webWorker;
     private frameToWaitFor;
     private lockedForFrame;
     private currentFrameNumber;
     timeStepSize: number;
     onError: (error: FrontEndError) => void;
     private static parseOneBinaryFrame;
-    private setupWebWorker;
     constructor();
     setOnError(onError: (error: FrontEndError) => void): void;
     get currentFrameData(): CachedFrame;
@@ -27,7 +25,6 @@ declare class VisData {
     WaitForFrame(frameNumber: number): void;
     clearCache(): void;
     clearForNewTrajectory(): void;
-    cancelAllWorkers(): void;
     private parseAgentsFromVisDataMessage;
     parseAgentsFromFrameData(msg: VisDataMessage | ArrayBuffer): void;
     parseAgentsFromNetData(msg: VisDataMessage | ArrayBuffer): void;
