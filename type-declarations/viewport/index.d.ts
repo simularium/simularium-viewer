@@ -28,6 +28,7 @@ type ViewportProps = {
     onRecordedMovie?: (blob: Blob) => void;
     disableCache?: boolean;
     onFollowObjectChanged?: (agentData: AgentData) => void;
+    maxCacheSize?: number;
 } & Partial<DefaultProps>;
 declare const defaultProps: {
     renderStyle: RenderStyle;

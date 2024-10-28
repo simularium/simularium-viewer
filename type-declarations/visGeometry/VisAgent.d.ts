@@ -14,6 +14,7 @@ export default class VisAgent {
     highlighted: boolean;
     hidden: boolean;
     constructor(name: string);
+    resetAgent(): void;
     resetMesh(): void;
     setColor(colorInfo: AgentColorInfo): void;
     setHidden(hidden: boolean): void;

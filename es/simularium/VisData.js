@@ -1,38 +1,34 @@
-import _toConsumableArray from "@babel/runtime/helpers/toConsumableArray";
 import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
-import { compareTimes } from "../util";
+import { noop } from "lodash";
+import { nullCachedFrame } from "../util";
 import * as util from "./ThreadUtil";
-import { AGENT_OBJECT_KEYS } from "./types";
-import { FrontEndError, ErrorLevel } from "./FrontEndError";
 import { parseVisDataMessage } from "./VisDataParse";
-import { nullAgent } from "../constants";
+import { VisDataCache } from "./VisDataCache";
+import { ErrorLevel, FrontEndError } from "./FrontEndError";
+import { BYTE_SIZE_64_BIT_NUM } from "../constants";
 var VisData = /*#__PURE__*/function () {
   function VisData() {
     _classCallCheck(this, VisData);
     _defineProperty(this, "frameCache", void 0);
-    _defineProperty(this, "frameDataCache", void 0);
-    _defineProperty(this, "enableCache", void 0);
     _defineProperty(this, "webWorker", void 0);
     _defineProperty(this, "frameToWaitFor", void 0);
     _defineProperty(this, "lockedForFrame", void 0);
-    _defineProperty(this, "cacheFrame", void 0);
+    _defineProperty(this, "currentFrameNumber", void 0);
     _defineProperty(this, "timeStepSize", void 0);
+    _defineProperty(this, "onError", void 0);
     this.webWorker = null;
     if (util.ThreadUtil.browserSupportsWebWorkers()) {
       this.setupWebWorker();
     }
-    this.frameCache = [];
-    this.frameDataCache = [];
-    this.cacheFrame = -1;
-    this.enableCache = true;
+    this.currentFrameNumber = -1;
+    this.frameCache = new VisDataCache();
     this.frameToWaitFor = 0;
     this.lockedForFrame = false;
     this.timeStepSize = 0;
+    this.onError = noop;
   }
-
-  //get time() { return this.cacheFrame < this.frameDataCache.length ? this.frameDataCache[this.cacheFrame] : -1 }
   _createClass(VisData, [{
     key: "setupWebWorker",
     value: function setupWebWorker() {
@@ -40,34 +36,34 @@ var VisData = /*#__PURE__*/function () {
       this.webWorker = new Worker(new URL("../visGeometry/workers/visDataWorker", import.meta.url), {
         type: "module"
       });
-
-      // event.data is of type ParsedBundle
       this.webWorker.onmessage = function (event) {
-        if (!_this.enableCache) {
-          _this.frameDataCache = _toConsumableArray(event.data.frameDataArray);
-          _this.frameCache = _toConsumableArray(event.data.parsedAgentDataArray);
-          return;
-        }
-        Array.prototype.push.apply(_this.frameDataCache, event.data.frameDataArray);
-        Array.prototype.push.apply(_this.frameCache, event.data.parsedAgentDataArray);
+        _this.addFrameToCache(event.data);
       };
+    }
+  }, {
+    key: "setOnError",
+    value: function setOnError(onError) {
+      this.onError = onError;
     }
   }, {
     key: "currentFrameData",
     get: function get() {
-      if (this.frameDataCache.length > 0) {
-        if (this.cacheFrame < 0) {
-          return this.frameDataCache[0];
-        } else if (this.cacheFrame >= this.frameDataCache.length) {
-          return this.frameDataCache[this.frameDataCache.length - 1];
-        } else {
-          return this.frameDataCache[this.cacheFrame];
+      if (!this.frameCache.hasFrames()) {
+        return nullCachedFrame();
+      }
+      if (this.currentFrameNumber < 0) {
+        var firstFrame = this.frameCache.getFirstFrame();
+        if (firstFrame) {
+          this.currentFrameNumber = firstFrame.frameNumber;
+          return firstFrame;
+        }
+      } else {
+        var frame = this.frameCache.getFrameAtFrameNumber(this.currentFrameNumber);
+        if (frame !== undefined) {
+          return frame;
         }
       }
-      return {
-        frameNumber: 0,
-        time: 0
-      };
+      return nullCachedFrame();
     }
 
     /**
@@ -76,59 +72,27 @@ var VisData = /*#__PURE__*/function () {
   }, {
     key: "hasLocalCacheForTime",
     value: function hasLocalCacheForTime(time) {
-      // TODO: debug compareTimes
-      if (!this.enableCache) {
-        return false;
-      }
-      if (this.frameDataCache.length < 1) {
-        return false;
-      }
-      var firstFrameTime = this.frameDataCache[0].time;
-      var lastFrameTime = this.frameDataCache[this.frameDataCache.length - 1].time;
-      var notLessThanFirstFrameTime = compareTimes(time, firstFrameTime, this.timeStepSize) !== -1;
-      var notGreaterThanLastFrameTime = compareTimes(time, lastFrameTime, this.timeStepSize) !== 1;
-      return notLessThanFirstFrameTime && notGreaterThanLastFrameTime;
+      return this.frameCache.containsTime(time);
     }
   }, {
     key: "gotoTime",
     value: function gotoTime(time) {
-      var _this2 = this;
-      this.cacheFrame = -1;
-
-      // Find the index of the frame that has the time matching our target time
-      var frameNumber = this.frameDataCache.findIndex(function (frameData) {
-        return compareTimes(frameData.time, time, _this2.timeStepSize) === 0;
-      });
-
-      // frameNumber is -1 if findIndex() above doesn't find a match
-      if (frameNumber !== -1) {
-        this.cacheFrame = frameNumber;
+      var _this$frameCache$getF;
+      var frameNumber = (_this$frameCache$getF = this.frameCache.getFrameAtTime(time)) === null || _this$frameCache$getF === void 0 ? void 0 : _this$frameCache$getF.frameNumber;
+      if (frameNumber !== undefined) {
+        this.currentFrameNumber = frameNumber;
       }
     }
   }, {
     key: "atLatestFrame",
     value: function atLatestFrame() {
-      if (this.cacheFrame === -1 && this.frameCache.length > 0) {
-        return false;
-      }
-      return this.cacheFrame >= this.frameCache.length - 1;
-    }
-  }, {
-    key: "currentFrame",
-    value: function currentFrame() {
-      if (this.frameCache.length === 0) {
-        return [];
-      } else if (this.cacheFrame === -1) {
-        this.cacheFrame = 0;
-        return this.frameCache[0];
-      }
-      return this.cacheFrame < this.frameCache.length ? this.frameCache[this.cacheFrame] : Array();
+      return this.currentFrameNumber >= this.frameCache.getLastFrameNumber();
     }
   }, {
     key: "gotoNextFrame",
     value: function gotoNextFrame() {
       if (!this.atLatestFrame()) {
-        this.cacheFrame = this.cacheFrame + 1;
+        this.currentFrameNumber += 1;
       }
     }
 
@@ -144,9 +108,8 @@ var VisData = /*#__PURE__*/function () {
   }, {
     key: "clearCache",
     value: function clearCache() {
-      this.frameCache = [];
-      this.frameDataCache = [];
-      this.cacheFrame = -1;
+      this.frameCache.clear();
+      this.currentFrameNumber = -1;
       this.frameToWaitFor = 0;
       this.lockedForFrame = false;
     }
@@ -163,24 +126,6 @@ var VisData = /*#__PURE__*/function () {
         this.webWorker.terminate();
         this.setupWebWorker();
       }
-    }
-  }, {
-    key: "setCacheEnabled",
-    value: function setCacheEnabled(cacheEnabled) {
-      this.enableCache = cacheEnabled;
-    }
-
-    // Add parsed frames to the cache and save the timestamp of the first frame
-  }, {
-    key: "addFramesToCache",
-    value: function addFramesToCache(frames) {
-      if (!this.enableCache) {
-        this.frameDataCache = _toConsumableArray(frames.frameDataArray);
-        this.frameCache = _toConsumableArray(frames.parsedAgentDataArray);
-        return;
-      }
-      Array.prototype.push.apply(this.frameDataCache, frames.frameDataArray);
-      Array.prototype.push.apply(this.frameCache, frames.parsedAgentDataArray);
     }
   }, {
     key: "parseAgentsFromVisDataMessage",
@@ -208,26 +153,28 @@ var VisData = /*#__PURE__*/function () {
           this.frameToWaitFor = 0;
         }
       }
+      var parsedMsg = parseVisDataMessage(visDataMsg);
+      if (this.frameCache.cacheSizeLimited && parsedMsg.size > this.frameCache.maxSize) {
+        this.frameExceedsCacheSizeError(parsedMsg.size);
+        return;
+      }
       if (util.ThreadUtil.browserSupportsWebWorkers() && this.webWorker !== null) {
-        this.webWorker.postMessage(visDataMsg);
+        this.webWorker.postMessage(parsedMsg);
       } else {
-        var frames = parseVisDataMessage(visDataMsg);
-        this.addFramesToCache(frames);
+        this.addFrameToCache(parsedMsg);
       }
     }
   }, {
     key: "parseAgentsFromFrameData",
     value: function parseAgentsFromFrameData(msg) {
       if (msg instanceof ArrayBuffer) {
-        var frames = VisData.parseOneBinaryFrame(msg);
-        if (frames.frameDataArray.length > 0 && frames.frameDataArray[0].frameNumber === 0) {
+        var frame = VisData.parseOneBinaryFrame(msg);
+        if (frame.frameNumber === 0) {
           this.clearCache(); // new data has arrived
         }
-        this.addFramesToCache(frames);
+        this.addFrameToCache(frame);
         return;
       }
-
-      // handle VisDataMessage
       this.parseAgentsFromVisDataMessage(msg);
     }
   }, {
@@ -244,43 +191,35 @@ var VisData = /*#__PURE__*/function () {
       }
       this.parseAgentsFromFrameData(msg);
     }
+  }, {
+    key: "addFrameToCache",
+    value: function addFrameToCache(frame) {
+      if (this.frameCache.cacheSizeLimited && frame.size > this.frameCache.maxSize) {
+        this.frameExceedsCacheSizeError(frame.size);
+        return;
+      }
+      this.frameCache.addFrame(frame);
+    }
+  }, {
+    key: "frameExceedsCacheSizeError",
+    value: function frameExceedsCacheSizeError(frameSize) {
+      this.onError(new FrontEndError("Frame size exceeds cache size: ".concat(frameSize, " > ").concat(this.frameCache.maxSize), ErrorLevel.ERROR));
+    }
   }], [{
     key: "parseOneBinaryFrame",
     value: function parseOneBinaryFrame(data) {
-      var parsedAgentDataArray = [];
-      var frameDataArray = [];
       var floatView = new Float32Array(data);
       var intView = new Uint32Array(data);
-      var parsedFrameData = {
+      var frameData = {
+        data: data,
+        frameNumber: floatView[0],
         time: floatView[1],
-        frameNumber: floatView[0]
+        agentCount: intView[2],
+        size: 0
       };
-      var expectedNumAgents = intView[2];
-      frameDataArray.push(parsedFrameData);
-      var AGENTS_OFFSET = 3;
-      var parsedAgentData = [];
-      var j = AGENTS_OFFSET;
-      for (var i = 0; i < expectedNumAgents; i++) {
-        var agentData = nullAgent();
-        for (var k = 0; k < AGENT_OBJECT_KEYS.length; ++k) {
-          agentData[AGENT_OBJECT_KEYS[k]] = floatView[j++];
-        }
-        var nSubPoints = agentData["nSubPoints"];
-        if (!Number.isInteger(nSubPoints)) {
-          throw new FrontEndError("Your data is malformed, non-integer value found for num-subpoints.", ErrorLevel.ERROR, "Number of Subpoints: <pre>".concat(nSubPoints, "</pre>"));
-          break;
-        }
-        // now read sub points.
-        for (var _k = 0; _k < nSubPoints; _k++) {
-          agentData.subpoints.push(floatView[j++]);
-        }
-        parsedAgentData.push(agentData);
-      }
-      parsedAgentDataArray.push(parsedAgentData);
-      return {
-        parsedAgentDataArray: parsedAgentDataArray,
-        frameDataArray: frameDataArray
-      };
+      var numMetadataFields = Object.keys(frameData).length - 1; // exclude "data" field
+      frameData.size = data.byteLength + numMetadataFields * BYTE_SIZE_64_BIT_NUM;
+      return frameData;
     }
   }]);
   return VisData;

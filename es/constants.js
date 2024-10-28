@@ -44,3 +44,8 @@ export var nullAgent = function nullAgent() {
     subpoints: []
   };
 };
+
+// the size of the header before the agent data in the binary file
+export var AGENT_HEADER_SIZE = 3; // frameNumber, time, agentCount
+
+export var BYTE_SIZE_64_BIT_NUM = 8;

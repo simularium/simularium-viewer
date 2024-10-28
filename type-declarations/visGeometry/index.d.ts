@@ -6,7 +6,7 @@ import VisAgent from "./VisAgent";
 import PDBModel from "./PDBModel";
 import AgentPath from "./agentPath";
 import { FrontEndError } from "../simularium/FrontEndError";
-import { AgentData, EncodedTypeMapping, PerspectiveCameraSpec } from "../simularium/types";
+import { AgentData, CachedFrame, EncodedTypeMapping, PerspectiveCameraSpec } from "../simularium/types";
 import SimulariumRenderer from "./rendering/SimulariumRenderer";
 import { LegacyRenderer } from "./rendering/LegacyRenderer";
 import GeometryStore from "./GeometryStore";
@@ -29,6 +29,7 @@ declare class VisGeometry {
     followObjectId: number;
     visAgents: VisAgent[];
     visAgentInstances: Map<number, VisAgent>;
+    private availableAgentPool;
     fixLightsToCamera: boolean;
     highlightedIds: number[];
     hiddenIds: number[];
@@ -51,7 +52,7 @@ declare class VisGeometry {
     colorHandler: ColorHandler;
     renderer: SimulariumRenderer;
     legacyRenderer: LegacyRenderer;
-    currentSceneAgents: AgentData[];
+    currentSceneData: CachedFrame;
     colorsData: Float32Array;
     lightsGroup: Group;
     agentPathGroup: Group;
@@ -160,7 +161,7 @@ declare class VisGeometry {
     showPathForAgent(id: number, visible: boolean): void;
     clearForNewTrajectory(): void;
     private resetAllGeometry;
-    update(agents: AgentData[]): void;
+    update(agents: CachedFrame): void;
 }
 export { VisGeometry, NO_AGENT };
 export default VisGeometry;

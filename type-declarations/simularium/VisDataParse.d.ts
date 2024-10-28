@@ -1,34 +1,19 @@
-import { FrameData, VisDataMessage, AgentData } from "./types";
-interface ParsedBundle {
-    frameDataArray: FrameData[];
-    parsedAgentDataArray: AgentData[][];
-}
+import { VisDataMessage, CachedFrame } from "./types";
 /**
- *   Parses a stream of data sent from the backend
+ * This function serves as a translation layer, it takes in a VisDataMessage
+ * and walks the data counting the agents and converting the number[] to ArrayBuffer
+ * in order to generate a CachedFrame.
  *
- *   To minimize bandwidth, traits/objects are not packed
- *   1-1; what arrives is an array of float values
+ * This is used for loading local JSON files, and in the rare case
+ * that JSON is sent from the backend. Parsing twice (number[] to ArrayBuffer,
+ * ArrayBuffer to AgentData) is a low concern for performance
+ * as local files will automatically pre-cache frames and not deal with
+ * network latency.
  *
- *   For instance for:
- *   entity = (
- *        trait1 : 4,
- *        trait2 : 5,
- *        trait3 : 6,
- *    ) ...
- *
- *   what arrives will be:
- *       [...,4,5,6,...]
- *
- *   The traits are assumed to be variable in length,
- *   and the alorithm to decode them needs to the reverse
- *   of the algorithm that packed them on the backend
- *
- *   This is more convuluted than sending the JSON objects themselves,
- *   however these frames arrive multiple times per second. Even a naive
- *   packing reduces the packet size by ~50%, reducing how much needs to
- *   paid for network bandwith (and improving the quality & responsiveness
- *   of the application, since network latency is a major bottle-neck)
- * */
-declare function parseVisDataMessage(visDataMsg: VisDataMessage): ParsedBundle;
-export { parseVisDataMessage };
-export type { ParsedBundle };
+ * todo: VisDataMessage.bundleData should only ever be a single frame
+ * regardless of whether or not the data is JSON or binary, so we
+ * should be able to adjust the typing of VisDataMessage to reflect that.
+ */
+declare function parseVisDataMessage(visDataMsg: VisDataMessage): CachedFrame;
+declare function calculateBufferSize(data: number[]): number;
+export { parseVisDataMessage, calculateBufferSize };

@@ -39,6 +39,14 @@ var VisAgent = /*#__PURE__*/function () {
     this.fiberCurve = undefined;
   }
   _createClass(VisAgent, [{
+    key: "resetAgent",
+    value: function resetAgent() {
+      this.active = false;
+      this.hidden = false;
+      this.followed = false;
+      this.fiberCurve = undefined;
+    }
+  }, {
     key: "resetMesh",
     value: function resetMesh() {
       this.followed = false;

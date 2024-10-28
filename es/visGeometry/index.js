@@ -19,13 +19,13 @@ import VisAgent from "./VisAgent";
 import VisTypes from "../simularium/VisTypes";
 import AgentPath from "./agentPath";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
-import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC, nullAgent } from "../constants";
+import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC, nullAgent, AGENT_HEADER_SIZE } from "../constants";
 import SimulariumRenderer from "./rendering/SimulariumRenderer";
 import { InstancedFiberGroup } from "./rendering/InstancedFiber";
 import { LegacyRenderer } from "./rendering/LegacyRenderer";
 import GeometryStore from "./GeometryStore";
 import { GeometryDisplayType } from "./types";
-import { checkAndSanitizePath } from "../util";
+import { checkAndSanitizePath, getAgentDataFromBuffer, getNextAgentOffset, nullCachedFrame } from "../util";
 import ColorHandler from "./ColorHandler";
 var MAX_PATH_LEN = 32;
 var MAX_MESHES = 100000;
@@ -80,6 +80,7 @@ var VisGeometry = /*#__PURE__*/function () {
     _defineProperty(this, "followObjectId", void 0);
     _defineProperty(this, "visAgents", void 0);
     _defineProperty(this, "visAgentInstances", void 0);
+    _defineProperty(this, "availableAgentPool", []);
     _defineProperty(this, "fixLightsToCamera", void 0);
     _defineProperty(this, "highlightedIds", void 0);
     _defineProperty(this, "hiddenIds", void 0);
@@ -104,7 +105,7 @@ var VisGeometry = /*#__PURE__*/function () {
     _defineProperty(this, "colorHandler", void 0);
     _defineProperty(this, "renderer", void 0);
     _defineProperty(this, "legacyRenderer", void 0);
-    _defineProperty(this, "currentSceneAgents", void 0);
+    _defineProperty(this, "currentSceneData", void 0);
     _defineProperty(this, "colorsData", void 0);
     _defineProperty(this, "lightsGroup", void 0);
     _defineProperty(this, "agentPathGroup", void 0);
@@ -139,6 +140,7 @@ var VisGeometry = /*#__PURE__*/function () {
     this.followObjectId = NO_AGENT;
     this.visAgents = [];
     this.visAgentInstances = new Map();
+    this.availableAgentPool = [];
     this.fixLightsToCamera = true;
     this.highlightedIds = [];
     this.hiddenIds = [];
@@ -194,7 +196,7 @@ var VisGeometry = /*#__PURE__*/function () {
     this.tickIntervalLength = 0;
     this.boxNearZ = 0;
     this.boxFarZ = 100;
-    this.currentSceneAgents = [];
+    this.currentSceneData = nullCachedFrame();
     this.colorsData = new Float32Array(0);
     this.lodBias = 0;
     this.lodDistanceStops = [100, 200, 400, Number.MAX_VALUE];
@@ -411,19 +413,19 @@ var VisGeometry = /*#__PURE__*/function () {
         step: 1
       }).on("change", function (event) {
         _this.lodBias = event.value;
-        _this.updateScene(_this.currentSceneAgents);
+        _this.updateScene(_this.currentSceneData);
       });
       lodFolder.addInput(settings, "lod0").on("change", function (event) {
         _this.lodDistanceStops[0] = event.value;
-        _this.updateScene(_this.currentSceneAgents);
+        _this.updateScene(_this.currentSceneData);
       });
       lodFolder.addInput(settings, "lod1").on("change", function (event) {
         _this.lodDistanceStops[1] = event.value;
-        _this.updateScene(_this.currentSceneAgents);
+        _this.updateScene(_this.currentSceneData);
       });
       lodFolder.addInput(settings, "lod2").on("change", function (event) {
         _this.lodDistanceStops[2] = event.value;
-        _this.updateScene(_this.currentSceneAgents);
+        _this.updateScene(_this.currentSceneData);
       });
       this.renderer.setupGui(this.gui);
     }
@@ -449,7 +451,7 @@ var VisGeometry = /*#__PURE__*/function () {
       if (changed) {
         this.constructInstancedFibers();
       }
-      this.updateScene(this.currentSceneAgents);
+      this.updateScene(this.currentSceneData);
     }
   }, {
     key: "constructInstancedFibers",
@@ -649,7 +651,7 @@ var VisGeometry = /*#__PURE__*/function () {
           _visAgent.setFollowed(true);
         }
       }
-      this.updateScene(this.currentSceneAgents);
+      this.updateScene(this.currentSceneData);
     }
   }, {
     key: "unfollow",
@@ -660,13 +662,13 @@ var VisGeometry = /*#__PURE__*/function () {
     key: "setVisibleByIds",
     value: function setVisibleByIds(hiddenIds) {
       this.hiddenIds = hiddenIds;
-      this.updateScene(this.currentSceneAgents);
+      this.updateScene(this.currentSceneData);
     }
   }, {
     key: "setHighlightByIds",
     value: function setHighlightByIds(ids) {
       this.highlightedIds = ids;
-      this.updateScene(this.currentSceneAgents);
+      this.updateScene(this.currentSceneData);
     }
   }, {
     key: "dehighlight",
@@ -706,7 +708,7 @@ var VisGeometry = /*#__PURE__*/function () {
           visAgent.setColor(this.colorHandler.getColorInfoForAgentType(visAgent.agentData.type));
         }
       }
-      this.updateScene(this.currentSceneAgents);
+      this.updateScene(this.currentSceneData);
     }
   }, {
     key: "setupControls",
@@ -1038,7 +1040,7 @@ var VisGeometry = /*#__PURE__*/function () {
         var newColorData = _this4.colorHandler.setColorForAgentTypes(color.agentIds, color.color);
         _this4.renderer.updateColors(newColorData.numberOfColors, newColorData.colorArray);
       });
-      this.updateScene(this.currentSceneAgents);
+      this.updateScene(this.currentSceneData);
     }
 
     /**
@@ -1115,7 +1117,7 @@ var VisGeometry = /*#__PURE__*/function () {
           _this5.logger.info(reason);
         });
       });
-      this.updateScene(this.currentSceneAgents);
+      this.updateScene(this.currentSceneData);
     }
   }, {
     key: "setTickIntervalLength",
@@ -1295,9 +1297,10 @@ var VisGeometry = /*#__PURE__*/function () {
      **/
   }, {
     key: "updateScene",
-    value: function updateScene(agents) {
-      var _this6 = this;
-      this.currentSceneAgents = agents;
+    value: function updateScene(frameData) {
+      this.currentSceneData = frameData;
+      var view = new Float32Array(frameData.data);
+      var agentCount = frameData.agentCount;
 
       // values for updating agent path
       var dx = 0,
@@ -1311,87 +1314,104 @@ var VisGeometry = /*#__PURE__*/function () {
       this.geometryStore.forEachMesh(function (agentGeo) {
         agentGeo.geometry.instances.beginUpdate();
       });
-      // these lists must be emptied on every scene update.
+
+      // Clear draw lists
       this.agentsWithPdbsToDraw = [];
       this.agentPdbsToDraw = [];
 
-      // First, mark ALL inactive and invisible.
-      // Note this implies a memory leak of sorts:
-      // the number of agent instances can only grow during one trajectory run.
-      // We just hide the unused ones.
-      // Worst case is if each frame uses completely different (incrementing) instance ids.
-      for (var i = 0; i < MAX_MESHES && i < this.visAgents.length; i += 1) {
-        var visAgent = this.visAgents[i];
-        visAgent.hideAndDeactivate();
+      // Mark all agents as inactive and invisible
+      for (var i = 0; i < MAX_MESHES && i < this.visAgents.length; i++) {
+        this.visAgents[i].hideAndDeactivate();
       }
-      agents.forEach(function (agentData) {
+      var offset = AGENT_HEADER_SIZE;
+      var newVisAgentInstances = new Map();
+      for (var _i2 = 0; _i2 < agentCount; _i2++) {
+        var agentData = getAgentDataFromBuffer(view, offset);
         var visType = agentData.visType;
         var instanceId = agentData.instanceId;
         var typeId = agentData.type;
         lastx = agentData.x;
         lasty = agentData.y;
         lastz = agentData.z;
-
-        // look up last agent with this instanceId.
-        var visAgent = _this6.visAgentInstances.get(instanceId);
-        var path = _this6.findPathForAgent(instanceId);
-        if (path) {
-          if (visAgent) {
-            lastx = visAgent.agentData.x;
-            lasty = visAgent.agentData.y;
-            lastz = visAgent.agentData.z;
-          }
+        var visAgent = this.visAgentInstances.get(instanceId);
+        var path = this.findPathForAgent(instanceId);
+        if (path && visAgent) {
+          lastx = visAgent.agentData.x;
+          lasty = visAgent.agentData.y;
+          lastz = visAgent.agentData.z;
         }
         if (!visAgent) {
-          visAgent = _this6.createAgent();
+          if (this.availableAgentPool.length > 0) {
+            visAgent = this.availableAgentPool.pop();
+          } else {
+            visAgent = this.createAgent();
+          }
           visAgent.agentData.instanceId = instanceId;
-          //visAgent.mesh.userData = { id: instanceId };
-          _this6.visAgentInstances.set(instanceId, visAgent);
-          // set hidden so that it is revealed later in this function:
+          this.visAgentInstances.set(instanceId, visAgent);
           visAgent.hidden = true;
         }
         if (visAgent.agentData.instanceId !== instanceId) {
-          _this6.logger.warn("incoming instance id ".concat(instanceId, " mismatched with visagent ").concat(visAgent.agentData.instanceId));
+          this.logger.warn("incoming instance id ".concat(instanceId, " mismatched with visagent ").concat(visAgent.agentData.instanceId));
         }
         visAgent.active = true;
-
         // update the agent!
         visAgent.agentData = agentData;
-        var isHighlighted = _this6.highlightedIds.includes(visAgent.agentData.type);
+        var isHighlighted = this.highlightedIds.includes(visAgent.agentData.type);
         visAgent.setHighlighted(isHighlighted);
-        var isHidden = _this6.hiddenIds.includes(visAgent.agentData.type);
+        var isHidden = this.hiddenIds.includes(visAgent.agentData.type);
         visAgent.setHidden(isHidden);
         if (visAgent.hidden) {
-          return;
+          offset = getNextAgentOffset(view, offset);
+          continue;
         }
-        visAgent.setColor(_this6.colorHandler.getColorInfoForAgentType(typeId));
-
+        visAgent.setColor(this.colorHandler.getColorInfoForAgentType(typeId));
         // if not fiber...
         if (visType === VisTypes.ID_VIS_TYPE_DEFAULT) {
-          var response = _this6.getGeoForAgentType(typeId);
+          var response = this.getGeoForAgentType(typeId);
           if (!response) {
-            _this6.logger.warn("No mesh nor pdb available for ".concat(typeId, "? Should be unreachable code"));
-            return;
+            this.logger.warn("No mesh nor pdb available for ".concat(typeId, "? Should be unreachable code"));
+            offset = getNextAgentOffset(view, offset);
+            continue;
           }
           var geometry = response.geometry,
             displayType = response.displayType;
           if (geometry && displayType === GeometryDisplayType.PDB) {
             var pdbEntry = geometry;
-            _this6.addPdbToDrawList(typeId, visAgent, pdbEntry);
+            this.addPdbToDrawList(typeId, visAgent, pdbEntry);
           } else {
             var meshEntry = geometry;
-            _this6.addMeshToDrawList(typeId, visAgent, meshEntry, agentData);
+            this.addMeshToDrawList(typeId, visAgent, meshEntry, agentData);
           }
           dx = agentData.x - lastx;
           dy = agentData.y - lasty;
           dz = agentData.z - lastz;
           if (path) {
-            _this6.addPointToPath(path, agentData.x, agentData.y, agentData.z, dx, dy, dz);
+            this.addPointToPath(path, agentData.x, agentData.y, agentData.z, dx, dy, dz);
           }
         } else if (visType === VisTypes.ID_VIS_TYPE_FIBER) {
-          _this6.addFiberToDrawList(typeId, visAgent, agentData);
+          this.addFiberToDrawList(typeId, visAgent, agentData);
         }
-      });
+        newVisAgentInstances.set(instanceId, visAgent);
+        offset = getNextAgentOffset(view, offset);
+      }
+      var _iterator2 = _createForOfIteratorHelper(this.visAgentInstances),
+        _step2;
+      try {
+        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+          var _step2$value = _slicedToArray(_step2.value, 2),
+            key = _step2$value[0],
+            _visAgent2 = _step2$value[1];
+          if (!newVisAgentInstances.has(key)) {
+            _visAgent2.resetAgent();
+            this.availableAgentPool.push(_visAgent2);
+          }
+        }
+      } catch (err) {
+        _iterator2.e(err);
+      } finally {
+        _iterator2.f();
+      }
+      this.visAgentInstances = newVisAgentInstances;
       this.fibers.endUpdate();
       this.geometryStore.forEachMesh(function (agentGeo) {
         agentGeo.geometry.instances.endUpdate();
@@ -1572,7 +1592,7 @@ var VisGeometry = /*#__PURE__*/function () {
       // remove current scene agents.
       this.visAgentInstances.clear();
       this.visAgents = [];
-      this.currentSceneAgents = [];
+      this.currentSceneData = nullCachedFrame();
       this.dehighlight();
     }
   }, {
@@ -1595,17 +1615,17 @@ var VisGeometry = /*#__PURE__*/function () {
       this.constructInstancedFibers();
 
       // set all runtime meshes back to spheres.
-      var _iterator2 = _createForOfIteratorHelper(this.visAgentInstances.values()),
-        _step2;
+      var _iterator3 = _createForOfIteratorHelper(this.visAgentInstances.values()),
+        _step3;
       try {
-        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-          var visAgent = _step2.value;
+        for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+          var visAgent = _step3.value;
           visAgent.resetMesh();
         }
       } catch (err) {
-        _iterator2.e(err);
+        _iterator3.e(err);
       } finally {
-        _iterator2.f();
+        _iterator3.f();
       }
     }
   }, {

@@ -1,5 +1,8 @@
 import JsonFileReader from "./simularium/JsonFileReader";
 import BinaryFileReader from "./simularium/BinaryFileReader";
+import { AGENT_OBJECT_KEYS } from "./simularium/types";
+import { nullAgent } from "./constants";
+import { FrontEndError } from "./simularium";
 export var compareTimes = function compareTimes(time1, time2, timeStepSize) {
   var stepSizeFraction = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0.01;
   /*
@@ -57,3 +60,36 @@ export function loadSimulariumFile(file) {
     }
   });
 }
+export var nullCachedFrame = function nullCachedFrame() {
+  return {
+    data: new ArrayBuffer(0),
+    frameNumber: -1,
+    time: -1,
+    agentCount: -1,
+    size: -1
+  };
+};
+export var getAgentDataFromBuffer = function getAgentDataFromBuffer(view, offset) {
+  // Check if the buffer has enough data for the AGENT_OBJECT_KEYS
+  if (offset + AGENT_OBJECT_KEYS.length > view.length) {
+    throw new FrontEndError("Invalid offset: Not enough data in the buffer for agent data.");
+  }
+  var agentData = nullAgent();
+  for (var i = 0; i < AGENT_OBJECT_KEYS.length; i++) {
+    agentData[AGENT_OBJECT_KEYS[i]] = view[offset + i];
+  }
+  var nSubPoints = agentData["nSubPoints"];
+
+  // Check if the buffer has enough data for subpoints
+  var subpointsStart = offset + AGENT_OBJECT_KEYS.length;
+  var subpointsEnd = subpointsStart + nSubPoints;
+  if (subpointsEnd > view.length) {
+    throw new FrontEndError("Invalid offset: Not enough data in the buffer for subpoints.");
+  }
+  agentData.subpoints = Array.from(view.subarray(offset + AGENT_OBJECT_KEYS.length, offset + AGENT_OBJECT_KEYS.length + nSubPoints));
+  return agentData;
+};
+export var getNextAgentOffset = function getNextAgentOffset(view, currentOffset) {
+  var nSubPoints = view[currentOffset + AGENT_OBJECT_KEYS.length - 1];
+  return currentOffset + AGENT_OBJECT_KEYS.length + nSubPoints;
+};

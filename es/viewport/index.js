@@ -174,8 +174,14 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
     _this.dispatchUpdatedTime = _this.dispatchUpdatedTime.bind(_assertThisInitialized(_this));
     _this.handleTimeChange = _this.handleTimeChange.bind(_assertThisInitialized(_this));
     _this.visGeometry = new VisGeometry(loggerLevel);
+    _this.props.simulariumController.visData.frameCache.changeSettings({
+      cacheEnabled: !props.disableCache,
+      maxSize: props.maxCacheSize
+    });
+    if (props.onError) {
+      _this.props.simulariumController.visData.setOnError(props.onError);
+    }
     _this.props.simulariumController.visData.clearCache();
-    _this.props.simulariumController.visData.setCacheEnabled(!_this.props.disableCache);
     _this.visGeometry.createMaterials(props.agentColors);
     _this.vdomRef = /*#__PURE__*/React.createRef();
     _this.lastRenderTime = Date.now();
@@ -222,7 +228,6 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
         onUIDisplayDataChanged = _this$props.onUIDisplayDataChanged,
         onError = _this$props.onError,
         agentColors = _this$props.agentColors;
-
       // Update TrajectoryFileInfo format to latest version
       var trajectoryFileInfo = updateTrajectoryFileInfoFormat(msg, onError);
       simulariumController.visData.timeStepSize = trajectoryFileInfo.timeStepSize;
@@ -366,7 +371,9 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
         this.visGeometry.toggleControls(lockedCamera);
       }
       if (prevProps.disableCache !== disableCache) {
-        this.props.simulariumController.visData.setCacheEnabled(!disableCache);
+        this.props.simulariumController.visData.frameCache.changeSettings({
+          cacheEnabled: !disableCache
+        });
       }
       if (prevState.showRenderParamsGUI !== this.state.showRenderParamsGUI) {
         if (this.state.showRenderParamsGUI) {
@@ -505,12 +512,15 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
           this.animationRequestID = requestAnimationFrame(this.animate);
           return;
         }
-        if (visData.currentFrameData.time != this.lastRenderedAgentTime) {
-          var currentAgents = visData.currentFrame();
-          if (currentAgents.length > 0) {
-            this.dispatchUpdatedTime(visData.currentFrameData);
-            this.visGeometry.update(currentAgents);
-            this.lastRenderedAgentTime = visData.currentFrameData.time;
+        var currentFrame = visData.currentFrameData;
+        if (currentFrame.time != this.lastRenderedAgentTime) {
+          if (currentFrame.agentCount > 0) {
+            this.dispatchUpdatedTime({
+              time: currentFrame.time,
+              frameNumber: currentFrame.frameNumber
+            });
+            this.visGeometry.update(currentFrame);
+            this.lastRenderedAgentTime = currentFrame.time;
             this.updateFollowObjectData();
           }
         }

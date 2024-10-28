@@ -1,24 +1,25 @@
-import { AgentData, FrameData, VisDataMessage } from "./types";
+import { VisDataMessage, CachedFrame } from "./types";
+import { VisDataCache } from "./VisDataCache";
+import { FrontEndError } from "./FrontEndError";
 declare class VisData {
-    private frameCache;
-    private frameDataCache;
-    private enableCache;
+    frameCache: VisDataCache;
     private webWorker;
     private frameToWaitFor;
     private lockedForFrame;
-    private cacheFrame;
+    private currentFrameNumber;
     timeStepSize: number;
+    onError: (error: FrontEndError) => void;
     private static parseOneBinaryFrame;
     private setupWebWorker;
     constructor();
-    get currentFrameData(): FrameData;
+    setOnError(onError: (error: FrontEndError) => void): void;
+    get currentFrameData(): CachedFrame;
     /**
      *   Functions to check update
      * */
     hasLocalCacheForTime(time: number): boolean;
     gotoTime(time: number): void;
     atLatestFrame(): boolean;
-    currentFrame(): AgentData[];
     gotoNextFrame(): void;
     /**
      * Data management
@@ -27,11 +28,11 @@ declare class VisData {
     clearCache(): void;
     clearForNewTrajectory(): void;
     cancelAllWorkers(): void;
-    setCacheEnabled(cacheEnabled: boolean): void;
-    private addFramesToCache;
     private parseAgentsFromVisDataMessage;
     parseAgentsFromFrameData(msg: VisDataMessage | ArrayBuffer): void;
     parseAgentsFromNetData(msg: VisDataMessage | ArrayBuffer): void;
+    private addFrameToCache;
+    private frameExceedsCacheSizeError;
 }
 export { VisData };
 export default VisData;
