@@ -1,3 +1,4 @@
+import { DEFAULT_PRE_FETCH_RATIO } from "../constants";
 import { compareTimes } from "../util";
 import { ErrorLevel, FrontEndError } from "./FrontEndError";
 import { CachedFrame, CacheNode } from "./types";
@@ -15,6 +16,7 @@ class VisDataCache {
     private _maxSize: number;
     private _cacheEnabled: boolean;
     private _cacheSizeLimited: boolean;
+    private _preFetchRatio: number;
 
     constructor(settings?: Partial<VisDataCacheSettings>) {
         /**
@@ -30,6 +32,7 @@ class VisDataCache {
         this._maxSize = -1;
         this._cacheEnabled = true;
         this._cacheSizeLimited = this._maxSize > 0;
+        this._preFetchRatio = DEFAULT_PRE_FETCH_RATIO;
 
         if (settings) {
             this.changeSettings(settings);
@@ -39,14 +42,18 @@ class VisDataCache {
     public changeSettings(options: {
         maxSize?: number;
         cacheEnabled?: boolean;
+        preFetchRatio?: number;
     }): void {
-        const { maxSize, cacheEnabled } = options;
+        const { maxSize, cacheEnabled, preFetchRatio } = options;
         if (cacheEnabled !== undefined) {
             this._cacheEnabled = cacheEnabled;
         }
         if (maxSize !== undefined) {
             this._maxSize = maxSize;
             this._cacheSizeLimited = maxSize > 0;
+        }
+        if (preFetchRatio !== undefined) {
+            this._preFetchRatio = preFetchRatio;
         }
     }
 
@@ -60,6 +67,10 @@ class VisDataCache {
 
     public get cacheSizeLimited(): boolean {
         return this._cacheSizeLimited;
+    }
+
+    public get preFetchRatio(): number {
+        return this._preFetchRatio;
     }
 
     private frameAccessError(msg?: string): CachedFrame {

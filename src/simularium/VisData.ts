@@ -17,6 +17,7 @@ class VisData {
     private currentFrameNumber: number;
 
     public timeStepSize: number;
+    public totalSteps: number;
     public onError: (error: FrontEndError) => void;
 
     private static parseOneBinaryFrame(data: ArrayBuffer): CachedFrame {
@@ -42,6 +43,7 @@ class VisData {
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
         this.timeStepSize = 0;
+        this.totalSteps = 0;
 
         this.onError = noop;
     }
@@ -90,6 +92,22 @@ class VisData {
         if (!this.atLatestFrame()) {
             this.currentFrameNumber += 1;
         }
+    }
+
+    public preFetchingComplete(): boolean {
+        return (
+            this.frameCache.getLastFrameNumber() >=
+            this.getPreFetchFrameTarget()
+        );
+    }
+
+    public getPreFetchFrameTarget(): number {
+        // todo: return -1 here in any context where we aren't pre-fetching at all
+        // so that preFetching complete always comes back true
+        return (
+            this.totalSteps * this.frameCache.preFetchRatio +
+            this.currentFrameData.frameNumber
+        );
     }
 
     /**
@@ -182,6 +200,7 @@ class VisData {
             this.frameExceedsCacheSizeError(frame.size);
             return;
         }
+        console.log("adding frame: ", frame);
         this.frameCache.addFrame(frame);
     }
 

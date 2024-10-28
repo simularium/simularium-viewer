@@ -53,7 +53,8 @@ export default class SimulariumController {
     public onError?: (error: FrontEndError) => void;
 
     private networkEnabled: boolean;
-    private isPaused: boolean;
+    private isPlaybackPaused: boolean;
+    public isStreaming: boolean;
     private isFileChanging: boolean;
     private playBackFile: string;
 
@@ -102,7 +103,8 @@ export default class SimulariumController {
         }
 
         this.networkEnabled = true;
-        this.isPaused = false;
+        this.isPlaybackPaused = false;
+        this.isStreaming = false;
         this.isFileChanging = false;
         this.playBackFile = params.trajectoryPlaybackFile || "";
         this.zoomIn = this.zoomIn.bind(this);
@@ -200,7 +202,7 @@ export default class SimulariumController {
 
         // switch back to 'networked' playback
         this.networkEnabled = true;
-        this.isPaused = false;
+        this.isPlaybackPaused = false;
         this.visData.clearCache();
 
         return this.simulator.startRemoteTrajectoryPlayback(this.playBackFile);
@@ -252,13 +254,14 @@ export default class SimulariumController {
     public pause(): void {
         if (this.networkEnabled && this.simulator) {
             this.simulator.pauseRemoteSim();
+            this.isStreaming = false;
         }
 
-        this.isPaused = true;
+        this.isPlaybackPaused = true;
     }
 
     public paused(): boolean {
-        return this.isPaused;
+        return this.isPlaybackPaused;
     }
 
     public initializeTrajectoryFile(): void {
@@ -272,27 +275,57 @@ export default class SimulariumController {
         if (this.isFileChanging === true) return;
         if (this.visData.hasLocalCacheForTime(time)) {
             this.visData.gotoTime(time);
+            this.preFetchFrames();
         } else {
             if (this.networkEnabled && this.simulator) {
                 // else reset the local cache,
                 //  and play remotely from the desired simulation time
                 this.visData.clearCache();
                 this.simulator.gotoRemoteSimulationTime(time);
+                this.preFetchFrames();
             }
         }
     }
 
     public playFromTime(time: number): void {
         this.gotoTime(time);
-        this.isPaused = false;
+        this.isPlaybackPaused = false;
+    }
+
+    public intervalLoopToCheckPreFetching(): void {
+        const intervalId = setInterval(() => {
+            if (this.visData.preFetchingComplete()) {
+                if (this.networkEnabled && this.simulator) {
+                    this.simulator.pauseRemoteSim();
+                    this.isStreaming = false;
+                }
+                clearInterval(intervalId);
+            }
+        }, 100);
+    }
+
+    public preFetchFrames(): void {
+        if (
+            this.networkEnabled &&
+            this.simulator instanceof RemoteSimulator &&
+            !this.visData.preFetchingComplete() &&
+            !this.isStreaming
+        ) {
+            this.simulator.resumeRemoteSim();
+            this.isStreaming = true;
+            this.intervalLoopToCheckPreFetching();
+        }
     }
 
     public resume(): void {
         if (this.networkEnabled && this.simulator) {
             this.simulator.resumeRemoteSim();
+            this.isStreaming = true;
         }
-
-        this.isPaused = false;
+        this.isPlaybackPaused = false;
+        if (!this.visData.preFetchingComplete() && !this.isStreaming) {
+            this.intervalLoopToCheckPreFetching();
+        }
     }
 
     public clearFile(): void {
@@ -360,7 +393,7 @@ export default class SimulariumController {
                         connectionParams.geoAssets
                     );
                     this.networkEnabled = true; // This confuses me, because local files also go through this code path
-                    this.isPaused = true;
+                    this.isPlaybackPaused = true;
                 } else {
                     // caught in following block, not sent to front end
                     throw new Error("incomplete simulator config provided");
@@ -370,7 +403,7 @@ export default class SimulariumController {
                 this.simulator = undefined;
                 console.warn(error.message);
                 this.networkEnabled = false;
-                this.isPaused = false;
+                this.isPlaybackPaused = false;
             }
         }
 
@@ -381,6 +414,10 @@ export default class SimulariumController {
                     if (this.simulator) {
                         this.simulator.requestSingleFrame(0);
                     }
+                })
+                .then(() => {
+                    this.pause();
+                    this.preFetchFrames();
                 })
                 .then(() => ({
                     status: FILE_STATUS_SUCCESS,

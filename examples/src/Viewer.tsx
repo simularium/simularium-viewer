@@ -493,6 +493,11 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         });
     }
 
+    public handlePause(): void {
+        simulariumController.pause();
+        simulariumController.preFetchFrames();
+    }
+
     public handleScrubTime(event): void {
         simulariumController.gotoTime(parseFloat(event.target.value));
     }
@@ -550,8 +555,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     }
 
     private configureAndLoad() {
-        simulariumController.configureNetwork(this.netConnectionSettings);
         if (playbackFile.startsWith("http")) {
+            simulariumController.configureNetwork(this.netConnectionSettings);
             return this.loadFromUrl(playbackFile);
         }
         if (playbackFile === "TEST_LIVEMODE_API") {
@@ -798,7 +803,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 <button onClick={() => simulariumController.resume()}>
                     Play
                 </button>
-                <button onClick={() => simulariumController.pause()}>
+                <button onClick={this.handlePause.bind(this)}>
                     Pause
                 </button>
                 <button onClick={() => simulariumController.stop()}>
@@ -1034,6 +1039,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         lockedCamera={false}
                         disableCache={false}
                         maxCacheSize={-1} // -1 means no limit, provide limits in bytes, 1MB = 1000000, 1GB = 1000000000
+                        preFetchRatio={0.25} // pre fetch all frames
                     />
                 </div>
             </div>

@@ -48,6 +48,7 @@ type ViewportProps = {
     disableCache?: boolean;
     onFollowObjectChanged?: (agentData: AgentData) => void; // passes agent data about the followed agent to the front end
     maxCacheSize?: number;
+    preFetchRatio?: number;
 } & Partial<DefaultProps>;
 
 const defaultProps = {
@@ -130,6 +131,7 @@ class Viewport extends React.Component<
         this.props.simulariumController.visData.frameCache.changeSettings({
             cacheEnabled: !props.disableCache,
             maxSize: props.maxCacheSize,
+            preFetchRatio: props.preFetchRatio,
         });
         if (props.onError) {
             this.props.simulariumController.visData.setOnError(props.onError);
@@ -187,6 +189,7 @@ class Viewport extends React.Component<
 
         simulariumController.visData.timeStepSize =
             trajectoryFileInfo.timeStepSize;
+        simulariumController.visData.totalSteps = trajectoryFileInfo.totalSteps;
 
         const bx = trajectoryFileInfo.size.x;
         const by = trajectoryFileInfo.size.y;
@@ -319,6 +322,7 @@ class Viewport extends React.Component<
             selectionStateInfo,
             lockedCamera,
             disableCache,
+            preFetchRatio,
         } = this.props;
 
         if (selectionStateInfo) {
@@ -384,6 +388,11 @@ class Viewport extends React.Component<
         if (prevProps.disableCache !== disableCache) {
             this.props.simulariumController.visData.frameCache.changeSettings({
                 cacheEnabled: !disableCache,
+            });
+        }
+        if (prevProps.preFetchRatio !== preFetchRatio) {
+            this.props.simulariumController.visData.frameCache.changeSettings({
+                preFetchRatio: preFetchRatio,
             });
         }
         if (prevState.showRenderParamsGUI !== this.state.showRenderParamsGUI) {
