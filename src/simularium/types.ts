@@ -195,3 +195,17 @@ export interface PlotConfig {
     metricsIdy?: number;
     scatterPlotMode?: string;
 }
+
+export interface CachedFrame {
+    data: ArrayBuffer;
+    frameNumber: number;
+    time: number;
+    agentCount: number;
+    size: number;
+}
+
+export interface CacheNode {
+    data: CachedFrame;
+    next: CacheNode | null;
+    prev: CacheNode | null;
+}

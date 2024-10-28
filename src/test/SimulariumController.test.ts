@@ -15,10 +15,8 @@ describe("SimulariumController module", () => {
             });
 
             controller.start();
-
-            // allow time for data streaming to occur
+            controller.gotoTime(2);
             setTimeout(() => {
-                controller.gotoTime(2);
                 expect(controller.time()).toEqual(2);
                 done();
             }, 500);
