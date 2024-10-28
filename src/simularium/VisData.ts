@@ -51,21 +51,24 @@ class VisData {
     }
 
     public get currentFrameData(): CachedFrame {
-        let currentData: CachedFrame = nullCachedFrame();
         if (!this.frameCache.hasFrames()) {
-            return currentData;
+            return nullCachedFrame();
         }
         if (this.currentFrameNumber < 0) {
-            currentData = this.frameCache.getFirstFrame();
-            this.currentFrameNumber = currentData.frameNumber;
-        } else if (
-            this.frameCache.containsFrameAtFrameNumber(this.currentFrameNumber)
-        ) {
-            currentData = this.frameCache.getFrameAtFrameNumber(
+            const firstFrame = this.frameCache.getFirstFrame();
+            if (firstFrame) {
+                this.currentFrameNumber = firstFrame.frameNumber;
+                return firstFrame;
+            }
+        } else {
+            const frame = this.frameCache.getFrameAtFrameNumber(
                 this.currentFrameNumber
             );
+            if (frame !== undefined) {
+                return frame;
+            }
         }
-        return currentData;
+        return nullCachedFrame();
     }
 
     /**

@@ -7,7 +7,7 @@ import {
     Material,
     MeshLambertMaterial,
     MeshBasicMaterial,
-    TubeBufferGeometry,
+    TubeGeometry,
     Group,
     LOD,
     Mesh,
@@ -59,7 +59,7 @@ class LegacyRenderer {
             return;
         }
         // expensive
-        const fibergeometry = new TubeBufferGeometry(
+        const fibergeometry = new TubeGeometry(
             visAgent.fiberCurve,
             4 * (visAgent.fiberCurve.points.length - 1), // 4 segments per control point
             scale * 0.5,

@@ -1,5 +1,4 @@
 import { compareTimes } from "../util";
-import { ErrorLevel, FrontEndError } from "./FrontEndError";
 import { CachedFrame, CacheNode } from "./types";
 
 interface VisDataCacheSettings {
@@ -14,7 +13,6 @@ class VisDataCache {
     public size: number;
     private _maxSize: number;
     private _cacheEnabled: boolean;
-    private _cacheSizeLimited: boolean;
 
     constructor(settings?: Partial<VisDataCacheSettings>) {
         /**
@@ -27,9 +25,8 @@ class VisDataCache {
         this.tail = null;
         this.numFrames = 0;
         this.size = 0;
-        this._maxSize = -1;
+        this._maxSize = Infinity;
         this._cacheEnabled = true;
-        this._cacheSizeLimited = this._maxSize > 0;
 
         if (settings) {
             this.changeSettings(settings);
@@ -46,7 +43,6 @@ class VisDataCache {
         }
         if (maxSize !== undefined) {
             this._maxSize = maxSize;
-            this._cacheSizeLimited = maxSize > 0;
         }
     }
 
@@ -59,14 +55,7 @@ class VisDataCache {
     }
 
     public get cacheSizeLimited(): boolean {
-        return this._cacheSizeLimited;
-    }
-
-    private frameAccessError(msg?: string): CachedFrame {
-        throw new FrontEndError(
-            `Error accessing frame: ${msg}`,
-            ErrorLevel.WARNING
-        );
+        return this._maxSize !== Infinity;
     }
 
     public hasFrames(): boolean {
@@ -78,10 +67,10 @@ class VisDataCache {
      * returns the node if found, otherwise returns null,
      * starts at head if firstNode is not provided.
      */
-    private walkLinkedList(
+    private findInLinkedList(
         condition: (data: CacheNode) => boolean,
         firstNode?: CacheNode
-    ): CacheNode | null {
+    ): CacheNode | undefined {
         let currentNode = firstNode || this.head;
         while (currentNode) {
             if (condition(currentNode)) {
@@ -89,7 +78,7 @@ class VisDataCache {
             }
             currentNode = currentNode.next;
         }
-        return null;
+        return undefined;
     }
 
     public containsTime(time: number): boolean {
@@ -102,7 +91,7 @@ class VisDataCache {
         if (time < this.getFirstFrameTime() || time > this.getLastFrameTime()) {
             return false;
         }
-        return !!this.walkLinkedList((node) => node.data.time === time);
+        return !!this.findInLinkedList((node) => node.data.time === time);
     }
 
     public containsFrameAtFrameNumber(frameNumber: number): boolean {
@@ -112,16 +101,13 @@ class VisDataCache {
         ) {
             return false;
         }
-        return !!this.walkLinkedList(
+        return !!this.findInLinkedList(
             (node) => node.data.frameNumber === frameNumber
         );
     }
 
-    public getFirstFrame(): CachedFrame {
-        if (!this.head) {
-            return this.frameAccessError("No data in cache.");
-        }
-        return this.head.data;
+    public getFirstFrame(): CachedFrame | undefined {
+        return this.head?.data;
     }
 
     public getFirstFrameNumber(): number {
@@ -132,11 +118,8 @@ class VisDataCache {
         return this.head?.data.time || -1;
     }
 
-    public getLastFrame(): CachedFrame {
-        if (!this.tail) {
-            return this.frameAccessError(" No data in cache.");
-        }
-        return this.tail.data;
+    public getLastFrame(): CachedFrame | undefined {
+        return this.tail?.data;
     }
 
     public getLastFrameNumber(): number {
@@ -148,36 +131,32 @@ class VisDataCache {
     }
 
     private getFrameAtCondition(
-        condition: (data: CacheNode) => boolean,
-        value: number
-    ): CachedFrame {
+        condition: (data: CacheNode) => boolean
+    ): CachedFrame | undefined {
         if (!this.head) {
-            return this.frameAccessError("No data in cache.");
+            return;
         }
-        const frame = this.walkLinkedList(condition);
+        const frame = this.findInLinkedList(condition);
         if (frame) {
             return frame.data;
         }
-        return this.frameAccessError(
-            `Frame not found at provided ${condition}. Attempting to access frame ${value}.`
-        );
     }
 
-    public getFrameAtTime(time: number): CachedFrame {
-        return this.getFrameAtCondition(
-            (node) => compareTimes(node.data.time, time, 0) === 0,
-            time
+    public getFrameAtTime(time: number): CachedFrame | undefined {
+        const frame = this.getFrameAtCondition(
+            (node) => compareTimes(node.data.time, time, 0) === 0
         );
+        return frame ? frame : undefined;
     }
 
-    public getFrameAtFrameNumber(frameNumber: number): CachedFrame {
-        return this.getFrameAtCondition(
-            (node) => node.data["frameNumber"] === frameNumber,
-            frameNumber
+    public getFrameAtFrameNumber(frameNumber: number): CachedFrame | undefined {
+        const frame = this.getFrameAtCondition(
+            (node) => node.data["frameNumber"] === frameNumber
         );
+        return frame ? frame : undefined;
     }
 
-    public assignSingleFrameToCache(data: CachedFrame): void {
+    private assignSingleFrameToCache(data: CachedFrame): void {
         const newNode: CacheNode = {
             data,
             next: null,
@@ -190,7 +169,7 @@ class VisDataCache {
         this.numFrames = 1;
     }
 
-    public addFrameToEndOfCache(data: CachedFrame): void {
+    private addFrameToEndOfCache(data: CachedFrame): void {
         const newNode: CacheNode = {
             data,
             next: null,
@@ -206,14 +185,14 @@ class VisDataCache {
             this.tail = newNode;
             this.numFrames++;
             this.size += data.size;
-            if (this._cacheSizeLimited && this.size > this._maxSize) {
+            if (this.size > this._maxSize) {
                 this.trimCache();
             }
         }
     }
 
     public addFrame(data: CachedFrame): void {
-        if (this._cacheSizeLimited && this.size + data.size > this._maxSize) {
+        if (this.size + data.size > this._maxSize) {
             this.trimCache(data.size);
         }
         if (this.hasFrames() && this._cacheEnabled) {
@@ -226,9 +205,8 @@ class VisDataCache {
     // generalized to remove any node, but in theory
     // we should only be removing the head when we trim the cache
     // under current assumptions
-    public removeNode(node: CacheNode): void {
+    private removeNode(node: CacheNode): void {
         if (this.numFrames === 0 || !this.head || !this.tail) {
-            this.frameAccessError("No data in cache.");
             return;
         }
         if (this.numFrames === 1 && this.head === this.tail) {
@@ -249,7 +227,7 @@ class VisDataCache {
         this.size -= node.data.size;
     }
 
-    public trimCache(incomingDataSize?: number): void {
+    private trimCache(incomingDataSize?: number): void {
         while (
             this.hasFrames() &&
             this.size + (incomingDataSize || 0) > this._maxSize &&
