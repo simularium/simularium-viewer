@@ -84,7 +84,6 @@ const agentColors = [
 
 interface ViewerState {
     renderStyle: RenderStyle;
-    pauseOn: number;
     particleTypeNames: string[];
     particleTypeTags: string[];
     currentFrame: number;
@@ -149,7 +148,6 @@ let currentTime = 0;
 
 const initialState: ViewerState = {
     renderStyle: RenderStyle.WEBGL2_PREFERRED,
-    pauseOn: -1,
     particleTypeNames: [],
     particleTypeTags: [],
     currentFrame: 0,
@@ -429,9 +427,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             this.setState({ initialPlay: false, firstFrameTime: currentTime });
         }
         this.setState({ currentFrame, currentTime });
-        if (this.state.pauseOn === currentFrame) {
+        if (currentFrame < 0) {
             simulariumController.pause();
-            this.setState({ pauseOn: -1 });
         }
     }
 
