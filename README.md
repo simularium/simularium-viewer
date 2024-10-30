@@ -56,8 +56,7 @@ class Viewer extends React.Component {
         this.viewerRef = React.createRef();
 
         this.state = {
-               highlightId: -1,
-                pauseOn: -1,
+                highlightId: -1,
                 particleTypeIds: [],
                 currentFrame: 0,
                 currentTime: 0,
