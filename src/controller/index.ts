@@ -118,6 +118,7 @@ export default class SimulariumController {
         this.setFocusMode = this.setFocusMode.bind(this);
         this.convertTrajectory = this.convertTrajectory.bind(this);
         this.setCameraType = this.setCameraType.bind(this);
+        this.startSmoldynSim = this.startSmoldynSim.bind(this);
     }
 
     private createSimulatorConnection(
@@ -276,6 +277,28 @@ export default class SimulariumController {
         if (this.simulator) {
             this.simulator.initialize(this.playBackFile);
         }
+    }
+
+    public startSmoldynSim(
+        netConnectionConfig: NetConnectionParams,
+        fileName: string,
+        smoldynInput: string
+    ): Promise<void> {
+        try {
+            if (
+                !(this.simulator && this.simulator.isConnectedToRemoteServer())
+            ) {
+                // Only configure network if we aren't already connected to the remote server
+                this.configureNetwork(netConnectionConfig);
+            }
+            if (!(this.simulator instanceof RemoteSimulator)) {
+                throw new Error("Autoconversion requires a RemoteSimulator");
+            }
+        } catch (e) {
+            return Promise.reject(e);
+        }
+
+        return this.simulator.startSmoldyn(fileName, smoldynInput);
     }
 
     public gotoTime(time: number): void {
