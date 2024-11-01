@@ -397,6 +397,41 @@ export class RemoteSimulator implements ISimulator {
         );
     }
 
+    public startSmoldyn(
+        outFileName: string,
+        smoldynInput: string
+    ): Promise<void> {
+        return this.connectToRemoteServer()
+            .then(() => {
+                this.sendSmoldynData(outFileName, smoldynInput);
+            })
+            .catch((e) => {
+                throw new FrontEndError(e.message, ErrorLevel.ERROR);
+            });
+    }
+
+    public sendSmoldynData(outFileName: string, smoldynInput: string): void {
+        this.lastRequestedFile = outFileName;
+        if (smoldynInput !== undefined && smoldynInput !== null) {
+            this.webSocketClient.sendWebSocketRequest(
+                {
+                    msgType: NetMessageEnum.ID_START_SMOLDYN,
+                    fileName: outFileName,
+                    smoldynInputVal: smoldynInput,
+                },
+                "Start smoldyn conversion"
+            );
+        } else {
+            this.webSocketClient.sendWebSocketRequest(
+                {
+                    msgType: NetMessageEnum.ID_START_SMOLDYN,
+                    fileName: outFileName,
+                },
+                "Start smoldyn conversion"
+            );
+        }
+    }
+
     public checkServerHealth(): Promise<void> {
         return this.connectToRemoteServer()
             .then(() => {
