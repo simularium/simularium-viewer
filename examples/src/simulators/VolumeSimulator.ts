@@ -10,12 +10,49 @@ import {
 } from "../../../src/simularium/types";
 import VisTypes from "../../../src/simularium/VisTypes";
 
+const NUM_TIMESTEPS = 5;
+
 const FOV_DEGREES = 75;
 const DEGREES_TO_RADIANS = 3.14159265 / 180.0;
+
+const volumeAgentData = (time: number): number[] => [
+    // AGENT 1 ("volume")
+    VisTypes.ID_VIS_TYPE_DEFAULT, // vis type - TODO swap to volume when/if available
+    0, // instance id
+    0, // type
+    0, // x
+    0, // y
+    0, // z
+    0, // rx
+    0, // ry
+    0, // rz
+    10.0, // collision radius
+    4, // subpoints
+    time,
+    0,
+    1,
+    2,
+];
+
+const sphereAgentData = (time: number): number[] => [
+    // AGENT 2 (sphere, to test volume-mesh intersection)
+    VisTypes.ID_VIS_TYPE_DEFAULT, // vis type
+    1, // instance id
+    1, // type
+    0, // x
+    0, // y
+    3, // z
+    0, // rx
+    0, // ry
+    0, // rz
+    time / 2 + 5, // collision radius
+    0, // subpoints
+];
 
 export default class VolumeSim implements IClientSimulatorImpl {
     agentdata: number[];
     size: [number, number, number];
+    time = 0;
 
     constructor() {
         this.agentdata = [
@@ -52,16 +89,20 @@ export default class VolumeSim implements IClientSimulatorImpl {
         this.size = [25, 25, 25];
     }
 
-    update(_dt: number): VisDataMessage {
+    update(dt: number): VisDataMessage {
+        this.time = dt % NUM_TIMESTEPS;
         return {
             msgType: ClientMessageEnum.ID_VIS_DATA_ARRIVE,
-            bundleStart: 0,
+            bundleStart: this.time,
             bundleSize: 1, // frames
             bundleData: [
                 {
-                    data: this.agentdata,
-                    frameNumber: 0,
-                    time: 0,
+                    data: [
+                        ...volumeAgentData(this.time),
+                        ...sphereAgentData(this.time),
+                    ],
+                    frameNumber: this.time,
+                    time: this.time,
                 },
             ],
             fileName: "hello world",
@@ -93,7 +134,7 @@ export default class VolumeSim implements IClientSimulatorImpl {
             msgType: ClientMessageEnum.ID_TRAJECTORY_FILE_INFO,
             version: 3,
             timeStepSize: 1,
-            totalSteps: 1,
+            totalSteps: NUM_TIMESTEPS,
             size: {
                 x: this.size[0],
                 y: this.size[1],
