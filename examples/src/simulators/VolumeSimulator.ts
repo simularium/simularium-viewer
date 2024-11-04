@@ -50,44 +50,8 @@ const sphereAgentData = (time: number): number[] => [
 ];
 
 export default class VolumeSim implements IClientSimulatorImpl {
-    agentdata: number[];
-    size: [number, number, number];
+    size = [25, 25, 25];
     time = 0;
-
-    constructor() {
-        this.agentdata = [
-            // AGENT 1 ("volume")
-            VisTypes.ID_VIS_TYPE_DEFAULT, // vis type - TODO swap to volume when/if available
-            0, // instance id
-            0, // type
-            0, // x
-            0, // y
-            0, // z
-            0, // rx
-            0, // ry
-            0, // rz
-            10.0, // collision radius
-            4, // subpoints
-            0,
-            0,
-            1,
-            2,
-
-            // AGENT 2 (sphere, to test volume-mesh intersection)
-            VisTypes.ID_VIS_TYPE_DEFAULT, // vis type
-            1, // instance id
-            1, // type
-            0, // x
-            0, // y
-            3, // z
-            0, // rx
-            0, // ry
-            0, // rz
-            5.0, // collision radius
-            0, // subpoints
-        ];
-        this.size = [25, 25, 25];
-    }
 
     update(dt: number): VisDataMessage {
         this.time = dt % NUM_TIMESTEPS;
