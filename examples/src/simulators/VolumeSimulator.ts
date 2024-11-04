@@ -78,7 +78,7 @@ export default class VolumeSim implements IClientSimulatorImpl {
                 name: "volume",
                 geometry: {
                     displayType: GeometryDisplayType.VOLUME,
-                    url: "https://animatedcell-test-data.s3.us-west-2.amazonaws.com/variance/1.zarr",
+                    url: "https://animatedcell-test-data.s3.us-west-2.amazonaws.com/20200323_F01_001/P13-C4.zarr/",
                     color: "ffff00",
                 },
             },
