@@ -942,7 +942,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 >
                     Get available metrics
                 </button>
-                <button onClick={this.downloadFile}>download</button>
+                <button onClick={this.downloadFile.bind(this)}>download</button>
                 <button
                     onClick={() =>
                         simulariumController.getPlotData(
