@@ -404,6 +404,7 @@ class GeometryStore {
         this.setGeometryInRegistry(url, model, GeometryDisplayType.VOLUME);
         const context = await this.getVolumeLoaderContext();
         const loader = await context.createLoader(url);
+        loader.syncMultichannelLoading(true);
         const loadCallback = model.onChannelLoaded.bind(model);
         const volume = await loader.createVolume(new LoadSpec(), loadCallback);
         model.setImage(volume);
