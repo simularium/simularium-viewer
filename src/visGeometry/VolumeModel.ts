@@ -70,7 +70,9 @@ export default class VolumeModel {
                 }
                 // If there are more subpoints, they are enabled channel idxes.
                 // Otherwise, just channel 0 is enabled.
-                const channels = numPoints > 1 ? data.subpoints.slice(1) : [0];
+                // TODO once again, there's an extra subpoint! These `2`s
+                //   should be `1`s.
+                const channels = numPoints > 2 ? data.subpoints.slice(2) : [0];
                 this.setEnabledChannels(channels);
             }
         }
