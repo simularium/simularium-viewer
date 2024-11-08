@@ -35,7 +35,7 @@ export default class VolumeModel {
         }
 
         for (const [channelIndex, enabled] of this.channelsEnabled.entries()) {
-            this.drawable.setVolumeChannelEnabled(channelIndex, enabled);
+            this.drawable.setChannelOptions(channelIndex, { enabled });
         }
     }
 
@@ -86,8 +86,8 @@ export default class VolumeModel {
 
     public onChannelLoaded(_vol: Volume, channelIndex: number): void {
         if (this.drawable) {
-            const isEnabled = this.channelsEnabled[channelIndex];
-            this.drawable.setVolumeChannelEnabled(channelIndex, isEnabled);
+            const enabled = this.channelsEnabled[channelIndex];
+            this.drawable.setChannelOptions(channelIndex, { enabled });
             this.drawable.updateScale();
             this.drawable.onChannelLoaded([channelIndex]);
             if (this.volume) {
