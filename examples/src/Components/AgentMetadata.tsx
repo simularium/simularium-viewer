@@ -1,5 +1,5 @@
 import React from "react";
-import { AgentData } from "../../type-declarations/simularium/types";
+import { AgentData } from "../../../type-declarations/simularium/types";
 
 interface AgentMetadataProps {
     agentData: AgentData;
