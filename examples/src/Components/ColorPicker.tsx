@@ -90,7 +90,7 @@ const ColorPicker = ({
     };
 
     return (
-        <>
+        <div className="ui-container">
             <span>Color change agent selections:</span>
             <select id="agentSelect" onChange={handleAgentSelection}>
                 <option value=""> Select Agent</option>
@@ -139,7 +139,7 @@ const ColorPicker = ({
             <button onClick={() => addColorToColorArray(colorToAppend)}>
                 Add color to color array
             </button>
-        </>
+        </div>
     );
 };
 
