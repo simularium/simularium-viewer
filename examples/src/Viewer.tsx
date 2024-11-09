@@ -2,7 +2,6 @@ import React from "react";
 import { isEqual, findIndex, map, reduce } from "lodash";
 import { v4 as uuidv4 } from "uuid";
 import { InputParams } from "tweakpane";
-import { InputParams } from "tweakpane";
 
 /**
  * NOTE: if you are debugging an import/build issue
@@ -17,23 +16,6 @@ import { InputParams } from "tweakpane";
 //     FrontEndError,
 //     ErrorLevel,
 // } from "../es";
-import SimulariumViewer, {
-    SimulariumController,
-    RenderStyle,
-    loadSimulariumFile,
-    FrontEndError,
-    ErrorLevel,
-    NetConnectionParams,
-    TrajectoryFileInfo,
-} from "../../src/index";
-import { nullAgent, TrajectoryType } from "../../src/constants";
-
-import type {
-    ISimulariumFile,
-    UIDisplayData,
-    SelectionStateInfo,
-    SelectionEntry,
-} from "../../type-declarations";
 import SimulariumViewer, {
     SimulariumController,
     RenderStyle,
