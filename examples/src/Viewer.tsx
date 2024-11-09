@@ -2,6 +2,7 @@ import React from "react";
 import { isEqual, findIndex, map, reduce } from "lodash";
 import { v4 as uuidv4 } from "uuid";
 import { InputParams } from "tweakpane";
+import { InputParams } from "tweakpane";
 
 /**
  * NOTE: if you are debugging an import/build issue
@@ -16,6 +17,23 @@ import { InputParams } from "tweakpane";
 //     FrontEndError,
 //     ErrorLevel,
 // } from "../es";
+import SimulariumViewer, {
+    SimulariumController,
+    RenderStyle,
+    loadSimulariumFile,
+    FrontEndError,
+    ErrorLevel,
+    NetConnectionParams,
+    TrajectoryFileInfo,
+} from "../../src/index";
+import { nullAgent, TrajectoryType } from "../../src/constants";
+
+import type {
+    ISimulariumFile,
+    UIDisplayData,
+    SelectionStateInfo,
+    SelectionEntry,
+} from "../../type-declarations";
 import SimulariumViewer, {
     SimulariumController,
     RenderStyle,
@@ -692,75 +710,18 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         }
         return (
             <div className="container" style={{ height: "90%", width: "75%" }}>
-                <select
-                    onChange={(event) => {
-                        simulariumController.pause();
-                        playbackFile = event.target.value;
-                        this.configureAndLoad();
+                <TrajectorySelection
+                    simulariumController={simulariumController}
+                    playbackFile={playbackFile}
+                    queryStringFile={queryStringFile}
+                    PLAYBACK_OPTIONS={PLAYBACK_OPTIONS}
+                    configureAndLoad={this.configureAndLoad.bind(this)}
+                    translateAgent={this.translateAgent.bind(this)}
+                    loadSmoldynFile={this.loadSmoldynFile.bind(this)}
+                    setplaybackFile={(file) => {
+                        playbackFile = file;
                     }}
-                    defaultValue={playbackFile}
-                >
-                    <option value={queryStringFile}>{queryStringFile}</option>
-                    <option value="TEST_LIVEMODE_API">
-                        TEST LIVE MODE API
-                    </option>
-                    <option value="actin012_3.h5">Actin 12_3</option>
-                    <option value="listeria_rocketbugs_normal_fine_2_filtered.simularium">
-                        listeria 01
-                    </option>
-                    <option value="kinesin002_01.h5">kinesin 002</option>
-                    <option value="microtubules038_10.h5">MT 38</option>
-                    <option value="microtubules_v2_shrinking.h5">M Tub</option>
-                    <option value="aster.cmo">Aster</option>
-                    <option value="microtubules30_1.h5">MT 30</option>
-                    <option value="endocytosis.simularium">Endocytosis</option>
-                    <option value="pc4covid19.simularium">COVIDLUNG</option>
-                    <option value="nanoparticle_wrapping.simularium">
-                        Nanoparticle wrapping
-                    </option>
-                    <option value="smoldyn_min1.simularium">
-                        Smoldyn min1
-                    </option>
-                    <option value="smoldyn_spine.simularium">
-                        Smoldyn spine
-                    </option>
-                    <option value="medyan_Chandrasekaran_2019_UNI_alphaA_0.1_MA_0.675.simularium">
-                        medyan 625
-                    </option>
-                    <option value="medyan_Chandrasekaran_2019_UNI_alphaA_0.1_MA_0.0225.simularium">
-                        medyan 0225
-                    </option>
-                    <option value="springsalad_condensate_formation_Below_Ksp.simularium">
-                        springsalad below ksp
-                    </option>
-                    <option value="springsalad_condensate_formation_At_Ksp.simularium">
-                        springsalad at ksp
-                    </option>
-                    <option value="springsalad_condensate_formation_Above_Ksp.simularium">
-                        springsalad above ksp
-                    </option>
-                    <option value="blood-plasma-1.0.simularium">
-                        blood plasma
-                    </option>
-                    <option value="TEST_SINGLE_PDB">TEST SINGLE PDB</option>
-                    <option value="TEST_PDB">TEST PDB</option>
-                    <option value="TEST_SINGLE_FIBER">TEST SINGLE FIBER</option>
-                    <option value="TEST_FIBERS">TEST FIBERS</option>
-                    <option value="TEST_POINTS">TEST POINTS</option>
-                    <option value="TEST_METABALLS">TEST METABALLS</option>
-                    <option value="TEST_BINDING">TEST BINDING</option>
-                </select>
-
-                <button onClick={() => this.translateAgent()}>
-                    TranslateAgent
-                </button>
-                <button onClick={() => simulariumController.clearFile()}>
-                    Clear
-                </button>
-                <button onClick={() => this.loadSmoldynFile()}>
-                    Load a smoldyn trajectory
-                </button>
-                <br />
+                />
                 <button onClick={() => simulariumController.resume()}>
                     Play
                 </button>
