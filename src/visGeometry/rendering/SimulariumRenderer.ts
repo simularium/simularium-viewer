@@ -17,6 +17,7 @@ import {
     PerspectiveCamera,
     RGBAFormat,
     Scene,
+    Texture,
     WebGLMultipleRenderTargets,
     WebGLRenderer,
     WebGLRenderTarget,
@@ -265,6 +266,10 @@ class SimulariumRenderer {
             .on("change", (event) => {
                 this.contourPass.setFollowAlpha(event.value);
             });
+    }
+
+    public getPositionTexture(): Texture {
+        return this.gbuffer.texture[POSITIONBUFFER];
     }
 
     public setBackgroundColor(color: Color): void {

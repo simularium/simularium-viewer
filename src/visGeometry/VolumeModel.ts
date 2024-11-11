@@ -3,6 +3,7 @@ import {
     Object3D,
     OrthographicCamera,
     PerspectiveCamera,
+    Texture,
     Vector3,
     WebGLRenderer,
 } from "three";
@@ -117,9 +118,10 @@ export default class VolumeModel {
 
     public onBeforeRender(
         renderer: WebGLRenderer,
-        camera: PerspectiveCamera | OrthographicCamera
+        camera: PerspectiveCamera | OrthographicCamera,
+        positionTexture: Texture
     ): void {
-        this.drawable?.onAnimate(renderer, camera, undefined);
+        this.drawable?.onAnimate(renderer, camera, positionTexture);
     }
 
     public setSize(width: number, height: number): void {

@@ -1054,7 +1054,8 @@ class VisGeometry {
                         );
                         entry.geometry.onBeforeRender(
                             this.threejsrenderer,
-                            this.camera
+                            this.camera,
+                            this.renderer.getPositionTexture()
                         );
                         this.volumeGroup.add(volObj);
                     }
