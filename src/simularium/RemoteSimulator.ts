@@ -401,6 +401,9 @@ export class RemoteSimulator implements ISimulator {
         outFileName: string,
         smoldynInput: string
     ): Promise<void> {
+        // Send Smoldyn input data to Octopus, which will run the Smoldyn simulation
+        // using the Biosimulators API, convert the output data using autoconversion,
+        // and then be ready to send frame data back like a normal simularium file
         return this.connectToRemoteServer()
             .then(() => {
                 this.sendSmoldynData(outFileName, smoldynInput);
@@ -418,7 +421,7 @@ export class RemoteSimulator implements ISimulator {
                 fileName: outFileName,
                 smoldynInputVal: smoldynInput ?? undefined,
             },
-            "Start smoldyn conversion"
+            "Start smoldyn simulation"
         );
     }
 
