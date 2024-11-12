@@ -412,24 +412,14 @@ export class RemoteSimulator implements ISimulator {
 
     public sendSmoldynData(outFileName: string, smoldynInput: string): void {
         this.lastRequestedFile = outFileName;
-        if (smoldynInput !== undefined && smoldynInput !== null) {
-            this.webSocketClient.sendWebSocketRequest(
-                {
-                    msgType: NetMessageEnum.ID_START_SMOLDYN,
-                    fileName: outFileName,
-                    smoldynInputVal: smoldynInput,
-                },
-                "Start smoldyn conversion"
-            );
-        } else {
-            this.webSocketClient.sendWebSocketRequest(
-                {
-                    msgType: NetMessageEnum.ID_START_SMOLDYN,
-                    fileName: outFileName,
-                },
-                "Start smoldyn conversion"
-            );
-        }
+        this.webSocketClient.sendWebSocketRequest(
+            {
+                msgType: NetMessageEnum.ID_START_SMOLDYN,
+                fileName: outFileName,
+                smoldynInputVal: smoldynInput ?? undefined,
+            },
+            "Start smoldyn conversion"
+        );
     }
 
     public checkServerHealth(): Promise<void> {
