@@ -1,5 +1,5 @@
 import React from "react";
-import { isEqual, findIndex, map, reduce } from "lodash";
+import { isEqual, findIndex, reduce } from "lodash";
 import { v4 as uuidv4 } from "uuid";
 import { InputParams } from "tweakpane";
 

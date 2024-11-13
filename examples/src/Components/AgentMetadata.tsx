@@ -6,7 +6,6 @@ interface AgentMetadataProps {
 }
 
 const AgentMetadata = ({ agentData }: AgentMetadataProps): JSX.Element => {
-    const getContents = () => {
         if (agentData.instanceId === -1) {
             return <div className="ui-container">No agent selected</div>;
         }
@@ -27,8 +26,5 @@ const AgentMetadata = ({ agentData }: AgentMetadataProps): JSX.Element => {
             </div>
         );
     };
-
-    return getContents();
-};
 
 export default AgentMetadata;
