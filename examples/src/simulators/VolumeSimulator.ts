@@ -53,8 +53,10 @@ export default class VolumeSim implements IClientSimulatorImpl {
     size = [25, 25, 25];
     time = 0;
 
-    update(dt: number): VisDataMessage {
-        this.time = dt % NUM_TIMESTEPS;
+    update(t: number): VisDataMessage {
+        // 0 seems to indicate stepping forward by 1 frame
+        const newTime = t === 0 ? this.time + 1 : t;
+        this.time = newTime % NUM_TIMESTEPS;
         return {
             msgType: ClientMessageEnum.ID_VIS_DATA_ARRIVE,
             bundleStart: this.time,
