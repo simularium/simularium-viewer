@@ -58,10 +58,7 @@ class RenderToBuffer {
         this.camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
     }
 
-    public render(
-        renderer: WebGLRenderer,
-        target: WebGLRenderTarget | null
-    ): void {
+    public render(renderer: WebGLRenderer, target: WebGLRenderTarget | null): void {
         renderer.setRenderTarget(target);
         renderer.render(this.scene, this.camera);
     }

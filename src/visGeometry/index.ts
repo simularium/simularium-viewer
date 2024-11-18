@@ -38,12 +38,7 @@ import PDBModel from "./PDBModel";
 import AgentPath from "./agentPath";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
 
-import {
-    DEFAULT_CAMERA_Z_POSITION,
-    DEFAULT_CAMERA_SPEC,
-    nullAgent,
-    AGENT_HEADER_SIZE,
-} from "../constants";
+import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC, nullAgent, AGENT_HEADER_SIZE } from "../constants";
 import {
     AgentData,
     AgentDisplayDataWithGeometry,
@@ -67,12 +62,7 @@ import {
     MeshLoadRequest,
     PDBGeometry,
 } from "./types";
-import {
-    checkAndSanitizePath,
-    getAgentDataFromBuffer,
-    getNextAgentOffset,
-    nullCachedFrame,
-} from "../util";
+import { checkAndSanitizePath, getAgentDataFromBuffer, getNextAgentOffset, nullCachedFrame } from "../util";
 import ColorHandler from "./ColorHandler";
 
 const MAX_PATH_LEN = 32;
@@ -246,12 +236,7 @@ class VisGeometry {
 
         this.cameraDefault = cloneDeep(DEFAULT_CAMERA_SPEC);
         const aspect = CANVAS_INITIAL_WIDTH / CANVAS_INITIAL_HEIGHT;
-        this.perspectiveCamera = new PerspectiveCamera(
-            75,
-            aspect,
-            CAMERA_INITIAL_ZNEAR,
-            CAMERA_INITIAL_ZFAR
-        );
+        this.perspectiveCamera = new PerspectiveCamera(75, aspect, CAMERA_INITIAL_ZNEAR, CAMERA_INITIAL_ZFAR);
         this.orthographicCamera = new OrthographicCamera();
         this.orthographicCamera.near = CAMERA_INITIAL_ZNEAR;
         this.orthographicCamera.far = CAMERA_INITIAL_ZFAR;
@@ -280,16 +265,12 @@ class VisGeometry {
         this.onError = onError;
     }
 
-    public setBackgroundColor(
-        c: string | number | [number, number, number] | undefined
-    ): void {
+    public setBackgroundColor(c: string | number | [number, number, number] | undefined): void {
         if (c === undefined) {
             this.backgroundColor = DEFAULT_BACKGROUND_COLOR.clone();
         } else {
             // convert from a PropColor to a THREE.Color
-            this.backgroundColor = Array.isArray(c)
-                ? new Color(c[0], c[1], c[2])
-                : new Color(c);
+            this.backgroundColor = Array.isArray(c) ? new Color(c[0], c[1], c[2]) : new Color(c);
         }
         this.pathEndColor = this.backgroundColor.clone();
         this.renderer.setBackgroundColor(this.backgroundColor);
@@ -303,9 +284,7 @@ class VisGeometry {
      */
     private getDefaultOrbitRadius(): number {
         const { position, lookAtPosition } = this.cameraDefault;
-        const radius = coordsToVector(position).distanceTo(
-            coordsToVector(lookAtPosition)
-        );
+        const radius = coordsToVector(position).distanceTo(coordsToVector(lookAtPosition));
 
         if (this.cameraDefault.orthographic) {
             return radius / this.cameraDefault.zoom;
@@ -353,8 +332,7 @@ class VisGeometry {
         spec.lookAtPosition = this.controls.target.clone();
         spec.fovDegrees = this.perspectiveCamera.fov;
 
-        spec.orthographic = !!(this.camera as OrthographicCamera)
-            .isOrthographicCamera;
+        spec.orthographic = !!(this.camera as OrthographicCamera).isOrthographicCamera;
         if (spec.orthographic) {
             spec.zoom = this.orthographicCamera.zoom;
         }
@@ -442,16 +420,11 @@ class VisGeometry {
         };
 
         this.gui.addInput(settings, "bgcolor").on("change", (event) => {
-            this.setBackgroundColor([
-                event.value.r / 255.0,
-                event.value.g / 255.0,
-                event.value.b / 255.0,
-            ]);
+            this.setBackgroundColor([event.value.r / 255.0, event.value.g / 255.0, event.value.b / 255.0]);
         });
         this.gui.addButton({ title: "Capture Frame" }).on("click", () => {
             this.render(0);
-            const dataUrl =
-                this.threejsrenderer.domElement.toDataURL("image/png");
+            const dataUrl = this.threejsrenderer.domElement.toDataURL("image/png");
             const anchor = document.createElement("a");
             anchor.href = dataUrl;
             anchor.download = "screenshot.png";
@@ -460,12 +433,10 @@ class VisGeometry {
         });
         this.gui.addSeparator();
         const lodFolder = this.gui.addFolder({ title: "LoD", expanded: false });
-        lodFolder
-            .addInput(settings, "lodBias", { min: 0, max: 4, step: 1 })
-            .on("change", (event) => {
-                this.lodBias = event.value;
-                this.updateScene(this.currentSceneData);
-            });
+        lodFolder.addInput(settings, "lodBias", { min: 0, max: 4, step: 1 }).on("change", (event) => {
+            this.lodBias = event.value;
+            this.updateScene(this.currentSceneData);
+        });
         lodFolder.addInput(settings, "lod0").on("change", (event) => {
             this.lodDistanceStops[0] = event.value;
             this.updateScene(this.currentSceneData);
@@ -491,10 +462,7 @@ class VisGeometry {
 
     public setRenderStyle(renderStyle: RenderStyle): void {
         // if target render style is supported, then change, otherwise don't.
-        if (
-            renderStyle === RenderStyle.WEBGL2_PREFERRED &&
-            !this.supportsWebGL2Rendering
-        ) {
+        if (renderStyle === RenderStyle.WEBGL2_PREFERRED && !this.supportsWebGL2Rendering) {
             this.logger.warn("Warning: WebGL2 rendering not supported");
             return;
         }
@@ -536,9 +504,7 @@ class VisGeometry {
             this.updateOrthographicFrustum();
             this.updateControlsZoomBounds();
         } else {
-            this.logger.info(
-                "Using default camera settings since none were provided"
-            );
+            this.logger.info("Using default camera settings since none were provided");
             this.cameraDefault = cloneDeep(DEFAULT_CAMERA_SPEC);
         }
         this.resetCamera();
@@ -553,8 +519,7 @@ class VisGeometry {
 
     // Sets camera position and orientation to the trajectory's initial (default) values
     public resetCameraPosition(): void {
-        const { position, upVector, lookAtPosition, fovDegrees } =
-            this.cameraDefault;
+        const { position, upVector, lookAtPosition, fovDegrees } = this.cameraDefault;
 
         // Reset camera position
         this.camera.position.set(position.x, position.y, position.z);
@@ -611,12 +576,8 @@ class VisGeometry {
                 return;
             }
 
-            const newPosition = new Vector3()
-                .subVectors(position, target)
-                .setLength(newDistance);
-            this.camera.position.copy(
-                new Vector3().addVectors(newPosition, target)
-            );
+            const newPosition = new Vector3().subVectors(position, target).setLength(newDistance);
+            this.camera.position.copy(new Vector3().addVectors(newPosition, target));
         }
 
         this.controls.update();
@@ -717,9 +678,7 @@ class VisGeometry {
     }
 
     private getAllTypeIdsForGeometryName(name: string) {
-        return [...this.visGeomMap.entries()]
-            .filter(({ 1: v }) => v === name)
-            .map(([k]) => k);
+        return [...this.visGeomMap.entries()].filter(({ 1: v }) => v === name).map(([k]) => k);
     }
 
     public onNewRuntimeGeometryType(
@@ -742,11 +701,7 @@ class VisGeometry {
         for (let i = 0; i < MAX_MESHES && i < nMeshes; i += 1) {
             const visAgent = this.visAgents[i];
             if (typeIds.includes(visAgent.agentData.type)) {
-                visAgent.setColor(
-                    this.colorHandler.getColorInfoForAgentType(
-                        visAgent.agentData.type
-                    )
-                );
+                visAgent.setColor(this.colorHandler.getColorInfoForAgentType(visAgent.agentData.type));
             }
         }
 
@@ -754,10 +709,7 @@ class VisGeometry {
     }
 
     private setupControls(disableControls: boolean): void {
-        this.controls = new OrbitControls(
-            this.camera,
-            this.threejsrenderer.domElement
-        );
+        this.controls = new OrbitControls(this.camera, this.threejsrenderer.domElement);
         this.controls.addEventListener("change", () => {
             if (this.gui) {
                 this.gui.refresh();
@@ -773,10 +725,8 @@ class VisGeometry {
             this.disableControls();
         }
         if (!disableControls) {
-            this.threejsrenderer.domElement.onmouseenter = () =>
-                this.enableControls();
-            this.threejsrenderer.domElement.onmouseleave = () =>
-                this.disableControls();
+            this.threejsrenderer.domElement.onmouseenter = () => this.enableControls();
+            this.threejsrenderer.domElement.onmouseleave = () => this.disableControls();
         }
     }
 
@@ -865,20 +815,14 @@ class VisGeometry {
         // set this up after the renderStyle has been set.
         this.constructInstancedFibers();
 
-        this.threejsrenderer.setSize(
-            CANVAS_INITIAL_WIDTH,
-            CANVAS_INITIAL_HEIGHT
-        ); // expected to change when reparented
+        this.threejsrenderer.setSize(CANVAS_INITIAL_WIDTH, CANVAS_INITIAL_HEIGHT); // expected to change when reparented
         this.threejsrenderer.setClearColor(this.backgroundColor, 1);
         this.threejsrenderer.clear();
 
         return this.threejsrenderer;
     }
 
-    public setCanvasOnTheDom(
-        parent: HTMLElement | null,
-        disableControls: boolean
-    ): void {
+    public setCanvasOnTheDom(parent: HTMLElement | null, disableControls: boolean): void {
         if (parent === undefined || parent == null) {
             return;
         }
@@ -890,18 +834,12 @@ class VisGeometry {
         parent["data-has-simularium-viewer-canvas"] = true;
         this.setupControls(disableControls);
 
-        this.resize(
-            Number(parent.dataset.width),
-            Number(parent.dataset.height)
-        );
+        this.resize(Number(parent.dataset.width), Number(parent.dataset.height));
 
         this.threejsrenderer.setClearColor(this.backgroundColor, 1.0);
         this.threejsrenderer.clear();
 
-        this.threejsrenderer.domElement.setAttribute(
-            "style",
-            "top: 0px; left: 0px"
-        );
+        this.threejsrenderer.domElement.setAttribute("style", "top: 0px; left: 0px");
     }
 
     public toggleControls(lockedCamera: boolean): void {
@@ -989,10 +927,7 @@ class VisGeometry {
         }
         if (this.hemiLight && this.fixLightsToCamera) {
             // make hemi light come down from vertical of screen (camera up)
-            this.hemiLight.position.setFromMatrixColumn(
-                this.camera.matrixWorld,
-                1
-            );
+            this.hemiLight.position.setFromMatrixColumn(this.camera.matrixWorld, 1);
         }
 
         // remove all children of instancedMeshGroup.  we will re-add them.
@@ -1020,9 +955,7 @@ class VisGeometry {
                     const meshEntry = entry as MeshGeometry;
                     if (meshEntry.geometry.instances.instanceCount() > 0) {
                         meshTypes.push(meshEntry.geometry.instances);
-                        this.instancedMeshGroup.add(
-                            meshEntry.geometry.instances.getMesh()
-                        );
+                        this.instancedMeshGroup.add(meshEntry.geometry.instances.getMesh());
                     }
                 } else {
                     const pdbEntry = entry as PDBGeometry;
@@ -1036,32 +969,18 @@ class VisGeometry {
                 }
             }
 
-            this.renderer.setMeshGroups(
-                this.instancedMeshGroup,
-                this.fibers,
-                meshTypes
-            );
+            this.renderer.setMeshGroups(this.instancedMeshGroup, this.fibers, meshTypes);
             this.renderer.setFollowedInstance(this.followObjectId);
             //get bounding box max dim
             const v = new Vector3();
             this.boundingBox.getSize(v);
             const maxDim = Math.max(v.x, v.y, v.z);
             // this.camera.zoom accounts for perspective vs ortho cameras
-            this.renderer.setNearFar(
-                this.boxNearZ,
-                this.boxFarZ,
-                maxDim,
-                this.camera.zoom
-            );
+            this.renderer.setNearFar(this.boxNearZ, this.boxFarZ, maxDim, this.camera.zoom);
             this.boundingBoxMesh.visible = false;
             this.tickMarksMesh.visible = false;
             this.agentPathGroup.visible = false;
-            this.renderer.render(
-                this.threejsrenderer,
-                this.scene,
-                this.camera,
-                null
-            );
+            this.renderer.render(this.threejsrenderer, this.scene, this.camera, null);
 
             // final pass, add extra stuff on top: bounding box and line paths
             this.boundingBoxMesh.visible = true;
@@ -1094,48 +1013,30 @@ class VisGeometry {
         const size = new Vector2();
         this.threejsrenderer.getSize(size);
         if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
-            const mouse = new Vector2(
-                (offsetX / size.x) * 2 - 1,
-                -(offsetY / size.y) * 2 + 1
-            );
+            const mouse = new Vector2((offsetX / size.x) * 2 - 1, -(offsetY / size.y) * 2 + 1);
             return this.legacyRenderer.hitTest(mouse, this.camera);
         } else {
             // read from instance buffer pixel!
-            return this.renderer.hitTest(
-                this.threejsrenderer,
-                offsetX,
-                size.y - offsetY
-            );
+            return this.renderer.hitTest(this.threejsrenderer, offsetX, size.y - offsetY);
         }
     }
 
     private setAgentColors(): void {
         this.visAgents.forEach((agent) => {
-            agent.setColor(
-                this.colorHandler.getColorInfoForAgentType(agent.agentData.type)
-            );
+            agent.setColor(this.colorHandler.getColorInfoForAgentType(agent.agentData.type));
         });
     }
 
     public createMaterials(colors: (number | string)[]): void {
         const newColorData = this.colorHandler.updateColorArray(colors);
-        this.renderer.updateColors(
-            newColorData.numberOfColors,
-            newColorData.colorArray
-        );
+        this.renderer.updateColors(newColorData.numberOfColors, newColorData.colorArray);
         this.setAgentColors();
     }
 
     public applyColorToAgents(colorAssignments: ColorAssignment[]): void {
         colorAssignments.forEach((color) => {
-            const newColorData = this.colorHandler.setColorForAgentTypes(
-                color.agentIds,
-                color.color
-            );
-            this.renderer.updateColors(
-                newColorData.numberOfColors,
-                newColorData.colorArray
-            );
+            const newColorData = this.colorHandler.setColorForAgentTypes(color.agentIds, color.color);
+            this.renderer.updateColors(newColorData.numberOfColors, newColorData.colorArray);
         });
         this.updateScene(this.currentSceneData);
     }
@@ -1183,42 +1084,22 @@ class VisGeometry {
                         return;
                     }
                     // will only have a returned displayType if it changed.
-                    const {
-                        displayType: returnedDisplayType,
-                        geometry,
-                        errorMessage,
-                    } = newGeometryLoaded;
+                    const { displayType: returnedDisplayType, geometry, errorMessage } = newGeometryLoaded;
                     const newDisplayType = returnedDisplayType || displayType;
-                    this.onNewRuntimeGeometryType(
-                        lookupKey,
-                        newDisplayType,
-                        geometry
-                    );
+                    this.onNewRuntimeGeometryType(lookupKey, newDisplayType, geometry);
                     // handle additional async update to LOD for pdbs
-                    if (
-                        newDisplayType === GeometryDisplayType.PDB &&
-                        geometry
-                    ) {
+                    if (newDisplayType === GeometryDisplayType.PDB && geometry) {
                         const pdbModel = geometry as PDBModel;
                         return pdbModel.generateLOD().then(() => {
-                            this.logger.info(
-                                "Finished loading pdb LODs: ",
-                                lookupKey
-                            );
-                            this.onNewRuntimeGeometryType(
-                                lookupKey,
-                                newDisplayType,
-                                geometry
-                            );
+                            this.logger.info("Finished loading pdb LODs: ", lookupKey);
+                            this.onNewRuntimeGeometryType(lookupKey, newDisplayType, geometry);
                         });
                     }
                     // if returned with a resolve, but has an error message,
                     // the error was handled, and the geometry was replaced with a sphere
                     // but still good to tell the user about it.
                     if (errorMessage) {
-                        this.onError(
-                            new FrontEndError(errorMessage, ErrorLevel.WARNING)
-                        );
+                        this.onError(new FrontEndError(errorMessage, ErrorLevel.WARNING));
                         this.logger.info(errorMessage);
                     }
                 })
@@ -1236,10 +1117,7 @@ class VisGeometry {
         this.tickIntervalLength = tickIntervalLength;
     }
 
-    public createTickMarks(
-        volumeDimensions: number[],
-        boundsAsTuple: Bounds
-    ): void {
+    public createTickMarks(volumeDimensions: number[], boundsAsTuple: Bounds): void {
         const [minX, minY, minZ, maxX, maxY, maxZ] = boundsAsTuple;
         const visible = this.tickMarksMesh ? this.tickMarksMesh.visible : true;
 
@@ -1376,44 +1254,26 @@ class VisGeometry {
 
     public createBoundingBox(boundsAsTuple: Bounds): void {
         const [minX, minY, minZ, maxX, maxY, maxZ] = boundsAsTuple;
-        const visible = this.boundingBoxMesh
-            ? this.boundingBoxMesh.visible
-            : true;
-        this.boundingBox = new Box3(
-            new Vector3(minX, minY, minZ),
-            new Vector3(maxX, maxY, maxZ)
-        );
-        this.boundingBoxMesh = new Box3Helper(
-            this.boundingBox,
-            BOUNDING_BOX_COLOR
-        );
+        const visible = this.boundingBoxMesh ? this.boundingBoxMesh.visible : true;
+        this.boundingBox = new Box3(new Vector3(minX, minY, minZ), new Vector3(maxX, maxY, maxZ));
+        this.boundingBoxMesh = new Box3Helper(this.boundingBox, BOUNDING_BOX_COLOR);
         this.boundingBoxMesh.visible = visible;
     }
 
     public resetBounds(volumeDimensions?: number[]): void {
         this.scene.remove(this.boundingBoxMesh, this.tickMarksMesh);
         if (!volumeDimensions) {
-            this.logger.warn(
-                `Invalid volume dimensions received: ${volumeDimensions}; using defaults.`
-            );
+            this.logger.warn(`Invalid volume dimensions received: ${volumeDimensions}; using defaults.`);
             volumeDimensions = DEFAULT_VOLUME_DIMENSIONS;
         }
         const [bx, by, bz] = volumeDimensions;
-        const boundsAsTuple: Bounds = [
-            -bx / 2,
-            -by / 2,
-            -bz / 2,
-            bx / 2,
-            by / 2,
-            bz / 2,
-        ];
+        const boundsAsTuple: Bounds = [-bx / 2, -by / 2, -bz / 2, bx / 2, by / 2, bz / 2];
         this.createBoundingBox(boundsAsTuple);
         this.createTickMarks(volumeDimensions, boundsAsTuple);
         this.scene.add(this.boundingBoxMesh, this.tickMarksMesh);
 
         if (this.controls) {
-            this.controls.maxDistance =
-                this.boundingBox.max.distanceTo(this.boundingBox.min) * 1.414;
+            this.controls.maxDistance = this.boundingBox.max.distanceTo(this.boundingBox.min) * 1.414;
         }
     }
 
@@ -1441,11 +1301,7 @@ class VisGeometry {
         return agent;
     }
 
-    private addPdbToDrawList(
-        typeId: number,
-        visAgent: VisAgent,
-        pdbEntry: PDBModel
-    ) {
+    private addPdbToDrawList(typeId: number, visAgent: VisAgent, pdbEntry: PDBModel) {
         if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
             this.legacyRenderer.addPdb(
                 pdbEntry,
@@ -1464,19 +1320,12 @@ class VisGeometry {
         }
     }
 
-    private addMeshToDrawList(
-        typeId: number,
-        visAgent: VisAgent,
-        meshEntry: MeshLoadRequest,
-        agentData: AgentData
-    ) {
+    private addMeshToDrawList(typeId: number, visAgent: VisAgent, meshEntry: MeshLoadRequest, agentData: AgentData) {
         const radius = agentData.cr ? agentData.cr : 1;
         const scale = this.getScaleForId(typeId);
         const meshGeom = meshEntry.mesh;
         if (!meshGeom) {
-            console.warn(
-                "MeshEntry is present but mesh unavailable. Not rendering agent."
-            );
+            console.warn("MeshEntry is present but mesh unavailable. Not rendering agent.");
         }
         if (this.renderStyle === RenderStyle.WEBGL1_FALLBACK) {
             this.legacyRenderer.addMesh(
@@ -1504,11 +1353,7 @@ class VisGeometry {
         }
     }
 
-    private addFiberToDrawList(
-        typeId: number,
-        visAgent: VisAgent,
-        agentData: AgentData
-    ) {
+    private addFiberToDrawList(typeId: number, visAgent: VisAgent, agentData: AgentData) {
         visAgent.updateFiber(agentData.subpoints);
         const scale = this.getScaleForId(typeId);
 
@@ -1609,9 +1454,7 @@ class VisGeometry {
             // update the agent!
             visAgent.agentData = agentData;
 
-            const isHighlighted = this.highlightedIds.includes(
-                visAgent.agentData.type
-            );
+            const isHighlighted = this.highlightedIds.includes(visAgent.agentData.type);
             visAgent.setHighlighted(isHighlighted);
 
             const isHidden = this.hiddenIds.includes(visAgent.agentData.type);
@@ -1621,16 +1464,12 @@ class VisGeometry {
                 continue;
             }
 
-            visAgent.setColor(
-                this.colorHandler.getColorInfoForAgentType(typeId)
-            );
+            visAgent.setColor(this.colorHandler.getColorInfoForAgentType(typeId));
             // if not fiber...
             if (visType === VisTypes.ID_VIS_TYPE_DEFAULT) {
                 const response = this.getGeoForAgentType(typeId);
                 if (!response) {
-                    this.logger.warn(
-                        `No mesh nor pdb available for ${typeId}? Should be unreachable code`
-                    );
+                    this.logger.warn(`No mesh nor pdb available for ${typeId}? Should be unreachable code`);
                     offset = getNextAgentOffset(view, offset);
                     continue;
                 }
@@ -1640,12 +1479,7 @@ class VisGeometry {
                     this.addPdbToDrawList(typeId, visAgent, pdbEntry);
                 } else {
                     const meshEntry = geometry as MeshLoadRequest;
-                    this.addMeshToDrawList(
-                        typeId,
-                        visAgent,
-                        meshEntry,
-                        agentData
-                    );
+                    this.addMeshToDrawList(typeId, visAgent, meshEntry, agentData);
                 }
 
                 dx = agentData.x - lastx;
@@ -1653,15 +1487,7 @@ class VisGeometry {
                 dz = agentData.z - lastz;
 
                 if (path) {
-                    this.addPointToPath(
-                        path,
-                        agentData.x,
-                        agentData.y,
-                        agentData.z,
-                        dx,
-                        dy,
-                        dz
-                    );
+                    this.addPointToPath(path, agentData.x, agentData.y, agentData.z, dx, dy, dz);
                 }
             } else if (visType === VisTypes.ID_VIS_TYPE_FIBER) {
                 this.addFiberToDrawList(typeId, visAgent, agentData);
@@ -1692,16 +1518,11 @@ class VisGeometry {
         const rotationBuffer = 0.01;
         if (this.followObjectId !== NO_AGENT && this.focusMode) {
             // keep camera at same distance from target.
-            const direction = new Vector3().subVectors(
-                this.camera.position,
-                this.controls.target
-            );
+            const direction = new Vector3().subVectors(this.camera.position, this.controls.target);
             const distance = direction.length();
             direction.normalize();
 
-            const followedObject = this.visAgentInstances.get(
-                this.followObjectId
-            );
+            const followedObject = this.visAgentInstances.get(this.followObjectId);
             if (!followedObject) {
                 return;
             }
@@ -1716,10 +1537,7 @@ class VisGeometry {
 
             // update new camera position
             const newPosition = new Vector3();
-            newPosition.subVectors(
-                newTarget,
-                direction.multiplyScalar(-distance)
-            );
+            newPosition.subVectors(newTarget, direction.multiplyScalar(-distance));
             if (lerpPosition) {
                 this.camera.position.lerp(newPosition, lerpRate);
             } else {
@@ -1727,9 +1545,7 @@ class VisGeometry {
             }
         } else if (this.needToCenterCamera) {
             this.controls.target.lerp(new Vector3(), lerpRate);
-            if (
-                this.controls.target.distanceTo(new Vector3()) < distanceBuffer
-            ) {
+            if (this.controls.target.distanceTo(new Vector3()) < distanceBuffer) {
                 this.controls.target.copy(new Vector3());
                 this.needToCenterCamera = false;
             }
@@ -1737,23 +1553,15 @@ class VisGeometry {
             this.controls.target.copy(new Vector3());
             const { position } = this.camera;
             const curDistanceFromCenter = this.rotateDistance;
-            const targetPosition = this.initCameraPosition
-                .clone()
-                .setLength(curDistanceFromCenter);
+            const targetPosition = this.initCameraPosition.clone().setLength(curDistanceFromCenter);
             const currentPosition = position.clone();
 
-            const targetQuat = new Quaternion().setFromAxisAngle(
-                targetPosition,
-                0
-            );
+            const targetQuat = new Quaternion().setFromAxisAngle(targetPosition, 0);
             const currentQuat = new Quaternion().copy(this.camera.quaternion);
             const totalAngle = currentQuat.angleTo(targetQuat);
 
             const newAngle = lerpRate * totalAngle; // gives same value as using quanternion.slerp
-            const normal = currentPosition
-                .clone()
-                .cross(targetPosition)
-                .normalize();
+            const normal = currentPosition.clone().cross(targetPosition).normalize();
 
             this.camera.position.applyAxisAngle(normal, newAngle);
             this.camera.lookAt(new Vector3());
@@ -1774,11 +1582,7 @@ class VisGeometry {
     }
 
     // assumes color is a threejs color, or null/undefined
-    public addPathForAgent(
-        id: number,
-        maxSegments?: number,
-        color?: Color
-    ): AgentPath {
+    public addPathForAgent(id: number, maxSegments?: number, color?: Color): AgentPath {
         // make sure the idx is not already in our list.
         // could be optimized...
         const foundpath = this.findPathForAgent(id);
@@ -1809,11 +1613,7 @@ class VisGeometry {
 
     public removePathForAgent(id: number): void {
         if (!this.agentPaths.delete(id)) {
-            this.logger.warn(
-                "attempted to remove path for agent " +
-                    id +
-                    " that doesn't exist."
-            );
+            this.logger.warn("attempted to remove path for agent " + id + " that doesn't exist.");
         }
     }
 
@@ -1821,15 +1621,7 @@ class VisGeometry {
         this.agentPaths.clear();
     }
 
-    public addPointToPath(
-        path: AgentPath,
-        x: number,
-        y: number,
-        z: number,
-        dx: number,
-        dy: number,
-        dz: number
-    ): void {
+    public addPointToPath(path: AgentPath, x: number, y: number, z: number, dx: number, dy: number, dz: number): void {
         if (x === dx && y === dy && z === dz) {
             return;
         }
@@ -1838,11 +1630,7 @@ class VisGeometry {
         // assume it jumped the boundary going the other way.
         const volumeSize = new Vector3();
         this.boundingBox.getSize(volumeSize);
-        if (
-            Math.abs(dx) > volumeSize.x / 2 ||
-            Math.abs(dy) > volumeSize.y / 2 ||
-            Math.abs(dz) > volumeSize.z / 2
-        ) {
+        if (Math.abs(dx) > volumeSize.x / 2 || Math.abs(dy) > volumeSize.y / 2 || Math.abs(dz) > volumeSize.z / 2) {
             // now what?
             // TODO: clip line segment from x-dx to x against the bounds,
             // compute new line segments from x-dx to bound, and from x to opposite bound

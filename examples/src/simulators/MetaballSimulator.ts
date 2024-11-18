@@ -1,12 +1,5 @@
-import {
-    IClientSimulatorImpl,
-    ClientMessageEnum,
-} from "../../../src/simularium/localSimulators/IClientSimulatorImpl";
-import {
-    EncodedTypeMapping,
-    TrajectoryFileInfo,
-    VisDataMessage,
-} from "../../../src/simularium/types";
+import { IClientSimulatorImpl, ClientMessageEnum } from "../../../src/simularium/localSimulators/IClientSimulatorImpl";
+import { EncodedTypeMapping, TrajectoryFileInfo, VisDataMessage } from "../../../src/simularium/types";
 import VisTypes from "../../../src/simularium/VisTypes";
 import { GeometryDisplayType } from "../../../src/visGeometry/types";
 
@@ -41,11 +34,7 @@ export default class MetaballSimulator implements IClientSimulatorImpl {
     }
 
     private randomPtInBox(xmin, xmax, ymin, ymax, zmin, zmax) {
-        return [
-            this.randomFloat(xmin, xmax),
-            this.randomFloat(ymin, ymax),
-            this.randomFloat(zmin, zmax),
-        ];
+        return [this.randomFloat(xmin, xmax), this.randomFloat(ymin, ymax), this.randomFloat(zmin, zmax)];
     }
 
     private setupAgents() {
@@ -60,11 +49,7 @@ export default class MetaballSimulator implements IClientSimulatorImpl {
         const agentdim = agentspacing / 2.0;
         for (let i = 0; i < this.nAgents; ++i) {
             // distribute positions in the box along x
-            this.agentPositions.push([
-                mindim + ((i + 1) / (this.nAgents + 1)) * dim,
-                0,
-                0,
-            ]);
+            this.agentPositions.push([mindim + ((i + 1) / (this.nAgents + 1)) * dim, 0, 0]);
             // one agent:
             // make 8 points within a certain box with given radii
             const subpts: number[] = [];
@@ -73,9 +58,7 @@ export default class MetaballSimulator implements IClientSimulatorImpl {
                 // coordinates in object space???
                 // world space??
                 // they will have to be converted to 0-1 space for metaball creation/voxelization
-                subpts.push(
-                    ...this.randomPtInBox(0, agentdim, 0, agentdim, 0, agentdim)
-                );
+                subpts.push(...this.randomPtInBox(0, agentdim, 0, agentdim, 0, agentdim));
                 //                subpts.push(...this.randomPtInBox(-2, 2, -2, 2, -2, 2));
                 // radius
                 subpts.push(this.randomFloat(agentdim * 0.8, agentdim));

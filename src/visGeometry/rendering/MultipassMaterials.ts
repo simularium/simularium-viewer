@@ -1,12 +1,4 @@
-import {
-    Material,
-    Matrix4,
-    Mesh,
-    Points,
-    RawShaderMaterial,
-    Scene,
-    Vector2,
-} from "three";
+import { Material, Matrix4, Mesh, Points, RawShaderMaterial, Scene, Vector2 } from "three";
 
 export interface MRTShaders {
     mat: RawShaderMaterial;
@@ -23,10 +15,7 @@ export function setRenderPass(obj: Mesh | Points, shaderSet: MRTShaders): void {
     obj.material = shaderSet.mat;
 }
 
-export function setSceneRenderPass(
-    scene: Scene,
-    shaderSet: MRTShaders
-): Material {
+export function setSceneRenderPass(scene: Scene, shaderSet: MRTShaders): Material {
     scene.overrideMaterial = shaderSet.mat;
     return scene.overrideMaterial;
 }

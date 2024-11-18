@@ -95,12 +95,7 @@ class LegacyRenderer {
         }
     }
 
-    public addMesh(
-        meshGeom: BufferGeometry,
-        visAgent: VisAgent,
-        scale: number,
-        color: Color
-    ): void {
+    public addMesh(meshGeom: BufferGeometry, visAgent: VisAgent, scale: number, color: Color): void {
         const m = new Mesh(meshGeom, this.selectMaterial(visAgent, color));
         m.position.x = visAgent.agentData.x;
         m.position.y = visAgent.agentData.y;
@@ -120,12 +115,7 @@ class LegacyRenderer {
         this.agentMeshGroup.add(m);
     }
 
-    public addPdb(
-        pdb: PDBModel,
-        visAgent: VisAgent,
-        color: Color,
-        distances: number[]
-    ): void {
+    public addPdb(pdb: PDBModel, visAgent: VisAgent, color: Color, distances: number[]): void {
         const pdbGroup = new LOD();
         const pdbObjects: Object3D[] = pdb.instantiate();
         // update pdb transforms too
@@ -164,10 +154,7 @@ class LegacyRenderer {
         const raycaster = new Raycaster();
         raycaster.setFromCamera(coords, camera);
         // intersect the agent mesh group.
-        const intersects = raycaster.intersectObjects(
-            this.agentMeshGroup.children,
-            true
-        );
+        const intersects = raycaster.intersectObjects(this.agentMeshGroup.children, true);
         intersects.sort((a, b) => a.distance - b.distance);
 
         if (intersects && intersects.length) {

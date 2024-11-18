@@ -1,11 +1,6 @@
 import PDBGBufferShaders from "./PDBGBufferShaders";
 import { InstancedFiberGroup } from "./InstancedFiber";
-import {
-    MRTShaders,
-    setRenderPass,
-    updateProjectionMatrix,
-    updateResolution,
-} from "./MultipassMaterials";
+import { MRTShaders, setRenderPass, updateProjectionMatrix, updateResolution } from "./MultipassMaterials";
 
 import { GeometryInstanceContainer } from "../types";
 
@@ -78,10 +73,7 @@ class GBufferPass {
         const a = renderer.getClearAlpha();
 
         // TODO necessary??  now handled in the meshTypes loop below
-        updateProjectionMatrix(
-            this.pdbGbufferMaterials,
-            camera.projectionMatrix
-        );
+        updateProjectionMatrix(this.pdbGbufferMaterials, camera.projectionMatrix);
         this.fibers.updateProjectionMatrix(camera.projectionMatrix);
         for (let i = 0; i < this.meshTypes.length; ++i) {
             const s = this.meshTypes[i].getShaders();
@@ -111,10 +103,7 @@ class GBufferPass {
 
             this.fibers.setRenderPass();
             for (let i = 0; i < this.meshTypes.length; ++i) {
-                setRenderPass(
-                    this.meshTypes[i].getMesh() as Mesh | Points,
-                    this.meshTypes[i].getShaders()
-                );
+                setRenderPass(this.meshTypes[i].getMesh() as Mesh | Points, this.meshTypes[i].getShaders());
             }
             renderer.render(scene, camera);
             // end draw instanced things

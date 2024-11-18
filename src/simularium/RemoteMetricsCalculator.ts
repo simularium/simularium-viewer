@@ -9,10 +9,7 @@ export class RemoteMetricsCalculator {
     public handleError: (error: FrontEndError) => void | (() => void);
     private webSocketClient: WebsocketClient;
 
-    public constructor(
-        webSocketClient: WebsocketClient,
-        errorHandler?: (error: FrontEndError) => void
-    ) {
+    public constructor(webSocketClient: WebsocketClient, errorHandler?: (error: FrontEndError) => void) {
         this.handleError =
             errorHandler ||
             (() => {
@@ -39,11 +36,7 @@ export class RemoteMetricsCalculator {
         );
     }
 
-    public getPlotData(
-        data: Record<string, unknown>,
-        plots: Array<PlotConfig>,
-        fileName?: string
-    ): void {
+    public getPlotData(data: Record<string, unknown>, plots: Array<PlotConfig>, fileName?: string): void {
         this.webSocketClient.sendWebSocketRequest(
             {
                 msgType: NetMessageEnum.ID_PLOT_DATA_REQUEST,
@@ -71,9 +64,6 @@ export class RemoteMetricsCalculator {
             this.onAvailableMetricsArrive
         );
 
-        this.webSocketClient.addJsonMessageHandler(
-            NetMessageEnum.ID_PLOT_DATA_RESPONSE,
-            this.onPlotDataArrive
-        );
+        this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_PLOT_DATA_RESPONSE, this.onPlotDataArrive);
     }
 }

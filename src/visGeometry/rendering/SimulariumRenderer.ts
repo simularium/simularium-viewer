@@ -106,10 +106,7 @@ class SimulariumRenderer {
 
         this.ssao1Pass = new SSAO1Pass();
 
-        this.blur1Pass = new BlurPass(
-            this.parameters.ao1.blurRadius,
-            this.parameters.ao1.blurStdDev
-        );
+        this.blur1Pass = new BlurPass(this.parameters.ao1.blurRadius, this.parameters.ao1.blurStdDev);
 
         this.compositePass = new CompositePass({
             x: this.parameters.bghueoffset,
@@ -206,21 +203,15 @@ class SimulariumRenderer {
             max: 2.0,
         });
 
-        depth
-            .addInput(settings, "bghueoffset", { min: 0.0, max: 1.0 })
-            .on("change", (event) => {
-                this.compositePass.setBgHueOffset(event.value);
-            });
-        depth
-            .addInput(settings, "bgchromaoffset", { min: 0.0, max: 1.0 })
-            .on("change", (event) => {
-                this.compositePass.setBgChromaOffset(event.value);
-            });
-        depth
-            .addInput(settings, "bgluminanceoffset", { min: 0.0, max: 1.0 })
-            .on("change", (event) => {
-                this.compositePass.setBgLuminanceOffset(event.value);
-            });
+        depth.addInput(settings, "bghueoffset", { min: 0.0, max: 1.0 }).on("change", (event) => {
+            this.compositePass.setBgHueOffset(event.value);
+        });
+        depth.addInput(settings, "bgchromaoffset", { min: 0.0, max: 1.0 }).on("change", (event) => {
+            this.compositePass.setBgChromaOffset(event.value);
+        });
+        depth.addInput(settings, "bgluminanceoffset", { min: 0.0, max: 1.0 }).on("change", (event) => {
+            this.compositePass.setBgLuminanceOffset(event.value);
+        });
         const outlines = gui.addFolder({ title: "Outlines", expanded: false });
         outlines
             .addInput(settings, "outlineThickness", {
@@ -232,18 +223,12 @@ class SimulariumRenderer {
                 this.contourPass.setOutlineThickness(event.value);
             });
         outlines.addInput(settings, "outlineColor").on("change", (event) => {
-            this.contourPass.setOutlineColor([
-                event.value.r,
-                event.value.g,
-                event.value.b,
-            ]);
+            this.contourPass.setOutlineColor([event.value.r, event.value.g, event.value.b]);
         });
 
-        outlines
-            .addInput(settings, "outlineAlpha", { min: 0.0, max: 1.0 })
-            .on("change", (event) => {
-                this.contourPass.setOutlineAlpha(event.value);
-            });
+        outlines.addInput(settings, "outlineAlpha", { min: 0.0, max: 1.0 }).on("change", (event) => {
+            this.contourPass.setOutlineAlpha(event.value);
+        });
         outlines
             .addInput(settings, "followThickness", {
                 min: 1.0,
@@ -254,17 +239,11 @@ class SimulariumRenderer {
                 this.contourPass.setFollowOutlineThickness(event.value);
             });
         outlines.addInput(settings, "followColor").on("change", (event) => {
-            this.contourPass.setFollowColor([
-                event.value.r,
-                event.value.g,
-                event.value.b,
-            ]);
+            this.contourPass.setFollowColor([event.value.r, event.value.g, event.value.b]);
         });
-        outlines
-            .addInput(settings, "followAlpha", { min: 0.0, max: 1.0 })
-            .on("change", (event) => {
-                this.contourPass.setFollowAlpha(event.value);
-            });
+        outlines.addInput(settings, "followAlpha", { min: 0.0, max: 1.0 }).on("change", (event) => {
+            this.contourPass.setFollowAlpha(event.value);
+        });
     }
 
     public setBackgroundColor(color: Color): void {
@@ -277,12 +256,7 @@ class SimulariumRenderer {
 
     public hitTest(renderer: WebGLRenderer, x: number, y: number): number {
         const tex = this.gbuffer.texture[AGENTBUFFER];
-        const pixel = this.hitTestHelper.hitTest(
-            renderer,
-            tex,
-            x / tex.image.width,
-            y / tex.image.height
-        );
+        const pixel = this.hitTestHelper.hitTest(renderer, tex, x / tex.image.width, y / tex.image.height);
         // (typeId), (instanceId), fragViewPos.z, fragPosDepth;
 
         if (pixel[3] === -1) {
@@ -324,12 +298,7 @@ class SimulariumRenderer {
         this.drawBufferPass.resize(x, y);
     }
 
-    public setNearFar(
-        n: number,
-        f: number,
-        boxMaxDim: number,
-        cameraZoom: number
-    ): void {
+    public setNearFar(n: number, f: number, boxMaxDim: number, cameraZoom: number): void {
         this.boundsNear = n;
         this.boundsFar = f;
         this.boundsMaxDim = boxMaxDim;
@@ -346,22 +315,16 @@ class SimulariumRenderer {
         const sceneSize = this.boundsMaxDim;
 
         // update all ao settings here.
-        this.ssao1Pass.pass.material.uniforms.bias.value =
-            this.parameters.ao1.bias;
-        this.ssao1Pass.pass.material.uniforms.intensity.value =
-            this.parameters.ao1.intensity;
+        this.ssao1Pass.pass.material.uniforms.bias.value = this.parameters.ao1.bias;
+        this.ssao1Pass.pass.material.uniforms.intensity.value = this.parameters.ao1.intensity;
         this.ssao1Pass.pass.material.uniforms.scale.value =
             (this.parameters.ao1.scale * sceneSize * this.cameraZoom) / 100.0;
-        this.ssao1Pass.pass.material.uniforms.kernelRadius.value =
-            this.parameters.ao1.kernelRadius;
-        this.ssao1Pass.pass.material.uniforms.minResolution.value =
-            this.parameters.ao1.minResolution;
+        this.ssao1Pass.pass.material.uniforms.kernelRadius.value = this.parameters.ao1.kernelRadius;
+        this.ssao1Pass.pass.material.uniforms.minResolution.value = this.parameters.ao1.minResolution;
         this.ssao1Pass.pass.material.uniforms.beginFalloffDistance.value =
-            this.parameters.atomBeginDistance * sceneSize +
-            Math.max(this.boundsNear, 0.0);
+            this.parameters.atomBeginDistance * sceneSize + Math.max(this.boundsNear, 0.0);
         this.ssao1Pass.pass.material.uniforms.endFalloffDistance.value =
-            this.parameters.chainBeginDistance * sceneSize +
-            Math.max(this.boundsNear, 0.0);
+            this.parameters.chainBeginDistance * sceneSize + Math.max(this.boundsNear, 0.0);
 
         this.ssao1Pass.pass.material.uniforms.cameraFar.value = camera.far;
 
@@ -372,11 +335,9 @@ class SimulariumRenderer {
         );
 
         this.compositePass.pass.material.uniforms.atomicBeginDistance.value =
-            this.parameters.atomBeginDistance * sceneSize +
-            Math.max(this.boundsNear, 0.0);
+            this.parameters.atomBeginDistance * sceneSize + Math.max(this.boundsNear, 0.0);
         this.compositePass.pass.material.uniforms.chainBeginDistance.value =
-            this.parameters.chainBeginDistance * sceneSize +
-            Math.max(this.boundsNear, 0.0);
+            this.parameters.chainBeginDistance * sceneSize + Math.max(this.boundsNear, 0.0);
 
         // currently rendering is a draw call per PDB POINTS objects and one draw call per mesh TRIANGLES object (reusing same geometry buffer)
 

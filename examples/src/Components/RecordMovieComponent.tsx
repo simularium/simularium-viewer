@@ -48,34 +48,16 @@ const RecordMovieComponent = ({
 
     return (
         <div className="ui-container">
-            <button onClick={() => setRecordingEnabled()}>
-                {isRecordingEnabled ? "Disable" : "Enable"} Recording
-            </button>
-            <button
-                onClick={startRecording}
-                disabled={
-                    isRecording || !browserSupported || !isRecordingEnabled
-                }
-            >
+            <button onClick={() => setRecordingEnabled()}>{isRecordingEnabled ? "Disable" : "Enable"} Recording</button>
+            <button onClick={startRecording} disabled={isRecording || !browserSupported || !isRecordingEnabled}>
                 Start Recording
             </button>
-            <button
-                onClick={stopRecording}
-                disabled={!isRecording || !browserSupported}
-            >
+            <button onClick={stopRecording} disabled={!isRecording || !browserSupported}>
                 Stop Recording
             </button>
             <div>{isRecording ? "Recording..." : ""}</div>
-            <div>
-                {!browserSupported ? "Browser does not support recording" : ""}
-            </div>
-            <div>
-                {isRecording
-                    ? "Recording duration:  " +
-                      recordingTimeElapsed +
-                      " seconds"
-                    : ""}
-            </div>
+            <div>{!browserSupported ? "Browser does not support recording" : ""}</div>
+            <div>{isRecording ? "Recording duration:  " + recordingTimeElapsed + " seconds" : ""}</div>
             <div>{outputStatus}</div>
         </div>
     );

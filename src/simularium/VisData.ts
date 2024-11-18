@@ -30,8 +30,7 @@ class VisData {
             size: 0,
         };
         const numMetadataFields = Object.keys(frameData).length - 1; // exclude "data" field
-        frameData.size =
-            data.byteLength + numMetadataFields * BYTE_SIZE_64_BIT_NUM;
+        frameData.size = data.byteLength + numMetadataFields * BYTE_SIZE_64_BIT_NUM;
 
         return frameData;
     }
@@ -61,9 +60,7 @@ class VisData {
                 return firstFrame;
             }
         } else {
-            const frame = this.frameCache.getFrameAtFrameNumber(
-                this.currentFrameNumber
-            );
+            const frame = this.frameCache.getFrameAtFrameNumber(this.currentFrameNumber);
             if (frame !== undefined) {
                 return frame;
             }
@@ -139,10 +136,7 @@ class VisData {
             }
         }
         const parsedMsg: CachedFrame = parseVisDataMessage(visDataMsg);
-        if (
-            this.frameCache.cacheSizeLimited &&
-            parsedMsg.size > this.frameCache.maxSize
-        ) {
+        if (this.frameCache.cacheSizeLimited && parsedMsg.size > this.frameCache.maxSize) {
             this.frameExceedsCacheSizeError(parsedMsg.size);
             return;
         }
@@ -178,10 +172,7 @@ class VisData {
     }
 
     private addFrameToCache(frame: CachedFrame): void {
-        if (
-            this.frameCache.cacheSizeLimited &&
-            frame.size > this.frameCache.maxSize
-        ) {
+        if (this.frameCache.cacheSizeLimited && frame.size > this.frameCache.maxSize) {
             this.frameExceedsCacheSizeError(frame.size);
             return;
         }

@@ -24,10 +24,9 @@ class InputForm extends React.Component<InputFormProps> {
         if (path.length == 0) {
             newState = {
                 ...this.state[key],
-                [key] : value
-            }
+                [key]: value,
+            };
         } else {
-            
             // convert the paths into a nested object
             // make sure to copy any existing state at each level
             let tempObject = newState;
@@ -43,7 +42,7 @@ class InputForm extends React.Component<InputFormProps> {
                     thisValue = { ...currentState };
                     currentState = currentState[array[i + 1]] || {};
                 }
-    
+
                 tempObject = tempObject[nestedKey] = thisValue;
             });
         }
@@ -56,7 +55,7 @@ class InputForm extends React.Component<InputFormProps> {
             ...this.state,
         };
         console.log("submitting", payload);
-        this.props.submitFile(payload)
+        this.props.submitFile(payload);
     }
 
     render() {

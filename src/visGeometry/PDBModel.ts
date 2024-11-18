@@ -2,13 +2,7 @@ import "regenerator-runtime/runtime";
 
 import * as Comlink from "comlink";
 import parsePdb from "parse-pdb";
-import {
-    Box3,
-    BufferGeometry,
-    Float32BufferAttribute,
-    Points,
-    Vector3,
-} from "three";
+import { Box3, BufferGeometry, Float32BufferAttribute, Points, Vector3 } from "three";
 
 import type { KMeansWorkerType } from "./workers/KMeansWorker";
 import { getObject } from "./cifparser";
@@ -111,9 +105,7 @@ class PDBModel {
             this.parseCIFData(data);
         } else {
             // Error will be caught by the Geometry store handling
-            throw new Error(
-                `Expected .cif or .pdb file extension to parse PDB data, but got ${fileExtension}`
-            );
+            throw new Error(`Expected .cif or .pdb file extension to parse PDB data, but got ${fileExtension}`);
         }
     }
 
@@ -126,9 +118,7 @@ class PDBModel {
         const parsedpdb: Record<string, unknown> = getObject(data);
         for (const obj in parsedpdb) {
             const mypdb = parsedpdb[obj];
-            const atomSites = (mypdb as Record<string, unknown>)[
-                "_atom_site"
-            ] as AtomSite[];
+            const atomSites = (mypdb as Record<string, unknown>)["_atom_site"] as AtomSite[];
             if (atomSites.length > 0) {
                 this.pdb = {
                     atoms: [] as PDBAtom[],
@@ -145,9 +135,7 @@ class PDBModel {
                     });
                 }
                 this.fixupCoordinates();
-                console.log(
-                    `PDB ${this.name} has ${this.pdb.atoms.length} atoms`
-                );
+                console.log(`PDB ${this.name} has ${this.pdb.atoms.length} atoms`);
                 this.checkChains();
                 return this.initializeLOD();
             }
@@ -222,10 +210,7 @@ class PDBModel {
             miny = Math.min(miny, this.pdb.atoms[i].y);
             minz = Math.min(minz, this.pdb.atoms[i].z);
         }
-        this.bounds = new Box3(
-            new Vector3(minx, miny, minz),
-            new Vector3(maxx, maxy, maxz)
-        );
+        this.bounds = new Box3(new Vector3(minx, miny, minz), new Vector3(maxx, maxy, maxz));
     }
 
     private checkChains(): void {
@@ -261,10 +246,7 @@ class PDBModel {
             vertices[j * 4 + 2] = coordinates[j * 3 + 2];
             vertices[j * 4 + 3] = 1;
         }
-        geometry.setAttribute(
-            "position",
-            new Float32BufferAttribute(vertices, 4)
-        );
+        geometry.setAttribute("position", new Float32BufferAttribute(vertices, 4));
         return geometry;
     }
 
@@ -314,12 +296,7 @@ class PDBModel {
         this.lods.push({
             geometry: geometry0,
             vertices: lod0,
-            instances: new InstancedMesh(
-                InstanceType.POINTS,
-                geometry0,
-                this.name + "_LOD0",
-                0
-            ),
+            instances: new InstancedMesh(InstanceType.POINTS, geometry0, this.name + "_LOD0", 0),
         });
         // start at 1, and add the rest
         for (let i = 1; i < this.lodSizes.length; ++i) {
@@ -328,21 +305,14 @@ class PDBModel {
             this.lods.push({
                 geometry: geometry,
                 vertices: lodData,
-                instances: new InstancedMesh(
-                    InstanceType.POINTS,
-                    geometry,
-                    this.name + "_LOD" + i,
-                    0
-                ),
+                instances: new InstancedMesh(InstanceType.POINTS, geometry, this.name + "_LOD" + i, 0),
             });
         }
     }
 
     public async generateLOD(): Promise<void> {
         if (!this.pdb || this.lods.length < 4) {
-            console.log(
-                "generateLOD called with no pdb data or uninitialized LODs"
-            );
+            console.log("generateLOD called with no pdb data or uninitialized LODs");
             return Promise.resolve();
         }
 
@@ -354,8 +324,8 @@ class PDBModel {
         const sizes: number[] = this.lodSizes.slice(1);
 
         // Enqueue this LOD calculation
-        const retData: Float32Array[] = await TaskQueue.enqueue<Float32Array[]>(
-            () => this.processPdbLod(n, sizes, allData)
+        const retData: Float32Array[] = await TaskQueue.enqueue<Float32Array[]>(() =>
+            this.processPdbLod(n, sizes, allData)
         );
         // ... continue on when it's done
 
@@ -370,12 +340,7 @@ class PDBModel {
             this.lods[lodIndex] = {
                 geometry: geometry,
                 vertices: retData[i],
-                instances: new InstancedMesh(
-                    InstanceType.POINTS,
-                    geometry,
-                    this.name + "_LOD" + lodIndex,
-                    0
-                ),
+                instances: new InstancedMesh(InstanceType.POINTS, geometry, this.name + "_LOD" + lodIndex, 0),
             };
         }
     }
@@ -415,18 +380,11 @@ class PDBModel {
 
     private async processPdbLod(n, sizes, allData) {
         // https://webpack.js.org/guides/web-workers/#syntax
-        const worker = new Worker(
-            new URL("./workers/KMeansWorker", import.meta.url),
-            { type: "module" }
-        );
+        const worker = new Worker(new URL("./workers/KMeansWorker", import.meta.url), { type: "module" });
         const kMeansWorkerClass = Comlink.wrap<KMeansWorkerType>(worker);
         const workerobj = await new kMeansWorkerClass();
 
-        const retData = await workerobj.run(
-            n,
-            sizes,
-            Comlink.transfer(allData, [allData.buffer])
-        );
+        const retData = await workerobj.run(n, sizes, Comlink.transfer(allData, [allData.buffer]));
 
         worker.terminate();
         return retData;

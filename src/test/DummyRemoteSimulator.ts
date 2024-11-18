@@ -1,9 +1,4 @@
-import {
-    NetConnectionParams,
-    NetMessage,
-    NetMessageEnum,
-    WebsocketClient,
-} from "../simularium/WebsocketClient";
+import { NetConnectionParams, NetMessage, NetMessageEnum, WebsocketClient } from "../simularium/WebsocketClient";
 import { RemoteSimulator } from "../simularium/RemoteSimulator";
 import { VisDataFrame, VisDataMessage } from "../simularium/types";
 
@@ -49,19 +44,7 @@ export class DummyRemoteSimulator extends RemoteSimulator {
         const data: VisDataFrame = {
             frameNumber: frameNumber,
             time: frameNumber,
-            data: [
-                1000,
-                0,
-                43,
-                Math.cos(frameNumber / 4) * 5,
-                Math.sin(frameNumber / 4) * 5,
-                0,
-                0,
-                0,
-                10,
-                1,
-                0,
-            ],
+            data: [1000, 0, 43, Math.cos(frameNumber / 4) * 5, Math.sin(frameNumber / 4) * 5, 0, 0, 0, 10, 1, 0],
         };
         msg.bundleData.push(data);
         return JSON.stringify(msg);
@@ -77,9 +60,7 @@ export class DummyRemoteSimulator extends RemoteSimulator {
             return;
         }
 
-        const msg: NetMessage = JSON.parse(
-            this.getDataBundle(this.frameCounter)
-        );
+        const msg: NetMessage = JSON.parse(this.getDataBundle(this.frameCounter));
         this.frameCounter++;
         this.onJsonIdVisDataArrive(msg);
     }
@@ -161,9 +142,7 @@ export class DummyRemoteSimulator extends RemoteSimulator {
         setTimeout(() => {
             this.frameCounter = time / this.timeStep;
 
-            const msg: NetMessage = JSON.parse(
-                this.getDataBundle(this.frameCounter)
-            );
+            const msg: NetMessage = JSON.parse(this.getDataBundle(this.frameCounter));
             this.frameCounter++;
             this.onJsonIdVisDataArrive(msg);
         }, this.commandLatencyMS);

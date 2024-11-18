@@ -99,9 +99,7 @@ export default class KMeans {
 
     public dataDimensionExtents(data: Float32Array): number[] {
         //data = data || this.data;
-        const extents = [
-            1000000, 1000000, 1000000, -1000000, -1000000, -1000000,
-        ];
+        const extents = [1000000, 1000000, 1000000, -1000000, -1000000, -1000000];
 
         for (let i = 0; i < data.length / 3; i++) {
             const x = data[i * 3];
@@ -169,9 +167,7 @@ export default class KMeans {
         // choose k random items from the original data set
         const numItems = data.length / 3;
         const selected: Set<number> = new Set();
-        while (
-            selected.add(Math.floor(Math.random() * numItems) | 0).size < k
-        ) {}
+        while (selected.add(Math.floor(Math.random() * numItems) | 0).size < k) {}
         const items: number[] = [...selected];
 
         const means = new Float32Array(k * 3);
@@ -216,10 +212,7 @@ export default class KMeans {
                  * √((pi-qi)^2+...+(pn-qn)^2)
                  */
 
-                const sum =
-                    (x - mx) * (x - mx) +
-                    (y - my) * (y - my) +
-                    (z - mz) * (z - mz);
+                const sum = (x - mx) * (x - mx) + (y - my) * (y - my) + (z - mz) * (z - mz);
 
                 // √sum
                 this.tmpDistances[j] = Math.sqrt(sum);
@@ -246,11 +239,7 @@ export default class KMeans {
         let dim;
 
         // For each cluster, get sum of point coordinates in every dimension.
-        for (
-            let pointIndex = 0;
-            pointIndex < this.assignments.length;
-            pointIndex++
-        ) {
+        for (let pointIndex = 0; pointIndex < this.assignments.length; pointIndex++) {
             meanIndex = this.assignments[pointIndex];
             const px = this.data[pointIndex * 3];
             const py = this.data[pointIndex * 3 + 1];
@@ -268,23 +257,18 @@ export default class KMeans {
          */
         for (meanIndex = 0; meanIndex < sums.length / 3; meanIndex++) {
             if (0 === counts[meanIndex]) {
-                sums[meanIndex * 3] =
-                    this.extents[0] + Math.random() * this.ranges[0];
-                sums[meanIndex * 3 + 1] =
-                    this.extents[1] + Math.random() * this.ranges[1];
-                sums[meanIndex * 3 + 2] =
-                    this.extents[2] + Math.random() * this.ranges[2];
+                sums[meanIndex * 3] = this.extents[0] + Math.random() * this.ranges[0];
+                sums[meanIndex * 3 + 1] = this.extents[1] + Math.random() * this.ranges[1];
+                sums[meanIndex * 3 + 2] = this.extents[2] + Math.random() * this.ranges[2];
                 continue;
             }
 
             sums[meanIndex * 3] /= counts[meanIndex];
             sums[meanIndex * 3] = Math.round(100 * sums[meanIndex * 3]) / 100;
             sums[meanIndex * 3 + 1] /= counts[meanIndex];
-            sums[meanIndex * 3 + 1] =
-                Math.round(100 * sums[meanIndex * 3 + 1]) / 100;
+            sums[meanIndex * 3 + 1] = Math.round(100 * sums[meanIndex * 3 + 1]) / 100;
             sums[meanIndex * 3 + 2] /= counts[meanIndex];
-            sums[meanIndex * 3 + 2] =
-                Math.round(100 * sums[meanIndex * 3 + 2]) / 100;
+            sums[meanIndex * 3 + 2] = Math.round(100 * sums[meanIndex * 3 + 2]) / 100;
         }
 
         /* If current means does not equal to new means, then
@@ -298,19 +282,13 @@ export default class KMeans {
             // Nudge means 1/nth of the way toward average point.
             for (meanIndex = 0; meanIndex < sums.length / 3; meanIndex++) {
                 for (dim = 0; dim < 3; dim++) {
-                    diff =
-                        sums[meanIndex * 3 + dim] -
-                        this.means[meanIndex * 3 + dim];
+                    diff = sums[meanIndex * 3 + dim] - this.means[meanIndex * 3 + dim];
                     if (Math.abs(diff) > 0.1) {
                         const stepsPerIteration = 10;
-                        this.means[meanIndex * 3 + dim] +=
-                            diff / stepsPerIteration;
-                        this.means[meanIndex * 3 + dim] =
-                            Math.round(100 * this.means[meanIndex * 3 + dim]) /
-                            100;
+                        this.means[meanIndex * 3 + dim] += diff / stepsPerIteration;
+                        this.means[meanIndex * 3 + dim] = Math.round(100 * this.means[meanIndex * 3 + dim]) / 100;
                     } else {
-                        this.means[meanIndex * 3 + dim] =
-                            sums[meanIndex * 3 + dim];
+                        this.means[meanIndex * 3 + dim] = sums[meanIndex * 3 + dim];
                     }
                 }
             }
@@ -346,10 +324,6 @@ export default class KMeans {
             meansMoved = this.moveMeans();
 
             time = Date.now() - startTimeMs;
-        } while (
-            meansMoved &&
-            this.iterations < maxIterations &&
-            !(time > timeLimitMs)
-        );
+        } while (meansMoved && this.iterations < maxIterations && !(time > timeLimitMs));
     }
 }

@@ -381,10 +381,7 @@ void main()	{
 }
 `;
 
-function createShaders(
-    lengthSegments: number,
-    nPointsPerCurve: number
-): MRTShaders {
+function createShaders(lengthSegments: number, nPointsPerCurve: number): MRTShaders {
     const shaderDefines = {
         lengthSegments: lengthSegments,
         ROBUST: false,

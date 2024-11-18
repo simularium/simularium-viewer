@@ -1,12 +1,5 @@
-import {
-    IClientSimulatorImpl,
-    ClientMessageEnum,
-} from "../../../src/simularium/localSimulators/IClientSimulatorImpl";
-import {
-    EncodedTypeMapping,
-    TrajectoryFileInfo,
-    VisDataMessage,
-} from "../../../src/simularium/types";
+import { IClientSimulatorImpl, ClientMessageEnum } from "../../../src/simularium/localSimulators/IClientSimulatorImpl";
+import { EncodedTypeMapping, TrajectoryFileInfo, VisDataMessage } from "../../../src/simularium/types";
 import VisTypes from "../../../src/simularium/VisTypes";
 import { GeometryDisplayType } from "../../../src/visGeometry/types";
 
@@ -86,9 +79,7 @@ export default class PdbSim implements IClientSimulatorImpl {
                     z:
                         // set a z value that will roughly frame the bounding box within our camera field of view
                         Math.sqrt(
-                            this.size[0] * this.size[0] +
-                                this.size[1] * this.size[1] +
-                                this.size[2] * this.size[2]
+                            this.size[0] * this.size[0] + this.size[1] * this.size[1] + this.size[2] * this.size[2]
                         ) * Math.tan(0.5 * FOV_DEGREES * DEGREES_TO_RADIANS),
                 },
                 lookAtPosition: {

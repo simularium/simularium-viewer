@@ -1,15 +1,4 @@
-import {
-    Box3,
-    BufferGeometry,
-    Camera,
-    Euler,
-    Group,
-    Quaternion,
-    Scene,
-    Vector3,
-    Vector4,
-    WebGLRenderer,
-} from "three";
+import { Box3, BufferGeometry, Camera, Euler, Group, Quaternion, Scene, Vector3, Vector4, WebGLRenderer } from "three";
 import { MarchingCubes } from "three/examples/jsm/objects/MarchingCubes";
 
 import MetaballMeshShaders from "./MetaballMeshShader";
@@ -73,14 +62,8 @@ class MetaballMesh implements GeometryInstanceContainer {
 
         const mat = this.shaderSet.mat.clone();
         mat.uniforms.translateAndScale.value = new Vector4(x, y, z, scale);
-        mat.uniforms.rotation.value = new Quaternion().setFromEuler(
-            new Euler(rx, ry, rz)
-        );
-        mat.uniforms.instanceAndTypeId.value = new Vector3(
-            uniqueAgentId,
-            typeId,
-            lodScale
-        );
+        mat.uniforms.rotation.value = new Quaternion().setFromEuler(new Euler(rx, ry, rz));
+        mat.uniforms.instanceAndTypeId.value = new Vector3(uniqueAgentId, typeId, lodScale);
 
         // what is a good value here?
         const resolution = 28;
@@ -94,13 +77,7 @@ class MetaballMesh implements GeometryInstanceContainer {
         // TODO consider this implementation instead:
         // https://github.com/sjpt/metaballsWebgl
 
-        const effect = new MarchingCubes(
-            resolution,
-            mat,
-            enableNormals,
-            enableColors,
-            maxPolyCount
-        );
+        const effect = new MarchingCubes(resolution, mat, enableNormals, enableColors, maxPolyCount);
         effect.position.set(0, 0, 0);
         effect.scale.set(1, 1, 1);
 
@@ -110,9 +87,7 @@ class MetaballMesh implements GeometryInstanceContainer {
         const bound = new Box3();
         let maxRadius = 0;
         for (let i = 0; i < subPoints.length; i += 4) {
-            bound.expandByPoint(
-                new Vector3(subPoints[i], subPoints[i + 1], subPoints[i + 2])
-            );
+            bound.expandByPoint(new Vector3(subPoints[i], subPoints[i + 1], subPoints[i + 2]));
             if (subPoints[i + 3] > maxRadius) {
                 maxRadius = subPoints[i + 3];
             }

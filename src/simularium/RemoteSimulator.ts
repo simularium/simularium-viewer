@@ -2,11 +2,7 @@ import jsLogger from "js-logger";
 import { v4 as uuidv4 } from "uuid";
 import { ILogger } from "js-logger";
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
-import {
-    WebsocketClient,
-    NetMessageEnum,
-    MessageEventLike,
-} from "./WebsocketClient";
+import { WebsocketClient, NetMessageEnum, MessageEventLike } from "./WebsocketClient";
 import type { NetMessage, ErrorMessage } from "./WebsocketClient";
 import { ISimulator } from "./ISimulator";
 import { TrajectoryFileInfoV2, VisDataMessage } from "./types";
@@ -23,10 +19,7 @@ export class RemoteSimulator implements ISimulator {
     protected lastRequestedFile: string;
     public handleError: (error: FrontEndError) => void | (() => void);
 
-    public constructor(
-        webSocketClient: WebsocketClient,
-        errorHandler?: (error: FrontEndError) => void
-    ) {
+    public constructor(webSocketClient: WebsocketClient, errorHandler?: (error: FrontEndError) => void) {
         this.webSocketClient = webSocketClient;
         this.lastRequestedFile = "";
         this.handleError =
@@ -51,14 +44,10 @@ export class RemoteSimulator implements ISimulator {
         };
     }
 
-    public setTrajectoryFileInfoHandler(
-        handler: (msg: TrajectoryFileInfoV2) => void
-    ): void {
+    public setTrajectoryFileInfoHandler(handler: (msg: TrajectoryFileInfoV2) => void): void {
         this.onTrajectoryFileInfoArrive = handler;
     }
-    public setTrajectoryDataHandler(
-        handler: (msg: VisDataMessage) => void
-    ): void {
+    public setTrajectoryDataHandler(handler: (msg: VisDataMessage) => void): void {
         this.onTrajectoryDataArrive = handler;
     }
 
@@ -83,21 +72,13 @@ export class RemoteSimulator implements ISimulator {
         const floatView = new Float32Array(event.data);
         const nameLength = floatView[1];
         const byteView = new Uint8Array(event.data);
-        const fileBytes = byteView.subarray(
-            OFFSET_TO_NAME_LENGTH,
-            OFFSET_TO_NAME_LENGTH + nameLength
-        );
+        const fileBytes = byteView.subarray(OFFSET_TO_NAME_LENGTH, OFFSET_TO_NAME_LENGTH + nameLength);
         const fileName = new TextDecoder("utf-8").decode(fileBytes);
 
         if (fileName == this.lastRequestedFile) {
             this.onTrajectoryDataArrive(event.data);
         } else {
-            this.logger.error(
-                "File arrived ",
-                fileName,
-                " is not file ",
-                this.lastRequestedFile
-            );
+            this.logger.error("File arrived ", fileName, " is not file ", this.lastRequestedFile);
         }
     }
 
@@ -133,63 +114,47 @@ export class RemoteSimulator implements ISimulator {
     }
 
     public onErrorMsg(msg: ErrorMessage): void {
-        this.logger.error(
-            "Error message of type ",
-            msg.errorCode,
-            " arrived: ",
-            msg.errorMsg
-        );
+        this.logger.error("Error message of type ", msg.errorCode, " arrived: ", msg.errorMsg);
         const error = new FrontEndError(msg.errorMsg, ErrorLevel.WARNING);
         this.handleError(error);
         // TODO: specific handling based on error code
     }
 
     private registerBinaryMessageHandlers(): void {
-        this.webSocketClient.addBinaryMessageHandler(
-            NetMessageEnum.ID_VIS_DATA_ARRIVE,
-            (msg) => this.onBinaryIdVisDataArrive(msg)
+        this.webSocketClient.addBinaryMessageHandler(NetMessageEnum.ID_VIS_DATA_ARRIVE, (msg) =>
+            this.onBinaryIdVisDataArrive(msg)
         );
     }
 
     private registerJsonMessageHandlers(): void {
-        this.webSocketClient.addJsonMessageHandler(
-            NetMessageEnum.ID_TRAJECTORY_FILE_INFO,
-            (msg) => this.onTrajectoryFileInfoArrive(msg)
+        this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_TRAJECTORY_FILE_INFO, (msg) =>
+            this.onTrajectoryFileInfoArrive(msg)
         );
 
-        this.webSocketClient.addJsonMessageHandler(
-            NetMessageEnum.ID_HEARTBEAT_PING,
-            (msg) => this.onHeartbeatPing(msg)
+        this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_HEARTBEAT_PING, (msg) =>
+            this.onHeartbeatPing(msg)
         );
 
-        this.webSocketClient.addJsonMessageHandler(
-            NetMessageEnum.ID_VIS_DATA_ARRIVE,
-            (msg) => this.onJsonIdVisDataArrive(msg)
+        this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_VIS_DATA_ARRIVE, (msg) =>
+            this.onJsonIdVisDataArrive(msg)
         );
 
-        this.webSocketClient.addJsonMessageHandler(
-            NetMessageEnum.ID_UPDATE_TIME_STEP,
-            (_msg) => this.updateTimestep()
+        this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_UPDATE_TIME_STEP, (_msg) => this.updateTimestep());
+
+        this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_UPDATE_RATE_PARAM, (_msg) =>
+            this.updateRateParam()
         );
 
-        this.webSocketClient.addJsonMessageHandler(
-            NetMessageEnum.ID_UPDATE_RATE_PARAM,
-            (_msg) => this.updateRateParam()
+        this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_MODEL_DEFINITION, (_msg) =>
+            this.onModelDefinitionArrive()
         );
 
-        this.webSocketClient.addJsonMessageHandler(
-            NetMessageEnum.ID_MODEL_DEFINITION,
-            (_msg) => this.onModelDefinitionArrive()
+        this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_SERVER_HEALTHY_RESPONSE, (_msg) =>
+            this.healthCheckHandler()
         );
 
-        this.webSocketClient.addJsonMessageHandler(
-            NetMessageEnum.ID_SERVER_HEALTHY_RESPONSE,
-            (_msg) => this.healthCheckHandler()
-        );
-
-        this.webSocketClient.addJsonMessageHandler(
-            NetMessageEnum.ID_ERROR_MSG,
-            (msg) => this.onErrorMsg(msg as ErrorMessage)
+        this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_ERROR_MSG, (msg) =>
+            this.onErrorMsg(msg as ErrorMessage)
         );
     }
 
@@ -231,10 +196,7 @@ export class RemoteSimulator implements ISimulator {
             paramName: paramName,
             paramValue: paramValue,
         };
-        this.webSocketClient.sendWebSocketRequest(
-            jsonData,
-            "Rate Parameter Update"
-        );
+        this.webSocketClient.sendWebSocketRequest(jsonData, "Rate Parameter Update");
     }
 
     public sendModelDefinition(model: string): void {
@@ -242,19 +204,13 @@ export class RemoteSimulator implements ISimulator {
             model: model,
             msgType: NetMessageEnum.ID_MODEL_DEFINITION,
         };
-        this.webSocketClient.sendWebSocketRequest(
-            dataToSend,
-            "Model Definition"
-        );
+        this.webSocketClient.sendWebSocketRequest(dataToSend, "Model Definition");
     }
 
     /**
      * WebSocket Simulation Control
      */
-    public startRemoteSimPreRun(
-        _timeStep: number,
-        _numTimeSteps: number
-    ): void {
+    public startRemoteSimPreRun(_timeStep: number, _numTimeSteps: number): void {
         // not implemented
     }
 
@@ -273,10 +229,7 @@ export class RemoteSimulator implements ISimulator {
         // Note that it is possible for the first vis data to arrive before the TrajectoryFileInfo...
         return this.connectToRemoteServer()
             .then(() => {
-                this.webSocketClient.sendWebSocketRequest(
-                    jsonData,
-                    "Start Trajectory File Playback"
-                );
+                this.webSocketClient.sendWebSocketRequest(jsonData, "Start Trajectory File Playback");
             })
             .catch((error) => {
                 throw new FrontEndError(error.message, ErrorLevel.ERROR);
@@ -381,10 +334,7 @@ export class RemoteSimulator implements ISimulator {
     ): void {
         // Check for provided file name, and if none provided
         // generate random file name for converted file to be stored on the server
-        const fileName =
-            providedFileName !== undefined
-                ? providedFileName
-                : uuidv4() + ".simularium";
+        const fileName = providedFileName !== undefined ? providedFileName : uuidv4() + ".simularium";
         this.lastRequestedFile = fileName;
         this.webSocketClient.sendWebSocketRequest(
             {
@@ -408,9 +358,7 @@ export class RemoteSimulator implements ISimulator {
                 );
             })
             .catch((e) => {
-                this.handleError(
-                    new FrontEndError(e.message, ErrorLevel.WARNING)
-                );
+                this.handleError(new FrontEndError(e.message, ErrorLevel.WARNING));
             });
     }
 

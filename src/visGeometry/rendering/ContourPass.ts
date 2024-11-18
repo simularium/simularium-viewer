@@ -165,11 +165,7 @@ class ContourPass {
     }
 
     public setFollowColor(value: number[]): void {
-        this.pass.material.uniforms.followColor.value = new Color(
-            value[0] / 255.0,
-            value[1] / 255.0,
-            value[2] / 255.0
-        );
+        this.pass.material.uniforms.followColor.value = new Color(value[0] / 255.0, value[1] / 255.0, value[2] / 255.0);
     }
 
     public setFollowAlpha(value: number): void {

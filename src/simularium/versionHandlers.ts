@@ -3,12 +3,7 @@ import * as si from "si-prefix";
 
 import { DEFAULT_CAMERA_SPEC_PERSPECTIVE } from "../constants";
 import { FrontEndError, ErrorLevel } from "./FrontEndError";
-import {
-    AgentDisplayDataWithGeometry,
-    TrajectoryFileInfo,
-    TrajectoryFileInfoAny,
-    TrajectoryFileInfoV1,
-} from "./types";
+import { AgentDisplayDataWithGeometry, TrajectoryFileInfo, TrajectoryFileInfoAny, TrajectoryFileInfoV1 } from "./types";
 import { GeometryDisplayType } from "../visGeometry/types";
 
 // the data may come in missing any of these values
@@ -31,10 +26,7 @@ Currently supported versions: 1, 2
 */
 const LATEST_VERSION = 3;
 const VERSION_NUM_ERROR = "Invalid version number in TrajectoryFileInfo:";
-export const makeMissingDisplayTypeErrorMessage = (
-    key: string,
-    url: string
-): string => {
+export const makeMissingDisplayTypeErrorMessage = (key: string, url: string): string => {
     if (url) {
         return `Missing typeMapping[${key}].geometry.displayType, so we couldn't request ${url}. Geometry will default to spheres`;
     } else {
@@ -53,63 +45,50 @@ export const sanitizeAgentMapGeometryData = (
     typeMapping: EncodedTypeMappingPreProcessing,
     onError?: (error: FrontEndError) => void
 ): { [key: number]: AgentDisplayDataWithGeometry } => {
-    return mapValues(
-        typeMapping,
-        (value: AgentDisplayDataPreProcessing, key) => {
-            let geometry = {};
-            if (value.geometry) {
-                let url = value.geometry.url || "";
-                let { displayType } = value.geometry;
-                if (!displayType) {
-                    // we're relying on the data to have a displayType to tell us what sort of data the url is pointing at
-                    // if the user fails to provide the displayType, we'll default to loading a sphere, and clear out the url
-                    const message = makeMissingDisplayTypeErrorMessage(
-                        key,
-                        url
-                    );
-                    if (onError) {
-                        onError(new FrontEndError(message, ErrorLevel.WARNING));
-                    } else {
-                        console.log(message);
-                    }
-                    url = "";
-                    displayType = GeometryDisplayType.SPHERE;
-                } else if (
-                    !url &&
-                    (displayType === GeometryDisplayType.PDB ||
-                        displayType === GeometryDisplayType.OBJ)
-                ) {
-                    const message = makeMissingUrlErrorMessage(
-                        key,
-                        displayType
-                    );
-                    if (onError) {
-                        onError(new FrontEndError(message, ErrorLevel.WARNING));
-                    } else {
-                        console.log(message);
-                    }
-                    displayType = GeometryDisplayType.SPHERE;
+    return mapValues(typeMapping, (value: AgentDisplayDataPreProcessing, key) => {
+        let geometry = {};
+        if (value.geometry) {
+            let url = value.geometry.url || "";
+            let { displayType } = value.geometry;
+            if (!displayType) {
+                // we're relying on the data to have a displayType to tell us what sort of data the url is pointing at
+                // if the user fails to provide the displayType, we'll default to loading a sphere, and clear out the url
+                const message = makeMissingDisplayTypeErrorMessage(key, url);
+                if (onError) {
+                    onError(new FrontEndError(message, ErrorLevel.WARNING));
+                } else {
+                    console.log(message);
                 }
-
-                geometry = {
-                    ...value.geometry,
-                    displayType,
-                    url,
-                    color: value.geometry.color || "",
-                };
-            } else {
-                geometry = {
-                    displayType: "SPHERE",
-                    url: "",
-                    color: "",
-                };
+                url = "";
+                displayType = GeometryDisplayType.SPHERE;
+            } else if (!url && (displayType === GeometryDisplayType.PDB || displayType === GeometryDisplayType.OBJ)) {
+                const message = makeMissingUrlErrorMessage(key, displayType);
+                if (onError) {
+                    onError(new FrontEndError(message, ErrorLevel.WARNING));
+                } else {
+                    console.log(message);
+                }
+                displayType = GeometryDisplayType.SPHERE;
             }
-            return {
-                ...value,
-                geometry,
-            } as AgentDisplayDataWithGeometry;
+
+            geometry = {
+                ...value.geometry,
+                displayType,
+                url,
+                color: value.geometry.color || "",
+            };
+        } else {
+            geometry = {
+                displayType: "SPHERE",
+                url: "",
+                color: "",
+            };
         }
-    );
+        return {
+            ...value,
+            geometry,
+        } as AgentDisplayDataWithGeometry;
+    });
 };
 
 export const updateTrajectoryFileInfoFormat = (
@@ -131,9 +110,7 @@ export const updateTrajectoryFileInfoFormat = (
             const v1Data = msg as TrajectoryFileInfoV1;
 
             // Ex: 1.5e-9 -> [1.5, "nm"]
-            const spatialUnitsArray = si.meter.convert(
-                v1Data.spatialUnitFactorMeters
-            );
+            const spatialUnitsArray = si.meter.convert(v1Data.spatialUnitFactorMeters);
             const spatialUnitsMagnitude = spatialUnitsArray[0];
             // The si-prefix library abbreviates "micro" as "mc", so swap it out with "µ"
             const spatialUnitsName = spatialUnitsArray[1].replace("mc", "µ");
@@ -158,9 +135,7 @@ export const updateTrajectoryFileInfoFormat = (
                 typeMapping: output.typeMapping,
                 version: LATEST_VERSION,
             };
-            console.warn(
-                "Using default camera settings since none were provided"
-            );
+            console.warn("Using default camera settings since none were provided");
             break;
         default:
             throw new RangeError(VERSION_NUM_ERROR + msg.version);

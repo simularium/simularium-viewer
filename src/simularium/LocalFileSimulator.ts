@@ -31,14 +31,10 @@ export class LocalFileSimulator implements ISimulator {
         console.log("NEW LOCALFILECONNECTION");
     }
 
-    public setTrajectoryFileInfoHandler(
-        handler: (msg: TrajectoryFileInfoV2) => void
-    ): void {
+    public setTrajectoryFileInfoHandler(handler: (msg: TrajectoryFileInfoV2) => void): void {
         this.onTrajectoryFileInfoArrive = handler;
     }
-    public setTrajectoryDataHandler(
-        handler: (msg: VisDataMessage | ArrayBuffer) => void
-    ): void {
+    public setTrajectoryDataHandler(handler: (msg: VisDataMessage | ArrayBuffer) => void): void {
         this.onTrajectoryDataArrive = handler;
     }
 
@@ -86,10 +82,7 @@ export class LocalFileSimulator implements ISimulator {
      *  Trajectory File: No simulation run, stream a result file piecemeal
      *
      */
-    public startRemoteSimPreRun(
-        _timeStep: number,
-        _numTimeSteps: number
-    ): void {
+    public startRemoteSimPreRun(_timeStep: number, _numTimeSteps: number): void {
         // not implemented
     }
 
@@ -120,9 +113,7 @@ export class LocalFileSimulator implements ISimulator {
                 this.pauseRemoteSim();
                 return;
             }
-            this.onTrajectoryDataArrive(
-                this.getFrame(this.currentPlaybackFrameIndex)
-            );
+            this.onTrajectoryDataArrive(this.getFrame(this.currentPlaybackFrameIndex));
             this.currentPlaybackFrameIndex++;
         }, 1);
     }
@@ -148,9 +139,7 @@ export class LocalFileSimulator implements ISimulator {
     }
 
     public requestTrajectoryFileInfo(_fileName: string): void {
-        this.onTrajectoryFileInfoArrive(
-            this.simulariumFile.getTrajectoryFileInfo()
-        );
+        this.onTrajectoryFileInfoArrive(this.simulariumFile.getTrajectoryFileInfo());
     }
 
     public sendUpdate(_obj: Record<string, unknown>): void {

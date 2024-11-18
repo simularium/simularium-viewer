@@ -1,9 +1,6 @@
 import { Mesh } from "three";
 
-import {
-    InstancedMesh,
-    InstanceType,
-} from "../visGeometry/rendering/InstancedMesh";
+import { InstancedMesh, InstanceType } from "../visGeometry/rendering/InstancedMesh";
 import GeometryStore, { DEFAULT_MESH_NAME } from "../visGeometry/GeometryStore";
 import { GeometryDisplayType } from "../visGeometry/types";
 import PDBModel from "../visGeometry/PDBModel";
@@ -25,12 +22,7 @@ describe("GeometryStore module", () => {
                 geometry: {
                     mesh: new Mesh(GeometryStore.sphereGeometry),
                     cancelled: false,
-                    instances: new InstancedMesh(
-                        InstanceType.MESH,
-                        GeometryStore.sphereGeometry,
-                        addedItem,
-                        1
-                    ),
+                    instances: new InstancedMesh(InstanceType.MESH, GeometryStore.sphereGeometry, addedItem, 1),
                 },
             });
             expect(registry.get(addedItem)).toBeTruthy();
@@ -104,12 +96,7 @@ describe("GeometryStore module", () => {
                 geometry: {
                     mesh: new Mesh(GeometryStore.sphereGeometry),
                     cancelled: false,
-                    instances: new InstancedMesh(
-                        InstanceType.MESH,
-                        GeometryStore.sphereGeometry,
-                        addedItem,
-                        1
-                    ),
+                    instances: new InstancedMesh(InstanceType.MESH, GeometryStore.sphereGeometry, addedItem, 1),
                 },
             });
             registry.forEach((value) => {
@@ -175,12 +162,8 @@ describe("GeometryStore module", () => {
 
             expect(returned).toBeTruthy();
             if (returned) {
-                expect(returned.displayType).toEqual(
-                    GeometryDisplayType.SPHERE
-                );
-                expect(returned.errorMessage).toEqual(
-                    "Failed to load mesh: /test"
-                );
+                expect(returned.displayType).toEqual(GeometryDisplayType.SPHERE);
+                expect(returned.errorMessage).toEqual("Failed to load mesh: /test");
             }
         });
     });

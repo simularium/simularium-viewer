@@ -1,12 +1,5 @@
-import {
-    IClientSimulatorImpl,
-    ClientMessageEnum,
-} from "../../../src/simularium/localSimulators/IClientSimulatorImpl";
-import {
-    EncodedTypeMapping,
-    TrajectoryFileInfo,
-    VisDataMessage,
-} from "../../../src/simularium/types";
+import { IClientSimulatorImpl, ClientMessageEnum } from "../../../src/simularium/localSimulators/IClientSimulatorImpl";
+import { EncodedTypeMapping, TrajectoryFileInfo, VisDataMessage } from "../../../src/simularium/types";
 import VisTypes from "../../../src/simularium/VisTypes";
 import { DEFAULT_CAMERA_SPEC } from "../../../src/constants";
 
@@ -40,11 +33,7 @@ export default class SingleCurveSim implements IClientSimulatorImpl {
         return [x, y, z];
     }
     private randomPtInBox(xmin, xmax, ymin, ymax, zmin, zmax) {
-        return [
-            this.randomFloat(xmin, xmax),
-            this.randomFloat(ymin, ymax),
-            this.randomFloat(zmin, zmax),
-        ];
+        return [this.randomFloat(xmin, xmax), this.randomFloat(ymin, ymax), this.randomFloat(zmin, zmax)];
     }
 
     private makeCurveBundle() {
@@ -79,18 +68,9 @@ export default class SingleCurveSim implements IClientSimulatorImpl {
         //const dt_adjusted = dt / 1000;
         const amplitude = 0.05;
         for (let jj = 0; jj < this.nPointsPerCurve; ++jj) {
-            this.curveData[jj * 3 + 0] += this.randomFloat(
-                -amplitude,
-                amplitude
-            );
-            this.curveData[jj * 3 + 1] += this.randomFloat(
-                -amplitude,
-                amplitude
-            );
-            this.curveData[jj * 3 + 2] += this.randomFloat(
-                -amplitude,
-                amplitude
-            );
+            this.curveData[jj * 3 + 0] += this.randomFloat(-amplitude, amplitude);
+            this.curveData[jj * 3 + 1] += this.randomFloat(-amplitude, amplitude);
+            this.curveData[jj * 3 + 2] += this.randomFloat(-amplitude, amplitude);
         }
         // fill agent data.
         const agentData: number[] = [];

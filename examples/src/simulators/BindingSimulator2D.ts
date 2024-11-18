@@ -62,21 +62,11 @@ class BindingInstance extends Circle {
         }
         const angle = random(-Math.PI / 4, Math.PI / 4);
         const center = this.findCenter(this, this.child);
-        const newCirclePosition = this.rotate(
-            this.pos.x,
-            this.pos.y,
-            angle,
-            center
-        );
+        const newCirclePosition = this.rotate(this.pos.x, this.pos.y, angle, center);
         this.setPosition(newCirclePosition[0], newCirclePosition[1]);
         const childPosX = this.child.pos.x + xStep;
         const childPosY = this.child.pos.y + yStep;
-        const childPosAndRotation = this.rotate(
-            childPosX,
-            childPosY,
-            angle,
-            center
-        );
+        const childPosAndRotation = this.rotate(childPosX, childPosY, angle, center);
         this.child.setPosition(childPosAndRotation[0], childPosAndRotation[1]);
     }
 
@@ -85,7 +75,7 @@ class BindingInstance extends Circle {
             return;
         }
         // D(r)≈(4.10901922×10^−3)/r nm^2/s
-        const diffusionCoefficient = 4 * 10**-3 / this.r;
+        const diffusionCoefficient = (4 * 10 ** -3) / this.r;
         const timeFactor = 30;
         const amplitude = Math.sqrt(2 * diffusionCoefficient) * timeFactor;
         let xStep = random(-amplitude, amplitude, true);
@@ -188,17 +178,8 @@ export default class BindingSimulator implements IClientSimulatorImpl {
             const agent = agents[i];
             for (let j = 0; j < agent.count; ++j) {
                 const position: number[] = this.getRandomPointOnSide(i);
-                const circle = new Circle(
-                    new Vector3(...position),
-                    agent.radius
-                );
-                const instance = new BindingInstance(
-                    circle,
-                    agent.id,
-                    agent.partners,
-                    agent.kOn,
-                    agent.kOff
-                );
+                const circle = new Circle(new Vector3(...position), agent.radius);
+                const instance = new BindingInstance(circle, agent.id, agent.partners, agent.kOn, agent.kOff);
                 this.system.insert(instance);
                 this.instances.push(instance);
             }
@@ -216,12 +197,10 @@ export default class BindingSimulator implements IClientSimulatorImpl {
         ];
         points.forEach((point, index) => {
             const nextPoint = points[(index + 1) % points.length];
-            this.system.createLine(
-                new Vector3(point[0], point[1]),
-                new Vector3(nextPoint[0], nextPoint[1]),
-                { isStatic: true }
-            );
-        })
+            this.system.createLine(new Vector3(point[0], point[1]), new Vector3(nextPoint[0], nextPoint[1]), {
+                isStatic: true,
+            });
+        });
     }
 
     private randomFloat(min, max) {
@@ -301,11 +280,7 @@ export default class BindingSimulator implements IClientSimulatorImpl {
             const instance = this.instances[ii];
             agentData.push(VisTypes.ID_VIS_TYPE_DEFAULT); // vis type
             agentData.push(ii); // instance id
-            agentData.push(
-                instance.bound || instance.child
-                    ? 100 + instance.id
-                    : instance.id
-            ); // type
+            agentData.push(instance.bound || instance.child ? 100 + instance.id : instance.id); // type
             agentData.push(instance.pos.x); // x
             agentData.push(instance.pos.y); // y
             agentData.push(0); // z
@@ -374,7 +349,6 @@ export default class BindingSimulator implements IClientSimulatorImpl {
                     y: 0,
                     z: 50,
                 },
-            
             },
             typeMapping: typeMapping,
             spatialUnits: {

@@ -30,8 +30,7 @@ export interface PerspectiveCameraSpec {
     fovDegrees: number;
 }
 
-export type CameraSpec = PerspectiveCameraSpec &
-    ({ orthographic: false } | { orthographic: true; zoom: number });
+export type CameraSpec = PerspectiveCameraSpec & ({ orthographic: false } | { orthographic: true; zoom: number });
 
 interface ScatterTrace {
     x: number[];

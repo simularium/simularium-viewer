@@ -193,9 +193,7 @@ describe("Version handlers", () => {
             const key = "1";
             const url = "";
             const message = makeMissingDisplayTypeErrorMessage(key, url);
-            expect(message).toEqual(
-                `No typeMapping[${key}].geometry.displayType. Geometry will default to spheres`
-            );
+            expect(message).toEqual(`No typeMapping[${key}].geometry.displayType. Geometry will default to spheres`);
         });
         test("it will create an error message for the user if there is a url", () => {
             const key = "1";
@@ -226,18 +224,13 @@ describe("Version handlers", () => {
             expect(result).toEqual(typeMappingWithDefaultGeo);
         });
         test("it converts to the default geo data if displayType is missing", () => {
-            const result = sanitizeAgentMapGeometryData(
-                typeMappingMissingDisplayType
-            );
+            const result = sanitizeAgentMapGeometryData(typeMappingMissingDisplayType);
             expect(result).toEqual(typeMappingWithDefaultGeo);
         });
         test("it will pass up an error message if there is a url but no displayType", () => {
             let message = "";
             const onError = (error: FrontEndError) => (message = error.message);
-            sanitizeAgentMapGeometryData(
-                typeMappingMissingDisplayType,
-                onError
-            );
+            sanitizeAgentMapGeometryData(typeMappingMissingDisplayType, onError);
             expect(message).toContain("Geometry will default to spheres");
         });
         test("it will return default geometry if there is a url but displayType is OBJ or PDB ", () => {

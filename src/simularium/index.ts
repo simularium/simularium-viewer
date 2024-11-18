@@ -11,11 +11,7 @@ export type {
     AgentData,
 } from "./types";
 
-export type {
-    SelectionStateInfo,
-    UIDisplayData,
-    SelectionEntry,
-} from "./SelectionInterface";
+export type { SelectionStateInfo, UIDisplayData, SelectionEntry } from "./SelectionInterface";
 export { ErrorLevel, FrontEndError } from "./FrontEndError";
 export { NetMessageEnum } from "./WebsocketClient";
 export { RemoteSimulator } from "./RemoteSimulator";

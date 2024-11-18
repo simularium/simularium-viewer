@@ -27,12 +27,7 @@ import SimulariumViewer, {
 } from "../../src/index";
 import { nullAgent, TrajectoryType } from "../../src/constants";
 
-import type {
-    ISimulariumFile,
-    UIDisplayData,
-    SelectionStateInfo,
-    SelectionEntry,
-} from "../../type-declarations";
+import type { ISimulariumFile, UIDisplayData, SelectionStateInfo, SelectionEntry } from "../../type-declarations";
 import { AgentData } from "../../type-declarations/simularium/types";
 import PointSimulator from "./simulators/PointSimulator";
 import BindingSimulator from "./simulators/BindingSimulator2D";
@@ -191,13 +186,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public onError = (error: FrontEndError) => {
         if (error.level === ErrorLevel.ERROR) {
-            window.alert(
-                `ERROR, something is broken: ${error.message} ${error.htmlData}`
-            );
+            window.alert(`ERROR, something is broken: ${error.message} ${error.htmlData}`);
         } else if (error.level === ErrorLevel.WARNING) {
-            window.alert(
-                `User warning, but not terrible:  ${error.message} ${error.htmlData}`
-            );
+            window.alert(`User warning, but not terrible:  ${error.message} ${error.htmlData}`);
         } else if (error.level === ErrorLevel.INFO) {
             console.log(`Just for your info. ${error.message}`);
         } else {
@@ -219,25 +210,19 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         try {
             // Try to identify the simularium file.
             // Put all the other files as text based geoAssets.
-            const simulariumFileIndex = findIndex(filesArr, (file) =>
-                file.name.includes(".simularium")
-            );
+            const simulariumFileIndex = findIndex(filesArr, (file) => file.name.includes(".simularium"));
             Promise.all(
-                filesArr.map(
-                    (element, index): Promise<string | ISimulariumFile> => {
-                        if (index !== simulariumFileIndex) {
-                            // is async call
-                            return element.text();
-                        } else {
-                            return loadSimulariumFile(element);
-                        }
+                filesArr.map((element, index): Promise<string | ISimulariumFile> => {
+                    if (index !== simulariumFileIndex) {
+                        // is async call
+                        return element.text();
+                    } else {
+                        return loadSimulariumFile(element);
                     }
-                )
+                })
             )
                 .then((parsedFiles: (ISimulariumFile | string)[]) => {
-                    const simulariumFile = parsedFiles[
-                        simulariumFileIndex
-                    ] as ISimulariumFile;
+                    const simulariumFile = parsedFiles[simulariumFileIndex] as ISimulariumFile;
                     this.setState({
                         simulariumFile: {
                             data: simulariumFile,
@@ -286,19 +271,11 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     public async loadUiTemplates(): Promise<{
         [key: string]: BaseType | CustomType;
     }> {
-        const baseTypes = await fetch(
-            `${UI_TEMPLATE_DOWNLOAD_URL_ROOT}/${UI_BASE_TYPES}`
-        ).then((data) => data.json());
-        const customTypes = await fetch(
-            `${UI_TEMPLATE_URL_ROOT}/${UI_CUSTOM_TYPES}`
-        )
+        const baseTypes = await fetch(`${UI_TEMPLATE_DOWNLOAD_URL_ROOT}/${UI_BASE_TYPES}`).then((data) => data.json());
+        const customTypes = await fetch(`${UI_TEMPLATE_URL_ROOT}/${UI_CUSTOM_TYPES}`)
             .then((data) => data.json())
             .then((fileRefs) =>
-                Promise.all(
-                    map(fileRefs, (ref) =>
-                        fetch(ref.download_url).then((data) => data.json())
-                    )
-                )
+                Promise.all(map(fileRefs, (ref) => fetch(ref.download_url).then((data) => data.json())))
             );
         const typeMap: {
             [key: string]: BaseType | CustomType;
@@ -323,9 +300,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     }
 
     public async loadSmoldynFile() {
-        const smoldynTemplate = await fetch(
-            `${UI_TEMPLATE_DOWNLOAD_URL_ROOT}/${SMOLDYN_TEMPLATE}`
-        ).then((data) => data.json());
+        const smoldynTemplate = await fetch(`${UI_TEMPLATE_DOWNLOAD_URL_ROOT}/${SMOLDYN_TEMPLATE}`).then((data) =>
+            data.json()
+        );
         const templateMap = await this.loadUiTemplates();
 
         this.setState({
@@ -336,30 +313,18 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             },
             serverHealthy: false,
         });
-        simulariumController.checkServerHealth(
-            this.onHealthCheckResponse,
-            this.netConnectionSettings
-        );
+        simulariumController.checkServerHealth(this.onHealthCheckResponse, this.netConnectionSettings);
     }
 
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
         const fileName = uuidv4() + ".simularium";
         simulariumController
-            .convertTrajectory(
-                this.netConnectionSettings,
-                obj,
-                fileType,
-                fileName
-            )
+            .convertTrajectory(this.netConnectionSettings, obj, fileType, fileName)
             .then(() => {
                 this.clearPendingFile();
             })
             .then(() => {
-                simulariumController.changeFile(
-                    { netConnectionSettings: this.netConnectionSettings },
-                    fileName,
-                    true
-                );
+                simulariumController.changeFile({ netConnectionSettings: this.netConnectionSettings }, fileName, true);
             })
             .catch((err) => {
                 console.error(err);
@@ -371,13 +336,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     }
 
     public loadFile(trajectoryFile, fileName, geoAssets?) {
-        const simulariumFile = fileName.includes(".simularium")
-            ? trajectoryFile
-            : null;
+        const simulariumFile = fileName.includes(".simularium") ? trajectoryFile : null;
         this.setState({ initialPlay: true });
-        return simulariumController
-            .handleFileChange(simulariumFile, fileName, geoAssets)
-            .catch(console.log);
+        return simulariumController.handleFileChange(simulariumFile, fileName, geoAssets).catch(console.log);
     }
 
     public handleJsonMeshData(jsonData): void {
@@ -400,14 +361,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         let currentHiddenAgents = this.state.selectionStateInfo.hiddenAgents;
         let nextHiddenAgents: SelectionEntry[] = [];
         if (currentHiddenAgents.some((a) => a.name === nameToToggle)) {
-            nextHiddenAgents = currentHiddenAgents.filter(
-                (hiddenAgent) => hiddenAgent.name !== nameToToggle
-            );
+            nextHiddenAgents = currentHiddenAgents.filter((hiddenAgent) => hiddenAgent.name !== nameToToggle);
         } else {
-            nextHiddenAgents = [
-                ...currentHiddenAgents,
-                { name: nameToToggle, tags: [] },
-            ];
+            nextHiddenAgents = [...currentHiddenAgents, { name: nameToToggle, tags: [] }];
         }
         this.setState({
             ...this.state,
@@ -419,18 +375,12 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     }
 
     public turnAgentHighlightsOnOff(nameToToggle: string) {
-        let currentHighlightedAgents =
-            this.state.selectionStateInfo.highlightedAgents;
+        let currentHighlightedAgents = this.state.selectionStateInfo.highlightedAgents;
         let nextHighlightedAgents: SelectionEntry[] = [];
         if (currentHighlightedAgents.some((a) => a.name === nameToToggle)) {
-            nextHighlightedAgents = currentHighlightedAgents.filter(
-                (hiddenAgent) => hiddenAgent.name !== nameToToggle
-            );
+            nextHighlightedAgents = currentHighlightedAgents.filter((hiddenAgent) => hiddenAgent.name !== nameToToggle);
         } else {
-            nextHighlightedAgents = [
-                ...currentHighlightedAgents,
-                { name: nameToToggle, tags: [] },
-            ];
+            nextHighlightedAgents = [...currentHighlightedAgents, { name: nameToToggle, tags: [] }];
         }
         this.setState({
             ...this.state,
@@ -460,20 +410,12 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public handleUIDisplayData(uiDisplayData: UIDisplayData): void {
         console.log("uiDisplayData", uiDisplayData);
-        const allTags = uiDisplayData.reduce(
-            (fullArray: string[], subarray) => {
-                fullArray = [
-                    ...fullArray,
-                    ...subarray.displayStates.map((b) => b.id),
-                ];
-                return fullArray;
-            },
-            []
-        );
+        const allTags = uiDisplayData.reduce((fullArray: string[], subarray) => {
+            fullArray = [...fullArray, ...subarray.displayStates.map((b) => b.id)];
+            return fullArray;
+        }, []);
         const uniqueTags: string[] = [...new Set(allTags)];
-        if (
-            isEqual(uiDisplayData, this.state.selectionStateInfo.appliedColors)
-        ) {
+        if (isEqual(uiDisplayData, this.state.selectionStateInfo.appliedColors)) {
             return;
         }
         this.setState({
@@ -487,15 +429,11 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     }
 
     public gotoNextFrame(): void {
-        simulariumController.gotoTime(
-            this.state.currentTime + this.state.timeStep
-        );
+        simulariumController.gotoTime(this.state.currentTime + this.state.timeStep);
     }
 
     public gotoPreviousFrame(): void {
-        simulariumController.gotoTime(
-            this.state.currentTime - this.state.timeStep
-        );
+        simulariumController.gotoTime(this.state.currentTime - this.state.timeStep);
     }
 
     private translateAgent() {
@@ -639,8 +577,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             ...this.state,
             selectionStateInfo: {
                 hiddenAgents: this.state.selectionStateInfo.hiddenAgents,
-                highlightedAgents:
-                    this.state.selectionStateInfo.highlightedAgents,
+                highlightedAgents: this.state.selectionStateInfo.highlightedAgents,
                 appliedColors: appliedColors,
             },
         });
@@ -648,9 +585,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     ////// DOWNLOAD MOVIES PROPS AND FUNCTIONS //////
     public getRecordedMovieTitle = (): string => {
-        return this.state.trajectoryTitle
-            ? this.state.trajectoryTitle
-            : "simularium";
+        return this.state.trajectoryTitle ? this.state.trajectoryTitle : "simularium";
     };
 
     public downloadMovie = (videoBlob: Blob, title?: string) => {
@@ -701,13 +636,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     defaultValue={playbackFile}
                 >
                     <option value={queryStringFile}>{queryStringFile}</option>
-                    <option value="TEST_LIVEMODE_API">
-                        TEST LIVE MODE API
-                    </option>
+                    <option value="TEST_LIVEMODE_API">TEST LIVE MODE API</option>
                     <option value="actin012_3.h5">Actin 12_3</option>
-                    <option value="listeria_rocketbugs_normal_fine_2_filtered.simularium">
-                        listeria 01
-                    </option>
+                    <option value="listeria_rocketbugs_normal_fine_2_filtered.simularium">listeria 01</option>
                     <option value="kinesin002_01.h5">kinesin 002</option>
                     <option value="microtubules038_10.h5">MT 38</option>
                     <option value="microtubules_v2_shrinking.h5">M Tub</option>
@@ -715,33 +646,15 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     <option value="microtubules30_1.h5">MT 30</option>
                     <option value="endocytosis.simularium">Endocytosis</option>
                     <option value="pc4covid19.simularium">COVIDLUNG</option>
-                    <option value="nanoparticle_wrapping.simularium">
-                        Nanoparticle wrapping
-                    </option>
-                    <option value="smoldyn_min1.simularium">
-                        Smoldyn min1
-                    </option>
-                    <option value="smoldyn_spine.simularium">
-                        Smoldyn spine
-                    </option>
-                    <option value="medyan_Chandrasekaran_2019_UNI_alphaA_0.1_MA_0.675.simularium">
-                        medyan 625
-                    </option>
-                    <option value="medyan_Chandrasekaran_2019_UNI_alphaA_0.1_MA_0.0225.simularium">
-                        medyan 0225
-                    </option>
-                    <option value="springsalad_condensate_formation_Below_Ksp.simularium">
-                        springsalad below ksp
-                    </option>
-                    <option value="springsalad_condensate_formation_At_Ksp.simularium">
-                        springsalad at ksp
-                    </option>
-                    <option value="springsalad_condensate_formation_Above_Ksp.simularium">
-                        springsalad above ksp
-                    </option>
-                    <option value="blood-plasma-1.0.simularium">
-                        blood plasma
-                    </option>
+                    <option value="nanoparticle_wrapping.simularium">Nanoparticle wrapping</option>
+                    <option value="smoldyn_min1.simularium">Smoldyn min1</option>
+                    <option value="smoldyn_spine.simularium">Smoldyn spine</option>
+                    <option value="medyan_Chandrasekaran_2019_UNI_alphaA_0.1_MA_0.675.simularium">medyan 625</option>
+                    <option value="medyan_Chandrasekaran_2019_UNI_alphaA_0.1_MA_0.0225.simularium">medyan 0225</option>
+                    <option value="springsalad_condensate_formation_Below_Ksp.simularium">springsalad below ksp</option>
+                    <option value="springsalad_condensate_formation_At_Ksp.simularium">springsalad at ksp</option>
+                    <option value="springsalad_condensate_formation_Above_Ksp.simularium">springsalad above ksp</option>
+                    <option value="blood-plasma-1.0.simularium">blood plasma</option>
                     <option value="TEST_SINGLE_PDB">TEST SINGLE PDB</option>
                     <option value="TEST_PDB">TEST PDB</option>
                     <option value="TEST_SINGLE_FIBER">TEST SINGLE FIBER</option>
@@ -751,31 +664,15 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     <option value="TEST_BINDING">TEST BINDING</option>
                 </select>
 
-                <button onClick={() => this.translateAgent()}>
-                    TranslateAgent
-                </button>
-                <button onClick={() => simulariumController.clearFile()}>
-                    Clear
-                </button>
-                <button onClick={() => this.loadSmoldynFile()}>
-                    Load a smoldyn trajectory
-                </button>
+                <button onClick={() => this.translateAgent()}>TranslateAgent</button>
+                <button onClick={() => simulariumController.clearFile()}>Clear</button>
+                <button onClick={() => this.loadSmoldynFile()}>Load a smoldyn trajectory</button>
                 <br />
-                <button onClick={() => simulariumController.resume()}>
-                    Play
-                </button>
-                <button onClick={() => simulariumController.pause()}>
-                    Pause
-                </button>
-                <button onClick={() => simulariumController.stop()}>
-                    stop
-                </button>
-                <button onClick={this.gotoPreviousFrame.bind(this)}>
-                    Previous Frame
-                </button>
-                <button onClick={this.gotoNextFrame.bind(this)}>
-                    Next Frame
-                </button>
+                <button onClick={() => simulariumController.resume()}>Play</button>
+                <button onClick={() => simulariumController.pause()}>Pause</button>
+                <button onClick={() => simulariumController.stop()}>stop</button>
+                <button onClick={this.gotoPreviousFrame.bind(this)}>Previous Frame</button>
+                <button onClick={this.gotoNextFrame.bind(this)}>Next Frame</button>
                 <input
                     name="slider"
                     type="range"
@@ -795,11 +692,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                             <label htmlFor={id}>{id}</label>
                             <input
                                 type="checkbox"
-                                onChange={(event) =>
-                                    this.turnAgentsOnOff(
-                                        (event.target as HTMLInputElement).value
-                                    )
-                                }
+                                onChange={(event) => this.turnAgentsOnOff((event.target as HTMLInputElement).value)}
                                 value={id}
                                 checked={
                                     this.state.selectionStateInfo.hiddenAgents.find(
@@ -810,9 +703,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                             <input
                                 type="checkbox"
                                 onChange={(event) =>
-                                    this.turnAgentHighlightsOnOff(
-                                        (event.target as HTMLInputElement).value
-                                    )
+                                    this.turnAgentHighlightsOnOff((event.target as HTMLInputElement).value)
                                 }
                                 value={id}
                                 defaultChecked={false}
@@ -822,14 +713,11 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 })}
                 <button
                     onClick={() => {
-                        let hiddenAgents: { name: string; tags: string[] }[] =
-                            [];
+                        let hiddenAgents: { name: string; tags: string[] }[] = [];
                         if (!this.state.hideAllAgents) {
-                            hiddenAgents = this.state.particleTypeNames.map(
-                                (name) => {
-                                    return { name: name, tags: [] };
-                                }
-                            );
+                            hiddenAgents = this.state.particleTypeNames.map((name) => {
+                                return { name: name, tags: [] };
+                            });
                         }
                         this.setState({
                             ...this.state,
@@ -844,19 +732,12 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     {this.state.hideAllAgents ? "Show all" : "Hide all"}
                 </button>
                 <br />
-                <button
-                    onClick={() =>
-                        this.setState({ showPaths: !this.state.showPaths })
-                    }
-                >
-                    ShowPaths
-                </button>
+                <button onClick={() => this.setState({ showPaths: !this.state.showPaths })}>ShowPaths</button>
                 <button
                     onClick={() =>
                         this.setState({
                             renderStyle:
-                                this.state.renderStyle ===
-                                RenderStyle.WEBGL1_FALLBACK
+                                this.state.renderStyle === RenderStyle.WEBGL1_FALLBACK
                                     ? RenderStyle.WEBGL2_PREFERRED
                                     : RenderStyle.WEBGL1_FALLBACK,
                         })
@@ -864,19 +745,11 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 >
                     Switch Render
                 </button>
-                <button onClick={() => simulariumController.resetCamera()}>
-                    Reset camera
-                </button>
-                <button onClick={() => simulariumController.centerCamera()}>
-                    center camera
-                </button>
-                <button onClick={() => simulariumController.reOrientCamera()}>
-                    starting orientation
-                </button>
+                <button onClick={() => simulariumController.resetCamera()}>Reset camera</button>
+                <button onClick={() => simulariumController.centerCamera()}>center camera</button>
+                <button onClick={() => simulariumController.reOrientCamera()}>starting orientation</button>
                 <button onClick={() => simulariumController.zoomIn()}>+</button>
-                <button onClick={() => simulariumController.zoomOut()}>
-                    -
-                </button>
+                <button onClick={() => simulariumController.zoomOut()}>-</button>
                 <button
                     onClick={() => {
                         this.panMode = !this.panMode;
@@ -902,13 +775,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     Camera mode
                 </button>
                 <br />
-                <button
-                    onClick={() =>
-                        simulariumController.getMetrics(
-                            this.netConnectionSettings
-                        )
-                    }
-                >
+                <button onClick={() => simulariumController.getMetrics(this.netConnectionSettings)}>
                     Get available metrics
                 </button>
                 <button onClick={this.downloadFile.bind(this)}>download</button>
@@ -935,10 +802,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 >
                     Get plot data
                 </button>
-                <span>
-                    Tick interval length:{" "}
-                    {simulariumController.tickIntervalLength}
-                </span>
+                <span>Tick interval length: {simulariumController.tickIntervalLength}</span>
                 <br></br>
                 <ColorPicker
                     uiDisplayData={this.state.selectionStateInfo.appliedColors}
@@ -951,9 +815,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     startRecordingHandler={simulariumController.startRecording}
                     stopRecordingHandler={simulariumController.stopRecording}
                     setRecordingEnabled={() => {
-                        this.setRecordingEnabled(
-                            !this.state.isRecordingEnabled
-                        );
+                        this.setRecordingEnabled(!this.state.isRecordingEnabled);
                     }}
                     isRecordingEnabled={this.state.isRecordingEnabled}
                 />
@@ -969,21 +831,11 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         simulariumController={simulariumController}
                         onJsonDataArrived={this.handleJsonMeshData}
                         showCameraControls={false}
-                        onTrajectoryFileInfoChanged={this.handleTrajectoryInfo.bind(
-                            this
-                        )}
+                        onTrajectoryFileInfoChanged={this.handleTrajectoryInfo.bind(this)}
                         selectionStateInfo={this.state.selectionStateInfo}
-                        onUIDisplayDataChanged={this.handleUIDisplayData.bind(
-                            this
-                        )}
-                        onRecordedMovie={
-                            this.state.isRecordingEnabled
-                                ? this.onRecordedMovie
-                                : undefined
-                        }
-                        onFollowObjectChanged={this.handleFollowObjectData.bind(
-                            this
-                        )}
+                        onUIDisplayDataChanged={this.handleUIDisplayData.bind(this)}
+                        onRecordedMovie={this.state.isRecordingEnabled ? this.onRecordedMovie : undefined}
+                        onFollowObjectChanged={this.handleFollowObjectData.bind(this)}
                         loadInitialData={true}
                         agentColors={this.state.agentColors}
                         showPaths={this.state.showPaths}

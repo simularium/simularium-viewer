@@ -21,10 +21,7 @@ export class FrameRecorder {
     public supportedBrowser: boolean;
     private frameRate: number;
 
-    constructor(
-        getCanvas: () => HTMLCanvasElement | null,
-        handleFile: (videoBlob: Blob) => void
-    ) {
+    constructor(getCanvas: () => HTMLCanvasElement | null, handleFile: (videoBlob: Blob) => void) {
         this.getCanvas = getCanvas;
         this.handleFile = handleFile;
         this.encoder = null;
@@ -67,8 +64,7 @@ export class FrameRecorder {
                     bitrate: 2.5e7, // 25 Mbps
                     latencyMode: "realtime",
                 };
-                const { supported, config: supportedConfig } =
-                    await VideoEncoder.isConfigSupported(config);
+                const { supported, config: supportedConfig } = await VideoEncoder.isConfigSupported(config);
                 if (supported && supportedConfig) {
                     this.encoder.configure(config);
                 } else {
@@ -121,8 +117,7 @@ export class FrameRecorder {
             if (canvas) {
                 // Add a keyframe every second: https://en.wikipedia.org/wiki/Key_frame
                 const keyFrame = this.frameIndex % this.frameRate === 0;
-                const timestampMicroseconds =
-                    (this.frameIndex / this.frameRate) * 1_000_000;
+                const timestampMicroseconds = (this.frameIndex / this.frameRate) * 1_000_000;
                 const durationMicroseconds = 1_000_000 / this.frameRate;
                 const newFrame = new VideoFrame(canvas, {
                     timestamp: timestampMicroseconds,

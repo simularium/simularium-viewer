@@ -39,10 +39,7 @@ export enum GeometryDisplayType {
     SPHERE_GROUP = "SPHERE_GROUP",
 }
 
-export type PrimitiveDisplayType =
-    | GeometryDisplayType.SPHERE
-    | GeometryDisplayType.CUBE
-    | GeometryDisplayType.GIZMO;
+export type PrimitiveDisplayType = GeometryDisplayType.SPHERE | GeometryDisplayType.CUBE | GeometryDisplayType.GIZMO;
 
 export interface PDBGeometry {
     geometry: PDBModel;
@@ -51,10 +48,7 @@ export interface PDBGeometry {
 
 export interface MeshGeometry {
     geometry: MeshLoadRequest;
-    displayType:
-        | GeometryDisplayType.SPHERE_GROUP
-        | GeometryDisplayType.OBJ
-        | PrimitiveDisplayType;
+    displayType: GeometryDisplayType.SPHERE_GROUP | GeometryDisplayType.OBJ | PrimitiveDisplayType;
 }
 
 export type AgentGeometry = PDBGeometry | MeshGeometry;

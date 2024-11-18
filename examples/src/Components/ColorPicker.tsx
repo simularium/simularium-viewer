@@ -23,9 +23,7 @@ const ColorPicker = ({
     const [colorToAppend, setColorToAppend] = useState("");
 
     const getSubAgentsforAgent = (agentName: string) => {
-        const agent = uiDisplayData.find(
-            (element) => element.name === agentName
-        );
+        const agent = uiDisplayData.find((element) => element.name === agentName);
         if (!agent) {
             throw new Error("No agent found");
         }
@@ -57,20 +55,15 @@ const ColorPicker = ({
                     if (subAgent.includes("")) {
                         newAgent.color = selectedColor;
                     }
-                    const newDisplayStates = agent.displayStates.map(
-                        (state: any) => {
-                            if (
-                                subAgent.includes(state.id) ||
-                                !subAgent.length
-                            ) {
-                                return {
-                                    ...state,
-                                    color: selectedColor,
-                                };
-                            }
-                            return state;
+                    const newDisplayStates = agent.displayStates.map((state: any) => {
+                        if (subAgent.includes(state.id) || !subAgent.length) {
+                            return {
+                                ...state,
+                                color: selectedColor,
+                            };
                         }
-                    );
+                        return state;
+                    });
                     newAgent.displayStates = newDisplayStates;
                 }
                 return newAgent;
@@ -100,16 +93,10 @@ const ColorPicker = ({
                     </option>
                 ))}
             </select>
-            <select
-                id="subAgentSelect"
-                onChange={(event) => setSelectedSubAgent(event.target.value)}
-            >
+            <select id="subAgentSelect" onChange={(event) => setSelectedSubAgent(event.target.value)}>
                 <option value="">Select Sub-Agent</option>
                 {subAgents.map((subAgent) => (
-                    <option
-                        key={subAgent.name}
-                        value={subAgent.id || subAgent.name}
-                    >
+                    <option key={subAgent.name} value={subAgent.id || subAgent.name}>
                         {subAgent.name}
                     </option>
                 ))}
@@ -136,9 +123,7 @@ const ColorPicker = ({
                     setColorToAppend(event.target.value);
                 }}
             ></input>
-            <button onClick={() => addColorToColorArray(colorToAppend)}>
-                Add color to color array
-            </button>
+            <button onClick={() => addColorToColorArray(colorToAppend)}>Add color to color array</button>
         </div>
     );
 };

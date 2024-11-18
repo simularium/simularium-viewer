@@ -71,13 +71,9 @@ export default class BinaryFileReader implements ISimulariumFile {
 
                 // Frame offsets,sizes (Number of frames * two 4-byte ints)
                 for (let i = 0; i < this.nFrames; i++) {
-                    this.frameOffsets.push(
-                        blockData.getUint32(byteOffset, true)
-                    );
+                    this.frameOffsets.push(blockData.getUint32(byteOffset, true));
                     byteOffset += 4;
-                    this.frameLengths.push(
-                        blockData.getUint32(byteOffset, true)
-                    );
+                    this.frameLengths.push(blockData.getUint32(byteOffset, true));
                     byteOffset += 4;
                 }
 
@@ -150,20 +146,10 @@ export default class BinaryFileReader implements ISimulariumFile {
         const blockSize = this.dataView.getUint32(block.offset + 4, true);
 
         if (blockType !== block.type) {
-            throw new Error(
-                "Block type mismatch.  Header says " +
-                    block.type +
-                    " but block says " +
-                    blockType
-            );
+            throw new Error("Block type mismatch.  Header says " + block.type + " but block says " + blockType);
         }
         if (blockSize !== block.size) {
-            throw new Error(
-                "Block size mismatch.  Header says " +
-                    block.size +
-                    " but block says " +
-                    blockSize
-            );
+            throw new Error("Block size mismatch.  Header says " + block.size + " but block says " + blockSize);
         }
         // note: NOT a copy.
         // never produce copies internally. let callers make a copy if they need it.
@@ -184,29 +170,15 @@ export default class BinaryFileReader implements ISimulariumFile {
         const blockSize = this.dataView.getUint32(block.offset + 4, true);
 
         if (blockType !== block.type) {
-            throw new Error(
-                "Block type mismatch.  Header says " +
-                    block.type +
-                    " but block says " +
-                    blockType
-            );
+            throw new Error("Block type mismatch.  Header says " + block.type + " but block says " + blockType);
         }
         if (blockSize !== block.size) {
-            throw new Error(
-                "Block size mismatch.  Header says " +
-                    block.size +
-                    " but block says " +
-                    blockSize
-            );
+            throw new Error("Block size mismatch.  Header says " + block.size + " but block says " + blockSize);
         }
         // note: NOT a copy.
         // never produce copies internally. let callers make a copy if they need it.
         // also note: return the contents of the block NOT including the block header
-        return new DataView(
-            this.fileContents,
-            block.offset + BLOCK_HEADER_SIZE,
-            block.size - BLOCK_HEADER_SIZE
-        );
+        return new DataView(this.fileContents, block.offset + BLOCK_HEADER_SIZE, block.size - BLOCK_HEADER_SIZE);
     }
 
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
@@ -236,10 +208,7 @@ export default class BinaryFileReader implements ISimulariumFile {
         for (let i = 0; i < this.nFrames; i++) {
             // get time of frame.
             // const frameNumber = this.spatialDataBlock[frameFloatOffset + 0];
-            const frameTime = this.spatialDataBlock.getFloat32(
-                this.frameOffsets[i] + 4,
-                true
-            );
+            const frameTime = this.spatialDataBlock.getFloat32(this.frameOffsets[i] + 4, true);
             // check time
             if (compareTimes(frameTime, time, timeStepSize) === 0) {
                 // TODO possible sanity check frameNumber === i ?
@@ -256,10 +225,7 @@ export default class BinaryFileReader implements ISimulariumFile {
         const totalOffset = this.spatialDataBlock.byteOffset + frameOffset;
         // TODO possibly this can return a TypedArray or DataView without making a copy
         // but requires a guarantee on 4-byte alignment. Leaving it as a future optimization.
-        const frameContents = this.fileContents.slice(
-            totalOffset,
-            totalOffset + frameSize
-        );
+        const frameContents = this.fileContents.slice(totalOffset, totalOffset + frameSize);
         return frameContents;
     }
 

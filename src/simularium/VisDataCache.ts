@@ -33,10 +33,7 @@ class VisDataCache {
         }
     }
 
-    public changeSettings(options: {
-        maxSize?: number;
-        cacheEnabled?: boolean;
-    }): void {
+    public changeSettings(options: { maxSize?: number; cacheEnabled?: boolean }): void {
         const { maxSize, cacheEnabled } = options;
         if (cacheEnabled !== undefined) {
             this._cacheEnabled = cacheEnabled;
@@ -67,10 +64,7 @@ class VisDataCache {
      * returns the node if found, otherwise returns null,
      * starts at head if firstNode is not provided.
      */
-    private findInLinkedList(
-        condition: (data: CacheNode) => boolean,
-        firstNode?: CacheNode
-    ): CacheNode | undefined {
+    private findInLinkedList(condition: (data: CacheNode) => boolean, firstNode?: CacheNode): CacheNode | undefined {
         let currentNode = firstNode || this.head;
         while (currentNode) {
             if (condition(currentNode)) {
@@ -95,15 +89,10 @@ class VisDataCache {
     }
 
     public containsFrameAtFrameNumber(frameNumber: number): boolean {
-        if (
-            frameNumber < this.getFirstFrameNumber() ||
-            frameNumber > this.getLastFrameNumber()
-        ) {
+        if (frameNumber < this.getFirstFrameNumber() || frameNumber > this.getLastFrameNumber()) {
             return false;
         }
-        return !!this.findInLinkedList(
-            (node) => node.data.frameNumber === frameNumber
-        );
+        return !!this.findInLinkedList((node) => node.data.frameNumber === frameNumber);
     }
 
     public getFirstFrame(): CachedFrame | undefined {
@@ -130,9 +119,7 @@ class VisDataCache {
         return this.tail?.data.time || -1;
     }
 
-    private getFrameAtCondition(
-        condition: (data: CacheNode) => boolean
-    ): CachedFrame | undefined {
+    private getFrameAtCondition(condition: (data: CacheNode) => boolean): CachedFrame | undefined {
         if (!this.head) {
             return;
         }
@@ -143,16 +130,12 @@ class VisDataCache {
     }
 
     public getFrameAtTime(time: number): CachedFrame | undefined {
-        const frame = this.getFrameAtCondition(
-            (node) => compareTimes(node.data.time, time, 0) === 0
-        );
+        const frame = this.getFrameAtCondition((node) => compareTimes(node.data.time, time, 0) === 0);
         return frame ? frame : undefined;
     }
 
     public getFrameAtFrameNumber(frameNumber: number): CachedFrame | undefined {
-        const frame = this.getFrameAtCondition(
-            (node) => node.data["frameNumber"] === frameNumber
-        );
+        const frame = this.getFrameAtCondition((node) => node.data["frameNumber"] === frameNumber);
         return frame ? frame : undefined;
     }
 
@@ -228,11 +211,7 @@ class VisDataCache {
     }
 
     private trimCache(incomingDataSize?: number): void {
-        while (
-            this.hasFrames() &&
-            this.size + (incomingDataSize || 0) > this._maxSize &&
-            this.head !== null
-        ) {
+        while (this.hasFrames() && this.size + (incomingDataSize || 0) > this._maxSize && this.head !== null) {
             this.removeNode(this.head);
         }
     }
