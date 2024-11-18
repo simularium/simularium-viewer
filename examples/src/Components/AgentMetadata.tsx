@@ -1,18 +1,17 @@
 import React from "react";
-import { AgentData } from "../../type-declarations/simularium/types";
+import { AgentData } from "../../../type-declarations/simularium/types";
 
 interface AgentMetadataProps {
     agentData: AgentData;
 }
 
 const AgentMetadata = ({ agentData }: AgentMetadataProps): JSX.Element => {
-
-    const getContents = () => {
         if (agentData.instanceId === -1) {
-            return <div>No agent selected</div>;
+            return <div className="ui-container">No agent selected</div>;
         }
         return (
-            <div>
+            <div className="ui-container">
+                <div>Agent metadata</div>
                 <div> uniqueID: {agentData.instanceId}</div>
                 <div> agentType: {agentData.type}</div>
                 <div>
@@ -27,8 +26,5 @@ const AgentMetadata = ({ agentData }: AgentMetadataProps): JSX.Element => {
             </div>
         );
     };
-
-    return <div>Agent Metadata: {getContents()}</div>;
-};
 
 export default AgentMetadata;
