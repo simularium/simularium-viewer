@@ -63,9 +63,7 @@ class SelectionInterface {
     public parse(idNameMapping: EncodedTypeMapping): void {
         this.clear();
         if (!idNameMapping) {
-            throw new Error(
-                "Trajectory is missing agent type mapping information."
-            );
+            throw new Error("Trajectory is missing agent type mapping information.");
         }
         Object.keys(idNameMapping).forEach((id) => {
             if (isNaN(parseInt(id))) {
@@ -101,9 +99,7 @@ class SelectionInterface {
 
         if (!name) {
             // error can be caught by onError prop to viewer
-            throw new Error(
-                `invalid name. Agent id: ${id}, name: ${encodedName}`
-            );
+            throw new Error(`invalid name. Agent id: ${id}, name: ${encodedName}`);
         }
 
         const uniqueTags = [...new Set(tags)];
@@ -147,11 +143,7 @@ class SelectionInterface {
             return [];
         }
         entryList.forEach((entry) => {
-            if (
-                !tags ||
-                tags.length === 0 ||
-                tags.some((t) => entry.tags.includes(t))
-            ) {
+            if (!tags || tags.length === 0 || tags.some((t) => entry.tags.includes(t))) {
                 if (entry.id >= 0) {
                     indices.push(entry.id);
                 }
@@ -184,10 +176,7 @@ class SelectionInterface {
         if (!entryList) {
             return [];
         }
-        const state = find(
-            entryList,
-            (entry: DecodedTypeEntry) => entry.id === id
-        );
+        const state = find(entryList, (entry: DecodedTypeEntry) => entry.id === id);
         if (state) {
             return state.tags;
         }
@@ -228,13 +217,8 @@ class SelectionInterface {
 
     public getParentColor(name: string): string {
         // wrapping in filter removes undefined values
-        const listOfUniqChildrenColors = filter(
-            uniq(map(this.entries[name], "color"))
-        );
-        const color =
-            listOfUniqChildrenColors.length === 1
-                ? listOfUniqChildrenColors[0]
-                : "";
+        const listOfUniqChildrenColors = filter(uniq(map(this.entries[name], "color")));
+        const color = listOfUniqChildrenColors.length === 1 ? listOfUniqChildrenColors[0] : "";
         return color;
     }
 
@@ -242,8 +226,7 @@ class SelectionInterface {
         return Object.keys(this.entries).map((name) => {
             const displayStates: DisplayStateEntry[] = [];
             const encounteredTags: string[] = [];
-            const hasMultipleStates =
-                Object.keys(this.entries[name]).length > 1;
+            const hasMultipleStates = Object.keys(this.entries[name]).length > 1;
             this.entries[name].forEach((entry: DecodedTypeEntry) => {
                 // add unmodified state if there are multiple states, and one of them
                 // has no state tags
@@ -279,11 +262,7 @@ class SelectionInterface {
         });
     }
 
-    private updateUiDataColor(
-        agentName: string,
-        idsToUpdate: number[],
-        color: number | string
-    ): void {
+    private updateUiDataColor(agentName: string, idsToUpdate: number[], color: number | string): void {
         const newColor = convertColorNumberToString(color);
         const entry = this.entries[agentName];
         // if no display state update parent color
@@ -318,11 +297,7 @@ class SelectionInterface {
                     agentIds: ids,
                     color: colors[defaultColorIndex],
                 });
-                this.updateUiDataColor(
-                    group.name,
-                    ids,
-                    colors[defaultColorIndex]
-                );
+                this.updateUiDataColor(group.name, ids, colors[defaultColorIndex]);
             } else {
                 // otherwise, we need to update any user defined colors
                 newColors.forEach((color, index) => {
@@ -341,11 +316,7 @@ class SelectionInterface {
                         }
                     } else {
                         // need update the display data with the default color being used
-                        this.updateUiDataColor(
-                            group.name,
-                            [ids[index]],
-                            colors[groupColorIndex]
-                        );
+                        this.updateUiDataColor(group.name, [ids[index]], colors[groupColorIndex]);
                     }
                     // if the user used all the same colors for all states of this agent,
                     // use that for the group as well
@@ -362,18 +333,13 @@ class SelectionInterface {
                 });
             }
             if (groupColorIndex > -1) {
-                group.color = convertColorNumberToString(
-                    colors[groupColorIndex]
-                );
+                group.color = convertColorNumberToString(colors[groupColorIndex]);
             } else {
                 group.color = "";
             }
             // if we used any of the default color array
             // need to go to the next default color.
-            if (
-                filter(newColors).length !== ids.length ||
-                groupColorIndex === defaultColorIndex
-            ) {
+            if (filter(newColors).length !== ids.length || groupColorIndex === defaultColorIndex) {
                 defaultColorIndex++;
             }
         });

@@ -6,14 +6,10 @@ import { VisDataMessage, TrajectoryFileInfo } from "./types";
 // and are some of them completely specific to websockets only?
 export interface ISimulator {
     // a callback to notify when TrajctoryFileInfo is ready
-    setTrajectoryFileInfoHandler(
-        handler: (msg: TrajectoryFileInfo) => void
-    ): void;
+    setTrajectoryFileInfoHandler(handler: (msg: TrajectoryFileInfo) => void): void;
 
     // a callback to notify when VisDataMessage is ready (the agent data)
-    setTrajectoryDataHandler(
-        handler: (msg: VisDataMessage | ArrayBuffer) => void
-    ): void;
+    setTrajectoryDataHandler(handler: (msg: VisDataMessage | ArrayBuffer) => void): void;
 
     /**
      * Connect

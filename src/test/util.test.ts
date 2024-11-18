@@ -1,48 +1,27 @@
 import { FrontEndError } from "../simularium";
-import {
-    checkAndSanitizePath,
-    compareTimes,
-    getAgentDataFromBuffer,
-    getNextAgentOffset,
-} from "../util";
+import { checkAndSanitizePath, compareTimes, getAgentDataFromBuffer, getNextAgentOffset } from "../util";
 
 describe("util", () => {
     describe("compareTimes", () => {
         const PRECISION_REF = 0.1;
 
         test("it correctly determines time1 > time2", () => {
-            const result = compareTimes(
-                14.699999809265137,
-                14.6,
-                PRECISION_REF
-            );
+            const result = compareTimes(14.699999809265137, 14.6, PRECISION_REF);
             expect(result).toEqual(1);
         });
 
         test("it correctly determines time1 < time2", () => {
-            const result = compareTimes(
-                14.600000381469727,
-                14.699999809265137,
-                PRECISION_REF
-            );
+            const result = compareTimes(14.600000381469727, 14.699999809265137, PRECISION_REF);
             expect(result).toEqual(-1);
         });
 
         test("it correctly determines time1 ~= time2 when time1 is slightly greater", () => {
-            const result = compareTimes(
-                14.700000190734863,
-                14.699999809265137,
-                PRECISION_REF
-            );
+            const result = compareTimes(14.700000190734863, 14.699999809265137, PRECISION_REF);
             expect(result).toEqual(0);
         });
 
         test("it correctly determines time1 ~= time2 when time1 is slightly less", () => {
-            const result = compareTimes(
-                14.699999809265137,
-                14.7,
-                PRECISION_REF
-            );
+            const result = compareTimes(14.699999809265137, 14.7, PRECISION_REF);
             expect(result).toEqual(0);
         });
 
@@ -58,8 +37,7 @@ describe("util", () => {
             expect(result).toEqual(url);
         });
         test("it returns a dropbox url modified with dropboxusercontent", () => {
-            const url =
-                "https://www.dropbox.com/scl/fi/xh3vmyt9d74cl5cbhqgpm/Antigen.obj?rlkey=key&dl=1";
+            const url = "https://www.dropbox.com/scl/fi/xh3vmyt9d74cl5cbhqgpm/Antigen.obj?rlkey=key&dl=1";
             const expected =
                 "https://dl.dropboxusercontent.com/scl/fi/xh3vmyt9d74cl5cbhqgpm/Antigen.obj?rlkey=key&dl=1";
             expect(checkAndSanitizePath(url)).toEqual(expected);
@@ -188,16 +166,10 @@ describe("util", () => {
 
                 // Get the offset for the second agent
                 const firstAgentOffset = 0;
-                const secondAgentOffset = getNextAgentOffset(
-                    view,
-                    firstAgentOffset
-                );
+                const secondAgentOffset = getNextAgentOffset(view, firstAgentOffset);
 
                 // Parse the second agent data
-                const secondAgentData = getAgentDataFromBuffer(
-                    view,
-                    secondAgentOffset
-                );
+                const secondAgentData = getAgentDataFromBuffer(view, secondAgentOffset);
 
                 // Check that the second agent's data is parsed correctly
                 expect(secondAgentData).toEqual({
@@ -230,9 +202,7 @@ describe("util", () => {
                 const view = new Float32Array(invalidTestData);
 
                 // Expect the function to throw an error when trying to parse this invalid data
-                expect(() => getAgentDataFromBuffer(view, 0)).toThrow(
-                    FrontEndError
-                );
+                expect(() => getAgentDataFromBuffer(view, 0)).toThrow(FrontEndError);
             });
 
             test("it throws an error if the subpoints exceed available data", () => {
@@ -254,9 +224,7 @@ describe("util", () => {
                 const view = new Float32Array(incompleteSubpointsTestData);
 
                 // Expect the function to throw an error because there aren't enough subpoints
-                expect(() => getAgentDataFromBuffer(view, 0)).toThrow(
-                    FrontEndError
-                );
+                expect(() => getAgentDataFromBuffer(view, 0)).toThrow(FrontEndError);
             });
         });
     });

@@ -89,10 +89,7 @@ class BlurPass1D {
         this.pass.render(renderer, tgt);
     }
 
-    private createSampleWeights(
-        kernelRadius: number,
-        stdDev: number
-    ): number[] {
+    private createSampleWeights(kernelRadius: number, stdDev: number): number[] {
         const weights: number[] = [];
 
         for (let i = 0; i <= kernelRadius; i++) {
@@ -102,10 +99,7 @@ class BlurPass1D {
         return weights;
     }
 
-    private createSampleOffsets(
-        kernelRadius: number,
-        uvIncrement: Vector2
-    ): Vector2[] {
+    private createSampleOffsets(kernelRadius: number, uvIncrement: Vector2): Vector2[] {
         const offsets: Vector2[] = [];
 
         for (let i = 0; i <= kernelRadius; i++) {
@@ -118,10 +112,11 @@ class BlurPass1D {
     public configure(kernelRadius: number, stdDev: number): void {
         if (kernelRadius !== this.radius || stdDev !== this.stdDev) {
             this.pass.material.defines["KERNEL_RADIUS"] = kernelRadius;
-            this.pass.material.uniforms["sampleUvOffsets"].value =
-                this.createSampleOffsets(kernelRadius, this.uvOffset);
-            this.pass.material.uniforms["sampleWeights"].value =
-                this.createSampleWeights(kernelRadius, stdDev);
+            this.pass.material.uniforms["sampleUvOffsets"].value = this.createSampleOffsets(
+                kernelRadius,
+                this.uvOffset
+            );
+            this.pass.material.uniforms["sampleWeights"].value = this.createSampleWeights(kernelRadius, stdDev);
             this.pass.material.needsUpdate = true;
             this.radius = kernelRadius;
             this.stdDev = stdDev;
@@ -130,10 +125,7 @@ class BlurPass1D {
 }
 
 function gaussian(x, stdDev) {
-    return (
-        Math.exp(-(x * x) / (2.0 * (stdDev * stdDev))) /
-        (Math.sqrt(2.0 * Math.PI) * stdDev)
-    );
+    return Math.exp(-(x * x) / (2.0 * (stdDev * stdDev))) / (Math.sqrt(2.0 * Math.PI) * stdDev);
 }
 
 class BlurPass {
@@ -150,11 +142,7 @@ class BlurPass {
         this.blurYpass.resize(x, y);
     }
 
-    public configure(
-        radius: number,
-        stdDev: number,
-        depthCutoff: number
-    ): void {
+    public configure(radius: number, stdDev: number, depthCutoff: number): void {
         this.blurXpass.configure(radius, stdDev);
         this.blurXpass.pass.material.uniforms.depthCutoff.value = depthCutoff;
         this.blurYpass.configure(radius, stdDev);
@@ -182,8 +170,7 @@ class BlurPass {
 
         this.blurXpass.render(renderer, intermediateBuffer);
 
-        this.blurYpass.pass.material.uniforms.colorTex.value =
-            intermediateBuffer.texture;
+        this.blurYpass.pass.material.uniforms.colorTex.value = intermediateBuffer.texture;
         this.blurYpass.pass.material.uniforms.viewPosTex.value = positions;
 
         this.blurYpass.render(renderer, target);

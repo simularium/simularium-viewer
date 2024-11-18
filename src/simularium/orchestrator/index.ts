@@ -17,9 +17,7 @@ export default class Orchestrator {
         this.serviceAddr = params.serviceAddr || "https://localhost:5000";
     }
 
-    public getNodes(
-        params: string
-    ): Promise<NodeConfig[]> | Promise<undefined> {
+    public getNodes(params: string): Promise<NodeConfig[]> | Promise<undefined> {
         const nodeFetch = fetch(this.serviceAddr + "/get?" + params);
 
         return nodeFetch
@@ -42,33 +40,17 @@ export default class Orchestrator {
         return this.getNodes(params);
     }
 
-    public getSimNode(
-        simId: string
-    ): Promise<NodeConfig[]> | Promise<undefined> {
+    public getSimNode(simId: string): Promise<NodeConfig[]> | Promise<undefined> {
         const params: string = "simulation=" + simId;
         return this.getNodes(params);
     }
 
     public reserveNode(config: NodeConfig, simulation: string): void {
-        fetch(
-            this.serviceAddr +
-                "/assign" +
-                "?command=reserve" +
-                "&simulation=" +
-                simulation +
-                "&name=" +
-                config.name
-        );
+        fetch(this.serviceAddr + "/assign" + "?command=reserve" + "&simulation=" + simulation + "&name=" + config.name);
     }
 
     public freeNode(config: NodeConfig): void {
-        fetch(
-            this.serviceAddr +
-                "/assign?" +
-                "command=free" +
-                "&name=" +
-                config.name
-        );
+        fetch(this.serviceAddr + "/assign?" + "command=free" + "&name=" + config.name);
     }
 }
 

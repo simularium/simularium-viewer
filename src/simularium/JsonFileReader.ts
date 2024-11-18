@@ -1,10 +1,5 @@
 import type { ISimulariumFile } from "./ISimulariumFile";
-import type {
-    Plot,
-    SimulariumFileFormat,
-    TrajectoryFileInfo,
-    VisDataFrame,
-} from "./types";
+import type { Plot, SimulariumFileFormat, TrajectoryFileInfo, VisDataFrame } from "./types";
 import { FrontEndError } from "./FrontEndError";
 import { compareTimes } from "../util";
 
@@ -15,14 +10,9 @@ export default class JsonFileReader implements ISimulariumFile {
 
         const spatialData = this.simulariumFile.spatialData;
         if (!spatialData) {
-            throw new FrontEndError(
-                "Simularium files need 'spatialData' array"
-            );
+            throw new FrontEndError("Simularium files need 'spatialData' array");
         }
-        spatialData.bundleData.sort(
-            (a: VisDataFrame, b: VisDataFrame): number =>
-                a.frameNumber - b.frameNumber
-        );
+        spatialData.bundleData.sort((a: VisDataFrame, b: VisDataFrame): number => a.frameNumber - b.frameNumber);
     }
 
     getTrajectoryFileInfo(): TrajectoryFileInfo {

@@ -42,11 +42,7 @@ class DrawBufferPass {
         this.pass.material.uniforms.bias.value = new Vector4(x, y, z, w);
     }
 
-    public render(
-        renderer: WebGLRenderer,
-        target: WebGLRenderTarget | null,
-        bufferToDraw: WebGLRenderTarget
-    ): void {
+    public render(renderer: WebGLRenderer, target: WebGLRenderTarget | null, bufferToDraw: WebGLRenderTarget): void {
         this.pass.material.uniforms.colorTex.value = bufferToDraw.texture;
 
         const c = renderer.getClearColor(new Color()).clone();

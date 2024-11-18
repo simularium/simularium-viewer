@@ -36,17 +36,9 @@ class InstancedMesh implements GeometryInstanceContainer {
     private currentInstance: number;
     private isUpdating: boolean;
 
-    constructor(
-        type: InstanceType,
-        baseGeometry: BufferGeometry,
-        name: string,
-        count: number
-    ) {
+    constructor(type: InstanceType, baseGeometry: BufferGeometry, name: string, count: number) {
         this.baseGeometry = baseGeometry;
-        this.drawable =
-            type === InstanceType.MESH
-                ? new Mesh(baseGeometry)
-                : new Points(baseGeometry);
+        this.drawable = type === InstanceType.MESH ? new Mesh(baseGeometry) : new Points(baseGeometry);
         this.drawable.name = name;
 
         this.currentInstance = 0;
@@ -55,24 +47,12 @@ class InstancedMesh implements GeometryInstanceContainer {
         this.instancedGeometry = new InstancedBufferGeometry();
         this.instancedGeometry.instanceCount = 0;
 
-        this.shaderSet =
-            type === InstanceType.MESH
-                ? InstancedMeshShader.shaderSet
-                : PDBGBufferShaders.shaderSet;
+        this.shaderSet = type === InstanceType.MESH ? InstancedMeshShader.shaderSet : PDBGBufferShaders.shaderSet;
 
         // make typescript happy. these will be reallocated in reallocate()
-        this.positionAttribute = new InstancedBufferAttribute(
-            Uint8Array.from([]),
-            1
-        );
-        this.rotationAttribute = new InstancedBufferAttribute(
-            Uint8Array.from([]),
-            1
-        );
-        this.instanceAttribute = new InstancedBufferAttribute(
-            Uint8Array.from([]),
-            1
-        );
+        this.positionAttribute = new InstancedBufferAttribute(Uint8Array.from([]), 1);
+        this.rotationAttribute = new InstancedBufferAttribute(Uint8Array.from([]), 1);
+        this.instanceAttribute = new InstancedBufferAttribute(Uint8Array.from([]), 1);
 
         // because instanced, threejs needs to know not to early cull
         this.drawable.frustumCulled = false;
@@ -128,10 +108,7 @@ class InstancedMesh implements GeometryInstanceContainer {
         const newPos = new Float32Array(4 * n);
         newPos.set(this.positionAttribute.array);
         this.positionAttribute = new InstancedBufferAttribute(newPos, 4, false);
-        this.instancedGeometry.setAttribute(
-            "translateAndScale",
-            this.positionAttribute
-        );
+        this.instancedGeometry.setAttribute("translateAndScale", this.positionAttribute);
 
         const newRot = new Float32Array(4 * n);
         newRot.set(this.rotationAttribute.array);
@@ -140,15 +117,8 @@ class InstancedMesh implements GeometryInstanceContainer {
 
         const newInst = new Float32Array(3 * n);
         newInst.set(this.instanceAttribute.array);
-        this.instanceAttribute = new InstancedBufferAttribute(
-            newInst,
-            3,
-            false
-        );
-        this.instancedGeometry.setAttribute(
-            "instanceAndTypeId",
-            this.instanceAttribute
-        );
+        this.instanceAttribute = new InstancedBufferAttribute(newInst, 3, false);
+        this.instancedGeometry.setAttribute("instanceAndTypeId", this.instanceAttribute);
     }
 
     dispose(): void {
@@ -173,8 +143,7 @@ class InstancedMesh implements GeometryInstanceContainer {
 
         if (requestedNumInstances > currentNumInstances) {
             // increase to next multiple of increment
-            const newInstanceCount =
-                (Math.trunc(requestedNumInstances / increment) + 1) * increment;
+            const newInstanceCount = (Math.trunc(requestedNumInstances / increment) + 1) * increment;
 
             this.reallocate(newInstanceCount);
         }

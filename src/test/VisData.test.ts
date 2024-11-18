@@ -1,13 +1,5 @@
-import {
-    VisData,
-    VisDataMessage,
-    NetMessageEnum,
-    FrontEndError,
-} from "../simularium";
-import {
-    calculateBufferSize,
-    parseVisDataMessage,
-} from "../simularium/VisDataParse";
+import { VisData, VisDataMessage, NetMessageEnum, FrontEndError } from "../simularium";
+import { calculateBufferSize, parseVisDataMessage } from "../simularium/VisDataParse";
 import { AGENT_OBJECT_KEYS, CachedFrame } from "../simularium/types";
 import { nullCachedFrame } from "../util";
 
@@ -90,8 +82,7 @@ describe("VisData module", () => {
             const HEADER_SIZE = 3; // frameNumber, time, agentCount
             const FRAME_DATA_SIZE = AGENT_OBJECT_KEYS.length;
             const nSubpoints = testData[10];
-            const expectedSize =
-                (HEADER_SIZE + FRAME_DATA_SIZE + nSubpoints) * 4;
+            const expectedSize = (HEADER_SIZE + FRAME_DATA_SIZE + nSubpoints) * 4;
             const result = calculateBufferSize(testData);
             expect(result).toEqual(expectedSize);
         });
@@ -165,9 +156,7 @@ describe("VisData module", () => {
                 bundleStart: 0,
                 fileName: "",
             };
-            expect(() => parseVisDataMessage(visDataMsg)).toThrow(
-                FrontEndError
-            );
+            expect(() => parseVisDataMessage(visDataMsg)).toThrow(FrontEndError);
         });
         test("currentFrame returns null frame when cache is empty", () => {
             const visData = new VisData();

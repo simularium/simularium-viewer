@@ -1,8 +1,4 @@
-import {
-    AgentData,
-    CameraSpec,
-    PerspectiveCameraSpec,
-} from "./simularium/types";
+import { AgentData, CameraSpec, PerspectiveCameraSpec } from "./simularium/types";
 
 export const DEFAULT_CAMERA_Z_POSITION = 120;
 export const DEFAULT_CAMERA_SPEC_PERSPECTIVE: PerspectiveCameraSpec = {

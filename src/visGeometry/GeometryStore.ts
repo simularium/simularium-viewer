@@ -1,13 +1,7 @@
 import { forEach } from "lodash";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
 import jsLogger, { ILogger, ILogLevel } from "js-logger";
-import {
-    BufferGeometry,
-    Object3D,
-    Mesh,
-    SphereGeometry,
-    BoxGeometry,
-} from "three";
+import { BufferGeometry, Object3D, Mesh, SphereGeometry, BoxGeometry } from "three";
 
 import { checkAndSanitizePath, getFileExtension } from "../util";
 import PDBModel from "./PDBModel";
@@ -15,13 +9,7 @@ import { InstancedMesh, InstanceType } from "./rendering/InstancedMesh";
 import TaskQueue from "../simularium/TaskQueue";
 import { AgentTypeVisData } from "../simularium/types";
 
-import {
-    AgentGeometry,
-    GeometryDisplayType,
-    GeometryStoreLoadResponse,
-    MeshGeometry,
-    MeshLoadRequest,
-} from "./types";
+import { AgentGeometry, GeometryDisplayType, GeometryStoreLoadResponse, MeshGeometry, MeshLoadRequest } from "./types";
 import { MetaballMesh } from "./rendering/MetaballMesh";
 
 export const DEFAULT_MESH_NAME = "SPHERE";
@@ -49,26 +37,16 @@ class GeometryStore {
     private _cachedAssets: Map<string, string>;
     private _registry: Registry;
     public mlogger: ILogger;
-    public static sphereGeometry: SphereGeometry = new SphereGeometry(
-        1,
-        32,
-        32
-    );
+    public static sphereGeometry: SphereGeometry = new SphereGeometry(1, 32, 32);
     public static cubeGeometry: BoxGeometry = new BoxGeometry(1, 1, 1);
 
-    private static shouldLoadPrimitive = (
-        displayType: GeometryDisplayType,
-        url?: string
-    ) => {
+    private static shouldLoadPrimitive = (displayType: GeometryDisplayType, url?: string) => {
         if (!url) {
             // if there isn't an url to load, even if they selected PDB or OBJ
             // we have to default to a sphere. May change depending on how we handle the gizmo
             return true;
         }
-        if (
-            displayType === GeometryDisplayType.PDB ||
-            displayType === GeometryDisplayType.OBJ
-        ) {
+        if (displayType === GeometryDisplayType.PDB || displayType === GeometryDisplayType.OBJ) {
             return false;
         }
         return true;
@@ -84,12 +62,7 @@ class GeometryStore {
             geometry: {
                 mesh: new Mesh(GeometryStore.sphereGeometry),
                 cancelled: false,
-                instances: new InstancedMesh(
-                    InstanceType.MESH,
-                    GeometryStore.sphereGeometry,
-                    DEFAULT_MESH_NAME,
-                    1
-                ),
+                instances: new InstancedMesh(InstanceType.MESH, GeometryStore.sphereGeometry, DEFAULT_MESH_NAME, 1),
             },
         });
         if (loggerLevel) {
@@ -105,12 +78,7 @@ class GeometryStore {
             geometry: {
                 mesh: new Mesh(GeometryStore.sphereGeometry),
                 cancelled: false,
-                instances: new InstancedMesh(
-                    InstanceType.MESH,
-                    GeometryStore.sphereGeometry,
-                    DEFAULT_MESH_NAME,
-                    1
-                ),
+                instances: new InstancedMesh(InstanceType.MESH, GeometryStore.sphereGeometry, DEFAULT_MESH_NAME, 1),
             },
         });
     }
@@ -173,12 +141,7 @@ class GeometryStore {
         return {
             mesh: new Mesh(GeometryStore.sphereGeometry),
             cancelled: false,
-            instances: new InstancedMesh(
-                InstanceType.MESH,
-                GeometryStore.sphereGeometry,
-                meshName,
-                1
-            ),
+            instances: new InstancedMesh(InstanceType.MESH, GeometryStore.sphereGeometry, meshName, 1),
         };
     }
 
@@ -186,20 +149,11 @@ class GeometryStore {
         return {
             mesh: new Mesh(GeometryStore.cubeGeometry),
             cancelled: false,
-            instances: new InstancedMesh(
-                InstanceType.MESH,
-                GeometryStore.cubeGeometry,
-                meshName,
-                1
-            ),
+            instances: new InstancedMesh(InstanceType.MESH, GeometryStore.cubeGeometry, meshName, 1),
         };
     }
 
-    private setGeometryInRegistry(
-        key: string,
-        geometry,
-        displayType: GeometryDisplayType
-    ) {
+    private setGeometryInRegistry(key: string, geometry, displayType: GeometryDisplayType) {
         this._registry.set(key, {
             geometry,
             displayType,
@@ -233,17 +187,13 @@ class GeometryStore {
                     return fetch(actualUrl).then((response) => {
                         if (!response.ok) {
                             // error will be caught by the function that calls this
-                            throw new Error(
-                                `Failed to fetch ${pdbModel.filePath} from ${actualUrl}`
-                            );
+                            throw new Error(`Failed to fetch ${pdbModel.filePath} from ${actualUrl}`);
                         }
                         return response.text();
                     });
                 } else {
                     // error will be caught by function that calls this
-                    throw new Error(
-                        `Failed to fetch ${pdbModel.filePath} from ${url}`
-                    );
+                    throw new Error(`Failed to fetch ${pdbModel.filePath} from ${url}`);
                 }
             })
             .then((data) => {
@@ -260,9 +210,7 @@ class GeometryStore {
                     // This seems like some kind of terrible error if we get here.
                     // Alternatively, we could try re-adding the registry entry.
                     // Or reject.
-                    this.mlogger.warn(
-                        `After download, GeometryStore PDB entry not found for ${url}`
-                    );
+                    this.mlogger.warn(`After download, GeometryStore PDB entry not found for ${url}`);
                     return Promise.resolve(undefined);
                 }
             });
@@ -285,35 +233,22 @@ class GeometryStore {
                 // there is already a mesh registered but we are going to load a new one.
                 // start by resetting this entry to a sphere. we will replace when the new mesh arrives
                 meshRequest.mesh = new Mesh(GeometryStore.sphereGeometry);
-                meshRequest.instances.replaceGeometry(
-                    GeometryStore.sphereGeometry,
-                    meshName
-                );
+                meshRequest.instances.replaceGeometry(GeometryStore.sphereGeometry, meshName);
             }
         } else {
             // if this mesh is not yet registered, then start off as a sphere
             // we will replace the sphere in here with the real geometry when it arrives.
-            this.setGeometryInRegistry(
-                meshName,
-                this.createNewSphereGeometry(meshName),
-                GeometryDisplayType.SPHERE
-            );
+            this.setGeometryInRegistry(meshName, this.createNewSphereGeometry(meshName), GeometryDisplayType.SPHERE);
         }
     }
 
-    private handleObjResponse(
-        meshName: string,
-        object: Object3D
-    ): MeshLoadRequest | undefined {
+    private handleObjResponse(meshName: string, object: Object3D): MeshLoadRequest | undefined {
         const item = this._registry.get(meshName);
         if (!item) {
             return; // should be unreachable, but needed for TypeScript
         }
         const meshLoadRequest = item.geometry as MeshLoadRequest;
-        if (
-            (meshLoadRequest && meshLoadRequest.cancelled) ||
-            !meshLoadRequest
-        ) {
+        if ((meshLoadRequest && meshLoadRequest.cancelled) || !meshLoadRequest) {
             this._registry.delete(meshName);
             return;
         }
@@ -334,9 +269,7 @@ class GeometryStore {
             meshLoadRequest.mesh = object;
             meshLoadRequest.instances.replaceGeometry(geom, meshName);
         } else {
-            console.error(
-                "Mesh loaded but could not find instanceable geometry in it"
-            );
+            console.error("Mesh loaded but could not find instanceable geometry in it");
         }
         if (!object.name) {
             object.name = meshName;
@@ -353,10 +286,7 @@ class GeometryStore {
                 objLoader.load(
                     url,
                     (object: Object3D) => {
-                        const meshLoadRequest = this.handleObjResponse(
-                            url,
-                            object
-                        );
+                        const meshLoadRequest = this.handleObjResponse(url, object);
                         if (meshLoadRequest) {
                             resolve(meshLoadRequest);
                         } else {
@@ -364,11 +294,7 @@ class GeometryStore {
                         }
                     },
                     (xhr) => {
-                        this.mlogger.info(
-                            url,
-                            " ",
-                            `${(xhr.loaded / xhr.total) * 100}% loaded`
-                        );
+                        this.mlogger.info(url, " ", `${(xhr.loaded / xhr.total) * 100}% loaded`);
                     },
                     (error) => {
                         // if the request fails, leave agent as a sphere by default
@@ -425,10 +351,7 @@ class GeometryStore {
                 );
             }
             return Promise.resolve(geometry);
-        } else if (
-            !this._registry.has(urlOrPath) &&
-            !this._geoLoadAttempted.get(urlOrPath)
-        ) {
+        } else if (!this._registry.has(urlOrPath) && !this._geoLoadAttempted.get(urlOrPath)) {
             this._geoLoadAttempted.set(urlOrPath, true);
             switch (displayType) {
                 case GeometryDisplayType.PDB:
@@ -482,19 +405,11 @@ class GeometryStore {
                 this.setGeometryInRegistry(lookupKey, geometry, displayType);
             } else if (displayType === GeometryDisplayType.CUBE) {
                 geometry = this.createNewCubeGeometry(lookupKey);
-                this.setGeometryInRegistry(
-                    lookupKey,
-                    geometry,
-                    GeometryDisplayType.CUBE
-                );
+                this.setGeometryInRegistry(lookupKey, geometry, GeometryDisplayType.CUBE);
             } else {
                 // default to a sphere
                 geometry = this.createNewSphereGeometry(lookupKey);
-                this.setGeometryInRegistry(
-                    lookupKey,
-                    geometry,
-                    GeometryDisplayType.SPHERE
-                );
+                this.setGeometryInRegistry(lookupKey, geometry, GeometryDisplayType.SPHERE);
             }
             return Promise.resolve({ geometry });
         } else {
@@ -512,11 +427,7 @@ class GeometryStore {
                     // if anything goes wrong, add a new sphere to the registry
                     // using this same lookup key
                     const geometry = this.createNewSphereGeometry(lookupKey);
-                    this.setGeometryInRegistry(
-                        lookupKey,
-                        geometry,
-                        GeometryDisplayType.SPHERE
-                    );
+                    this.setGeometryInRegistry(lookupKey, geometry, GeometryDisplayType.SPHERE);
                     return Promise.resolve({
                         geometry,
                         displayType: GeometryDisplayType.SPHERE,

@@ -18,10 +18,7 @@ function getObject(str: string): Record<string, unknown> {
     for (let index = 0; index < fileArray.length; index++) {
         if (fileArray[index].startsWith(";") && semicolon === false) {
             semicolon = true;
-            fileArray[index] = fileArray[index].substring(
-                1,
-                fileArray[index].length
-            );
+            fileArray[index] = fileArray[index].substring(1, fileArray[index].length);
             sentence = sentence + fileArray[index];
             fileArray[index] = "";
         } else if (fileArray[index].startsWith(";") && semicolon === true) {
@@ -75,11 +72,7 @@ function getObject(str: string): Record<string, unknown> {
                 dataname = line.split(".")[0];
                 precArray = [];
                 precArray.push(line);
-            } else if (
-                dataname !== "" &&
-                dataname !== line.split(".")[0] &&
-                line.startsWith("_")
-            ) {
+            } else if (dataname !== "" && dataname !== line.split(".")[0] && line.startsWith("_")) {
                 //NEW DATANAME NO LOOP
 
                 dataname = line.split(".")[0];
@@ -151,35 +144,23 @@ function elaborate(dataArray, isLoop) {
 
                         controlChar = "'";
                         pushed = false;
-                    } else if (
-                        controlChar === " " &&
-                        line.charAt(index) === '"'
-                    ) {
+                    } else if (controlChar === " " && line.charAt(index) === '"') {
                         // OpEN "
 
                         controlChar = '"';
                         pushed = false;
-                    } else if (
-                        controlChar === " " &&
-                        line.charAt(index) === " "
-                    ) {
+                    } else if (controlChar === " " && line.charAt(index) === " ") {
                         if (field.trim() !== "") valueArray.push(field);
                         field = "";
                         pushed = true;
-                    } else if (
-                        controlChar === "'" &&
-                        line.charAt(index) === "'"
-                    ) {
+                    } else if (controlChar === "'" && line.charAt(index) === "'") {
                         // CLOSE '
 
                         valueArray.push(field);
                         field = "";
                         controlChar = " ";
                         pushed = true;
-                    } else if (
-                        controlChar === '"' &&
-                        line.charAt(index) === '"'
-                    ) {
+                    } else if (controlChar === '"' && line.charAt(index) === '"') {
                         // CLOSE "
 
                         valueArray.push(field);

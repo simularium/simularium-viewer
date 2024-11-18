@@ -5,12 +5,7 @@ import { AGENT_OBJECT_KEYS, AgentData, CachedFrame } from "./simularium/types";
 import { nullAgent } from "./constants";
 import { FrontEndError } from "./simularium";
 
-export const compareTimes = (
-    time1: number,
-    time2: number,
-    timeStepSize: number,
-    stepSizeFraction = 0.01
-): number => {
+export const compareTimes = (time1: number, time2: number, timeStepSize: number, stepSizeFraction = 0.01): number => {
     /*
     Compares two time values in a series by seeing whether they are within some
     small fraction of the time step size.
@@ -37,8 +32,7 @@ export const checkAndSanitizePath = (pathOrUrl: string): string => {
      * if given a url, return it. If given a path, return it in the form "/filename" (if it already
      * has a forward slash, also return it unmodified)
      */
-    const isUrlRegEX =
-        /(https?:\/\/)([\w\-])+\.{1}([a-zA-Z]{2,63})([\/\w-]*)*\/?\??([^#\n\r]*)?#?([^\n\r]*)/g;
+    const isUrlRegEX = /(https?:\/\/)([\w\-])+\.{1}([a-zA-Z]{2,63})([\/\w-]*)*\/?\??([^#\n\r]*)?#?([^\n\r]*)/g;
     if (isUrlRegEX.test(pathOrUrl)) {
         let url = pathOrUrl;
         if (url.includes("dropbox")) {
@@ -53,10 +47,7 @@ export const checkAndSanitizePath = (pathOrUrl: string): string => {
 
 export function getFileExtension(pathOrUrl: string): string {
     // the file extension is considered to be all string contents after the last "."
-    return (
-        pathOrUrl.substring(pathOrUrl.lastIndexOf(".") + 1, pathOrUrl.length) ||
-        pathOrUrl
-    );
+    return pathOrUrl.substring(pathOrUrl.lastIndexOf(".") + 1, pathOrUrl.length) || pathOrUrl;
 }
 
 export function loadSimulariumFile(file: Blob): Promise<ISimulariumFile> {
@@ -88,15 +79,10 @@ export const nullCachedFrame = (): CachedFrame => {
     };
 };
 
-export const getAgentDataFromBuffer = (
-    view: Float32Array,
-    offset: number
-): AgentData => {
+export const getAgentDataFromBuffer = (view: Float32Array, offset: number): AgentData => {
     // Check if the buffer has enough data for the AGENT_OBJECT_KEYS
     if (offset + AGENT_OBJECT_KEYS.length > view.length) {
-        throw new FrontEndError(
-            "Invalid offset: Not enough data in the buffer for agent data."
-        );
+        throw new FrontEndError("Invalid offset: Not enough data in the buffer for agent data.");
     }
     const agentData: AgentData = nullAgent();
     for (let i = 0; i < AGENT_OBJECT_KEYS.length; i++) {
@@ -109,23 +95,15 @@ export const getAgentDataFromBuffer = (
     const subpointsEnd = subpointsStart + nSubPoints;
 
     if (subpointsEnd > view.length) {
-        throw new FrontEndError(
-            "Invalid offset: Not enough data in the buffer for subpoints."
-        );
+        throw new FrontEndError("Invalid offset: Not enough data in the buffer for subpoints.");
     }
     agentData.subpoints = Array.from(
-        view.subarray(
-            offset + AGENT_OBJECT_KEYS.length,
-            offset + AGENT_OBJECT_KEYS.length + nSubPoints
-        )
+        view.subarray(offset + AGENT_OBJECT_KEYS.length, offset + AGENT_OBJECT_KEYS.length + nSubPoints)
     );
     return agentData;
 };
 
-export const getNextAgentOffset = (
-    view: Float32Array,
-    currentOffset: number
-): number => {
+export const getNextAgentOffset = (view: Float32Array, currentOffset: number): number => {
     const nSubPoints = view[currentOffset + AGENT_OBJECT_KEYS.length - 1];
     return currentOffset + AGENT_OBJECT_KEYS.length + nSubPoints;
 };

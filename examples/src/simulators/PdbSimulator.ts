@@ -1,12 +1,5 @@
-import {
-    IClientSimulatorImpl,
-    ClientMessageEnum,
-} from "../../../src/simularium/localSimulators/IClientSimulatorImpl";
-import {
-    EncodedTypeMapping,
-    TrajectoryFileInfo,
-    VisDataMessage,
-} from "../../../src/simularium/types";
+import { IClientSimulatorImpl, ClientMessageEnum } from "../../../src/simularium/localSimulators/IClientSimulatorImpl";
+import { EncodedTypeMapping, TrajectoryFileInfo, VisDataMessage } from "../../../src/simularium/types";
 import VisTypes from "../../../src/simularium/VisTypes";
 import { GeometryDisplayType } from "../../../src/visGeometry/types";
 
@@ -47,11 +40,7 @@ export default class PdbSim implements IClientSimulatorImpl {
         return [x, y, z];
     }
     private randomPtInBox(xmin, xmax, ymin, ymax, zmin, zmax) {
-        return [
-            this.randomFloat(xmin, xmax),
-            this.randomFloat(ymin, ymax),
-            this.randomFloat(zmin, zmax),
-        ];
+        return [this.randomFloat(xmin, xmax), this.randomFloat(ymin, ymax), this.randomFloat(zmin, zmax)];
     }
 
     private makePoints(nPoints) {
@@ -78,18 +67,9 @@ export default class PdbSim implements IClientSimulatorImpl {
         const amplitude = this.size[0] * 0.01;
         // fill agent data.
         for (let i = 0; i < this.nPoints; ++i) {
-            this.pointsData[i * 3 + 0] += this.randomFloat(
-                -amplitude,
-                amplitude
-            );
-            this.pointsData[i * 3 + 1] += this.randomFloat(
-                -amplitude,
-                amplitude
-            );
-            this.pointsData[i * 3 + 2] += this.randomFloat(
-                -amplitude,
-                amplitude
-            );
+            this.pointsData[i * 3 + 0] += this.randomFloat(-amplitude, amplitude);
+            this.pointsData[i * 3 + 1] += this.randomFloat(-amplitude, amplitude);
+            this.pointsData[i * 3 + 2] += this.randomFloat(-amplitude, amplitude);
 
             this.agentdata[i * 11 + 0] = VisTypes.ID_VIS_TYPE_DEFAULT; // vis type
             this.agentdata[i * 11 + 1] = i; // instance id
@@ -132,26 +112,8 @@ export default class PdbSim implements IClientSimulatorImpl {
             "https://aics-simularium-data.s3.us-east-2.amazonaws.com/meshes/obj/tubA.pdb",
             "https://aics-simularium-data.s3.us-east-2.amazonaws.com/meshes/obj/tubB.pdb",
         ];
-        const names = [
-            "4V40",
-            "7DAM",
-            "7PWD",
-            "actin",
-            "arp2",
-            "arp3",
-            "tubA",
-            "tubB",
-        ];
-        const colors = [
-            "ff0000",
-            "00ff00",
-            "0000ff",
-            "ffff00",
-            "ff00ff",
-            "00ffff",
-            "ffffff",
-            "888888",
-        ];
+        const names = ["4V40", "7DAM", "7PWD", "actin", "arp2", "arp3", "tubA", "tubB"];
+        const colors = ["ff0000", "00ff00", "0000ff", "ffff00", "ff00ff", "00ffff", "ffffff", "888888"];
 
         const typeMapping: EncodedTypeMapping = {};
         for (let i = 0; i < this.nTypes; ++i) {
@@ -186,9 +148,7 @@ export default class PdbSim implements IClientSimulatorImpl {
                     z:
                         // set a z value that will roughly frame the bounding box within our camera field of view
                         Math.sqrt(
-                            this.size[0] * this.size[0] +
-                                this.size[1] * this.size[1] +
-                                this.size[2] * this.size[2]
+                            this.size[0] * this.size[0] + this.size[1] * this.size[1] + this.size[2] * this.size[2]
                         ) * Math.tan(0.5 * FOV_DEGREES * DEGREES_TO_RADIANS),
                 },
                 lookAtPosition: {

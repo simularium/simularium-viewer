@@ -6,12 +6,7 @@ import { faSyncAlt } from "@fortawesome/free-solid-svg-icons";
 import { forOwn, isEqual } from "lodash";
 
 import SimulariumController from "../controller";
-import {
-    TrajectoryFileInfo,
-    SelectionInterface,
-    SelectionStateInfo,
-    UIDisplayData,
-} from "../simularium";
+import { TrajectoryFileInfo, SelectionInterface, SelectionStateInfo, UIDisplayData } from "../simularium";
 import { AgentData, TrajectoryFileInfoAny } from "../simularium/types";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
@@ -32,9 +27,7 @@ type ViewportProps = {
     onTimeChange: (timeData: TimeData) => void | undefined;
     simulariumController: SimulariumController;
     onJsonDataArrived(any): void;
-    onTrajectoryFileInfoChanged: (
-        cachedData: TrajectoryFileInfo
-    ) => void | undefined;
+    onTrajectoryFileInfoChanged: (cachedData: TrajectoryFileInfo) => void | undefined;
     onUIDisplayDataChanged: (data: UIDisplayData) => void | undefined;
     loadInitialData: boolean;
     hideAllAgents: boolean;
@@ -62,11 +55,10 @@ const defaultProps = {
     lockedCamera: false,
     disableCache: false,
     agentColors: [
-        0x6ac1e5, 0xff2200, 0xee7967, 0xff6600, 0xd94d49, 0xffaa00, 0xffcc00,
-        0x00ccff, 0x00aaff, 0x8048f3, 0x07f4ec, 0x79bd8f, 0x8800ff, 0xaa00ff,
-        0xcc00ff, 0xff00cc, 0xff00aa, 0xff0088, 0xff0066, 0xff0044, 0xff0022,
-        0xff0000, 0xccff00, 0xaaff00, 0x88ff00, 0x00ffcc, 0x66ff00, 0x44ff00,
-        0x22ff00, 0x00ffaa, 0x00ff88, 0x00ffaa, 0x00ffff, 0x0066ff,
+        0x6ac1e5, 0xff2200, 0xee7967, 0xff6600, 0xd94d49, 0xffaa00, 0xffcc00, 0x00ccff, 0x00aaff, 0x8048f3, 0x07f4ec,
+        0x79bd8f, 0x8800ff, 0xaa00ff, 0xcc00ff, 0xff00cc, 0xff00aa, 0xff0088, 0xff0066, 0xff0044, 0xff0022, 0xff0000,
+        0xccff00, 0xaaff00, 0x88ff00, 0x00ffcc, 0x66ff00, 0x44ff00, 0x22ff00, 0x00ffaa, 0x00ff88, 0x00ffaa, 0x00ffff,
+        0x0066ff,
     ] as string[] | number[],
 };
 
@@ -93,10 +85,7 @@ const MAX_CLICK_TIME = 300;
 // for float errors
 const CLICK_TOLERANCE = 1e-4;
 
-class Viewport extends React.Component<
-    ViewportProps & DefaultProps,
-    ViewportState
-> {
+class Viewport extends React.Component<ViewportProps & DefaultProps, ViewportState> {
     private visGeometry: VisGeometry;
     private selectionInterface: SelectionInterface;
     private recorder: FrameRecorder | null;
@@ -119,8 +108,7 @@ class Viewport extends React.Component<
     public constructor(props: ViewportProps & DefaultProps) {
         super(props);
 
-        const loggerLevel =
-            props.loggerLevel === "debug" ? jsLogger.DEBUG : jsLogger.OFF;
+        const loggerLevel = props.loggerLevel === "debug" ? jsLogger.DEBUG : jsLogger.OFF;
 
         this.animate = this.animate.bind(this);
         this.dispatchUpdatedTime = this.dispatchUpdatedTime.bind(this);
@@ -174,36 +162,24 @@ class Viewport extends React.Component<
     }
 
     private onTrajectoryFileInfo(msg: TrajectoryFileInfoAny): void {
-        const {
-            simulariumController,
-            onTrajectoryFileInfoChanged,
-            onUIDisplayDataChanged,
-            onError,
-            agentColors,
-        } = this.props;
+        const { simulariumController, onTrajectoryFileInfoChanged, onUIDisplayDataChanged, onError, agentColors } =
+            this.props;
         // Update TrajectoryFileInfo format to latest version
-        const trajectoryFileInfo: TrajectoryFileInfo =
-            updateTrajectoryFileInfoFormat(msg, onError);
+        const trajectoryFileInfo: TrajectoryFileInfo = updateTrajectoryFileInfoFormat(msg, onError);
 
-        simulariumController.visData.timeStepSize =
-            trajectoryFileInfo.timeStepSize;
+        simulariumController.visData.timeStepSize = trajectoryFileInfo.timeStepSize;
 
         const bx = trajectoryFileInfo.size.x;
         const by = trajectoryFileInfo.size.y;
         const bz = trajectoryFileInfo.size.z;
         const epsilon = 0.000001;
-        if (
-            Math.abs(bx) < epsilon ||
-            Math.abs(by) < epsilon ||
-            Math.abs(bz) < epsilon
-        ) {
+        if (Math.abs(bx) < epsilon || Math.abs(by) < epsilon || Math.abs(bz) < epsilon) {
             this.visGeometry.resetBounds();
         } else {
             this.visGeometry.resetBounds([bx, by, bz]);
         }
         // this can only happen right after resetBounds
-        simulariumController.tickIntervalLength =
-            this.visGeometry.tickIntervalLength;
+        simulariumController.tickIntervalLength = this.visGeometry.tickIntervalLength;
 
         this.visGeometry.handleCameraData(trajectoryFileInfo.cameraDefault);
         this.visGeometry.handleAgentGeometry(trajectoryFileInfo.typeMapping);
@@ -213,12 +189,7 @@ class Viewport extends React.Component<
         } catch (e) {
             if (onError) {
                 const error = e as Error;
-                onError(
-                    new FrontEndError(
-                        `error parsing 'typeMapping' data, ${error.message}`,
-                        ErrorLevel.ERROR
-                    )
-                );
+                onError(new FrontEndError(`error parsing 'typeMapping' data, ${error.message}`, ErrorLevel.ERROR));
             } else {
                 console.log("error parsing 'typeMapping' data", e);
             }
@@ -240,13 +211,7 @@ class Viewport extends React.Component<
     }
 
     public componentDidMount(): void {
-        const {
-            backgroundColor,
-            simulariumController,
-            loadInitialData,
-            onError,
-            lockedCamera,
-        } = this.props;
+        const { backgroundColor, simulariumController, loadInitialData, onError, lockedCamera } = this.props;
         this.visGeometry.setCanvasOnTheDom(this.vdomRef.current, lockedCamera);
         if (backgroundColor !== undefined) {
             this.visGeometry.setBackgroundColor(backgroundColor);
@@ -263,9 +228,7 @@ class Viewport extends React.Component<
         }
 
         simulariumController.visGeometry = this.visGeometry;
-        simulariumController.trajFileInfoCallback = (
-            msg: TrajectoryFileInfoAny
-        ) => {
+        simulariumController.trajFileInfoCallback = (msg: TrajectoryFileInfoAny) => {
             this.onTrajectoryFileInfo(msg);
         };
 
@@ -278,11 +241,7 @@ class Viewport extends React.Component<
         simulariumController.stopRecording = this.stopRecording.bind(this);
 
         if (this.vdomRef.current) {
-            this.vdomRef.current.addEventListener(
-                "timeChange",
-                this.handleTimeChange,
-                false
-            );
+            this.vdomRef.current.addEventListener("timeChange", this.handleTimeChange, false);
         }
         this.addEventHandlersToCanvas();
 
@@ -294,19 +253,13 @@ class Viewport extends React.Component<
         this.visGeometry.destroyGui();
 
         if (this.vdomRef.current) {
-            this.vdomRef.current.removeEventListener(
-                "timeChange",
-                this.handleTimeChange
-            );
+            this.vdomRef.current.removeEventListener("timeChange", this.handleTimeChange);
         }
         this.removeEventHandlersFromCanvas();
         this.stopAnimate();
     }
 
-    public componentDidUpdate(
-        prevProps: ViewportProps,
-        prevState: ViewportState
-    ): void {
+    public componentDidUpdate(prevProps: ViewportProps, prevState: ViewportState): void {
         const {
             backgroundColor,
             agentColors,
@@ -322,33 +275,16 @@ class Viewport extends React.Component<
         } = this.props;
 
         if (selectionStateInfo) {
-            if (
-                !isEqual(
-                    selectionStateInfo.highlightedAgents,
-                    prevProps.selectionStateInfo.highlightedAgents
-                )
-            ) {
-                const highlightedIds =
-                    this.selectionInterface.getHighlightedIds(
-                        selectionStateInfo
-                    );
+            if (!isEqual(selectionStateInfo.highlightedAgents, prevProps.selectionStateInfo.highlightedAgents)) {
+                const highlightedIds = this.selectionInterface.getHighlightedIds(selectionStateInfo);
                 this.visGeometry.setHighlightByIds(highlightedIds);
             }
-            if (
-                !isEqual(
-                    selectionStateInfo.hiddenAgents,
-                    prevProps.selectionStateInfo.hiddenAgents
-                )
-            ) {
-                const hiddenIds =
-                    this.selectionInterface.getHiddenIds(selectionStateInfo);
+            if (!isEqual(selectionStateInfo.hiddenAgents, prevProps.selectionStateInfo.hiddenAgents)) {
+                const hiddenIds = this.selectionInterface.getHiddenIds(selectionStateInfo);
                 this.visGeometry.setVisibleByIds(hiddenIds);
             }
             if (
-                !isEqual(
-                    selectionStateInfo.appliedColors,
-                    prevProps.selectionStateInfo.appliedColors
-                ) &&
+                !isEqual(selectionStateInfo.appliedColors, prevProps.selectionStateInfo.appliedColors) &&
                 selectionStateInfo.appliedColors.length > 0
             ) {
                 this.changeAgentsColor(selectionStateInfo.appliedColors);
@@ -512,10 +448,7 @@ class Viewport extends React.Component<
         if (!this.vdomRef.current) {
             return;
         }
-        const intersectedObject = this.visGeometry.hitTest(
-            event.offsetX,
-            event.offsetY
-        );
+        const intersectedObject = this.visGeometry.hitTest(event.offsetX, event.offsetY);
         if (intersectedObject !== NO_AGENT) {
             if (!this.props.lockedCamera) {
                 this.vdomRef.current.style.cursor = "pointer";
@@ -527,22 +460,14 @@ class Viewport extends React.Component<
 
     public addEventHandlersToCanvas(): void {
         forOwn(this.handlers, (handler, eventName) =>
-            this.visGeometry.renderDom.addEventListener(
-                eventName,
-                handler,
-                false
-            )
+            this.visGeometry.renderDom.addEventListener(eventName, handler, false)
         );
         document.addEventListener("keydown", this.handleKeyDown, false);
     }
 
     public removeEventHandlersFromCanvas(): void {
         forOwn(this.handlers, (handler, eventName) =>
-            this.visGeometry.renderDom.removeEventListener(
-                eventName,
-                handler,
-                false
-            )
+            this.visGeometry.renderDom.removeEventListener(eventName, handler, false)
         );
         document.removeEventListener("keydown", this.handleKeyDown, false);
     }
@@ -556,10 +481,7 @@ class Viewport extends React.Component<
         const intersectedObject = this.visGeometry.hitTest(posX, posY);
         if (intersectedObject !== NO_AGENT) {
             this.hit = true;
-            if (
-                oldFollowObject !== intersectedObject &&
-                oldFollowObject !== NO_AGENT
-            ) {
+            if (oldFollowObject !== intersectedObject && oldFollowObject !== NO_AGENT) {
                 this.visGeometry.removePathForAgent(oldFollowObject);
             }
             if (!this.props.lockedCamera) {
@@ -603,15 +525,12 @@ class Viewport extends React.Component<
     public changeAgentsColor(appliedColors: UIDisplayData): void {
         const changes: ColorAssignment[] = [];
         appliedColors.forEach((agent) => {
-            const agentIds = this.selectionInterface.getAgentIdsByNamesAndTags([
-                { name: agent.name, tags: [] },
-            ]);
+            const agentIds = this.selectionInterface.getAgentIdsByNamesAndTags([{ name: agent.name, tags: [] }]);
             changes.push({ agentIds, color: agent.color });
             agent.displayStates.forEach((state) => {
-                const stateIds =
-                    this.selectionInterface.getAgentIdsByNamesAndTags([
-                        { name: agent.name, tags: [state.name] },
-                    ]);
+                const stateIds = this.selectionInterface.getAgentIdsByNamesAndTags([
+                    { name: agent.name, tags: [state.name] },
+                ]);
                 changes.push({ agentIds: stateIds, color: state.color });
             });
         });
@@ -676,26 +595,13 @@ class Viewport extends React.Component<
         const { simulariumController } = this.props;
         return (
             <div className="view-controls">
-                <button
-                    onClick={simulariumController.resetCamera}
-                    className="btn"
-                >
-                    <FontAwesomeIcon
-                        icon={faSyncAlt}
-                        transform="flip-h"
-                        style={{ color: "#737373" }}
-                    />
+                <button onClick={simulariumController.resetCamera} className="btn">
+                    <FontAwesomeIcon icon={faSyncAlt} transform="flip-h" style={{ color: "#737373" }} />
                 </button>
-                <button
-                    onClick={simulariumController.centerCamera}
-                    className="btn-work"
-                >
+                <button onClick={simulariumController.centerCamera} className="btn-work">
                     Re-center
                 </button>
-                <button
-                    onClick={simulariumController.reOrientCamera}
-                    className="btn-word"
-                >
+                <button onClick={simulariumController.reOrientCamera} className="btn-word">
                     Starting orientation
                 </button>
             </div>

@@ -14,10 +14,7 @@ const BaseInput = (props: BaseInputProps) => {
                 <label>
                     {" "}
                     {props.name}
-                    <input
-                        type="text"
-                        onChange={(e) => props.handler(e.target.value)}
-                    />
+                    <input type="text" onChange={(e) => props.handler(e.target.value)} />
                 </label>
             );
         case "number":
@@ -25,10 +22,7 @@ const BaseInput = (props: BaseInputProps) => {
                 <label>
                     {" "}
                     {props.name}
-                    <input
-                        type="number"
-                        onChange={(e) => props.handler(Number(e.target.value))}
-                    />
+                    <input type="number" onChange={(e) => props.handler(Number(e.target.value))} />
                 </label>
             );
         case "enum":
@@ -63,10 +57,7 @@ const BaseInput = (props: BaseInputProps) => {
                 <label>
                     {" "}
                     {props.name}
-                    <input
-                        type="text"
-                        onChange={(e) => props.handler(e.target.value)}
-                    />
+                    <input type="text" onChange={(e) => props.handler(e.target.value)} />
                 </label>
             );
     }

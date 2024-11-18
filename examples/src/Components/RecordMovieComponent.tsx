@@ -3,11 +3,15 @@ import React, { useState, useEffect } from "react";
 interface RecordMovieComponentProps {
     startRecordingHandler: () => void;
     stopRecordingHandler: () => void;
+    setRecordingEnabled: () => void;
+    isRecordingEnabled: boolean;
 }
 
 const RecordMovieComponent = ({
     startRecordingHandler,
     stopRecordingHandler,
+    setRecordingEnabled,
+    isRecordingEnabled,
 }: RecordMovieComponentProps): JSX.Element => {
     // recording time measured in seconds
     const [isRecording, setIsRecording] = useState<boolean>(false);
@@ -43,30 +47,17 @@ const RecordMovieComponent = ({
     };
 
     return (
-        <div>
-            <button
-                onClick={startRecording}
-                disabled={isRecording || !browserSupported}
-            >
+        <div className="ui-container">
+            <button onClick={() => setRecordingEnabled()}>{isRecordingEnabled ? "Disable" : "Enable"} Recording</button>
+            <button onClick={startRecording} disabled={isRecording || !browserSupported || !isRecordingEnabled}>
                 Start Recording
             </button>
-            <button
-                onClick={stopRecording}
-                disabled={!isRecording || !browserSupported}
-            >
+            <button onClick={stopRecording} disabled={!isRecording || !browserSupported}>
                 Stop Recording
             </button>
             <div>{isRecording ? "Recording..." : ""}</div>
-            <div>
-                {!browserSupported ? "Browser does not support recording" : ""}
-            </div>
-            <div>
-                {isRecording
-                    ? "Recording duration:  " +
-                      recordingTimeElapsed +
-                      " seconds"
-                    : ""}
-            </div>
+            <div>{!browserSupported ? "Browser does not support recording" : ""}</div>
+            <div>{isRecording ? "Recording duration:  " + recordingTimeElapsed + " seconds" : ""}</div>
             <div>{outputStatus}</div>
         </div>
     );

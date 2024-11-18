@@ -121,9 +121,7 @@ export default class VisAgent {
             material.uniformsNeedUpdate = true;
         }
         if (material.uniforms.instanceId) {
-            material.uniforms.instanceId.value = Number(
-                this.agentData.instanceId
-            );
+            material.uniforms.instanceId.value = Number(this.agentData.instanceId);
             material.uniformsNeedUpdate = true;
         }
         if (material.uniforms.radius) {
@@ -141,15 +139,11 @@ export default class VisAgent {
         const numSubPoints = subpoints.length;
         const numPoints = numSubPoints / 3;
         if (numSubPoints % 3 !== 0) {
-            console.warn(
-                "Warning, subpoints array does not contain a multiple of 3"
-            );
+            console.warn("Warning, subpoints array does not contain a multiple of 3");
             return;
         }
         if (numPoints < 2) {
-            console.warn(
-                "Warning, subpoints array does not have enough points for a curve"
-            );
+            console.warn("Warning, subpoints array does not have enough points for a curve");
             return;
         }
         // put all the subpoints into a Vector3[]
@@ -166,15 +160,8 @@ export default class VisAgent {
     }
 
     public getFollowPosition(): Vector3 {
-        const pos = new Vector3(
-            this.agentData.x,
-            this.agentData.y,
-            this.agentData.z
-        );
-        if (
-            this.agentData.visType === VisTypes.ID_VIS_TYPE_FIBER &&
-            this.fiberCurve
-        ) {
+        const pos = new Vector3(this.agentData.x, this.agentData.y, this.agentData.z);
+        if (this.agentData.visType === VisTypes.ID_VIS_TYPE_FIBER && this.fiberCurve) {
             return this.fiberCurve.getPoint(0.5).add(pos);
         } else {
             return pos;

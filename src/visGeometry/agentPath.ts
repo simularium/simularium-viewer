@@ -1,10 +1,4 @@
-import {
-    Color,
-    BufferAttribute,
-    BufferGeometry,
-    LineBasicMaterial,
-    LineSegments,
-} from "three";
+import { Color, BufferAttribute, BufferGeometry, LineBasicMaterial, LineSegments } from "three";
 
 const MAX_PATH_LENGTH = 32;
 
@@ -26,10 +20,7 @@ export default class LinePath {
         const pointsArray = new Float32Array(maxSegments * 3 * 2);
         const colorsArray = new Float32Array(maxSegments * 3 * 2);
         const lineGeometry = new BufferGeometry();
-        lineGeometry.setAttribute(
-            "position",
-            new BufferAttribute(pointsArray, 3)
-        );
+        lineGeometry.setAttribute("position", new BufferAttribute(pointsArray, 3));
         lineGeometry.setAttribute("color", new BufferAttribute(colorsArray, 3));
         // path starts empty: draw range spans nothing
         lineGeometry.setDrawRange(0, 0);

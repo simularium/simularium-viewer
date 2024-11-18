@@ -1,8 +1,4 @@
-import {
-    WebsocketClient,
-    NetMessageEnum,
-    MessageEventLike,
-} from "../simularium/WebsocketClient";
+import { WebsocketClient, NetMessageEnum, MessageEventLike } from "../simularium/WebsocketClient";
 
 class TestWebsocketClient extends WebsocketClient {
     // exposing the protected onMessage() method for testing purposes
@@ -23,10 +19,7 @@ describe("WebsocketClient", () => {
 
         test("handles defined websocket event", () => {
             const mockCallback = jest.fn((x) => x["data"]);
-            websocketClient.addJsonMessageHandler(
-                NetMessageEnum.ID_CONVERT_TRAJECTORY_FILE,
-                mockCallback
-            );
+            websocketClient.addJsonMessageHandler(NetMessageEnum.ID_CONVERT_TRAJECTORY_FILE, mockCallback);
             const definedEvent = {
                 data: JSON.stringify({
                     msgType: NetMessageEnum.ID_CONVERT_TRAJECTORY_FILE,
@@ -42,10 +35,7 @@ describe("WebsocketClient", () => {
         test("ignores websocket events that don't have a defined handler", () => {
             const mockCallback = jest.fn((x) => x["data"]);
 
-            websocketClient.addJsonMessageHandler(
-                NetMessageEnum.ID_CONVERT_TRAJECTORY_FILE,
-                mockCallback
-            );
+            websocketClient.addJsonMessageHandler(NetMessageEnum.ID_CONVERT_TRAJECTORY_FILE, mockCallback);
             const randomEvent0 = {
                 data: JSON.stringify({
                     msgType: NetMessageEnum.ID_MODEL_DEFINITION,
@@ -68,14 +58,8 @@ describe("WebsocketClient", () => {
             const mockCallback0 = jest.fn((x) => x["data"]);
             const mockCallback1 = jest.fn((x) => x["data"]);
 
-            websocketClient.addJsonMessageHandler(
-                NetMessageEnum.ID_CONVERT_TRAJECTORY_FILE,
-                mockCallback0
-            );
-            websocketClient.addJsonMessageHandler(
-                NetMessageEnum.ID_MODEL_DEFINITION,
-                mockCallback1
-            );
+            websocketClient.addJsonMessageHandler(NetMessageEnum.ID_CONVERT_TRAJECTORY_FILE, mockCallback0);
+            websocketClient.addJsonMessageHandler(NetMessageEnum.ID_MODEL_DEFINITION, mockCallback1);
             const definedEvent0 = {
                 data: JSON.stringify({
                     msgType: NetMessageEnum.ID_CONVERT_TRAJECTORY_FILE,

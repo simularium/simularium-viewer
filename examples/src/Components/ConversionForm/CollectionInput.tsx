@@ -24,10 +24,7 @@ interface CollectionState {
     length: number;
 }
 
-class CollectionInput extends React.Component<
-    CollectionInputProps,
-    CollectionState
-> {
+class CollectionInput extends React.Component<CollectionInputProps, CollectionState> {
     constructor(props: CollectionInputProps) {
         super(props);
         this.state = {
@@ -37,12 +34,7 @@ class CollectionInput extends React.Component<
         this.addItem = this.addItem.bind(this);
     }
 
-    handleChange(
-        key: string,
-        index: number,
-        type: "key" | "value",
-        targetValue: any
-    ) {
+    handleChange(key: string, index: number, type: "key" | "value", targetValue: any) {
         const { handler, id } = this.props;
         const newState = { ...this.state };
         if (!newState[index]) {
@@ -90,24 +82,12 @@ class CollectionInput extends React.Component<
                     options={childItem.options || []}
                     dataType={currentDataType}
                     name={childItem.name}
-                    handler={(value) =>
-                        this.handleChange(
-                            newPath[newPath.length - 1],
-                            index,
-                            type,
-                            value
-                        )
-                    }
+                    handler={(value) => this.handleChange(newPath[newPath.length - 1], index, type, value)}
                 />
             );
         } else if (data.parameters) {
             return map(data.parameters, (childParameter, key) => {
-                return this.renderValueItem(
-                    childParameter,
-                    [...newPath, key],
-                    index,
-                    type
-                );
+                return this.renderValueItem(childParameter, [...newPath, key], index, type);
             });
         }
     };
@@ -126,28 +106,20 @@ class CollectionInput extends React.Component<
                     <h4>{index}:</h4>
                     <div>
                         Key:
-                        {this.renderValueItem(
-                            parameter.key_item,
-                            path,
-                            index,
-                            "key"
-                        )}
+                        {this.renderValueItem(parameter.key_item, path, index, "key")}
                     </div>
                     <div>
                         Value:
-                        {this.renderValueItem(
-                            parameter.value_item,
-                            path,
-                            index,
-                            "value"
-                        )}
+                        {this.renderValueItem(parameter.value_item, path, index, "value")}
                     </div>
                 </div>
             );
         }
         if (parameter.extendible) {
             jsx.push(
-                <button key={name} onClick={this.addItem}>Add another {name} item</button>
+                <button key={name} onClick={this.addItem}>
+                    Add another {name} item
+                </button>
             );
         }
         return jsx;

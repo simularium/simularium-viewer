@@ -1,6 +1,6 @@
 {
-  "extends": "./tsconfig.base",
-  "compilerOptions": {
-    "module": "CommonJS"
-  }
+    "extends": "./tsconfig.base",
+    "compilerOptions": {
+        "module": "CommonJS"
+    }
 }

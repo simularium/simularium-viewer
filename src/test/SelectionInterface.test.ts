@@ -1,9 +1,6 @@
 import { mapValues } from "lodash";
 import { EncodedTypeMapping, SelectionInterface } from "../simularium";
-import {
-    UIDisplayData,
-    UIDisplayEntry,
-} from "../simularium/SelectionInterface";
+import { UIDisplayData, UIDisplayEntry } from "../simularium/SelectionInterface";
 
 const idMapping = {
     0: { name: "A" },
@@ -360,66 +357,46 @@ describe("SelectionInterface module", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
             const uiDisplayData = si.getUIDisplayData();
-            const uiDisplayDataForA = uiDisplayData.find(
-                (entry) => entry.name === "A"
-            );
-            const uiDisplayDataForB = uiDisplayData.find(
-                (entry) => entry.name === "B"
-            );
-            const uiDisplayDataForC = uiDisplayData.find(
-                (entry) => entry.name === "C"
-            );
+            const uiDisplayDataForA = uiDisplayData.find((entry) => entry.name === "A");
+            const uiDisplayDataForB = uiDisplayData.find((entry) => entry.name === "B");
+            const uiDisplayDataForC = uiDisplayData.find((entry) => entry.name === "C");
             const unmodifiedDisplayState = {
                 name: "<unmodified>",
                 id: "",
                 color: "",
             };
             expect(uiDisplayDataForA?.displayStates.length).toEqual(3);
-            expect(uiDisplayDataForA?.displayStates).toContainEqual(
-                unmodifiedDisplayState
-            );
+            expect(uiDisplayDataForA?.displayStates).toContainEqual(unmodifiedDisplayState);
             expect(uiDisplayDataForB?.displayStates.length).toEqual(3);
-            expect(uiDisplayDataForB?.displayStates).toContainEqual(
-                unmodifiedDisplayState
-            );
+            expect(uiDisplayDataForB?.displayStates).toContainEqual(unmodifiedDisplayState);
             expect(uiDisplayDataForC?.displayStates.length).toEqual(3);
-            expect(uiDisplayDataForC?.displayStates).toContainEqual(
-                unmodifiedDisplayState
-            );
+            expect(uiDisplayDataForC?.displayStates).toContainEqual(unmodifiedDisplayState);
         });
         test("It doesn't add an unmodified state to agents that don't have one", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
             const uiDisplayData = si.getUIDisplayData();
-            const uiDisplayDataForE = uiDisplayData.find(
-                (entry) => entry.name === "E"
-            );
+            const uiDisplayDataForE = uiDisplayData.find((entry) => entry.name === "E");
             const unmodifiedDisplayState = {
                 name: "<unmodified>",
                 id: "",
                 color: "",
             };
             expect(uiDisplayDataForE?.displayStates.length).toEqual(1);
-            expect(uiDisplayDataForE?.displayStates).not.toContainEqual(
-                unmodifiedDisplayState
-            );
+            expect(uiDisplayDataForE?.displayStates).not.toContainEqual(unmodifiedDisplayState);
         });
         test("It doesn't include unmodified state if there are no other tags", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
             const uiDisplayData = si.getUIDisplayData();
-            const uiDisplayDataForD = uiDisplayData.find(
-                (entry) => entry.name === "D"
-            );
+            const uiDisplayDataForD = uiDisplayData.find((entry) => entry.name === "D");
             const unmodifiedDisplayState = {
                 name: "<unmodified>",
                 id: "",
                 color: "",
             };
             expect(uiDisplayDataForD?.displayStates.length).toEqual(0);
-            expect(uiDisplayDataForD?.displayStates).not.toContainEqual(
-                unmodifiedDisplayState
-            );
+            expect(uiDisplayDataForD?.displayStates).not.toContainEqual(unmodifiedDisplayState);
         });
     });
 
@@ -481,34 +458,18 @@ describe("SelectionInterface module", () => {
             si = new SelectionInterface();
             si.parse(idMappingWithColors as EncodedTypeMapping);
             uiDisplayData = si.getUIDisplayData();
-            uiDisplayDataForA = uiDisplayData.find(
-                (entry) => entry.name === "A"
-            );
-            uiDisplayDataForB = uiDisplayData.find(
-                (entry) => entry.name === "B"
-            );
-            uiDisplayDataForE = uiDisplayData.find(
-                (entry) => entry.name === "E"
-            );
-            uiDisplayDataForF = uiDisplayData.find(
-                (entry) => entry.name === "F"
-            );
-            uiDisplayDataForG = uiDisplayData.find(
-                (entry) => entry.name === "G"
-            );
+            uiDisplayDataForA = uiDisplayData.find((entry) => entry.name === "A");
+            uiDisplayDataForB = uiDisplayData.find((entry) => entry.name === "B");
+            uiDisplayDataForE = uiDisplayData.find((entry) => entry.name === "E");
+            uiDisplayDataForF = uiDisplayData.find((entry) => entry.name === "F");
+            uiDisplayDataForG = uiDisplayData.find((entry) => entry.name === "G");
         });
 
         test("it will create a new material for each of the use defined colors", () => {
             const numberOfNewColors = Object.keys(agentColors).length + 2; // two additional colors for G
-            const updatedColors = si.setInitialAgentColors(
-                uiDisplayData,
-                colorList,
-                setColorForIds
-            );
+            const updatedColors = si.setInitialAgentColors(uiDisplayData, colorList, setColorForIds);
 
-            expect(updatedColors.length).toEqual(
-                numberOfNewColors + defaultColorListLength
-            );
+            expect(updatedColors.length).toEqual(numberOfNewColors + defaultColorListLength);
         });
 
         test("it set the entry color to the 'unmodified' state color if provided", () => {
@@ -524,15 +485,11 @@ describe("SelectionInterface module", () => {
             expect(uiDisplayDataForE?.color).toEqual("");
             si.setInitialAgentColors(uiDisplayData, colorList, setColorForIds);
             expect(uiDisplayDataForE?.color).toEqual("#00");
-            expect(setColorForIds).toHaveBeenCalledWith(
-                expect.arrayContaining([{ agentIds: [13], color: "#00" }])
-            );
+            expect(setColorForIds).toHaveBeenCalledWith(expect.arrayContaining([{ agentIds: [13], color: "#00" }]));
         });
         test("If no user colors are provided all the ids for an entry will get a default color", () => {
             si.setInitialAgentColors(uiDisplayData, colorList, setColorForIds);
-            expect(setColorForIds).toHaveBeenCalledWith(
-                expect.arrayContaining([{ agentIds: [13], color: "#00" }])
-            );
+            expect(setColorForIds).toHaveBeenCalledWith(expect.arrayContaining([{ agentIds: [13], color: "#00" }]));
         });
         test("if all the colors are the same, the parent entry will also get that color, even if no unmodified color set", () => {
             si.setInitialAgentColors(uiDisplayData, colorList, setColorForIds);

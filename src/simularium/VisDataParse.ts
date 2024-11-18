@@ -48,10 +48,7 @@ function parseVisDataMessage(visDataMsg: VisDataMessage): CachedFrame {
         agentCount++;
 
         // Copy agent data
-        const agentData = frame.data.slice(
-            readIndex,
-            readIndex + FRAME_DATA_SIZE
-        );
+        const agentData = frame.data.slice(readIndex, readIndex + FRAME_DATA_SIZE);
         view.set(agentData, writeIndex);
         readIndex += FRAME_DATA_SIZE;
         writeIndex += FRAME_DATA_SIZE;
@@ -59,9 +56,9 @@ function parseVisDataMessage(visDataMsg: VisDataMessage): CachedFrame {
         // Validate data integrity
         if (--readIndex + nSubPoints > frame.data.length) {
             throw new FrontEndError(
-                `Your data is malformed, there are too few entries. Found ${
-                    frame.data.length
-                }, expected ${readIndex + nSubPoints}.`,
+                `Your data is malformed, there are too few entries. Found ${frame.data.length}, expected ${
+                    readIndex + nSubPoints
+                }.`,
                 ErrorLevel.ERROR
             );
         }
@@ -102,8 +99,7 @@ function calculateBufferSize(data: number[]): number {
 
     while (index < data.length) {
         size += FRAME_DATA_SIZE * 4; // Agent header size in bytes
-        const nSubPoints =
-            data[index + AGENT_OBJECT_KEYS.indexOf("nSubPoints")];
+        const nSubPoints = data[index + AGENT_OBJECT_KEYS.indexOf("nSubPoints")];
         size += nSubPoints * 4; // Subpoints size in bytes
         index += FRAME_DATA_SIZE + nSubPoints;
     }

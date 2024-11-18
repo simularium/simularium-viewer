@@ -25,11 +25,7 @@ class CompositePass {
                 backgroundColor: { value: new Color(1, 1, 1) },
                 bgHCLoffset: bgHCLoffset
                     ? {
-                          value: new Vector3(
-                              bgHCLoffset.x,
-                              bgHCLoffset.y,
-                              bgHCLoffset.z
-                          ),
+                          value: new Vector3(bgHCLoffset.x, bgHCLoffset.y, bgHCLoffset.z),
                       }
                     : { value: new Vector3(1.0, 0.0, 0.2) },
                 zNear: { value: 0.1 },

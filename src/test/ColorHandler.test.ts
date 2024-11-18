@@ -18,12 +18,8 @@ describe("ColorHandler", () => {
     });
     describe("updateColorArray", () => {
         test("sets colorsData with 4 values for each color", () => {
-            expect((colorHandler as any).colorsData).toHaveLength(
-                initialColorData.length * 4
-            );
-            expect((colorHandler as any).numberOfColors).toBe(
-                initialColorData.length
-            );
+            expect((colorHandler as any).colorsData).toHaveLength(initialColorData.length * 4);
+            expect((colorHandler as any).numberOfColors).toBe(initialColorData.length);
         });
     });
     describe("convertDataColorIndexToId", () => {
@@ -48,18 +44,14 @@ describe("ColorHandler", () => {
     describe("getColorDataIndex", () => {
         test("it returns the index into the colorData array of an existing color", () => {
             for (let i = 0; i < initialColorData.length; i++) {
-                const colorNumber = convertColorStringToNumber(
-                    initialColorData[i]
-                );
+                const colorNumber = convertColorStringToNumber(initialColorData[i]);
                 const newColor = [
                     ((colorNumber & 0x00ff0000) >> 16) / 255.0,
                     ((colorNumber & 0x0000ff00) >> 8) / 255.0,
                     ((colorNumber & 0x000000ff) >> 0) / 255.0,
                     1.0,
                 ];
-                expect((colorHandler as any).getColorDataIndex(newColor)).toBe(
-                    i * 4
-                );
+                expect((colorHandler as any).getColorDataIndex(newColor)).toBe(i * 4);
             }
         });
         test("it returns -1 if the color is not found", () => {
@@ -90,12 +82,8 @@ describe("ColorHandler", () => {
             expect(actualColor).toEqual((colorHandler as any).getColorById(0));
         });
         test("it loops around if the id is out of range", () => {
-            expect((colorHandler as any).getColorById(4)).toEqual(
-                (colorHandler as any).getColorById(0)
-            );
-            expect((colorHandler as any).getColorById(5)).toEqual(
-                (colorHandler as any).getColorById(1)
-            );
+            expect((colorHandler as any).getColorById(4)).toEqual((colorHandler as any).getColorById(0));
+            expect((colorHandler as any).getColorById(5)).toEqual((colorHandler as any).getColorById(1));
         });
     });
 });

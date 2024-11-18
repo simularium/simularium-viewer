@@ -6,20 +6,11 @@ import { Vector2, Vector3, Vector4 } from "three";
 
 // verify that T,N,B are non zero vecs and all perp
 function allzero(v: Vector3, epsilon = 0.0001): boolean {
-    return (
-        Math.abs(v.x) < epsilon &&
-        Math.abs(v.y) < epsilon &&
-        Math.abs(v.z) < epsilon
-    );
+    return Math.abs(v.x) < epsilon && Math.abs(v.y) < epsilon && Math.abs(v.z) < epsilon;
 }
 
 function initCubicPolynomial(x0, x1, t0, t1): Vector4 {
-    return new Vector4(
-        x0,
-        t0,
-        -3.0 * x0 + 3.0 * x1 - 2.0 * t0 - t1,
-        2.0 * x0 - 2.0 * x1 + t0 + t1
-    );
+    return new Vector4(x0, t0, -3.0 * x0 + 3.0 * x1 - 2.0 * t0 - t1, 2.0 * x0 - 2.0 * x1 + t0 + t1);
 }
 function calcCubicPolynomial(t: number, c: Vector4): number {
     const t2 = t * t;
@@ -135,15 +126,11 @@ function createTube(
     // if next-prev and next+prev are parallel, then
     // our normal and binormal will be ill-defined so we need to check for that
     // check parallel by dot the unit vectors and check close to +/-1
-    const check = new Vector3()
-        .copy(vT)
-        .dot(new Vector3().copy(next).add(prev).normalize());
+    const check = new Vector3().copy(vT).dot(new Vector3().copy(next).add(prev).normalize());
     if (Math.abs(check) < 0.999) {
         // cross product of parallel vectors is 0, so T must not be parallel to next+prev
         // hence the above check.
-        vB.copy(
-            new Vector3().copy(next).add(prev).normalize().cross(vT).normalize()
-        );
+        vB.copy(new Vector3().copy(next).add(prev).normalize().cross(vT).normalize());
     } else {
         // special case for which N and B are not well defined.
         // so we will just pick something
@@ -174,11 +161,7 @@ function createTube(
     const bx = new Vector3().copy(vB).multiplyScalar(circX);
     const ny = new Vector3().copy(vN).multiplyScalar(circY);
     normal.copy(new Vector3().copy(bx).add(ny).normalize()); //xyz = normalize(B * circX + N * circY);
-    offset.copy(
-        sampleCurve(t, points)
-            .add(bx.multiplyScalar(volume.x))
-            .add(ny.multiplyScalar(volume.y))
-    ); //.xyz = sampleCurve(t) + B * volume.x * circX + N * volume.y * circY;
+    offset.copy(sampleCurve(t, points).add(bx.multiplyScalar(volume.x)).add(ny.multiplyScalar(volume.y))); //.xyz = sampleCurve(t) + B * volume.x * circX + N * volume.y * circY;
 }
 
 function walkCurve(points) {
@@ -200,17 +183,7 @@ function walkCurve(points) {
     // walk along whole curve
     const nsteps = 8;
     for (let t = 0; t < 1.0; t += 1.0 / nsteps) {
-        createTube(
-            points,
-            t,
-            angle,
-            volume,
-            transformed,
-            objectNormal,
-            T,
-            B,
-            N
-        );
+        createTube(points, t, angle, volume, transformed, objectNormal, T, B, N);
 
         expect(allzero(T)).toBe(false);
         expect(allzero(B)).toBe(false);
@@ -226,17 +199,11 @@ function walkCurve(points) {
 
 describe("Test curve", () => {
     test("on-axis curve computes valid positions", () => {
-        const points: Vector3[] = [
-            new Vector3(-70, 0, 0),
-            new Vector3(10, 0, 0),
-        ];
+        const points: Vector3[] = [new Vector3(-70, 0, 0), new Vector3(10, 0, 0)];
         walkCurve(points);
     });
     test("on-axis curve computes valid positions", () => {
-        const points: Vector3[] = [
-            new Vector3(10, 0, 0),
-            new Vector3(-70, 0, 0),
-        ];
+        const points: Vector3[] = [new Vector3(10, 0, 0), new Vector3(-70, 0, 0)];
         walkCurve(points);
     });
     test("very short curve computes valid positions", () => {

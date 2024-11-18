@@ -64,12 +64,7 @@ export default class HitTestHelper {
     }
 
     // Read the x,y pixel of the given idBuffer Texture object
-    public hitTest(
-        renderer: WebGLRenderer,
-        idBuffer: Texture,
-        x: number,
-        y: number
-    ): Float32Array {
+    public hitTest(renderer: WebGLRenderer, idBuffer: Texture, x: number, y: number): Float32Array {
         // Strategy:  because multiple render targets (MRT) are being used, and ThreeJS
         // doesn't allow direct reads from them, we render a single pixel from one of
         // the textures internal to the MRT.
@@ -81,11 +76,8 @@ export default class HitTestHelper {
         // (typeId), (instanceId), fragViewPos.z, fragPosDepth;
 
         // tell the shader which texture to use, and which pixel to read from
-        (
-            this.hitTestMesh.material as ShaderMaterial
-        ).uniforms.objectIdTexture.value = idBuffer;
-        (this.hitTestMesh.material as ShaderMaterial).uniforms.pixel.value =
-            new Vector2(x, y);
+        (this.hitTestMesh.material as ShaderMaterial).uniforms.objectIdTexture.value = idBuffer;
+        (this.hitTestMesh.material as ShaderMaterial).uniforms.pixel.value = new Vector2(x, y);
 
         // "draw" the pixel into our hit test buffer
         renderer.setRenderTarget(this.hitTestBuffer);

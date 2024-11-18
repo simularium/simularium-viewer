@@ -89,26 +89,14 @@ export class WebsocketClient {
     public connectionTimeWaited: number;
     public connectionRetries: number;
     protected jsonMessageHandlers: Map<NetMessageEnum, (NetMessage) => void>;
-    protected binaryMessageHandlers: Map<
-        NetMessageEnum,
-        (MessageEventLike) => void
-    >;
+    protected binaryMessageHandlers: Map<NetMessageEnum, (MessageEventLike) => void>;
     protected logger: ILogger;
     public handleError: (error: FrontEndError) => void | (() => void);
 
-    public constructor(
-        opts?: NetConnectionParams,
-        errorHandler?: (error: FrontEndError) => void
-    ) {
+    public constructor(opts?: NetConnectionParams, errorHandler?: (error: FrontEndError) => void) {
         this.webSocket = null;
-        this.jsonMessageHandlers = new Map<
-            NetMessageEnum,
-            (NetMessage) => void
-        >();
-        this.binaryMessageHandlers = new Map<
-            NetMessageEnum,
-            (NetMessage) => void
-        >();
+        this.jsonMessageHandlers = new Map<NetMessageEnum, (NetMessage) => void>();
+        this.binaryMessageHandlers = new Map<NetMessageEnum, (NetMessage) => void>();
         this.serverIp = opts && opts.serverIp ? opts.serverIp : "localhost";
         this.serverPort = opts && opts.serverPort ? opts.serverPort : 9002;
         this.connectionTimeWaited = 0;
@@ -130,40 +118,25 @@ export class WebsocketClient {
      * WebSocket State
      */
     private socketIsConnecting(): boolean {
-        return (
-            this.webSocket !== null &&
-            this.webSocket.readyState === this.webSocket.CONNECTING
-        );
+        return this.webSocket !== null && this.webSocket.readyState === this.webSocket.CONNECTING;
     }
 
     public socketIsValid(): boolean {
-        return !(
-            this.webSocket === null ||
-            this.webSocket.readyState === this.webSocket.CLOSED
-        );
+        return !(this.webSocket === null || this.webSocket.readyState === this.webSocket.CLOSED);
     }
 
     private socketIsConnected(): boolean {
-        return (
-            this.webSocket !== null &&
-            this.webSocket.readyState === this.webSocket.OPEN
-        );
+        return this.webSocket !== null && this.webSocket.readyState === this.webSocket.OPEN;
     }
 
     /**
      *   Websocket Message Handling
      * */
-    public addBinaryMessageHandler(
-        messageType: NetMessageEnum,
-        handler: (msg: MessageEventLike) => void
-    ): void {
+    public addBinaryMessageHandler(messageType: NetMessageEnum, handler: (msg: MessageEventLike) => void): void {
         this.binaryMessageHandlers[messageType.valueOf()] = handler;
     }
 
-    public addJsonMessageHandler(
-        messageType: NetMessageEnum,
-        handler: (msg: NetMessage) => void
-    ): void {
+    public addJsonMessageHandler(messageType: NetMessageEnum, handler: (msg: NetMessage) => void): void {
         this.jsonMessageHandlers[messageType] = handler;
     }
 
@@ -180,10 +153,7 @@ export class WebsocketClient {
             if (binaryMsgType in this.binaryMessageHandlers) {
                 this.binaryMessageHandlers[binaryMsgType](event);
             } else {
-                this.logger.error(
-                    "Unexpected binary message arrived of type ",
-                    binaryMsgType
-                );
+                this.logger.error("Unexpected binary message arrived of type ", binaryMsgType);
             }
             return;
         }
@@ -196,21 +166,14 @@ export class WebsocketClient {
         if (jsonMsgType > numMsgTypes || jsonMsgType < 1) {
             // this suggests either the back-end is out of sync, or a connection to an unknown back-end
             //  either would be very bad
-            this.logger.error(
-                "Unrecognized web message of type ",
-                msg.msgType,
-                " arrived"
-            );
+            this.logger.error("Unrecognized web message of type ", msg.msgType, " arrived");
             return;
         }
 
         if (jsonMsgType in this.jsonMessageHandlers) {
             this.jsonMessageHandlers[jsonMsgType](msg);
         } else {
-            this.logger.error(
-                "Unexpected json message arrived of type ",
-                jsonMsgType
-            );
+            this.logger.error("Unexpected json message arrived of type ", jsonMsgType);
         }
         this.logger.debug("Web request recieved", msg.msgType);
     }
@@ -265,11 +228,7 @@ export class WebsocketClient {
         );
     }
 
-    public async checkConnection(
-        address: string,
-        timeout = 1000,
-        maxRetries = 1
-    ): Promise<boolean> {
+    public async checkConnection(address: string, timeout = 1000, maxRetries = 1): Promise<boolean> {
         // Check if the WebSocket becomes connected within an allotted amount
         // of time and number of retries.
 
@@ -322,19 +281,14 @@ export class WebsocketClient {
         this.logger.debug("Web Socket Request Sent: ", whatRequest, jsonData);
     }
 
-    public sendWebSocketRequest(
-        jsonData: Record<string, unknown>,
-        requestDescription: string
-    ): void {
+    public sendWebSocketRequest(jsonData: Record<string, unknown>, requestDescription: string): void {
         if (this.socketIsConnected()) {
             if (this.webSocket !== null) {
                 this.webSocket.send(JSON.stringify(jsonData));
             }
             this.logWebSocketRequest(requestDescription, jsonData);
         } else {
-            console.error(
-                "Request to server cannot be made with a closed Websocket connection."
-            );
+            console.error("Request to server cannot be made with a closed Websocket connection.");
             this.handleError(
                 new FrontEndError(
                     "Connection to server is closed; please try reloading. If the problem persists, the server may be too busy. Please try again at another time.",

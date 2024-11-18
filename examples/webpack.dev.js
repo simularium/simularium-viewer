@@ -2,7 +2,7 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const path = require("path");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const webpack = require('webpack');
+const webpack = require("webpack");
 
 module.exports = {
     entry: "./src/index.tsx",
@@ -32,7 +32,7 @@ module.exports = {
         }),
     ],
     devServer: {
-        devMiddleware:{
+        devMiddleware: {
             publicPath: "/public/",
         },
         open: ["public/"],

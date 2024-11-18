@@ -17,16 +17,16 @@ project documentation. If you cannot find the documentation you're
 looking for, please file a GitHub issue with details of what
 you'd like to see documented.
 
-___
+---
 
 ## How to Contribute
 
 1. Fork the repo on GitHub.
 2. Create a branch and make your edits on your branch, pushing back to your fork.
 3. Make sure `npm run typeCheck`, `npm run test` and `npm run lint` all exit without errors. Add tests and documentation as needed.
-4. Submit a pull request back to main via GitHub using template, include screen shots for visual changes. 
+4. Submit a pull request back to main via GitHub using template, include screen shots for visual changes.
 
-___
+---
 
 ## Publishing
 
@@ -35,20 +35,22 @@ ___
 3. Push the new tag: `git push origin [NEW_TAG]` -- e.g. `git push origin v2.7.1`
 4. Write up [release notes](https://github.com/simularium/simularium-viewer/releases).
     - Select the tag
-    - Click "generate release notes" 
-    - Use this template to summarize changes (delete any categories that aren't relevant). `## Pull requests included in this release` should be above the auto generated content: 
+    - Click "generate release notes"
+    - Use this template to summarize changes (delete any categories that aren't relevant). `## Pull requests included in this release` should be above the auto generated content:
+
 ```Markdown
 ## What's Changed
 
-### **🎉 New features**   
+### **🎉 New features**
     -
 ### **🐞 Bug Fixes**
-    - 
-### **⛏ Maintenance** 
+    -
+### **⛏ Maintenance**
     -
 ## Pull requests included in this release
 ```
-___
+
+---
 
 ## Questions or Thoughts?
 

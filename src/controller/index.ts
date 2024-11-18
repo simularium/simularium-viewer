@@ -3,12 +3,7 @@ import { isEmpty, noop } from "lodash";
 import { VisData, RemoteSimulator } from "../simularium";
 import type { NetConnectionParams, TrajectoryFileInfo } from "../simularium";
 import { VisGeometry } from "../visGeometry";
-import {
-    FileReturn,
-    FILE_STATUS_SUCCESS,
-    FILE_STATUS_FAIL,
-    PlotConfig,
-} from "../simularium/types";
+import { FileReturn, FILE_STATUS_SUCCESS, FILE_STATUS_FAIL, PlotConfig } from "../simularium/types";
 
 import { ClientSimulator } from "../simularium/ClientSimulator";
 import { IClientSimulatorImpl } from "../simularium/localSimulators/IClientSimulatorImpl";
@@ -71,22 +66,14 @@ export default class SimulariumController {
         // TODO: change test so controller isn't initialized with a remoteSimulator
         if (params.remoteSimulator) {
             this.simulator = params.remoteSimulator;
-            this.simulator.setTrajectoryFileInfoHandler(
-                (trajFileInfo: TrajectoryFileInfo) => {
-                    this.handleTrajectoryInfo(trajFileInfo);
-                }
-            );
-            this.simulator.setTrajectoryDataHandler(
-                this.visData.parseAgentsFromNetData.bind(this.visData)
-            );
+            this.simulator.setTrajectoryFileInfoHandler((trajFileInfo: TrajectoryFileInfo) => {
+                this.handleTrajectoryInfo(trajFileInfo);
+            });
+            this.simulator.setTrajectoryDataHandler(this.visData.parseAgentsFromNetData.bind(this.visData));
             // TODO: probably remove this? We're never initalizing the controller
             // with any settings on the website.
         } else if (params.netConnectionSettings) {
-            this.createSimulatorConnection(
-                params.netConnectionSettings,
-                undefined,
-                undefined
-            );
+            this.createSimulatorConnection(params.netConnectionSettings, undefined, undefined);
         } else {
             // No network information was passed in
             //  the viewer will be initialized blank
@@ -95,9 +82,7 @@ export default class SimulariumController {
 
             // @TODO: Pass this warning upwards (to installing app)
             if (params.trajectoryPlaybackFile) {
-                console.warn(
-                    "trajectoryPlaybackFile param ignored, no network config provided"
-                );
+                console.warn("trajectoryPlaybackFile param ignored, no network config provided");
             }
         }
 
@@ -124,42 +109,26 @@ export default class SimulariumController {
     ): void {
         if (clientSimulator) {
             this.simulator = new ClientSimulator(clientSimulator);
-            this.simulator.setTrajectoryDataHandler(
-                this.visData.parseAgentsFromNetData.bind(this.visData)
-            );
+            this.simulator.setTrajectoryDataHandler(this.visData.parseAgentsFromNetData.bind(this.visData));
         } else if (localFile) {
-            this.simulator = new LocalFileSimulator(
-                this.playBackFile,
-                localFile
-            );
+            this.simulator = new LocalFileSimulator(this.playBackFile, localFile);
             if (this.visGeometry && geoAssets && !isEmpty(geoAssets)) {
                 this.visGeometry.geometryStore.cacheLocalAssets(geoAssets);
             }
-            this.simulator.setTrajectoryDataHandler(
-                this.visData.parseAgentsFromFrameData.bind(this.visData)
-            );
+            this.simulator.setTrajectoryDataHandler(this.visData.parseAgentsFromFrameData.bind(this.visData));
         } else if (netConnectionConfig) {
-            const webSocketClient = new WebsocketClient(
-                netConnectionConfig,
-                this.onError
-            );
+            const webSocketClient = new WebsocketClient(netConnectionConfig, this.onError);
             this.remoteWebsocketClient = webSocketClient;
             this.simulator = new RemoteSimulator(webSocketClient, this.onError);
-            this.simulator.setTrajectoryDataHandler(
-                this.visData.parseAgentsFromNetData.bind(this.visData)
-            );
+            this.simulator.setTrajectoryDataHandler(this.visData.parseAgentsFromNetData.bind(this.visData));
         } else {
             // caught in try/catch block, not sent to front end
-            throw new Error(
-                "Insufficient data to determine and configure simulator connection"
-            );
+            throw new Error("Insufficient data to determine and configure simulator connection");
         }
 
-        this.simulator.setTrajectoryFileInfoHandler(
-            (trajFileInfo: TrajectoryFileInfo) => {
-                this.handleTrajectoryInfo(trajFileInfo);
-            }
-        );
+        this.simulator.setTrajectoryFileInfoHandler((trajFileInfo: TrajectoryFileInfo) => {
+            this.handleTrajectoryInfo(trajFileInfo);
+        });
     }
 
     public configureNetwork(config: NetConnectionParams): void {
@@ -178,19 +147,13 @@ export default class SimulariumController {
     // parent app
     public connect(): Promise<string> {
         if (!this.simulator) {
-            return Promise.reject(
-                new Error(
-                    "No network connection established in simularium controller."
-                )
-            );
+            return Promise.reject(new Error("No network connection established in simularium controller."));
         }
 
-        return this.simulator
-            .connectToRemoteServer(this.simulator.getIp())
-            .then((msg: string) => {
-                this.postConnect();
-                return msg;
-            });
+        return this.simulator.connectToRemoteServer(this.simulator.getIp()).then((msg: string) => {
+            this.postConnect();
+            return msg;
+        });
     }
 
     public start(): Promise<void> {
@@ -229,9 +192,7 @@ export default class SimulariumController {
         providedFileName?: string
     ): Promise<void> {
         try {
-            if (
-                !(this.simulator && this.simulator.isConnectedToRemoteServer())
-            ) {
+            if (!(this.simulator && this.simulator.isConnectedToRemoteServer())) {
                 // Only configure network if we aren't already connected to the remote server
                 this.configureNetwork(netConnectionConfig);
             }
@@ -242,11 +203,7 @@ export default class SimulariumController {
             return Promise.reject(e);
         }
 
-        return this.simulator.convertTrajectory(
-            dataToConvert,
-            fileType,
-            providedFileName
-        );
+        return this.simulator.convertTrajectory(dataToConvert, fileType, providedFileName);
     }
 
     public pause(): void {
@@ -348,9 +305,7 @@ export default class SimulariumController {
 
         // don't create simulator if client wants to keep remote simulator and the
         // current simulator is a remote simulator
-        if (
-            !(keepRemoteConnection && this.simulator instanceof RemoteSimulator)
-        ) {
+        if (!(keepRemoteConnection && this.simulator instanceof RemoteSimulator)) {
             try {
                 if (connectionParams) {
                     this.createSimulatorConnection(
@@ -400,10 +355,7 @@ export default class SimulariumController {
         return this.playBackFile;
     }
 
-    public checkServerHealth(
-        handler: () => void,
-        netConnectionConfig: NetConnectionParams
-    ): void {
+    public checkServerHealth(handler: () => void, netConnectionConfig: NetConnectionParams): void {
         if (!(this.simulator && this.simulator.isConnectedToRemoteServer())) {
             // Only configure network if we aren't already connected to the remote server
             this.configureNetwork(netConnectionConfig);
@@ -421,58 +373,38 @@ export default class SimulariumController {
         }
     }
 
-    private setupMetricsCalculator(
-        config: NetConnectionParams
-    ): RemoteMetricsCalculator {
+    private setupMetricsCalculator(config: NetConnectionParams): RemoteMetricsCalculator {
         const webSocketClient =
-            this.remoteWebsocketClient &&
-            this.remoteWebsocketClient.socketIsValid()
+            this.remoteWebsocketClient && this.remoteWebsocketClient.socketIsValid()
                 ? this.remoteWebsocketClient
                 : new WebsocketClient(config, this.onError);
         return new RemoteMetricsCalculator(webSocketClient, this.onError);
     }
 
     public async getMetrics(config: NetConnectionParams): Promise<void> {
-        if (
-            !this.metricsCalculator ||
-            !this.metricsCalculator.socketIsValid()
-        ) {
+        if (!this.metricsCalculator || !this.metricsCalculator.socketIsValid()) {
             this.metricsCalculator = this.setupMetricsCalculator(config);
             await this.metricsCalculator.connectToRemoteServer();
         }
         this.metricsCalculator.getAvailableMetrics();
     }
 
-    public async getPlotData(
-        config: NetConnectionParams,
-        requestedPlots: PlotConfig[]
-    ): Promise<void> {
+    public async getPlotData(config: NetConnectionParams, requestedPlots: PlotConfig[]): Promise<void> {
         if (!this.simulator) {
             return;
         }
 
-        if (
-            !this.metricsCalculator ||
-            !this.metricsCalculator.socketIsValid()
-        ) {
+        if (!this.metricsCalculator || !this.metricsCalculator.socketIsValid()) {
             this.metricsCalculator = this.setupMetricsCalculator(config);
             await this.metricsCalculator.connectToRemoteServer();
         }
 
         if (this.simulator instanceof LocalFileSimulator) {
-            const simulariumFile: ISimulariumFile =
-                this.simulator.getSimulariumFile();
-            this.metricsCalculator.getPlotData(
-                simulariumFile["simulariumFile"],
-                requestedPlots
-            );
+            const simulariumFile: ISimulariumFile = this.simulator.getSimulariumFile();
+            this.metricsCalculator.getPlotData(simulariumFile["simulariumFile"], requestedPlots);
         } else if (this.simulator instanceof RemoteSimulator) {
             // we don't have the simularium file, so we'll just send an empty data object
-            this.metricsCalculator.getPlotData(
-                {},
-                requestedPlots,
-                this.simulator.getLastRequestedFile()
-            );
+            this.metricsCalculator.getPlotData({}, requestedPlots, this.simulator.getLastRequestedFile());
         }
     }
 
@@ -488,9 +420,7 @@ export default class SimulariumController {
         this.visData.clearCache();
     }
 
-    public set trajFileInfoCallback(
-        callback: (msg: TrajectoryFileInfo) => void
-    ) {
+    public set trajFileInfoCallback(callback: (msg: TrajectoryFileInfo) => void) {
         this.handleTrajectoryInfo = callback;
         if (this.simulator) {
             this.simulator.setTrajectoryFileInfoHandler(callback);

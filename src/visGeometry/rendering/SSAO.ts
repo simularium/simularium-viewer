@@ -1,13 +1,6 @@
 import RenderToBuffer from "./RenderToBuffer";
 
-import {
-    Color,
-    Vector2,
-    OrthographicCamera,
-    PerspectiveCamera,
-    WebGLRenderer,
-    WebGLRenderTarget
-} from "three";
+import { Color, Vector2, OrthographicCamera, PerspectiveCamera, WebGLRenderer, WebGLRenderTarget } from "three";
 
 class SSAO1Pass {
     public pass: RenderToBuffer;

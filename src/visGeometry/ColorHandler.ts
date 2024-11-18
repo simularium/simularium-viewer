@@ -46,12 +46,9 @@ class ColorHandler {
         const colorsData = new Float32Array(numberOfColors * 4);
         for (let i = 0; i < numberOfColors; i += 1) {
             // each color is currently a hex value:
-            colorsData[i * 4 + 0] =
-                ((colorNumbers[i] & 0x00ff0000) >> 16) / 255.0;
-            colorsData[i * 4 + 1] =
-                ((colorNumbers[i] & 0x0000ff00) >> 8) / 255.0;
-            colorsData[i * 4 + 2] =
-                ((colorNumbers[i] & 0x000000ff) >> 0) / 255.0;
+            colorsData[i * 4 + 0] = ((colorNumbers[i] & 0x00ff0000) >> 16) / 255.0;
+            colorsData[i * 4 + 1] = ((colorNumbers[i] & 0x0000ff00) >> 8) / 255.0;
+            colorsData[i * 4 + 2] = ((colorNumbers[i] & 0x000000ff) >> 0) / 255.0;
             colorsData[i * 4 + 3] = 1.0;
         }
         return colorsData;

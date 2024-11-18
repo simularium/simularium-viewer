@@ -17,31 +17,16 @@ import {
 } from "three";
 
 import { createShaders } from "./InstancedFiberShader";
-import {
-    MRTShaders,
-    setRenderPass,
-    updateProjectionMatrix,
-} from "./MultipassMaterials";
+import { MRTShaders, setRenderPass, updateProjectionMatrix } from "./MultipassMaterials";
 
 const tmpQuaternion = new Quaternion();
 const tmpEuler = new Euler();
 
-function createTubeGeometry(
-    numSides = 8,
-    subdivisions = 50,
-    openEnded = false
-) {
+function createTubeGeometry(numSides = 8, subdivisions = 50, openEnded = false) {
     // create a base CylinderGeometry which handles UVs, end caps and faces
     const radius = 1;
     const length = 1;
-    const baseGeometry = new CylinderGeometry(
-        radius,
-        radius,
-        length,
-        numSides,
-        subdivisions,
-        openEnded
-    );
+    const baseGeometry = new CylinderGeometry(radius, radius, length, numSides, subdivisions, openEnded);
 
     // fix the orientation so X can act as arc length
     baseGeometry.rotateZ(Math.PI / 2);
@@ -62,21 +47,9 @@ function createTubeGeometry(
         const a = indices[i];
         const b = indices[i + 1];
         const c = indices[i + 2];
-        const v0 = new Vector3(
-            vertices[a * 3 + 0],
-            vertices[a * 3 + 1],
-            vertices[a * 3 + 2]
-        );
-        const v1 = new Vector3(
-            vertices[b * 3 + 0],
-            vertices[b * 3 + 1],
-            vertices[b * 3 + 2]
-        );
-        const v2 = new Vector3(
-            vertices[c * 3 + 0],
-            vertices[c * 3 + 1],
-            vertices[c * 3 + 2]
-        );
+        const v0 = new Vector3(vertices[a * 3 + 0], vertices[a * 3 + 1], vertices[a * 3 + 2]);
+        const v1 = new Vector3(vertices[b * 3 + 0], vertices[b * 3 + 1], vertices[b * 3 + 2]);
+        const v2 = new Vector3(vertices[c * 3 + 0], vertices[c * 3 + 1], vertices[c * 3 + 2]);
         const verts = [v0, v1, v2];
         const faceUvs = [
             new Vector2(faceVertexUvs[a * 2 + 0], faceVertexUvs[a * 2 + 1]),
@@ -158,18 +131,9 @@ class InstancedFiber {
 
         // make typescript happy. these will be reallocated in reallocate()
         this.curveGeometry = new BufferGeometry();
-        this.positionAttribute = new InstancedBufferAttribute(
-            Uint8Array.from([]),
-            1
-        );
-        this.rotationAttribute = new InstancedBufferAttribute(
-            Uint8Array.from([]),
-            1
-        );
-        this.instanceAttribute = new InstancedBufferAttribute(
-            Uint8Array.from([]),
-            1
-        );
+        this.positionAttribute = new InstancedBufferAttribute(Uint8Array.from([]), 1);
+        this.rotationAttribute = new InstancedBufferAttribute(Uint8Array.from([]), 1);
+        this.instanceAttribute = new InstancedBufferAttribute(Uint8Array.from([]), 1);
         this.curveData = new DataTexture(Uint8Array.from([]), 0, 0);
 
         this.mesh = new Mesh(this.instancedGeometry);
@@ -211,20 +175,10 @@ class InstancedFiber {
         // Otherwise an exception is thrown.
         const oldData = this.curveData.image.data;
         newData.set(oldData);
-        this.curveData = new DataTexture(
-            newData,
-            this.nCurvePoints,
-            n,
-            RGBAFormat,
-            FloatType
-        );
+        this.curveData = new DataTexture(newData, this.nCurvePoints, n, RGBAFormat, FloatType);
         this.curveData.needsUpdate = true;
 
-        this.curveGeometry = createTubeGeometry(
-            this.nRadialSections,
-            this.nSegments,
-            false
-        );
+        this.curveGeometry = createTubeGeometry(this.nRadialSections, this.nSegments, false);
 
         // we must create a new Geometry to have things update correctly
         this.instancedGeometry = new InstancedBufferGeometry().copy(
@@ -233,10 +187,7 @@ class InstancedFiber {
         );
         // install the new geometry into our Mesh object
         this.mesh.geometry = this.instancedGeometry;
-        this.instancedGeometry.setDrawRange(
-            0,
-            this.curveGeometry.getAttribute("position").count
-        );
+        this.instancedGeometry.setDrawRange(0, this.curveGeometry.getAttribute("position").count);
 
         this.shaderSet.mat.uniforms.curveData.value = this.curveData;
 
@@ -247,10 +198,7 @@ class InstancedFiber {
         const newPos = new Float32Array(4 * n);
         newPos.set(this.positionAttribute.array);
         this.positionAttribute = new InstancedBufferAttribute(newPos, 4, false);
-        this.instancedGeometry.setAttribute(
-            "translateAndScale",
-            this.positionAttribute
-        );
+        this.instancedGeometry.setAttribute("translateAndScale", this.positionAttribute);
 
         const newRot = new Float32Array(4 * n);
         newRot.set(this.rotationAttribute.array);
@@ -259,15 +207,8 @@ class InstancedFiber {
 
         const newInst = new Float32Array(3 * n);
         newInst.set(this.instanceAttribute.array);
-        this.instanceAttribute = new InstancedBufferAttribute(
-            newInst,
-            3,
-            false
-        );
-        this.instancedGeometry.setAttribute(
-            "instanceAndTypeId",
-            this.instanceAttribute
-        );
+        this.instanceAttribute = new InstancedBufferAttribute(newInst, 3, false);
+        this.instancedGeometry.setAttribute("instanceAndTypeId", this.instanceAttribute);
     }
 
     dispose(): void {
@@ -292,8 +233,7 @@ class InstancedFiber {
 
         if (requestedNumInstances > currentNumInstances) {
             // increase to next multiple of increment
-            const newInstanceCount =
-                (Math.trunc(requestedNumInstances / increment) + 1) * increment;
+            const newInstanceCount = (Math.trunc(requestedNumInstances / increment) + 1) * increment;
 
             this.reallocate(newInstanceCount);
         }
@@ -316,12 +256,7 @@ class InstancedFiber {
         this.positionAttribute.setXYZW(offset, x, y, z, scale);
         const q = tmpQuaternion.setFromEuler(tmpEuler.set(rx, ry, rz));
         this.rotationAttribute.setXYZW(offset, q.x, q.y, q.z, q.w);
-        this.instanceAttribute.setXYZ(
-            offset,
-            uniqueAgentId,
-            typeId,
-            this.currentInstance
-        );
+        this.instanceAttribute.setXYZ(offset, uniqueAgentId, typeId, this.currentInstance);
         const nPts = Math.min(curvePts.length / 3, this.nCurvePoints);
         for (let i = 0; i < nPts; ++i) {
             const offset = this.currentInstance * this.nCurvePoints * 4 + i * 4;
@@ -404,18 +339,7 @@ class InstancedFiberGroup {
             // create new
             this.fibers[nCurvePts] = new InstancedFiber(nCurvePts, 256);
         }
-        this.fibers[nCurvePts].addInstance(
-            curvePts,
-            x,
-            y,
-            z,
-            scale,
-            rx,
-            ry,
-            rz,
-            uniqueAgentId,
-            typeId
-        );
+        this.fibers[nCurvePts].addInstance(curvePts, x, y, z, scale, rx, ry, rz, uniqueAgentId, typeId);
     }
 
     endUpdate(): void {

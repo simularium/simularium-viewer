@@ -1,18 +1,11 @@
 module.exports = {
-    extends: [
-        "plugin:@typescript-eslint/recommended",
-        "plugin:react/recommended",
-    ],
+    extends: ["plugin:@typescript-eslint/recommended", "plugin:react/recommended"],
     env: {
         mocha: true,
         es6: true,
         browser: true,
     },
-    ignorePatterns: [
-        "examples/webpack.dev.js",
-        ".eslintrc.js",
-        "babel.config.js",
-    ],
+    ignorePatterns: ["examples/webpack.dev.js", ".eslintrc.js", "babel.config.js"],
     parser: "@typescript-eslint/parser",
     parserOptions: {
         project: ["./tsconfig.json", "./src/visGeometry/workers/tsconfig.json"],
@@ -62,10 +55,7 @@ module.exports = {
         "no-var": ["warn"],
         // note you must disable the base rule as it can report incorrect errors
         "no-unused-vars": "off",
-        "@typescript-eslint/no-unused-vars": [
-            "warn",
-            { argsIgnorePattern: "^_" },
-        ],
+        "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
     },
     settings: {
         react: {
