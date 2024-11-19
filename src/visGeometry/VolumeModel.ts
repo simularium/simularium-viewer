@@ -62,9 +62,7 @@ export default class VolumeModel {
             if (this.volume) {
                 // Volume agent data may use subpoint 0 as time
                 const numPoints = data.subpoints.length;
-                // TODO subpoints seem to be getting sliced out of agent data
-                //   incorrectly! The index below should be `0`, not `1`.
-                const time = numPoints > 0 ? data.subpoints[1] : 0;
+                const time = numPoints > 0 ? data.subpoints[0] : 0;
                 if (this.volume.loadSpec.time !== time) {
                     this.volume.updateRequiredData({ time });
                 }
