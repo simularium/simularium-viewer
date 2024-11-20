@@ -22,7 +22,7 @@ const volumeAgentData = (time: number): number[] => [
     0, // type
     0, // x
     0, // y
-    0, // z
+    time * 0.3, // z
     0, // rx
     0, // ry
     0, // rz
