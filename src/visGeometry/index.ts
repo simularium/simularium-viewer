@@ -1558,13 +1558,50 @@ class VisGeometry {
     }
 
     /**
+     * Updates only volumes in the scene, and returns a promise which resolves
+     * when they've all loaded.
+     */
+    private async updateVolumesOnly(
+        view: Float32Array,
+        agentCount: number
+    ): Promise<void> {
+        const volumeLoadPromises: Promise<void>[] = [];
+        let offset = AGENT_HEADER_SIZE;
+        for (let i = 0; i < agentCount; i++) {
+            const agentData = getAgentDataFromBuffer(view, offset);
+            const { visType, type } = agentData;
+            if (visType === VisTypes.ID_VIS_TYPE_DEFAULT) {
+                const response = this.getGeoForAgentType(type);
+                if (
+                    response &&
+                    response.displayType === GeometryDisplayType.VOLUME
+                ) {
+                    const { geometry } = response;
+                    if (geometry) {
+                        const prom = geometry.setAgentData(agentData);
+                        volumeLoadPromises.push(prom);
+                    }
+                }
+            }
+            offset = getNextAgentOffset(view, offset);
+        }
+        await Promise.all(volumeLoadPromises);
+    }
+
+    /**
      *   Update Scene
      **/
-    private async updateScene(frameData: CachedFrame): Promise<void> {
+    private async updateScene(
+        frameData: CachedFrame,
+        waitForVolumes?: boolean
+    ): Promise<void> {
         this.currentSceneData = frameData;
         const view = new Float32Array(frameData.data);
         const agentCount = frameData.agentCount;
-        const volumeLoadPromises: Promise<void>[] = [];
+
+        if (waitForVolumes) {
+            await this.updateVolumesOnly(view, agentCount);
+        }
 
         // values for updating agent path
         let dx = 0,
@@ -1593,9 +1630,7 @@ class VisGeometry {
         const newVisAgentInstances = new Map<number, VisAgent>();
         for (let i = 0; i < agentCount; i++) {
             const agentData = getAgentDataFromBuffer(view, offset);
-            const visType = agentData.visType;
-            const instanceId = agentData.instanceId;
-            const typeId = agentData.type;
+            const { visType, instanceId, type: typeId } = agentData;
 
             lastx = agentData.x;
             lasty = agentData.y;
@@ -1660,8 +1695,9 @@ class VisGeometry {
                 if (geometry && displayType === GeometryDisplayType.PDB) {
                     this.addPdbToDrawList(typeId, visAgent, geometry);
                 } else if (displayType === GeometryDisplayType.VOLUME) {
-                    // Hmm... is anyone gonna want to instance a volume?
-                    volumeLoadPromises.push(geometry.setAgentData(agentData));
+                    if (!waitForVolumes) {
+                        geometry.setAgentData(agentData);
+                    }
                 } else {
                     this.addMeshToDrawList(
                         typeId,
@@ -1705,8 +1741,6 @@ class VisGeometry {
             agentGeo.geometry.instances.endUpdate();
         });
         this.legacyRenderer.endUpdate(this.scene);
-
-        await Promise.all(volumeLoadPromises);
     }
 
     public animateCamera(): void {
@@ -1946,8 +1980,11 @@ class VisGeometry {
         }
     }
 
-    public update(agents: CachedFrame): Promise<void> {
-        return this.updateScene(agents);
+    public update(
+        agents: CachedFrame,
+        waitForVolumes?: boolean
+    ): Promise<void> {
+        return this.updateScene(agents, waitForVolumes);
     }
 }
 
