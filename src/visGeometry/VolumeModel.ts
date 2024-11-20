@@ -48,10 +48,32 @@ export default class VolumeModel {
         this.drawable.setDensity(0.7);
     }
 
-    public setAgentData(data: AgentData): Promise<void> {
-        let promise = Promise.resolve();
-
+    public async setAgentData(
+        data: AgentData,
+        syncLoading?: boolean
+    ): Promise<void> {
         if (this.drawable) {
+            // Always defined if `drawable` is, but ts doesn't know that.
+            if (this.volume) {
+                // Volume agent data may use subpoint 0 as time
+                const numPoints = data.subpoints.length;
+                const time = numPoints > 0 ? data.subpoints[0] : 0;
+                if (this.volume.loadSpec.time !== time) {
+                    const volume = this.volume;
+
+                    const promise: Promise<void> = new Promise((resolve) =>
+                        volume.updateRequiredData({ time }, () => resolve())
+                    );
+
+                    if (syncLoading) {
+                        await promise;
+                    }
+                }
+                // If there are more subpoints, they are enabled channel idxes.
+                // Otherwise, just channel 0 is enabled.
+                const channels = numPoints > 1 ? data.subpoints.slice(1) : [0];
+                this.setEnabledChannels(channels);
+            }
             this.drawable.setTranslation(new Vector3(data.x, data.y, data.z));
             this.drawable.setRotation(
                 new Euler(data.xrot, data.yrot, data.zrot)
@@ -60,25 +82,7 @@ export default class VolumeModel {
             this.drawable.setScale(
                 new Vector3(this.scale, this.scale, this.scale)
             );
-            // Always defined if `drawable` is, but ts doesn't know that.
-            if (this.volume) {
-                // Volume agent data may use subpoint 0 as time
-                const numPoints = data.subpoints.length;
-                const time = numPoints > 0 ? data.subpoints[0] : 0;
-                if (this.volume.loadSpec.time !== time) {
-                    const volume = this.volume;
-                    promise = new Promise((resolve) =>
-                        volume.updateRequiredData({ time }, () => resolve())
-                    );
-                }
-                // If there are more subpoints, they are enabled channel idxes.
-                // Otherwise, just channel 0 is enabled.
-                const channels = numPoints > 1 ? data.subpoints.slice(1) : [0];
-                this.setEnabledChannels(channels);
-            }
         }
-
-        return promise;
     }
 
     public loadInitialData(): void {

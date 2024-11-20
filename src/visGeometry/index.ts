@@ -1578,7 +1578,7 @@ class VisGeometry {
                 ) {
                     const { geometry } = response;
                     if (geometry) {
-                        const prom = geometry.setAgentData(agentData);
+                        const prom = geometry.setAgentData(agentData, true);
                         volumeLoadPromises.push(prom);
                     }
                 }
