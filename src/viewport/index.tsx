@@ -625,7 +625,7 @@ class Viewport extends React.Component<
         }
     }
 
-    public animate(): void {
+    public async animate(): Promise<void> {
         const { simulariumController } = this.props;
         const { visData } = simulariumController;
         const framesPerSecond = DEFAULT_FRAME_RATE; // how often the view-port rendering is refreshed per second
@@ -651,7 +651,7 @@ class Viewport extends React.Component<
                         time: currentFrame.time,
                         frameNumber: currentFrame.frameNumber,
                     });
-                    this.visGeometry.update(currentFrame);
+                    await this.visGeometry.update(currentFrame);
                     this.lastRenderedAgentTime = currentFrame.time;
                     this.updateFollowObjectData();
                 }

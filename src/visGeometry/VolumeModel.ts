@@ -48,7 +48,9 @@ export default class VolumeModel {
         this.drawable.setDensity(0.7);
     }
 
-    public setAgentData(data: AgentData): void {
+    public setAgentData(data: AgentData): Promise<void> {
+        let promise = Promise.resolve();
+
         if (this.drawable) {
             this.drawable.setTranslation(new Vector3(data.x, data.y, data.z));
             this.drawable.setRotation(
@@ -64,7 +66,10 @@ export default class VolumeModel {
                 const numPoints = data.subpoints.length;
                 const time = numPoints > 0 ? data.subpoints[0] : 0;
                 if (this.volume.loadSpec.time !== time) {
-                    this.volume.updateRequiredData({ time });
+                    const volume = this.volume;
+                    promise = new Promise((resolve) =>
+                        volume.updateRequiredData({ time }, () => resolve())
+                    );
                 }
                 // If there are more subpoints, they are enabled channel idxes.
                 // Otherwise, just channel 0 is enabled.
@@ -72,6 +77,8 @@ export default class VolumeModel {
                 this.setEnabledChannels(channels);
             }
         }
+
+        return promise;
     }
 
     public loadInitialData(): void {

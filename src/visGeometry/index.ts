@@ -1560,10 +1560,11 @@ class VisGeometry {
     /**
      *   Update Scene
      **/
-    private updateScene(frameData: CachedFrame): void {
+    private async updateScene(frameData: CachedFrame): Promise<void> {
         this.currentSceneData = frameData;
         const view = new Float32Array(frameData.data);
         const agentCount = frameData.agentCount;
+        const volumeLoadPromises: Promise<void>[] = [];
 
         // values for updating agent path
         let dx = 0,
@@ -1660,7 +1661,7 @@ class VisGeometry {
                     this.addPdbToDrawList(typeId, visAgent, geometry);
                 } else if (displayType === GeometryDisplayType.VOLUME) {
                     // Hmm... is anyone gonna want to instance a volume?
-                    geometry.setAgentData(agentData);
+                    volumeLoadPromises.push(geometry.setAgentData(agentData));
                 } else {
                     this.addMeshToDrawList(
                         typeId,
@@ -1704,6 +1705,8 @@ class VisGeometry {
             agentGeo.geometry.instances.endUpdate();
         });
         this.legacyRenderer.endUpdate(this.scene);
+
+        await Promise.all(volumeLoadPromises);
     }
 
     public animateCamera(): void {
@@ -1943,8 +1946,8 @@ class VisGeometry {
         }
     }
 
-    public update(agents: CachedFrame): void {
-        this.updateScene(agents);
+    public update(agents: CachedFrame): Promise<void> {
+        return this.updateScene(agents);
     }
 }
 
