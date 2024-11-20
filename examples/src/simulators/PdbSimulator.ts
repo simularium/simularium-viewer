@@ -73,7 +73,7 @@ export default class PdbSim implements IClientSimulatorImpl {
         return pts;
     }
 
-    public update(_dt: number): VisDataMessage {
+    public update(_dt?: number): VisDataMessage {
         //const dt_adjusted = dt / 1000;
         const amplitude = this.size[0] * 0.01;
         // fill agent data.

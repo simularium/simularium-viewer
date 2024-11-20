@@ -22,7 +22,7 @@ export default class PdbSim implements IClientSimulatorImpl {
         this.agentdata = new Array(11);
     }
 
-    public update(_dt: number): VisDataMessage {
+    public update(_dt?: number): VisDataMessage {
         // fill agent data.
 
         this.agentdata[0] = VisTypes.ID_VIS_TYPE_DEFAULT; // vis type

@@ -74,7 +74,7 @@ export default class SingleCurveSim implements IClientSimulatorImpl {
         return curves;
     }
 
-    public update(_dt: number): VisDataMessage {
+    public update(_dt?: number): VisDataMessage {
         const nFloatsPerCurve = this.nPointsPerCurve * 3;
         //const dt_adjusted = dt / 1000;
         const amplitude = 0.05;

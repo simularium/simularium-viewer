@@ -89,7 +89,7 @@ export default class PointSimLive implements IClientSimulatorImpl {
         }
     }
 
-    public update(_dt: number): VisDataMessage {
+    public update(_dt?: number): VisDataMessage {
         //const dt_adjusted = dt / 1000;
         const amplitude = 0.15;
         for (let ii = 0; ii < this.nPoints; ++ii) {
