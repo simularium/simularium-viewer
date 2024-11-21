@@ -75,7 +75,7 @@ describe("SelectionInterface module", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
             const result = si.getUnmodifiedStateId("Not in state");
-            expect(result).toBeNull;
+            expect(result).toBeNull();
         });
         test("it returns the id of the unmodified state", () => {
             const si = new SelectionInterface();
@@ -94,7 +94,7 @@ describe("SelectionInterface module", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
             const unmod = si.getUnmodifiedStateId("E");
-            expect(unmod).toBeNull;
+            expect(unmod).toBeNull();
         });
     });
 
