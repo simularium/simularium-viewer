@@ -397,6 +397,34 @@ export class RemoteSimulator implements ISimulator {
         );
     }
 
+    public startSmoldyn(
+        outFileName: string,
+        smoldynInput: string
+    ): Promise<void> {
+        // Send Smoldyn input data to Octopus, which will run the Smoldyn simulation
+        // using the Biosimulators API, convert the output data using autoconversion,
+        // and then be ready to send frame data back like a normal simularium file
+        return this.connectToRemoteServer()
+            .then(() => {
+                this.sendSmoldynData(outFileName, smoldynInput);
+            })
+            .catch((e) => {
+                throw new FrontEndError(e.message, ErrorLevel.ERROR);
+            });
+    }
+
+    public sendSmoldynData(outFileName: string, smoldynInput: string): void {
+        this.lastRequestedFile = outFileName;
+        this.webSocketClient.sendWebSocketRequest(
+            {
+                msgType: NetMessageEnum.ID_START_SMOLDYN,
+                fileName: outFileName,
+                smoldynInputVal: smoldynInput ?? undefined,
+            },
+            "Start smoldyn simulation"
+        );
+    }
+
     public checkServerHealth(): Promise<void> {
         return this.connectToRemoteServer()
             .then(() => {
