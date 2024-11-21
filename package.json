@@ -3,6 +3,7 @@
     "version": "3.8.4",
     "description": "An npm package to view simulations.",
     "main": "es/index.js",
+    "type": "module",
     "module": "es/index.js",
     "types": "type-declarations",
     "scripts": {
@@ -10,7 +11,7 @@
         "install-examples": "npm install && cd examples && npm install",
         "gh-build": "npm run processCSS && cd examples && npm run build-example",
         "lint": "eslint src --ext .ts,.tsx,.js,.jsx",
-        "test": "jest --coverage",
+        "test": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --coverage",
         "typeCheck": "tsc -p tsconfig.json --noEmit",
         "all-checks": "npm-run-all lint test typeCheck",
         "generateTypes": "tsc -p tsconfig.base.json --emitDeclarationOnly",
@@ -42,20 +43,22 @@
     "devDependencies": {
         "@babel/cli": "^7.23.4",
         "@babel/core": "^7.23.5",
+        "@babel/plugin-syntax-jsx": "^7.25.9",
         "@babel/plugin-transform-class-properties": "^7.23.3",
         "@babel/preset-env": "^7.23.5",
         "@babel/preset-react": "^7.23.3",
         "@babel/preset-typescript": "^7.23.3",
         "@types/dom-webcodecs": "^0.1.11",
-        "@types/jest": "^27.0.1",
+        "@types/jest": "^29.5.14",
         "@types/lodash": "^4.14.175",
         "@types/react": "^18.2.46",
         "@types/react-dom": "^18.2.18",
-        "@types/three": "^0.144.0",
+        "@types/three": "^0.162.0",
         "@typescript-eslint/eslint-plugin": "~4.29.0",
         "@typescript-eslint/parser": "~4.29.0",
         "acorn": "^8.7.0",
         "auto-changelog": "^2.3.0",
+        "babel-jest": "^29.7.0",
         "babel-loader": "~8.2.2",
         "babel-plugin-const-enum": "^1.1.0",
         "blob-polyfill": "^6.0.20211015",
@@ -103,7 +106,8 @@
         "mp4-muxer": "^2.2.2",
         "parse-pdb": "^1.0.0",
         "si-prefix": "^0.2.0",
-        "three": "^0.144.0",
-        "tweakpane": "^3.0.7"
+        "three": "^0.162.0",
+        "tweakpane": "^3.0.7",
+        "zarrita": "^0.4.0-next.17"
     }
 }
