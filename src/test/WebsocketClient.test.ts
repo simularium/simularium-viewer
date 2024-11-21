@@ -19,10 +19,10 @@ describe("WebsocketClient", () => {
 
     describe("addJsonMessageHandler", () => {
         const websocketClient = new TestWebsocketClient(CONNECTION_SETTINGS);
-        websocketClient.socketIsValid = jest.fn().mockReturnValue(true);
+        websocketClient.socketIsValid = vi.fn().mockReturnValue(true);
 
         test("handles defined websocket event", () => {
-            const mockCallback = jest.fn((x) => x["data"]);
+            const mockCallback = vi.fn((x) => x["data"]);
             websocketClient.addJsonMessageHandler(
                 NetMessageEnum.ID_CONVERT_TRAJECTORY_FILE,
                 mockCallback
@@ -40,7 +40,7 @@ describe("WebsocketClient", () => {
         });
 
         test("ignores websocket events that don't have a defined handler", () => {
-            const mockCallback = jest.fn((x) => x["data"]);
+            const mockCallback = vi.fn((x) => x["data"]);
 
             websocketClient.addJsonMessageHandler(
                 NetMessageEnum.ID_CONVERT_TRAJECTORY_FILE,
@@ -65,8 +65,8 @@ describe("WebsocketClient", () => {
         });
 
         test("calls correct callback for event with multiple defined", () => {
-            const mockCallback0 = jest.fn((x) => x["data"]);
-            const mockCallback1 = jest.fn((x) => x["data"]);
+            const mockCallback0 = vi.fn((x) => x["data"]);
+            const mockCallback1 = vi.fn((x) => x["data"]);
 
             websocketClient.addJsonMessageHandler(
                 NetMessageEnum.ID_CONVERT_TRAJECTORY_FILE,
