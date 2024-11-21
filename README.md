@@ -109,16 +109,16 @@ This will run the example in `/examples/src/`, demonstrating the viewer's functi
 
 ## Quick Start
 
-| script            | comments                                                                                                                                          |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| build             | create ES module build                                                                                                        |
-| clean             | remove generated artifacts                                                                                                                        |
-| generateTypes     | generate type declarations                                                                                                                        |
-| lint              | run eslint on `src` directory                                                                                                                     |
-| transpileES       | run babel on `src` directory; _do not_ transpile `import/export` statements for an ES module compatible build (used by bundlers for tree-shaking) |
-| test              | run `jest`; searches for any files matching the pattern "src/\*_/_.test.js"                                                                      |
-| typeCheck         | run `tsc` in type-check only mode                                                                                                                 |
-| start             | runs an example app from `examples` for testing. Runs at `localhost:8080/public/`. Use `--localserver` to run backend locally. With no flags, this script will default to using the staging octopus server as backend |
+| script        | comments                                                                                                                                                                                                              |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| build         | create ES module build                                                                                                                                                                                                |
+| clean         | remove generated artifacts                                                                                                                                                                                            |
+| generateTypes | generate type declarations                                                                                                                                                                                            |
+| lint          | run eslint on `src` directory                                                                                                                                                                                         |
+| transpileES   | run babel on `src` directory; _do not_ transpile `import/export` statements for an ES module compatible build (used by bundlers for tree-shaking)                                                                     |
+| test          | run `vitest`; searches for any files matching the pattern "src/\*_/_.test.js"                                                                                                                                         |
+| typeCheck     | run `tsc` in type-check only mode                                                                                                                                                                                     |
+| start         | runs an example app from `examples` for testing. Runs at `localhost:8080/public/`. Use `--localserver` to run backend locally. With no flags, this script will default to using the staging octopus server as backend |
 
 ---
 
