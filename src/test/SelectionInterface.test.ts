@@ -475,7 +475,7 @@ describe("SelectionInterface module", () => {
                 },
             };
         });
-        const setColorForIds = jest.fn();
+        const setColorForIds = vi.fn();
 
         beforeEach(() => {
             si = new SelectionInterface();
