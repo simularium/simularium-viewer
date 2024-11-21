@@ -1,3 +1,5 @@
+import { vi } from "vitest";
+
 import {
     WebsocketClient,
     NetMessageEnum,

@@ -1,3 +1,5 @@
+import { vi } from "vitest";
+
 import { mapValues } from "lodash";
 import { EncodedTypeMapping, SelectionInterface } from "../simularium";
 import {

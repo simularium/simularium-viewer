@@ -1,3 +1,5 @@
+import { vi } from "vitest";
+
 import {
     CONNECTION_SUCCESS_MSG,
     CONNECTION_FAIL_MSG,
