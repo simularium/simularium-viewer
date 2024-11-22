@@ -1,4 +1,3 @@
-import "regenerator-runtime/runtime";
 import * as Comlink from "comlink";
 
 import KMeans3d from "../rendering/KMeans3d.js";

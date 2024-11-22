@@ -1,5 +1,3 @@
-import "regenerator-runtime/runtime";
-
 import * as Comlink from "comlink";
 import parsePdb from "parse-pdb";
 import {
