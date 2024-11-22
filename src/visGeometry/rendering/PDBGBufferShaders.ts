@@ -1,6 +1,6 @@
 import { FrontSide, GLSL3, Matrix4, RawShaderMaterial, Vector2 } from "three";
 
-import { MRTShaders } from "./MultipassMaterials";
+import { MRTShaders } from "./MultipassMaterials.js";
 
 const vertexShader = `
 precision highp float;

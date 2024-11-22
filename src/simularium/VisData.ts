@@ -1,16 +1,16 @@
-import { compareTimes } from "../util";
+import { compareTimes } from "../util.js";
 
-import * as util from "./ThreadUtil";
+import * as util from "./ThreadUtil.js";
 import {
     AGENT_OBJECT_KEYS,
     AgentData,
     FrameData,
     VisDataMessage,
-} from "./types";
-import { FrontEndError, ErrorLevel } from "./FrontEndError";
-import type { ParsedBundle } from "./VisDataParse";
-import { parseVisDataMessage } from "./VisDataParse";
-import { nullAgent } from "../constants";
+} from "./types.js";
+import { FrontEndError, ErrorLevel } from "./FrontEndError.js";
+import type { ParsedBundle } from "./VisDataParse.js";
+import { parseVisDataMessage } from "./VisDataParse.js";
+import { nullAgent } from "../constants.js";
 
 class VisData {
     private frameCache: AgentData[][];

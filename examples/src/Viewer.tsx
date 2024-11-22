@@ -7,8 +7,8 @@ import type {
     UIDisplayData,
     SelectionStateInfo,
     SelectionEntry,
-} from "../../type-declarations";
-import { nullAgent, TrajectoryType } from "../../src/constants";
+} from "../../type-declarations.js";
+import { nullAgent, TrajectoryType } from "../../src/constants.js";
 import SimulariumViewer, {
     SimulariumController,
     RenderStyle,
@@ -17,7 +17,7 @@ import SimulariumViewer, {
     ErrorLevel,
     NetConnectionParams,
     TrajectoryFileInfo,
-} from "../../src/index";
+} from "../../src/index.js";
 
 /**
  * NOTE: if you are debugging an import/build issue
@@ -31,28 +31,28 @@ import SimulariumViewer, {
 //     loadSimulariumFile,
 //     FrontEndError,
 //     ErrorLevel,
-// } from "../es";
+// } from "../es.js"
 import "../../style/style.css";
-import { AgentData } from "../../type-declarations/simularium/types";
-import PointSimulator from "./simulators/PointSimulator";
-import BindingSimulator from "./simulators/BindingSimulator2D";
-import PointSimulatorLive from "./simulators/PointSimulatorLive";
-import PdbSimulator from "./simulators/PdbSimulator";
-import SinglePdbSimulator from "./simulators/SinglePdbSimulator";
-import CurveSimulator from "./simulators/CurveSimulator";
-import SingleCurveSimulator from "./simulators/SingleCurveSimulator";
-import ColorPicker from "./ColorPicker";
-import RecordMovieComponent from "./RecordMovieComponent";
+import { AgentData } from "../../type-declarations/simularium/types.js";
+import PointSimulator from "./simulators/PointSimulator.js";
+import BindingSimulator from "./simulators/BindingSimulator2D.js";
+import PointSimulatorLive from "./simulators/PointSimulatorLive.js";
+import PdbSimulator from "./simulators/PdbSimulator.js";
+import SinglePdbSimulator from "./simulators/SinglePdbSimulator.js";
+import CurveSimulator from "./simulators/CurveSimulator.js";
+import SingleCurveSimulator from "./simulators/SingleCurveSimulator.js";
+import ColorPicker from "./ColorPicker.js";
+import RecordMovieComponent from "./RecordMovieComponent.js";
 import {
     SMOLDYN_TEMPLATE,
     UI_BASE_TYPES,
     UI_CUSTOM_TYPES,
     UI_TEMPLATE_DOWNLOAD_URL_ROOT,
     UI_TEMPLATE_URL_ROOT,
-} from "./api-settings";
-import ConversionForm from "./ConversionForm";
-import MetaballSimulator from "./simulators/MetaballSimulator";
-import AgentMetadata from "./AgentMetadata";
+} from "./api-settings.js";
+import ConversionForm from "./ConversionForm.js";
+import MetaballSimulator from "./simulators/MetaballSimulator.js";
+import AgentMetadata from "./AgentMetadata.js";
 
 let playbackFile = "TEST_LIVEMODE_API";
 let queryStringFile = "";
@@ -388,16 +388,21 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
         const fileName = uuidv4() + ".simularium";
         simulariumController
-            .convertTrajectory(this.netConnectionSettings, obj, fileType, fileName)
+            .convertTrajectory(
+                this.netConnectionSettings,
+                obj,
+                fileType,
+                fileName
+            )
             .then(() => {
                 this.clearPendingFile();
             })
             .then(() => {
                 simulariumController.changeFile(
-                    { netConnectionSettings: this.netConnectionSettings, },
+                    { netConnectionSettings: this.netConnectionSettings },
                     fileName,
-                    true,
-                )
+                    true
+                );
             })
             .catch((err) => {
                 console.error(err);
@@ -412,7 +417,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         const simulariumFile = fileName.includes(".simularium")
             ? trajectoryFile
             : null;
-        this.setState({ initialPlay: true})
+        this.setState({ initialPlay: true });
         return simulariumController
             .handleFileChange(simulariumFile, fileName, geoAssets)
             .catch(console.log);
@@ -510,13 +515,18 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             []
         );
         const uniqueTags: string[] = [...new Set(allTags)];
-        if (isEqual(uiDisplayData, this.state.selectionStateInfo.appliedColors)) {
+        if (
+            isEqual(uiDisplayData, this.state.selectionStateInfo.appliedColors)
+        ) {
             return;
         }
         this.setState({
             particleTypeNames: uiDisplayData.map((a) => a.name),
             particleTypeTags: uniqueTags,
-            selectionStateInfo: {...initialState.selectionStateInfo, appliedColors: uiDisplayData},
+            selectionStateInfo: {
+                ...initialState.selectionStateInfo,
+                appliedColors: uiDisplayData,
+            },
         });
     }
 

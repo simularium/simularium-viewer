@@ -3,9 +3,9 @@ import {
     NetMessage,
     NetMessageEnum,
     WebsocketClient,
-} from "../simularium/WebsocketClient";
-import { RemoteSimulator } from "../simularium/RemoteSimulator";
-import { VisDataFrame, VisDataMessage } from "../simularium/types";
+} from "../simularium/WebsocketClient.js";
+import { RemoteSimulator } from "../simularium/RemoteSimulator.js";
+import { VisDataFrame, VisDataMessage } from "../simularium/types.js";
 
 // Mocks the simularium simulation back-end, w/ latency
 export class DummyRemoteSimulator extends RemoteSimulator {

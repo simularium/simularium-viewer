@@ -11,7 +11,7 @@ import {
     VisDataMessage,
     DEFAULT_CAMERA_SPEC,
     VisTypes,
-} from "../../../src";
+} from "../../../src.js";
 
 class BindingInstance extends Circle {
     id: number;
@@ -85,7 +85,7 @@ class BindingInstance extends Circle {
             return;
         }
         // D(r)≈(4.10901922×10^−3)/r nm^2/s
-        const diffusionCoefficient = 4 * 10**-3 / this.r;
+        const diffusionCoefficient = (4 * 10 ** -3) / this.r;
         const timeFactor = 30;
         const amplitude = Math.sqrt(2 * diffusionCoefficient) * timeFactor;
         let xStep = random(-amplitude, amplitude, true);
@@ -221,7 +221,7 @@ export default class BindingSimulator implements IClientSimulatorImpl {
                 new Vector3(nextPoint[0], nextPoint[1]),
                 { isStatic: true }
             );
-        })
+        });
     }
 
     private randomFloat(min, max) {
@@ -374,7 +374,6 @@ export default class BindingSimulator implements IClientSimulatorImpl {
                     y: 0,
                     z: 50,
                 },
-            
             },
             typeMapping: typeMapping,
             spatialUnits: {

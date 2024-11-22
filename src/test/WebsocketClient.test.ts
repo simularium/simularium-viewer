@@ -4,7 +4,7 @@ import {
     WebsocketClient,
     NetMessageEnum,
     MessageEventLike,
-} from "../simularium/WebsocketClient";
+} from "../simularium/WebsocketClient.js";
 
 class TestWebsocketClient extends WebsocketClient {
     // exposing the protected onMessage() method for testing purposes

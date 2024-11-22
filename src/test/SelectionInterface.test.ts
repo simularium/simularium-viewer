@@ -1,11 +1,11 @@
 import { vi } from "vitest";
 
 import { mapValues } from "lodash";
-import { EncodedTypeMapping, SelectionInterface } from "../simularium";
+import { EncodedTypeMapping, SelectionInterface } from "../simularium/index.js";
 import {
     UIDisplayData,
     UIDisplayEntry,
-} from "../simularium/SelectionInterface";
+} from "../simularium/SelectionInterface.js";
 
 const idMapping = {
     0: { name: "A" },

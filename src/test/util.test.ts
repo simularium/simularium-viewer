@@ -1,4 +1,4 @@
-import { checkAndSanitizePath, compareTimes } from "../util";
+import { checkAndSanitizePath, compareTimes } from "../util.js";
 
 describe("util", () => {
     describe("compareTimes", () => {

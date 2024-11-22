@@ -3,8 +3,8 @@ import {
     VisDataMessage,
     AgentData,
     AGENT_OBJECT_KEYS,
-} from "./types";
-import { FrontEndError, ErrorLevel } from "./FrontEndError";
+} from "./types.js";
+import { FrontEndError, ErrorLevel } from "./FrontEndError.js";
 
 interface ParsedBundle {
     frameDataArray: FrameData[];

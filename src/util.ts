@@ -1,6 +1,6 @@
-import type { ISimulariumFile } from "./simularium/ISimulariumFile";
-import JsonFileReader from "./simularium/JsonFileReader";
-import BinaryFileReader from "./simularium/BinaryFileReader";
+import type { ISimulariumFile } from "./simularium/ISimulariumFile.js";
+import JsonFileReader from "./simularium/JsonFileReader.js";
+import BinaryFileReader from "./simularium/BinaryFileReader.js";
 
 export const compareTimes = (
     time1: number,

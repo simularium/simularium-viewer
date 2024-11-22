@@ -1,7 +1,7 @@
 import { map, reduce } from "lodash";
 import React from "react";
-import BaseInput from "./BaseInput";
-import { CustomParameters } from "../Viewer";
+import BaseInput from "./BaseInput.js"
+import { CustomParameters } from "../Viewer.js"
 
 interface CollectionParameters extends CustomParameters {
     length: number;

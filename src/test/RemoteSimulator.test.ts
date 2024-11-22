@@ -3,10 +3,10 @@ import { vi } from "vitest";
 import {
     CONNECTION_SUCCESS_MSG,
     CONNECTION_FAIL_MSG,
-} from "../simularium/WebsocketClient";
-import { FrontEndError } from "../simularium/FrontEndError";
-import { RemoteSimulator } from "..";
-import { WebsocketClient } from "../simularium/WebsocketClient";
+} from "../simularium/WebsocketClient.js";
+import { FrontEndError } from "../simularium/FrontEndError.js";
+import { RemoteSimulator } from "../index.js";
+import { WebsocketClient } from "../simularium/WebsocketClient.js";
 
 describe("RemoteSimulator", () => {
     // Silence console.debug messages like this in Jest output:

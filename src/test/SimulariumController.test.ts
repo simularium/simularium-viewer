@@ -1,5 +1,5 @@
-import { SimulariumController } from "../controller";
-import { DummyRemoteSimulator } from "./DummyRemoteSimulator";
+import { SimulariumController } from "../controller/index.js";
+import { DummyRemoteSimulator } from "./DummyRemoteSimulator.js";
 
 describe("SimulariumController module", () => {
     describe("SimulariumController Time", () => {
