@@ -1,23 +1,7 @@
 import React from "react";
-import { isEqual, findIndex, map, reduce } from "lodash";
+import { isEqual, findIndex, reduce } from "lodash";
 import { v4 as uuidv4 } from "uuid";
-
-import type {
-    ISimulariumFile,
-    UIDisplayData,
-    SelectionStateInfo,
-    SelectionEntry,
-} from "../../type-declarations.js";
-import { nullAgent, TrajectoryType } from "../../src/constants.js";
-import SimulariumViewer, {
-    SimulariumController,
-    RenderStyle,
-    loadSimulariumFile,
-    FrontEndError,
-    ErrorLevel,
-    NetConnectionParams,
-    TrajectoryFileInfo,
-} from "../../src/index.js";
+import { InputParams } from "tweakpane";
 
 /**
  * NOTE: if you are debugging an import/build issue
@@ -31,8 +15,24 @@ import SimulariumViewer, {
 //     loadSimulariumFile,
 //     FrontEndError,
 //     ErrorLevel,
-// } from "../es.js"
-import "../../style/style.css";
+// } from "../es";
+import SimulariumViewer, {
+    SimulariumController,
+    RenderStyle,
+    loadSimulariumFile,
+    FrontEndError,
+    ErrorLevel,
+    NetConnectionParams,
+    TrajectoryFileInfo,
+} from "../../src/index.js";
+import { nullAgent, TrajectoryType } from "../../src/constants.js";
+
+import type {
+    ISimulariumFile,
+    UIDisplayData,
+    SelectionStateInfo,
+    SelectionEntry,
+} from "../../type-declarations/index.js";
 import { AgentData } from "../../type-declarations/simularium/types.js";
 import PointSimulator from "./simulators/PointSimulator.js";
 import BindingSimulator from "./simulators/BindingSimulator2D.js";
@@ -41,8 +41,15 @@ import PdbSimulator from "./simulators/PdbSimulator.js";
 import SinglePdbSimulator from "./simulators/SinglePdbSimulator.js";
 import CurveSimulator from "./simulators/CurveSimulator.js";
 import SingleCurveSimulator from "./simulators/SingleCurveSimulator.js";
-import ColorPicker from "./ColorPicker.js";
-import RecordMovieComponent from "./RecordMovieComponent.js";
+import MetaballSimulator from "./simulators/MetaballSimulator.js";
+
+import ColorPicker from "./Components/ColorPicker.js";
+import RecordMovieComponent from "./Components/RecordMovieComponent.js";
+import ConversionForm from "./Components/ConversionForm/index.js";
+import AgentMetadata from "./Components/AgentMetadata.js";
+
+import { agentColors } from "./constants.js";
+import { BaseType, CustomType } from "./types.js";
 import {
     SMOLDYN_TEMPLATE,
     UI_BASE_TYPES,
@@ -50,9 +57,9 @@ import {
     UI_TEMPLATE_DOWNLOAD_URL_ROOT,
     UI_TEMPLATE_URL_ROOT,
 } from "./api-settings.js";
-import ConversionForm from "./ConversionForm.js";
-import MetaballSimulator from "./simulators/MetaballSimulator.js";
-import AgentMetadata from "./AgentMetadata.js";
+
+import "../../style/style.css";
+import "./style.css";
 
 let playbackFile = "TEST_LIVEMODE_API";
 let queryStringFile = "";
@@ -62,29 +69,8 @@ if (urlParams.has("file")) {
     playbackFile = queryStringFile;
 }
 
-const agentColors = [
-    "#fee34d",
-    "#f7b232",
-    "#bf5736",
-    "#94a7fc",
-    "#ce8ec9",
-    "#58606c",
-    "#0ba345",
-    "#9267cb",
-    "#81dbe6",
-    "#bd7800",
-    "#bbbb99",
-    "#5b79f0",
-    "#89a500",
-    "#da8692",
-    "#418463",
-    "#9f516c",
-    "#00aabf",
-];
-
 interface ViewerState {
     renderStyle: RenderStyle;
-    pauseOn: number;
     particleTypeNames: string[];
     particleTypeTags: string[];
     currentFrame: number;
@@ -114,34 +100,6 @@ interface ViewerState {
     followObjectData: AgentData;
 }
 
-interface BaseType {
-    isBaseType: true;
-    id: string;
-    data: string;
-    match: string;
-}
-
-export interface CustomParameters {
-    name: string;
-    data_type: string;
-    description: string;
-    required: boolean;
-    help: string;
-    options?: string[];
-}
-
-interface CustomType {
-    [key: string]: {
-        "python::module": string;
-        "python::object": string;
-        parameters: CustomParameters;
-    };
-}
-
-interface InputParams {
-    localBackendServer: boolean;
-}
-
 const simulariumController = new SimulariumController({});
 
 let currentFrame = 0;
@@ -149,7 +107,6 @@ let currentTime = 0;
 
 const initialState: ViewerState = {
     renderStyle: RenderStyle.WEBGL2_PREFERRED,
-    pauseOn: -1,
     particleTypeNames: [],
     particleTypeTags: [],
     currentFrame: 0,
@@ -434,9 +391,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             this.setState({ initialPlay: false, firstFrameTime: currentTime });
         }
         this.setState({ currentFrame, currentTime });
-        if (this.state.pauseOn === currentFrame) {
+        if (currentFrame < 0) {
             simulariumController.pause();
-            this.setState({ pauseOn: -1 });
         }
     }
 
@@ -955,7 +911,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 >
                     Get available metrics
                 </button>
-                <button onClick={this.downloadFile}>download</button>
+                <button onClick={this.downloadFile.bind(this)}>download</button>
                 <button
                     onClick={() =>
                         simulariumController.getPlotData(
@@ -991,24 +947,16 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     updateAgentColorArray={this.updateAgentColorArray}
                     setColorSelectionInfo={this.setColorSelectionInfo}
                 />
-                <button
-                    onClick={() =>
-                        this.setRecordingEnabled(!this.state.isRecordingEnabled)
-                    }
-                >
-                    {this.state.isRecordingEnabled ? "Disable" : "Enable"}{" "}
-                    Recording
-                </button>
-                {this.state.isRecordingEnabled && (
-                    <RecordMovieComponent
-                        startRecordingHandler={
-                            simulariumController.startRecording
-                        }
-                        stopRecordingHandler={
-                            simulariumController.stopRecording
-                        }
-                    />
-                )}
+                <RecordMovieComponent
+                    startRecordingHandler={simulariumController.startRecording}
+                    stopRecordingHandler={simulariumController.stopRecording}
+                    setRecordingEnabled={() => {
+                        this.setRecordingEnabled(
+                            !this.state.isRecordingEnabled
+                        );
+                    }}
+                    isRecordingEnabled={this.state.isRecordingEnabled}
+                />
                 <AgentMetadata agentData={this.state.followObjectData} />
                 <div className="viewer-container">
                     <SimulariumViewer
@@ -1043,6 +991,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         backgroundColor={[0, 0, 0]}
                         lockedCamera={false}
                         disableCache={false}
+                        maxCacheSize={Infinity} //  means no limit, provide limits in bytes, 1MB = 1000000, 1GB = 1000000000
                     />
                 </div>
             </div>

@@ -1,6 +1,13 @@
 import type { ISimulariumFile } from "./simularium/ISimulariumFile.js";
 import JsonFileReader from "./simularium/JsonFileReader.js";
 import BinaryFileReader from "./simularium/BinaryFileReader.js";
+import {
+    AGENT_OBJECT_KEYS,
+    AgentData,
+    CachedFrame,
+} from "./simularium/types.js";
+import { nullAgent } from "./constants.js";
+import { FrontEndError } from "./simularium/index.js";
 
 export const compareTimes = (
     time1: number,
@@ -74,3 +81,55 @@ export function loadSimulariumFile(file: Blob): Promise<ISimulariumFile> {
             }
         });
 }
+
+export const nullCachedFrame = (): CachedFrame => {
+    return {
+        data: new ArrayBuffer(0),
+        frameNumber: -1,
+        time: -1,
+        agentCount: -1,
+        size: -1,
+    };
+};
+
+export const getAgentDataFromBuffer = (
+    view: Float32Array,
+    offset: number
+): AgentData => {
+    // Check if the buffer has enough data for the AGENT_OBJECT_KEYS
+    if (offset + AGENT_OBJECT_KEYS.length > view.length) {
+        throw new FrontEndError(
+            "Invalid offset: Not enough data in the buffer for agent data."
+        );
+    }
+    const agentData: AgentData = nullAgent();
+    for (let i = 0; i < AGENT_OBJECT_KEYS.length; i++) {
+        agentData[AGENT_OBJECT_KEYS[i]] = view[offset + i];
+    }
+    const nSubPoints = agentData["nSubPoints"];
+
+    // Check if the buffer has enough data for subpoints
+    const subpointsStart = offset + AGENT_OBJECT_KEYS.length;
+    const subpointsEnd = subpointsStart + nSubPoints;
+
+    if (subpointsEnd > view.length) {
+        throw new FrontEndError(
+            "Invalid offset: Not enough data in the buffer for subpoints."
+        );
+    }
+    agentData.subpoints = Array.from(
+        view.subarray(
+            offset + AGENT_OBJECT_KEYS.length,
+            offset + AGENT_OBJECT_KEYS.length + nSubPoints
+        )
+    );
+    return agentData;
+};
+
+export const getNextAgentOffset = (
+    view: Float32Array,
+    currentOffset: number
+): number => {
+    const nSubPoints = view[currentOffset + AGENT_OBJECT_KEYS.length - 1];
+    return currentOffset + AGENT_OBJECT_KEYS.length + nSubPoints;
+};

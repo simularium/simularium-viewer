@@ -42,14 +42,13 @@ export class DummyRemoteSimulator extends RemoteSimulator {
         const msg: VisDataMessage = {
             msgType: NetMessageEnum.ID_VIS_DATA_ARRIVE,
             bundleStart: frameNumber,
-            bundleSize: 1,
+            bundleSize: 1, // backend only sends one frame at a time now
             bundleData: [],
             fileName: this.lastRequestedFile,
         };
-
         const data: VisDataFrame = {
             frameNumber: frameNumber,
-            time: frameNumber * this.timeStep,
+            time: frameNumber,
             data: [
                 1000,
                 0,
@@ -78,11 +77,10 @@ export class DummyRemoteSimulator extends RemoteSimulator {
             return;
         }
 
-        const bundleSize = 5;
         const msg: NetMessage = JSON.parse(
             this.getDataBundle(this.frameCounter)
         );
-        this.frameCounter += bundleSize;
+        this.frameCounter++;
         this.onJsonIdVisDataArrive(msg);
     }
 

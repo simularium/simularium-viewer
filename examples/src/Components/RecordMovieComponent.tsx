@@ -3,11 +3,15 @@ import React, { useState, useEffect } from "react";
 interface RecordMovieComponentProps {
     startRecordingHandler: () => void;
     stopRecordingHandler: () => void;
+    setRecordingEnabled: () => void;
+    isRecordingEnabled: boolean;
 }
 
 const RecordMovieComponent = ({
     startRecordingHandler,
     stopRecordingHandler,
+    setRecordingEnabled,
+    isRecordingEnabled,
 }: RecordMovieComponentProps): JSX.Element => {
     // recording time measured in seconds
     const [isRecording, setIsRecording] = useState<boolean>(false);
@@ -43,10 +47,15 @@ const RecordMovieComponent = ({
     };
 
     return (
-        <div>
+        <div className="ui-container">
+            <button onClick={() => setRecordingEnabled()}>
+                {isRecordingEnabled ? "Disable" : "Enable"} Recording
+            </button>
             <button
                 onClick={startRecording}
-                disabled={isRecording || !browserSupported}
+                disabled={
+                    isRecording || !browserSupported || !isRecordingEnabled
+                }
             >
                 Start Recording
             </button>
