@@ -57,9 +57,7 @@ import {
     UI_TEMPLATE_DOWNLOAD_URL_ROOT,
     UI_TEMPLATE_URL_ROOT,
 } from "./api-settings";
-
-import "../../style/style.css";
-import "./style.css";
+import CacheAndStreamingLogs from "./Components/CacheAndStreamingLogs";
 
 let playbackFile = "TEST_LIVEMODE_API";
 let queryStringFile = "";
@@ -392,7 +390,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         }
         this.setState({ currentFrame, currentTime });
         if (currentFrame < 0) {
-            simulariumController.pause();
+            simulariumController.pauseStreaming();
         }
     }
 
@@ -454,8 +452,12 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         });
     }
 
+    public handlePause(): void {
+        simulariumController.pausePlayback();
+    }
+
     public handleScrubTime(event): void {
-        simulariumController.gotoTime(parseFloat(event.target.value));
+        simulariumController.movePlaybackTime(parseFloat(event.target.value));
     }
 
     public handleUIDisplayData(uiDisplayData: UIDisplayData): void {
@@ -487,13 +489,13 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     }
 
     public gotoNextFrame(): void {
-        simulariumController.gotoTime(
+        simulariumController.movePlaybackTime(
             this.state.currentTime + this.state.timeStep
         );
     }
 
     public gotoPreviousFrame(): void {
-        simulariumController.gotoTime(
+        simulariumController.movePlaybackTime(
             this.state.currentTime - this.state.timeStep
         );
     }
@@ -516,8 +518,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     }
 
     private configureAndLoad() {
-        simulariumController.configureNetwork(this.netConnectionSettings);
         if (playbackFile.startsWith("http")) {
+            simulariumController.configureNetwork(this.netConnectionSettings);
             return this.loadFromUrl(playbackFile);
         }
         if (playbackFile === "TEST_LIVEMODE_API") {
@@ -694,7 +696,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             <div className="container" style={{ height: "90%", width: "75%" }}>
                 <select
                     onChange={(event) => {
-                        simulariumController.pause();
+                        simulariumController.pauseStreaming();
                         playbackFile = event.target.value;
                         this.configureAndLoad();
                     }}
@@ -761,13 +763,13 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     Load a smoldyn trajectory
                 </button>
                 <br />
-                <button onClick={() => simulariumController.resume()}>
+                <button onClick={() => simulariumController.resumePlayback()}>
                     Play
                 </button>
-                <button onClick={() => simulariumController.pause()}>
-                    Pause
-                </button>
-                <button onClick={() => simulariumController.stop()}>
+                <button onClick={this.handlePause.bind(this)}>Pause</button>
+                <button
+                    onClick={() => simulariumController.abortRemoteSimulation()}
+                >
                     stop
                 </button>
                 <button onClick={this.gotoPreviousFrame.bind(this)}>
@@ -947,17 +949,50 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     updateAgentColorArray={this.updateAgentColorArray}
                     setColorSelectionInfo={this.setColorSelectionInfo}
                 />
-                <RecordMovieComponent
-                    startRecordingHandler={simulariumController.startRecording}
-                    stopRecordingHandler={simulariumController.stopRecording}
-                    setRecordingEnabled={() => {
-                        this.setRecordingEnabled(
-                            !this.state.isRecordingEnabled
-                        );
-                    }}
-                    isRecordingEnabled={this.state.isRecordingEnabled}
-                />
+                <button
+                    onClick={() =>
+                        this.setRecordingEnabled(!this.state.isRecordingEnabled)
+                    }
+                >
+                    {this.state.isRecordingEnabled ? "Disable" : "Enable"}{" "}
+                    Recording
+                </button>
+                {this.state.isRecordingEnabled && (
+                    <RecordMovieComponent
+                        startRecordingHandler={
+                            simulariumController.startRecording
+                        }
+                        stopRecordingHandler={
+                            simulariumController.stopRecording
+                        }
+                    />
+                )}
                 <AgentMetadata agentData={this.state.followObjectData} />
+                <CacheAndStreamingLogs
+                    playbackState={
+                        simulariumController.isPlaybackPaused
+                            ? "paused"
+                            : "playing"
+                    }
+                    streamingState={
+                        simulariumController.isStreaming
+                            ? "streaming"
+                            : "not streaming"
+                    }
+                    cacheSize={simulariumController.visData.frameCache.size}
+                    cacheEnabled={
+                        simulariumController.visData.frameCache.cacheEnabled
+                    }
+                    maxSize={simulariumController.visData.frameCache.maxSize}
+                    firstFrameNumber={simulariumController.visData.frameCache.getFirstFrameNumber()}
+                    lastFrameNumber={simulariumController.visData.frameCache.getLastFrameNumber()}
+                    getFirstFrameNumber={() => {return simulariumController.visData.frameCache.head?.data.frameNumber! || 66}}
+                    getLastFrameNumber={() => simulariumController.visData.frameCache.getLastFrameNumber()}
+                    currentPlaybackFrame={this.state.currentFrame}
+                    totalDuration={Math.ceil(
+                        this.state.totalDuration / this.state.timeStep
+                    )}
+                />
                 <div className="viewer-container">
                     <SimulariumViewer
                         ref={this.viewerRef}

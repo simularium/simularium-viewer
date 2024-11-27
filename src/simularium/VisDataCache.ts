@@ -1,3 +1,4 @@
+import { DEFAULT_PRE_FETCH_RATIO } from "../constants";
 import { compareTimes } from "../util";
 import { CachedFrame, CacheNode } from "./types";
 
@@ -7,12 +8,13 @@ interface VisDataCacheSettings {
 }
 
 class VisDataCache {
-    private head: CacheNode | null;
+    public head: CacheNode | null;
     private tail: CacheNode | null;
     public numFrames: number;
     public size: number;
     private _maxSize: number;
     private _cacheEnabled: boolean;
+    private _preFetchRatio: number;
 
     constructor(settings?: Partial<VisDataCacheSettings>) {
         /**
@@ -27,6 +29,7 @@ class VisDataCache {
         this.size = 0;
         this._maxSize = Infinity;
         this._cacheEnabled = true;
+        this._preFetchRatio = DEFAULT_PRE_FETCH_RATIO;
 
         if (settings) {
             this.changeSettings(settings);
@@ -36,13 +39,17 @@ class VisDataCache {
     public changeSettings(options: {
         maxSize?: number;
         cacheEnabled?: boolean;
+        preFetchRatio?: number;
     }): void {
-        const { maxSize, cacheEnabled } = options;
+        const { maxSize, cacheEnabled, preFetchRatio } = options;
         if (cacheEnabled !== undefined) {
             this._cacheEnabled = cacheEnabled;
         }
         if (maxSize !== undefined) {
             this._maxSize = maxSize;
+        }
+        if (preFetchRatio !== undefined) {
+            this._preFetchRatio = preFetchRatio;
         }
     }
 
@@ -56,6 +63,10 @@ class VisDataCache {
 
     public get cacheSizeLimited(): boolean {
         return this._maxSize !== Infinity;
+    }
+
+    public get preFetchRatio(): number {
+        return this._preFetchRatio;
     }
 
     public hasFrames(): boolean {
@@ -162,7 +173,6 @@ class VisDataCache {
             next: null,
             prev: null,
         };
-
         this.head = newNode;
         this.tail = newNode;
         this.size = data.size;
@@ -185,6 +195,7 @@ class VisDataCache {
             this.tail = newNode;
             this.numFrames++;
             this.size += data.size;
+            // todo: handle this logic at a higher level
             if (this.size > this._maxSize) {
                 this.trimCache();
             }
@@ -227,7 +238,7 @@ class VisDataCache {
         this.size -= node.data.size;
     }
 
-    private trimCache(incomingDataSize?: number): void {
+    public trimCache(incomingDataSize?: number): void {
         while (
             this.hasFrames() &&
             this.size + (incomingDataSize || 0) > this._maxSize &&

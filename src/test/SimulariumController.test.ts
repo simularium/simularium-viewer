@@ -14,8 +14,8 @@ describe("SimulariumController module", () => {
                 remoteSimulator: netConn,
             });
 
-            controller.start();
-            controller.gotoTime(2);
+            controller.initializePrecomputedSimulation();
+            controller.movePlaybackTime(2);
             setTimeout(() => {
                 expect(controller.time()).toEqual(2);
                 done();
