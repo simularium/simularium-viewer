@@ -11,7 +11,7 @@ import {
     VisDataMessage,
     DEFAULT_CAMERA_SPEC,
     VisTypes,
-} from "../../../src.js";
+} from "@aics/simularium-viewer";
 
 class BindingInstance extends Circle {
     id: number;

@@ -1,14 +1,12 @@
 import {
     IClientSimulatorImpl,
     ClientMessageEnum,
-} from "../../../src/simularium/localSimulators/IClientSimulatorImpl.js";
-import {
     EncodedTypeMapping,
     TrajectoryFileInfo,
     VisDataMessage,
-} from "../../../src/simularium/types.js";
-import VisTypes from "../../../src/simularium/VisTypes.js";
-import { DEFAULT_CAMERA_SPEC } from "../../../src/constants.js";
+    VisTypes,
+    DEFAULT_CAMERA_SPEC,
+} from "@aics/simularium-viewer";
 
 export default class PointSimLive implements IClientSimulatorImpl {
     nPoints: number;

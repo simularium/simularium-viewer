@@ -1,4 +1,4 @@
-import { compareTimes } from "../util";
+import { compareTimes } from "../util.js";
 import { CachedFrame, CacheNode } from "./types";
 
 interface VisDataCacheSettings {
