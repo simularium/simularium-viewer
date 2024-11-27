@@ -42,13 +42,6 @@ const CacheAndStreamingLogs: React.FC<StreamingReadoutProps> = ({
         }));
     }, [firstFrameNumber, getFirstFrameNumber, lastFrameNumber]);
 
-    const calculateRatio = () => {
-        const first = Math.max(firstFrameNumber, getFirstFrameNumber());
-        const last = Math.max(lastFrameNumber, getLastFrameNumber());
-        if (last <= first || currentPlaybackFrame < first) return 0;
-        return (last - currentPlaybackFrame) / (last - first);
-    };
-
     return (
         <div>
             <button onClick={() => setIsOpen(!isOpen)}>
