@@ -5,7 +5,7 @@
     "main": "index.js",
     "type": "module",
     "scripts": {
-        "serve-example": "vite serve ./src",
+        "serve-example": "vite serve ../",
         "serve-example_old": "webpack serve --config webpack.dev.js",
         "prebuild-example": "npm install",
         "build-example": "webpack --config webpack.dev.js",

@@ -11,15 +11,7 @@ export default {
     server: {
         fs: {
             strict: false,
-            allow: ["../es/**"],
         },
+        open: "examples/src/index.html",
     },
-    worker: {
-        format: "es",
-    },
-    optimizeDeps: {
-        exclude: ["@aics/simularium-viewer"],
-    },
-
-    // ...
 } satisfies UserConfig;
