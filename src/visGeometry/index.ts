@@ -53,6 +53,7 @@ import {
     Coordinates3d,
     EncodedTypeMapping,
     PerspectiveCameraSpec,
+    VolumeLoadingMode,
 } from "../simularium/types";
 
 import SimulariumRenderer from "./rendering/SimulariumRenderer";
@@ -1593,13 +1594,13 @@ class VisGeometry {
      **/
     private async updateScene(
         frameData: CachedFrame,
-        waitForVolumes?: boolean
+        volumeLoadingMode = VolumeLoadingMode.NONE
     ): Promise<void> {
         this.currentSceneData = frameData;
         const view = new Float32Array(frameData.data);
         const agentCount = frameData.agentCount;
 
-        if (waitForVolumes) {
+        if (volumeLoadingMode === VolumeLoadingMode.WAIT) {
             await this.updateVolumesOnly(view, agentCount);
         }
 
@@ -1695,8 +1696,10 @@ class VisGeometry {
                 if (geometry && displayType === GeometryDisplayType.PDB) {
                     this.addPdbToDrawList(typeId, visAgent, geometry);
                 } else if (displayType === GeometryDisplayType.VOLUME) {
-                    if (!waitForVolumes) {
-                        geometry.setAgentData(agentData);
+                    if (volumeLoadingMode !== VolumeLoadingMode.WAIT) {
+                        const hide =
+                            volumeLoadingMode === VolumeLoadingMode.HIDE;
+                        geometry.setAgentData(agentData, false, hide);
                     }
                 } else {
                     this.addMeshToDrawList(
@@ -1982,9 +1985,9 @@ class VisGeometry {
 
     public update(
         agents: CachedFrame,
-        waitForVolumes?: boolean
+        volumeLoadingMode?: VolumeLoadingMode
     ): Promise<void> {
-        return this.updateScene(agents, waitForVolumes);
+        return this.updateScene(agents, volumeLoadingMode);
     }
 }
 

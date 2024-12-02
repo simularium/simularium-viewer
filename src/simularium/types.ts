@@ -209,3 +209,22 @@ export interface CacheNode {
     next: CacheNode | null;
     prev: CacheNode | null;
 }
+
+/**
+ * How to approach the problem of updating volume agents, which may need to
+ * load large amounts of new data on every timestep to display correctly.
+ */
+export const enum VolumeLoadingMode {
+    /**
+     * Take no special measures. Allow the volume data shown to be out of sync
+     * with the current timestep.
+     */
+    NONE,
+    /** Delay updating to the next timestep until volume data is ready. */
+    WAIT,
+    /**
+     * Hide the volume until data for the current frame is ready. Hidden
+     * volumes display an outline of their bounding box rather than real data.
+     */
+    HIDE,
+}

@@ -12,7 +12,11 @@ import {
     SelectionStateInfo,
     UIDisplayData,
 } from "../simularium";
-import { AgentData, TrajectoryFileInfoAny } from "../simularium/types";
+import {
+    AgentData,
+    TrajectoryFileInfoAny,
+    VolumeLoadingMode,
+} from "../simularium/types";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
 import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry";
@@ -655,7 +659,10 @@ class Viewport extends React.Component<
                             frameNumber: currentFrame.frameNumber,
                         });
                         this.waitingForFrame = true;
-                        await this.visGeometry.update(currentFrame, true);
+                        await this.visGeometry.update(
+                            currentFrame,
+                            VolumeLoadingMode.NONE
+                        );
                         this.waitingForFrame = false;
                         this.lastRenderedAgentTime = currentFrame.time;
                         this.updateFollowObjectData();
