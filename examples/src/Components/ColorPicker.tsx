@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-import { UIDisplayData } from "../../../src/index.js";
+import { UIDisplayData } from "@aics/simularium-viewer";
 
 type ColorPickerProps = {
     uiDisplayData: UIDisplayData;

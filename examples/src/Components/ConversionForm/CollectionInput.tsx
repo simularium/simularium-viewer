@@ -1,6 +1,6 @@
 import { map, reduce } from "lodash";
 import React from "react";
-import BaseInput from "./BaseInput"
+import BaseInput from "./BaseInput";
 import { CustomParameters } from "../../types";
 
 interface CollectionParameters extends CustomParameters {
@@ -147,7 +147,9 @@ class CollectionInput extends React.Component<
         }
         if (parameter.extendible) {
             jsx.push(
-                <button key={name} onClick={this.addItem}>Add another {name} item</button>
+                <button key={name} onClick={this.addItem}>
+                    Add another {name} item
+                </button>
             );
         }
         return jsx;

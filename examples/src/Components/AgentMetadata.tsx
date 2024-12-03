@@ -1,5 +1,5 @@
 import React from "react";
-import { AgentData } from "../../../type-declarations/simularium/types.js";
+import { AgentData } from "@aics/simularium-viewer";
 
 interface AgentMetadataProps {
     agentData: AgentData;
