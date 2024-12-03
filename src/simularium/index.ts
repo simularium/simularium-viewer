@@ -9,7 +9,6 @@ export type {
     SimulariumFileFormat,
     Plot,
     AgentData,
-    VolumeLoadingMode,
 } from "./types";
 
 export type {
