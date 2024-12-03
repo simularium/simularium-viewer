@@ -2,13 +2,12 @@ import jsLogger from "js-logger";
 import { isEmpty, noop } from "lodash";
 import { VisData, RemoteSimulator } from "../simularium";
 import type { NetConnectionParams, TrajectoryFileInfo } from "../simularium";
-import { VisGeometry } from "../visGeometry";
+import { VisGeometry, VolumeLoadingMode } from "../visGeometry";
 import {
     FileReturn,
     FILE_STATUS_SUCCESS,
     FILE_STATUS_FAIL,
     PlotConfig,
-    VolumeLoadingMode,
 } from "../simularium/types";
 
 import { ClientSimulator } from "../simularium/ClientSimulator";
