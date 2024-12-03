@@ -17,6 +17,7 @@ import SimulariumViewer, {
     ErrorLevel,
     NetConnectionParams,
     TrajectoryFileInfo,
+    VolumeLoadingMode,
 } from "../../src/index";
 
 /**
@@ -82,6 +83,12 @@ const agentColors = [
     "#9f516c",
     "#00aabf",
 ];
+
+const volumeLoadingModes = {
+    "none": VolumeLoadingMode.NONE,
+    "wait": VolumeLoadingMode.WAIT,
+    "hide": VolumeLoadingMode.HIDE,
+}
 
 interface ViewerState {
     renderStyle: RenderStyle;
@@ -1013,6 +1020,12 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         }
                     />
                 )}
+                Volume loading mode:{" "}
+                <select onChange={({ target }) => simulariumController.setVolumeLoadingMode(volumeLoadingModes[target.value])}>
+                    <option value="none">None</option>
+                    <option value="wait">Wait</option>
+                    <option value="hide">Hide</option>
+                </select>
                 <AgentMetadata agentData={this.state.followObjectData} />
                 <div className="viewer-container">
                     <SimulariumViewer
