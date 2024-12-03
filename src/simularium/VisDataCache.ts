@@ -1,5 +1,5 @@
-import { compareTimes } from "../util";
-import { CachedFrame, CacheNode } from "./types";
+import { compareTimes } from "../util.js";
+import { CachedFrame, CacheNode } from "./types.js";
 
 interface VisDataCacheSettings {
     maxSize: number;
