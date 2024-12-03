@@ -12,6 +12,7 @@ export type {
     VisDataMessage,
     Plot,
     AgentData,
+    VolumeLoadingMode,
 } from "./simularium";
 export type { ISimulariumFile } from "./simularium/ISimulariumFile";
 export type { TimeData } from "./viewport";

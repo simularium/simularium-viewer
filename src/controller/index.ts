@@ -8,6 +8,7 @@ import {
     FILE_STATUS_SUCCESS,
     FILE_STATUS_FAIL,
     PlotConfig,
+    VolumeLoadingMode,
 } from "../simularium/types";
 
 import { ClientSimulator } from "../simularium/ClientSimulator";
@@ -495,6 +496,10 @@ export default class SimulariumController {
         if (this.simulator) {
             this.simulator.setTrajectoryFileInfoHandler(callback);
         }
+    }
+
+    public setVolumeLoadingMode(mode: VolumeLoadingMode): void {
+        this.visGeometry?.setVolumeLoadingMode(mode);
     }
 
     /**

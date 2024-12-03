@@ -177,6 +177,7 @@ class VisGeometry {
     private cameraDefault: CameraSpec;
     private fibers: InstancedFiberGroup;
     private focusMode: boolean;
+    private volumeLoadingMode: VolumeLoadingMode;
     public gui?: Pane;
 
     private cam1: CameraSpec;
@@ -212,6 +213,7 @@ class VisGeometry {
         this.rotateDistance = DEFAULT_CAMERA_Z_POSITION;
         // will store data for all agents that are drawing paths
         this.agentPaths = new Map<number, AgentPath>();
+        this.volumeLoadingMode = VolumeLoadingMode.NONE;
 
         this.fibers = new InstancedFiberGroup();
 
@@ -669,6 +671,10 @@ class VisGeometry {
 
     public setFocusMode(focus: boolean): void {
         this.focusMode = focus;
+    }
+
+    public setVolumeLoadingMode(mode: VolumeLoadingMode): void {
+        this.volumeLoadingMode = mode;
     }
 
     public getObjectData(id: number): AgentData {
@@ -1983,11 +1989,8 @@ class VisGeometry {
         }
     }
 
-    public update(
-        agents: CachedFrame,
-        volumeLoadingMode?: VolumeLoadingMode
-    ): Promise<void> {
-        return this.updateScene(agents, volumeLoadingMode);
+    public update(agents: CachedFrame): Promise<void> {
+        return this.updateScene(agents, this.volumeLoadingMode);
     }
 }
 
