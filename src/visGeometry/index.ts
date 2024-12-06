@@ -439,6 +439,7 @@ class VisGeometry {
                 g: this.backgroundColor.g * 255,
                 b: this.backgroundColor.b * 255,
             },
+            showBounds: true,
         };
 
         this.gui.addInput(settings, "bgcolor").on("change", (event) => {
@@ -447,6 +448,9 @@ class VisGeometry {
                 event.value.g / 255.0,
                 event.value.b / 255.0,
             ]);
+        });
+        this.gui.addInput(settings, "showBounds").on("change", (event) => {
+            this.setShowBounds(event.value);
         });
         this.gui.addButton({ title: "Capture Frame" }).on("click", () => {
             this.render(0);
