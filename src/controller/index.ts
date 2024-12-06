@@ -220,6 +220,7 @@ export default class SimulariumController {
     public abortRemoteSimulation(): void {
         if (this.simulator) {
             this.simulator.abortRemoteSim();
+            this.isStreaming = false;
         }
     }
 

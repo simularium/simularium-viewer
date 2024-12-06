@@ -24,6 +24,7 @@ import SimulariumViewer, {
     ErrorLevel,
     NetConnectionParams,
     TrajectoryFileInfo,
+    CacheLog,
 } from "../../src/index";
 import { nullAgent, TrajectoryType } from "../../src/constants";
 
@@ -96,6 +97,7 @@ interface ViewerState {
     initialPlay: boolean;
     firstFrameTime: number;
     followObjectData: AgentData;
+    cacheLog: CacheLog;
 }
 
 const simulariumController = new SimulariumController({});
@@ -129,6 +131,16 @@ const initialState: ViewerState = {
     initialPlay: true,
     firstFrameTime: 0,
     followObjectData: nullAgent(),
+    cacheLog: {
+        size: 0,
+        numFrames: 0,
+        maxSize: 0,
+        enabled: false,
+        firstFrameNumber: 0,
+        firstFrameTime: 0,
+        lastFrameNumber: 0,
+        lastFrameTime: 0,
+    },
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
@@ -680,6 +692,13 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         this.setState({ followObjectData: agentData });
     };
 
+    public handleCacheUpdate = (log: CacheLog) => {
+           this.setState({
+            cacheLog: log
+        });
+    }
+
+
     public render(): JSX.Element {
         if (this.state.filePending) {
             const fileType = this.state.filePending.type;
@@ -766,11 +785,11 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 <button onClick={() => simulariumController.resumePlayback()}>
                     Play
                 </button>
-                <button onClick={this.handlePause.bind(this)}>Pause</button>
+                <button onClick={this.handlePause.bind(this)}>Pause playback</button>
                 <button
                     onClick={() => simulariumController.abortRemoteSimulation()}
                 >
-                    stop
+                    stop / abort sim
                 </button>
                 <button onClick={this.gotoPreviousFrame.bind(this)}>
                     Previous Frame
@@ -979,16 +998,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                             ? "streaming"
                             : "not streaming"
                     }
-                    cacheSize={simulariumController.visData.frameCache.size}
-                    cacheEnabled={
-                        simulariumController.visData.frameCache.cacheEnabled
-                    }
-                    maxSize={simulariumController.visData.frameCache.maxSize}
-                    firstFrameNumber={simulariumController.visData.frameCache.getFirstFrameNumber()}
-                    lastFrameNumber={simulariumController.visData.frameCache.getLastFrameNumber()}
-                    getFirstFrameNumber={() => {return simulariumController.visData.frameCache.head?.data.frameNumber! || 66}}
-                    getLastFrameNumber={() => simulariumController.visData.frameCache.getLastFrameNumber()}
-                    currentPlaybackFrame={this.state.currentFrame}
+                    cacheLog={this.state.cacheLog}
                     totalDuration={Math.ceil(
                         this.state.totalDuration / this.state.timeStep
                     )}
@@ -1027,6 +1037,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         lockedCamera={false}
                         disableCache={false}
                         maxCacheSize={Infinity} //  means no limit, provide limits in bytes, 1MB = 1000000, 1GB = 1000000000
+                        onCacheUpdate={this.handleCacheUpdate.bind(this)}
                     />
                 </div>
             </div>

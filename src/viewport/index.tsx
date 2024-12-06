@@ -11,6 +11,7 @@ import {
     SelectionInterface,
     SelectionStateInfo,
     UIDisplayData,
+    CacheLog,
 } from "../simularium";
 import { AgentData, TrajectoryFileInfoAny } from "../simularium/types";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
@@ -49,6 +50,7 @@ type ViewportProps = {
     onFollowObjectChanged?: (agentData: AgentData) => void; // passes agent data about the followed agent to the front end
     maxCacheSize?: number;
     preFetchRatio?: number;
+    onCacheUpdate?: (log: CacheLog) => void;
 } & Partial<DefaultProps>;
 
 const defaultProps = {
@@ -131,7 +133,7 @@ class Viewport extends React.Component<
         this.props.simulariumController.visData.frameCache.changeSettings({
             cacheEnabled: !props.disableCache,
             maxSize: props.maxCacheSize,
-            preFetchRatio: props.preFetchRatio,
+            onUpdate: props.onCacheUpdate,
         });
         if (props.onError) {
             this.props.simulariumController.visData.setOnError(props.onError);
