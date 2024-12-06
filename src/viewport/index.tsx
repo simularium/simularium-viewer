@@ -49,7 +49,6 @@ type ViewportProps = {
     disableCache?: boolean;
     onFollowObjectChanged?: (agentData: AgentData) => void; // passes agent data about the followed agent to the front end
     maxCacheSize?: number;
-    preFetchRatio?: number;
     onCacheUpdate?: (log: CacheLog) => void;
 } & Partial<DefaultProps>;
 
@@ -324,7 +323,6 @@ class Viewport extends React.Component<
             selectionStateInfo,
             lockedCamera,
             disableCache,
-            preFetchRatio,
         } = this.props;
 
         if (selectionStateInfo) {
@@ -390,11 +388,6 @@ class Viewport extends React.Component<
         if (prevProps.disableCache !== disableCache) {
             this.props.simulariumController.visData.frameCache.changeSettings({
                 cacheEnabled: !disableCache,
-            });
-        }
-        if (prevProps.preFetchRatio !== preFetchRatio) {
-            this.props.simulariumController.visData.frameCache.changeSettings({
-                preFetchRatio: preFetchRatio,
             });
         }
         if (prevState.showRenderParamsGUI !== this.state.showRenderParamsGUI) {

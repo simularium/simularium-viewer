@@ -15,7 +15,6 @@ class VisDataCache {
     public size: number;
     private _maxSize: number;
     private _cacheEnabled: boolean;
-    private _preFetchRatio: number;
     private cacheUpdateCallback: ((log: CacheLog) => void) | null;
 
     constructor(settings?: Partial<VisDataCacheSettings>) {
@@ -31,7 +30,6 @@ class VisDataCache {
         this.size = 0;
         this._maxSize = Infinity;
         this._cacheEnabled = true;
-        this._preFetchRatio = DEFAULT_PRE_FETCH_RATIO;
         this.cacheUpdateCallback = null;
 
         if (settings) {
@@ -81,10 +79,6 @@ class VisDataCache {
 
     public get cacheSizeLimited(): boolean {
         return this._maxSize !== Infinity;
-    }
-
-    public get preFetchRatio(): number {
-        return this._preFetchRatio;
     }
 
     public hasFrames(): boolean {
