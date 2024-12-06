@@ -145,6 +145,7 @@ class VisGeometry {
     public hemiLight: HemisphereLight;
     public boundingBox!: Box3;
     public boundingBoxMesh!: Box3Helper;
+    public showBounds: boolean;
     public tickMarksMesh!: LineSegments;
     public tickIntervalLength: number;
     // front and back of transformed bounds in camera space
@@ -227,6 +228,7 @@ class VisGeometry {
         this.instancedMeshGroup.name = "instanced meshes for agents";
         this.scene.add(this.instancedMeshGroup);
 
+        this.showBounds = true;
         this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
 
         this.dl = new DirectionalLight(0xffffff, 0.6);
@@ -1068,8 +1070,8 @@ class VisGeometry {
             );
 
             // final pass, add extra stuff on top: bounding box and line paths
-            this.boundingBoxMesh.visible = true;
-            this.tickMarksMesh.visible = true;
+            this.boundingBoxMesh.visible = this.showBounds;
+            this.tickMarksMesh.visible = this.showBounds;
             this.agentPathGroup.visible = true;
 
             this.threejsrenderer.autoClear = false;
@@ -1245,7 +1247,6 @@ class VisGeometry {
         boundsAsTuple: Bounds
     ): void {
         const [minX, minY, minZ, maxX, maxY, maxZ] = boundsAsTuple;
-        const visible = this.tickMarksMesh ? this.tickMarksMesh.visible : true;
 
         const longestEdgeLength = Math.max(...volumeDimensions);
         // Use the length of the longest bounding box edge to determine the tick interval (scale bar) length
@@ -1375,14 +1376,11 @@ class VisGeometry {
             color: BOUNDING_BOX_COLOR,
         });
         this.tickMarksMesh = new LineSegments(lineGeometry, lineMaterial);
-        this.tickMarksMesh.visible = visible;
+        this.tickMarksMesh.visible = this.showBounds;
     }
 
     public createBoundingBox(boundsAsTuple: Bounds): void {
         const [minX, minY, minZ, maxX, maxY, maxZ] = boundsAsTuple;
-        const visible = this.boundingBoxMesh
-            ? this.boundingBoxMesh.visible
-            : true;
         this.boundingBox = new Box3(
             new Vector3(minX, minY, minZ),
             new Vector3(maxX, maxY, maxZ)
@@ -1391,7 +1389,7 @@ class VisGeometry {
             this.boundingBox,
             BOUNDING_BOX_COLOR
         );
-        this.boundingBoxMesh.visible = visible;
+        this.boundingBoxMesh.visible = this.showBounds;
     }
 
     public resetBounds(volumeDimensions?: number[]): void {
@@ -1877,8 +1875,7 @@ class VisGeometry {
     }
 
     public setShowBounds(showBounds: boolean): void {
-        this.boundingBoxMesh.visible = showBounds;
-        this.tickMarksMesh.visible = showBounds;
+        this.showBounds = showBounds;
     }
 
     public showPathForAgent(id: number, visible: boolean): void {
