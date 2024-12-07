@@ -54,3 +54,4 @@ export const nullAgent = (): AgentData => {
 export const AGENT_HEADER_SIZE = 3; // frameNumber, time, agentCount
 
 export const BYTE_SIZE_64_BIT_NUM = 8;
+export const DEFAULT_PRE_FETCH_RATIO = 0;

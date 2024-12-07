@@ -15,8 +15,14 @@ class VisData {
     private lockedForFrame: boolean;
 
     private currentFrameNumber: number;
+    private isPlaybackPaused: boolean;
+    public setPlaybackPaused(paused: boolean): void {
+        this.isPlaybackPaused = paused;
+    }
+    public onCacheLimitReached: (latestFrame: number) => void;
 
     public timeStepSize: number;
+    public totalSteps: number;
     public onError: (error: FrontEndError) => void;
 
     private static parseOneBinaryFrame(data: ArrayBuffer): CachedFrame {
@@ -42,12 +48,21 @@ class VisData {
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
         this.timeStepSize = 0;
+        this.totalSteps = 0;
+        this.isPlaybackPaused = false;
 
         this.onError = noop;
+        this.onCacheLimitReached = noop;
     }
 
     public setOnError(onError: (error: FrontEndError) => void): void {
         this.onError = onError;
+    }
+
+    public setOnCacheLimitReached(
+        onCacheLimitReached: (latestFrame: number) => void
+    ): void {
+        this.onCacheLimitReached = onCacheLimitReached;
     }
 
     public get currentFrameData(): CachedFrame {
@@ -184,6 +199,35 @@ class VisData {
         ) {
             this.frameExceedsCacheSizeError(frame.size);
             return;
+        }
+
+        // TODO: the code below and associated callbacks
+        // are not finished/finalized
+        // we currently need controller to tell visData whether playback
+        // is ongoing and to send a callback to correct the "backend time"
+        // when it gets out of sync with the end of the cache
+        // as vidata does not directly interact with the simulator
+        if (this.frameCache.size + frame.size > this.frameCache.maxSize) {
+            // if playback is ongoing we can trim from the beginning of the cache
+            // and add frames to the end of the cache
+            if (!this.isPlaybackPaused) {
+                const playbackFrame = this.currentFrameData;
+                if (
+                    playbackFrame.frameNumber >
+                    this.frameCache.getFirstFrameNumber()
+                ) {
+                    this.frameCache.trimCache(playbackFrame.size);
+                    this.frameCache.addFrame(frame);
+                } else {
+                    // If playback is not advancing, we are in prefetch mode
+                    // (streaming but playback paused)
+                    // Stop streaming, reject the frame, reset backend "time"
+                    // to the latest frame in the cache
+                    this.onCacheLimitReached(
+                        this.frameCache.getLastFrameTime()
+                    );
+                }
+            }
         }
         this.frameCache.addFrame(frame);
     }

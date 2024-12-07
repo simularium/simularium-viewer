@@ -11,6 +11,7 @@ import {
     SelectionInterface,
     SelectionStateInfo,
     UIDisplayData,
+    CacheLog,
 } from "../simularium";
 import { AgentData, TrajectoryFileInfoAny } from "../simularium/types";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
@@ -48,6 +49,7 @@ type ViewportProps = {
     disableCache?: boolean;
     onFollowObjectChanged?: (agentData: AgentData) => void; // passes agent data about the followed agent to the front end
     maxCacheSize?: number;
+    onCacheUpdate?: (log: CacheLog) => void;
 } & Partial<DefaultProps>;
 
 const defaultProps = {
@@ -130,6 +132,7 @@ class Viewport extends React.Component<
         this.props.simulariumController.visData.frameCache.changeSettings({
             cacheEnabled: !props.disableCache,
             maxSize: props.maxCacheSize,
+            onUpdate: props.onCacheUpdate,
         });
         if (props.onError) {
             this.props.simulariumController.visData.setOnError(props.onError);
@@ -187,6 +190,7 @@ class Viewport extends React.Component<
 
         simulariumController.visData.timeStepSize =
             trajectoryFileInfo.timeStepSize;
+        simulariumController.visData.totalSteps = trajectoryFileInfo.totalSteps;
 
         const bx = trajectoryFileInfo.size.x;
         const by = trajectoryFileInfo.size.y;
@@ -657,7 +661,7 @@ class Viewport extends React.Component<
                 }
             }
 
-            if (!visData.atLatestFrame() && !simulariumController.paused()) {
+            if (!visData.atLatestFrame() && !simulariumController.playbackPaused()) {
                 visData.gotoNextFrame();
             }
             this.stats.begin();
