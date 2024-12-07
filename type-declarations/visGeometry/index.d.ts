@@ -45,6 +45,7 @@ declare class VisGeometry {
     hemiLight: HemisphereLight;
     boundingBox: Box3;
     boundingBoxMesh: Box3Helper;
+    showBounds: boolean;
     tickMarksMesh: LineSegments;
     tickIntervalLength: number;
     private boxNearZ;

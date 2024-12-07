@@ -97,6 +97,7 @@ var VisGeometry = /*#__PURE__*/function () {
     _defineProperty(this, "hemiLight", void 0);
     _defineProperty(this, "boundingBox", void 0);
     _defineProperty(this, "boundingBoxMesh", void 0);
+    _defineProperty(this, "showBounds", void 0);
     _defineProperty(this, "tickMarksMesh", void 0);
     _defineProperty(this, "tickIntervalLength", void 0);
     // front and back of transformed bounds in camera space
@@ -168,6 +169,7 @@ var VisGeometry = /*#__PURE__*/function () {
     this.instancedMeshGroup = new Group();
     this.instancedMeshGroup.name = "instanced meshes for agents";
     this.scene.add(this.instancedMeshGroup);
+    this.showBounds = true;
     this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
     this.dl = new DirectionalLight(0xffffff, 0.6);
     this.dl.position.set(0, 0, 1);
@@ -386,10 +388,14 @@ var VisGeometry = /*#__PURE__*/function () {
           r: this.backgroundColor.r * 255,
           g: this.backgroundColor.g * 255,
           b: this.backgroundColor.b * 255
-        }
+        },
+        showBounds: true
       };
       this.gui.addInput(settings, "bgcolor").on("change", function (event) {
         _this.setBackgroundColor([event.value.r / 255.0, event.value.g / 255.0, event.value.b / 255.0]);
+      });
+      this.gui.addInput(settings, "showBounds").on("change", function (event) {
+        _this.setShowBounds(event.value);
       });
       this.gui.addButton({
         title: "Capture Frame"
@@ -980,8 +986,8 @@ var VisGeometry = /*#__PURE__*/function () {
         this.renderer.render(this.threejsrenderer, this.scene, this.camera, null);
 
         // final pass, add extra stuff on top: bounding box and line paths
-        this.boundingBoxMesh.visible = true;
-        this.tickMarksMesh.visible = true;
+        this.boundingBoxMesh.visible = this.showBounds;
+        this.tickMarksMesh.visible = this.showBounds;
         this.agentPathGroup.visible = true;
         this.threejsrenderer.autoClear = false;
         // hide everything except the wireframe and paths, and render with the standard renderer
@@ -1136,7 +1142,6 @@ var VisGeometry = /*#__PURE__*/function () {
         maxX = _boundsAsTuple[3],
         maxY = _boundsAsTuple[4],
         maxZ = _boundsAsTuple[5];
-      var visible = this.tickMarksMesh ? this.tickMarksMesh.visible : true;
       var longestEdgeLength = Math.max.apply(Math, _toConsumableArray(volumeDimensions));
       // Use the length of the longest bounding box edge to determine the tick interval (scale bar) length
       this.setTickIntervalLength(longestEdgeLength);
@@ -1183,7 +1188,7 @@ var VisGeometry = /*#__PURE__*/function () {
         color: BOUNDING_BOX_COLOR
       });
       this.tickMarksMesh = new LineSegments(lineGeometry, lineMaterial);
-      this.tickMarksMesh.visible = visible;
+      this.tickMarksMesh.visible = this.showBounds;
     }
   }, {
     key: "createBoundingBox",
@@ -1195,10 +1200,9 @@ var VisGeometry = /*#__PURE__*/function () {
         maxX = _boundsAsTuple2[3],
         maxY = _boundsAsTuple2[4],
         maxZ = _boundsAsTuple2[5];
-      var visible = this.boundingBoxMesh ? this.boundingBoxMesh.visible : true;
       this.boundingBox = new Box3(new Vector3(minX, minY, minZ), new Vector3(maxX, maxY, maxZ));
       this.boundingBoxMesh = new Box3Helper(this.boundingBox, BOUNDING_BOX_COLOR);
-      this.boundingBoxMesh.visible = visible;
+      this.boundingBoxMesh.visible = this.showBounds;
     }
   }, {
     key: "resetBounds",
@@ -1571,8 +1575,7 @@ var VisGeometry = /*#__PURE__*/function () {
   }, {
     key: "setShowBounds",
     value: function setShowBounds(showBounds) {
-      this.boundingBoxMesh.visible = showBounds;
-      this.tickMarksMesh.visible = showBounds;
+      this.showBounds = showBounds;
     }
   }, {
     key: "showPathForAgent",
