@@ -1,12 +1,12 @@
 import { noop } from "lodash";
 
-import { nullCachedFrame } from "../util";
+import { nullCachedFrame } from "../util.js";
 
-import { VisDataMessage, CachedFrame } from "./types";
-import { parseVisDataMessage } from "./VisDataParse";
-import { VisDataCache } from "./VisDataCache";
-import { ErrorLevel, FrontEndError } from "./FrontEndError";
-import { BYTE_SIZE_64_BIT_NUM } from "../constants";
+import { VisDataMessage, CachedFrame } from "./types.js";
+import { parseVisDataMessage } from "./VisDataParse.js";
+import { VisDataCache } from "./VisDataCache.js";
+import { ErrorLevel, FrontEndError } from "./FrontEndError.js";
+import { BYTE_SIZE_64_BIT_NUM } from "../constants.js";
 
 class VisData {
     public frameCache: VisDataCache;

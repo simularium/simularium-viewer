@@ -1,6 +1,6 @@
-import { VisDataMessage, AGENT_OBJECT_KEYS, CachedFrame } from "./types";
-import { FrontEndError, ErrorLevel } from "./FrontEndError";
-import { AGENT_HEADER_SIZE } from "../constants";
+import { VisDataMessage, AGENT_OBJECT_KEYS, CachedFrame } from "./types.js";
+import { FrontEndError, ErrorLevel } from "./FrontEndError.js";
+import { AGENT_HEADER_SIZE } from "../constants.js";
 
 const FRAME_DATA_SIZE = AGENT_OBJECT_KEYS.length;
 

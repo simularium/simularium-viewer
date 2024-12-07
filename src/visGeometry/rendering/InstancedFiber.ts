@@ -16,12 +16,12 @@ import {
     Matrix4,
 } from "three";
 
-import { createShaders } from "./InstancedFiberShader";
+import { createShaders } from "./InstancedFiberShader.js";
 import {
     MRTShaders,
     setRenderPass,
     updateProjectionMatrix,
-} from "./MultipassMaterials";
+} from "./MultipassMaterials.js";
 
 const tmpQuaternion = new Quaternion();
 const tmpEuler = new Euler();

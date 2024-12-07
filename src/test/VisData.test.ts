@@ -3,13 +3,13 @@ import {
     VisDataMessage,
     NetMessageEnum,
     FrontEndError,
-} from "../simularium";
+} from "../simularium/index.js";
 import {
     calculateBufferSize,
     parseVisDataMessage,
-} from "../simularium/VisDataParse";
-import { AGENT_OBJECT_KEYS, CachedFrame } from "../simularium/types";
-import { nullCachedFrame } from "../util";
+} from "../simularium/VisDataParse.js";
+import { AGENT_OBJECT_KEYS, CachedFrame } from "../simularium/types.js";
+import { nullCachedFrame } from "../util.js";
 
 // Sample data of a single agent of type '7'
 //  moving linearly from (0,0,0) to (5,5,5)

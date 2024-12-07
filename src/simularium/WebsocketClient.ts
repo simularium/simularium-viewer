@@ -1,6 +1,6 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
-import { FrontEndError, ErrorLevel } from "./FrontEndError";
+import { FrontEndError, ErrorLevel } from "./FrontEndError.js";
 
 export interface NetMessage {
     connId: string;

@@ -1,5 +1,5 @@
-export type { NetConnectionParams } from "./WebsocketClient";
-export type { IClientSimulatorImpl } from "./localSimulators/IClientSimulatorImpl";
+export type { NetConnectionParams } from "./WebsocketClient.js";
+export type { IClientSimulatorImpl } from "./localSimulators/IClientSimulatorImpl.js";
 export type {
     VisDataMessage,
     VisDataFrame,
@@ -9,19 +9,19 @@ export type {
     SimulariumFileFormat,
     Plot,
     AgentData,
-} from "./types";
+} from "./types.js";
 
 export type {
     SelectionStateInfo,
     UIDisplayData,
     SelectionEntry,
-} from "./SelectionInterface";
-export { ErrorLevel, FrontEndError } from "./FrontEndError";
-export { NetMessageEnum } from "./WebsocketClient";
-export { RemoteSimulator } from "./RemoteSimulator";
-export { VisData } from "./VisData";
-export { ThreadUtil } from "./ThreadUtil";
-export { SelectionInterface } from "./SelectionInterface";
-export { Orchestrator } from "./orchestrator";
-export { default as VisTypes } from "./VisTypes";
-export { ClientMessageEnum } from "./localSimulators/IClientSimulatorImpl";
+} from "./SelectionInterface.js";
+export { ErrorLevel, FrontEndError } from "./FrontEndError.js";
+export { NetMessageEnum } from "./WebsocketClient.js";
+export { RemoteSimulator } from "./RemoteSimulator.js";
+export { VisData } from "./VisData.js";
+export { ThreadUtil } from "./ThreadUtil.js";
+export { SelectionInterface } from "./SelectionInterface.js";
+export { Orchestrator } from "./orchestrator/index.js";
+export { default as VisTypes } from "./VisTypes.js";
+export { ClientMessageEnum } from "./localSimulators/IClientSimulatorImpl.js";

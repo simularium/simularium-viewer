@@ -1,6 +1,6 @@
 import { BufferGeometry, Color, Object3D } from "three";
-import PDBModel from "./PDBModel";
-import { MRTShaders } from "./rendering/MultipassMaterials";
+import PDBModel from "./PDBModel.js";
+import { MRTShaders } from "./rendering/MultipassMaterials.js";
 
 export interface GeometryInstanceContainer {
     replaceGeometry: (newGeometry: BufferGeometry, name: string) => void;

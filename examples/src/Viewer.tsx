@@ -3,19 +3,7 @@ import { isEqual, findIndex, reduce } from "lodash";
 import { v4 as uuidv4 } from "uuid";
 import { InputParams } from "tweakpane";
 
-/**
- * NOTE: if you are debugging an import/build issue
- * on the front end, you may need to switch to the
- * following import statements to reproduce the issue
- * here.
- */
-// import SimulariumViewer, {
-//     SimulariumController,
-//     RenderStyle,
-//     loadSimulariumFile,
-//     FrontEndError,
-//     ErrorLevel,
-// } from "../es";
+// viewer package imports
 import SimulariumViewer, {
     SimulariumController,
     RenderStyle,
@@ -24,16 +12,19 @@ import SimulariumViewer, {
     ErrorLevel,
     NetConnectionParams,
     TrajectoryFileInfo,
-} from "../../src/index";
-import { nullAgent, TrajectoryType } from "../../src/constants";
-
+    nullAgent,
+    TrajectoryType,
+} from "@aics/simularium-viewer";
 import type {
     ISimulariumFile,
     UIDisplayData,
     SelectionStateInfo,
     SelectionEntry,
-} from "../../type-declarations";
-import { AgentData } from "../../type-declarations/simularium/types";
+    AgentData,
+} from "@aics/simularium-viewer";
+import "../../style/style.css";
+
+// local test bed imports
 import PointSimulator from "./simulators/PointSimulator";
 import BindingSimulator from "./simulators/BindingSimulator2D";
 import PointSimulatorLive from "./simulators/PointSimulatorLive";
@@ -47,7 +38,6 @@ import ColorPicker from "./Components/ColorPicker";
 import RecordMovieComponent from "./Components/RecordMovieComponent";
 import ConversionForm from "./Components/ConversionForm";
 import AgentMetadata from "./Components/AgentMetadata";
-
 import { agentColors } from "./constants";
 import { BaseType, CustomType } from "./types";
 import {
@@ -58,7 +48,6 @@ import {
     UI_TEMPLATE_URL_ROOT,
 } from "./api-settings";
 
-import "../../style/style.css";
 import "./style.css";
 
 let playbackFile = "TEST_LIVEMODE_API";
@@ -470,7 +459,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             },
             []
         );
-        const uniqueTags: string[] = [...new Set(allTags)];
+        const uniqueTags: string[] = [...new Set(allTags)] as string[];
         if (
             isEqual(uiDisplayData, this.state.selectionStateInfo.appliedColors)
         ) {

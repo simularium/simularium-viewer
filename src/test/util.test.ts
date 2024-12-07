@@ -1,10 +1,10 @@
-import { FrontEndError } from "../simularium";
+import { FrontEndError } from "../simularium/index.js";
 import {
     checkAndSanitizePath,
     compareTimes,
     getAgentDataFromBuffer,
     getNextAgentOffset,
-} from "../util";
+} from "../util.js";
 
 describe("util", () => {
     describe("compareTimes", () => {

@@ -1,5 +1,3 @@
-import "regenerator-runtime/runtime";
-
 import * as Comlink from "comlink";
 import parsePdb from "parse-pdb";
 import {
@@ -10,12 +8,12 @@ import {
     Vector3,
 } from "three";
 
-import type { KMeansWorkerType } from "./workers/KMeansWorker";
-import { getObject } from "./cifparser";
+import type { KMeansWorkerType } from "./workers/KMeansWorker.js";
+import { getObject } from "./cifparser.js";
 
-import KMeans from "./rendering/KMeans3d";
-import TaskQueue from "../simularium/TaskQueue";
-import { InstancedMesh, InstanceType } from "./rendering/InstancedMesh";
+import KMeans from "./rendering/KMeans3d.js";
+import TaskQueue from "../simularium/TaskQueue.js";
+import { InstancedMesh, InstanceType } from "./rendering/InstancedMesh.js";
 
 interface PDBAtom {
     serial?: number;

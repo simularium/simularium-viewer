@@ -1,5 +1,5 @@
-import PDBModel from "../PDBModel";
-import VisAgent from "../VisAgent";
+import PDBModel from "../PDBModel.js";
+import VisAgent from "../VisAgent.js";
 
 import {
     BufferGeometry,

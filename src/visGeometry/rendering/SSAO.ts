@@ -1,4 +1,4 @@
-import RenderToBuffer from "./RenderToBuffer";
+import RenderToBuffer from "./RenderToBuffer.js";
 
 import {
     Color,
@@ -6,7 +6,7 @@ import {
     OrthographicCamera,
     PerspectiveCamera,
     WebGLRenderer,
-    WebGLRenderTarget
+    WebGLRenderTarget,
 } from "three";
 
 class SSAO1Pass {

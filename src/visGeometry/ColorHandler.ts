@@ -1,6 +1,6 @@
 import { map, round, isEqual } from "lodash";
 import { Color } from "three";
-import { AgentColorInfo } from "./types";
+import { AgentColorInfo } from "./types.js";
 
 export function convertColorStringToNumber(color: number | string): number {
     if (typeof color !== "string") {

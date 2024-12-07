@@ -1,9 +1,13 @@
-import type { ISimulariumFile } from "./simularium/ISimulariumFile";
-import JsonFileReader from "./simularium/JsonFileReader";
-import BinaryFileReader from "./simularium/BinaryFileReader";
-import { AGENT_OBJECT_KEYS, AgentData, CachedFrame } from "./simularium/types";
-import { nullAgent } from "./constants";
-import { FrontEndError } from "./simularium";
+import type { ISimulariumFile } from "./simularium/ISimulariumFile.js";
+import JsonFileReader from "./simularium/JsonFileReader.js";
+import BinaryFileReader from "./simularium/BinaryFileReader.js";
+import {
+    AGENT_OBJECT_KEYS,
+    AgentData,
+    CachedFrame,
+} from "./simularium/types.js";
+import { nullAgent } from "./constants.js";
+import { FrontEndError } from "./simularium/index.js";
 
 export const compareTimes = (
     time1: number,

@@ -1,6 +1,6 @@
-import type { ISimulariumFile } from "./ISimulariumFile";
-import type { Plot, TrajectoryFileInfo, VisDataFrame } from "./types";
-import { compareTimes } from "../util";
+import type { ISimulariumFile } from "./ISimulariumFile.js";
+import type { Plot, TrajectoryFileInfo, VisDataFrame } from "./types.js";
+import { compareTimes } from "../util.js";
 
 const enum BlockTypeEnum {
     // type = 0 : spatial data block in JSON

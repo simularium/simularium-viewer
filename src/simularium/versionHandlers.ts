@@ -1,15 +1,15 @@
 import { mapValues } from "lodash";
 import * as si from "si-prefix";
 
-import { DEFAULT_CAMERA_SPEC_PERSPECTIVE } from "../constants";
-import { FrontEndError, ErrorLevel } from "./FrontEndError";
+import { DEFAULT_CAMERA_SPEC_PERSPECTIVE } from "../constants.js";
+import { FrontEndError, ErrorLevel } from "./FrontEndError.js";
 import {
     AgentDisplayDataWithGeometry,
     TrajectoryFileInfo,
     TrajectoryFileInfoAny,
     TrajectoryFileInfoV1,
-} from "./types";
-import { GeometryDisplayType } from "../visGeometry/types";
+} from "./types.js";
+import { GeometryDisplayType } from "../visGeometry/types.js";
 
 // the data may come in missing any of these values
 export interface AgentTypeVisDataPreProcessing {

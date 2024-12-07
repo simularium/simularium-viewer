@@ -1,13 +1,13 @@
-import PDBGBufferShaders from "./PDBGBufferShaders";
-import { InstancedFiberGroup } from "./InstancedFiber";
+import PDBGBufferShaders from "./PDBGBufferShaders.js";
+import { InstancedFiberGroup } from "./InstancedFiber.js";
 import {
     MRTShaders,
     setRenderPass,
     updateProjectionMatrix,
     updateResolution,
-} from "./MultipassMaterials";
+} from "./MultipassMaterials.js";
 
-import { GeometryInstanceContainer } from "../types";
+import { GeometryInstanceContainer } from "../types.js";
 
 import {
     Color,

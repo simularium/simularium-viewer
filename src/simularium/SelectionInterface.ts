@@ -1,7 +1,7 @@
 import { filter, find, map, uniq } from "lodash";
-import { EncodedTypeMapping } from "./types";
-import { convertColorNumberToString } from "../visGeometry/ColorHandler";
-import { ColorAssignment } from "../visGeometry/types";
+import { EncodedTypeMapping } from "./types.js";
+import { convertColorNumberToString } from "../visGeometry/ColorHandler.js";
+import { ColorAssignment } from "../visGeometry/types.js";
 
 // An individual entry parsed from an encoded name
 // The encoded names can be just a name or a name plus a
