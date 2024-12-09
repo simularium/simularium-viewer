@@ -1,6 +1,6 @@
 import { map } from "lodash";
 import React from "react";
-import InputSwitch from "./InputSwitch"
+import InputSwitch from "./InputSwitch";
 
 interface InputFormProps {
     template: { [key: string]: any };
