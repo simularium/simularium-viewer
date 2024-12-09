@@ -1,4 +1,4 @@
-import { TaskQueue, REASON_CANCELLED } from "../simularium/TaskQueue";
+import { TaskQueue, REASON_CANCELLED } from "../simularium/TaskQueue.js";
 
 const delay = (t) => {
     const resultPromise = new Promise((resolve) => {

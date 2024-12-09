@@ -1,13 +1,13 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
 
-import { VisDataMessage, TrajectoryFileInfo } from "./types";
+import { VisDataMessage, TrajectoryFileInfo } from "./types.js";
 import {
     ClientMessageEnum,
     ClientPlayBackType,
     IClientSimulatorImpl,
-} from "./localSimulators/IClientSimulatorImpl";
-import { ISimulator } from "./ISimulator";
+} from "./localSimulators/IClientSimulatorImpl.js";
+import { ISimulator } from "./ISimulator.js";
 
 // a ClientSimulator is a ISimulator that is expected to run purely in procedural javascript in the browser client,
 // with the procedural implementation in a IClientSimulatorImpl
@@ -213,7 +213,7 @@ export class ClientSimulator implements ISimulator {
         const jsonData = {
             msgType: ClientMessageEnum.ID_VIS_DATA_REQUEST,
             mode: ClientPlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
-            "file-name": fileName,
+            fileName: fileName,
         };
 
         return this.connectToRemoteServer(this.getIp()).then(() => {

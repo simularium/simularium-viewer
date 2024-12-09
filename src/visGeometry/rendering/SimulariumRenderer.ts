@@ -1,12 +1,12 @@
-import SSAO1Pass from "./SSAO";
-import GBufferPass from "./GBufferPass";
-import BlurPass from "./GaussianBlur";
-import CompositePass from "./CompositePass";
-import ContourPass from "./ContourPass";
-import DrawBufferPass from "./DrawBufferPass";
-import HitTestHelper from "./HitTestHelper";
-import { InstancedFiberGroup } from "./InstancedFiber";
-import { GeometryInstanceContainer } from "../types";
+import SSAO1Pass from "./SSAO.js";
+import GBufferPass from "./GBufferPass.js";
+import BlurPass from "./GaussianBlur.js";
+import CompositePass from "./CompositePass.js";
+import ContourPass from "./ContourPass.js";
+import DrawBufferPass from "./DrawBufferPass.js";
+import HitTestHelper from "./HitTestHelper.js";
+import { InstancedFiberGroup } from "./InstancedFiber.js";
+import { GeometryInstanceContainer } from "../types.js";
 
 import {
     Color,

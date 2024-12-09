@@ -1,15 +1,17 @@
+import { vi } from "vitest";
+
 import {
     CONNECTION_SUCCESS_MSG,
     CONNECTION_FAIL_MSG,
-} from "../simularium/WebsocketClient";
-import { FrontEndError } from "../simularium/FrontEndError";
-import { RemoteSimulator } from "..";
-import { WebsocketClient } from "../simularium/WebsocketClient";
+} from "../simularium/WebsocketClient.js";
+import { FrontEndError } from "../simularium/FrontEndError.js";
+import { RemoteSimulator } from "../index.js";
+import { WebsocketClient } from "../simularium/WebsocketClient.js";
 
 describe("RemoteSimulator", () => {
     // Silence console.debug messages like this in Jest output:
     // "[netconnection] WS Connection Request Sent:  wss://..."
-    jest.spyOn(global.console, "debug").mockImplementation(() => jest.fn());
+    vi.spyOn(global.console, "debug").mockImplementation(() => vi.fn());
 
     const CONNECTION_SETTINGS = {
         serverIp: "dummy.uri.com",
@@ -33,7 +35,7 @@ describe("RemoteSimulator", () => {
         test("returns true if connection succeeds within allotted time with no retries", async () => {
             const websocketClient = new WebsocketClient(CONNECTION_SETTINGS);
             const simulator = new RemoteSimulator(websocketClient);
-            jest.spyOn(websocketClient, "waitForWebSocket").mockResolvedValue(
+            vi.spyOn(websocketClient, "waitForWebSocket").mockResolvedValue(
                 true
             );
 
@@ -50,7 +52,7 @@ describe("RemoteSimulator", () => {
         test("returns false if connection does not succeed within allotted time and number of retries", async () => {
             const websocketClient = new WebsocketClient(CONNECTION_SETTINGS);
             const simulator = new RemoteSimulator(websocketClient);
-            jest.spyOn(websocketClient, "waitForWebSocket").mockResolvedValue(
+            vi.spyOn(websocketClient, "waitForWebSocket").mockResolvedValue(
                 false
             );
 
@@ -68,7 +70,7 @@ describe("RemoteSimulator", () => {
         test("returns true if connection succeeds on the retry", async () => {
             const websocketClient = new WebsocketClient(CONNECTION_SETTINGS);
             const simulator = new RemoteSimulator(websocketClient);
-            const waitForWebSocket = jest.spyOn(
+            const waitForWebSocket = vi.spyOn(
                 websocketClient,
                 "waitForWebSocket"
             );
@@ -92,7 +94,7 @@ describe("RemoteSimulator", () => {
     describe("connectToRemoteServer", () => {
         test("emits a 'connection success' message if connection succeeds", async () => {
             const websocketClient = new WebsocketClient(CONNECTION_SETTINGS);
-            jest.spyOn(websocketClient, "checkConnection").mockResolvedValue(
+            vi.spyOn(websocketClient, "checkConnection").mockResolvedValue(
                 true
             );
 
@@ -101,7 +103,7 @@ describe("RemoteSimulator", () => {
         });
         test("emits error if connecting to server is unsuccessful", async () => {
             const websocketClient = new WebsocketClient(CONNECTION_SETTINGS);
-            jest.spyOn(websocketClient, "checkConnection").mockResolvedValue(
+            vi.spyOn(websocketClient, "checkConnection").mockResolvedValue(
                 false
             );
 
@@ -117,7 +119,7 @@ describe("RemoteSimulator", () => {
         test("does not throw error if connectToRemoteServer succeeds", async () => {
             const websocketClient = new WebsocketClient(CONNECTION_SETTINGS);
             const simulator = new RemoteSimulator(websocketClient);
-            jest.spyOn(simulator, "connectToRemoteServer").mockResolvedValue(
+            vi.spyOn(simulator, "connectToRemoteServer").mockResolvedValue(
                 CONNECTION_SUCCESS_MSG
             );
 
@@ -131,7 +133,7 @@ describe("RemoteSimulator", () => {
         test("throws error emitted by connectToRemoteServer as a FrontEndError if connection fails", async () => {
             const websocketClient = new WebsocketClient(CONNECTION_SETTINGS);
             const simulator = new RemoteSimulator(websocketClient);
-            jest.spyOn(simulator, "connectToRemoteServer").mockRejectedValue(
+            vi.spyOn(simulator, "connectToRemoteServer").mockRejectedValue(
                 new Error("Mock error message")
             );
 

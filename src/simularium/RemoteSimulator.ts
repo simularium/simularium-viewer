@@ -1,16 +1,16 @@
 import jsLogger from "js-logger";
 import { v4 as uuidv4 } from "uuid";
 import { ILogger } from "js-logger";
-import { FrontEndError, ErrorLevel } from "./FrontEndError";
+import { FrontEndError, ErrorLevel } from "./FrontEndError.js";
 import {
     WebsocketClient,
     NetMessageEnum,
     MessageEventLike,
-} from "./WebsocketClient";
-import type { NetMessage, ErrorMessage } from "./WebsocketClient";
-import { ISimulator } from "./ISimulator";
-import { TrajectoryFileInfoV2, VisDataMessage } from "./types";
-import { TrajectoryType } from "../constants";
+} from "./WebsocketClient.js";
+import type { NetMessage, ErrorMessage } from "./WebsocketClient.js";
+import { ISimulator } from "./ISimulator.js";
+import { TrajectoryFileInfoV2, VisDataMessage } from "./types.js";
+import { TrajectoryType } from "../constants.js";
 
 // a RemoteSimulator is a ISimulator that connects to the Octopus backend server
 // and plays back a trajectory specified in the NetConnectionParams

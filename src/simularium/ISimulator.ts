@@ -1,4 +1,4 @@
-import { VisDataMessage, TrajectoryFileInfo } from "./types";
+import { VisDataMessage, TrajectoryFileInfo } from "./types.js";
 
 // TODO we need to examine this whole interface and document it with comments here
 // what is each function expected to do, from the caller's perspective?

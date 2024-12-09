@@ -8,7 +8,7 @@ import {
     Vector4,
 } from "three";
 
-import { MRTShaders } from "./MultipassMaterials";
+import { MRTShaders } from "./MultipassMaterials.js";
 
 const vertexShader = `
 precision highp float;
