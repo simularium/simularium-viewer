@@ -18,7 +18,7 @@ const AgentMetadata = ({ agentData }: AgentMetadataProps): JSX.Element => {
                 position: x = {agentData.x}, y = {agentData.y}, z = {agentData.z}
             </div>
             <div>
-                rotation: x = {agentData.xrot}, y = {agentData.yrot}, z =
+                rotation: x = {agentData.xrot}, y = {agentData.yrot}, z ={" "}
                 {agentData.zrot}
             </div>
             <div> radius: {agentData.cr}</div>
