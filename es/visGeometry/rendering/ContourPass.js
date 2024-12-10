@@ -2,7 +2,7 @@ import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import { Color } from "three";
-import RenderToBuffer from "./RenderToBuffer";
+import RenderToBuffer from "./RenderToBuffer.js";
 var ContourPass = /*#__PURE__*/function () {
   function ContourPass() {
     _classCallCheck(this, ContourPass);
@@ -45,7 +45,7 @@ var ContourPass = /*#__PURE__*/function () {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _createClass(ContourPass, [{
+  return _createClass(ContourPass, [{
     key: "resize",
     value: function resize(x, y) {
       /* do nothing */
@@ -104,6 +104,5 @@ var ContourPass = /*#__PURE__*/function () {
       // renderer.setClearColor(c, a);
     }
   }]);
-  return ContourPass;
 }();
 export default ContourPass;

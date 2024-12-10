@@ -1,13 +1,13 @@
 import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
-import SSAO1Pass from "./SSAO";
-import GBufferPass from "./GBufferPass";
-import BlurPass from "./GaussianBlur";
-import CompositePass from "./CompositePass";
-import ContourPass from "./ContourPass";
-import DrawBufferPass from "./DrawBufferPass";
-import HitTestHelper from "./HitTestHelper";
+import SSAO1Pass from "./SSAO.js";
+import GBufferPass from "./GBufferPass.js";
+import BlurPass from "./GaussianBlur.js";
+import CompositePass from "./CompositePass.js";
+import ContourPass from "./ContourPass.js";
+import DrawBufferPass from "./DrawBufferPass.js";
+import HitTestHelper from "./HitTestHelper.js";
 import { FloatType, NearestFilter, RGBAFormat, WebGLMultipleRenderTargets, WebGLRenderTarget } from "three";
 var AGENTBUFFER = 0;
 var NORMALBUFFER = 1;
@@ -143,7 +143,7 @@ var SimulariumRenderer = /*#__PURE__*/function () {
     });
     this.ssaoBufferBlurred2.texture.generateMipmaps = false;
   }
-  _createClass(SimulariumRenderer, [{
+  return _createClass(SimulariumRenderer, [{
     key: "setupGui",
     value: function setupGui(gui) {
       var _this = this;
@@ -385,6 +385,5 @@ var SimulariumRenderer = /*#__PURE__*/function () {
       //this.drawBufferPass.render(renderer, target, this.positionBuffer);
     }
   }]);
-  return SimulariumRenderer;
 }();
 export default SimulariumRenderer;

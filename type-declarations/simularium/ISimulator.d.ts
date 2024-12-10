@@ -1,4 +1,4 @@
-import { VisDataMessage, TrajectoryFileInfo } from "./types";
+import { VisDataMessage, TrajectoryFileInfo } from "./types.js";
 export interface ISimulator {
     setTrajectoryFileInfoHandler(handler: (msg: TrajectoryFileInfo) => void): void;
     setTrajectoryDataHandler(handler: (msg: VisDataMessage | ArrayBuffer) => void): void;

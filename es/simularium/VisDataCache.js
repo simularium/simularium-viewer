@@ -1,7 +1,7 @@
 import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
-import { compareTimes } from "../util";
+import { compareTimes } from "../util.js";
 var VisDataCache = /*#__PURE__*/function () {
   function VisDataCache(settings) {
     _classCallCheck(this, VisDataCache);
@@ -27,7 +27,7 @@ var VisDataCache = /*#__PURE__*/function () {
       this.changeSettings(settings);
     }
   }
-  _createClass(VisDataCache, [{
+  return _createClass(VisDataCache, [{
     key: "changeSettings",
     value: function changeSettings(options) {
       var maxSize = options.maxSize,
@@ -254,6 +254,5 @@ var VisDataCache = /*#__PURE__*/function () {
       this.size = 0;
     }
   }]);
-  return VisDataCache;
 }();
 export { VisDataCache };

@@ -1,7 +1,7 @@
 import { ILogger } from "js-logger";
-import { VisDataMessage, TrajectoryFileInfo } from "./types";
-import { IClientSimulatorImpl } from "./localSimulators/IClientSimulatorImpl";
-import { ISimulator } from "./ISimulator";
+import { VisDataMessage, TrajectoryFileInfo } from "./types.js";
+import { IClientSimulatorImpl } from "./localSimulators/IClientSimulatorImpl.js";
+import { ISimulator } from "./ISimulator.js";
 export declare class ClientSimulator implements ISimulator {
     private localSimulator;
     private simulatorIntervalId;

@@ -1,8 +1,8 @@
-import JsonFileReader from "./simularium/JsonFileReader";
-import BinaryFileReader from "./simularium/BinaryFileReader";
-import { AGENT_OBJECT_KEYS } from "./simularium/types";
-import { nullAgent } from "./constants";
-import { FrontEndError } from "./simularium";
+import JsonFileReader from "./simularium/JsonFileReader.js";
+import BinaryFileReader from "./simularium/BinaryFileReader.js";
+import { AGENT_OBJECT_KEYS } from "./simularium/types.js";
+import { nullAgent } from "./constants.js";
+import { FrontEndError } from "./simularium/index.js";
 export var compareTimes = function compareTimes(time1, time2, timeStepSize) {
   var stepSizeFraction = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0.01;
   /*

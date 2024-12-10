@@ -1,9 +1,9 @@
 import * as React from "react";
-import SimulariumController from "../controller";
-import { TrajectoryFileInfo, SelectionStateInfo, UIDisplayData } from "../simularium";
-import { AgentData } from "../simularium/types";
-import { FrontEndError } from "../simularium/FrontEndError";
-import { RenderStyle } from "../visGeometry";
+import SimulariumController from "../controller/index.js";
+import { TrajectoryFileInfo, SelectionStateInfo, UIDisplayData } from "../simularium/index.js";
+import { AgentData } from "../simularium/types.js";
+import { FrontEndError } from "../simularium/FrontEndError.js";
+import { RenderStyle } from "../visGeometry/index.js";
 export type PropColor = string | number | [number, number, number];
 type ViewportProps = {
     renderStyle: RenderStyle;

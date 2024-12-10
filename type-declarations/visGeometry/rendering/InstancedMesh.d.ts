@@ -1,6 +1,6 @@
 import { BufferGeometry, Mesh, Points } from "three";
-import { MRTShaders } from "./MultipassMaterials";
-import { GeometryInstanceContainer } from "../types";
+import { MRTShaders } from "./MultipassMaterials.js";
+import { GeometryInstanceContainer } from "../types.js";
 export declare enum InstanceType {
     MESH = 0,
     POINTS = 1

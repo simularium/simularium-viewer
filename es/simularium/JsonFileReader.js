@@ -1,8 +1,8 @@
 import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
-import { FrontEndError } from "./FrontEndError";
-import { compareTimes } from "../util";
+import { FrontEndError } from "./FrontEndError.js";
+import { compareTimes } from "../util.js";
 var JsonFileReader = /*#__PURE__*/function () {
   function JsonFileReader(fileContents) {
     _classCallCheck(this, JsonFileReader);
@@ -16,7 +16,7 @@ var JsonFileReader = /*#__PURE__*/function () {
       return a.frameNumber - b.frameNumber;
     });
   }
-  _createClass(JsonFileReader, [{
+  return _createClass(JsonFileReader, [{
     key: "getTrajectoryFileInfo",
     value: function getTrajectoryFileInfo() {
       return this.simulariumFile.trajectoryInfo;
@@ -55,6 +55,5 @@ var JsonFileReader = /*#__PURE__*/function () {
       });
     }
   }]);
-  return JsonFileReader;
 }();
 export { JsonFileReader as default };

@@ -3,14 +3,13 @@ import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import _regeneratorRuntime from "@babel/runtime/regenerator";
-import "regenerator-runtime/runtime";
 import * as Comlink from "comlink";
 import parsePdb from "parse-pdb";
 import { Box3, BufferGeometry, Float32BufferAttribute, Points, Vector3 } from "three";
-import { getObject } from "./cifparser";
-import KMeans from "./rendering/KMeans3d";
-import TaskQueue from "../simularium/TaskQueue";
-import { InstancedMesh, InstanceType } from "./rendering/InstancedMesh";
+import { getObject } from "./cifparser.js";
+import KMeans from "./rendering/KMeans3d.js";
+import TaskQueue from "../simularium/TaskQueue.js";
+import { InstancedMesh, InstanceType } from "./rendering/InstancedMesh.js";
 var PDBModel = /*#__PURE__*/function () {
   function PDBModel(filePath) {
     _classCallCheck(this, PDBModel);
@@ -32,7 +31,7 @@ var PDBModel = /*#__PURE__*/function () {
     this._cancelled = false;
     this.bounds = new Box3();
   }
-  _createClass(PDBModel, [{
+  return _createClass(PDBModel, [{
     key: "cancelled",
     get: function get() {
       return this._cancelled;
@@ -265,7 +264,7 @@ var PDBModel = /*#__PURE__*/function () {
   }, {
     key: "generateLOD",
     value: function () {
-      var _generateLOD = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee() {
+      var _generateLOD = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime.mark(function _callee() {
         var _this = this;
         var n, allData, sizes, retData, i, lodIndex, geometry;
         return _regeneratorRuntime.wrap(function _callee$(_context) {
@@ -354,7 +353,7 @@ var PDBModel = /*#__PURE__*/function () {
   }, {
     key: "processPdbLod",
     value: function () {
-      var _processPdbLod = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee2(n, sizes, allData) {
+      var _processPdbLod = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime.mark(function _callee2(n, sizes, allData) {
         var worker, kMeansWorkerClass, workerobj, retData;
         return _regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) switch (_context2.prev = _context2.next) {
@@ -386,6 +385,5 @@ var PDBModel = /*#__PURE__*/function () {
       return processPdbLod;
     }()
   }]);
-  return PDBModel;
 }();
 export default PDBModel;

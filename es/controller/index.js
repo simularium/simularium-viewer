@@ -5,12 +5,12 @@ import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import _regeneratorRuntime from "@babel/runtime/regenerator";
 import jsLogger from "js-logger";
 import { isEmpty, noop } from "lodash";
-import { VisData, RemoteSimulator } from "../simularium";
-import { FILE_STATUS_SUCCESS, FILE_STATUS_FAIL } from "../simularium/types";
-import { ClientSimulator } from "../simularium/ClientSimulator";
-import { LocalFileSimulator } from "../simularium/LocalFileSimulator";
-import { WebsocketClient } from "../simularium/WebsocketClient";
-import { RemoteMetricsCalculator } from "../simularium/RemoteMetricsCalculator";
+import { VisData, RemoteSimulator } from "../simularium/index.js";
+import { FILE_STATUS_SUCCESS, FILE_STATUS_FAIL } from "../simularium/types.js";
+import { ClientSimulator } from "../simularium/ClientSimulator.js";
+import { LocalFileSimulator } from "../simularium/LocalFileSimulator.js";
+import { WebsocketClient } from "../simularium/WebsocketClient.js";
+import { RemoteMetricsCalculator } from "../simularium/RemoteMetricsCalculator.js";
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
 // TODO: refine this as part of the public API for initializing the
@@ -92,7 +92,7 @@ var SimulariumController = /*#__PURE__*/function () {
     this.convertTrajectory = this.convertTrajectory.bind(this);
     this.setCameraType = this.setCameraType.bind(this);
   }
-  _createClass(SimulariumController, [{
+  return _createClass(SimulariumController, [{
     key: "createSimulatorConnection",
     value: function createSimulatorConnection(netConnectionConfig, clientSimulator, localFile, geoAssets) {
       var _this2 = this;
@@ -310,9 +310,9 @@ var SimulariumController = /*#__PURE__*/function () {
             throw new Error("incomplete simulator config provided");
           }
         } catch (e) {
-          var _error = e;
+          var error = e;
           this.simulator = undefined;
-          console.warn(_error.message);
+          console.warn(error.message);
           this.networkEnabled = false;
           this.isPaused = false;
         }
@@ -373,7 +373,7 @@ var SimulariumController = /*#__PURE__*/function () {
   }, {
     key: "getMetrics",
     value: function () {
-      var _getMetrics = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee(config) {
+      var _getMetrics = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime.mark(function _callee(config) {
         return _regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) switch (_context.prev = _context.next) {
             case 0:
@@ -400,7 +400,7 @@ var SimulariumController = /*#__PURE__*/function () {
   }, {
     key: "getPlotData",
     value: function () {
-      var _getPlotData = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee2(config, requestedPlots) {
+      var _getPlotData = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime.mark(function _callee2(config, requestedPlots) {
         var simulariumFile;
         return _regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) switch (_context2.prev = _context2.next) {
@@ -520,7 +520,6 @@ var SimulariumController = /*#__PURE__*/function () {
       (_this$visGeometry9 = this.visGeometry) === null || _this$visGeometry9 === void 0 || _this$visGeometry9.setCameraType(ortho);
     }
   }]);
-  return SimulariumController;
 }();
 export { SimulariumController as default };
 export { SimulariumController };

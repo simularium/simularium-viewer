@@ -1,6 +1,5 @@
-import "regenerator-runtime/runtime";
 import { Points } from "three";
-import { InstancedMesh } from "./rendering/InstancedMesh";
+import { InstancedMesh } from "./rendering/InstancedMesh.js";
 interface PDBAtom {
     serial?: number;
     name?: string;

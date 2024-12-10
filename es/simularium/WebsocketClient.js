@@ -4,7 +4,7 @@ import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import _regeneratorRuntime from "@babel/runtime/regenerator";
 import jsLogger from "js-logger";
-import { FrontEndError, ErrorLevel } from "./FrontEndError";
+import { FrontEndError, ErrorLevel } from "./FrontEndError.js";
 
 // TODO: proposed new NetMessage data type:
 // This factors the raw data structure away from the networking and transmission info.
@@ -93,7 +93,7 @@ export var WebsocketClient = /*#__PURE__*/function () {
   /**
    * WebSocket State
    */
-  _createClass(WebsocketClient, [{
+  return _createClass(WebsocketClient, [{
     key: "socketIsConnecting",
     value: function socketIsConnecting() {
       return this.webSocket !== null && this.webSocket.readyState === this.webSocket.CONNECTING;
@@ -208,7 +208,7 @@ export var WebsocketClient = /*#__PURE__*/function () {
   }, {
     key: "waitForWebSocket",
     value: function () {
-      var _waitForWebSocket = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee(timeout) {
+      var _waitForWebSocket = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime.mark(function _callee(timeout) {
         var _this = this;
         return _regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) switch (_context.prev = _context.next) {
@@ -232,7 +232,7 @@ export var WebsocketClient = /*#__PURE__*/function () {
   }, {
     key: "checkConnection",
     value: function () {
-      var _checkConnection = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee2(address) {
+      var _checkConnection = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime.mark(function _callee2(address) {
         var timeout,
           maxRetries,
           maxWaitTime,
@@ -289,7 +289,7 @@ export var WebsocketClient = /*#__PURE__*/function () {
   }, {
     key: "connectToRemoteServer",
     value: function () {
-      var _connectToRemoteServer = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee3() {
+      var _connectToRemoteServer = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime.mark(function _callee3() {
         var address, isConnectionSuccessful;
         return _regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) switch (_context3.prev = _context3.next) {
@@ -348,5 +348,4 @@ export var WebsocketClient = /*#__PURE__*/function () {
       }
     }
   }]);
-  return WebsocketClient;
 }();

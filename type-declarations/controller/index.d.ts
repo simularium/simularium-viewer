@@ -1,14 +1,14 @@
-import { VisData, RemoteSimulator } from "../simularium";
-import type { NetConnectionParams, TrajectoryFileInfo } from "../simularium";
-import { VisGeometry } from "../visGeometry";
-import { FileReturn, PlotConfig } from "../simularium/types";
-import { IClientSimulatorImpl } from "../simularium/localSimulators/IClientSimulatorImpl";
-import { ISimulator } from "../simularium/ISimulator";
-import { FrontEndError } from "../simularium/FrontEndError";
-import type { ISimulariumFile } from "../simularium/ISimulariumFile";
-import { WebsocketClient } from "../simularium/WebsocketClient";
-import { TrajectoryType } from "../constants";
-import { RemoteMetricsCalculator } from "../simularium/RemoteMetricsCalculator";
+import { VisData, RemoteSimulator } from "../simularium/index.js";
+import type { NetConnectionParams, TrajectoryFileInfo } from "../simularium/index.js";
+import { VisGeometry } from "../visGeometry/index.js";
+import { FileReturn, PlotConfig } from "../simularium/types.js";
+import { IClientSimulatorImpl } from "../simularium/localSimulators/IClientSimulatorImpl.js";
+import { ISimulator } from "../simularium/ISimulator.js";
+import { FrontEndError } from "../simularium/FrontEndError.js";
+import type { ISimulariumFile } from "../simularium/ISimulariumFile.js";
+import { WebsocketClient } from "../simularium/WebsocketClient.js";
+import { TrajectoryType } from "../constants.js";
+import { RemoteMetricsCalculator } from "../simularium/RemoteMetricsCalculator.js";
 interface SimulariumControllerParams {
     remoteSimulator?: RemoteSimulator;
     netConnectionSettings?: NetConnectionParams;

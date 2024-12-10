@@ -1,6 +1,6 @@
-import { FrontEndError } from "./FrontEndError";
-import { PlotConfig } from "./types";
-import { WebsocketClient, NetMessage } from "./WebsocketClient";
+import { FrontEndError } from "./FrontEndError.js";
+import { PlotConfig } from "./types.js";
+import { WebsocketClient, NetMessage } from "./WebsocketClient.js";
 export declare class RemoteMetricsCalculator {
     handleError: (error: FrontEndError) => void | (() => void);
     private webSocketClient;

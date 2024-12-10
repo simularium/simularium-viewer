@@ -1,7 +1,7 @@
 import { ILogger } from "js-logger";
-import { VisDataMessage, TrajectoryFileInfoV2 } from "./types";
-import { ISimulator } from "./ISimulator";
-import type { ISimulariumFile } from "./ISimulariumFile";
+import { VisDataMessage, TrajectoryFileInfoV2 } from "./types.js";
+import { ISimulator } from "./ISimulator.js";
+import type { ISimulariumFile } from "./ISimulariumFile.js";
 export declare class LocalFileSimulator implements ISimulator {
     protected fileName: string;
     protected simulariumFile: ISimulariumFile;

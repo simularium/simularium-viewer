@@ -27,7 +27,7 @@ export var LocalFileSimulator = /*#__PURE__*/function () {
     };
     console.log("NEW LOCALFILECONNECTION");
   }
-  _createClass(LocalFileSimulator, [{
+  return _createClass(LocalFileSimulator, [{
     key: "setTrajectoryFileInfoHandler",
     value: function setTrajectoryFileInfoHandler(handler) {
       this.onTrajectoryFileInfoArrive = handler;
@@ -193,5 +193,4 @@ export var LocalFileSimulator = /*#__PURE__*/function () {
       return this.simulariumFile;
     }
   }]);
-  return LocalFileSimulator;
 }();

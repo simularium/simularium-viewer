@@ -1,6 +1,6 @@
-import { FrontEndError } from "./FrontEndError";
-import { AgentDisplayDataWithGeometry, TrajectoryFileInfo, TrajectoryFileInfoAny } from "./types";
-import { GeometryDisplayType } from "../visGeometry/types";
+import { FrontEndError } from "./FrontEndError.js";
+import { AgentDisplayDataWithGeometry, TrajectoryFileInfo, TrajectoryFileInfoAny } from "./types.js";
+import { GeometryDisplayType } from "../visGeometry/types.js";
 export interface AgentTypeVisDataPreProcessing {
     displayType?: GeometryDisplayType;
     url?: string;

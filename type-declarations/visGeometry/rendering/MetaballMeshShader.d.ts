@@ -1,4 +1,4 @@
-import { MRTShaders } from "./MultipassMaterials";
+import { MRTShaders } from "./MultipassMaterials.js";
 declare const _default: {
     shaderSet: MRTShaders;
 };

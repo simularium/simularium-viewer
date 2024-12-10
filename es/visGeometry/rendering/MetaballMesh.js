@@ -2,8 +2,8 @@ import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import { Box3, Euler, Group, Quaternion, Vector3, Vector4 } from "three";
-import { MarchingCubes } from "three/examples/jsm/objects/MarchingCubes";
-import MetaballMeshShaders from "./MetaballMeshShader";
+import { MarchingCubes } from "three/examples/jsm/objects/MarchingCubes.js";
+import MetaballMeshShaders from "./MetaballMeshShader.js";
 var MetaballMesh = /*#__PURE__*/function () {
   // to act like an instancedmesh for GeometryStore purposes
   // but each instance is a whole MarchingCubes object
@@ -15,7 +15,7 @@ var MetaballMesh = /*#__PURE__*/function () {
     this.drawable.name = name;
     this.shaderSet = MetaballMeshShaders.shaderSet;
   }
-  _createClass(MetaballMesh, [{
+  return _createClass(MetaballMesh, [{
     key: "getMesh",
     value: function getMesh() {
       return this.drawable;
@@ -115,6 +115,5 @@ var MetaballMesh = /*#__PURE__*/function () {
       this.drawable.add(effect);
     }
   }]);
-  return MetaballMesh;
 }();
 export { MetaballMesh };

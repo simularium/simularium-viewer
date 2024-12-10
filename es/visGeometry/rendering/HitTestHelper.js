@@ -41,7 +41,7 @@ var HitTestHelper = /*#__PURE__*/function () {
   }
 
   // Read the x,y pixel of the given idBuffer Texture object
-  _createClass(HitTestHelper, [{
+  return _createClass(HitTestHelper, [{
     key: "hitTest",
     value: function hitTest(renderer, idBuffer, x, y) {
       // Strategy:  because multiple render targets (MRT) are being used, and ThreeJS
@@ -68,6 +68,5 @@ var HitTestHelper = /*#__PURE__*/function () {
       return pixel;
     }
   }]);
-  return HitTestHelper;
 }();
 export { HitTestHelper as default };

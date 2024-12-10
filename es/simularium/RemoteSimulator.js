@@ -5,8 +5,8 @@ import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import _regeneratorRuntime from "@babel/runtime/regenerator";
 import jsLogger from "js-logger";
 import { v4 as uuidv4 } from "uuid";
-import { FrontEndError, ErrorLevel } from "./FrontEndError";
-import { NetMessageEnum } from "./WebsocketClient";
+import { FrontEndError, ErrorLevel } from "./FrontEndError.js";
+import { NetMessageEnum } from "./WebsocketClient.js";
 // a RemoteSimulator is a ISimulator that connects to the Octopus backend server
 // and plays back a trajectory specified in the NetConnectionParams
 export var RemoteSimulator = /*#__PURE__*/function () {
@@ -38,7 +38,7 @@ export var RemoteSimulator = /*#__PURE__*/function () {
       /* do nothing */
     };
   }
-  _createClass(RemoteSimulator, [{
+  return _createClass(RemoteSimulator, [{
     key: "setTrajectoryFileInfoHandler",
     value: function setTrajectoryFileInfoHandler(handler) {
       this.onTrajectoryFileInfoArrive = handler;
@@ -182,7 +182,7 @@ export var RemoteSimulator = /*#__PURE__*/function () {
   }, {
     key: "connectToRemoteServer",
     value: function () {
-      var _connectToRemoteServer = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee() {
+      var _connectToRemoteServer = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime.mark(function _callee() {
         return _regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) switch (_context.prev = _context.next) {
             case 0:
@@ -373,5 +373,4 @@ export var RemoteSimulator = /*#__PURE__*/function () {
       this.lastRequestedFile = "";
     }
   }]);
-  return RemoteSimulator;
 }();

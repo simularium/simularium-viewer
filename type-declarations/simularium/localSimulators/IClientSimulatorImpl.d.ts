@@ -1,4 +1,4 @@
-import { TrajectoryFileInfo, VisDataMessage } from "../types";
+import { TrajectoryFileInfo, VisDataMessage } from "../types.js";
 export interface IClientSimulatorImpl {
     update(dt: number): VisDataMessage;
     getInfo(): TrajectoryFileInfo;

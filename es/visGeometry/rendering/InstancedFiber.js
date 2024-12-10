@@ -3,8 +3,8 @@ import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import _slicedToArray from "@babel/runtime/helpers/slicedToArray";
 import { BufferAttribute, BufferGeometry, CylinderGeometry, Euler, InstancedBufferAttribute, InstancedBufferGeometry, Mesh, Quaternion, DataTexture, RGBAFormat, FloatType, Vector2, Vector3, Group } from "three";
-import { createShaders } from "./InstancedFiberShader";
-import { setRenderPass as _setRenderPass, updateProjectionMatrix as _updateProjectionMatrix } from "./MultipassMaterials";
+import { createShaders } from "./InstancedFiberShader.js";
+import { setRenderPass as _setRenderPass, updateProjectionMatrix as _updateProjectionMatrix } from "./MultipassMaterials.js";
 var tmpQuaternion = new Quaternion();
 var tmpEuler = new Euler();
 function createTubeGeometry() {
@@ -124,7 +124,7 @@ var InstancedFiber = /*#__PURE__*/function () {
     this.mesh.frustumCulled = false;
     this.reallocate(count);
   }
-  _createClass(InstancedFiber, [{
+  return _createClass(InstancedFiber, [{
     key: "getMesh",
     value: function getMesh() {
       return this.mesh;
@@ -253,7 +253,6 @@ var InstancedFiber = /*#__PURE__*/function () {
       this.isUpdating = false;
     }
   }]);
-  return InstancedFiber;
 }();
 var InstancedFiberGroup = /*#__PURE__*/function () {
   function InstancedFiberGroup() {
@@ -265,7 +264,7 @@ var InstancedFiberGroup = /*#__PURE__*/function () {
     this.fibers = [];
     this.isUpdating = false;
   }
-  _createClass(InstancedFiberGroup, [{
+  return _createClass(InstancedFiberGroup, [{
     key: "getGroup",
     value: function getGroup() {
       var _this = this;
@@ -326,7 +325,6 @@ var InstancedFiberGroup = /*#__PURE__*/function () {
       });
     }
   }]);
-  return InstancedFiberGroup;
 }();
 _defineProperty(InstancedFiberGroup, "GROUP_NAME", "fibers");
 export { InstancedFiber, InstancedFiberGroup };

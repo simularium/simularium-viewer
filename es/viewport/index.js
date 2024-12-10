@@ -2,23 +2,22 @@ import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _possibleConstructorReturn from "@babel/runtime/helpers/possibleConstructorReturn";
 import _getPrototypeOf from "@babel/runtime/helpers/getPrototypeOf";
-import _assertThisInitialized from "@babel/runtime/helpers/assertThisInitialized";
 import _inherits from "@babel/runtime/helpers/inherits";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
 function _callSuper(t, o, e) { return o = _getPrototypeOf(o), _possibleConstructorReturn(t, _isNativeReflectConstruct() ? Reflect.construct(o, e || [], _getPrototypeOf(t).constructor) : o.apply(t, e)); }
 function _isNativeReflectConstruct() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct = function _isNativeReflectConstruct() { return !!t; })(); }
 import * as React from "react";
 import jsLogger from "js-logger";
-import Stats from "three/examples/jsm/libs/stats.module";
+import Stats from "three/examples/jsm/libs/stats.module.js";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSyncAlt } from "@fortawesome/free-solid-svg-icons";
 import { forOwn, isEqual } from "lodash";
-import { SelectionInterface } from "../simularium";
-import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
-import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
-import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry";
-import FrameRecorder from "../simularium/FrameRecorder";
-import { DEFAULT_FRAME_RATE } from "../constants";
+import { SelectionInterface } from "../simularium/index.js";
+import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers.js";
+import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError.js";
+import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry/index.js";
+import FrameRecorder from "../simularium/FrameRecorder.js";
+import { DEFAULT_FRAME_RATE } from "../constants.js";
 var defaultProps = {
   renderStyle: RenderStyle.WEBGL2_PREFERRED,
   backgroundColor: [0, 0, 0],
@@ -37,23 +36,22 @@ var MAX_CLICK_TIME = 300;
 // for float errors
 var CLICK_TOLERANCE = 1e-4;
 var Viewport = /*#__PURE__*/function (_React$Component) {
-  _inherits(Viewport, _React$Component);
   function Viewport(props) {
     var _this;
     _classCallCheck(this, Viewport);
     _this = _callSuper(this, Viewport, [props]);
-    _defineProperty(_assertThisInitialized(_this), "visGeometry", void 0);
-    _defineProperty(_assertThisInitialized(_this), "selectionInterface", void 0);
-    _defineProperty(_assertThisInitialized(_this), "recorder", void 0);
-    _defineProperty(_assertThisInitialized(_this), "lastRenderTime", void 0);
-    _defineProperty(_assertThisInitialized(_this), "startTime", void 0);
-    _defineProperty(_assertThisInitialized(_this), "vdomRef", void 0);
-    _defineProperty(_assertThisInitialized(_this), "handlers", void 0);
-    _defineProperty(_assertThisInitialized(_this), "hit", void 0);
-    _defineProperty(_assertThisInitialized(_this), "animationRequestID", void 0);
-    _defineProperty(_assertThisInitialized(_this), "lastRenderedAgentTime", void 0);
-    _defineProperty(_assertThisInitialized(_this), "stats", void 0);
-    _defineProperty(_assertThisInitialized(_this), "isClick", function (thisClick) {
+    _defineProperty(_this, "visGeometry", void 0);
+    _defineProperty(_this, "selectionInterface", void 0);
+    _defineProperty(_this, "recorder", void 0);
+    _defineProperty(_this, "lastRenderTime", void 0);
+    _defineProperty(_this, "startTime", void 0);
+    _defineProperty(_this, "vdomRef", void 0);
+    _defineProperty(_this, "handlers", void 0);
+    _defineProperty(_this, "hit", void 0);
+    _defineProperty(_this, "animationRequestID", void 0);
+    _defineProperty(_this, "lastRenderedAgentTime", void 0);
+    _defineProperty(_this, "stats", void 0);
+    _defineProperty(_this, "isClick", function (thisClick) {
       var lastClick = _this.state.lastClick;
       var t = Date.now() - lastClick.time;
       if (t > MAX_CLICK_TIME) {
@@ -66,7 +64,7 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
       }
       return true;
     });
-    _defineProperty(_assertThisInitialized(_this), "handleTouchStart", function (e) {
+    _defineProperty(_this, "handleTouchStart", function (e) {
       var event = e;
       var touch = event.touches[0];
       _this.setState({
@@ -77,7 +75,7 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
         }
       });
     });
-    _defineProperty(_assertThisInitialized(_this), "handleKeyDown", function (e) {
+    _defineProperty(_this, "handleKeyDown", function (e) {
       // the viewer canvas must have focus for the key press to work.
       if (e.target !== _this.vdomRef.current) {
         return;
@@ -91,7 +89,7 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
         });
       }
     });
-    _defineProperty(_assertThisInitialized(_this), "handleTouchEnd", function (e) {
+    _defineProperty(_this, "handleTouchEnd", function (e) {
       var event = e;
       var touch = event.changedTouches[0];
       var thisClick = {
@@ -111,7 +109,7 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
         _this.onPickObject(offsetX, offsetY);
       }
     });
-    _defineProperty(_assertThisInitialized(_this), "handleClickStart", function (e) {
+    _defineProperty(_this, "handleClickStart", function (e) {
       var event = e;
       _this.setState({
         lastClick: {
@@ -121,7 +119,7 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
         }
       });
     });
-    _defineProperty(_assertThisInitialized(_this), "handlePointerDown", function (e) {
+    _defineProperty(_this, "handlePointerDown", function (e) {
       var event = e;
       _this.setState({
         lastClick: {
@@ -131,7 +129,7 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
         }
       });
     });
-    _defineProperty(_assertThisInitialized(_this), "handleMouseUp", function (e) {
+    _defineProperty(_this, "handleMouseUp", function (e) {
       var event = e;
       var thisClick = {
         x: event.x,
@@ -143,7 +141,7 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
         _this.onPickObject(event.offsetX, event.offsetY);
       }
     });
-    _defineProperty(_assertThisInitialized(_this), "handlePointerUp", function (e) {
+    _defineProperty(_this, "handlePointerUp", function (e) {
       var event = e;
       var thisClick = {
         x: event.x,
@@ -155,7 +153,7 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
         _this.onPickObject(event.offsetX, event.offsetY);
       }
     });
-    _defineProperty(_assertThisInitialized(_this), "handleMouseMove", function (e) {
+    _defineProperty(_this, "handleMouseMove", function (e) {
       var event = e;
       if (!_this.vdomRef.current) {
         return;
@@ -170,9 +168,9 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
       }
     });
     var loggerLevel = props.loggerLevel === "debug" ? jsLogger.DEBUG : jsLogger.OFF;
-    _this.animate = _this.animate.bind(_assertThisInitialized(_this));
-    _this.dispatchUpdatedTime = _this.dispatchUpdatedTime.bind(_assertThisInitialized(_this));
-    _this.handleTimeChange = _this.handleTimeChange.bind(_assertThisInitialized(_this));
+    _this.animate = _this.animate.bind(_this);
+    _this.dispatchUpdatedTime = _this.dispatchUpdatedTime.bind(_this);
+    _this.handleTimeChange = _this.handleTimeChange.bind(_this);
     _this.visGeometry = new VisGeometry(loggerLevel);
     _this.props.simulariumController.visData.frameCache.changeSettings({
       cacheEnabled: !props.disableCache,
@@ -186,7 +184,7 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
     _this.vdomRef = /*#__PURE__*/React.createRef();
     _this.lastRenderTime = Date.now();
     _this.startTime = Date.now();
-    _this.onPickObject = _this.onPickObject.bind(_assertThisInitialized(_this));
+    _this.onPickObject = _this.onPickObject.bind(_this);
     _this.stats = Stats();
     _this.stats.showPanel(1);
     _this.handlers = {
@@ -219,7 +217,8 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
     }
     return _this;
   }
-  _createClass(Viewport, [{
+  _inherits(Viewport, _React$Component);
+  return _createClass(Viewport, [{
     key: "onTrajectoryFileInfo",
     value: function onTrajectoryFileInfo(msg) {
       var _this$props = this.props,
@@ -248,8 +247,8 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
         this.selectionInterface.parse(trajectoryFileInfo.typeMapping);
       } catch (e) {
         if (onError) {
-          var _error = e;
-          onError(new FrontEndError("error parsing 'typeMapping' data, ".concat(_error.message), ErrorLevel.ERROR));
+          var error = e;
+          onError(new FrontEndError("error parsing 'typeMapping' data, ".concat(error.message), ErrorLevel.ERROR));
         } else {
           console.log("error parsing 'typeMapping' data", e);
         }
@@ -605,7 +604,6 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
       return "detail" in event;
     }
   }]);
-  return Viewport;
 }(React.Component);
 _defineProperty(Viewport, "defaultProps", defaultProps);
 export { RenderStyle };

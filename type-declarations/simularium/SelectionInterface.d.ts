@@ -1,5 +1,5 @@
-import { EncodedTypeMapping } from "./types";
-import { ColorAssignment } from "../visGeometry/types";
+import { EncodedTypeMapping } from "./types.js";
+import { ColorAssignment } from "../visGeometry/types.js";
 export interface SelectionEntry {
     name: string;
     tags: string[];

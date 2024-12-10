@@ -2,7 +2,7 @@ import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import jsLogger from "js-logger";
-import { ClientMessageEnum, ClientPlayBackType } from "./localSimulators/IClientSimulatorImpl";
+import { ClientMessageEnum, ClientPlayBackType } from "./localSimulators/IClientSimulatorImpl.js";
 // a ClientSimulator is a ISimulator that is expected to run purely in procedural javascript in the browser client,
 // with the procedural implementation in a IClientSimulatorImpl
 export var ClientSimulator = /*#__PURE__*/function () {
@@ -26,7 +26,7 @@ export var ClientSimulator = /*#__PURE__*/function () {
     };
     this.localSimulator = sim;
   }
-  _createClass(ClientSimulator, [{
+  return _createClass(ClientSimulator, [{
     key: "setTrajectoryFileInfoHandler",
     value: function setTrajectoryFileInfoHandler(handler) {
       this.onTrajectoryFileInfoArrive = handler;
@@ -209,7 +209,7 @@ export var ClientSimulator = /*#__PURE__*/function () {
       var jsonData = {
         msgType: ClientMessageEnum.ID_VIS_DATA_REQUEST,
         mode: ClientPlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
-        "file-name": fileName
+        fileName: fileName
       };
       return this.connectToRemoteServer(this.getIp()).then(function () {
         _this4.sendSimulationRequest(jsonData, "Start Trajectory File Playback");
@@ -271,5 +271,4 @@ export var ClientSimulator = /*#__PURE__*/function () {
       }, "Initialize trajectory file info");
     }
   }]);
-  return ClientSimulator;
 }();

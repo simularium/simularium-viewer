@@ -1,5 +1,5 @@
 import { WebGLRenderer, WebGLRenderTarget } from "three";
-import RenderToBuffer from "./RenderToBuffer";
+import RenderToBuffer from "./RenderToBuffer.js";
 declare class ContourPass {
     pass: RenderToBuffer;
     constructor();

@@ -3,30 +3,30 @@ import _toConsumableArray from "@babel/runtime/helpers/toConsumableArray";
 import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
-function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
+function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t["return"] || t["return"](); } finally { if (u) throw o; } } }; }
+function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
+function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 import WEBGL from "three/examples/jsm/capabilities/WebGL.js";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { Box3, Box3Helper, BufferAttribute, BufferGeometry, Color, DirectionalLight, Group, HemisphereLight, LineBasicMaterial, LineSegments, MOUSE, OrthographicCamera, PerspectiveCamera, Quaternion, Scene, Spherical, Vector2, Vector3, WebGLRenderer } from "three";
 import { Pane } from "tweakpane";
 import * as EssentialsPlugin from "@tweakpane/plugin-essentials";
 import jsLogger from "js-logger";
 import { cloneDeep, noop } from "lodash";
-import VisAgent from "./VisAgent";
-import VisTypes from "../simularium/VisTypes";
-import AgentPath from "./agentPath";
-import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
-import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC, nullAgent, AGENT_HEADER_SIZE } from "../constants";
-import SimulariumRenderer from "./rendering/SimulariumRenderer";
-import { InstancedFiberGroup } from "./rendering/InstancedFiber";
-import { LegacyRenderer } from "./rendering/LegacyRenderer";
-import GeometryStore from "./GeometryStore";
-import { GeometryDisplayType } from "./types";
-import { checkAndSanitizePath, getAgentDataFromBuffer, getNextAgentOffset, nullCachedFrame } from "../util";
-import ColorHandler from "./ColorHandler";
+import VisAgent from "./VisAgent.js";
+import VisTypes from "../simularium/VisTypes.js";
+import AgentPath from "./agentPath.js";
+import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError.js";
+import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC, nullAgent, AGENT_HEADER_SIZE } from "../constants.js";
+import SimulariumRenderer from "./rendering/SimulariumRenderer.js";
+import { InstancedFiberGroup } from "./rendering/InstancedFiber.js";
+import { LegacyRenderer } from "./rendering/LegacyRenderer.js";
+import GeometryStore from "./GeometryStore.js";
+import { GeometryDisplayType } from "./types.js";
+import { checkAndSanitizePath, getAgentDataFromBuffer, getNextAgentOffset, nullCachedFrame } from "../util.js";
+import ColorHandler from "./ColorHandler.js";
 var MAX_PATH_LEN = 32;
 var MAX_MESHES = 100000;
 var DEFAULT_BACKGROUND_COLOR = new Color(0, 0, 0);
@@ -206,7 +206,7 @@ var VisGeometry = /*#__PURE__*/function () {
     this.agentPdbsToDraw = [];
     this.onError = noop;
   }
-  _createClass(VisGeometry, [{
+  return _createClass(VisGeometry, [{
     key: "setOnErrorCallBack",
     value: function setOnErrorCallBack(onError) {
       this.onError = onError;
@@ -1637,7 +1637,6 @@ var VisGeometry = /*#__PURE__*/function () {
       this.updateScene(agents);
     }
   }]);
-  return VisGeometry;
 }();
 export { VisGeometry, NO_AGENT };
 export default VisGeometry;

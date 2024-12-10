@@ -2,8 +2,8 @@ import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import { Euler, InstancedBufferAttribute, InstancedBufferGeometry, Mesh, Points, Quaternion } from "three";
-import InstancedMeshShader from "./InstancedMeshShader";
-import PDBGBufferShaders from "./PDBGBufferShaders";
+import InstancedMeshShader from "./InstancedMeshShader.js";
+import PDBGBufferShaders from "./PDBGBufferShaders.js";
 var tmpQuaternion = new Quaternion();
 var tmpEuler = new Euler();
 export var InstanceType = /*#__PURE__*/function (InstanceType) {
@@ -45,7 +45,7 @@ var InstancedMesh = /*#__PURE__*/function () {
     this.drawable.frustumCulled = false;
     this.reallocate(count);
   }
-  _createClass(InstancedMesh, [{
+  return _createClass(InstancedMesh, [{
     key: "getMesh",
     value: function getMesh() {
       return this.drawable;
@@ -164,6 +164,5 @@ var InstancedMesh = /*#__PURE__*/function () {
       this.isUpdating = false;
     }
   }]);
-  return InstancedMesh;
 }();
 export { InstancedMesh };

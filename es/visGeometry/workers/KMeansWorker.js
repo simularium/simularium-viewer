@@ -2,17 +2,16 @@ import _asyncToGenerator from "@babel/runtime/helpers/asyncToGenerator";
 import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _regeneratorRuntime from "@babel/runtime/regenerator";
-import "regenerator-runtime/runtime";
 import * as Comlink from "comlink";
-import KMeans3d from "../rendering/KMeans3d";
+import KMeans3d from "../rendering/KMeans3d.js";
 var KMeansWorker = /*#__PURE__*/function () {
   function KMeansWorker() {
     _classCallCheck(this, KMeansWorker);
   }
-  _createClass(KMeansWorker, [{
+  return _createClass(KMeansWorker, [{
     key: "run",
     value: function () {
-      var _run = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee(k, sizes, data) {
+      var _run = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime.mark(function _callee(k, sizes, data) {
         var results, i, km3;
         return _regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) switch (_context.prev = _context.next) {
@@ -38,6 +37,5 @@ var KMeansWorker = /*#__PURE__*/function () {
       return run;
     }()
   }]);
-  return KMeansWorker;
 }();
 Comlink.expose(KMeansWorker);

@@ -41,7 +41,7 @@ var LinePath = /*#__PURE__*/function () {
     this.material = lineMaterial;
     this.line = lineObject;
   }
-  _createClass(LinePath, [{
+  return _createClass(LinePath, [{
     key: "show",
     value: function show(visible) {
       this.line.visible = visible;
@@ -85,6 +85,5 @@ var LinePath = /*#__PURE__*/function () {
       this.line.geometry.attributes.position.needsUpdate = true; // required after the first render
     }
   }]);
-  return LinePath;
 }();
 export { LinePath as default };

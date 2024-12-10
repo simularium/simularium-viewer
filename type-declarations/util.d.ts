@@ -1,5 +1,5 @@
-import type { ISimulariumFile } from "./simularium/ISimulariumFile";
-import { AgentData, CachedFrame } from "./simularium/types";
+import type { ISimulariumFile } from "./simularium/ISimulariumFile.js";
+import { AgentData, CachedFrame } from "./simularium/types.js";
 export declare const compareTimes: (time1: number, time2: number, timeStepSize: number, stepSizeFraction?: number) => number;
 export declare const checkAndSanitizePath: (pathOrUrl: string) => string;
 export declare function getFileExtension(pathOrUrl: string): string;

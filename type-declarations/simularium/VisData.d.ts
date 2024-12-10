@@ -1,6 +1,6 @@
-import { VisDataMessage, CachedFrame } from "./types";
-import { VisDataCache } from "./VisDataCache";
-import { FrontEndError } from "./FrontEndError";
+import { VisDataMessage, CachedFrame } from "./types.js";
+import { VisDataCache } from "./VisDataCache.js";
+import { FrontEndError } from "./FrontEndError.js";
 declare class VisData {
     frameCache: VisDataCache;
     private frameToWaitFor;

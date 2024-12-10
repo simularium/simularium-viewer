@@ -33,7 +33,7 @@ var ColorHandler = /*#__PURE__*/function () {
     // so that typescript doesn't complain
     this.colorsData = new Float32Array(0);
   }
-  _createClass(ColorHandler, [{
+  return _createClass(ColorHandler, [{
     key: "numberOfColors",
     get: function get() {
       return this.colorsData.length / 4;
@@ -201,6 +201,5 @@ var ColorHandler = /*#__PURE__*/function () {
       this.updateColorArray(defaultColors);
     }
   }]);
-  return ColorHandler;
 }();
 export default ColorHandler;

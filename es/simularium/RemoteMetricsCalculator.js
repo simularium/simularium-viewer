@@ -6,7 +6,7 @@ import _regeneratorRuntime from "@babel/runtime/regenerator";
 // Gotta set up a separate RemoteMetricsCalculator in case we have a non-remote
 // simulator and want to calculate metrics anyways
 
-import { NetMessageEnum } from "./WebsocketClient";
+import { NetMessageEnum } from "./WebsocketClient.js";
 export var RemoteMetricsCalculator = /*#__PURE__*/function () {
   function RemoteMetricsCalculator(webSocketClient, errorHandler) {
     _classCallCheck(this, RemoteMetricsCalculator);
@@ -17,10 +17,10 @@ export var RemoteMetricsCalculator = /*#__PURE__*/function () {
     };
     this.webSocketClient = webSocketClient;
   }
-  _createClass(RemoteMetricsCalculator, [{
+  return _createClass(RemoteMetricsCalculator, [{
     key: "connectToRemoteServer",
     value: function () {
-      var _connectToRemoteServer = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee() {
+      var _connectToRemoteServer = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime.mark(function _callee() {
         return _regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) switch (_context.prev = _context.next) {
             case 0:
@@ -78,5 +78,4 @@ export var RemoteMetricsCalculator = /*#__PURE__*/function () {
       this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_PLOT_DATA_RESPONSE, this.onPlotDataArrive);
     }
   }]);
-  return RemoteMetricsCalculator;
 }();

@@ -1,4 +1,4 @@
-import { CachedFrame } from "./types";
+import { CachedFrame } from "./types.js";
 interface VisDataCacheSettings {
     maxSize: number;
     cacheEnabled: boolean;

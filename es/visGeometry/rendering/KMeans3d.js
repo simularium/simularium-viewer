@@ -94,7 +94,7 @@ var KMeans = /*#__PURE__*/function () {
    * var extents = kmeans.dataDimensionExtents();
    * console.log(extents); // [2,1,1, 4,7,3]
    */
-  _createClass(KMeans, [{
+  return _createClass(KMeans, [{
     key: "dataDimensionExtents",
     value: function dataDimensionExtents(data) {
       //data = data || this.data;
@@ -321,6 +321,5 @@ var KMeans = /*#__PURE__*/function () {
       return means;
     }
   }]);
-  return KMeans;
 }();
 export { KMeans as default };

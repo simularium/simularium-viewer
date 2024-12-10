@@ -2,7 +2,7 @@ import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import { Color, Vector2 } from "three";
-import RenderToBuffer from "./RenderToBuffer";
+import RenderToBuffer from "./RenderToBuffer.js";
 var BlurPass1D = /*#__PURE__*/function () {
   function BlurPass1D(uvOffset, radius, stdDev) {
     _classCallCheck(this, BlurPass1D);
@@ -41,7 +41,7 @@ var BlurPass1D = /*#__PURE__*/function () {
     });
     this.configure(radius, stdDev);
   }
-  _createClass(BlurPass1D, [{
+  return _createClass(BlurPass1D, [{
     key: "resize",
     value: function resize(x, y) {
       this.pass.material.uniforms.size.value = new Vector2(x, y);
@@ -82,7 +82,6 @@ var BlurPass1D = /*#__PURE__*/function () {
       }
     }
   }]);
-  return BlurPass1D;
 }();
 function gaussian(x, stdDev) {
   return Math.exp(-(x * x) / (2.0 * (stdDev * stdDev))) / (Math.sqrt(2.0 * Math.PI) * stdDev);
@@ -95,7 +94,7 @@ var BlurPass = /*#__PURE__*/function () {
     this.blurXpass = new BlurPass1D(new Vector2(1.0, 0.0), radius, stdDev);
     this.blurYpass = new BlurPass1D(new Vector2(0.0, 1.0), radius, stdDev);
   }
-  _createClass(BlurPass, [{
+  return _createClass(BlurPass, [{
     key: "resize",
     value: function resize(x, y) {
       this.blurXpass.resize(x, y);
@@ -130,6 +129,5 @@ var BlurPass = /*#__PURE__*/function () {
       renderer.setClearColor(c, a);
     }
   }]);
-  return BlurPass;
 }();
 export default BlurPass;

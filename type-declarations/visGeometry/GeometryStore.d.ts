@@ -1,8 +1,8 @@
 import { ILogger, ILogLevel } from "js-logger";
 import { SphereGeometry, BoxGeometry } from "three";
-import PDBModel from "./PDBModel";
-import { AgentTypeVisData } from "../simularium/types";
-import { AgentGeometry, GeometryStoreLoadResponse, MeshGeometry } from "./types";
+import PDBModel from "./PDBModel.js";
+import { AgentTypeVisData } from "../simularium/types.js";
+import { AgentGeometry, GeometryStoreLoadResponse, MeshGeometry } from "./types.js";
 export declare const DEFAULT_MESH_NAME = "SPHERE";
 type Registry = Map<string, AgentGeometry>;
 declare class GeometryStore {

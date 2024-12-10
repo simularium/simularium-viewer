@@ -35,13 +35,12 @@ var RenderToBuffer = /*#__PURE__*/function () {
     // This camera will not move or rotate for the duration of the app.
     this.camera = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
   }
-  _createClass(RenderToBuffer, [{
+  return _createClass(RenderToBuffer, [{
     key: "render",
     value: function render(renderer, target) {
       renderer.setRenderTarget(target);
       renderer.render(this.scene, this.camera);
     }
   }]);
-  return RenderToBuffer;
 }();
 export default RenderToBuffer;

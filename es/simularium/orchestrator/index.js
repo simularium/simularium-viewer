@@ -7,7 +7,7 @@ var Orchestrator = /*#__PURE__*/function () {
     _defineProperty(this, "serviceAddr", void 0);
     this.serviceAddr = params.serviceAddr || "https://localhost:5000";
   }
-  _createClass(Orchestrator, [{
+  return _createClass(Orchestrator, [{
     key: "getNodes",
     value: function getNodes(params) {
       var nodeFetch = fetch(this.serviceAddr + "/get?" + params);
@@ -46,7 +46,6 @@ var Orchestrator = /*#__PURE__*/function () {
       fetch(this.serviceAddr + "/assign?" + "command=free" + "&name=" + config.name);
     }
   }]);
-  return Orchestrator;
 }();
 export { Orchestrator as default };
 export { Orchestrator };

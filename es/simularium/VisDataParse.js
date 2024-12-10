@@ -1,7 +1,7 @@
 import _toConsumableArray from "@babel/runtime/helpers/toConsumableArray";
-import { AGENT_OBJECT_KEYS } from "./types";
-import { FrontEndError, ErrorLevel } from "./FrontEndError";
-import { AGENT_HEADER_SIZE } from "../constants";
+import { AGENT_OBJECT_KEYS } from "./types.js";
+import { FrontEndError, ErrorLevel } from "./FrontEndError.js";
+import { AGENT_HEADER_SIZE } from "../constants.js";
 var FRAME_DATA_SIZE = AGENT_OBJECT_KEYS.length;
 
 /**

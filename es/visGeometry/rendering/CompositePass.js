@@ -2,7 +2,7 @@ import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import { Color, DataTexture, FloatType, RGBAFormat, Vector3 } from "three";
-import RenderToBuffer from "./RenderToBuffer";
+import RenderToBuffer from "./RenderToBuffer.js";
 var CompositePass = /*#__PURE__*/function () {
   function CompositePass(bgHCLoffset) {
     _classCallCheck(this, CompositePass);
@@ -48,7 +48,7 @@ var CompositePass = /*#__PURE__*/function () {
   }
 
   // colorsData is a Float32Array of rgba
-  _createClass(CompositePass, [{
+  return _createClass(CompositePass, [{
     key: "updateColors",
     value: function updateColors(numColors, colorsData) {
       this.pass.material.uniforms.colorsBuffer.value = new DataTexture(colorsData, numColors, 1, RGBAFormat, FloatType);
@@ -106,6 +106,5 @@ var CompositePass = /*#__PURE__*/function () {
       // renderer.setClearColor(c, a);
     }
   }]);
-  return CompositePass;
 }();
 export default CompositePass;

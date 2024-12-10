@@ -4,7 +4,7 @@ import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import _regeneratorRuntime from "@babel/runtime/regenerator";
 import { ArrayBufferTarget, Muxer } from "mp4-muxer";
-import { DEFAULT_FRAME_RATE } from "../constants";
+import { DEFAULT_FRAME_RATE } from "../constants.js";
 
 /**
  * Records frames to an MP4 file using the WebCodecs API.
@@ -35,10 +35,10 @@ export var FrameRecorder = /*#__PURE__*/function () {
     this.supportedBrowser = "VideoEncoder" in window;
     this.frameRate = DEFAULT_FRAME_RATE;
   }
-  _createClass(FrameRecorder, [{
+  return _createClass(FrameRecorder, [{
     key: "setup",
     value: function () {
-      var _setup = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee() {
+      var _setup = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime.mark(function _callee() {
         var _this = this;
         var canvas, evenWidth, evenHeight, config, _yield$VideoEncoder$i, supported, supportedConfig;
         return _regeneratorRuntime.wrap(function _callee$(_context) {
@@ -130,7 +130,7 @@ export var FrameRecorder = /*#__PURE__*/function () {
   }, {
     key: "start",
     value: function () {
-      var _start = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee2() {
+      var _start = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime.mark(function _callee2() {
         return _regeneratorRuntime.wrap(function _callee2$(_context2) {
           while (1) switch (_context2.prev = _context2.next) {
             case 0:
@@ -164,7 +164,7 @@ export var FrameRecorder = /*#__PURE__*/function () {
   }, {
     key: "stop",
     value: function () {
-      var _stop = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee3() {
+      var _stop = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime.mark(function _callee3() {
         return _regeneratorRuntime.wrap(function _callee3$(_context3) {
           while (1) switch (_context3.prev = _context3.next) {
             case 0:
@@ -218,7 +218,7 @@ export var FrameRecorder = /*#__PURE__*/function () {
   }, {
     key: "onCompletedRecording",
     value: function () {
-      var _onCompletedRecording = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee4() {
+      var _onCompletedRecording = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime.mark(function _callee4() {
         var buffer, videoBlob;
         return _regeneratorRuntime.wrap(function _callee4$(_context4) {
           while (1) switch (_context4.prev = _context4.next) {
@@ -256,6 +256,5 @@ export var FrameRecorder = /*#__PURE__*/function () {
       return onCompletedRecording;
     }()
   }]);
-  return FrameRecorder;
 }();
 export default FrameRecorder;

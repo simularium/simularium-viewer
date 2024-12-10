@@ -1,10 +1,10 @@
 import { ILogger } from "js-logger";
-import { FrontEndError } from "./FrontEndError";
-import { WebsocketClient, MessageEventLike } from "./WebsocketClient";
-import type { NetMessage, ErrorMessage } from "./WebsocketClient";
-import { ISimulator } from "./ISimulator";
-import { TrajectoryFileInfoV2, VisDataMessage } from "./types";
-import { TrajectoryType } from "../constants";
+import { FrontEndError } from "./FrontEndError.js";
+import { WebsocketClient, MessageEventLike } from "./WebsocketClient.js";
+import type { NetMessage, ErrorMessage } from "./WebsocketClient.js";
+import { ISimulator } from "./ISimulator.js";
+import { TrajectoryFileInfoV2, VisDataMessage } from "./types.js";
+import { TrajectoryType } from "../constants.js";
 export declare class RemoteSimulator implements ISimulator {
     webSocketClient: WebsocketClient;
     protected logger: ILogger;

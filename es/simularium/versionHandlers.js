@@ -3,9 +3,9 @@ function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbol
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 import { mapValues } from "lodash";
 import * as si from "si-prefix";
-import { DEFAULT_CAMERA_SPEC_PERSPECTIVE } from "../constants";
-import { FrontEndError, ErrorLevel } from "./FrontEndError";
-import { GeometryDisplayType } from "../visGeometry/types";
+import { DEFAULT_CAMERA_SPEC_PERSPECTIVE } from "../constants.js";
+import { FrontEndError, ErrorLevel } from "./FrontEndError.js";
+import { GeometryDisplayType } from "../visGeometry/types.js";
 
 // the data may come in missing any of these values
 

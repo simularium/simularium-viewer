@@ -26,7 +26,7 @@ var LegacyRenderer = /*#__PURE__*/function () {
     });
     this.agentMeshGroup = new Group();
   }
-  _createClass(LegacyRenderer, [{
+  return _createClass(LegacyRenderer, [{
     key: "beginUpdate",
     value: function beginUpdate(scene) {
       scene.remove(this.agentMeshGroup);
@@ -162,6 +162,5 @@ var LegacyRenderer = /*#__PURE__*/function () {
       }
     }
   }]);
-  return LegacyRenderer;
 }();
 export { LegacyRenderer };

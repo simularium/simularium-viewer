@@ -1,6 +1,6 @@
 import { CatmullRomCurve3, Color, Vector3 } from "three";
-import { AgentData } from "../simularium/types";
-import { AgentColorInfo } from "./types";
+import { AgentData } from "../simularium/types.js";
+import { AgentColorInfo } from "./types.js";
 export default class VisAgent {
     private static readonly UNASSIGNED_MESH_COLOR;
     static readonly UNASSIGNED_NAME_PREFIX = "Unassigned";

@@ -13,7 +13,7 @@ export var TaskQueue = /*#__PURE__*/function () {
     _defineProperty(this, "queue", []);
     _defineProperty(this, "numActiveWorkers", 0);
   }
-  _createClass(TaskQueue, [{
+  return _createClass(TaskQueue, [{
     key: "enqueue",
     value:
     // add a task to the queue and start it immediately if not too busy
@@ -88,7 +88,6 @@ export var TaskQueue = /*#__PURE__*/function () {
       return true;
     }
   }]);
-  return TaskQueue;
 }();
 
 // by default, export a "singleton" of this class.

@@ -1,17 +1,17 @@
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { Box3, Box3Helper, Color, DirectionalLight, Group, HemisphereLight, LineSegments, OrthographicCamera, PerspectiveCamera, Scene, WebGLRenderer } from "three";
 import { Pane } from "tweakpane";
 import { ILogger, ILogLevel } from "js-logger";
-import VisAgent from "./VisAgent";
-import PDBModel from "./PDBModel";
-import AgentPath from "./agentPath";
-import { FrontEndError } from "../simularium/FrontEndError";
-import { AgentData, CachedFrame, EncodedTypeMapping, PerspectiveCameraSpec } from "../simularium/types";
-import SimulariumRenderer from "./rendering/SimulariumRenderer";
-import { LegacyRenderer } from "./rendering/LegacyRenderer";
-import GeometryStore from "./GeometryStore";
-import { ColorAssignment, GeometryDisplayType, MeshLoadRequest } from "./types";
-import ColorHandler from "./ColorHandler";
+import VisAgent from "./VisAgent.js";
+import PDBModel from "./PDBModel.js";
+import AgentPath from "./agentPath.js";
+import { FrontEndError } from "../simularium/FrontEndError.js";
+import { AgentData, CachedFrame, EncodedTypeMapping, PerspectiveCameraSpec } from "../simularium/types.js";
+import SimulariumRenderer from "./rendering/SimulariumRenderer.js";
+import { LegacyRenderer } from "./rendering/LegacyRenderer.js";
+import GeometryStore from "./GeometryStore.js";
+import { ColorAssignment, GeometryDisplayType, MeshLoadRequest } from "./types.js";
+import ColorHandler from "./ColorHandler.js";
 declare const NO_AGENT = -1;
 export declare enum RenderStyle {
     WEBGL1_FALLBACK = 0,

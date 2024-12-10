@@ -1,4 +1,4 @@
-import { VisDataMessage, CachedFrame } from "./types";
+import { VisDataMessage, CachedFrame } from "./types.js";
 /**
  * This function serves as a translation layer, it takes in a VisDataMessage
  * and walks the data counting the agents and converting the number[] to ArrayBuffer

@@ -1,5 +1,5 @@
 import { Mesh, Group, Matrix4 } from "three";
-import { MRTShaders } from "./MultipassMaterials";
+import { MRTShaders } from "./MultipassMaterials.js";
 declare class InstancedFiber {
     private nCurvePoints;
     private nRadialSections;

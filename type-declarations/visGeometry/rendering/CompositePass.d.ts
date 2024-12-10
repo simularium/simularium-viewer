@@ -1,5 +1,5 @@
 import { Color, OrthographicCamera, PerspectiveCamera, WebGLRenderer, WebGLRenderTarget } from "three";
-import RenderToBuffer from "./RenderToBuffer";
+import RenderToBuffer from "./RenderToBuffer.js";
 declare class CompositePass {
     pass: RenderToBuffer;
     constructor(bgHCLoffset?: {

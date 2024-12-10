@@ -3,7 +3,7 @@ import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import { filter, find, map, uniq } from "lodash";
-import { convertColorNumberToString } from "../visGeometry/ColorHandler";
+import { convertColorNumberToString } from "../visGeometry/ColorHandler.js";
 
 // An individual entry parsed from an encoded name
 // The encoded names can be just a name or a name plus a
@@ -14,7 +14,7 @@ var SelectionInterface = /*#__PURE__*/function () {
     _defineProperty(this, "entries", void 0);
     this.entries = new Map();
   }
-  _createClass(SelectionInterface, [{
+  return _createClass(SelectionInterface, [{
     key: "containsName",
     value: function containsName(name) {
       return this.entries.hasOwnProperty(name);
@@ -339,7 +339,6 @@ var SelectionInterface = /*#__PURE__*/function () {
       return colors;
     }
   }]);
-  return SelectionInterface;
 }();
 export { SelectionInterface };
 export default SelectionInterface;

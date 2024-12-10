@@ -2,11 +2,11 @@ import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import { noop } from "lodash";
-import { nullCachedFrame } from "../util";
-import { parseVisDataMessage } from "./VisDataParse";
-import { VisDataCache } from "./VisDataCache";
-import { ErrorLevel, FrontEndError } from "./FrontEndError";
-import { BYTE_SIZE_64_BIT_NUM } from "../constants";
+import { nullCachedFrame } from "../util.js";
+import { parseVisDataMessage } from "./VisDataParse.js";
+import { VisDataCache } from "./VisDataCache.js";
+import { ErrorLevel, FrontEndError } from "./FrontEndError.js";
+import { BYTE_SIZE_64_BIT_NUM } from "../constants.js";
 var VisData = /*#__PURE__*/function () {
   function VisData() {
     _classCallCheck(this, VisData);
@@ -23,7 +23,7 @@ var VisData = /*#__PURE__*/function () {
     this.timeStepSize = 0;
     this.onError = noop;
   }
-  _createClass(VisData, [{
+  return _createClass(VisData, [{
     key: "setOnError",
     value: function setOnError(onError) {
       this.onError = onError;
@@ -192,7 +192,6 @@ var VisData = /*#__PURE__*/function () {
       return frameData;
     }
   }]);
-  return VisData;
 }();
 export { VisData };
 export default VisData;

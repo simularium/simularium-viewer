@@ -4,15 +4,15 @@ import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import _regeneratorRuntime from "@babel/runtime/regenerator";
 import { forEach } from "lodash";
-import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
+import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import jsLogger from "js-logger";
 import { Object3D, Mesh, SphereGeometry, BoxGeometry } from "three";
-import { checkAndSanitizePath, getFileExtension } from "../util";
-import PDBModel from "./PDBModel";
-import { InstancedMesh, InstanceType } from "./rendering/InstancedMesh";
-import TaskQueue from "../simularium/TaskQueue";
-import { GeometryDisplayType } from "./types";
-import { MetaballMesh } from "./rendering/MetaballMesh";
+import { checkAndSanitizePath, getFileExtension } from "../util.js";
+import PDBModel from "./PDBModel.js";
+import { InstancedMesh, InstanceType } from "./rendering/InstancedMesh.js";
+import TaskQueue from "../simularium/TaskQueue.js";
+import { GeometryDisplayType } from "./types.js";
+import { MetaballMesh } from "./rendering/MetaballMesh.js";
 export var DEFAULT_MESH_NAME = "SPHERE";
 var GeometryStore = /*#__PURE__*/function () {
   function GeometryStore(loggerLevel) {
@@ -53,7 +53,7 @@ var GeometryStore = /*#__PURE__*/function () {
       this.mlogger.setLevel(loggerLevel);
     }
   }
-  _createClass(GeometryStore, [{
+  return _createClass(GeometryStore, [{
     key: "reset",
     value: function reset() {
       this._geoLoadAttempted.clear();
@@ -358,7 +358,7 @@ var GeometryStore = /*#__PURE__*/function () {
   }, {
     key: "mapKeyToGeom",
     value: function () {
-      var _mapKeyToGeom = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee(id, agentVisData) {
+      var _mapKeyToGeom = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime.mark(function _callee(id, agentVisData) {
         var _this4 = this;
         var displayType, url, lookupKey, geometry, _lookupKey;
         return _regeneratorRuntime.wrap(function _callee$(_context) {
@@ -432,7 +432,6 @@ var GeometryStore = /*#__PURE__*/function () {
       return mapKeyToGeom;
     }()
   }]);
-  return GeometryStore;
 }();
 _defineProperty(GeometryStore, "sphereGeometry", new SphereGeometry(1, 32, 32));
 _defineProperty(GeometryStore, "cubeGeometry", new BoxGeometry(1, 1, 1));

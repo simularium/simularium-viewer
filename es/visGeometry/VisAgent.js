@@ -2,7 +2,7 @@ import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import { CatmullRomCurve3, Color, Vector3 } from "three";
-import VisTypes from "../simularium/VisTypes";
+import VisTypes from "../simularium/VisTypes.js";
 var NO_AGENT = -1;
 var VisAgent = /*#__PURE__*/function () {
   function VisAgent(name) {
@@ -38,7 +38,7 @@ var VisAgent = /*#__PURE__*/function () {
     this.highlighted = false;
     this.fiberCurve = undefined;
   }
-  _createClass(VisAgent, [{
+  return _createClass(VisAgent, [{
     key: "resetAgent",
     value: function resetAgent() {
       this.active = false;
@@ -164,7 +164,6 @@ var VisAgent = /*#__PURE__*/function () {
       }
     }
   }]);
-  return VisAgent;
 }();
 _defineProperty(VisAgent, "UNASSIGNED_MESH_COLOR", 0xff00ff);
 _defineProperty(VisAgent, "UNASSIGNED_NAME_PREFIX", "Unassigned");

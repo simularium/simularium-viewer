@@ -2,7 +2,7 @@ import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import { Color, Vector4 } from "three";
-import RenderToBuffer from "./RenderToBuffer";
+import RenderToBuffer from "./RenderToBuffer.js";
 var DrawBufferPass = /*#__PURE__*/function () {
   function DrawBufferPass() {
     _classCallCheck(this, DrawBufferPass);
@@ -24,7 +24,7 @@ var DrawBufferPass = /*#__PURE__*/function () {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _createClass(DrawBufferPass, [{
+  return _createClass(DrawBufferPass, [{
     key: "resize",
     value: function resize(x, y) {
       /* do nothing */
@@ -50,6 +50,5 @@ var DrawBufferPass = /*#__PURE__*/function () {
       renderer.setClearColor(c, a);
     }
   }]);
-  return DrawBufferPass;
 }();
 export default DrawBufferPass;

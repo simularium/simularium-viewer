@@ -1,4 +1,4 @@
-import RenderToBuffer from "./RenderToBuffer";
+import RenderToBuffer from "./RenderToBuffer.js";
 import { OrthographicCamera, PerspectiveCamera, WebGLRenderer, WebGLRenderTarget } from "three";
 declare class SSAO1Pass {
     pass: RenderToBuffer;

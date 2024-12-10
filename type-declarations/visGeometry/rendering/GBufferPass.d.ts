@@ -1,6 +1,6 @@
-import { InstancedFiberGroup } from "./InstancedFiber";
-import { MRTShaders } from "./MultipassMaterials";
-import { GeometryInstanceContainer } from "../types";
+import { InstancedFiberGroup } from "./InstancedFiber.js";
+import { MRTShaders } from "./MultipassMaterials.js";
+import { GeometryInstanceContainer } from "../types.js";
 import { Group, OrthographicCamera, PerspectiveCamera, Scene, WebGLRenderer, WebGLMultipleRenderTargets } from "three";
 declare class GBufferPass {
     pdbGbufferMaterials: MRTShaders;

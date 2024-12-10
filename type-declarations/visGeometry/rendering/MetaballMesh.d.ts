@@ -1,6 +1,6 @@
 import { BufferGeometry, Group } from "three";
-import { MRTShaders } from "./MultipassMaterials";
-import { GeometryInstanceContainer } from "../types";
+import { MRTShaders } from "./MultipassMaterials.js";
+import { GeometryInstanceContainer } from "../types.js";
 declare class MetaballMesh implements GeometryInstanceContainer {
     private drawable;
     private shaderSet;

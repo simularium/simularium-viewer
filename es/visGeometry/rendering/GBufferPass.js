@@ -1,9 +1,9 @@
 import _classCallCheck from "@babel/runtime/helpers/classCallCheck";
 import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
-import PDBGBufferShaders from "./PDBGBufferShaders";
-import { InstancedFiberGroup } from "./InstancedFiber";
-import { setRenderPass, updateProjectionMatrix, updateResolution } from "./MultipassMaterials";
+import PDBGBufferShaders from "./PDBGBufferShaders.js";
+import { InstancedFiberGroup } from "./InstancedFiber.js";
+import { setRenderPass, updateProjectionMatrix, updateResolution } from "./MultipassMaterials.js";
 import { Color, Group, Scene } from "three";
 
 // strategy:
@@ -34,7 +34,7 @@ var GBufferPass = /*#__PURE__*/function () {
     this.pdbGbufferMaterials = PDBGBufferShaders.shaderSet;
     this.scene = new Scene();
   }
-  _createClass(GBufferPass, [{
+  return _createClass(GBufferPass, [{
     key: "setMeshGroups",
     value: function setMeshGroups(instancedMeshGroup, fibers, meshes) {
       this.instancedMeshGroup = instancedMeshGroup;
@@ -96,6 +96,5 @@ var GBufferPass = /*#__PURE__*/function () {
       renderer.setClearColor(c, a);
     }
   }]);
-  return GBufferPass;
 }();
 export default GBufferPass;
