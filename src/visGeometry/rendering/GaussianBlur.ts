@@ -1,6 +1,6 @@
 import { Color, Vector2, WebGLRenderer, WebGLRenderTarget } from "three";
 
-import RenderToBuffer from "./RenderToBuffer";
+import RenderToBuffer from "./RenderToBuffer.js";
 
 class BlurPass1D {
     public pass: RenderToBuffer;

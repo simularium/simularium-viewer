@@ -1,7 +1,7 @@
 import {
     convertColorStringToNumber,
     convertColorNumberToString,
-} from "../visGeometry/ColorHandler";
+} from "../visGeometry/ColorHandler.js";
 
 describe("VisGeometry color-utils", () => {
     describe("convertColorStringToNumber", () => {

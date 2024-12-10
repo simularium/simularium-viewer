@@ -1,6 +1,6 @@
 import { Color, Vector4, WebGLRenderer, WebGLRenderTarget } from "three";
 
-import RenderToBuffer from "./RenderToBuffer";
+import RenderToBuffer from "./RenderToBuffer.js";
 
 class DrawBufferPass {
     public pass: RenderToBuffer;

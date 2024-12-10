@@ -1,14 +1,12 @@
 import {
     IClientSimulatorImpl,
     ClientMessageEnum,
-} from "../../../src/simularium/localSimulators/IClientSimulatorImpl";
-import {
     EncodedTypeMapping,
     TrajectoryFileInfo,
     VisDataMessage,
-} from "../../../src/simularium/types";
-import VisTypes from "../../../src/simularium/VisTypes";
-import { GeometryDisplayType } from "../../../src/visGeometry/types";
+    VisTypes,
+    GeometryDisplayType,
+} from "@aics/simularium-viewer";
 
 export default class PdbSim implements IClientSimulatorImpl {
     nPoints: number;

@@ -1,9 +1,13 @@
 // Gotta set up a separate RemoteMetricsCalculator in case we have a non-remote
 // simulator and want to calculate metrics anyways
 
-import { FrontEndError } from "./FrontEndError";
-import { PlotConfig } from "./types";
-import { NetMessageEnum, WebsocketClient, NetMessage } from "./WebsocketClient";
+import { FrontEndError } from "./FrontEndError.js";
+import { PlotConfig } from "./types.js";
+import {
+    NetMessageEnum,
+    WebsocketClient,
+    NetMessage,
+} from "./WebsocketClient.js";
 
 export class RemoteMetricsCalculator {
     public handleError: (error: FrontEndError) => void | (() => void);

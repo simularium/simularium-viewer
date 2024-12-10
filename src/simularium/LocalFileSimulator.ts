@@ -1,9 +1,9 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
 
-import { VisDataFrame, VisDataMessage, TrajectoryFileInfoV2 } from "./types";
-import { ISimulator } from "./ISimulator";
-import type { ISimulariumFile } from "./ISimulariumFile";
+import { VisDataFrame, VisDataMessage, TrajectoryFileInfoV2 } from "./types.js";
+import { ISimulator } from "./ISimulator.js";
+import type { ISimulariumFile } from "./ISimulariumFile.js";
 
 // a LocalFileSimulator is a ISimulator that plays back the contents of
 // a drag-n-drop trajectory file (a ISimulariumFile object)
