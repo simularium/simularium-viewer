@@ -3,10 +3,12 @@ import { Mesh } from "three";
 import {
     InstancedMesh,
     InstanceType,
-} from "../visGeometry/rendering/InstancedMesh";
-import GeometryStore, { DEFAULT_MESH_NAME } from "../visGeometry/GeometryStore";
-import { GeometryDisplayType } from "../visGeometry/types";
-import PDBModel from "../visGeometry/PDBModel";
+} from "../visGeometry/rendering/InstancedMesh.js";
+import GeometryStore, {
+    DEFAULT_MESH_NAME,
+} from "../visGeometry/GeometryStore.js";
+import { GeometryDisplayType } from "../visGeometry/types.js";
+import PDBModel from "../visGeometry/PDBModel.js";
 
 describe("GeometryStore module", () => {
     test("it creates a registry with a single mesh", () => {

@@ -1,9 +1,11 @@
+import { vi } from "vitest";
+
 import { mapValues } from "lodash";
-import { EncodedTypeMapping, SelectionInterface } from "../simularium";
+import { EncodedTypeMapping, SelectionInterface } from "../simularium/index.js";
 import {
     UIDisplayData,
     UIDisplayEntry,
-} from "../simularium/SelectionInterface";
+} from "../simularium/SelectionInterface.js";
 
 const idMapping = {
     0: { name: "A" },
@@ -73,7 +75,7 @@ describe("SelectionInterface module", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
             const result = si.getUnmodifiedStateId("Not in state");
-            expect(result).toBeNull;
+            expect(result).toBeNull();
         });
         test("it returns the id of the unmodified state", () => {
             const si = new SelectionInterface();
@@ -92,7 +94,7 @@ describe("SelectionInterface module", () => {
             const si = new SelectionInterface();
             si.parse(idMapping);
             const unmod = si.getUnmodifiedStateId("E");
-            expect(unmod).toBeNull;
+            expect(unmod).toBeNull();
         });
     });
 
@@ -475,7 +477,7 @@ describe("SelectionInterface module", () => {
                 },
             };
         });
-        const setColorForIds = jest.fn();
+        const setColorForIds = vi.fn();
 
         beforeEach(() => {
             si = new SelectionInterface();

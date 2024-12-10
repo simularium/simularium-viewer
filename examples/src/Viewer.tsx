@@ -1,14 +1,9 @@
 import React from "react";
-import { isEqual, findIndex, map, reduce } from "lodash";
+import { isEqual, findIndex, reduce } from "lodash";
 import { v4 as uuidv4 } from "uuid";
+import { InputParams } from "tweakpane";
 
-import type {
-    ISimulariumFile,
-    UIDisplayData,
-    SelectionStateInfo,
-    SelectionEntry,
-} from "../../type-declarations";
-import { nullAgent, TrajectoryType } from "../../src/constants";
+// viewer package imports
 import SimulariumViewer, {
     SimulariumController,
     RenderStyle,
@@ -17,23 +12,19 @@ import SimulariumViewer, {
     ErrorLevel,
     NetConnectionParams,
     TrajectoryFileInfo,
-} from "../../src/index";
-
-/**
- * NOTE: if you are debugging an import/build issue
- * on the front end, you may need to switch to the
- * following import statements to reproduce the issue
- * here.
- */
-// import SimulariumViewer, {
-//     SimulariumController,
-//     RenderStyle,
-//     loadSimulariumFile,
-//     FrontEndError,
-//     ErrorLevel,
-// } from "../es";
+    nullAgent,
+    TrajectoryType,
+} from "@aics/simularium-viewer";
+import type {
+    ISimulariumFile,
+    UIDisplayData,
+    SelectionStateInfo,
+    SelectionEntry,
+    AgentData,
+} from "@aics/simularium-viewer";
 import "../../style/style.css";
-import { AgentData } from "../../type-declarations/simularium/types";
+
+// local test bed imports
 import PointSimulator from "./simulators/PointSimulator";
 import BindingSimulator from "./simulators/BindingSimulator2D";
 import PointSimulatorLive from "./simulators/PointSimulatorLive";
@@ -42,8 +33,14 @@ import SinglePdbSimulator from "./simulators/SinglePdbSimulator";
 import CurveSimulator from "./simulators/CurveSimulator";
 import VolumeSimulator from "./simulators/VolumeSimulator";
 import SingleCurveSimulator from "./simulators/SingleCurveSimulator";
-import ColorPicker from "./ColorPicker";
-import RecordMovieComponent from "./RecordMovieComponent";
+import MetaballSimulator from "./simulators/MetaballSimulator";
+
+import ColorPicker from "./Components/ColorPicker";
+import RecordMovieComponent from "./Components/RecordMovieComponent";
+import ConversionForm from "./Components/ConversionForm";
+import AgentMetadata from "./Components/AgentMetadata";
+import { agentColors } from "./constants";
+import { BaseType, CustomType } from "./types";
 import {
     SMOLDYN_TEMPLATE,
     UI_BASE_TYPES,
@@ -51,9 +48,8 @@ import {
     UI_TEMPLATE_DOWNLOAD_URL_ROOT,
     UI_TEMPLATE_URL_ROOT,
 } from "./api-settings";
-import ConversionForm from "./ConversionForm";
-import MetaballSimulator from "./simulators/MetaballSimulator";
-import AgentMetadata from "./AgentMetadata";
+
+import "./style.css";
 
 let playbackFile = "TEST_LIVEMODE_API";
 let queryStringFile = "";
@@ -63,29 +59,8 @@ if (urlParams.has("file")) {
     playbackFile = queryStringFile;
 }
 
-const agentColors = [
-    "#fee34d",
-    "#f7b232",
-    "#bf5736",
-    "#94a7fc",
-    "#ce8ec9",
-    "#58606c",
-    "#0ba345",
-    "#9267cb",
-    "#81dbe6",
-    "#bd7800",
-    "#bbbb99",
-    "#5b79f0",
-    "#89a500",
-    "#da8692",
-    "#418463",
-    "#9f516c",
-    "#00aabf",
-];
-
 interface ViewerState {
     renderStyle: RenderStyle;
-    pauseOn: number;
     particleTypeNames: string[];
     particleTypeTags: string[];
     currentFrame: number;
@@ -115,34 +90,6 @@ interface ViewerState {
     followObjectData: AgentData;
 }
 
-interface BaseType {
-    isBaseType: true;
-    id: string;
-    data: string;
-    match: string;
-}
-
-export interface CustomParameters {
-    name: string;
-    data_type: string;
-    description: string;
-    required: boolean;
-    help: string;
-    options?: string[];
-}
-
-interface CustomType {
-    [key: string]: {
-        "python::module": string;
-        "python::object": string;
-        parameters: CustomParameters;
-    };
-}
-
-interface InputParams {
-    localBackendServer: boolean;
-}
-
 const simulariumController = new SimulariumController({});
 
 let currentFrame = 0;
@@ -150,7 +97,6 @@ let currentTime = 0;
 
 const initialState: ViewerState = {
     renderStyle: RenderStyle.WEBGL2_PREFERRED,
-    pauseOn: -1,
     particleTypeNames: [],
     particleTypeTags: [],
     currentFrame: 0,
@@ -435,9 +381,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             this.setState({ initialPlay: false, firstFrameTime: currentTime });
         }
         this.setState({ currentFrame, currentTime });
-        if (this.state.pauseOn === currentFrame) {
+        if (currentFrame < 0) {
             simulariumController.pause();
-            this.setState({ pauseOn: -1 });
         }
     }
 
@@ -515,14 +460,19 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             },
             []
         );
-        const uniqueTags: string[] = [...new Set(allTags)];
-        if (isEqual(uiDisplayData, this.state.selectionStateInfo.appliedColors)) {
+        const uniqueTags: string[] = [...new Set(allTags)] as string[];
+        if (
+            isEqual(uiDisplayData, this.state.selectionStateInfo.appliedColors)
+        ) {
             return;
         }
         this.setState({
             particleTypeNames: uiDisplayData.map((a) => a.name),
             particleTypeTags: uniqueTags,
-            selectionStateInfo: {...initialState.selectionStateInfo, appliedColors: uiDisplayData},
+            selectionStateInfo: {
+                ...initialState.selectionStateInfo,
+                appliedColors: uiDisplayData,
+            },
         });
     }
 
@@ -959,7 +909,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 >
                     Get available metrics
                 </button>
-                <button onClick={this.downloadFile}>download</button>
+                <button onClick={this.downloadFile.bind(this)}>download</button>
                 <button
                     onClick={() =>
                         simulariumController.getPlotData(
@@ -995,24 +945,16 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     updateAgentColorArray={this.updateAgentColorArray}
                     setColorSelectionInfo={this.setColorSelectionInfo}
                 />
-                <button
-                    onClick={() =>
-                        this.setRecordingEnabled(!this.state.isRecordingEnabled)
-                    }
-                >
-                    {this.state.isRecordingEnabled ? "Disable" : "Enable"}{" "}
-                    Recording
-                </button>
-                {this.state.isRecordingEnabled && (
-                    <RecordMovieComponent
-                        startRecordingHandler={
-                            simulariumController.startRecording
-                        }
-                        stopRecordingHandler={
-                            simulariumController.stopRecording
-                        }
-                    />
-                )}
+                <RecordMovieComponent
+                    startRecordingHandler={simulariumController.startRecording}
+                    stopRecordingHandler={simulariumController.stopRecording}
+                    setRecordingEnabled={() => {
+                        this.setRecordingEnabled(
+                            !this.state.isRecordingEnabled
+                        );
+                    }}
+                    isRecordingEnabled={this.state.isRecordingEnabled}
+                />
                 <AgentMetadata agentData={this.state.followObjectData} />
                 <div className="viewer-container">
                     <SimulariumViewer

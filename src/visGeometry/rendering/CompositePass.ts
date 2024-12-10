@@ -10,7 +10,7 @@ import {
     WebGLRenderTarget,
 } from "three";
 
-import RenderToBuffer from "./RenderToBuffer";
+import RenderToBuffer from "./RenderToBuffer.js";
 
 class CompositePass {
     public pass: RenderToBuffer;

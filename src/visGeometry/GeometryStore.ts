@@ -1,5 +1,5 @@
 import { forEach } from "lodash";
-import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader";
+import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import jsLogger, { ILogger, ILogLevel } from "js-logger";
 import { createVolumeLoader, LoadSpec } from "@aics/volume-viewer";
 import {
@@ -10,11 +10,11 @@ import {
     BoxGeometry,
 } from "three";
 
-import { checkAndSanitizePath, getFileExtension } from "../util";
-import PDBModel from "./PDBModel";
-import { InstancedMesh, InstanceType } from "./rendering/InstancedMesh";
-import TaskQueue from "../simularium/TaskQueue";
-import { AgentTypeVisData } from "../simularium/types";
+import { checkAndSanitizePath, getFileExtension } from "../util.js";
+import PDBModel from "./PDBModel.js";
+import { InstancedMesh, InstanceType } from "./rendering/InstancedMesh.js";
+import TaskQueue from "../simularium/TaskQueue.js";
+import { AgentTypeVisData } from "../simularium/types.js";
 
 import {
     AgentGeometry,
@@ -22,9 +22,9 @@ import {
     GeometryStoreLoadResponse,
     MeshGeometry,
     MeshLoadRequest,
-} from "./types";
-import { MetaballMesh } from "./rendering/MetaballMesh";
-import VolumeModel from "./VolumeModel";
+} from "./types.js";
+import { MetaballMesh } from "./rendering/MetaballMesh.js";
+import VolumeModel from "./VolumeModel.js";
 
 export const DEFAULT_MESH_NAME = "SPHERE";
 
