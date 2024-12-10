@@ -152,6 +152,7 @@ export class DummyRemoteSimulator extends RemoteSimulator {
             this.frameCounter = frameNumber;
 
             const msg: NetMessage = JSON.parse(this.getDataBundle(frameNumber));
+            this.frameCounter++;            
             this.onJsonIdVisDataArrive(msg);
         }, this.commandLatencyMS);
     }
