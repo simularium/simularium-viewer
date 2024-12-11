@@ -17,7 +17,6 @@ import {
     PerspectiveCamera,
     RGBAFormat,
     Scene,
-    WebGLMultipleRenderTargets,
     WebGLRenderer,
     WebGLRenderTarget,
 } from "three";
@@ -60,7 +59,7 @@ class SimulariumRenderer {
     public compositePass: CompositePass;
     public contourPass: ContourPass;
     public drawBufferPass: DrawBufferPass;
-    public gbuffer: WebGLMultipleRenderTargets;
+    public gbuffer: WebGLRenderTarget;
     private hitTestHelper: HitTestHelper;
     public blurIntermediateBuffer: WebGLRenderTarget;
     public ssaoBuffer: WebGLRenderTarget;
@@ -120,18 +119,18 @@ class SimulariumRenderer {
         this.drawBufferPass = new DrawBufferPass();
 
         // buffers:
-        this.gbuffer = new WebGLMultipleRenderTargets(2, 2, 3);
-        for (let i = 0, il = this.gbuffer.texture.length; i < il; i++) {
-            this.gbuffer.texture[i].minFilter = NearestFilter;
-            this.gbuffer.texture[i].magFilter = NearestFilter;
-            this.gbuffer.texture[i].format = RGBAFormat;
-            this.gbuffer.texture[i].type = FloatType;
-            this.gbuffer.texture[i].generateMipmaps = false;
-        }
+        this.gbuffer = new WebGLRenderTarget(2, 2, {
+            count: 3,
+            minFilter: NearestFilter,
+            magFilter: NearestFilter,
+            format: RGBAFormat,
+            type: FloatType,
+            generateMipmaps: false,
+        });
         // Name our G-Buffer attachments for debugging
-        this.gbuffer.texture[AGENTBUFFER].name = "agentinfo";
-        this.gbuffer.texture[NORMALBUFFER].name = "normal";
-        this.gbuffer.texture[POSITIONBUFFER].name = "position";
+        this.gbuffer.textures[AGENTBUFFER].name = "agentinfo";
+        this.gbuffer.textures[NORMALBUFFER].name = "normal";
+        this.gbuffer.textures[POSITIONBUFFER].name = "position";
 
         this.hitTestHelper = new HitTestHelper();
 
@@ -276,7 +275,7 @@ class SimulariumRenderer {
     }
 
     public hitTest(renderer: WebGLRenderer, x: number, y: number): number {
-        const tex = this.gbuffer.texture[AGENTBUFFER];
+        const tex = this.gbuffer.textures[AGENTBUFFER];
         const pixel = this.hitTestHelper.hitTest(
             renderer,
             tex,
@@ -411,14 +410,14 @@ class SimulariumRenderer {
             renderer,
             camera,
             this.ssaoBuffer,
-            this.gbuffer.texture[NORMALBUFFER],
-            this.gbuffer.texture[POSITIONBUFFER]
+            this.gbuffer.textures[NORMALBUFFER],
+            this.gbuffer.textures[POSITIONBUFFER]
         );
         this.blur1Pass.render(
             renderer,
             this.ssaoBufferBlurred,
             this.ssaoBuffer,
-            this.gbuffer.texture[POSITIONBUFFER],
+            this.gbuffer.textures[POSITIONBUFFER],
             this.blurIntermediateBuffer
         );
 
@@ -433,7 +432,7 @@ class SimulariumRenderer {
             compositeTarget,
             this.ssaoBufferBlurred,
             this.ssaoBufferBlurred2,
-            this.gbuffer.texture[AGENTBUFFER]
+            this.gbuffer.textures[AGENTBUFFER]
         );
 
         this.contourPass.render(
@@ -441,8 +440,8 @@ class SimulariumRenderer {
             target,
             compositeTarget,
             // this is the buffer with the instance ids and fragdepth!
-            this.gbuffer.texture[AGENTBUFFER],
-            this.gbuffer.texture[NORMALBUFFER]
+            this.gbuffer.textures[AGENTBUFFER],
+            this.gbuffer.textures[NORMALBUFFER]
         );
 
         // DEBUGGING some of the intermediate buffers:
