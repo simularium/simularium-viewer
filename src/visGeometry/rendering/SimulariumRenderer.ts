@@ -440,8 +440,8 @@ class SimulariumRenderer {
             target,
             compositeTarget,
             // this is the buffer with the instance ids and fragdepth!
-            this.gbuffer.texture[AGENTBUFFER],
-            this.gbuffer.texture[NORMALBUFFER]
+            this.gbuffer.textures[AGENTBUFFER],
+            this.gbuffer.textures[NORMALBUFFER]
         );
 
         // DEBUGGING some of the intermediate buffers:
