@@ -16,12 +16,13 @@ import {
 import { ClientSimulator } from "../simularium/ClientSimulator.js";
 import { IClientSimulatorImpl } from "../simularium/localSimulators/IClientSimulatorImpl.js";
 import { ISimulator } from "../simularium/ISimulator.js";
-import { LocalFileSimulator } from "../simularium/LocalFileSimulator.js";
+import { LocalFileSimulator } from "../simularium/LocalFileSimulator2.js";
 import { FrontEndError } from "../simularium/FrontEndError.js";
 import type { ISimulariumFile } from "../simularium/ISimulariumFile.js";
 import { WebsocketClient } from "../simularium/WebsocketClient.js";
 import { TrajectoryType } from "../constants.js";
 import { RemoteMetricsCalculator } from "../simularium/RemoteMetricsCalculator.js";
+import { ISimulator2 } from "../simularium/ISimulator2.js";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
@@ -43,7 +44,7 @@ interface SimulatorConnectionParams {
 }
 
 export default class SimulariumController {
-    public simulator?: ISimulator;
+    public simulator?: ISimulator | ISimulator2;
     public remoteWebsocketClient?: WebsocketClient;
     public metricsCalculator?: RemoteMetricsCalculator;
     public visData: VisData;
@@ -119,6 +120,20 @@ export default class SimulariumController {
         this.setCameraType = this.setCameraType.bind(this);
     }
 
+    // Type guard to check if we have ISimulator
+    public isISimulator(
+        simulator: ISimulator | ISimulator2
+    ): simulator is ISimulator {
+        return "resume" in simulator;
+    }
+
+    // Type guard to check if we have ISimulator2
+    public isISimulator2(
+        simulator: ISimulator | ISimulator2
+    ): simulator is ISimulator2 {
+        return "stream" in simulator;
+    }
+
     private createSimulatorConnection(
         netConnectionConfig?: NetConnectionParams,
         clientSimulator?: IClientSimulatorImpl,
@@ -166,7 +181,11 @@ export default class SimulariumController {
     }
 
     public configureNetwork(config: NetConnectionParams): void {
-        if (this.simulator && this.simulator.socketIsValid()) {
+        if (
+            this.simulator &&
+            this.isISimulator(this.simulator) &&
+            this.simulator.socketIsValid()
+        ) {
             this.simulator.disconnect();
         }
 
@@ -180,7 +199,7 @@ export default class SimulariumController {
     // Not called by viewer, but could be called by
     // parent app
     public connect(): Promise<string> {
-        if (!this.simulator) {
+        if (!this.simulator || !this.isISimulator(this.simulator)) {
             return Promise.reject(
                 new Error(
                     "No network connection established in simularium controller."
@@ -205,8 +224,15 @@ export default class SimulariumController {
         this.networkEnabled = true;
         this.isPaused = false;
         this.visData.clearCache();
-
-        return this.simulator.startRemoteTrajectoryPlayback(this.playBackFile);
+        if (this.isISimulator(this.simulator)) {
+            return this.simulator.startRemoteTrajectoryPlayback(
+                this.playBackFile
+            );
+        } else if (this.isISimulator2(this.simulator)) {
+            return this.simulator.initialize(this.playBackFile);
+        } else {
+            return Promise.reject();
+        }
     }
 
     public time(): number {
@@ -215,12 +241,17 @@ export default class SimulariumController {
 
     public stop(): void {
         if (this.simulator) {
-            this.simulator.abortRemoteSim();
+            if (this.isISimulator(this.simulator)) {
+                this.simulator.abortRemoteSim();
+            }
+            if (this.isISimulator2(this.simulator)) {
+                this.simulator.pause();
+            }
         }
     }
 
     public sendUpdate(obj: Record<string, unknown>): void {
-        if (this.simulator) {
+        if (this.simulator && this.isISimulator(this.simulator)) {
             this.simulator.sendUpdate(obj);
         }
     }
@@ -233,7 +264,11 @@ export default class SimulariumController {
     ): Promise<void> {
         try {
             if (
-                !(this.simulator && this.simulator.isConnectedToRemoteServer())
+                !(
+                    this.simulator &&
+                    this.isISimulator(this.simulator) &&
+                    this.simulator.isConnectedToRemoteServer()
+                )
             ) {
                 // Only configure network if we aren't already connected to the remote server
                 this.configureNetwork(netConnectionConfig);
@@ -254,7 +289,12 @@ export default class SimulariumController {
 
     public pause(): void {
         if (this.networkEnabled && this.simulator) {
-            this.simulator.pauseRemoteSim();
+            if (this.isISimulator(this.simulator)) {
+                this.simulator.pauseRemoteSim();
+            }
+            if (this.isISimulator2(this.simulator)) {
+                this.simulator.pause();
+            }
         }
 
         this.isPaused = true;
@@ -265,8 +305,11 @@ export default class SimulariumController {
     }
 
     public initializeTrajectoryFile(): void {
-        if (this.simulator) {
+        if (this.simulator && this.isISimulator(this.simulator)) {
             this.simulator.requestTrajectoryFileInfo(this.playBackFile);
+        }
+        if (this.simulator && this.isISimulator2(this.simulator)) {
+            this.simulator.initialize(this.playBackFile);
         }
     }
 
@@ -280,7 +323,12 @@ export default class SimulariumController {
                 // else reset the local cache,
                 //  and play remotely from the desired simulation time
                 this.visData.clearCache();
-                this.simulator.gotoRemoteSimulationTime(time);
+                if (this.isISimulator(this.simulator)) {
+                    this.simulator.gotoRemoteSimulationTime(time);
+                }
+                if (this.isISimulator2(this.simulator)) {
+                    this.simulator.requestDataByTime(time);
+                }
             }
         }
     }
@@ -292,7 +340,12 @@ export default class SimulariumController {
 
     public resume(): void {
         if (this.networkEnabled && this.simulator) {
-            this.simulator.resumeRemoteSim();
+            if (this.isISimulator(this.simulator)) {
+                this.simulator.resumeRemoteSim();
+            }
+            if (this.isISimulator2(this.simulator)) {
+                this.simulator.stream();
+            }
         }
 
         this.isPaused = false;
@@ -382,7 +435,12 @@ export default class SimulariumController {
             return this.start()
                 .then(() => {
                     if (this.simulator) {
-                        this.simulator.requestSingleFrame(0);
+                        if (this.isISimulator(this.simulator)) {
+                            return this.simulator.requestSingleFrame(0);
+                        }
+                        if (this.isISimulator2(this.simulator)) {
+                            return this.simulator.requestFirstFrame(0);
+                        }
                     }
                 })
                 .then(() => ({
@@ -407,7 +465,13 @@ export default class SimulariumController {
         handler: () => void,
         netConnectionConfig: NetConnectionParams
     ): void {
-        if (!(this.simulator && this.simulator.isConnectedToRemoteServer())) {
+        if (
+            !(
+                this.simulator &&
+                this.isISimulator(this.simulator) &&
+                this.simulator.isConnectedToRemoteServer()
+            )
+        ) {
             // Only configure network if we aren't already connected to the remote server
             this.configureNetwork(netConnectionConfig);
         }
@@ -482,7 +546,11 @@ export default class SimulariumController {
     public disableNetworkCommands(): void {
         this.networkEnabled = false;
 
-        if (this.simulator && this.simulator.socketIsValid()) {
+        if (
+            this.simulator &&
+            this.isISimulator(this.simulator) &&
+            this.simulator.socketIsValid()
+        ) {
             this.simulator.disconnect();
         }
     }
