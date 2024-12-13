@@ -42,61 +42,6 @@ export class LocalFileSimulator implements ISimulator2 {
         this.onTrajectoryDataArrive = handler;
     }
 
-    // public socketIsValid(): boolean {
-    //     return true;
-    // }
-
-    /**
-     * Connect
-     * */
-    // public disconnect(): void {
-    //     this.abortRemoteSim();
-    // }
-
-    // public getIp(): string {
-    //     return "";
-    // }
-
-    // public isConnectedToRemoteServer(): boolean {
-    //     return false;
-    // }
-
-    // public connectToRemoteServer(_address: string): Promise<string> {
-    //     return Promise.resolve("Local file successfully started");
-    // }
-
-    // public sendTimeStepUpdate(_newTimeStep: number): void {
-    //     // not implemented
-    // }
-
-    // public sendParameterUpdate(_paramName: string, _paramValue: number): void {
-    //     // not implemented
-    // }
-
-    // public sendModelDefinition(_model: string): void {
-    //     // not implemented
-    // }
-
-    /**
-     * Simulation Control
-     *
-     * Simulation Run Modes:
-     *  Live : Results are sent as they are calculated
-     *  Pre-Run : All results are evaluated, then sent piecemeal
-     *  Trajectory File: No simulation run, stream a result file piecemeal
-     *
-     */
-    // public startRemoteSimPreRun(
-    //     _timeStep: number,
-    //     _numTimeSteps: number
-    // ): void {
-    //     // not implemented
-    // }
-
-    // public startRemoteSimLive(): void {
-    //     // not implemented
-    // }
-
     public initialize(_fileName: string): Promise<void> {
         try {
             const trajectoryInfo = this.simulariumFile.getTrajectoryFileInfo();
@@ -146,16 +91,6 @@ export class LocalFileSimulator implements ISimulator2 {
             this.requestFirstFrame(frameNumber);
         }
     }
-
-    // public requestTrajectoryFileInfo(_fileName: string): void {
-    //     this.onTrajectoryFileInfoArrive(
-    //         this.simulariumFile.getTrajectoryFileInfo()
-    //     );
-    // }
-
-    // public sendUpdate(_obj: Record<string, unknown>): void {
-    //     // not implemented
-    // }
 
     private getFrame(theFrameNumber: number): VisDataMessage | ArrayBuffer {
         // Possible TODO:
