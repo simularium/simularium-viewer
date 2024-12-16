@@ -14,12 +14,13 @@ class VisData {
     private frameToWaitFor: number;
     private lockedForFrame: boolean;
 
-    private currentFrameNumber: number;
-    private isPlaybackPaused: boolean;
-    public setPlaybackPaused(paused: boolean): void {
-        this.isPlaybackPaused = paused;
-    }
-    public onCacheLimitReached: (latestFrame: number) => void;
+    public currentFrameNumber: number; // playback head
+    public currentStreamingHead: number;
+    public remoteStreamingHeadPotentiallyOutOfSync: boolean;
+    public isPlaying: boolean;
+    public isStreaming: boolean;
+    public onStreamingChange: (streaming: boolean) => void;
+    public onCacheLimitReached: () => void;
 
     public timeStepSize: number;
     public totalSteps: number;
@@ -44,14 +45,18 @@ class VisData {
 
     public constructor() {
         this.currentFrameNumber = -1;
+        this.currentStreamingHead = -1;
+        this.remoteStreamingHeadPotentiallyOutOfSync = false;
         this.frameCache = new VisDataCache();
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
         this.timeStepSize = 0;
         this.totalSteps = 0;
-        this.isPlaybackPaused = false;
+        this.isPlaying = false;
+        this.isStreaming = false;
 
         this.onError = noop;
+        this.onStreamingChange = noop;
         this.onCacheLimitReached = noop;
     }
 
@@ -59,9 +64,13 @@ class VisData {
         this.onError = onError;
     }
 
-    public setOnCacheLimitReached(
-        onCacheLimitReached: (latestFrame: number) => void
+    public setOnStreamingChange(
+        onStreamingChange: (streaming: boolean) => void
     ): void {
+        this.onStreamingChange = onStreamingChange;
+    }
+
+    public setOnCacheLimitReached(onCacheLimitReached: () => void): void {
         this.onCacheLimitReached = onCacheLimitReached;
     }
 
@@ -93,9 +102,19 @@ class VisData {
         return this.frameCache.containsTime(time);
     }
 
+    public hasLocalCacheForFrame(frameNumber: number): boolean {
+        return this.frameCache.containsFrameAtFrameNumber(frameNumber);
+    }
+
     public gotoTime(time: number): void {
         const frameNumber = this.frameCache.getFrameAtTime(time)?.frameNumber;
         if (frameNumber !== undefined) {
+            this.currentFrameNumber = frameNumber;
+        }
+    }
+
+    public gotoFrame(frameNumber: number): void {
+        if (this.hasLocalCacheForFrame(frameNumber)) {
             this.currentFrameNumber = frameNumber;
         }
     }
@@ -108,6 +127,11 @@ class VisData {
         if (!this.atLatestFrame()) {
             this.currentFrameNumber += 1;
         }
+    }
+
+    public updateStreamingState(isStreaming: boolean): void {
+        this.isStreaming = isStreaming;
+        this.onStreamingChange(isStreaming);
     }
 
     /**
@@ -161,7 +185,7 @@ class VisData {
             this.frameExceedsCacheSizeError(parsedMsg.size);
             return;
         }
-        this.addFrameToCache(parsedMsg);
+        this.validateAndProcessFrame(parsedMsg);
     }
 
     public parseAgentsFromFrameData(msg: VisDataMessage | ArrayBuffer): void {
@@ -170,7 +194,7 @@ class VisData {
             if (frame.frameNumber === 0) {
                 this.clearCache(); // new data has arrived
             }
-            this.addFrameToCache(frame);
+            this.validateAndProcessFrame(frame);
             return;
         }
         this.parseAgentsFromVisDataMessage(msg);
@@ -192,7 +216,10 @@ class VisData {
         this.parseAgentsFromFrameData(msg);
     }
 
-    private addFrameToCache(frame: CachedFrame): void {
+    /**
+     * Incoming frame management
+     */
+    private handleOversizedFrame(frame: CachedFrame): void {
         if (
             this.frameCache.cacheSizeLimited &&
             frame.size > this.frameCache.maxSize
@@ -200,36 +227,53 @@ class VisData {
             this.frameExceedsCacheSizeError(frame.size);
             return;
         }
+    }
 
-        // TODO: the code below and associated callbacks
-        // are not finished/finalized
-        // we currently need controller to tell visData whether playback
-        // is ongoing and to send a callback to correct the "backend time"
-        // when it gets out of sync with the end of the cache
-        // as vidata does not directly interact with the simulator
-        if (this.frameCache.size + frame.size > this.frameCache.maxSize) {
-            // if playback is ongoing we can trim from the beginning of the cache
-            // and add frames to the end of the cache
-            if (!this.isPlaybackPaused) {
-                const playbackFrame = this.currentFrameData;
-                if (
-                    playbackFrame.frameNumber >
-                    this.frameCache.getFirstFrameNumber()
-                ) {
-                    this.frameCache.trimCache(playbackFrame.size);
-                    this.frameCache.addFrame(frame);
-                } else {
-                    // If playback is not advancing, we are in prefetch mode
-                    // (streaming but playback paused)
-                    // Stop streaming, reject the frame, reset backend "time"
-                    // to the latest frame in the cache
-                    this.onCacheLimitReached(
-                        this.frameCache.getLastFrameTime()
-                    );
-                }
-            }
-        }
+    private trimAndAddFrame(frame: CachedFrame): void {
+        this.frameCache.trimCache(this.currentFrameData.size);
         this.frameCache.addFrame(frame);
+    }
+
+    private resetCacheWithFrame(frame: CachedFrame): void {
+        this.clearCache();
+        this.frameCache.addFrame(frame);
+    }
+
+    private handleCacheOverflow(frame: CachedFrame): boolean {
+        if (frame.size + this.frameCache.size <= this.frameCache.maxSize) {
+            return false;
+        }
+        const playbackFrame = this.currentFrameData;
+        const isCacheHeadBehindPlayback =
+            playbackFrame.frameNumber > this.frameCache.getFirstFrameNumber();
+
+        if (isCacheHeadBehindPlayback) {
+            this.trimAndAddFrame(frame);
+        } else if (this.isPlaying) {
+            // if currently playing, and cache head is ahead of playback head
+            // we clear the cache and add the frame
+            this.resetCacheWithFrame(frame);
+        } else {
+            // if paused we run out of space we need to stop streaming
+            // which is handled by the controller via a callback
+            this.currentStreamingHead = frame.frameNumber;
+            this.remoteStreamingHeadPotentiallyOutOfSync = true;
+            this.onCacheLimitReached();
+        }
+        return true;
+    }
+
+    private validateAndProcessFrame(frame: CachedFrame): void {
+        this.handleOversizedFrame(frame);
+
+        if (!this.handleCacheOverflow(frame)) {
+            this.addFrameToCache(frame);
+        }
+    }
+
+    private addFrameToCache(frame: CachedFrame): void {
+        this.frameCache.addFrame(frame);
+        this.currentStreamingHead = this.frameCache.getLastFrameNumber();
     }
 
     private frameExceedsCacheSizeError(frameSize: number): void {

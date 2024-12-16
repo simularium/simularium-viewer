@@ -2,27 +2,24 @@ import React, { useState } from "react";
 import { CacheLog } from "../../../src";
 
 interface StreamingReadoutProps {
-    playbackState: string;
-    streamingState: string;
+    playbackPlayingState: boolean;
+    isStreamingState: boolean;
     cacheLog: CacheLog;
+    playbackFrame: number;
     totalDuration: number;
 }
 
 const CacheAndStreamingLogs: React.FC<StreamingReadoutProps> = ({
-    playbackState,
-    streamingState,
+    playbackPlayingState,
+    isStreamingState,
     cacheLog,
+    playbackFrame,
     totalDuration,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
 
-    const {
-        size,
-        enabled,
-        maxSize,
-        firstFrameNumber,
-        lastFrameNumber,
-    } = cacheLog;
+    const { size, enabled, maxSize, firstFrameNumber, lastFrameNumber } =
+        cacheLog;
     return (
         <div>
             <button onClick={() => setIsOpen(!isOpen)}>
@@ -33,15 +30,22 @@ const CacheAndStreamingLogs: React.FC<StreamingReadoutProps> = ({
 
             {isOpen && (
                 <>
-                    <div>Playback State: {playbackState}</div>
-                    <div>Streaming State: {streamingState}</div>
+                    <div>
+                        Playback State:{" "}
+                        {playbackPlayingState === true ? "playing" : "paused"}
+                    </div>
+                    <div>
+                        Streaming State:{" "}
+                        {isStreamingState == true
+                            ? "streaming"
+                            : "not streaming"}
+                    </div>
                     <div>Cache Size: {size}</div>
                     <div>Cache Enabled: {enabled ? "Yes" : "No"}</div>
                     <div>Max Size: {maxSize}</div>
-                    <div>
-                        First Frame Number: {firstFrameNumber}
-                    </div>
+                    <div>First Frame Number: {firstFrameNumber}</div>
                     <div>Last Frame Number: {lastFrameNumber}</div>
+                    <div>Current playback frame: {playbackFrame}</div>
                     <div>Total Duration: {totalDuration}</div>
                 </>
             )}
