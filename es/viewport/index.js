@@ -185,7 +185,7 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
     _this.lastRenderTime = Date.now();
     _this.startTime = Date.now();
     _this.onPickObject = _this.onPickObject.bind(_this);
-    _this.stats = Stats();
+    _this.stats = new Stats();
     _this.stats.showPanel(1);
     _this.handlers = {
       touchstart: _this.handleTouchStart,

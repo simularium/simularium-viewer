@@ -8,7 +8,7 @@ import CompositePass from "./CompositePass.js";
 import ContourPass from "./ContourPass.js";
 import DrawBufferPass from "./DrawBufferPass.js";
 import HitTestHelper from "./HitTestHelper.js";
-import { FloatType, NearestFilter, RGBAFormat, WebGLMultipleRenderTargets, WebGLRenderTarget } from "three";
+import { FloatType, NearestFilter, RGBAFormat, WebGLRenderTarget } from "three";
 var AGENTBUFFER = 0;
 var NORMALBUFFER = 1;
 var POSITIONBUFFER = 2;
@@ -82,18 +82,18 @@ var SimulariumRenderer = /*#__PURE__*/function () {
     this.drawBufferPass = new DrawBufferPass();
 
     // buffers:
-    this.gbuffer = new WebGLMultipleRenderTargets(2, 2, 3);
-    for (var i = 0, il = this.gbuffer.texture.length; i < il; i++) {
-      this.gbuffer.texture[i].minFilter = NearestFilter;
-      this.gbuffer.texture[i].magFilter = NearestFilter;
-      this.gbuffer.texture[i].format = RGBAFormat;
-      this.gbuffer.texture[i].type = FloatType;
-      this.gbuffer.texture[i].generateMipmaps = false;
-    }
+    this.gbuffer = new WebGLRenderTarget(2, 2, {
+      count: 3,
+      minFilter: NearestFilter,
+      magFilter: NearestFilter,
+      format: RGBAFormat,
+      type: FloatType,
+      generateMipmaps: false
+    });
     // Name our G-Buffer attachments for debugging
-    this.gbuffer.texture[AGENTBUFFER].name = "agentinfo";
-    this.gbuffer.texture[NORMALBUFFER].name = "normal";
-    this.gbuffer.texture[POSITIONBUFFER].name = "position";
+    this.gbuffer.textures[AGENTBUFFER].name = "agentinfo";
+    this.gbuffer.textures[NORMALBUFFER].name = "normal";
+    this.gbuffer.textures[POSITIONBUFFER].name = "position";
     this.hitTestHelper = new HitTestHelper();
 
     // intermediate blurring buffer
@@ -265,7 +265,7 @@ var SimulariumRenderer = /*#__PURE__*/function () {
   }, {
     key: "hitTest",
     value: function hitTest(renderer, x, y) {
-      var tex = this.gbuffer.texture[AGENTBUFFER];
+      var tex = this.gbuffer.textures[AGENTBUFFER];
       var pixel = this.hitTestHelper.hitTest(renderer, tex, x / tex.image.width, y / tex.image.height);
       // (typeId), (instanceId), fragViewPos.z, fragPosDepth;
 
@@ -362,18 +362,18 @@ var SimulariumRenderer = /*#__PURE__*/function () {
       this.gbufferPass.render(renderer, scene, camera, this.gbuffer);
 
       // 2 render ssao
-      this.ssao1Pass.render(renderer, camera, this.ssaoBuffer, this.gbuffer.texture[NORMALBUFFER], this.gbuffer.texture[POSITIONBUFFER]);
-      this.blur1Pass.render(renderer, this.ssaoBufferBlurred, this.ssaoBuffer, this.gbuffer.texture[POSITIONBUFFER], this.blurIntermediateBuffer);
+      this.ssao1Pass.render(renderer, camera, this.ssaoBuffer, this.gbuffer.textures[NORMALBUFFER], this.gbuffer.textures[POSITIONBUFFER]);
+      this.blur1Pass.render(renderer, this.ssaoBufferBlurred, this.ssaoBuffer, this.gbuffer.textures[POSITIONBUFFER], this.blurIntermediateBuffer);
 
       // render composite pass into this buffer, overwriting whatever was there!
       // Be sure this buffer is not needed anymore!
       var compositeTarget = this.blurIntermediateBuffer;
 
       // render into default render target
-      this.compositePass.render(renderer, camera, compositeTarget, this.ssaoBufferBlurred, this.ssaoBufferBlurred2, this.gbuffer.texture[AGENTBUFFER]);
+      this.compositePass.render(renderer, camera, compositeTarget, this.ssaoBufferBlurred, this.ssaoBufferBlurred2, this.gbuffer.textures[AGENTBUFFER]);
       this.contourPass.render(renderer, target, compositeTarget,
       // this is the buffer with the instance ids and fragdepth!
-      this.gbuffer.texture[AGENTBUFFER], this.gbuffer.texture[NORMALBUFFER]);
+      this.gbuffer.textures[AGENTBUFFER], this.gbuffer.textures[NORMALBUFFER]);
 
       // DEBUGGING some of the intermediate buffers:
       //this.drawBufferPass.setScale(1.0 / 34.0, 1.0 / 6.0, 0, 1);

@@ -6,7 +6,7 @@ import ContourPass from "./ContourPass.js";
 import DrawBufferPass from "./DrawBufferPass.js";
 import { InstancedFiberGroup } from "./InstancedFiber.js";
 import { GeometryInstanceContainer } from "../types.js";
-import { Color, Group, OrthographicCamera, PerspectiveCamera, Scene, WebGLMultipleRenderTargets, WebGLRenderer, WebGLRenderTarget } from "three";
+import { Color, Group, OrthographicCamera, PerspectiveCamera, Scene, WebGLRenderer, WebGLRenderTarget } from "three";
 import { Pane } from "tweakpane";
 export interface SimulariumAOParameters {
     bias: number;
@@ -25,7 +25,7 @@ declare class SimulariumRenderer {
     compositePass: CompositePass;
     contourPass: ContourPass;
     drawBufferPass: DrawBufferPass;
-    gbuffer: WebGLMultipleRenderTargets;
+    gbuffer: WebGLRenderTarget;
     private hitTestHelper;
     blurIntermediateBuffer: WebGLRenderTarget;
     ssaoBuffer: WebGLRenderTarget;
