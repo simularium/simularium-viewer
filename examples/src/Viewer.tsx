@@ -1,5 +1,5 @@
 import React from "react";
-import { isEqual, findIndex, reduce } from "lodash";
+import { map, isEqual, findIndex, reduce } from "lodash";
 import { v4 as uuidv4 } from "uuid";
 import { InputParams } from "tweakpane";
 
@@ -87,6 +87,8 @@ interface ViewerState {
     initialPlay: boolean;
     firstFrameTime: number;
     followObjectData: AgentData;
+    convertingFile: boolean;
+    conversionFileName: string;
 }
 
 const simulariumController = new SimulariumController({});
@@ -120,6 +122,8 @@ const initialState: ViewerState = {
     initialPlay: true,
     firstFrameTime: 0,
     followObjectData: nullAgent(),
+    convertingFile: false,
+    conversionFileName: "",
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
@@ -333,6 +337,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
         const fileName = uuidv4() + ".simularium";
+        this.setState({ convertingFile: true, conversionFileName: fileName });
         simulariumController
             .convertTrajectory(
                 this.netConnectionSettings,
@@ -342,13 +347,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             )
             .then(() => {
                 this.clearPendingFile();
-            })
-            .then(() => {
-                simulariumController.changeFile(
-                    { netConnectionSettings: this.netConnectionSettings },
-                    fileName,
-                    true
-                );
             })
             .catch((err) => {
                 console.error(err);
@@ -430,8 +428,27 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         });
     }
 
+    public receiveConvertedFile(data: TrajectoryFileInfo): void {
+        simulariumController
+            .changeFile(
+                { netConnectionSettings: this.netConnectionSettings },
+                this.state.conversionFileName,
+                true
+            )
+            .then(() => {
+                simulariumController.gotoTime(0);
+            })
+            .then(() => this.setState({ convertingFile: false }))
+            .catch((e) => {
+                console.warn(e);
+            });
+    }
+
     public handleTrajectoryInfo(data: TrajectoryFileInfo): void {
         console.log("Trajectory info arrived", data);
+        if (this.state.convertingFile === true) {
+            this.receiveConvertedFile(data);
+        }
         // NOTE: Currently incorrectly assumes initial time of 0
         const totalDuration = (data.totalSteps - 1) * data.timeStepSize;
         this.setState({
