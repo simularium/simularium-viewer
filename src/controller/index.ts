@@ -1,5 +1,6 @@
 import jsLogger from "js-logger";
 import { isEmpty, noop } from "lodash";
+import { v4 as uuidv4 } from "uuid";
 import { VisData, RemoteSimulator } from "../simularium/index.js";
 import type {
     NetConnectionParams,
@@ -22,6 +23,7 @@ import type { ISimulariumFile } from "../simularium/ISimulariumFile.js";
 import { WebsocketClient } from "../simularium/WebsocketClient.js";
 import { TrajectoryType } from "../constants.js";
 import { RemoteMetricsCalculator } from "../simularium/RemoteMetricsCalculator.js";
+import { OctopusServicesClient } from "../simularium/OctopusClient.js";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
@@ -45,6 +47,7 @@ interface SimulatorConnectionParams {
 export default class SimulariumController {
     public simulator?: ISimulator;
     public remoteWebsocketClient?: WebsocketClient;
+    public octopusClient?: OctopusServicesClient;
     public metricsCalculator?: RemoteMetricsCalculator;
     public visData: VisData;
     public visGeometry: VisGeometry | undefined;
@@ -55,7 +58,6 @@ export default class SimulariumController {
     public stopRecording: () => void;
     public onError?: (error: FrontEndError) => void;
 
-    private networkEnabled: boolean;
     private isPaused: boolean;
     private isFileChanging: boolean;
     private playBackFile: string;
@@ -104,7 +106,6 @@ export default class SimulariumController {
             }
         }
 
-        this.networkEnabled = true;
         this.isPaused = false;
         this.isFileChanging = false;
         this.playBackFile = params.trajectoryPlaybackFile || "";
@@ -147,6 +148,7 @@ export default class SimulariumController {
                 this.onError
             );
             this.remoteWebsocketClient = webSocketClient;
+            this.octopusClient = new OctopusServicesClient(webSocketClient);
             this.simulator = new RemoteSimulator(webSocketClient, this.onError);
             this.simulator.setTrajectoryDataHandler(
                 this.visData.parseAgentsFromNetData.bind(this.visData)
@@ -166,11 +168,19 @@ export default class SimulariumController {
     }
 
     public configureNetwork(config: NetConnectionParams): void {
-        if (this.simulator && this.simulator.socketIsValid()) {
-            this.simulator.disconnect();
+        if (this.simulator) {
+            this.simulator.destroy();
         }
 
         this.createSimulatorConnection(config);
+    }
+
+    public remoteOctopusClientIsConfigured(): boolean {
+        return !!(
+            this.simulator &&
+            this.octopusClient &&
+            this.remoteWebsocketClient?.socketIsValid()
+        );
     }
 
     public get isChangingFile(): boolean {
@@ -179,8 +189,9 @@ export default class SimulariumController {
 
     // Not called by viewer, but could be called by
     // parent app
+    // todo candidate for removal? not called in website
     public connect(): Promise<string> {
-        if (!this.simulator) {
+        if (!this.remoteWebsocketClient) {
             return Promise.reject(
                 new Error(
                     "No network connection established in simularium controller."
@@ -188,8 +199,8 @@ export default class SimulariumController {
             );
         }
 
-        return this.simulator
-            .connectToRemoteServer(this.simulator.getIp())
+        return this.remoteWebsocketClient
+            .connectToRemoteServer()
             .then((msg: string) => {
                 this.postConnect();
                 return msg;
@@ -201,12 +212,10 @@ export default class SimulariumController {
             return Promise.reject();
         }
 
-        // switch back to 'networked' playback
-        this.networkEnabled = true;
         this.isPaused = false;
         this.visData.clearCache();
 
-        return this.simulator.startRemoteTrajectoryPlayback(this.playBackFile);
+        return this.simulator.initialize(this.playBackFile);
     }
 
     public time(): number {
@@ -215,7 +224,7 @@ export default class SimulariumController {
 
     public stop(): void {
         if (this.simulator) {
-            this.simulator.abortRemoteSim();
+            this.simulator.destroy();
         }
     }
 
@@ -232,32 +241,31 @@ export default class SimulariumController {
         providedFileName?: string
     ): Promise<void> {
         try {
-            if (
-                !(this.simulator && this.simulator.isConnectedToRemoteServer())
-            ) {
-                // Only configure network if we aren't already connected to the remote server
+            if (!this.remoteOctopusClientIsConfigured()) {
                 this.configureNetwork(netConnectionConfig);
             }
-            if (!(this.simulator instanceof RemoteSimulator)) {
-                throw new Error("Autoconversion requires a RemoteSimulator");
+            if (!this.octopusClient) {
+                throw new Error("Octopus client not configured");
             }
+            if (!this.simulator) {
+                throw new Error("Simulator not initialized");
+            }
+            const fileName = providedFileName ?? `${uuidv4()}.simularium`;
+            return this.octopusClient.convertTrajectory(
+                dataToConvert,
+                fileType,
+                fileName
+            );
         } catch (e) {
             return Promise.reject(e);
         }
-
-        return this.simulator.convertTrajectory(
-            dataToConvert,
-            fileType,
-            providedFileName
-        );
     }
 
     public pause(): void {
-        if (this.networkEnabled && this.simulator) {
-            this.simulator.pauseRemoteSim();
+        if (this.simulator) {
+            this.simulator?.pause();
+            this.isPaused = true;
         }
-
-        this.isPaused = true;
     }
 
     public paused(): boolean {
@@ -266,22 +274,20 @@ export default class SimulariumController {
 
     public initializeTrajectoryFile(): void {
         if (this.simulator) {
-            this.simulator.requestTrajectoryFileInfo(this.playBackFile);
+            this.simulator.initialize(this.playBackFile);
         }
     }
 
     public gotoTime(time: number): void {
         // If in the middle of changing files, ignore any gotoTime requests
-        if (this.isFileChanging === true) return;
+        if (this.isFileChanging || !this.simulator) return;
         if (this.visData.hasLocalCacheForTime(time)) {
             this.visData.gotoTime(time);
         } else {
-            if (this.networkEnabled && this.simulator) {
-                // else reset the local cache,
-                //  and play remotely from the desired simulation time
-                this.visData.clearCache();
-                this.simulator.gotoRemoteSimulationTime(time);
-            }
+            // else reset the local cache,
+            //  and play remotely from the desired simulation time
+            this.visData.clearCache();
+            this.simulator.requestFrameByTime(time);
         }
     }
 
@@ -291,18 +297,17 @@ export default class SimulariumController {
     }
 
     public resume(): void {
-        if (this.networkEnabled && this.simulator) {
-            this.simulator.resumeRemoteSim();
+        if (this.simulator) {
+            this.simulator.stream();
+            this.isPaused = false;
         }
-
-        this.isPaused = false;
     }
 
     public clearFile(): void {
         this.isFileChanging = false;
         this.playBackFile = "";
         this.visData.clearForNewTrajectory();
-        this.disableNetworkCommands();
+        this.simulator?.destroy();
         this.pause();
         if (this.visGeometry) {
             this.visGeometry.clearForNewTrajectory();
@@ -335,25 +340,18 @@ export default class SimulariumController {
         this.isFileChanging = true;
         this.playBackFile = newFileName;
 
-        if (this.simulator instanceof RemoteSimulator) {
-            this.simulator.handleError = () => noop;
-        }
+        // calls simulator.destroy()
+        this.stop();
 
         this.visData.WaitForFrame(0);
         this.visData.clearForNewTrajectory();
 
-        this.stop();
-
-        // Do I still need this? test...
-        // if (this.simulator) {
-        //     this.simulator.disconnect();
-        // }
-
+        const configureNewSimulator = !(
+            keepRemoteConnection && this.remoteOctopusClientIsConfigured()
+        );
         // don't create simulator if client wants to keep remote simulator and the
         // current simulator is a remote simulator
-        if (
-            !(keepRemoteConnection && this.simulator instanceof RemoteSimulator)
-        ) {
+        if (configureNewSimulator) {
             try {
                 if (connectionParams) {
                     this.createSimulatorConnection(
@@ -362,7 +360,6 @@ export default class SimulariumController {
                         connectionParams.simulariumFile,
                         connectionParams.geoAssets
                     );
-                    this.networkEnabled = true; // This confuses me, because local files also go through this code path
                     this.isPaused = true;
                 } else {
                     // caught in following block, not sent to front end
@@ -372,14 +369,13 @@ export default class SimulariumController {
                 const error = e as Error;
                 this.simulator = undefined;
                 console.warn(error.message);
-                this.networkEnabled = false;
                 this.isPaused = false;
             }
         }
 
         // start the simulation paused and get first frame
         if (this.simulator) {
-            return this.start()
+            return this.start() // will reject if no simulator
                 .then(() => {
                     if (this.simulator) {
                         this.simulator.requestSingleFrame(0);
@@ -407,20 +403,18 @@ export default class SimulariumController {
         handler: () => void,
         netConnectionConfig: NetConnectionParams
     ): void {
-        if (!(this.simulator && this.simulator.isConnectedToRemoteServer())) {
-            // Only configure network if we aren't already connected to the remote server
+        if (!this.remoteOctopusClientIsConfigured()) {
             this.configureNetwork(netConnectionConfig);
         }
-        if (this.simulator instanceof RemoteSimulator) {
-            this.simulator.setHealthCheckHandler(handler);
-            this.simulator.checkServerHealth();
+        if (this.octopusClient) {
+            this.octopusClient.setHealthCheckHandler(handler);
+            this.octopusClient.checkServerHealth();
         }
     }
 
     public cancelConversion(): void {
-        // Only relevant if there is an active RemoteSimulator instance
-        if (this.simulator && this.simulator instanceof RemoteSimulator) {
-            this.simulator.cancelConversion();
+        if (this.octopusClient) {
+            this.octopusClient.cancelConversion();
         }
     }
 
@@ -476,14 +470,6 @@ export default class SimulariumController {
                 requestedPlots,
                 this.simulator.getLastRequestedFile()
             );
-        }
-    }
-
-    public disableNetworkCommands(): void {
-        this.networkEnabled = false;
-
-        if (this.simulator && this.simulator.socketIsValid()) {
-            this.simulator.disconnect();
         }
     }
 

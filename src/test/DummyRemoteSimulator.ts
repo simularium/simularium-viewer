@@ -107,18 +107,18 @@ export class DummyRemoteSimulator extends RemoteSimulator {
         }, this.commandLatencyMS);
     }
 
-    public pauseRemoteSim(): void {
+    public pause(): void {
         this.isStreamingData = false;
     }
-    public resumeRemoteSim(): void {
+    public stream(): void {
         this.isStreamingData = true;
     }
-    public abortRemoteSim(): void {
+    public destroy(): void {
         this.isStreamingData = false;
         this.isConnected = false;
     }
 
-    public startRemoteTrajectoryPlayback(fileName: string): Promise<void> {
+    public initialize(fileName: string): Promise<void> {
         return this.connectToRemoteServer().then(() => {
             this.fileName = fileName;
             this.isStreamingData = true;
@@ -152,12 +152,12 @@ export class DummyRemoteSimulator extends RemoteSimulator {
             this.frameCounter = frameNumber;
 
             const msg: NetMessage = JSON.parse(this.getDataBundle(frameNumber));
-            this.frameCounter++;            
+            this.frameCounter++;
             this.onJsonIdVisDataArrive(msg);
         }, this.commandLatencyMS);
     }
 
-    public gotoRemoteSimulationTime(time: number): void {
+    public requestFrameByTime(time: number): void {
         setTimeout(() => {
             this.frameCounter = time / this.timeStep;
 
