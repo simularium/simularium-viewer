@@ -86,6 +86,7 @@ interface ViewerState {
     initialPlay: boolean;
     firstFrameTime: number;
     followObjectData: AgentData;
+    conversionActive: boolean;
     conversionFileName: string;
 }
 
@@ -119,7 +120,8 @@ const initialState: ViewerState = {
     trajectoryTitle: "",
     initialPlay: true,
     firstFrameTime: 0,
-    followObjectData: null,
+    followObjectData: nullAgent(),
+    conversionActive: false,
     conversionFileName: "",
 };
 
@@ -335,6 +337,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
         const fileName = uuidv4() + ".simularium";
         this.setState({
+            conversionActive: true,
             conversionFileName: fileName,
         });
 
@@ -430,20 +433,14 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public receiveConvertedFile(): void {
         simulariumController
-            .changeFile(
-                {
-                    netConnectionSettings: this.netConnectionSettings,
-                },
-                this.state.conversionFileName
-            )
+            .changeFile({
+                netConnectionSettings: this.netConnectionSettings,
+                
+            }, this.state.conversionFileName)
             .then(() => {
                 simulariumController.gotoTime(0);
             })
-            .then(() =>
-                this.setState({
-                    conversionFileName: "",
-                })
-            )
+            .then(() => this.setState({ conversionActive: false, conversionFileName: "" }))
             .catch((e) => {
                 console.warn(e);
             });
@@ -451,8 +448,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public handleTrajectoryInfo(data: TrajectoryFileInfo): void {
         console.log("Trajectory info arrived", data);
-        const conversionActive = !!this.state.conversionFileName;
-        if (conversionActive) {
+        if (this.state.conversionActive === true) {
             this.receiveConvertedFile();
         }
         // NOTE: Currently incorrectly assumes initial time of 0
