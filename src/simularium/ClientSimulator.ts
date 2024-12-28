@@ -174,7 +174,7 @@ export class ClientSimulator implements ISimulator {
         );
     }
 
-    public abort(): void {
+    public destroy(): void {
         this.sendSimulationRequest(
             { msgType: ClientMessageEnum.ID_VIS_DATA_ABORT },
             "Abort Simulation"

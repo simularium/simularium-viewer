@@ -272,7 +272,7 @@ export class RemoteSimulator implements ISimulator {
         );
     }
 
-    public abort(): void {
+    public destroy(): void {
         if (!this.socketIsValid()) {
             return;
         }
@@ -318,7 +318,7 @@ export class RemoteSimulator implements ISimulator {
         );
     }
 
-    public sendUpdate(_obj: Record<string, unknown>): Promise<void> {
+    public sendUpdate(obj: Record<string, unknown>): Promise<void> {
         return Promise.resolve();
     }
 }
