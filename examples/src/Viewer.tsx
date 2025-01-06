@@ -1,5 +1,5 @@
 import React from "react";
-import { isEqual, findIndex, reduce } from "lodash";
+import { isEqual, findIndex, reduce, map } from "lodash";
 import { v4 as uuidv4 } from "uuid";
 import { InputParams } from "tweakpane";
 
@@ -12,7 +12,6 @@ import SimulariumViewer, {
     ErrorLevel,
     NetConnectionParams,
     TrajectoryFileInfo,
-    nullAgent,
     TrajectoryType,
 } from "@aics/simularium-viewer";
 import type {
@@ -119,7 +118,7 @@ const initialState: ViewerState = {
     trajectoryTitle: "",
     initialPlay: true,
     firstFrameTime: 0,
-    followObjectData: nullAgent(),
+    followObjectData: null,
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
