@@ -129,7 +129,7 @@ type Bounds = readonly [number, number, number, number, number, number];
 
 class VisGeometry {
     static getNullAgent(): AgentData {
-        return NULL_AGENT;
+        return { ...NULL_AGENT };
     }
     public onError: (error: FrontEndError) => void;
     public renderStyle: RenderStyle;
@@ -683,6 +683,10 @@ class VisGeometry {
     }
 
     public getObjectData(id: number): AgentData {
+        if (id === NO_AGENT) {
+            // initial state
+            return VisGeometry.getNullAgent();
+        }
         const data = this.visAgentInstances.get(id);
         if (!data) {
             return VisGeometry.getNullAgent();
