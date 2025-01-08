@@ -434,14 +434,21 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public receiveConvertedFile(): void {
         simulariumController
-            .changeFile({
-                netConnectionSettings: this.netConnectionSettings,
-                
-            }, this.state.conversionFileName)
+            .changeFile(
+                {
+                    netConnectionSettings: this.netConnectionSettings,
+                },
+                this.state.conversionFileName
+            )
             .then(() => {
                 simulariumController.gotoTime(0);
             })
-            .then(() => this.setState({ conversionActive: false, conversionFileName: "" }))
+            .then(() =>
+                this.setState({
+                    conversionActive: false,
+                    conversionFileName: "",
+                })
+            )
             .catch((e) => {
                 console.warn(e);
             });
