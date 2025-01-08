@@ -2,17 +2,14 @@ import { VisDataMessage, TrajectoryFileInfo } from "./types.js";
 
 /**
 From the caller's perspective, this interface is a contract for a 
-simulator that can be used to subscribe to data events and error handling
-by setting callbacks, and to set up, tear down, and control streaming
-of data frames.
+simulator that can be used to control set up, tear down, and streaming,
+and to subscribe to data events and error handling.
  */
 
 export interface ISimulator {
     /**
-     *
      * Callbacks to subscribe front end implementations
      * to data events and error handling from the simulator
-     *
      */
 
     // a callback to notify when TrajectoryFileInfo is ready
@@ -35,10 +32,9 @@ export interface ISimulator {
     /**
      * General Simulation Control
      *
-     * initialize: prepare a simulation for streaming,
-     * must be async to accommodate connection steps in remote simulators
-     * destroy: stop sending frames and clean up this simulator connection, release resources
-     * stream: request that a stream of frames begin from the streaming head
+     * initialize: prepare a simulation for streaming, async to accommodate connection steps
+     * destroy: stop sending frames, release resources, close connections
+     * stream: request a stream of frames
      * pause: request that frames stop being sent, keep the precomputed streaming head where it is
      *
      */
