@@ -87,7 +87,6 @@ interface ViewerState {
     initialPlay: boolean;
     firstFrameTime: number;
     followObjectData: AgentData;
-    conversionActive: boolean;
     conversionFileName: string;
 }
 
@@ -122,7 +121,6 @@ const initialState: ViewerState = {
     initialPlay: true,
     firstFrameTime: 0,
     followObjectData: nullAgent(),
-    conversionActive: false,
     conversionFileName: "",
 };
 
@@ -338,7 +336,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
         const fileName = uuidv4() + ".simularium";
         this.setState({
-            conversionActive: true,
             conversionFileName: fileName,
         });
 
@@ -445,7 +442,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             })
             .then(() =>
                 this.setState({
-                    conversionActive: false,
                     conversionFileName: "",
                 })
             )
@@ -456,7 +452,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public handleTrajectoryInfo(data: TrajectoryFileInfo): void {
         console.log("Trajectory info arrived", data);
-        if (this.state.conversionActive === true) {
+        const conversionActive = !!this.state.conversionFileName;
+        if (conversionActive) {
             this.receiveConvertedFile();
         }
         // NOTE: Currently incorrectly assumes initial time of 0
