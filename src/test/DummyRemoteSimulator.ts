@@ -113,7 +113,7 @@ export class DummyRemoteSimulator extends RemoteSimulator {
     public stream(): void {
         this.isStreamingData = true;
     }
-    public destroy(): void {
+    public abort(): void {
         this.isStreamingData = false;
         this.isConnected = false;
     }
