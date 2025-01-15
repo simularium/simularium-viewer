@@ -19,6 +19,7 @@ export declare enum RenderStyle {
 }
 type Bounds = readonly [number, number, number, number, number, number];
 declare class VisGeometry {
+    static getNullAgent(): AgentData;
     onError: (error: FrontEndError) => void;
     renderStyle: RenderStyle;
     backgroundColor: Color;

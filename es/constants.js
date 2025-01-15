@@ -29,22 +29,6 @@ export var TrajectoryType = /*#__PURE__*/function (TrajectoryType) {
 }({});
 export var DEFAULT_FRAME_RATE = 60; // frames per second
 
-export var nullAgent = function nullAgent() {
-  return {
-    visType: -1,
-    instanceId: -1,
-    type: -1,
-    x: 0,
-    y: 0,
-    z: 0,
-    xrot: 0,
-    yrot: 0,
-    zrot: 0,
-    cr: 0,
-    subpoints: []
-  };
-};
-
 // the size of the header before the agent data in the binary file
 export var AGENT_HEADER_SIZE = 3; // frameNumber, time, agentCount
 

@@ -1,8 +1,8 @@
 import JsonFileReader from "./simularium/JsonFileReader.js";
 import BinaryFileReader from "./simularium/BinaryFileReader.js";
 import { AGENT_OBJECT_KEYS } from "./simularium/types.js";
-import { nullAgent } from "./constants.js";
 import { FrontEndError } from "./simularium/index.js";
+import VisGeometry from "./visGeometry/index.js";
 export var compareTimes = function compareTimes(time1, time2, timeStepSize) {
   var stepSizeFraction = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 0.01;
   /*
@@ -74,7 +74,7 @@ export var getAgentDataFromBuffer = function getAgentDataFromBuffer(view, offset
   if (offset + AGENT_OBJECT_KEYS.length > view.length) {
     throw new FrontEndError("Invalid offset: Not enough data in the buffer for agent data.");
   }
-  var agentData = nullAgent();
+  var agentData = VisGeometry.getNullAgent();
   for (var i = 0; i < AGENT_OBJECT_KEYS.length; i++) {
     agentData[AGENT_OBJECT_KEYS[i]] = view[offset + i];
   }

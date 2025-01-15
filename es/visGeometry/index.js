@@ -19,7 +19,7 @@ import VisAgent from "./VisAgent.js";
 import VisTypes from "../simularium/VisTypes.js";
 import AgentPath from "./agentPath.js";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError.js";
-import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC, nullAgent, AGENT_HEADER_SIZE } from "../constants.js";
+import { DEFAULT_CAMERA_Z_POSITION, DEFAULT_CAMERA_SPEC, AGENT_HEADER_SIZE } from "../constants.js";
 import SimulariumRenderer from "./rendering/SimulariumRenderer.js";
 import { InstancedFiberGroup } from "./rendering/InstancedFiber.js";
 import { LegacyRenderer } from "./rendering/LegacyRenderer.js";
@@ -44,6 +44,19 @@ var MAX_ZOOM = 120;
 var MIN_ZOOM = 0.16;
 var CANVAS_INITIAL_WIDTH = 100;
 var CANVAS_INITIAL_HEIGHT = 100;
+var NULL_AGENT = {
+  visType: -1,
+  instanceId: NO_AGENT,
+  type: -1,
+  x: 0,
+  y: 0,
+  z: 0,
+  xrot: 0,
+  yrot: 0,
+  zrot: 0,
+  cr: 0,
+  subpoints: []
+};
 export var RenderStyle = /*#__PURE__*/function (RenderStyle) {
   RenderStyle[RenderStyle["WEBGL1_FALLBACK"] = 0] = "WEBGL1_FALLBACK";
   RenderStyle[RenderStyle["WEBGL2_PREFERRED"] = 1] = "WEBGL2_PREFERRED";
@@ -623,9 +636,13 @@ var VisGeometry = /*#__PURE__*/function () {
   }, {
     key: "getObjectData",
     value: function getObjectData(id) {
+      if (id === NO_AGENT) {
+        // initial state
+        return VisGeometry.getNullAgent();
+      }
       var data = this.visAgentInstances.get(id);
       if (!data) {
-        return nullAgent();
+        return VisGeometry.getNullAgent();
       }
       return data.agentData;
     }
@@ -1635,6 +1652,11 @@ var VisGeometry = /*#__PURE__*/function () {
     key: "update",
     value: function update(agents) {
       this.updateScene(agents);
+    }
+  }], [{
+    key: "getNullAgent",
+    value: function getNullAgent() {
+      return _objectSpread({}, NULL_AGENT);
     }
   }]);
 }();
