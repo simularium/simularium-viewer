@@ -6,8 +6,8 @@ import {
     AgentData,
     CachedFrame,
 } from "./simularium/types.js";
-import { nullAgent } from "./constants.js";
 import { FrontEndError } from "./simularium/index.js";
+import VisGeometry from "./visGeometry/index.js";
 
 export const compareTimes = (
     time1: number,
@@ -102,7 +102,7 @@ export const getAgentDataFromBuffer = (
             "Invalid offset: Not enough data in the buffer for agent data."
         );
     }
-    const agentData: AgentData = nullAgent();
+    const agentData: AgentData = VisGeometry.getNullAgent();
     for (let i = 0; i < AGENT_OBJECT_KEYS.length; i++) {
         agentData[AGENT_OBJECT_KEYS[i]] = view[offset + i];
     }

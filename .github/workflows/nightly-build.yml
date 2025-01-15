@@ -1,42 +1,42 @@
 name: github pages
 
 on:
-  schedule:
-    - cron: "0 0 * * *"
+    schedule:
+        - cron: "0 0 * * *"
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
+    deploy:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
 
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: "16.x"
+            - name: Setup Node
+              uses: actions/setup-node@v3
+              with:
+                  node-version: "20.x"
 
-      - name: Cache dependencies
- 
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-            
-      - run: npm ci
-      - run: npm run gh-build
-      - name: Prepare tag
-        id: prepare_tag
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          TAG_NAME="${GITHUB_REF##refs/tags/}"
-          echo "::set-output name=tag_name::${TAG_NAME}"
-          echo "::set-output name=deploy_tag_name::deploy-${TAG_NAME}"
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
-          tag_name: ${{ steps.prepare_tag.outputs.deploy_tag_name }}
-          tag_message: 'Deployment to gh-pages to test new viewer ${{ steps.prepare_tag.outputs.tag_name }}'
+            - name: Cache dependencies
+
+              uses: actions/cache@v3
+              with:
+                  path: ~/.npm
+                  key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+                  restore-keys: |
+                      ${{ runner.os }}-node-
+
+            - run: npm ci
+            - run: npm run gh-build
+            - name: Prepare tag
+              id: prepare_tag
+              if: startsWith(github.ref, 'refs/tags/')
+              run: |
+                  TAG_NAME="${GITHUB_REF##refs/tags/}"
+                  echo "::set-output name=tag_name::${TAG_NAME}"
+                  echo "::set-output name=deploy_tag_name::deploy-${TAG_NAME}"
+            - name: Deploy
+              uses: peaceiris/actions-gh-pages@v3
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  publish_dir: ./public
+                  tag_name: ${{ steps.prepare_tag.outputs.deploy_tag_name }}
+                  tag_message: "Deployment to gh-pages to test new viewer ${{ steps.prepare_tag.outputs.tag_name }}"
