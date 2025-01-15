@@ -12,7 +12,6 @@ import SimulariumViewer, {
     ErrorLevel,
     NetConnectionParams,
     TrajectoryFileInfo,
-    nullAgent,
     TrajectoryType,
 } from "@aics/simularium-viewer";
 import type {
