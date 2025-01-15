@@ -1,18 +1,7 @@
 import { TrajectoryType } from "../constants.js";
 import { WebsocketClient, NetMessageEnum } from "./WebsocketClient.js";
 
-interface IOctopusServices {
-    convertTrajectory(
-        dataToConvert: Record<string, unknown>,
-        fileType: TrajectoryType,
-        providedFileName?: string
-    ): Promise<void>;
-    cancelConversion(): void;
-    checkServerHealth(): Promise<void>;
-    setHealthCheckHandler(handler: () => void): void;
-}
-
-export class OctopusServicesClient implements IOctopusServices {
+export class OctopusServicesClient {
     private webSocketClient: WebsocketClient;
     private lastRequestedFile = "";
     private healthCheckHandler: () => void;

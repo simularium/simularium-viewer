@@ -79,7 +79,7 @@ export class LocalFileSimulator implements ISimulator {
         }, 1);
     }
 
-    public destroy(): void {
+    public abort(): void {
         window.clearInterval(this.playbackIntervalId);
         this.playbackIntervalId = 0;
         this.currentPlaybackFrameIndex = 0;
