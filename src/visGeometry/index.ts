@@ -96,7 +96,7 @@ const CANVAS_INITIAL_HEIGHT = 100;
 
 const NULL_AGENT = {
     visType: -1,
-    instanceId: -1,
+    instanceId: NO_AGENT,
     type: -1,
     x: 0,
     y: 0,
