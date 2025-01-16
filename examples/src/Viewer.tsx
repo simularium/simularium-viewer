@@ -119,7 +119,7 @@ const initialState: ViewerState = {
     trajectoryTitle: "",
     initialPlay: true,
     firstFrameTime: 0,
-    followObjectData: nullAgent(),
+    followObjectData: null,
     conversionFileName: "",
 };
 
