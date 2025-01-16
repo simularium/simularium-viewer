@@ -175,7 +175,7 @@ export default class SimulariumController {
         this.createSimulatorConnection(config);
     }
 
-    public isRemoteOctopusClientIsConfigured(): boolean {
+    public isRemoteOctopusClientConfigured(): boolean {
         return !!(
             this.simulator &&
             this.octopusClient &&
@@ -241,7 +241,7 @@ export default class SimulariumController {
         providedFileName?: string
     ): Promise<void> {
         try {
-            if (!this.isRemoteOctopusClientIsConfigured()) {
+            if (!this.isRemoteOctopusClientConfigured()) {
                 this.configureNetwork(netConnectionConfig);
             }
             if (!this.octopusClient) {
@@ -347,7 +347,7 @@ export default class SimulariumController {
         this.visData.clearForNewTrajectory();
 
         const shouldConfigureNewSimulator = !(
-            keepRemoteConnection && this.isRemoteOctopusClientIsConfigured()
+            keepRemoteConnection && this.isRemoteOctopusClientConfigured()
         );
         // don't create simulator if client wants to keep remote simulator and the
         // current simulator is a remote simulator
@@ -403,7 +403,7 @@ export default class SimulariumController {
         handler: () => void,
         netConnectionConfig: NetConnectionParams
     ): void {
-        if (!this.isRemoteOctopusClientIsConfigured()) {
+        if (!this.isRemoteOctopusClientConfigured()) {
             this.configureNetwork(netConnectionConfig);
         }
         if (this.octopusClient) {

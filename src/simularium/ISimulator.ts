@@ -41,7 +41,7 @@ export interface ISimulator {
     /** request that streaming of frames stop */
     pause(): void;
     /** request a single frame of data by frame number */
-    requestSingleFrame(startFrameNumber: number): void;
+    requestFrame(frameNumber: number): void;
     /** request a single frame of data by time stamp */
     requestFrameByTime(time: number): void;
     /** request trajectory metadata */
