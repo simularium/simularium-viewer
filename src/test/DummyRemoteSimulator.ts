@@ -147,7 +147,7 @@ export class DummyRemoteSimulator extends RemoteSimulator {
         }, this.commandLatencyMS);
     }
 
-    public requestSingleFrame(frameNumber: number): void {
+    public requestFrame(frameNumber: number): void {
         setTimeout(() => {
             this.frameCounter = frameNumber;
 

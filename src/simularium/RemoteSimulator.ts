@@ -285,7 +285,7 @@ export class RemoteSimulator implements ISimulator {
         );
     }
 
-    public requestSingleFrame(startFrameNumber: number): void {
+    public requestFrame(startFrameNumber: number): void {
         this.webSocketClient.sendWebSocketRequest(
             {
                 msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,

@@ -181,7 +181,7 @@ export class ClientSimulator implements ISimulator {
         );
     }
 
-    public requestSingleFrame(startFrameNumber: number): void {
+    public requestFrame(startFrameNumber: number): void {
         this.sendSimulationRequest(
             {
                 msgType: ClientMessageEnum.ID_VIS_DATA_REQUEST,

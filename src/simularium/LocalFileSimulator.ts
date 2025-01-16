@@ -85,7 +85,7 @@ export class LocalFileSimulator implements ISimulator {
         this.currentPlaybackFrameIndex = 0;
     }
 
-    public requestSingleFrame(startFrameNumber: number): void {
+    public requestFrame(startFrameNumber: number): void {
         this.onTrajectoryDataArrive(this.getFrame(startFrameNumber));
     }
 
@@ -95,7 +95,7 @@ export class LocalFileSimulator implements ISimulator {
         // frameNumber is -1 if findIndex() above doesn't find a match
         if (frameNumber !== -1) {
             this.currentPlaybackFrameIndex = frameNumber;
-            this.requestSingleFrame(frameNumber);
+            this.requestFrame(frameNumber);
         }
     }
 
