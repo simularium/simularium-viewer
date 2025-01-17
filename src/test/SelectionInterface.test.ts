@@ -8,20 +8,20 @@ import {
 } from "../simularium/SelectionInterface.js";
 
 const idMapping = {
-    "0": { name: "A" },
-    "1": { name: "A#t1" },
-    "2": { name: "A#t2" },
-    "3": { name: "A#t1_t2" },
-    "4": { name: "B" },
-    "5": { name: "B#t1" },
-    "6": { name: "B#t2" },
-    "7": { name: "B#t1_t2" },
-    "8": { name: "C" },
-    "9": { name: "C#t1" },
-    "10": { name: "C#t2" },
-    "11": { name: "C#t1_t2" },
-    "12": { name: "D" },
-    "13": { name: "E#t1000" },
+    0: { name: "A" },
+    1: { name: "A#t1" },
+    2: { name: "A#t2" },
+    3: { name: "A#t1_t2" },
+    4: { name: "B" },
+    5: { name: "B#t1" },
+    6: { name: "B#t2" },
+    7: { name: "B#t1_t2" },
+    8: { name: "C" },
+    9: { name: "C#t1" },
+    10: { name: "C#t2" },
+    11: { name: "C#t1_t2" },
+    12: { name: "D" },
+    13: { name: "E#t1000" },
 };
 
 const color = "";
@@ -456,12 +456,12 @@ describe("SelectionInterface module", () => {
             [key: number]: { name: string; color?: string };
         } = {
             ...idMapping,
-            "14": { name: "F#t1000" },
-            "15": {
+            14: { name: "F#t1000" },
+            15: {
                 name: "G#1",
                 color: "#g1",
             },
-            "16": {
+            16: {
                 name: "G#2",
                 color: "#g2",
             },
