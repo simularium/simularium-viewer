@@ -8,5 +8,6 @@ export default {
     },
     server: {
         open: "examples/src/index.html",
+        port: 8080,
     },
 } satisfies UserConfig;
