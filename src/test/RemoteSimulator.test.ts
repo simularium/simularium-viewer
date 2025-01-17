@@ -115,7 +115,7 @@ describe("RemoteSimulator", () => {
         });
     });
 
-    describe("startRemoteTrajectoryPlayback", () => {
+    describe("initialize", () => {
         test("does not throw error if connectToRemoteServer succeeds", async () => {
             const websocketClient = new WebsocketClient(CONNECTION_SETTINGS);
             const simulator = new RemoteSimulator(websocketClient);
@@ -124,10 +124,7 @@ describe("RemoteSimulator", () => {
             );
 
             expect(
-                async () =>
-                    await simulator.startRemoteTrajectoryPlayback(
-                        "endocytosis.simularium"
-                    )
+                async () => await simulator.initialize("endocytosis.simularium")
             ).not.toThrow();
         });
         test("throws error emitted by connectToRemoteServer as a FrontEndError if connection fails", async () => {
@@ -138,9 +135,7 @@ describe("RemoteSimulator", () => {
             );
 
             try {
-                await simulator.startRemoteTrajectoryPlayback(
-                    "endocytosis.simularium"
-                );
+                await simulator.initialize("endocytosis.simularium");
             } catch (error) {
                 expect(error).toEqual(new FrontEndError("Mock error message"));
             }

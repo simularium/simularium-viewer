@@ -42,7 +42,6 @@ import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError.js";
 import {
     DEFAULT_CAMERA_Z_POSITION,
     DEFAULT_CAMERA_SPEC,
-    nullAgent,
     AGENT_HEADER_SIZE,
 } from "../constants.js";
 import {
@@ -96,6 +95,20 @@ const MIN_ZOOM = 0.16;
 const CANVAS_INITIAL_WIDTH = 100;
 const CANVAS_INITIAL_HEIGHT = 100;
 
+const NULL_AGENT = {
+    visType: -1,
+    instanceId: NO_AGENT,
+    type: -1,
+    x: 0,
+    y: 0,
+    z: 0,
+    xrot: 0,
+    yrot: 0,
+    zrot: 0,
+    cr: 0,
+    subpoints: [],
+};
+
 export enum RenderStyle {
     WEBGL1_FALLBACK,
     WEBGL2_PREFERRED,
@@ -121,6 +134,9 @@ export const isOrthographicCamera = (
 type Bounds = readonly [number, number, number, number, number, number];
 
 class VisGeometry {
+    static getNullAgent(): AgentData {
+        return { ...NULL_AGENT };
+    }
     public onError: (error: FrontEndError) => void;
     public renderStyle: RenderStyle;
     public backgroundColor: Color;
@@ -677,9 +693,13 @@ class VisGeometry {
     }
 
     public getObjectData(id: number): AgentData {
+        if (id === NO_AGENT) {
+            // initial state
+            return VisGeometry.getNullAgent();
+        }
         const data = this.visAgentInstances.get(id);
         if (!data) {
-            return nullAgent();
+            return VisGeometry.getNullAgent();
         }
         return data.agentData;
     }
