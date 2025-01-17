@@ -60,6 +60,13 @@ export default [{
             format: ["camelCase", "UPPER_CASE"],
             leadingUnderscore: "allow",
         }, {
+            selector: "property",
+            format: null,
+            filter: {
+                regex: "^[0-9]+$",
+                match: true,
+            }
+        }, {
             selector: "typeLike",
             format: ["PascalCase"],
         }, {
