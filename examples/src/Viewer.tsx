@@ -1,5 +1,5 @@
 import React from "react";
-import { isEqual, findIndex, reduce, map } from "lodash";
+import { isEqual, findIndex, reduce, map as lodashMap } from "lodash";
 import { v4 as uuidv4 } from "uuid";
 import { InputParams } from "tweakpane";
 
@@ -86,6 +86,7 @@ interface ViewerState {
     initialPlay: boolean;
     firstFrameTime: number;
     followObjectData: AgentData;
+    conversionFileName: string;
 }
 
 const simulariumController = new SimulariumController({});
@@ -119,6 +120,7 @@ const initialState: ViewerState = {
     initialPlay: true,
     firstFrameTime: 0,
     followObjectData: null,
+    conversionFileName: "",
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
@@ -283,7 +285,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             .then((data) => data.json())
             .then((fileRefs) =>
                 Promise.all(
-                    map(fileRefs, (ref) =>
+                    lodashMap(fileRefs, (ref) =>
                         fetch(ref.download_url).then((data) => data.json())
                     )
                 )
@@ -332,6 +334,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
         const fileName = uuidv4() + ".simularium";
+        this.setState({
+            conversionFileName: fileName,
+        });
+
         simulariumController
             .convertTrajectory(
                 this.netConnectionSettings,
@@ -341,13 +347,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             )
             .then(() => {
                 this.clearPendingFile();
-            })
-            .then(() => {
-                simulariumController.changeFile(
-                    { netConnectionSettings: this.netConnectionSettings },
-                    fileName,
-                    true
-                );
             })
             .catch((err) => {
                 console.error(err);
@@ -429,8 +428,33 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         });
     }
 
+    public receiveConvertedFile(): void {
+        simulariumController
+            .changeFile(
+                {
+                    netConnectionSettings: this.netConnectionSettings,
+                },
+                this.state.conversionFileName
+            )
+            .then(() => {
+                simulariumController.gotoTime(0);
+            })
+            .then(() =>
+                this.setState({
+                    conversionFileName: "",
+                })
+            )
+            .catch((e) => {
+                console.warn(e);
+            });
+    }
+
     public handleTrajectoryInfo(data: TrajectoryFileInfo): void {
         console.log("Trajectory info arrived", data);
+        const conversionActive = !!this.state.conversionFileName;
+        if (conversionActive) {
+            this.receiveConvertedFile();
+        }
         // NOTE: Currently incorrectly assumes initial time of 0
         const totalDuration = (data.totalSteps - 1) * data.timeStepSize;
         this.setState({
