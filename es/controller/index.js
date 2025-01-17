@@ -5,12 +5,14 @@ import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import _regeneratorRuntime from "@babel/runtime/regenerator";
 import jsLogger from "js-logger";
 import { isEmpty, noop } from "lodash";
+import { v4 as uuidv4 } from "uuid";
 import { VisData, RemoteSimulator } from "../simularium/index.js";
 import { FILE_STATUS_SUCCESS, FILE_STATUS_FAIL } from "../simularium/types.js";
 import { ClientSimulator } from "../simularium/ClientSimulator.js";
 import { LocalFileSimulator } from "../simularium/LocalFileSimulator.js";
 import { WebsocketClient } from "../simularium/WebsocketClient.js";
 import { RemoteMetricsCalculator } from "../simularium/RemoteMetricsCalculator.js";
+import { OctopusServicesClient } from "../simularium/OctopusClient.js";
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
 // TODO: refine this as part of the public API for initializing the
@@ -24,6 +26,7 @@ var SimulariumController = /*#__PURE__*/function () {
     _classCallCheck(this, SimulariumController);
     _defineProperty(this, "simulator", void 0);
     _defineProperty(this, "remoteWebsocketClient", void 0);
+    _defineProperty(this, "octopusClient", void 0);
     _defineProperty(this, "metricsCalculator", void 0);
     _defineProperty(this, "visData", void 0);
     _defineProperty(this, "visGeometry", void 0);
@@ -33,7 +36,6 @@ var SimulariumController = /*#__PURE__*/function () {
     _defineProperty(this, "startRecording", void 0);
     _defineProperty(this, "stopRecording", void 0);
     _defineProperty(this, "onError", void 0);
-    _defineProperty(this, "networkEnabled", void 0);
     _defineProperty(this, "isPaused", void 0);
     _defineProperty(this, "isFileChanging", void 0);
     _defineProperty(this, "playBackFile", void 0);
@@ -78,7 +80,6 @@ var SimulariumController = /*#__PURE__*/function () {
         console.warn("trajectoryPlaybackFile param ignored, no network config provided");
       }
     }
-    this.networkEnabled = true;
     this.isPaused = false;
     this.isFileChanging = false;
     this.playBackFile = params.trajectoryPlaybackFile || "";
@@ -108,6 +109,7 @@ var SimulariumController = /*#__PURE__*/function () {
       } else if (netConnectionConfig) {
         var webSocketClient = new WebsocketClient(netConnectionConfig, this.onError);
         this.remoteWebsocketClient = webSocketClient;
+        this.octopusClient = new OctopusServicesClient(webSocketClient);
         this.simulator = new RemoteSimulator(webSocketClient, this.onError);
         this.simulator.setTrajectoryDataHandler(this.visData.parseAgentsFromNetData.bind(this.visData));
       } else {
@@ -121,10 +123,16 @@ var SimulariumController = /*#__PURE__*/function () {
   }, {
     key: "configureNetwork",
     value: function configureNetwork(config) {
-      if (this.simulator && this.simulator.socketIsValid()) {
-        this.simulator.disconnect();
+      if (this.simulator) {
+        this.simulator.abort();
       }
       this.createSimulatorConnection(config);
+    }
+  }, {
+    key: "isRemoteOctopusClientConfigured",
+    value: function isRemoteOctopusClientConfigured() {
+      var _this$remoteWebsocket;
+      return !!(this.simulator && this.octopusClient && (_this$remoteWebsocket = this.remoteWebsocketClient) !== null && _this$remoteWebsocket !== void 0 && _this$remoteWebsocket.socketIsValid());
     }
   }, {
     key: "isChangingFile",
@@ -134,14 +142,15 @@ var SimulariumController = /*#__PURE__*/function () {
 
     // Not called by viewer, but could be called by
     // parent app
+    // todo candidate for removal? not called in website
   }, {
     key: "connect",
     value: function connect() {
       var _this3 = this;
-      if (!this.simulator) {
+      if (!this.remoteWebsocketClient) {
         return Promise.reject(new Error("No network connection established in simularium controller."));
       }
-      return this.simulator.connectToRemoteServer(this.simulator.getIp()).then(function (msg) {
+      return this.remoteWebsocketClient.connectToRemoteServer().then(function (msg) {
         _this3.postConnect();
         return msg;
       });
@@ -152,12 +161,9 @@ var SimulariumController = /*#__PURE__*/function () {
       if (!this.simulator) {
         return Promise.reject();
       }
-
-      // switch back to 'networked' playback
-      this.networkEnabled = true;
       this.isPaused = false;
       this.visData.clearCache();
-      return this.simulator.startRemoteTrajectoryPlayback(this.playBackFile);
+      return this.simulator.initialize(this.playBackFile);
     }
   }, {
     key: "time",
@@ -168,7 +174,7 @@ var SimulariumController = /*#__PURE__*/function () {
     key: "stop",
     value: function stop() {
       if (this.simulator) {
-        this.simulator.abortRemoteSim();
+        this.simulator.abort();
       }
     }
   }, {
@@ -182,25 +188,28 @@ var SimulariumController = /*#__PURE__*/function () {
     key: "convertTrajectory",
     value: function convertTrajectory(netConnectionConfig, dataToConvert, fileType, providedFileName) {
       try {
-        if (!(this.simulator && this.simulator.isConnectedToRemoteServer())) {
-          // Only configure network if we aren't already connected to the remote server
+        if (!this.isRemoteOctopusClientConfigured()) {
           this.configureNetwork(netConnectionConfig);
         }
-        if (!(this.simulator instanceof RemoteSimulator)) {
-          throw new Error("Autoconversion requires a RemoteSimulator");
+        if (!this.octopusClient) {
+          throw new Error("Octopus client not configured");
         }
+        if (!this.simulator) {
+          throw new Error("Simulator not initialized");
+        }
+        var fileName = providedFileName !== null && providedFileName !== void 0 ? providedFileName : "".concat(uuidv4(), ".simularium");
+        return this.octopusClient.convertTrajectory(dataToConvert, fileType, fileName);
       } catch (e) {
         return Promise.reject(e);
       }
-      return this.simulator.convertTrajectory(dataToConvert, fileType, providedFileName);
     }
   }, {
     key: "pause",
     value: function pause() {
-      if (this.networkEnabled && this.simulator) {
-        this.simulator.pauseRemoteSim();
+      if (this.simulator) {
+        this.simulator.pause();
+        this.isPaused = true;
       }
-      this.isPaused = true;
     }
   }, {
     key: "paused",
@@ -211,23 +220,21 @@ var SimulariumController = /*#__PURE__*/function () {
     key: "initializeTrajectoryFile",
     value: function initializeTrajectoryFile() {
       if (this.simulator) {
-        this.simulator.requestTrajectoryFileInfo(this.playBackFile);
+        this.simulator.initialize(this.playBackFile);
       }
     }
   }, {
     key: "gotoTime",
     value: function gotoTime(time) {
       // If in the middle of changing files, ignore any gotoTime requests
-      if (this.isFileChanging === true) return;
+      if (this.isFileChanging || !this.simulator) return;
       if (this.visData.hasLocalCacheForTime(time)) {
         this.visData.gotoTime(time);
       } else {
-        if (this.networkEnabled && this.simulator) {
-          // else reset the local cache,
-          //  and play remotely from the desired simulation time
-          this.visData.clearCache();
-          this.simulator.gotoRemoteSimulationTime(time);
-        }
+        // else reset the local cache,
+        //  and play remotely from the desired simulation time
+        this.visData.clearCache();
+        this.simulator.requestFrameByTime(time);
       }
     }
   }, {
@@ -239,18 +246,19 @@ var SimulariumController = /*#__PURE__*/function () {
   }, {
     key: "resume",
     value: function resume() {
-      if (this.networkEnabled && this.simulator) {
-        this.simulator.resumeRemoteSim();
+      if (this.simulator) {
+        this.simulator.stream();
+        this.isPaused = false;
       }
-      this.isPaused = false;
     }
   }, {
     key: "clearFile",
     value: function clearFile() {
+      var _this$simulator;
       this.isFileChanging = false;
       this.playBackFile = "";
       this.visData.clearForNewTrajectory();
-      this.disableNetworkCommands();
+      (_this$simulator = this.simulator) === null || _this$simulator === void 0 || _this$simulator.abort();
       this.pause();
       if (this.visGeometry) {
         this.visGeometry.clearForNewTrajectory();
@@ -283,27 +291,18 @@ var SimulariumController = /*#__PURE__*/function () {
       var keepRemoteConnection = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
       this.isFileChanging = true;
       this.playBackFile = newFileName;
-      if (this.simulator instanceof RemoteSimulator) {
-        this.simulator.handleError = function () {
-          return noop;
-        };
-      }
+
+      // calls simulator.abort()
+      this.stop();
       this.visData.WaitForFrame(0);
       this.visData.clearForNewTrajectory();
-      this.stop();
-
-      // Do I still need this? test...
-      // if (this.simulator) {
-      //     this.simulator.disconnect();
-      // }
-
+      var shouldConfigureNewSimulator = !(keepRemoteConnection && this.isRemoteOctopusClientConfigured());
       // don't create simulator if client wants to keep remote simulator and the
       // current simulator is a remote simulator
-      if (!(keepRemoteConnection && this.simulator instanceof RemoteSimulator)) {
+      if (shouldConfigureNewSimulator) {
         try {
           if (connectionParams) {
             this.createSimulatorConnection(connectionParams.netConnectionSettings, connectionParams.clientSimulator, connectionParams.simulariumFile, connectionParams.geoAssets);
-            this.networkEnabled = true; // This confuses me, because local files also go through this code path
             this.isPaused = true;
           } else {
             // caught in following block, not sent to front end
@@ -313,16 +312,16 @@ var SimulariumController = /*#__PURE__*/function () {
           var error = e;
           this.simulator = undefined;
           console.warn(error.message);
-          this.networkEnabled = false;
           this.isPaused = false;
         }
       }
 
       // start the simulation paused and get first frame
       if (this.simulator) {
-        return this.start().then(function () {
+        return this.start() // will reject if no simulator
+        .then(function () {
           if (_this4.simulator) {
-            _this4.simulator.requestSingleFrame(0);
+            _this4.simulator.requestFrame(0);
           }
         }).then(function () {
           return {
@@ -347,21 +346,19 @@ var SimulariumController = /*#__PURE__*/function () {
   }, {
     key: "checkServerHealth",
     value: function checkServerHealth(handler, netConnectionConfig) {
-      if (!(this.simulator && this.simulator.isConnectedToRemoteServer())) {
-        // Only configure network if we aren't already connected to the remote server
+      if (!this.isRemoteOctopusClientConfigured()) {
         this.configureNetwork(netConnectionConfig);
       }
-      if (this.simulator instanceof RemoteSimulator) {
-        this.simulator.setHealthCheckHandler(handler);
-        this.simulator.checkServerHealth();
+      if (this.octopusClient) {
+        this.octopusClient.setHealthCheckHandler(handler);
+        this.octopusClient.checkServerHealth();
       }
     }
   }, {
     key: "cancelConversion",
     value: function cancelConversion() {
-      // Only relevant if there is an active RemoteSimulator instance
-      if (this.simulator && this.simulator instanceof RemoteSimulator) {
-        this.simulator.cancelConversion();
+      if (this.octopusClient) {
+        this.octopusClient.cancelConversion();
       }
     }
   }, {
@@ -437,14 +434,6 @@ var SimulariumController = /*#__PURE__*/function () {
       }
       return getPlotData;
     }()
-  }, {
-    key: "disableNetworkCommands",
-    value: function disableNetworkCommands() {
-      this.networkEnabled = false;
-      if (this.simulator && this.simulator.socketIsValid()) {
-        this.simulator.disconnect();
-      }
-    }
   }, {
     key: "clearLocalCache",
     value: function clearLocalCache() {

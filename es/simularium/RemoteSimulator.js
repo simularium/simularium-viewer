@@ -4,7 +4,6 @@ import _createClass from "@babel/runtime/helpers/createClass";
 import _defineProperty from "@babel/runtime/helpers/defineProperty";
 import _regeneratorRuntime from "@babel/runtime/regenerator";
 import jsLogger from "js-logger";
-import { v4 as uuidv4 } from "uuid";
 import { FrontEndError, ErrorLevel } from "./FrontEndError.js";
 import { NetMessageEnum } from "./WebsocketClient.js";
 // a RemoteSimulator is a ISimulator that connects to the Octopus backend server
@@ -16,7 +15,6 @@ export var RemoteSimulator = /*#__PURE__*/function () {
     _defineProperty(this, "logger", void 0);
     _defineProperty(this, "onTrajectoryFileInfoArrive", void 0);
     _defineProperty(this, "onTrajectoryDataArrive", void 0);
-    _defineProperty(this, "healthCheckHandler", void 0);
     _defineProperty(this, "lastRequestedFile", void 0);
     _defineProperty(this, "handleError", void 0);
     this.webSocketClient = webSocketClient;
@@ -34,9 +32,6 @@ export var RemoteSimulator = /*#__PURE__*/function () {
     this.onTrajectoryDataArrive = function () {
       /* do nothing */
     };
-    this.healthCheckHandler = function () {
-      /* do nothing */
-    };
   }
   return _createClass(RemoteSimulator, [{
     key: "setTrajectoryFileInfoHandler",
@@ -49,9 +44,9 @@ export var RemoteSimulator = /*#__PURE__*/function () {
       this.onTrajectoryDataArrive = handler;
     }
   }, {
-    key: "setHealthCheckHandler",
-    value: function setHealthCheckHandler(handler) {
-      this.healthCheckHandler = handler;
+    key: "setErrorHandler",
+    value: function setErrorHandler(handler) {
+      this.handleError = handler;
     }
   }, {
     key: "socketIsValid",
@@ -153,9 +148,6 @@ export var RemoteSimulator = /*#__PURE__*/function () {
       this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_MODEL_DEFINITION, function (_msg) {
         return _this2.onModelDefinitionArrive();
       });
-      this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_SERVER_HEALTHY_RESPONSE, function (_msg) {
-        return _this2.healthCheckHandler();
-      });
       this.webSocketClient.addJsonMessageHandler(NetMessageEnum.ID_ERROR_MSG, function (msg) {
         return _this2.onErrorMsg(msg);
       });
@@ -177,7 +169,7 @@ export var RemoteSimulator = /*#__PURE__*/function () {
   }, {
     key: "isConnectedToRemoteServer",
     value: function isConnectedToRemoteServer() {
-      return this.socketIsValid();
+      return this.webSocketClient.socketIsValid();
     }
   }, {
     key: "connectToRemoteServer",
@@ -222,33 +214,17 @@ export var RemoteSimulator = /*#__PURE__*/function () {
       };
       this.webSocketClient.sendWebSocketRequest(jsonData, "Rate Parameter Update");
     }
-  }, {
-    key: "sendModelDefinition",
-    value: function sendModelDefinition(model) {
-      var dataToSend = {
-        model: model,
-        msgType: NetMessageEnum.ID_MODEL_DEFINITION
-      };
-      this.webSocketClient.sendWebSocketRequest(dataToSend, "Model Definition");
-    }
 
     /**
      * WebSocket Simulation Control
      */
   }, {
-    key: "startRemoteSimPreRun",
-    value: function startRemoteSimPreRun(_timeStep, _numTimeSteps) {
-      // not implemented
-    }
-  }, {
-    key: "startRemoteSimLive",
-    value: function startRemoteSimLive() {
-      // not implemented
-    }
-  }, {
-    key: "startRemoteTrajectoryPlayback",
-    value: function startRemoteTrajectoryPlayback(fileName) {
+    key: "initialize",
+    value: function initialize(fileName) {
       var _this3 = this;
+      if (!this.isConnectedToRemoteServer()) {
+        this.connectToRemoteServer();
+      }
       this.lastRequestedFile = fileName;
       var jsonData = {
         msgType: NetMessageEnum.ID_INIT_TRAJECTORY_FILE,
@@ -264,24 +240,24 @@ export var RemoteSimulator = /*#__PURE__*/function () {
       });
     }
   }, {
-    key: "pauseRemoteSim",
-    value: function pauseRemoteSim() {
+    key: "pause",
+    value: function pause() {
       this.webSocketClient.sendWebSocketRequest({
         msgType: NetMessageEnum.ID_VIS_DATA_PAUSE,
         fileName: this.lastRequestedFile
       }, "Pause Simulation");
     }
   }, {
-    key: "resumeRemoteSim",
-    value: function resumeRemoteSim() {
+    key: "stream",
+    value: function stream() {
       this.webSocketClient.sendWebSocketRequest({
         msgType: NetMessageEnum.ID_VIS_DATA_RESUME,
         fileName: this.lastRequestedFile
       }, "Resume Simulation");
     }
   }, {
-    key: "abortRemoteSim",
-    value: function abortRemoteSim() {
+    key: "abort",
+    value: function abort() {
       if (!this.socketIsValid()) {
         return;
       }
@@ -291,8 +267,8 @@ export var RemoteSimulator = /*#__PURE__*/function () {
       }, "Abort Simulation");
     }
   }, {
-    key: "requestSingleFrame",
-    value: function requestSingleFrame(startFrameNumber) {
+    key: "requestFrame",
+    value: function requestFrame(startFrameNumber) {
       this.webSocketClient.sendWebSocketRequest({
         msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
         frameNumber: startFrameNumber,
@@ -300,8 +276,8 @@ export var RemoteSimulator = /*#__PURE__*/function () {
       }, "Request Single Frame");
     }
   }, {
-    key: "gotoRemoteSimulationTime",
-    value: function gotoRemoteSimulationTime(time) {
+    key: "requestFrameByTime",
+    value: function requestFrameByTime(time) {
       this.webSocketClient.sendWebSocketRequest({
         msgType: NetMessageEnum.ID_GOTO_SIMULATION_TIME,
         time: time,
@@ -319,58 +295,8 @@ export var RemoteSimulator = /*#__PURE__*/function () {
     }
   }, {
     key: "sendUpdate",
-    value: function sendUpdate(obj) {
-      this.webSocketClient.sendWebSocketRequest({
-        msgType: NetMessageEnum.ID_UPDATE_SIMULATION_STATE,
-        data: obj
-      }, "Send update instructions to simulation server");
-    }
-
-    // Start autoconversion and roll right into the simulation
-  }, {
-    key: "convertTrajectory",
-    value: function convertTrajectory(dataToConvert, fileType, providedFileName) {
-      var _this4 = this;
-      return this.connectToRemoteServer().then(function () {
-        _this4.sendTrajectory(dataToConvert, fileType, providedFileName);
-      })["catch"](function (e) {
-        throw new FrontEndError(e.message, ErrorLevel.ERROR);
-      });
-    }
-  }, {
-    key: "sendTrajectory",
-    value: function sendTrajectory(dataToConvert, fileType, providedFileName) {
-      // Check for provided file name, and if none provided
-      // generate random file name for converted file to be stored on the server
-      var fileName = providedFileName !== undefined ? providedFileName : uuidv4() + ".simularium";
-      this.lastRequestedFile = fileName;
-      this.webSocketClient.sendWebSocketRequest({
-        msgType: NetMessageEnum.ID_CONVERT_TRAJECTORY_FILE,
-        trajType: fileType.toLowerCase(),
-        fileName: fileName,
-        data: dataToConvert
-      }, "Convert trajectory output to simularium file format");
-    }
-  }, {
-    key: "checkServerHealth",
-    value: function checkServerHealth() {
-      var _this5 = this;
-      return this.connectToRemoteServer().then(function () {
-        _this5.webSocketClient.sendWebSocketRequest({
-          msgType: NetMessageEnum.ID_CHECK_HEALTH_REQUEST
-        }, "Request server health check");
-      })["catch"](function (e) {
-        _this5.handleError(new FrontEndError(e.message, ErrorLevel.WARNING));
-      });
-    }
-  }, {
-    key: "cancelConversion",
-    value: function cancelConversion() {
-      this.webSocketClient.sendWebSocketRequest({
-        msgType: NetMessageEnum.ID_CANCEL_CONVERSION,
-        fileName: this.lastRequestedFile
-      }, "Cancel the requested autoconversion");
-      this.lastRequestedFile = "";
+    value: function sendUpdate(_obj) {
+      return Promise.resolve();
     }
   }]);
 }();

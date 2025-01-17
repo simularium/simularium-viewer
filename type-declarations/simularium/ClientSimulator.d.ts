@@ -9,21 +9,14 @@ export declare class ClientSimulator implements ISimulator {
     protected logger: ILogger;
     onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfo) => void;
     onTrajectoryDataArrive: (msg: VisDataMessage) => void;
+    handleError: (error: Error) => void;
     constructor(sim: IClientSimulatorImpl);
     setTrajectoryFileInfoHandler(handler: (msg: TrajectoryFileInfo) => void): void;
     setTrajectoryDataHandler(handler: (msg: VisDataMessage) => void): void;
-    socketIsValid(): boolean;
-    /**
-     * Connect
-     * */
-    disconnect(): void;
-    getIp(): string;
-    isConnectedToRemoteServer(): boolean;
-    connectToRemoteServer(_address: string): Promise<string>;
+    setErrorHandler(handler: (msg: Error) => void): void;
     private sendSimulationRequest;
     sendTimeStepUpdate(newTimeStep: number): void;
-    sendUpdate(obj: Record<string, unknown>): void;
-    sendModelDefinition(model: string): void;
+    sendUpdate(obj: Record<string, unknown>): Promise<void>;
     /**
      * Simulation Control
      *
@@ -33,13 +26,11 @@ export declare class ClientSimulator implements ISimulator {
      *  Trajectory File: No simulation run, stream a result file piecemeal
      *
      */
-    startRemoteSimPreRun(timeStep: number, numTimeSteps: number): void;
-    startRemoteSimLive(): void;
-    startRemoteTrajectoryPlayback(fileName: string): Promise<void>;
-    pauseRemoteSim(): void;
-    resumeRemoteSim(): void;
-    abortRemoteSim(): void;
-    requestSingleFrame(startFrameNumber: number): void;
-    gotoRemoteSimulationTime(time: number): void;
+    initialize(fileName: string): Promise<void>;
+    pause(): void;
+    stream(): void;
+    abort(): void;
+    requestFrame(startFrameNumber: number): void;
+    requestFrameByTime(time: number): void;
     requestTrajectoryFileInfo(fileName: string): void;
 }

@@ -9,6 +9,7 @@ import type { ISimulariumFile } from "../simularium/ISimulariumFile.js";
 import { WebsocketClient } from "../simularium/WebsocketClient.js";
 import { TrajectoryType } from "../constants.js";
 import { RemoteMetricsCalculator } from "../simularium/RemoteMetricsCalculator.js";
+import { OctopusServicesClient } from "../simularium/OctopusClient.js";
 interface SimulariumControllerParams {
     remoteSimulator?: RemoteSimulator;
     netConnectionSettings?: NetConnectionParams;
@@ -25,6 +26,7 @@ interface SimulatorConnectionParams {
 export default class SimulariumController {
     simulator?: ISimulator;
     remoteWebsocketClient?: WebsocketClient;
+    octopusClient?: OctopusServicesClient;
     metricsCalculator?: RemoteMetricsCalculator;
     visData: VisData;
     visGeometry: VisGeometry | undefined;
@@ -34,13 +36,13 @@ export default class SimulariumController {
     startRecording: () => void;
     stopRecording: () => void;
     onError?: (error: FrontEndError) => void;
-    private networkEnabled;
     private isPaused;
     private isFileChanging;
     private playBackFile;
     constructor(params: SimulariumControllerParams);
     private createSimulatorConnection;
     configureNetwork(config: NetConnectionParams): void;
+    isRemoteOctopusClientConfigured(): boolean;
     get isChangingFile(): boolean;
     connect(): Promise<string>;
     start(): Promise<void>;
@@ -66,7 +68,6 @@ export default class SimulariumController {
     private setupMetricsCalculator;
     getMetrics(config: NetConnectionParams): Promise<void>;
     getPlotData(config: NetConnectionParams, requestedPlots: PlotConfig[]): Promise<void>;
-    disableNetworkCommands(): void;
     clearLocalCache(): void;
     set trajFileInfoCallback(callback: (msg: TrajectoryFileInfo) => void);
     /**

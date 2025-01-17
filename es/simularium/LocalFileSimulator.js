@@ -12,6 +12,7 @@ export var LocalFileSimulator = /*#__PURE__*/function () {
     _defineProperty(this, "logger", void 0);
     _defineProperty(this, "onTrajectoryFileInfoArrive", void 0);
     _defineProperty(this, "onTrajectoryDataArrive", void 0);
+    _defineProperty(this, "handleError", void 0);
     // setInterval is the playback engine for now
     _defineProperty(this, "playbackIntervalId", 0);
     _defineProperty(this, "currentPlaybackFrameIndex", 0);
@@ -23,6 +24,9 @@ export var LocalFileSimulator = /*#__PURE__*/function () {
       /* do nothing */
     };
     this.onTrajectoryDataArrive = function () {
+      /* do nothing */
+    };
+    this.handleError = function () {
       /* do nothing */
     };
     console.log("NEW LOCALFILECONNECTION");
@@ -38,72 +42,13 @@ export var LocalFileSimulator = /*#__PURE__*/function () {
       this.onTrajectoryDataArrive = handler;
     }
   }, {
-    key: "socketIsValid",
-    value: function socketIsValid() {
-      return true;
-    }
-
-    /**
-     * Connect
-     * */
-  }, {
-    key: "disconnect",
-    value: function disconnect() {
-      this.abortRemoteSim();
+    key: "setErrorHandler",
+    value: function setErrorHandler(handler) {
+      this.handleError = handler;
     }
   }, {
-    key: "getIp",
-    value: function getIp() {
-      return "";
-    }
-  }, {
-    key: "isConnectedToRemoteServer",
-    value: function isConnectedToRemoteServer() {
-      return false;
-    }
-  }, {
-    key: "connectToRemoteServer",
-    value: function connectToRemoteServer(_address) {
-      return Promise.resolve("Local file successfully started");
-    }
-  }, {
-    key: "sendTimeStepUpdate",
-    value: function sendTimeStepUpdate(_newTimeStep) {
-      // not implemented
-    }
-  }, {
-    key: "sendParameterUpdate",
-    value: function sendParameterUpdate(_paramName, _paramValue) {
-      // not implemented
-    }
-  }, {
-    key: "sendModelDefinition",
-    value: function sendModelDefinition(_model) {
-      // not implemented
-    }
-
-    /**
-     * Simulation Control
-     *
-     * Simulation Run Modes:
-     *  Live : Results are sent as they are calculated
-     *  Pre-Run : All results are evaluated, then sent piecemeal
-     *  Trajectory File: No simulation run, stream a result file piecemeal
-     *
-     */
-  }, {
-    key: "startRemoteSimPreRun",
-    value: function startRemoteSimPreRun(_timeStep, _numTimeSteps) {
-      // not implemented
-    }
-  }, {
-    key: "startRemoteSimLive",
-    value: function startRemoteSimLive() {
-      // not implemented
-    }
-  }, {
-    key: "startRemoteTrajectoryPlayback",
-    value: function startRemoteTrajectoryPlayback(_fileName) {
+    key: "initialize",
+    value: function initialize(_fileName) {
       try {
         var trajectoryInfo = this.simulariumFile.getTrajectoryFileInfo();
         this.onTrajectoryFileInfoArrive(trajectoryInfo);
@@ -113,20 +58,20 @@ export var LocalFileSimulator = /*#__PURE__*/function () {
       return Promise.resolve();
     }
   }, {
-    key: "pauseRemoteSim",
-    value: function pauseRemoteSim() {
+    key: "pause",
+    value: function pause() {
       window.clearInterval(this.playbackIntervalId);
       this.playbackIntervalId = 0;
     }
   }, {
-    key: "resumeRemoteSim",
-    value: function resumeRemoteSim() {
+    key: "stream",
+    value: function stream() {
       var _this = this;
       this.playbackIntervalId = window.setInterval(function () {
         var numFrames = _this.simulariumFile.getNumFrames();
         if (_this.currentPlaybackFrameIndex >= numFrames) {
           _this.currentPlaybackFrameIndex = numFrames - 1;
-          _this.pauseRemoteSim();
+          _this.pause();
           return;
         }
         _this.onTrajectoryDataArrive(_this.getFrame(_this.currentPlaybackFrameIndex));
@@ -134,26 +79,26 @@ export var LocalFileSimulator = /*#__PURE__*/function () {
       }, 1);
     }
   }, {
-    key: "abortRemoteSim",
-    value: function abortRemoteSim() {
+    key: "abort",
+    value: function abort() {
       window.clearInterval(this.playbackIntervalId);
       this.playbackIntervalId = 0;
       this.currentPlaybackFrameIndex = 0;
     }
   }, {
-    key: "requestSingleFrame",
-    value: function requestSingleFrame(startFrameNumber) {
+    key: "requestFrame",
+    value: function requestFrame(startFrameNumber) {
       this.onTrajectoryDataArrive(this.getFrame(startFrameNumber));
     }
   }, {
-    key: "gotoRemoteSimulationTime",
-    value: function gotoRemoteSimulationTime(time) {
+    key: "requestFrameByTime",
+    value: function requestFrameByTime(time) {
       var frameNumber = this.simulariumFile.getFrameIndexAtTime(time);
 
       // frameNumber is -1 if findIndex() above doesn't find a match
       if (frameNumber !== -1) {
         this.currentPlaybackFrameIndex = frameNumber;
-        this.requestSingleFrame(frameNumber);
+        this.requestFrame(frameNumber);
       }
     }
   }, {
@@ -165,6 +110,7 @@ export var LocalFileSimulator = /*#__PURE__*/function () {
     key: "sendUpdate",
     value: function sendUpdate(_obj) {
       // not implemented
+      return Promise.resolve();
     }
   }, {
     key: "getFrame",

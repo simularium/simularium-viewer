@@ -16,12 +16,16 @@ export var ClientSimulator = /*#__PURE__*/function () {
     _defineProperty(this, "logger", void 0);
     _defineProperty(this, "onTrajectoryFileInfoArrive", void 0);
     _defineProperty(this, "onTrajectoryDataArrive", void 0);
+    _defineProperty(this, "handleError", void 0);
     this.logger = jsLogger.get("netconnection");
     this.logger.setLevel(jsLogger.DEBUG);
     this.onTrajectoryFileInfoArrive = function () {
       /* do nothing */
     };
     this.onTrajectoryDataArrive = function () {
+      /* do nothing */
+    };
+    this.handleError = function () {
       /* do nothing */
     };
     this.localSimulator = sim;
@@ -37,44 +41,14 @@ export var ClientSimulator = /*#__PURE__*/function () {
       this.onTrajectoryDataArrive = handler;
     }
   }, {
-    key: "socketIsValid",
-    value: function socketIsValid() {
-      return true;
-    }
-
-    /**
-     * Connect
-     * */
-  }, {
-    key: "disconnect",
-    value: function disconnect() {
-      if (!this.socketIsValid()) {
-        this.logger.warn("disconnect failed, client is not connected");
-        return;
-      }
-    }
-  }, {
-    key: "getIp",
-    value: function getIp() {
-      return "";
-    }
-  }, {
-    key: "isConnectedToRemoteServer",
-    value: function isConnectedToRemoteServer() {
-      return false;
-    }
-  }, {
-    key: "connectToRemoteServer",
-    value: function connectToRemoteServer(_address) {
-      return Promise.resolve("Local client sim successfully started");
+    key: "setErrorHandler",
+    value: function setErrorHandler(handler) {
+      this.handleError = handler;
     }
   }, {
     key: "sendSimulationRequest",
     value: function sendSimulationRequest(jsonData, _requestDescription) {
       var _this = this;
-      // do processing, then return!
-      //this.logWebSocketRequest(requestDescription, jsonData);
-
       switch (jsonData.msgType) {
         case ClientMessageEnum.ID_UPDATE_TIME_STEP:
           break;
@@ -136,9 +110,6 @@ export var ClientSimulator = /*#__PURE__*/function () {
   }, {
     key: "sendTimeStepUpdate",
     value: function sendTimeStepUpdate(newTimeStep) {
-      if (!this.socketIsValid()) {
-        return;
-      }
       var jsonData = {
         msgType: ClientMessageEnum.ID_UPDATE_TIME_STEP,
         timeStep: newTimeStep
@@ -148,23 +119,9 @@ export var ClientSimulator = /*#__PURE__*/function () {
   }, {
     key: "sendUpdate",
     value: function sendUpdate(obj) {
-      if (!this.socketIsValid()) {
-        return;
-      }
       obj.msgType = ClientMessageEnum.ID_UPDATE_SIMULATION_STATE;
       this.sendSimulationRequest(obj, "Simulation State Update");
-    }
-  }, {
-    key: "sendModelDefinition",
-    value: function sendModelDefinition(model) {
-      if (!this.socketIsValid()) {
-        return;
-      }
-      var dataToSend = {
-        model: model,
-        msgType: ClientMessageEnum.ID_MODEL_DEFINITION
-      };
-      this.sendSimulationRequest(dataToSend, "Model Definition");
+      return Promise.resolve();
     }
 
     /**
@@ -177,77 +134,42 @@ export var ClientSimulator = /*#__PURE__*/function () {
      *
      */
   }, {
-    key: "startRemoteSimPreRun",
-    value: function startRemoteSimPreRun(timeStep, numTimeSteps) {
+    key: "initialize",
+    value: function initialize(fileName) {
       var _this2 = this;
-      var jsonData = {
-        msgType: ClientMessageEnum.ID_VIS_DATA_REQUEST,
-        mode: ClientPlayBackType.ID_PRE_RUN_SIMULATION,
-        timeStep: timeStep,
-        numTimeSteps: numTimeSteps
-      };
-      this.connectToRemoteServer(this.getIp()).then(function () {
-        _this2.sendSimulationRequest(jsonData, "Start Simulation Pre-Run");
-      });
-    }
-  }, {
-    key: "startRemoteSimLive",
-    value: function startRemoteSimLive() {
-      var _this3 = this;
-      var jsonData = {
-        msgType: ClientMessageEnum.ID_VIS_DATA_REQUEST,
-        mode: ClientPlayBackType.ID_LIVE_SIMULATION
-      };
-      this.connectToRemoteServer(this.getIp()).then(function () {
-        _this3.sendSimulationRequest(jsonData, "Start Simulation Live");
-      });
-    }
-  }, {
-    key: "startRemoteTrajectoryPlayback",
-    value: function startRemoteTrajectoryPlayback(fileName) {
-      var _this4 = this;
       var jsonData = {
         msgType: ClientMessageEnum.ID_VIS_DATA_REQUEST,
         mode: ClientPlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
         fileName: fileName
       };
-      return this.connectToRemoteServer(this.getIp()).then(function () {
-        _this4.sendSimulationRequest(jsonData, "Start Trajectory File Playback");
+      return Promise.resolve().then(function () {
+        _this2.sendSimulationRequest(jsonData, "Start Trajectory File Playback");
       });
     }
   }, {
-    key: "pauseRemoteSim",
-    value: function pauseRemoteSim() {
-      if (!this.socketIsValid()) {
-        return;
-      }
+    key: "pause",
+    value: function pause() {
       this.sendSimulationRequest({
         msgType: ClientMessageEnum.ID_VIS_DATA_PAUSE
       }, "Pause Simulation");
     }
   }, {
-    key: "resumeRemoteSim",
-    value: function resumeRemoteSim() {
-      if (!this.socketIsValid()) {
-        return;
-      }
+    key: "stream",
+    value: function stream() {
       this.sendSimulationRequest({
         msgType: ClientMessageEnum.ID_VIS_DATA_RESUME
       }, "Resume Simulation");
     }
   }, {
-    key: "abortRemoteSim",
-    value: function abortRemoteSim() {
-      if (!this.socketIsValid()) {
-        return;
-      }
+    key: "abort",
+    value: function abort() {
       this.sendSimulationRequest({
         msgType: ClientMessageEnum.ID_VIS_DATA_ABORT
       }, "Abort Simulation");
     }
   }, {
-    key: "requestSingleFrame",
-    value: function requestSingleFrame(startFrameNumber) {
+    key: "requestFrame",
+    value: function requestFrame(startFrameNumber) {
       this.sendSimulationRequest({
         msgType: ClientMessageEnum.ID_VIS_DATA_REQUEST,
         mode: ClientPlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
@@ -255,8 +177,8 @@ export var ClientSimulator = /*#__PURE__*/function () {
       }, "Request Single Frame");
     }
   }, {
-    key: "gotoRemoteSimulationTime",
-    value: function gotoRemoteSimulationTime(time) {
+    key: "requestFrameByTime",
+    value: function requestFrameByTime(time) {
       this.sendSimulationRequest({
         msgType: ClientMessageEnum.ID_GOTO_SIMULATION_TIME,
         time: time

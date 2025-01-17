@@ -4,19 +4,17 @@ import { WebsocketClient, MessageEventLike } from "./WebsocketClient.js";
 import type { NetMessage, ErrorMessage } from "./WebsocketClient.js";
 import { ISimulator } from "./ISimulator.js";
 import { TrajectoryFileInfoV2, VisDataMessage } from "./types.js";
-import { TrajectoryType } from "../constants.js";
 export declare class RemoteSimulator implements ISimulator {
     webSocketClient: WebsocketClient;
     protected logger: ILogger;
     onTrajectoryFileInfoArrive: (NetMessage: any) => void;
     onTrajectoryDataArrive: (NetMessage: any) => void;
-    healthCheckHandler: () => void;
-    protected lastRequestedFile: string;
+    lastRequestedFile: string;
     handleError: (error: FrontEndError) => void | (() => void);
     constructor(webSocketClient: WebsocketClient, errorHandler?: (error: FrontEndError) => void);
     setTrajectoryFileInfoHandler(handler: (msg: TrajectoryFileInfoV2) => void): void;
     setTrajectoryDataHandler(handler: (msg: VisDataMessage) => void): void;
-    setHealthCheckHandler(handler: () => void): void;
+    setErrorHandler(handler: (msg: Error) => void): void;
     socketIsValid(): boolean;
     getLastRequestedFile(): string;
     /**
@@ -43,22 +41,15 @@ export declare class RemoteSimulator implements ISimulator {
      */
     sendTimeStepUpdate(newTimeStep: number): void;
     sendParameterUpdate(paramName: string, paramValue: number): void;
-    sendModelDefinition(model: string): void;
     /**
      * WebSocket Simulation Control
      */
-    startRemoteSimPreRun(_timeStep: number, _numTimeSteps: number): void;
-    startRemoteSimLive(): void;
-    startRemoteTrajectoryPlayback(fileName: string): Promise<void>;
-    pauseRemoteSim(): void;
-    resumeRemoteSim(): void;
-    abortRemoteSim(): void;
-    requestSingleFrame(startFrameNumber: number): void;
-    gotoRemoteSimulationTime(time: number): void;
+    initialize(fileName: string): Promise<void>;
+    pause(): void;
+    stream(): void;
+    abort(): void;
+    requestFrame(startFrameNumber: number): void;
+    requestFrameByTime(time: number): void;
     requestTrajectoryFileInfo(fileName: string): void;
-    sendUpdate(obj: Record<string, unknown>): void;
-    convertTrajectory(dataToConvert: Record<string, unknown>, fileType: TrajectoryType, providedFileName?: string): Promise<void>;
-    sendTrajectory(dataToConvert: Record<string, unknown>, fileType: TrajectoryType, providedFileName?: string): void;
-    checkServerHealth(): Promise<void>;
-    cancelConversion(): void;
+    sendUpdate(_obj: Record<string, unknown>): Promise<void>;
 }
