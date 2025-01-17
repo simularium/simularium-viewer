@@ -1,12 +1,12 @@
-import type { ISimulariumFile } from "./ISimulariumFile";
+import type { ISimulariumFile } from "./ISimulariumFile.js";
 import type {
     Plot,
     SimulariumFileFormat,
     TrajectoryFileInfo,
     VisDataFrame,
-} from "./types";
-import { FrontEndError } from "./FrontEndError";
-import { compareTimes } from "../util";
+} from "./types.js";
+import { FrontEndError } from "./FrontEndError.js";
+import { compareTimes } from "../util.js";
 
 export default class JsonFileReader implements ISimulariumFile {
     simulariumFile: SimulariumFileFormat;

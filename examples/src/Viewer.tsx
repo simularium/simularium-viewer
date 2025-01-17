@@ -1,21 +1,9 @@
 import React from "react";
-import { isEqual, findIndex, reduce } from "lodash";
+import { isEqual, findIndex, reduce, map as lodashMap } from "lodash";
 import { v4 as uuidv4 } from "uuid";
 import { InputParams } from "tweakpane";
 
-/**
- * NOTE: if you are debugging an import/build issue
- * on the front end, you may need to switch to the
- * following import statements to reproduce the issue
- * here.
- */
-// import SimulariumViewer, {
-//     SimulariumController,
-//     RenderStyle,
-//     loadSimulariumFile,
-//     FrontEndError,
-//     ErrorLevel,
-// } from "../es";
+// viewer package imports
 import SimulariumViewer, {
     SimulariumController,
     RenderStyle,
@@ -25,16 +13,18 @@ import SimulariumViewer, {
     NetConnectionParams,
     TrajectoryFileInfo,
     CacheLog,
-} from "../../src/index";
-import { nullAgent, TrajectoryType } from "../../src/constants";
-
+    TrajectoryType,
+} from "@aics/simularium-viewer";
 import type {
     ISimulariumFile,
     UIDisplayData,
     SelectionStateInfo,
     SelectionEntry,
-} from "../../type-declarations";
-import { AgentData } from "../../type-declarations/simularium/types";
+    AgentData,
+} from "@aics/simularium-viewer";
+import "../../style/style.css";
+
+// local test bed imports
 import PointSimulator from "./simulators/PointSimulator";
 import BindingSimulator from "./simulators/BindingSimulator2D";
 import PointSimulatorLive from "./simulators/PointSimulatorLive";
@@ -48,7 +38,6 @@ import ColorPicker from "./Components/ColorPicker";
 import RecordMovieComponent from "./Components/RecordMovieComponent";
 import ConversionForm from "./Components/ConversionForm";
 import AgentMetadata from "./Components/AgentMetadata";
-
 import { agentColors } from "./constants";
 import { BaseType, CustomType } from "./types";
 import {
@@ -59,6 +48,8 @@ import {
     UI_TEMPLATE_URL_ROOT,
 } from "./api-settings";
 import CacheAndStreamingLogs from "./Components/CacheAndStreamingLogs";
+
+import "./style.css";
 
 let playbackFile = "TEST_LIVEMODE_API";
 let queryStringFile = "";
@@ -100,6 +91,7 @@ interface ViewerState {
     cacheLog: CacheLog;
     playbackPlaying: boolean;
     streaming: boolean;
+    conversionFileName: string;
 }
 
 const simulariumController = new SimulariumController({});
@@ -132,7 +124,7 @@ const initialState: ViewerState = {
     trajectoryTitle: "",
     initialPlay: true,
     firstFrameTime: 0,
-    followObjectData: nullAgent(),
+    followObjectData: null,
     cacheLog: {
         size: 0,
         numFrames: 0,
@@ -145,6 +137,7 @@ const initialState: ViewerState = {
     },
     playbackPlaying: false,
     streaming: false,
+    conversionFileName: "",
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
@@ -309,7 +302,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             .then((data) => data.json())
             .then((fileRefs) =>
                 Promise.all(
-                    map(fileRefs, (ref) =>
+                    lodashMap(fileRefs, (ref) =>
                         fetch(ref.download_url).then((data) => data.json())
                     )
                 )
@@ -358,6 +351,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
         const fileName = uuidv4() + ".simularium";
+        this.setState({
+            conversionFileName: fileName,
+        });
+
         simulariumController
             .convertTrajectory(
                 this.netConnectionSettings,
@@ -367,13 +364,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             )
             .then(() => {
                 this.clearPendingFile();
-            })
-            .then(() => {
-                simulariumController.changeFile(
-                    { netConnectionSettings: this.netConnectionSettings },
-                    fileName,
-                    true
-                );
             })
             .catch((err) => {
                 console.error(err);
@@ -455,8 +445,33 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         });
     }
 
+    public receiveConvertedFile(): void {
+        simulariumController
+            .changeFile(
+                {
+                    netConnectionSettings: this.netConnectionSettings,
+                },
+                this.state.conversionFileName
+            )
+            .then(() => {
+                simulariumController.gotoTime(0);
+            })
+            .then(() =>
+                this.setState({
+                    conversionFileName: "",
+                })
+            )
+            .catch((e) => {
+                console.warn(e);
+            });
+    }
+
     public handleTrajectoryInfo(data: TrajectoryFileInfo): void {
         console.log("Trajectory info arrived", data);
+        const conversionActive = !!this.state.conversionFileName;
+        if (conversionActive) {
+            this.receiveConvertedFile();
+        }
         // NOTE: Currently incorrectly assumes initial time of 0
         // const totalDuration = (data.totalSteps - 1) * data.timeStepSize;
         const totalDuration = data.totalSteps;
@@ -506,7 +521,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             },
             []
         );
-        const uniqueTags: string[] = [...new Set(allTags)];
+        const uniqueTags: string[] = [...new Set(allTags)] as string[];
         if (
             isEqual(uiDisplayData, this.state.selectionStateInfo.appliedColors)
         ) {
@@ -817,7 +832,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     Pause playback
                 </button>
                 <button
-                    onClick={() => simulariumController.abortRemoteSimulation()}
+                    onClick={() => simulariumController.stop()}
                 >
                     stop / abort sim
                 </button>

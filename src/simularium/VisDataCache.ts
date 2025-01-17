@@ -1,4 +1,3 @@
-import { DEFAULT_PRE_FETCH_RATIO } from "../constants";
 import { compareTimes } from "../util";
 import { CachedFrame, CacheNode, CacheLog } from "./types";
 

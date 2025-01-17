@@ -1,25 +1,24 @@
 import * as React from "react";
 import jsLogger from "js-logger";
-import Stats from "three/examples/jsm/libs/stats.module";
+import Stats from "three/examples/jsm/libs/stats.module.js";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSyncAlt } from "@fortawesome/free-solid-svg-icons";
 import { forOwn, isEqual } from "lodash";
 
-import SimulariumController from "../controller";
+import SimulariumController from "../controller/index.js";
 import {
     TrajectoryFileInfo,
     SelectionInterface,
     SelectionStateInfo,
     UIDisplayData,
-    CacheLog,
-} from "../simularium";
-import { AgentData, TrajectoryFileInfoAny } from "../simularium/types";
-import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers";
-import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
-import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry";
-import { ColorAssignment } from "../visGeometry/types";
-import FrameRecorder from "../simularium/FrameRecorder";
-import { DEFAULT_FRAME_RATE } from "../constants";
+} from "../simularium/index.js";
+import { AgentData, CacheLog, TrajectoryFileInfoAny } from "../simularium/types.js";
+import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers.js";
+import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError.js";
+import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry/index.js";
+import { ColorAssignment } from "../visGeometry/types.js";
+import FrameRecorder from "../simularium/FrameRecorder.js";
+import { DEFAULT_FRAME_RATE } from "../constants.js";
 
 export type PropColor = string | number | [number, number, number];
 
@@ -149,7 +148,7 @@ class Viewport extends React.Component<
         this.lastRenderTime = Date.now();
         this.startTime = Date.now();
         this.onPickObject = this.onPickObject.bind(this);
-        this.stats = Stats();
+        this.stats = new Stats();
         this.stats.showPanel(1);
 
         this.handlers = {
