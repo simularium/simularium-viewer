@@ -13,6 +13,7 @@ export class LocalFileSimulator implements ISimulator {
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfoV2) => void;
     public onTrajectoryDataArrive: (msg: VisDataMessage | ArrayBuffer) => void;
+    public handleError: (error: Error) => void;
     // setInterval is the playback engine for now
     private playbackIntervalId = 0;
     private currentPlaybackFrameIndex = 0;
@@ -28,6 +29,9 @@ export class LocalFileSimulator implements ISimulator {
         this.onTrajectoryDataArrive = () => {
             /* do nothing */
         };
+        this.handleError = () => {
+            /* do nothing */
+        };
         console.log("NEW LOCALFILECONNECTION");
     }
 
@@ -41,63 +45,11 @@ export class LocalFileSimulator implements ISimulator {
     ): void {
         this.onTrajectoryDataArrive = handler;
     }
-
-    public socketIsValid(): boolean {
-        return true;
+    public setErrorHandler(handler: (msg: Error) => void): void {
+        this.handleError = handler;
     }
 
-    /**
-     * Connect
-     * */
-    public disconnect(): void {
-        this.abortRemoteSim();
-    }
-
-    public getIp(): string {
-        return "";
-    }
-
-    public isConnectedToRemoteServer(): boolean {
-        return false;
-    }
-
-    public connectToRemoteServer(_address: string): Promise<string> {
-        return Promise.resolve("Local file successfully started");
-    }
-
-    public sendTimeStepUpdate(_newTimeStep: number): void {
-        // not implemented
-    }
-
-    public sendParameterUpdate(_paramName: string, _paramValue: number): void {
-        // not implemented
-    }
-
-    public sendModelDefinition(_model: string): void {
-        // not implemented
-    }
-
-    /**
-     * Simulation Control
-     *
-     * Simulation Run Modes:
-     *  Live : Results are sent as they are calculated
-     *  Pre-Run : All results are evaluated, then sent piecemeal
-     *  Trajectory File: No simulation run, stream a result file piecemeal
-     *
-     */
-    public startRemoteSimPreRun(
-        _timeStep: number,
-        _numTimeSteps: number
-    ): void {
-        // not implemented
-    }
-
-    public startRemoteSimLive(): void {
-        // not implemented
-    }
-
-    public startRemoteTrajectoryPlayback(_fileName: string): Promise<void> {
+    public initialize(_fileName: string): Promise<void> {
         try {
             const trajectoryInfo = this.simulariumFile.getTrajectoryFileInfo();
             this.onTrajectoryFileInfoArrive(trajectoryInfo);
@@ -107,17 +59,17 @@ export class LocalFileSimulator implements ISimulator {
         return Promise.resolve();
     }
 
-    public pauseRemoteSim(): void {
+    public pause(): void {
         window.clearInterval(this.playbackIntervalId);
         this.playbackIntervalId = 0;
     }
 
-    public resumeRemoteSim(): void {
+    public stream(): void {
         this.playbackIntervalId = window.setInterval(() => {
             const numFrames = this.simulariumFile.getNumFrames();
             if (this.currentPlaybackFrameIndex >= numFrames) {
                 this.currentPlaybackFrameIndex = numFrames - 1;
-                this.pauseRemoteSim();
+                this.pause();
                 return;
             }
             this.onTrajectoryDataArrive(
@@ -127,23 +79,23 @@ export class LocalFileSimulator implements ISimulator {
         }, 1);
     }
 
-    public abortRemoteSim(): void {
+    public abort(): void {
         window.clearInterval(this.playbackIntervalId);
         this.playbackIntervalId = 0;
         this.currentPlaybackFrameIndex = 0;
     }
 
-    public requestSingleFrame(startFrameNumber: number): void {
+    public requestFrame(startFrameNumber: number): void {
         this.onTrajectoryDataArrive(this.getFrame(startFrameNumber));
     }
 
-    public gotoRemoteSimulationTime(time: number): void {
+    public requestFrameByTime(time: number): void {
         const frameNumber = this.simulariumFile.getFrameIndexAtTime(time);
 
         // frameNumber is -1 if findIndex() above doesn't find a match
         if (frameNumber !== -1) {
             this.currentPlaybackFrameIndex = frameNumber;
-            this.requestSingleFrame(frameNumber);
+            this.requestFrame(frameNumber);
         }
     }
 
@@ -153,8 +105,9 @@ export class LocalFileSimulator implements ISimulator {
         );
     }
 
-    public sendUpdate(_obj: Record<string, unknown>): void {
+    public sendUpdate(_obj: Record<string, unknown>): Promise<void> {
         // not implemented
+        return Promise.resolve();
     }
 
     private getFrame(theFrameNumber: number): VisDataMessage | ArrayBuffer {
