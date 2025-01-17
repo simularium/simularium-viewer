@@ -57,8 +57,9 @@ export default [{
             format: ["camelCase", "UPPER_CASE", "PascalCase"],
         }, {
             selector: "property",
-            format: ["camelCase", "UPPER_CASE"],
+            format: ["camelCase", "UPPER_CASE", "snake_case"],
             leadingUnderscore: "allow",
+            pattern: "^[0-9]+$|^[a-zA-Z_][a-zA-Z0-9_]*$",
         }, {
             selector: "typeLike",
             format: ["PascalCase"],
