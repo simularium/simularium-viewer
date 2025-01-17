@@ -118,6 +118,7 @@ export default class SimulariumController {
         this.setFocusMode = this.setFocusMode.bind(this);
         this.convertTrajectory = this.convertTrajectory.bind(this);
         this.setCameraType = this.setCameraType.bind(this);
+        this.startSmoldynSim = this.startSmoldynSim.bind(this);
     }
 
     private createSimulatorConnection(
@@ -275,6 +276,27 @@ export default class SimulariumController {
     public initializeTrajectoryFile(): void {
         if (this.simulator) {
             this.simulator.initialize(this.playBackFile);
+        }
+    }
+
+    public startSmoldynSim(
+        netConnectionConfig: NetConnectionParams,
+        fileName: string,
+        smoldynInput: string
+    ): Promise<void> {
+        try {
+            if (!this.isRemoteOctopusClientConfigured()) {
+                this.configureNetwork(netConnectionConfig);
+            }
+            if (!this.octopusClient) {
+                throw new Error("Octopus client not configured");
+            }
+            if (!this.simulator) {
+                throw new Error("Simulator not initialized");
+            }
+            return this.octopusClient.sendSmoldynData(fileName, smoldynInput);
+        } catch (e) {
+            return Promise.reject(e);
         }
     }
 
