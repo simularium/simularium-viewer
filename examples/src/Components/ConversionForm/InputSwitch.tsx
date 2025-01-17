@@ -1,7 +1,7 @@
 import { map } from "lodash";
 import React from "react";
-import BaseInput from "./BaseInput"
-import CollectionInput from "./CollectionInput"
+import BaseInput from "./BaseInput";
+import CollectionInput from "./CollectionInput";
 
 interface InputSwitchProps {
     handler: (path: string[], key: string, value: any) => void;
