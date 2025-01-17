@@ -285,20 +285,19 @@ export default class SimulariumController {
         smoldynInput: string
     ): Promise<void> {
         try {
-            if (
-                !(this.simulator && this.simulator.isConnectedToRemoteServer())
-            ) {
-                // Only configure network if we aren't already connected to the remote server
+            if (!this.isRemoteOctopusClientConfigured()) {
                 this.configureNetwork(netConnectionConfig);
             }
-            if (!(this.simulator instanceof RemoteSimulator)) {
-                throw new Error("Autoconversion requires a RemoteSimulator");
+            if (!this.octopusClient) {
+                throw new Error("Octopus client not configured");
             }
+            if (!this.simulator) {
+                throw new Error("Simulator not initialized");
+            }
+            return this.octopusClient.sendSmoldynData(fileName, smoldynInput);
         } catch (e) {
             return Promise.reject(e);
         }
-
-        return this.simulator.startSmoldyn(fileName, smoldynInput);
     }
 
     public gotoTime(time: number): void {
