@@ -1,4 +1,4 @@
-import { GeometryDisplayType } from "../../../src";
+import { GeometryDisplayType } from "@aics/simularium-viewer";
 import {
     IClientSimulatorImpl,
     ClientMessageEnum,
