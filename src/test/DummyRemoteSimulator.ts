@@ -48,7 +48,7 @@ export class DummyRemoteSimulator extends RemoteSimulator {
         };
         const data: VisDataFrame = {
             frameNumber: frameNumber,
-            time: frameNumber,
+            time: frameNumber * this.timeStep,
             data: [
                 1000,
                 0,

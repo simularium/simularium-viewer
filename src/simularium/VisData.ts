@@ -264,6 +264,10 @@ class VisData {
     }
 
     private validateAndProcessFrame(frame: CachedFrame): void {
+        // assumes that if a frame has come in, the back end has set that to be the current frame
+        // todo update when octopus has functionality to move backend "current frame"
+        // via argument on pause() or new message type
+        this.currentStreamingHead = frame.frameNumber;
         this.handleOversizedFrame(frame);
 
         if (!this.handleCacheOverflow(frame)) {
@@ -273,7 +277,6 @@ class VisData {
 
     private addFrameToCache(frame: CachedFrame): void {
         this.frameCache.addFrame(frame);
-        this.currentStreamingHead = this.frameCache.getLastFrameNumber();
     }
 
     private frameExceedsCacheSizeError(frameSize: number): void {

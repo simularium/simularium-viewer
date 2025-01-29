@@ -15,8 +15,8 @@ describe("SimulariumController module", () => {
                     remoteSimulator: netConn,
                 });
 
-                controller.initializePrecomputedSimulation();
-                controller.movePlaybackTime(2);
+                controller.initialize();
+                controller.gotoTime(2);
 
                 // allow time for data streaming to occur
                 setTimeout(() => {

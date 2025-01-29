@@ -72,7 +72,7 @@ interface ViewerState {
     agentColors: number[] | string[];
     showPaths: boolean;
     timeStep: number;
-    totalDuration: number;
+    totalSteps: number;
     filePending: {
         type: TrajectoryType;
         template: { [key: string]: any };
@@ -111,7 +111,7 @@ const initialState: ViewerState = {
     agentColors: agentColors,
     showPaths: true,
     timeStep: 1,
-    totalDuration: 100,
+    totalSteps: 100,
     selectionStateInfo: {
         highlightedAgents: [],
         hiddenAgents: [],
@@ -473,10 +473,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             this.receiveConvertedFile();
         }
         // NOTE: Currently incorrectly assumes initial time of 0
-        // const totalDuration = (data.totalSteps - 1) * data.timeStepSize;
-        const totalDuration = data.totalSteps;
         this.setState({
-            totalDuration,
+            totalSteps: data.totalSteps,
             timeStep: data.timeStepSize,
             currentFrame: 0,
             currentTime: 0,
@@ -485,24 +483,20 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     }
 
     public handlePlay(): void {
-        simulariumController.resumePlayback();
+        simulariumController.resume();
         if (!simulariumController.isStreaming()) {
             simulariumController.resumeStreaming();
         }
     }
 
     public handlePause(): void {
-        simulariumController.pausePlayback();
+        simulariumController.pause();
         if (
             simulariumController.visData.currentFrameNumber >
             simulariumController.visData.frameCache.getFirstFrameNumber()
         ) {
             simulariumController.resumeStreaming();
         }
-    }
-
-    public handleScrubTime(event): void {
-        simulariumController.movePlaybackTime(parseFloat(event.target.value));
     }
 
     public handleScrubFrame(event): void {
@@ -814,7 +808,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     <option value="TEST_METABALLS">TEST METABALLS</option>
                     <option value="TEST_BINDING">TEST BINDING</option>
                 </select>
-
                 <button onClick={() => this.translateAgent()}>
                     TranslateAgent
                 </button>
@@ -831,9 +824,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 <button onClick={this.handlePause.bind(this)}>
                     Pause playback
                 </button>
-                <button
-                    onClick={() => simulariumController.stop()}
-                >
+                <button onClick={() => simulariumController.stop()}>
                     stop / abort sim
                 </button>
                 <button onClick={this.gotoPreviousFrame.bind(this)}>
@@ -848,13 +839,13 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     min={0}
                     step={1}
                     value={this.state.currentFrame}
-                    max={this.state.totalDuration}
+                    max={this.state.totalSteps}
                     onChange={this.handleScrubFrame}
                 />
                 <label htmlFor="slider">
                     {this.state.currentFrame * this.state.timeStep +
                         this.state.firstFrameTime}
-                    / {this.state.totalDuration * this.state.timeStep}
+                    / {this.state.totalSteps * this.state.timeStep}
                 </label>
                 <br />
                 {this.state.particleTypeNames.map((id, i) => {
@@ -1031,21 +1022,22 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         stopRecordingHandler={
                             simulariumController.stopRecording
                         }
+                        setRecordingEnabled={() => {
+                            this.setRecordingEnabled(
+                                !this.state.isRecordingEnabled
+                            );
+                        }}
+                        isRecordingEnabled={this.state.isRecordingEnabled}
                     />
                 )}
                 <AgentMetadata agentData={this.state.followObjectData} />
                 <CacheAndStreamingLogs
                     playbackPlayingState={this.state.playbackPlaying}
-                    isStreamingState={
-                        this.state.streaming
-                    }
+                    isStreamingState={this.state.streaming}
                     cacheLog={this.state.cacheLog}
                     playbackFrame={
                         simulariumController.visData.currentFrameNumber
                     }
-                    totalDuration={Math.ceil(
-                        this.state.totalDuration / this.state.timeStep
-                    )}
                 />
                 <div className="viewer-container">
                     <SimulariumViewer
@@ -1080,7 +1072,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         backgroundColor={[0, 0, 0]}
                         lockedCamera={false}
                         disableCache={false}
-                        maxCacheSize={2e6} //  means no limit, provide limits in bytes, 1MB = 1000000, 1GB = 1000000000
+                        //  Infinity means no limit, provide limits in bytes, 1MB = 1e6, 1GB = 1e9
+                        maxCacheSize={2e6}
                         onCacheUpdate={this.handleCacheUpdate.bind(this)}
                         onStreamingChange={(streaming) => {
                             this.handleStreamingChange(streaming);

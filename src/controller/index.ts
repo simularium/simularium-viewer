@@ -165,7 +165,6 @@ export default class SimulariumController {
         );
         this.visData.setOnCacheLimitReached(() => {
             this.pauseStreaming();
-            // this.simulator?.requestSingleFrame(this.visData.currentStreamingHead);
         });
     }
 
@@ -173,7 +172,6 @@ export default class SimulariumController {
         if (this.simulator) {
             this.simulator.abort();
         }
-
         this.createSimulatorConnection(config);
     }
 
@@ -209,7 +207,7 @@ export default class SimulariumController {
             });
     }
 
-    public initializePrecomputedSimulation(): Promise<void> {
+    public initialize(): Promise<void> {
         if (!this.simulator) {
             return Promise.reject();
         }
@@ -273,6 +271,7 @@ export default class SimulariumController {
     public pauseStreaming(): void {
         if (this.simulator) {
             this.visData.updateStreamingState(false);
+            // todo add frame argument once octopus supports this
             this.simulator.pause();
         }
     }
@@ -287,44 +286,35 @@ export default class SimulariumController {
         }
     }
 
-    public movePlaybackTime(time: number): void {
-        // If in the middle of changing files, ignore any gotoTime requests
-        if (this.isFileChanging || !this.simulator) return;
-        if (this.visData.hasLocalCacheForTime(time)) {
-            this.visData.gotoTime(time);
-            this.resumeStreaming();
-        } else {
-            if (this.simulator) {
-                this.simulator.requestFrameByTime(time);
-                // get frame number for time
-                const frameNumber = time;
-                // time is framenumber *timestep
-
-                this.visData.currentFrameNumber = frameNumber;
-                // this.resumeStreaming();
-            }
+    private getFrameAtTime(time: number): number {
+        let frame = Math.round(time / this.visData.timeStepSize);
+        const frameBeyondMax = frame >= this.visData.totalSteps - 1;
+        if (frameBeyondMax) {
+            frame = this.visData.totalSteps - 1;
         }
+        return Math.max(0, frame);
     }
 
     public movePlaybackFrame(frameNumber: number): void {
-        // If in the middle of changing files, ignore any gotoTime requests
-        console.log("movePlaybackFrame", frameNumber);
-        if (this.isFileChanging === true) return;
+        if (this.isFileChanging || !this.simulator) return;
         if (this.visData.hasLocalCacheForFrame(frameNumber)) {
             this.visData.gotoFrame(frameNumber);
             this.resumeStreaming();
-        } else {
-            if (this.simulator) {
-                this.clearLocalCache();
-                this.visData.WaitForFrame(frameNumber);
-                this.visData.currentFrameNumber = frameNumber;
-                this.resumeStreaming(frameNumber);
-            }
+        } else if (this.simulator) {
+            this.clearLocalCache();
+            this.visData.WaitForFrame(frameNumber);
+            this.visData.currentFrameNumber = frameNumber;
+            this.resumeStreaming(frameNumber);
         }
     }
 
+    public gotoTime(time: number): void {
+        const targetFrame = this.getFrameAtTime(time);
+        this.movePlaybackFrame(targetFrame);
+    }
+
     public playFromTime(time: number): void {
-        this.movePlaybackTime(time);
+        this.gotoTime(time);
         this.visData.isPlaying = true;
     }
 
@@ -353,11 +343,13 @@ export default class SimulariumController {
         }
     }
 
-    public pausePlayback(): void {
+    // pause playback
+    public pause(): void {
         this.visData.isPlaying = false;
     }
 
-    public resumePlayback(): void {
+    // resume playback
+    public resume(): void {
         this.visData.isPlaying = true;
     }
 
@@ -433,7 +425,7 @@ export default class SimulariumController {
 
         // start the simulation paused and get first frame
         if (this.simulator) {
-            return this.initializePrecomputedSimulation()
+            return this.initialize()
                 .then(() => {
                     if (this.simulator) {
                         this.simulator.requestFrame(0);

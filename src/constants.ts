@@ -38,4 +38,3 @@ export const DEFAULT_FRAME_RATE = 60; // frames per second
 export const AGENT_HEADER_SIZE = 3; // frameNumber, time, agentCount
 
 export const BYTE_SIZE_64_BIT_NUM = 8;
-export const DEFAULT_PRE_FETCH_RATIO = 0;
