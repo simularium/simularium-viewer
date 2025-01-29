@@ -88,10 +88,10 @@ interface ViewerState {
     initialPlay: boolean;
     firstFrameTime: number;
     followObjectData: AgentData;
+    conversionFileName: string;
     cacheLog: CacheLog;
     playbackPlaying: boolean;
     streaming: boolean;
-    conversionFileName: string;
 }
 
 const simulariumController = new SimulariumController({});
@@ -125,6 +125,7 @@ const initialState: ViewerState = {
     initialPlay: true,
     firstFrameTime: 0,
     followObjectData: null,
+    conversionFileName: "",
     cacheLog: {
         size: 0,
         numFrames: 0,
@@ -137,7 +138,6 @@ const initialState: ViewerState = {
     },
     playbackPlaying: false,
     streaming: false,
-    conversionFileName: "",
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
