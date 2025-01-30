@@ -8,6 +8,12 @@ export default {
             process.env.npm_config_localserver || false
         ),
     },
+    resolve: {
+        dedupe: ["react", "react-dom"],
+    },
+    optimizeDeps: {
+        include: ["@aics/simularium-viewer"],
+    },
     server: {
         open: "examples/src/index.html",
         port: 8080,
