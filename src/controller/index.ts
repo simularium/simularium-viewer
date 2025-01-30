@@ -226,7 +226,7 @@ export default class SimulariumController {
             });
     }
 
-    public initialize(): Promise<void> {
+    public start(): Promise<void> {
         if (!this.simulator) {
             return Promise.reject();
         }
@@ -445,7 +445,7 @@ export default class SimulariumController {
 
         // start the simulation paused and get first frame
         if (this.simulator) {
-            return this.initialize()
+            return this.start()
                 .then(() => {
                     if (this.simulator) {
                         this.simulator.requestFrame(0);

@@ -22,7 +22,7 @@ describe("SimulariumController module", () => {
         // but is a more robust test than just calling for a given time
         // via simulator.requestFrameByTime, in terms of asking if
         // controller.getFrameAtTime is working properly
-        controller.initialize();
+        controller.start();
         controller.visData.timeStepSize = netConn.timeStep;
         controller.visData.totalSteps = netConn.totalDuration;
     });

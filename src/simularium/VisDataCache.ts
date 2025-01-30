@@ -8,7 +8,7 @@ interface VisDataCacheSettings {
 }
 
 class VisDataCache {
-    public head: CacheNode | null;
+    private head: CacheNode | null;
     private tail: CacheNode | null;
     public numFrames: number;
     public size: number;
