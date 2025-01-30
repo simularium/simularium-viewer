@@ -6,4 +6,4 @@ import Viewer from "./Viewer";
 const container: HTMLElement | null = document.getElementById("root");
 
 const root = createRoot(container!);
-root.render(<Viewer localBackendServer={SIMULARIUM_USE_LOCAL_BACKEND} />);
+root.render(<Viewer localBackendServer={false} />);
