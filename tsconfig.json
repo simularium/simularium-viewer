@@ -1,6 +1,8 @@
 {
     "extends": "./tsconfig.base",
-    "include": ["src/**/*", "examples/src/**/*", "vitest.config.ts"],
-    "exclude": ["src/visGeometry/workers/**/*"],
+    // "include": ["src/**/*", "examples/src/**/*", "vitest.config.ts"],
+    // "exclude": ["src/visGeometry/workers/**/*"],
+    "include": ["src/**/*", "vitest.config.ts"],
+    "exclude": ["examples/**/*"],
     "compilerOptions": {"types": ["vitest/globals"]}
 }

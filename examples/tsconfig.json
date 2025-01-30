@@ -1,15 +1,28 @@
+// {
+//     "extends": "../tsconfig.json",
+//     "compilerOptions": {
+//         "jsx": "preserve",
+//         "esModuleInterop": true,
+//         "downlevelIteration": true,
+//                 "baseUrl": ".",
+//         "allowImportingTsExtensions": true,
+//         "emitDeclarationOnly": true,
+//         "paths": {
+//             "@aics/simularium-viewer": ["../es"],
+//             "@aics/simularium-viewer/*": ["../es/*"]
+//         }
+//     }
+// }
 {
     "extends": "../tsconfig.json",
     "compilerOptions": {
         "jsx": "preserve",
         "esModuleInterop": true,
         "downlevelIteration": true,
-                "baseUrl": ".",
-        "allowImportingTsExtensions": true,
-        "emitDeclarationOnly": true,
+        "baseUrl": ".",
         "paths": {
-            "@aics/simularium-viewer": ["../es"],
-            "@aics/simularium-viewer/*": ["../es/*"]
+            "@aics/simularium-viewer": ["../type-declarations"],
+            "@aics/simularium-viewer/*": ["../type-declarations/*"]
         }
     }
 }
