@@ -3,6 +3,13 @@
     "compilerOptions": {
         "jsx": "preserve",
         "esModuleInterop": true,
-        "downlevelIteration": true
+        "downlevelIteration": true,
+                "baseUrl": ".",
+        "allowImportingTsExtensions": true,
+        "emitDeclarationOnly": true,
+        "paths": {
+            "@aics/simularium-viewer": ["../es"],
+            "@aics/simularium-viewer/*": ["../es/*"]
+        }
     }
 }
