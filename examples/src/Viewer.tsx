@@ -707,7 +707,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         this.setState({
             cacheLog: log,
             playbackPlaying: simulariumController.isPlaying(),
-            // streaming: simulariumController.isStreaming(),
         });
     };
 
