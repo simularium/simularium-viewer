@@ -2,6 +2,5 @@
     "extends": "./tsconfig.base",
     "include": ["src/**/*", "examples/src/**/*", "vitest.config.ts"],
     "exclude": ["src/visGeometry/workers/**/*"],
-    "compilerOptions": {"types": ["vitest/globals"],
-        "typeRoots": ["node_modules/vitest/globals"]}
+    "compilerOptions": {"types": ["vitest/globals"]}
 }
