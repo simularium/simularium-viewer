@@ -483,23 +483,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         });
     }
 
-    public handlePlay(): void {
-        simulariumController.resume();
-        if (!simulariumController.isStreaming()) {
-            simulariumController.resumeStreaming();
-        }
-    }
-
-    public handlePause(): void {
-        simulariumController.pause();
-        if (
-            simulariumController.visData.currentFrameNumber >
-            simulariumController.visData.frameCache.getFirstFrameNumber()
-        ) {
-            simulariumController.resumeStreaming();
-        }
-    }
-
     public handleScrubFrame(event): void {
         simulariumController.movePlaybackFrame(parseInt(event.target.value));
     }
@@ -819,10 +802,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     Load a smoldyn trajectory
                 </button>
                 <br />
-                <button onClick={this.handlePlay.bind(this)}>
+                <button onClick={() => simulariumController.resume()}>
                     Play / resume streaming
                 </button>
-                <button onClick={this.handlePause.bind(this)}>
+                <button onClick={() => simulariumController.pause()}>
                     Pause playback
                 </button>
                 <button onClick={() => simulariumController.stop()}>
