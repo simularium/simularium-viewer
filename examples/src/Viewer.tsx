@@ -397,7 +397,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         }
         this.setState({ currentFrame, currentTime });
         if (currentFrame < 0) {
-            this.handlePauseStreaming();
+            simulariumController.pauseStreaming();
         }
     }
 
@@ -521,11 +521,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public gotoPreviousFrame(): void {
         simulariumController.movePlaybackFrame(this.state.currentFrame - 1);
-    }
-
-    public handlePauseStreaming(): void {
-        simulariumController.pauseStreaming();
-        this.setState({ streaming: simulariumController.isStreaming() });
     }
 
     private translateAgent() {
@@ -712,7 +707,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         this.setState({
             cacheLog: log,
             playbackPlaying: simulariumController.isPlaying(),
-            streaming: simulariumController.isStreaming(),
+            // streaming: simulariumController.isStreaming(),
         });
     };
 
