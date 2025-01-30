@@ -16,27 +16,20 @@ describe("SimulariumController module", () => {
         controller = new SimulariumController({
             remoteSimulator: netConn,
         });
+        // this does not test whether the simulator, controller and
+        // visData are properly configured (no viewport is configured with
+        // a trajFileInfo handler)
+        // but is a more robust test than just calling for a given time
+        // via simulator.requestFrameByTime, in terms of asking if
+        // controller.getFrameAtTime is working properly
         controller.initialize();
         controller.visData.timeStepSize = netConn.timeStep;
         controller.visData.totalSteps = netConn.totalDuration;
     });
 
-    // this does not test whether the simulator, controller and
-    // visData are properly configured (no viewport is configured with
-    // a trajFileInfo handler)
-    // but is a more robust test than just calling for a given time
-    // via simulator.requestFrameByTime, in terms of asking if
-    // controller.getFrameAtTime is working properly
-    const initializeControllerWithVisData = () => {
-        controller.initialize();
-        controller.visData.timeStepSize = netConn.timeStep;
-        controller.visData.totalSteps = netConn.totalDuration;
-    };
-
     describe("gotoTime", () => {
         test("Moves current frame to valid time", () =>
-            new Promise<void>(async (done) => {
-                // initializeControllerWithVisData();
+            new Promise<void>((done) => {
                 controller.gotoTime(2);
                 setTimeout(() => {
                     expect(controller.time()).toEqual(2);
@@ -44,8 +37,7 @@ describe("SimulariumController module", () => {
                 }, DEFAULT_TIMEOUT);
             }));
         test("Handle time beyond maximum", () =>
-            new Promise<void>(async (done) => {
-                // initializeControllerWithVisData();
+            new Promise<void>((done) => {
                 controller.gotoTime(101);
                 setTimeout(() => {
                     expect(controller.time()).toEqual(99);
@@ -53,8 +45,7 @@ describe("SimulariumController module", () => {
                 }, DEFAULT_TIMEOUT);
             }));
         test("Handle negative time", () =>
-            new Promise<void>(async (done) => {
-                // initializeControllerWithVisData();
+            new Promise<void>((done) => {
                 controller.gotoTime(-1);
                 setTimeout(() => {
                     expect(controller.time()).toEqual(0);

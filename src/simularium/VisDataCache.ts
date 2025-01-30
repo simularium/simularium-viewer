@@ -64,8 +64,19 @@ class VisDataCache {
                 firstFrameTime: this.getFirstFrameTime(),
                 lastFrameNumber: this.getLastFrameNumber(),
                 lastFrameTime: this.getLastFrameTime(),
+                framesInCache: this.getListOfCachedFrameNumbers(),
             });
         }
+    }
+
+    private getListOfCachedFrameNumbers(): number[] {
+        const frameNumbers: number[] = [];
+        let current: CacheNode | null = this.head;
+        while (current !== null) {
+            frameNumbers.push(current.data.frameNumber);
+            current = current.next;
+        }
+        return frameNumbers;
     }
 
     public get maxSize(): number {

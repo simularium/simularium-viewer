@@ -18,8 +18,6 @@ class VisData {
     public currentStreamingHead: number;
     public remoteStreamingHeadPotentiallyOutOfSync: boolean;
     public isPlaying: boolean;
-    public isStreaming: boolean;
-    public onStreamingChange: (streaming: boolean) => void;
     public onCacheLimitReached: () => void;
 
     public timeStepSize: number;
@@ -53,21 +51,13 @@ class VisData {
         this.timeStepSize = 0;
         this.totalSteps = 0;
         this.isPlaying = false;
-        this.isStreaming = false;
 
         this.onError = noop;
-        this.onStreamingChange = noop;
         this.onCacheLimitReached = noop;
     }
 
     public setOnError(onError: (error: FrontEndError) => void): void {
         this.onError = onError;
-    }
-
-    public setOnStreamingChange(
-        onStreamingChange: (streaming: boolean) => void
-    ): void {
-        this.onStreamingChange = onStreamingChange;
     }
 
     public setOnCacheLimitReached(onCacheLimitReached: () => void): void {
@@ -129,11 +119,6 @@ class VisData {
         }
     }
 
-    public updateStreamingState(isStreaming: boolean): void {
-        this.isStreaming = isStreaming;
-        this.onStreamingChange(isStreaming);
-    }
-
     /**
      * Data management
      * */
@@ -151,6 +136,8 @@ class VisData {
 
     public clearForNewTrajectory(): void {
         this.clearCache();
+        this.currentStreamingHead = -1;
+        this.remoteStreamingHeadPotentiallyOutOfSync = false;
     }
 
     private parseAgentsFromVisDataMessage(msg: VisDataMessage): void {
@@ -254,9 +241,8 @@ class VisData {
             // we clear the cache and add the frame
             this.resetCacheWithFrame(frame);
         } else {
-            // if paused we run out of space we need to stop streaming
-            // which is handled by the controller via a callback
-            this.currentStreamingHead = frame.frameNumber;
+            // if paused, and we run out of space in the cache
+            // we need to stop streaming, whichd is handled by the controller
             this.remoteStreamingHeadPotentiallyOutOfSync = true;
             this.onCacheLimitReached();
         }

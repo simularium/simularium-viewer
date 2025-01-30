@@ -135,6 +135,7 @@ const initialState: ViewerState = {
         firstFrameTime: 0,
         lastFrameNumber: 0,
         lastFrameTime: 0,
+        framesInCache: [],
     },
     playbackPlaying: false,
     streaming: false,
@@ -752,7 +753,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             <div className="container" style={{ height: "90%", width: "75%" }}>
                 <select
                     onChange={(event) => {
-                        this.handlePauseStreaming();
+                        simulariumController.stop();
                         playbackFile = event.target.value;
                         this.configureAndLoad();
                     }}
@@ -1006,30 +1007,16 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     updateAgentColorArray={this.updateAgentColorArray}
                     setColorSelectionInfo={this.setColorSelectionInfo}
                 />
-                <button
-                    onClick={() =>
-                        this.setRecordingEnabled(!this.state.isRecordingEnabled)
-                    }
-                >
-                    {this.state.isRecordingEnabled ? "Disable" : "Enable"}{" "}
-                    Recording
-                </button>
-                {this.state.isRecordingEnabled && (
-                    <RecordMovieComponent
-                        startRecordingHandler={
-                            simulariumController.startRecording
-                        }
-                        stopRecordingHandler={
-                            simulariumController.stopRecording
-                        }
-                        setRecordingEnabled={() => {
-                            this.setRecordingEnabled(
-                                !this.state.isRecordingEnabled
-                            );
-                        }}
-                        isRecordingEnabled={this.state.isRecordingEnabled}
-                    />
-                )}
+                <RecordMovieComponent
+                    startRecordingHandler={simulariumController.startRecording}
+                    stopRecordingHandler={simulariumController.stopRecording}
+                    setRecordingEnabled={() => {
+                        this.setRecordingEnabled(
+                            !this.state.isRecordingEnabled
+                        );
+                    }}
+                    isRecordingEnabled={this.state.isRecordingEnabled}
+                />
                 <AgentMetadata agentData={this.state.followObjectData} />
                 <CacheAndStreamingLogs
                     playbackPlayingState={this.state.playbackPlaying}
@@ -1038,6 +1025,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     playbackFrame={
                         simulariumController.visData.currentFrameNumber
                     }
+                    streamingHead={simulariumController.currentStreamingHead()}
                 />
                 <div className="viewer-container">
                     <SimulariumViewer
@@ -1072,7 +1060,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         backgroundColor={[0, 0, 0]}
                         lockedCamera={false}
                         disableCache={false}
-                        //  Infinity means no limit, provide limits in bytes, 1MB = 1e6, 1GB = 1e9
+                        //  For no limit use Infinity, provide limits in bytes, 1MB = 1e6, 1GB = 1e9
                         maxCacheSize={2e6}
                         onCacheUpdate={this.handleCacheUpdate.bind(this)}
                         onStreamingChange={(streaming) => {

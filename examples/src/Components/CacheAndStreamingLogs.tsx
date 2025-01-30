@@ -6,6 +6,7 @@ interface StreamingReadoutProps {
     isStreamingState: boolean;
     cacheLog: CacheLog;
     playbackFrame: number;
+    streamingHead: number;
 }
 
 const CacheAndStreamingLogs: React.FC<StreamingReadoutProps> = ({
@@ -13,10 +14,11 @@ const CacheAndStreamingLogs: React.FC<StreamingReadoutProps> = ({
     isStreamingState,
     cacheLog,
     playbackFrame,
+    streamingHead,
 }) => {
     const [isOpen, setIsOpen] = useState(false);
 
-    const { size, enabled, maxSize, firstFrameNumber, lastFrameNumber } =
+    const { size, enabled, maxSize, firstFrameNumber, lastFrameNumber, framesInCache } =
         cacheLog;
     return (
         <div>
@@ -44,6 +46,10 @@ const CacheAndStreamingLogs: React.FC<StreamingReadoutProps> = ({
                     <div>First Frame Number: {firstFrameNumber}</div>
                     <div>Last Frame Number: {lastFrameNumber}</div>
                     <div>Current playback frame: {playbackFrame}</div>
+                    <div> Current streaming head: {streamingHead}</div>
+                    <div>
+                        Frames in Cache: {framesInCache.join(", ")}
+                    </div>
                 </>
             )}
         </div>

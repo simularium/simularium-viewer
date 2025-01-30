@@ -218,4 +218,5 @@ export interface CacheLog {
     firstFrameTime: number;
     lastFrameNumber: number;
     lastFrameTime: number;
+    framesInCache: number[];
 }

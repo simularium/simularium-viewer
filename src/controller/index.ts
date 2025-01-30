@@ -56,9 +56,11 @@ export default class SimulariumController {
     public postConnect: () => void;
     public startRecording: () => void;
     public stopRecording: () => void;
+    public onStreamingChange: (streaming: boolean) => void;
     public onError?: (error: FrontEndError) => void;
 
     public isFileChanging: boolean;
+    public streaming: boolean;
     private playBackFile: string;
 
     public constructor(params: SimulariumControllerParams) {
@@ -70,6 +72,7 @@ export default class SimulariumController {
 
         this.handleTrajectoryInfo = (/*msg: TrajectoryFileInfo*/) => noop;
         this.onError = (/*errorMessage*/) => noop;
+        this.onStreamingChange = (/*streaming: boolean*/) => noop;
 
         // might only be used in unit testing
         // TODO: change test so controller isn't initialized with a remoteSimulator
@@ -106,6 +109,7 @@ export default class SimulariumController {
         }
 
         this.isFileChanging = false;
+        this.streaming = false;
         this.playBackFile = params.trajectoryPlaybackFile || "";
         this.zoomIn = this.zoomIn.bind(this);
         this.zoomOut = this.zoomOut.bind(this);
@@ -187,6 +191,21 @@ export default class SimulariumController {
         return this.isFileChanging;
     }
 
+    public setOnStreamingChange(
+        onStreamingChange: (streaming: boolean) => void
+    ): void {
+        this.onStreamingChange = onStreamingChange;
+    }
+
+    private handleStreamingChange(streaming: boolean): void {
+        this.streaming = streaming;
+        this.onStreamingChange(streaming);
+    }
+
+    public isStreaming(): boolean {
+        return this.streaming;
+    }
+
     // Not called by viewer, but could be called by
     // parent app
     // todo candidate for removal? not called in website
@@ -224,16 +243,9 @@ export default class SimulariumController {
     public stop(): void {
         if (this.simulator) {
             this.simulator.abort();
-            this.visData.updateStreamingState(false); // todo this is maybe breaking the new simulator abstraction?
+            this.handleStreamingChange(false);
         }
     }
-
-    // public abortRemoteSimulation(): void {
-    //     if (this.simulator) {
-    //         this.simulator.abort();
-    //         this.visData.updateStreamingState(false);
-    //     }
-    // }
 
     public sendUpdate(obj: Record<string, unknown>): void {
         if (this.simulator) {
@@ -270,7 +282,7 @@ export default class SimulariumController {
 
     public pauseStreaming(): void {
         if (this.simulator) {
-            this.visData.updateStreamingState(false);
+            this.handleStreamingChange(false);
             // todo add frame argument once octopus supports this
             this.simulator.pause();
         }
@@ -322,7 +334,7 @@ export default class SimulariumController {
         if (this.simulator) {
             this.simulator.requestFrame(0);
             this.simulator.stream();
-            this.visData.updateStreamingState(true);
+            this.handleStreamingChange(true);
         }
     }
 
@@ -338,8 +350,7 @@ export default class SimulariumController {
                 this.simulator.requestFrame(requestFrame);
             }
             this.simulator.stream();
-            this.visData.updateStreamingState(true);
-            this.visData.remoteStreamingHeadPotentiallyOutOfSync = false;
+            this.handleStreamingChange(true);
         }
     }
 
@@ -580,10 +591,6 @@ export default class SimulariumController {
 
     public setCameraType(ortho: boolean): void {
         this.visGeometry?.setCameraType(ortho);
-    }
-
-    public isStreaming(): boolean {
-        return this.visData.isStreaming;
     }
 
     public isPlaying(): boolean {
