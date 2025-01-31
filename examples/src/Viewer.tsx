@@ -366,9 +366,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 this.clearPendingFile();
             })
             .then(() => {
-                simulariumController.changeFile(
+                simulariumController.initNewFile(
                     { netConnectionSettings: this.netConnectionSettings, },
-                    fileName,
                     true,
                 )
             })
@@ -454,11 +453,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public receiveConvertedFile(): void {
         simulariumController
-            .changeFile(
+            .initNewFile(
                 {
                     netConnectionSettings: this.netConnectionSettings,
                 },
-                this.state.conversionFileName
             )
             .then(() => {
                 simulariumController.gotoTime(0);
