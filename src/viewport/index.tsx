@@ -12,7 +12,11 @@ import {
     SelectionStateInfo,
     UIDisplayData,
 } from "../simularium/index.js";
-import { AgentData, CacheLog, TrajectoryFileInfoAny } from "../simularium/types.js";
+import {
+    AgentData,
+    CacheLog,
+    TrajectoryFileInfoAny,
+} from "../simularium/types.js";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers.js";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError.js";
 import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry/index.js";
@@ -113,6 +117,7 @@ class Viewport extends React.Component<
 
     private stats: Stats;
     public static defaultProps = defaultProps;
+    private playbackTimeAccumulator: number;
 
     private static isCustomEvent(event: Event): event is CustomEvent {
         return "detail" in event;
@@ -127,6 +132,7 @@ class Viewport extends React.Component<
         this.animate = this.animate.bind(this);
         this.dispatchUpdatedTime = this.dispatchUpdatedTime.bind(this);
         this.handleTimeChange = this.handleTimeChange.bind(this);
+        this.playbackTimeAccumulator = 0;
 
         this.visGeometry = new VisGeometry(loggerLevel);
         this.props.simulariumController.visData.frameCache.changeSettings({
@@ -637,47 +643,65 @@ class Viewport extends React.Component<
     public animate(): void {
         const { simulariumController } = this.props;
         const { visData } = simulariumController;
-        const framesPerSecond = DEFAULT_FRAME_RATE; // how often the view-port rendering is refreshed per second
-        const timePerFrame = 1000 / framesPerSecond; // the time interval at which to re-render
+        const renderingFPS = DEFAULT_FRAME_RATE; // how often the view-port rendering is refreshed per second
+        const timePerRender = 1000 / renderingFPS;
         const now = Date.now();
         const elapsedTime = now - this.lastRenderTime;
         const totalElapsedTime = now - this.startTime;
-        if (elapsedTime > timePerFrame) {
-            if (simulariumController.isChangingFile) {
-                this.visGeometry.render(totalElapsedTime);
-                this.lastRenderTime = Date.now();
-                this.lastRenderedAgentTime = -1;
-                simulariumController.markFileChangeAsHandled();
 
-                this.animationRequestID = requestAnimationFrame(this.animate);
-
-                return;
-            }
-            const currentFrame = visData.currentFrameData;
-            if (currentFrame.time != this.lastRenderedAgentTime) {
-                if (currentFrame.agentCount > 0) {
-                    this.dispatchUpdatedTime({
-                        time: currentFrame.time,
-                        frameNumber: currentFrame.frameNumber,
-                    });
-                    this.visGeometry.update(currentFrame);
-                    this.lastRenderedAgentTime = currentFrame.time;
-                    this.updateFollowObjectData();
-                }
-            }
-
-            if (!visData.atLatestFrame() && simulariumController.isPlaying()) {
-                visData.gotoNextFrame();
-            }
-            this.stats.begin();
-            this.visGeometry.render(totalElapsedTime);
-            if (this.recorder?.isRecording) {
-                this.recorder.onFrame();
-            }
-            this.stats.end();
-            this.lastRenderTime = Date.now();
+        // Early return if too soon to refresh animation
+        if (elapsedTime <= timePerRender) {
+            this.animationRequestID = requestAnimationFrame(this.animate);
+            return;
         }
 
+        // Handle file changes
+        if (simulariumController.isChangingFile) {
+            this.visGeometry.render(totalElapsedTime);
+            this.lastRenderTime = Date.now();
+            this.lastRenderedAgentTime = -1;
+            simulariumController.markFileChangeAsHandled();
+            this.animationRequestID = requestAnimationFrame(this.animate);
+            return;
+        }
+
+        // Render current frame
+        const currentFrame = simulariumController.visData.currentFrameData;
+        if (
+            currentFrame.time !== this.lastRenderedAgentTime &&
+            currentFrame.agentCount > 0
+        ) {
+            this.dispatchUpdatedTime({
+                time: currentFrame.time,
+                frameNumber: currentFrame.frameNumber,
+            });
+            this.visGeometry.update(currentFrame);
+            this.lastRenderedAgentTime = currentFrame.time;
+            this.updateFollowObjectData();
+        }
+
+        // Update simulation time
+        this.playbackTimeAccumulator += elapsedTime;
+        // how frequently we should advance frames while playing is ongoing
+        const playbackFPS = simulariumController.getPlaybackSpeed();
+        const timePerPlaybackFrame = 1000 / playbackFPS;
+
+        // Update frame if needed
+        if (
+            !visData.atLatestFrame() &&
+            simulariumController.isPlaying() &&
+            this.playbackTimeAccumulator >= timePerPlaybackFrame
+        ) {
+            simulariumController.visData.gotoNextFrame();
+            this.playbackTimeAccumulator = 0;
+        }
+        this.stats.begin();
+        this.visGeometry.render(totalElapsedTime);
+        if (this.recorder?.isRecording) {
+            this.recorder.onFrame();
+        }
+        this.stats.end();
+        this.lastRenderTime = Date.now();
         this.animationRequestID = requestAnimationFrame(this.animate);
     }
 

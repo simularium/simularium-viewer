@@ -48,6 +48,7 @@ import {
     UI_TEMPLATE_URL_ROOT,
 } from "./api-settings";
 import CacheAndStreamingLogs from "./Components/CacheAndStreamingLogs";
+import SpeedControl from "./Components/SpeedControl";
 
 import "./style.css";
 
@@ -1004,6 +1005,12 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         simulariumController.visData.currentFrameNumber
                     }
                     streamingHead={simulariumController.currentStreamingHead()}
+                />
+                <SpeedControl
+                    setSpeed={(speed: number) =>
+                        simulariumController.setPlaybackSpeed(speed)
+                    }
+                    currentSpeed={simulariumController.getPlaybackSpeed()}
                 />
                 <div className="viewer-container">
                     <SimulariumViewer

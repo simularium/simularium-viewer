@@ -21,7 +21,11 @@ import { LocalFileSimulator } from "../simularium/LocalFileSimulator.js";
 import { FrontEndError } from "../simularium/FrontEndError.js";
 import type { ISimulariumFile } from "../simularium/ISimulariumFile.js";
 import { WebsocketClient } from "../simularium/WebsocketClient.js";
-import { TrajectoryType } from "../constants.js";
+import {
+    DEFAULT_SPEED_INDEX,
+    PLAYBACK_SPEEDS,
+    TrajectoryType,
+} from "../constants.js";
 import { RemoteMetricsCalculator } from "../simularium/RemoteMetricsCalculator.js";
 import { OctopusServicesClient } from "../simularium/OctopusClient.js";
 
@@ -62,6 +66,7 @@ export default class SimulariumController {
     public isFileChanging: boolean;
     public streaming: boolean;
     private playBackFile: string;
+    private playbackSpeed: number;
 
     public constructor(params: SimulariumControllerParams) {
         this.visData = new VisData();
@@ -111,6 +116,7 @@ export default class SimulariumController {
         this.isFileChanging = false;
         this.streaming = false;
         this.playBackFile = params.trajectoryPlaybackFile || "";
+        this.playbackSpeed = PLAYBACK_SPEEDS[DEFAULT_SPEED_INDEX];
         this.zoomIn = this.zoomIn.bind(this);
         this.zoomOut = this.zoomOut.bind(this);
         this.resetCamera = this.resetCamera.bind(this);
@@ -612,6 +618,16 @@ export default class SimulariumController {
 
     public currentStreamingHead(): number {
         return this.visData.currentStreamingHead;
+    }
+
+    public setPlaybackSpeed(speed: number): void {
+        if (speed >= 0 && speed < PLAYBACK_SPEEDS.length) {
+            this.playbackSpeed = PLAYBACK_SPEEDS[speed];
+        }
+    }
+
+    public getPlaybackSpeed(): number {
+        return this.playbackSpeed;
     }
 }
 
