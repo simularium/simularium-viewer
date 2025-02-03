@@ -191,7 +191,7 @@ export default class SimulariumController {
         return this.isFileChanging;
     }
 
-    public setOnStreamingChange(
+    public setOnStreamingChangeCallback(
         onStreamingChange: (streaming: boolean) => void
     ): void {
         this.onStreamingChange = onStreamingChange;
@@ -289,7 +289,7 @@ export default class SimulariumController {
     }
 
     public paused(): boolean {
-        return !!this.isPlaying;
+        return !this.isPlaying();
     }
 
     public initializeTrajectoryFile(): void {
@@ -412,7 +412,6 @@ export default class SimulariumController {
         // calls simulator.abort()
         this.stop();
 
-        // this.abortRemoteSimulation();
         this.visData.WaitForFrame(0);
         this.visData.clearForNewTrajectory();
 

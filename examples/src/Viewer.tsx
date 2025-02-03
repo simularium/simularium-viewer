@@ -47,7 +47,7 @@ import {
     UI_TEMPLATE_DOWNLOAD_URL_ROOT,
     UI_TEMPLATE_URL_ROOT,
 } from "./api-settings";
-import CacheAndStreamingLogs from "./Components/CacheAndStreamingLogs";
+import CacheAndStreamingLogsDisplay from "./Components/CacheAndStreamingLogs";
 
 import "./style.css";
 
@@ -995,7 +995,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     isRecordingEnabled={this.state.isRecordingEnabled}
                 />
                 <AgentMetadata agentData={this.state.followObjectData} />
-                <CacheAndStreamingLogs
+                <CacheAndStreamingLogsDisplay
                     playbackPlayingState={this.state.playbackPlaying}
                     isStreamingState={this.state.streaming}
                     cacheLog={this.state.cacheLog}
@@ -1037,7 +1037,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         backgroundColor={[0, 0, 0]}
                         lockedCamera={false}
                         disableCache={false}
-                        //  For no limit use Infinity, provide limits in bytes, 1MB = 1e6, 1GB = 1e9
+                        //  For no limit use Infinity. Provide limits in bytes, 1MB = 1e6, 1GB = 1e9
                         maxCacheSize={2e6}
                         onCacheUpdate={this.handleCacheUpdate.bind(this)}
                         onStreamingChange={(streaming) => {
