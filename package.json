@@ -13,7 +13,7 @@
         "install-examples": "npm install && cd examples && npm install",
         "watch": "npm-run-all --parallel watch:babel watch:css",
         "watch:babel": "cross-env TS_NODE_PROJECT=tsconfig.es.json BABEL_ENV=es babel src --out-dir es --extensions .ts,.tsx,.js,.jsx --ignore 'src/test' --watch",
-        "watch:css": "postcss src/viewport/index.css --output es/style/style.css --watch",
+        "watch:css": "postcss src/viewport/index.css --output style/style.css --watch",
         "gh-build": "npm run processCSS && cd examples && npm run build-example",
         "lint": "eslint src/**",
         "test": "vitest run",
