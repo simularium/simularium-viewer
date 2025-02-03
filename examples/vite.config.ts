@@ -15,7 +15,7 @@ export default {
         include: ["@aics/simularium-viewer"],
     },
     server: {
-        open: "examples/src/index.html",
+        open: "/",
         port: 8080,
     },
 } satisfies UserConfig;
