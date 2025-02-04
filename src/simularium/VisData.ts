@@ -203,9 +203,8 @@ class VisData {
         this.parseAgentsFromFrameData(msg);
     }
 
-    /**
-     * Incoming frame management
-     */
+    ////////// Incoming frame management //////////////
+
     private handleOversizedFrame(frame: CachedFrame): void {
         if (
             this.frameCache.cacheSizeLimited &&
