@@ -155,7 +155,7 @@ class Viewport extends React.Component<
             this.props.simulariumController.visData.setOnError(props.onError);
         }
         if (props.onStreamingChange) {
-            this.props.simulariumController.setOnStreamingChange(
+            this.props.simulariumController.setOnStreamingChangeCallback(
                 props.onStreamingChange
             );
         }

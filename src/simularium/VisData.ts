@@ -203,9 +203,8 @@ class VisData {
         this.parseAgentsFromFrameData(msg);
     }
 
-    /**
-     * Incoming frame management
-     */
+    ////////// Incoming frame management //////////////
+
     private handleOversizedFrame(frame: CachedFrame): void {
         if (
             this.frameCache.cacheSizeLimited &&
@@ -226,10 +225,11 @@ class VisData {
         this.frameCache.addFrame(frame);
     }
 
-    private handleCacheOverflow(frame: CachedFrame): boolean {
-        if (frame.size + this.frameCache.size <= this.frameCache.maxSize) {
-            return false;
-        }
+    private doesFrameCauseCacheOverflow(frame: CachedFrame): boolean {
+        return frame.size + this.frameCache.size > this.frameCache.maxSize;
+    }
+
+    private handleCacheOverflow(frame: CachedFrame): void {
         const playbackFrame = this.currentFrameData;
         const cacheHeadFrame = this.frameCache.getFirstFrameNumber();
         const isCacheHeadBehindPlayback =
@@ -243,11 +243,10 @@ class VisData {
             this.resetCacheWithFrame(frame);
         } else {
             // if paused, and we run out of space in the cache
-            // we need to stop streaming, whichd is handled by the controller
+            // we need to stop streaming, which is handled by the controller
             this.remoteStreamingHeadPotentiallyOutOfSync = true;
             this.onCacheLimitReached();
         }
-        return true;
     }
 
     private validateAndProcessFrame(frame: CachedFrame): void {
@@ -257,7 +256,9 @@ class VisData {
         this.currentStreamingHead = frame.frameNumber;
         this.handleOversizedFrame(frame);
 
-        if (!this.handleCacheOverflow(frame)) {
+        if (this.doesFrameCauseCacheOverflow(frame)) {
+            this.handleCacheOverflow(frame);
+        } else {
             this.addFrameToCache(frame);
         }
     }
