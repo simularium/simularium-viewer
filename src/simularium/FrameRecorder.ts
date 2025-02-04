@@ -1,5 +1,5 @@
 import { ArrayBufferTarget, Muxer } from "mp4-muxer";
-import { DEFAULT_FRAME_RATE } from "../constants.js";
+import { DEFAULT_RENDER_FRAME_RATE } from "../constants.js";
 
 /**
  * Records frames to an MP4 file using the WebCodecs API.
@@ -31,7 +31,7 @@ export class FrameRecorder {
         this.isRecording = false;
         this.frameIndex = 0;
         this.supportedBrowser = "VideoEncoder" in window;
-        this.frameRate = DEFAULT_FRAME_RATE;
+        this.frameRate = DEFAULT_RENDER_FRAME_RATE;
     }
 
     private async setup(): Promise<void> {

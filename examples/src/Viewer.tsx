@@ -38,7 +38,11 @@ import ColorPicker from "./Components/ColorPicker";
 import RecordMovieComponent from "./Components/RecordMovieComponent";
 import ConversionForm from "./Components/ConversionForm";
 import AgentMetadata from "./Components/AgentMetadata";
-import { agentColors } from "./constants";
+import {
+    agentColors,
+    DEFAULT_PLAYBACK_SPEED_INDEX,
+    PLAYBACK_SPEEDS,
+} from "./constants";
 import { BaseType, CustomType } from "./types";
 import {
     SMOLDYN_TEMPLATE,
@@ -48,9 +52,10 @@ import {
     UI_TEMPLATE_URL_ROOT,
 } from "./api-settings";
 import CacheAndStreamingLogs from "./Components/CacheAndStreamingLogs";
-import SpeedControl from "./Components/SpeedControl";
+import PlaybackSpeedControl from "./Components/PlaybackSpeedControl";
 
 import "./style.css";
+import PlaybackControls from "./Components/PlaybackControls";
 
 let playbackFile = "TEST_LIVEMODE_API";
 let queryStringFile = "";
@@ -93,6 +98,7 @@ interface ViewerState {
     cacheLog: CacheLog;
     playbackPlaying: boolean;
     streaming: boolean;
+    playbackSpeed: number;
 }
 
 const simulariumController = new SimulariumController({});
@@ -140,6 +146,7 @@ const initialState: ViewerState = {
     },
     playbackPlaying: false,
     streaming: false,
+    playbackSpeed: PLAYBACK_SPEEDS[DEFAULT_PLAYBACK_SPEED_INDEX],
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
@@ -484,10 +491,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         });
     }
 
-    public handleScrubFrame(event): void {
-        simulariumController.movePlaybackFrame(parseInt(event.target.value));
-    }
-
     public handleUIDisplayData(uiDisplayData: UIDisplayData): void {
         console.log("uiDisplayData", uiDisplayData);
         const allTags = uiDisplayData.reduce(
@@ -514,14 +517,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 appliedColors: uiDisplayData,
             },
         });
-    }
-
-    public gotoNextFrame(): void {
-        simulariumController.movePlaybackFrame(this.state.currentFrame + 1);
-    }
-
-    public gotoPreviousFrame(): void {
-        simulariumController.movePlaybackFrame(this.state.currentFrame - 1);
     }
 
     private translateAgent() {
@@ -716,6 +711,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         this.setState({ streaming });
     };
 
+    public setPlaybackSpeed = (speed: number) => {
+        this.setState({ playbackSpeed: speed });
+    };
+
     public render(): JSX.Element {
         if (this.state.filePending) {
             const fileType = this.state.filePending.type;
@@ -798,35 +797,15 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     Load a smoldyn trajectory
                 </button>
                 <br />
-                <button onClick={() => simulariumController.resume()}>
-                    Play / resume streaming
-                </button>
-                <button onClick={() => simulariumController.pause()}>
-                    Pause playback
-                </button>
-                <button onClick={() => simulariumController.stop()}>
-                    stop / abort sim
-                </button>
-                <button onClick={this.gotoPreviousFrame.bind(this)}>
-                    Previous Frame
-                </button>
-                <button onClick={this.gotoNextFrame.bind(this)}>
-                    Next Frame
-                </button>
-                <input
-                    name="slider"
-                    type="range"
-                    min={0}
-                    step={1}
-                    value={this.state.currentFrame}
-                    max={this.state.totalSteps}
-                    onChange={this.handleScrubFrame}
+                <PlaybackControls
+                    simulariumController={simulariumController}
+                    totalSteps={this.state.totalSteps}
+                    timeStep={this.state.timeStep}
+                    firstFrameTime={this.state.firstFrameTime}
+                    currentFrame={this.state.currentFrame}
+                    setSpeed={this.setPlaybackSpeed.bind(this)}
+                    currentSpeed={this.state.playbackSpeed}
                 />
-                <label htmlFor="slider">
-                    {this.state.currentFrame * this.state.timeStep +
-                        this.state.firstFrameTime}
-                    / {this.state.totalSteps * this.state.timeStep}
-                </label>
                 <br />
                 {this.state.particleTypeNames.map((id, i) => {
                     return (
@@ -1006,12 +985,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     }
                     streamingHead={simulariumController.currentStreamingHead()}
                 />
-                <SpeedControl
-                    setSpeed={(speed: number) =>
-                        simulariumController.setPlaybackSpeed(speed)
-                    }
-                    currentSpeed={simulariumController.getPlaybackSpeed()}
-                />
                 <div className="viewer-container">
                     <SimulariumViewer
                         ref={this.viewerRef}
@@ -1051,6 +1024,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         onStreamingChange={(streaming) => {
                             this.handleStreamingChange(streaming);
                         }}
+                        playbackSpeed={this.state.playbackSpeed}
                     />
                 </div>
             </div>

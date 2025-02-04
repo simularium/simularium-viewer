@@ -1,8 +1,4 @@
-import {
-    AgentData,
-    CameraSpec,
-    PerspectiveCameraSpec,
-} from "./simularium/types.js";
+import { CameraSpec, PerspectiveCameraSpec } from "./simularium/types.js";
 
 export const DEFAULT_CAMERA_Z_POSITION = 120;
 export const DEFAULT_CAMERA_SPEC_PERSPECTIVE: PerspectiveCameraSpec = {
@@ -32,7 +28,7 @@ export const enum TrajectoryType {
     SMOLDYN = "Smoldyn",
 }
 
-export const DEFAULT_FRAME_RATE = 60; // frames per second
+export const DEFAULT_RENDER_FRAME_RATE = 60; // frames per second
 export const PLAYBACK_SPEEDS = [5, 10, 15, 20, 30, 45, 60];
 export const DEFAULT_SPEED_INDEX = 3;
 

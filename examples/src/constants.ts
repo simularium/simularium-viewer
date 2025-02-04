@@ -17,3 +17,6 @@ export const agentColors: string[] = [
     "#9f516c",
     "#00aabf",
 ];
+
+export const DEFAULT_PLAYBACK_SPEED_INDEX = 3;
+export const PLAYBACK_SPEEDS: number[] = [5, 10, 15, 20, 30, 45, 60];
