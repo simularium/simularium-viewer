@@ -7,9 +7,9 @@
     "module": "es/index.js",
     "types": "type-declarations",
     "scripts": {
-        "start": "cd examples && npm run serve-example",
+        "start": "run-p 'processCSS -- --watch' 'transpileES -- --watch' 'generateTypes -- --watch' serve-example",
+        "serve-example": "cd examples && npm run serve-example",
         "install-examples": "npm install && cd examples && npm install",
-        "watch": "npm-run-all --parallel 'processCSS -- --watch' 'transpileES -- --watch' 'generateTypes -- --watch' start",
         "build": "npm-run-all generateTypes transpileES processCSS",
         "generateTypes": "tsc -p tsconfig.base.json --emitDeclarationOnly",
         "transpileES": "cross-env TS_NODE_PROJECT=tsconfig.es.json BABEL_ENV=es babel src --out-dir es --extensions .ts,.tsx,.js,.jsx --ignore 'src/test'",
