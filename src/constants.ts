@@ -29,8 +29,6 @@ export const enum TrajectoryType {
 }
 
 export const DEFAULT_RENDER_FRAME_RATE = 60; // frames per second
-export const PLAYBACK_SPEEDS = [5, 10, 15, 20, 30, 45, 60];
-export const DEFAULT_SPEED_INDEX = 3;
 
 // the size of the header before the agent data in the binary file
 export const AGENT_HEADER_SIZE = 3; // frameNumber, time, agentCount
