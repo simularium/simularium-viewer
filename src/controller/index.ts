@@ -298,25 +298,30 @@ export default class SimulariumController {
         }
     }
 
+    private clampFrameNumber(frame: number): number {
+        return Math.max(0, Math.min(frame, this.visData.totalSteps - 1));
+    }
+
     private getFrameAtTime(time: number): number {
-        let frame = Math.round(time / this.visData.timeStepSize);
-        const frameBeyondMax = frame >= this.visData.totalSteps - 1;
-        if (frameBeyondMax) {
-            frame = this.visData.totalSteps - 1;
-        }
-        return Math.max(0, frame);
+        const frameNumber = Math.round(time / this.visData.timeStepSize);
+        const clampedFrame = this.clampFrameNumber(frameNumber);
+        return clampedFrame;
     }
 
     public movePlaybackFrame(frameNumber: number): void {
+        if (this.streaming) {
+            this.pauseStreaming();
+        }
+        const clampedFrame = this.clampFrameNumber(frameNumber);
         if (this.isFileChanging || !this.simulator) return;
-        if (this.visData.hasLocalCacheForFrame(frameNumber)) {
-            this.visData.gotoFrame(frameNumber);
+        if (this.visData.hasLocalCacheForFrame(clampedFrame)) {
+            this.visData.gotoFrame(clampedFrame);
             this.resumeStreaming();
         } else if (this.simulator) {
             this.clearLocalCache();
-            this.visData.WaitForFrame(frameNumber);
-            this.visData.currentFrameNumber = frameNumber;
-            this.resumeStreaming(frameNumber);
+            this.visData.WaitForFrame(clampedFrame);
+            this.visData.currentFrameNumber = clampedFrame;
+            this.resumeStreaming(clampedFrame);
         }
     }
 
@@ -339,6 +344,9 @@ export default class SimulariumController {
     }
 
     public resumeStreaming(startFrame?: number): void {
+        if (this.streaming) {
+            return;
+        }
         let requestFrame: number | null = null;
         if (startFrame !== undefined) {
             requestFrame = startFrame;
@@ -368,9 +376,7 @@ export default class SimulariumController {
     // resume playback
     public resume(): void {
         this.visData.isPlaying = true;
-        if (!this.streaming) {
-            this.resumeStreaming();
-        }
+        this.resumeStreaming();
     }
 
     public clearFile(): void {
