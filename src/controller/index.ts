@@ -21,7 +21,7 @@ import { LocalFileSimulator } from "../simularium/LocalFileSimulator.js";
 import { FrontEndError } from "../simularium/FrontEndError.js";
 import type { ISimulariumFile } from "../simularium/ISimulariumFile.js";
 import { WebsocketClient } from "../simularium/WebsocketClient.js";
-import { DEFAULT_RENDER_FRAME_RATE, TrajectoryType } from "../constants.js";
+import { TrajectoryType } from "../constants.js";
 import { RemoteMetricsCalculator } from "../simularium/RemoteMetricsCalculator.js";
 import { OctopusServicesClient } from "../simularium/OctopusClient.js";
 
@@ -62,7 +62,6 @@ export default class SimulariumController {
     public isFileChanging: boolean;
     public streaming: boolean;
     private playBackFile: string;
-    private playbackSpeed: number;
 
     public constructor(params: SimulariumControllerParams) {
         this.visData = new VisData();
@@ -112,7 +111,6 @@ export default class SimulariumController {
         this.isFileChanging = false;
         this.streaming = false;
         this.playBackFile = params.trajectoryPlaybackFile || "";
-        this.playbackSpeed = DEFAULT_RENDER_FRAME_RATE;
         this.zoomIn = this.zoomIn.bind(this);
         this.zoomOut = this.zoomOut.bind(this);
         this.resetCamera = this.resetCamera.bind(this);
