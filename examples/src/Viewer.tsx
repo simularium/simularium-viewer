@@ -19,34 +19,33 @@ import type {
     UIDisplayData,
     SelectionStateInfo,
     SelectionEntry,
-    AgentData,
 } from "@aics/simularium-viewer";
-import "../../style/style.css";
 
-// local test bed imports
-import PointSimulator from "./simulators/PointSimulator";
-import BindingSimulator from "./simulators/BindingSimulator2D";
-import PointSimulatorLive from "./simulators/PointSimulatorLive";
-import PdbSimulator from "./simulators/PdbSimulator";
-import SinglePdbSimulator from "./simulators/SinglePdbSimulator";
-import CurveSimulator from "./simulators/CurveSimulator";
-import SingleCurveSimulator from "./simulators/SingleCurveSimulator";
-import MetaballSimulator from "./simulators/MetaballSimulator";
+import PointSimulator from "./simulators/PointSimulator.ts";
+import BindingSimulator from "./simulators/BindingSimulator2D.ts";
+import PointSimulatorLive from "./simulators/PointSimulatorLive.ts";
+import PdbSimulator from "./simulators/PdbSimulator.ts";
+import SinglePdbSimulator from "./simulators/SinglePdbSimulator.ts";
+import CurveSimulator from "./simulators/CurveSimulator.ts";
+import SingleCurveSimulator from "./simulators/SingleCurveSimulator.ts";
+import MetaballSimulator from "./simulators/MetaballSimulator.ts";
 
-import ColorPicker from "./Components/ColorPicker";
-import RecordMovieComponent from "./Components/RecordMovieComponent";
-import ConversionForm from "./Components/ConversionForm";
-import AgentMetadata from "./Components/AgentMetadata";
-import { agentColors } from "./constants";
-import { BaseType, CustomType } from "./types";
+import ColorPicker from "./Components/ColorPicker.tsx";
+import RecordMovieComponent from "./Components/RecordMovieComponent.tsx";
+import ConversionForm from "./Components/ConversionForm/index.tsx";
+import AgentMetadata from "./Components/AgentMetadata.tsx";
+
+import { agentColors } from "./constants.ts";
+import { BaseType, CustomType } from "./types.ts";
 import {
     SMOLDYN_TEMPLATE,
     UI_BASE_TYPES,
     UI_CUSTOM_TYPES,
     UI_TEMPLATE_DOWNLOAD_URL_ROOT,
     UI_TEMPLATE_URL_ROOT,
-} from "./api-settings";
+} from "./api-settings.ts";
 
+import "@aics/simularium-viewer/style/style.css";
 import "./style.css";
 
 let playbackFile = "TEST_LIVEMODE_API";
