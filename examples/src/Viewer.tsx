@@ -20,7 +20,6 @@ import type {
     SelectionStateInfo,
     SelectionEntry,
 } from "@aics/simularium-viewer";
-import { AgentData } from "@aics/simularium-viewer";
 
 import PointSimulator from "./simulators/PointSimulator.ts";
 import BindingSimulator from "./simulators/BindingSimulator2D.ts";
