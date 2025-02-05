@@ -231,8 +231,9 @@ class VisData {
 
     private handleCacheOverflow(frame: CachedFrame): void {
         const playbackFrame = this.currentFrameData;
+        const cacheHeadFrame = this.frameCache.getFirstFrameNumber();
         const isCacheHeadBehindPlayback =
-            playbackFrame.frameNumber > this.frameCache.getFirstFrameNumber();
+            playbackFrame.frameNumber > cacheHeadFrame;
 
         if (isCacheHeadBehindPlayback) {
             this.trimAndAddFrame(frame);

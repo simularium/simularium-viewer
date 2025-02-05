@@ -365,12 +365,6 @@ export default class SimulariumController {
     // pause playback
     public pause(): void {
         this.visData.isPlaying = false;
-        if (
-            this.visData.currentFrameNumber >
-            this.visData.frameCache.getFirstFrameNumber()
-        ) {
-            this.resumeStreaming();
-        }
     }
 
     // resume playback
