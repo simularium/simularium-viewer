@@ -100,7 +100,7 @@ class Viewer extends React.Component {
 
 1. Run `npm run install-examples` to install the dependencies.
 2. Run `npm start`
-3. Navigate to `http://localhost:8080/public/` - the `/` at the end is required
+3. Navigate to `http://localhost:8080`
 
 This will run the example in `/examples/src/`, demonstrating the viewer's functionality.
 
@@ -117,7 +117,7 @@ This will run the example in `/examples/src/`, demonstrating the viewer's functi
 | transpileES   | run babel on `src` directory; _do not_ transpile `import/export` statements for an ES module compatible build (used by bundlers for tree-shaking)                                                                     |
 | test          | run `vitest`; searches for any files matching the pattern "src/\*_/_.test.js"                                                                                                                                         |
 | typeCheck     | run `tsc` in type-check only mode                                                                                                                                                                                     |
-| start         | runs an example app from `examples` for testing. Runs at `localhost:8080/public/`. Use `--localserver` to run backend locally. With no flags, this script will default to using the staging octopus server as backend |
+| start         | runs an example app from `examples` for testing. Runs at `localhost:8080`. Use `--localserver` to run backend locally. With no flags, this script will default to using the staging octopus server as backend |
 
 ---
 
