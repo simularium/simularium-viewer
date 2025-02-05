@@ -5,10 +5,11 @@
     "main": "index.js",
     "type": "module",
     "scripts": {
-        "serve-example": "vite serve ../ --config ./vite.config.ts",
+        "serve-example": "vite --config ./vite.config.ts",
         "serve-example_old": "webpack serve --config webpack.dev.js",
         "prebuild-example": "npm install",
-        "build-example": "webpack --config webpack.dev.js",
+        "build-example": "vite build --config ./vite.config.ts",
+        "build-example_old": "webpack --config webpack.dev.js",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "author": "",
