@@ -57,6 +57,7 @@ export const enum NetMessageEnum {
     ID_CHECK_HEALTH_REQUEST = 22,
     ID_SERVER_HEALTHY_RESPONSE = 23,
     ID_CANCEL_CONVERSION = 24,
+    ID_START_SMOLDYN = 25,
     // insert new values here before LENGTH
     LENGTH,
 }
@@ -70,6 +71,7 @@ export const enum ServerErrorCodes {
     FRAME_NOT_FOUND = 5,
     FILENAME_MISMATCH = 6,
     NO_RUNNING_SIMULATION = 7,
+    SMOLDYN_ERROR = 8,
     LENGTH,
 }
 

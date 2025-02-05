@@ -128,6 +128,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     private panMode = false;
     private focusMode = true;
     private orthoMode = false;
+    private smoldynInput = "100";
     private netConnectionSettings: NetConnectionParams;
 
     public constructor(props: InputParams) {
@@ -353,6 +354,28 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             });
     }
 
+    public loadSmoldynSim() {
+        simulariumController.checkServerHealth(
+            this.onHealthCheckResponse,
+            this.netConnectionSettings
+        );
+        const fileName = "smoldyn_sim" + uuidv4() + ".simularium"
+        simulariumController
+            .startSmoldynSim(this.netConnectionSettings, fileName, this.smoldynInput)
+            .then(() => {
+                this.clearPendingFile();
+            })
+            .then(() => {
+                simulariumController.initNewFile(
+                    { netConnectionSettings: this.netConnectionSettings, },
+                    true,
+                )
+            })
+            .catch((err) => {
+                console.error(err);
+            });
+    }
+
     public clearPendingFile() {
         this.setState({ filePending: null });
     }
@@ -430,11 +453,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public receiveConvertedFile(): void {
         simulariumController
-            .changeFile(
+            .initNewFile(
                 {
                     netConnectionSettings: this.netConnectionSettings,
                 },
-                this.state.conversionFileName
             )
             .then(() => {
                 simulariumController.gotoTime(0);
@@ -771,6 +793,17 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 </button>
                 <button onClick={() => this.loadSmoldynFile()}>
                     Load a smoldyn trajectory
+                </button>
+                <br />
+                <label>
+                    Initial Rabbit Count:
+                    <input
+                        defaultValue="100"
+                        onChange={(event) => {this.smoldynInput = event.target.value}}
+                    />
+                </label>
+                <button onClick={() => this.loadSmoldynSim()}>
+                    Run Smoldyn
                 </button>
                 <br />
                 <button onClick={() => simulariumController.resume()}>

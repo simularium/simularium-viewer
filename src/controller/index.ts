@@ -118,6 +118,9 @@ export default class SimulariumController {
         this.setFocusMode = this.setFocusMode.bind(this);
         this.convertTrajectory = this.convertTrajectory.bind(this);
         this.setCameraType = this.setCameraType.bind(this);
+        this.startSmoldynSim = this.startSmoldynSim.bind(this);
+        this.cancelCurrentFile = this.cancelCurrentFile.bind(this);
+        this.initNewFile = this.initNewFile.bind(this);
     }
 
     private createSimulatorConnection(
@@ -240,6 +243,8 @@ export default class SimulariumController {
         fileType: TrajectoryType,
         providedFileName?: string
     ): Promise<void> {
+        const fileName = providedFileName ?? `${uuidv4()}.simularium`;
+        this.cancelCurrentFile(fileName);
         try {
             if (!this.isRemoteOctopusClientConfigured()) {
                 this.configureNetwork(netConnectionConfig);
@@ -250,7 +255,6 @@ export default class SimulariumController {
             if (!this.simulator) {
                 throw new Error("Simulator not initialized");
             }
-            const fileName = providedFileName ?? `${uuidv4()}.simularium`;
             return this.octopusClient.convertTrajectory(
                 dataToConvert,
                 fileType,
@@ -275,6 +279,28 @@ export default class SimulariumController {
     public initializeTrajectoryFile(): void {
         if (this.simulator) {
             this.simulator.initialize(this.playBackFile);
+        }
+    }
+
+    public startSmoldynSim(
+        netConnectionConfig: NetConnectionParams,
+        fileName: string,
+        smoldynInput: string
+    ): Promise<void> {
+        this.cancelCurrentFile(fileName);
+        try {
+            if (!this.isRemoteOctopusClientConfigured()) {
+                this.configureNetwork(netConnectionConfig);
+            }
+            if (!this.octopusClient) {
+                throw new Error("Octopus client not configured");
+            }
+            if (!this.simulator) {
+                throw new Error("Simulator not initialized");
+            }
+            return this.octopusClient.sendSmoldynData(fileName, smoldynInput);
+        } catch (e) {
+            return Promise.reject(e);
         }
     }
 
@@ -331,12 +357,7 @@ export default class SimulariumController {
         }
     }
 
-    public changeFile(
-        connectionParams: SimulatorConnectionParams,
-        // TODO: push newFileName into connectionParams
-        newFileName: string,
-        keepRemoteConnection = false
-    ): Promise<FileReturn> {
+    public cancelCurrentFile(newFileName: string): void {
         this.isFileChanging = true;
         this.playBackFile = newFileName;
 
@@ -345,7 +366,12 @@ export default class SimulariumController {
 
         this.visData.WaitForFrame(0);
         this.visData.clearForNewTrajectory();
+    }
 
+    public initNewFile(
+        connectionParams: SimulatorConnectionParams,
+        keepRemoteConnection = false
+    ): Promise<FileReturn> {
         const shouldConfigureNewSimulator = !(
             keepRemoteConnection && this.isRemoteOctopusClientConfigured()
         );
@@ -389,6 +415,16 @@ export default class SimulariumController {
         return Promise.reject({
             status: FILE_STATUS_FAIL,
         });
+    }
+
+    public changeFile(
+        connectionParams: SimulatorConnectionParams,
+        // TODO: push newFileName into connectionParams
+        newFileName: string,
+        keepRemoteConnection = false
+    ): Promise<FileReturn> {
+        this.cancelCurrentFile(newFileName);
+        return this.initNewFile(connectionParams, keepRemoteConnection);
     }
 
     public markFileChangeAsHandled(): void {
