@@ -44,7 +44,8 @@ export var NetMessageEnum = /*#__PURE__*/function (NetMessageEnum) {
   NetMessageEnum[NetMessageEnum["ID_CHECK_HEALTH_REQUEST"] = 22] = "ID_CHECK_HEALTH_REQUEST";
   NetMessageEnum[NetMessageEnum["ID_SERVER_HEALTHY_RESPONSE"] = 23] = "ID_SERVER_HEALTHY_RESPONSE";
   NetMessageEnum[NetMessageEnum["ID_CANCEL_CONVERSION"] = 24] = "ID_CANCEL_CONVERSION";
-  NetMessageEnum[NetMessageEnum["LENGTH"] = 25] = "LENGTH";
+  NetMessageEnum[NetMessageEnum["ID_START_SMOLDYN"] = 25] = "ID_START_SMOLDYN";
+  NetMessageEnum[NetMessageEnum["LENGTH"] = 26] = "LENGTH";
   return NetMessageEnum;
 }({});
 export var ServerErrorCodes = /*#__PURE__*/function (ServerErrorCodes) {
@@ -56,7 +57,8 @@ export var ServerErrorCodes = /*#__PURE__*/function (ServerErrorCodes) {
   ServerErrorCodes[ServerErrorCodes["FRAME_NOT_FOUND"] = 5] = "FRAME_NOT_FOUND";
   ServerErrorCodes[ServerErrorCodes["FILENAME_MISMATCH"] = 6] = "FILENAME_MISMATCH";
   ServerErrorCodes[ServerErrorCodes["NO_RUNNING_SIMULATION"] = 7] = "NO_RUNNING_SIMULATION";
-  ServerErrorCodes[ServerErrorCodes["LENGTH"] = 8] = "LENGTH";
+  ServerErrorCodes[ServerErrorCodes["SMOLDYN_ERROR"] = 8] = "SMOLDYN_ERROR";
+  ServerErrorCodes[ServerErrorCodes["LENGTH"] = 9] = "LENGTH";
   return ServerErrorCodes;
 }({});
 export var CONNECTION_SUCCESS_MSG = "Remote sim successfully started";

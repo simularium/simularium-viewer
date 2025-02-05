@@ -10,4 +10,5 @@ export declare class OctopusServicesClient {
     convertTrajectory(dataToConvert: Record<string, unknown>, fileType: TrajectoryType, fileName: string): Promise<void>;
     cancelConversion(): void;
     checkServerHealth(): Promise<void>;
+    sendSmoldynData(outFileName: string, smoldynInput: string): Promise<void>;
 }

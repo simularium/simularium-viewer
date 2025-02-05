@@ -101,5 +101,32 @@ export var OctopusServicesClient = /*#__PURE__*/function () {
       }
       return checkServerHealth;
     }()
+  }, {
+    key: "sendSmoldynData",
+    value: function () {
+      var _sendSmoldynData = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime.mark(function _callee4(outFileName, smoldynInput) {
+        return _regeneratorRuntime.wrap(function _callee4$(_context4) {
+          while (1) switch (_context4.prev = _context4.next) {
+            case 0:
+              _context4.next = 2;
+              return this.webSocketClient.connectToRemoteServer();
+            case 2:
+              this.lastRequestedFile = outFileName;
+              this.webSocketClient.sendWebSocketRequest({
+                msgType: NetMessageEnum.ID_START_SMOLDYN,
+                fileName: outFileName,
+                smoldynInputVal: smoldynInput !== null && smoldynInput !== void 0 ? smoldynInput : undefined
+              }, "Start smoldyn simulation");
+            case 4:
+            case "end":
+              return _context4.stop();
+          }
+        }, _callee4, this);
+      }));
+      function sendSmoldynData(_x4, _x5) {
+        return _sendSmoldynData.apply(this, arguments);
+      }
+      return sendSmoldynData;
+    }()
   }]);
 }();

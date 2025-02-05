@@ -92,6 +92,9 @@ var SimulariumController = /*#__PURE__*/function () {
     this.setFocusMode = this.setFocusMode.bind(this);
     this.convertTrajectory = this.convertTrajectory.bind(this);
     this.setCameraType = this.setCameraType.bind(this);
+    this.startSmoldynSim = this.startSmoldynSim.bind(this);
+    this.cancelCurrentFile = this.cancelCurrentFile.bind(this);
+    this.initNewFile = this.initNewFile.bind(this);
   }
   return _createClass(SimulariumController, [{
     key: "createSimulatorConnection",
@@ -187,6 +190,8 @@ var SimulariumController = /*#__PURE__*/function () {
   }, {
     key: "convertTrajectory",
     value: function convertTrajectory(netConnectionConfig, dataToConvert, fileType, providedFileName) {
+      var fileName = providedFileName !== null && providedFileName !== void 0 ? providedFileName : "".concat(uuidv4(), ".simularium");
+      this.cancelCurrentFile(fileName);
       try {
         if (!this.isRemoteOctopusClientConfigured()) {
           this.configureNetwork(netConnectionConfig);
@@ -197,7 +202,6 @@ var SimulariumController = /*#__PURE__*/function () {
         if (!this.simulator) {
           throw new Error("Simulator not initialized");
         }
-        var fileName = providedFileName !== null && providedFileName !== void 0 ? providedFileName : "".concat(uuidv4(), ".simularium");
         return this.octopusClient.convertTrajectory(dataToConvert, fileType, fileName);
       } catch (e) {
         return Promise.reject(e);
@@ -221,6 +225,25 @@ var SimulariumController = /*#__PURE__*/function () {
     value: function initializeTrajectoryFile() {
       if (this.simulator) {
         this.simulator.initialize(this.playBackFile);
+      }
+    }
+  }, {
+    key: "startSmoldynSim",
+    value: function startSmoldynSim(netConnectionConfig, fileName, smoldynInput) {
+      this.cancelCurrentFile(fileName);
+      try {
+        if (!this.isRemoteOctopusClientConfigured()) {
+          this.configureNetwork(netConnectionConfig);
+        }
+        if (!this.octopusClient) {
+          throw new Error("Octopus client not configured");
+        }
+        if (!this.simulator) {
+          throw new Error("Simulator not initialized");
+        }
+        return this.octopusClient.sendSmoldynData(fileName, smoldynInput);
+      } catch (e) {
+        return Promise.reject(e);
       }
     }
   }, {
@@ -283,12 +306,8 @@ var SimulariumController = /*#__PURE__*/function () {
       }
     }
   }, {
-    key: "changeFile",
-    value: function changeFile(connectionParams,
-    // TODO: push newFileName into connectionParams
-    newFileName) {
-      var _this4 = this;
-      var keepRemoteConnection = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+    key: "cancelCurrentFile",
+    value: function cancelCurrentFile(newFileName) {
       this.isFileChanging = true;
       this.playBackFile = newFileName;
 
@@ -296,6 +315,12 @@ var SimulariumController = /*#__PURE__*/function () {
       this.stop();
       this.visData.WaitForFrame(0);
       this.visData.clearForNewTrajectory();
+    }
+  }, {
+    key: "initNewFile",
+    value: function initNewFile(connectionParams) {
+      var _this4 = this;
+      var keepRemoteConnection = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
       var shouldConfigureNewSimulator = !(keepRemoteConnection && this.isRemoteOctopusClientConfigured());
       // don't create simulator if client wants to keep remote simulator and the
       // current simulator is a remote simulator
@@ -332,6 +357,15 @@ var SimulariumController = /*#__PURE__*/function () {
       return Promise.reject({
         status: FILE_STATUS_FAIL
       });
+    }
+  }, {
+    key: "changeFile",
+    value: function changeFile(connectionParams,
+    // TODO: push newFileName into connectionParams
+    newFileName) {
+      var keepRemoteConnection = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+      this.cancelCurrentFile(newFileName);
+      return this.initNewFile(connectionParams, keepRemoteConnection);
     }
   }, {
     key: "markFileChangeAsHandled",

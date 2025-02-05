@@ -53,6 +53,7 @@ export default class SimulariumController {
     pause(): void;
     paused(): boolean;
     initializeTrajectoryFile(): void;
+    startSmoldynSim(netConnectionConfig: NetConnectionParams, fileName: string, smoldynInput: string): Promise<void>;
     gotoTime(time: number): void;
     playFromTime(time: number): void;
     resume(): void;
@@ -60,6 +61,8 @@ export default class SimulariumController {
     handleFileChange(simulariumFile: ISimulariumFile, fileName: string, geoAssets?: {
         [key: string]: string;
     }): Promise<FileReturn>;
+    cancelCurrentFile(newFileName: string): void;
+    initNewFile(connectionParams: SimulatorConnectionParams, keepRemoteConnection?: boolean): Promise<FileReturn>;
     changeFile(connectionParams: SimulatorConnectionParams, newFileName: string, keepRemoteConnection?: boolean): Promise<FileReturn>;
     markFileChangeAsHandled(): void;
     getFile(): string;

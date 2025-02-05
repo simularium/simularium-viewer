@@ -39,7 +39,8 @@ export declare const enum NetMessageEnum {
     ID_CHECK_HEALTH_REQUEST = 22,
     ID_SERVER_HEALTHY_RESPONSE = 23,
     ID_CANCEL_CONVERSION = 24,
-    LENGTH = 25
+    ID_START_SMOLDYN = 25,
+    LENGTH = 26
 }
 export declare const enum ServerErrorCodes {
     FILE_NOT_FOUND = 0,
@@ -50,7 +51,8 @@ export declare const enum ServerErrorCodes {
     FRAME_NOT_FOUND = 5,
     FILENAME_MISMATCH = 6,
     NO_RUNNING_SIMULATION = 7,
-    LENGTH = 8
+    SMOLDYN_ERROR = 8,
+    LENGTH = 9
 }
 export declare const CONNECTION_SUCCESS_MSG = "Remote sim successfully started";
 export declare const CONNECTION_FAIL_MSG = "Failed to connect to server; try reloading. If the problem persists, there may be a problem with your connection speed or the server might be too busy.";
