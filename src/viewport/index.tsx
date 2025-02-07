@@ -114,13 +114,10 @@ class Viewport extends React.Component<
     private handlers: { [key: string]: (e: Event) => void };
 
     private hit: boolean;
-    private animationRequestID: number;
+    private animationRequestID: number | null;
     private currentSimulationTime: number;
     private clockTimePerRender: number;
-    private clockTimeSinceRender: number;
-    private totalClockTimeElapsed: number;
-    private clockTimeSinceFrameAdvance: number;
-    private clockTimePerFrameAdvance: number;
+    private lastFrameAdvanceTime: number;
 
     private stats: Stats;
     public static defaultProps = defaultProps;
@@ -140,10 +137,7 @@ class Viewport extends React.Component<
             this.dispatchUpdatedSimulationTime.bind(this);
         this.handleTimeChange = this.handleTimeChange.bind(this);
         this.clockTimePerRender = 1000 / DEFAULT_RENDER_FRAME_RATE;
-        this.clockTimePerFrameAdvance = 1000 / props.playbackSpeed;
-        this.clockTimeSinceRender = 0;
-        this.totalClockTimeElapsed = 0;
-        this.clockTimeSinceFrameAdvance = 0;
+        this.lastFrameAdvanceTime = 0;
 
         this.visGeometry = new VisGeometry(loggerLevel);
         this.props.simulariumController.visData.frameCache.changeSettings({
@@ -162,8 +156,8 @@ class Viewport extends React.Component<
         this.props.simulariumController.visData.clearCache();
         this.visGeometry.createMaterials(props.agentColors);
         this.vdomRef = React.createRef();
-        this.lastRenderTime = Date.now();
-        this.startTime = Date.now();
+        this.lastRenderTime = performance.now();
+        this.startTime = performance.now();
         this.onPickObject = this.onPickObject.bind(this);
         this.stats = new Stats();
         this.stats.showPanel(1);
@@ -178,7 +172,7 @@ class Viewport extends React.Component<
             mousemove: this.handleMouseMove,
         };
         this.hit = false;
-        this.animationRequestID = 0;
+        this.animationRequestID = null;
         this.currentSimulationTime = -1;
         this.selectionInterface = new SelectionInterface();
         this.state = {
@@ -326,7 +320,7 @@ class Viewport extends React.Component<
             );
         }
         this.removeEventHandlersFromCanvas();
-        this.stopAnimate();
+        this.stopAnimation();
     }
 
     public componentDidUpdate(
@@ -345,7 +339,6 @@ class Viewport extends React.Component<
             selectionStateInfo,
             lockedCamera,
             disableCache,
-            playbackSpeed,
         } = this.props;
 
         if (selectionStateInfo) {
@@ -419,9 +412,6 @@ class Viewport extends React.Component<
             } else {
                 this.visGeometry.destroyGui();
             }
-        }
-        if (playbackSpeed !== prevProps.playbackSpeed) {
-            this.clockTimePerFrameAdvance = 1000 / playbackSpeed;
         }
     }
 
@@ -648,10 +638,25 @@ class Viewport extends React.Component<
         this.visGeometry.applyColorToAgents(changes);
     }
 
-    public stopAnimate(): void {
-        if (this.animationRequestID !== 0) {
+    /////////// Animation ///////////
+
+    private handleFileChange(
+        totalElapsedTime: number,
+        timestamp: number
+    ): void {
+        const { simulariumController } = this.props;
+        this.visGeometry.render(totalElapsedTime);
+        this.lastRenderTime = timestamp;
+        this.lastFrameAdvanceTime = timestamp;
+        this.currentSimulationTime = -1;
+        simulariumController.markFileChangeAsHandled();
+        this.animationRequestID = requestAnimationFrame(this.animate);
+    }
+
+    public stopAnimation(): void {
+        if (this.animationRequestID !== null) {
             cancelAnimationFrame(this.animationRequestID);
-            this.animationRequestID = 0;
+            this.animationRequestID = null;
         }
     }
 
@@ -661,31 +666,18 @@ class Viewport extends React.Component<
             simulariumController.visData.frameCache.getLastFrameNumber() + 1;
         simulariumController.visData.gotoNextFrame();
         simulariumController.resumeStreaming(nextFrame);
-        this.clockTimeSinceFrameAdvance = 0;
+        this.lastFrameAdvanceTime = this.lastRenderTime; // Use last render time instead of 0
     }
 
-    private handleFileChange(totalElapsedTime: number): void {
-        const { simulariumController } = this.props;
-        this.visGeometry.render(totalElapsedTime);
-        this.lastRenderTime = Date.now();
-        this.currentSimulationTime = -1;
-        simulariumController.markFileChangeAsHandled();
-        this.animationRequestID = requestAnimationFrame(this.animate);
-    }
+    private shouldFrameAdvance(timestamp: number): boolean {
+        const { simulariumController, playbackSpeed } = this.props;
+        const timeSinceLastAdvance =
+            timestamp - this.lastFrameAdvanceTime;
 
-    private updateAnimationTime(): void {
-        const now = Date.now();
-        this.clockTimeSinceRender = now - this.lastRenderTime;
-        this.totalClockTimeElapsed = now - this.startTime;
-        this.clockTimeSinceFrameAdvance += this.clockTimeSinceRender;
-    }
-
-    private shouldFrameAdvance(): boolean {
-        const { simulariumController } = this.props;
         return (
             !simulariumController.visData.atLatestFrame() &&
             simulariumController.isPlaying() &&
-            this.clockTimeSinceFrameAdvance >= this.clockTimePerFrameAdvance
+            timeSinceLastAdvance >= 1000 / playbackSpeed
         );
     }
 
@@ -704,30 +696,40 @@ class Viewport extends React.Component<
         }
     }
 
-    public animate(): void {
+    public animate(timestamp?: number): void {
         const { simulariumController } = this.props;
-        this.updateAnimationTime();
-        if (this.clockTimeSinceRender <= this.clockTimePerRender) {
+
+        if (!timestamp) {
+            // timestamp provided by requestAnimationFrame
+            this.animationRequestID = requestAnimationFrame(this.animate);
+            return;
+        }
+
+        const clockTimeSinceLastRender = timestamp - this.lastRenderTime;
+        const totalClockTimeElapsed = timestamp - this.startTime;
+
+        if (clockTimeSinceLastRender <= this.clockTimePerRender) {
             this.animationRequestID = requestAnimationFrame(this.animate);
             return;
         }
         if (simulariumController.isChangingFile) {
-            this.handleFileChange(this.totalClockTimeElapsed);
+            this.handleFileChange(totalClockTimeElapsed, timestamp);
             return;
         }
+
         const currentFrame = simulariumController.visData.currentFrameData;
         this.renderCurrentFrame(currentFrame);
-        
-        if (this.shouldFrameAdvance()) {
+        if (this.shouldFrameAdvance(timestamp)) {
             this.advanceFrame();
         }
+
         this.stats.begin();
-        this.visGeometry.render(this.totalClockTimeElapsed);
+        this.visGeometry.render(totalClockTimeElapsed);
         if (this.recorder?.isRecording) {
             this.recorder.onFrame();
         }
         this.stats.end();
-        this.lastRenderTime = Date.now();
+        this.lastRenderTime = timestamp;
         this.animationRequestID = requestAnimationFrame(this.animate);
     }
 
