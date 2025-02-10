@@ -711,6 +711,20 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         this.setState({ followObjectData: agentData });
     };
 
+    public updateLiveMode = () => {
+        const updateData = {
+            data: {
+                agents: {
+                    "1": {
+                        _updater: "accumulate",
+                        position: [0.1, 0, 0],
+                    }
+                }
+            }
+        };
+        simulariumController.sendUpdate(updateData);
+    };
+
     public render(): JSX.Element {
         if (this.state.filePending) {
             const fileType = this.state.filePending.type;
@@ -734,6 +748,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     defaultValue={playbackFile}
                 >
                     <option value={queryStringFile}>{queryStringFile}</option>
+                    <option value="test_live_mode">TEST OCTOPUS LIVE MODE</option>
                     <option value="TEST_LIVEMODE_API">
                         TEST LIVE MODE API
                     </option>
@@ -783,7 +798,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     <option value="TEST_METABALLS">TEST METABALLS</option>
                     <option value="TEST_BINDING">TEST BINDING</option>
                 </select>
-
+                <button onClick={() => this.updateLiveMode()}>
+                    Update (Live Mode)
+                </button>
                 <button onClick={() => this.translateAgent()}>
                     TranslateAgent
                 </button>

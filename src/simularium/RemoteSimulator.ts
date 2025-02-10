@@ -291,6 +291,7 @@ export class RemoteSimulator implements ISimulator {
                 msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
                 frameNumber: startFrameNumber,
                 fileName: this.lastRequestedFile,
+                jsonResponse: true,
             },
             "Request Single Frame"
         );
@@ -302,6 +303,7 @@ export class RemoteSimulator implements ISimulator {
                 msgType: NetMessageEnum.ID_GOTO_SIMULATION_TIME,
                 time: time,
                 fileName: this.lastRequestedFile,
+                jsonResponse: true,
             },
             "Load single frame at specified Time"
         );
@@ -313,12 +315,20 @@ export class RemoteSimulator implements ISimulator {
             {
                 msgType: NetMessageEnum.ID_INIT_TRAJECTORY_FILE,
                 fileName: fileName,
+                jsonResponse: true,
             },
             "Initialize trajectory file info"
         );
     }
 
     public sendUpdate(_obj: Record<string, unknown>): Promise<void> {
+        this.webSocketClient.sendWebSocketRequest(
+            {
+                msgType: NetMessageEnum.ID_UPDATE_SIMULATION_STATE,
+                data: _obj,
+            },
+            "Send Update"
+        );
         return Promise.resolve();
     }
 }
