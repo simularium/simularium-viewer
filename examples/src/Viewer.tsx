@@ -91,7 +91,7 @@ interface ViewerState {
     conversionFileName: string;
     cacheLog: CacheLog;
     playbackPlaying: boolean;
-    streaming: boolean;
+    isStreaming: boolean;
 }
 
 const simulariumController = new SimulariumController({});
@@ -138,7 +138,7 @@ const initialState: ViewerState = {
         framesInCache: [],
     },
     playbackPlaying: false,
-    streaming: false,
+    isStreaming: false,
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
@@ -711,7 +711,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     };
 
     public handleStreamingChange = (streaming: boolean) => {
-        this.setState({ streaming });
+        this.setState({ isStreaming: streaming });
     };
 
     public render(): JSX.Element {
@@ -997,7 +997,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 <AgentMetadata agentData={this.state.followObjectData} />
                 <CacheAndStreamingLogsDisplay
                     playbackPlayingState={this.state.playbackPlaying}
-                    isStreamingState={this.state.streaming}
+                    isStreamingState={this.state.isStreaming}
                     cacheLog={this.state.cacheLog}
                     playbackFrame={
                         simulariumController.visData.currentFrameNumber
