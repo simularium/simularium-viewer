@@ -42,6 +42,7 @@ interface SimulatorConnectionParams {
     clientSimulator?: IClientSimulatorImpl;
     simulariumFile?: ISimulariumFile;
     geoAssets?: { [key: string]: string };
+    requestJson?: boolean;
 }
 
 export default class SimulariumController {
@@ -127,7 +128,8 @@ export default class SimulariumController {
         netConnectionConfig?: NetConnectionParams,
         clientSimulator?: IClientSimulatorImpl,
         localFile?: ISimulariumFile,
-        geoAssets?: { [key: string]: string }
+        geoAssets?: { [key: string]: string },
+        requestJson?: boolean
     ): void {
         if (clientSimulator) {
             this.simulator = new ClientSimulator(clientSimulator);
@@ -152,7 +154,11 @@ export default class SimulariumController {
             );
             this.remoteWebsocketClient = webSocketClient;
             this.octopusClient = new OctopusServicesClient(webSocketClient);
-            this.simulator = new RemoteSimulator(webSocketClient, this.onError);
+            this.simulator = new RemoteSimulator(
+                webSocketClient,
+                this.onError,
+                requestJson
+            );
             this.simulator.setTrajectoryDataHandler(
                 this.visData.parseAgentsFromNetData.bind(this.visData)
             );
@@ -384,7 +390,8 @@ export default class SimulariumController {
                         connectionParams.netConnectionSettings,
                         connectionParams.clientSimulator,
                         connectionParams.simulariumFile,
-                        connectionParams.geoAssets
+                        connectionParams.geoAssets,
+                        connectionParams.requestJson
                     );
                     this.isPaused = true;
                 } else {
