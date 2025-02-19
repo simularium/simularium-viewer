@@ -22,7 +22,6 @@ const FileSelection = ({
     loadSmoldynPreConfiguredSim,
     setRabbitCount,
 }: FileSelectionProps): JSX.Element => {
-
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has("file")) {
@@ -84,7 +83,9 @@ const FileSelection = ({
             <button onClick={loadSmoldynFile}>
                 Convert a smoldyn trajectory
             </button>
-            <button onClick={loadSmoldynPreConfiguredSim}>Run Smoldyn</button>
+            <button onClick={loadSmoldynPreConfiguredSim}>
+                Run pre-config Smoldyn sim via BioSimulators API
+            </button>
             <br></br>
             <label>
                 Initial Rabbit Count:

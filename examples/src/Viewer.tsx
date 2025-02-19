@@ -39,12 +39,7 @@ import AgentMetadata from "./Components/AgentMetadata.tsx";
 import FileSelection from "./Components/FileSelect.tsx";
 import AgentSelectionControls from "./Components/AgentSelection.tsx";
 
-import {
-    agentColors,
-    AWAITING_CONVERSION,
-    AWAITING_SMOLDYN_SIM_RUN,
-    TRAJECTORY_OPTIONS,
-} from "./constants.ts";
+import { agentColors, AWAITING_CONVERSION, AWAITING_SMOLDYN_SIM_RUN, TRAJECTORY_OPTIONS } from "./constants.ts";
 import { BaseType, CustomType } from "./types.ts";
 import {
     SMOLDYN_TEMPLATE,
@@ -190,11 +185,11 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public onError = (error: FrontEndError) => {
         if (error.level === ErrorLevel.ERROR) {
-            window.alert(
+            console.warn(
                 `ERROR, something is broken: ${error.message} ${error.htmlData}`
             );
         } else if (error.level === ErrorLevel.WARNING) {
-            window.alert(
+            console.warn(
                 `User warning, but not terrible:  ${error.message} ${error.htmlData}`
             );
         } else if (error.level === ErrorLevel.INFO) {
@@ -590,7 +585,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 break;
 
             case "TEST_BINDING":
-                // For example, change camera if needed:
                 simulariumController.setCameraType(true);
                 config.clientSimulator = new BindingSimulator([
                     { id: 0, count: 30, radius: 3, partners: [1, 2] },
