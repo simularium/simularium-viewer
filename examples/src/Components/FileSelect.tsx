@@ -81,7 +81,7 @@ const FileSelection = ({
             <br></br>
             <button onClick={() => clearFile()}>Clear trajectory </button>
             <button onClick={loadSmoldynFile}>
-                Convert a smoldyn trajectory with
+                Convert a smoldyn trajectory
             </button>
             <button onClick={loadSmoldynPreConfiguredSim}>
                 Run pre-config Smoldyn sim via BioSimulators API

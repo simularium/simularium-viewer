@@ -2,7 +2,7 @@ import React from "react";
 import { AgentData } from "@aics/simularium-viewer";
 
 interface AgentMetadataProps {
-    agentData: AgentData;
+    agentData: AgentData | null;
 }
 
 const AgentMetadata = ({ agentData }: AgentMetadataProps): JSX.Element => {
