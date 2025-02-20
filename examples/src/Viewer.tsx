@@ -1122,6 +1122,12 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                                 backgroundColor={[0, 0, 0]}
                                 lockedCamera={false}
                                 disableCache={false}
+                                onCacheUpdate={this.handleCacheUpdate.bind(
+                                    this
+                                )}
+                                onStreamingChange={(streaming) => {
+                                    this.handleStreamingChange(streaming);
+                                }}
                                 maxCacheSize={Infinity} //  means no limit, provide limits in bytes, 1MB = 1000000, 1GB = 1000000000
                             />
                         </div>

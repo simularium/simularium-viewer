@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { CacheLog } from "../../../src";
+import { CacheLog } from "@aics/simularium-viewer";
 
 interface StreamingReadoutProps {
     playbackPlayingState: boolean;
@@ -8,6 +8,49 @@ interface StreamingReadoutProps {
     playbackFrame: number;
     streamingHead: number;
 }
+
+const TruncatedArrayDisplay: React.FC<{
+    array: number[];
+    maxDisplayLength?: number;
+    separator?: string;
+    className?: string;
+}> = ({ array, maxDisplayLength = 10, separator = "..." }) => {
+    const [showAll, setShowAll] = useState(false);
+
+    if (!array || array.length === 0) {
+        return <div>[]</div>;
+    }
+
+    if (showAll || array.length <= maxDisplayLength) {
+        return (
+            <div>
+                {array.length > maxDisplayLength && (
+                    <button
+                    onClick={() => setShowAll(false)}
+                    >
+                        Show Less
+                    </button>
+                )}
+                <div>{array.join(", ")}</div>
+            </div>
+        );
+    }
+
+    const halfLength = Math.floor(maxDisplayLength / 2);
+    const start = array.slice(0, halfLength);
+    const end = array.slice(-halfLength);
+
+    return (
+        <div>
+            <div>
+                {start.join(", ")} {separator} {end.join(", ")}
+            </div>
+            <button onClick={() => setShowAll(true)}>
+                Show All {array.length} Frames
+            </button>
+        </div>
+    );
+};
 
 const CacheAndStreamingLogsDisplay: React.FC<StreamingReadoutProps> = ({
     playbackPlayingState,
@@ -18,8 +61,14 @@ const CacheAndStreamingLogsDisplay: React.FC<StreamingReadoutProps> = ({
 }) => {
     const [isOpen, setIsOpen] = useState(false);
 
-    const { size, enabled, maxSize, firstFrameNumber, lastFrameNumber, framesInCache } =
-        cacheLog;
+    const {
+        size,
+        enabled,
+        maxSize,
+        firstFrameNumber,
+        lastFrameNumber,
+        framesInCache,
+    } = cacheLog;
     return (
         <div>
             <button onClick={() => setIsOpen(!isOpen)}>
@@ -48,7 +97,11 @@ const CacheAndStreamingLogsDisplay: React.FC<StreamingReadoutProps> = ({
                     <div>Current playback frame: {playbackFrame}</div>
                     <div>Current streaming head: {streamingHead}</div>
                     <div>
-                        Frames in Cache: {framesInCache.join(", ")}
+                        Frames in Cache:{" "}
+                        <TruncatedArrayDisplay
+                            array={framesInCache}
+                            maxDisplayLength={10}
+                        />
                     </div>
                 </>
             )}
