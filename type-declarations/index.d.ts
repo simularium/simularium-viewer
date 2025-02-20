@@ -1,5 +1,5 @@
 import Viewport from "./viewport/index.js";
-export type { SelectionStateInfo, UIDisplayData, VisDataFrame, SelectionEntry, TrajectoryFileInfo, NetConnectionParams, IClientSimulatorImpl, EncodedTypeMapping, VisDataMessage, Plot, AgentData, } from "./simularium/index.js";
+export type { SelectionStateInfo, UIDisplayData, VisDataFrame, SelectionEntry, TrajectoryFileInfo, NetConnectionParams, IClientSimulatorImpl, EncodedTypeMapping, VisDataMessage, Plot, AgentData, CacheLog, } from "./simularium/index.js";
 export type { ISimulariumFile } from "./simularium/ISimulariumFile.js";
 export type { TimeData } from "./viewport/index.js";
 export { GeometryDisplayType } from "./visGeometry/types.js";

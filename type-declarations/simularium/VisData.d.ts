@@ -5,18 +5,26 @@ declare class VisData {
     frameCache: VisDataCache;
     private frameToWaitFor;
     private lockedForFrame;
-    private currentFrameNumber;
+    currentFrameNumber: number;
+    currentStreamingHead: number;
+    remoteStreamingHeadPotentiallyOutOfSync: boolean;
+    isPlaying: boolean;
+    onCacheLimitReached: () => void;
     timeStepSize: number;
+    totalSteps: number;
     onError: (error: FrontEndError) => void;
     private static parseOneBinaryFrame;
     constructor();
     setOnError(onError: (error: FrontEndError) => void): void;
+    setOnCacheLimitReached(onCacheLimitReached: () => void): void;
     get currentFrameData(): CachedFrame;
     /**
      *   Functions to check update
      * */
     hasLocalCacheForTime(time: number): boolean;
+    hasLocalCacheForFrame(frameNumber: number): boolean;
     gotoTime(time: number): void;
+    gotoFrame(frameNumber: number): void;
     atLatestFrame(): boolean;
     gotoNextFrame(): void;
     /**
@@ -28,6 +36,12 @@ declare class VisData {
     private parseAgentsFromVisDataMessage;
     parseAgentsFromFrameData(msg: VisDataMessage | ArrayBuffer): void;
     parseAgentsFromNetData(msg: VisDataMessage | ArrayBuffer): void;
+    private handleOversizedFrame;
+    private trimAndAddFrame;
+    private resetCacheWithFrame;
+    private doesFrameCauseCacheOverflow;
+    private handleCacheOverflow;
+    private validateAndProcessFrame;
     private addFrameToCache;
     private frameExceedsCacheSizeError;
 }

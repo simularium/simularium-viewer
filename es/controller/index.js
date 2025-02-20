@@ -35,9 +35,10 @@ var SimulariumController = /*#__PURE__*/function () {
     _defineProperty(this, "postConnect", void 0);
     _defineProperty(this, "startRecording", void 0);
     _defineProperty(this, "stopRecording", void 0);
+    _defineProperty(this, "onStreamingChange", void 0);
     _defineProperty(this, "onError", void 0);
-    _defineProperty(this, "isPaused", void 0);
     _defineProperty(this, "isFileChanging", void 0);
+    _defineProperty(this, "streaming", void 0);
     _defineProperty(this, "playBackFile", void 0);
     this.visData = new VisData();
     this.tickIntervalLength = 0; // Will be overwritten when a trajectory is loaded
@@ -54,6 +55,9 @@ var SimulariumController = /*#__PURE__*/function () {
       return noop;
     };
     this.onError = function /*errorMessage*/ () {
+      return noop;
+    };
+    this.onStreamingChange = function /*streaming: boolean*/ () {
       return noop;
     };
 
@@ -80,8 +84,8 @@ var SimulariumController = /*#__PURE__*/function () {
         console.warn("trajectoryPlaybackFile param ignored, no network config provided");
       }
     }
-    this.isPaused = false;
     this.isFileChanging = false;
+    this.streaming = false;
     this.playBackFile = params.trajectoryPlaybackFile || "";
     this.zoomIn = this.zoomIn.bind(this);
     this.zoomOut = this.zoomOut.bind(this);
@@ -122,6 +126,9 @@ var SimulariumController = /*#__PURE__*/function () {
       this.simulator.setTrajectoryFileInfoHandler(function (trajFileInfo) {
         _this2.handleTrajectoryInfo(trajFileInfo);
       });
+      this.visData.setOnCacheLimitReached(function () {
+        _this2.pauseStreaming();
+      });
     }
   }, {
     key: "configureNetwork",
@@ -141,6 +148,22 @@ var SimulariumController = /*#__PURE__*/function () {
     key: "isChangingFile",
     get: function get() {
       return this.isFileChanging;
+    }
+  }, {
+    key: "setOnStreamingChangeCallback",
+    value: function setOnStreamingChangeCallback(onStreamingChange) {
+      this.onStreamingChange = onStreamingChange;
+    }
+  }, {
+    key: "handleStreamingChange",
+    value: function handleStreamingChange(streaming) {
+      this.streaming = streaming;
+      this.onStreamingChange(streaming);
+    }
+  }, {
+    key: "isStreaming",
+    value: function isStreaming() {
+      return this.streaming;
     }
 
     // Not called by viewer, but could be called by
@@ -164,7 +187,6 @@ var SimulariumController = /*#__PURE__*/function () {
       if (!this.simulator) {
         return Promise.reject();
       }
-      this.isPaused = false;
       this.visData.clearCache();
       return this.simulator.initialize(this.playBackFile);
     }
@@ -178,6 +200,7 @@ var SimulariumController = /*#__PURE__*/function () {
     value: function stop() {
       if (this.simulator) {
         this.simulator.abort();
+        this.handleStreamingChange(false);
       }
     }
   }, {
@@ -208,17 +231,18 @@ var SimulariumController = /*#__PURE__*/function () {
       }
     }
   }, {
-    key: "pause",
-    value: function pause() {
+    key: "pauseStreaming",
+    value: function pauseStreaming() {
       if (this.simulator) {
+        this.handleStreamingChange(false);
+        // todo add frame argument once octopus supports this
         this.simulator.pause();
-        this.isPaused = true;
       }
     }
   }, {
     key: "paused",
     value: function paused() {
-      return this.isPaused;
+      return !this.isPlaying();
     }
   }, {
     key: "initializeTrajectoryFile",
@@ -247,32 +271,90 @@ var SimulariumController = /*#__PURE__*/function () {
       }
     }
   }, {
+    key: "clampFrameNumber",
+    value: function clampFrameNumber(frame) {
+      return Math.max(0, Math.min(frame, this.visData.totalSteps - 1));
+    }
+  }, {
+    key: "getFrameAtTime",
+    value: function getFrameAtTime(time) {
+      var frameNumber = Math.round(time / this.visData.timeStepSize);
+      var clampedFrame = this.clampFrameNumber(frameNumber);
+      return clampedFrame;
+    }
+  }, {
+    key: "movePlaybackFrame",
+    value: function movePlaybackFrame(frameNumber) {
+      if (this.streaming) {
+        this.pauseStreaming();
+      }
+      var clampedFrame = this.clampFrameNumber(frameNumber);
+      if (this.isFileChanging || !this.simulator) return;
+      if (this.visData.hasLocalCacheForFrame(clampedFrame)) {
+        this.visData.gotoFrame(clampedFrame);
+        this.resumeStreaming();
+      } else if (this.simulator) {
+        this.clearLocalCache();
+        this.visData.WaitForFrame(clampedFrame);
+        this.visData.currentFrameNumber = clampedFrame;
+        this.resumeStreaming(clampedFrame);
+      }
+    }
+  }, {
     key: "gotoTime",
     value: function gotoTime(time) {
-      // If in the middle of changing files, ignore any gotoTime requests
-      if (this.isFileChanging || !this.simulator) return;
-      if (this.visData.hasLocalCacheForTime(time)) {
-        this.visData.gotoTime(time);
-      } else {
-        // else reset the local cache,
-        //  and play remotely from the desired simulation time
-        this.visData.clearCache();
-        this.simulator.requestFrameByTime(time);
-      }
+      var targetFrame = this.getFrameAtTime(time);
+      this.movePlaybackFrame(targetFrame);
     }
   }, {
     key: "playFromTime",
     value: function playFromTime(time) {
       this.gotoTime(time);
-      this.isPaused = false;
+      this.visData.isPlaying = true;
     }
+  }, {
+    key: "initalizeStreaming",
+    value: function initalizeStreaming() {
+      if (this.simulator) {
+        this.simulator.requestFrame(0);
+        this.simulator.stream();
+        this.handleStreamingChange(true);
+      }
+    }
+  }, {
+    key: "resumeStreaming",
+    value: function resumeStreaming(startFrame) {
+      if (this.streaming) {
+        return;
+      }
+      var requestFrame = null;
+      if (startFrame !== undefined) {
+        requestFrame = startFrame;
+      } else if (this.visData.remoteStreamingHeadPotentiallyOutOfSync) {
+        requestFrame = this.visData.currentStreamingHead;
+      }
+      if (this.simulator) {
+        if (requestFrame !== null) {
+          this.simulator.requestFrame(requestFrame);
+        }
+        this.simulator.stream();
+        this.handleStreamingChange(true);
+      }
+    }
+
+    // pause playback
+  }, {
+    key: "pause",
+    value: function pause() {
+      this.visData.isPlaying = false;
+    }
+
+    // resume playback
   }, {
     key: "resume",
     value: function resume() {
-      if (this.simulator) {
-        this.simulator.stream();
-        this.isPaused = false;
-      }
+      this.visData.isPlaying = true;
+      this.resumeStreaming();
     }
   }, {
     key: "clearFile",
@@ -282,7 +364,6 @@ var SimulariumController = /*#__PURE__*/function () {
       this.playBackFile = "";
       this.visData.clearForNewTrajectory();
       (_this$simulator = this.simulator) === null || _this$simulator === void 0 || _this$simulator.abort();
-      this.pause();
       if (this.visGeometry) {
         this.visGeometry.clearForNewTrajectory();
         this.visGeometry.resetCamera();
@@ -328,7 +409,7 @@ var SimulariumController = /*#__PURE__*/function () {
         try {
           if (connectionParams) {
             this.createSimulatorConnection(connectionParams.netConnectionSettings, connectionParams.clientSimulator, connectionParams.simulariumFile, connectionParams.geoAssets);
-            this.isPaused = true;
+            this.visData.isPlaying = false;
           } else {
             // caught in following block, not sent to front end
             throw new Error("incomplete simulator config provided");
@@ -337,17 +418,18 @@ var SimulariumController = /*#__PURE__*/function () {
           var error = e;
           this.simulator = undefined;
           console.warn(error.message);
-          this.isPaused = false;
+          this.visData.isPlaying = false;
         }
       }
 
       // start the simulation paused and get first frame
       if (this.simulator) {
-        return this.start() // will reject if no simulator
-        .then(function () {
+        return this.start().then(function () {
           if (_this4.simulator) {
             _this4.simulator.requestFrame(0);
           }
+        }).then(function () {
+          _this4.resumeStreaming();
         }).then(function () {
           return {
             status: FILE_STATUS_SUCCESS
@@ -541,6 +623,21 @@ var SimulariumController = /*#__PURE__*/function () {
     value: function setCameraType(ortho) {
       var _this$visGeometry9;
       (_this$visGeometry9 = this.visGeometry) === null || _this$visGeometry9 === void 0 || _this$visGeometry9.setCameraType(ortho);
+    }
+  }, {
+    key: "isPlaying",
+    value: function isPlaying() {
+      return this.visData.isPlaying;
+    }
+  }, {
+    key: "currentPlaybackHead",
+    value: function currentPlaybackHead() {
+      return this.visData.currentFrameNumber;
+    }
+  }, {
+    key: "currentStreamingHead",
+    value: function currentStreamingHead() {
+      return this.visData.currentStreamingHead;
     }
   }]);
 }();

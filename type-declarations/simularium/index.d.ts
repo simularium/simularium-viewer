@@ -1,6 +1,6 @@
 export type { NetConnectionParams } from "./WebsocketClient.js";
 export type { IClientSimulatorImpl } from "./localSimulators/IClientSimulatorImpl.js";
-export type { VisDataMessage, VisDataFrame, TrajectoryFileInfo, ModelInfo, EncodedTypeMapping, SimulariumFileFormat, Plot, AgentData, } from "./types.js";
+export type { VisDataMessage, VisDataFrame, TrajectoryFileInfo, ModelInfo, EncodedTypeMapping, SimulariumFileFormat, Plot, AgentData, CacheLog, } from "./types";
 export type { SelectionStateInfo, UIDisplayData, SelectionEntry, } from "./SelectionInterface.js";
 export { ErrorLevel, FrontEndError } from "./FrontEndError.js";
 export { NetMessageEnum } from "./WebsocketClient.js";

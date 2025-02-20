@@ -1,7 +1,7 @@
 import * as React from "react";
 import SimulariumController from "../controller/index.js";
 import { TrajectoryFileInfo, SelectionStateInfo, UIDisplayData } from "../simularium/index.js";
-import { AgentData } from "../simularium/types.js";
+import { AgentData, CacheLog } from "../simularium/types.js";
 import { FrontEndError } from "../simularium/FrontEndError.js";
 import { RenderStyle } from "../visGeometry/index.js";
 export type PropColor = string | number | [number, number, number];
@@ -29,6 +29,8 @@ type ViewportProps = {
     disableCache?: boolean;
     onFollowObjectChanged?: (agentData: AgentData) => void;
     maxCacheSize?: number;
+    onCacheUpdate?: (log: CacheLog) => void;
+    onStreamingChange?: (streaming: boolean) => void;
 } & Partial<DefaultProps>;
 declare const defaultProps: {
     renderStyle: RenderStyle;

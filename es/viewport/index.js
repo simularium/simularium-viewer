@@ -174,10 +174,14 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
     _this.visGeometry = new VisGeometry(loggerLevel);
     _this.props.simulariumController.visData.frameCache.changeSettings({
       cacheEnabled: !props.disableCache,
-      maxSize: props.maxCacheSize
+      maxSize: props.maxCacheSize,
+      onUpdate: props.onCacheUpdate
     });
     if (props.onError) {
       _this.props.simulariumController.visData.setOnError(props.onError);
+    }
+    if (props.onStreamingChange) {
+      _this.props.simulariumController.setOnStreamingChangeCallback(props.onStreamingChange);
     }
     _this.props.simulariumController.visData.clearCache();
     _this.visGeometry.createMaterials(props.agentColors);
@@ -230,6 +234,7 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
       // Update TrajectoryFileInfo format to latest version
       var trajectoryFileInfo = updateTrajectoryFileInfoFormat(msg, onError);
       simulariumController.visData.timeStepSize = trajectoryFileInfo.timeStepSize;
+      simulariumController.visData.totalSteps = trajectoryFileInfo.totalSteps;
       var bx = trajectoryFileInfo.size.x;
       var by = trajectoryFileInfo.size.y;
       var bz = trajectoryFileInfo.size.z;
@@ -523,7 +528,7 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
             this.updateFollowObjectData();
           }
         }
-        if (!visData.atLatestFrame() && !simulariumController.paused()) {
+        if (!visData.atLatestFrame() && simulariumController.isPlaying()) {
           visData.gotoNextFrame();
         }
         this.stats.begin();

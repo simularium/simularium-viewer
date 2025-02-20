@@ -14,19 +14,35 @@ var VisData = /*#__PURE__*/function () {
     _defineProperty(this, "frameToWaitFor", void 0);
     _defineProperty(this, "lockedForFrame", void 0);
     _defineProperty(this, "currentFrameNumber", void 0);
+    // playback head
+    _defineProperty(this, "currentStreamingHead", void 0);
+    _defineProperty(this, "remoteStreamingHeadPotentiallyOutOfSync", void 0);
+    _defineProperty(this, "isPlaying", void 0);
+    _defineProperty(this, "onCacheLimitReached", void 0);
     _defineProperty(this, "timeStepSize", void 0);
+    _defineProperty(this, "totalSteps", void 0);
     _defineProperty(this, "onError", void 0);
     this.currentFrameNumber = -1;
+    this.currentStreamingHead = -1;
+    this.remoteStreamingHeadPotentiallyOutOfSync = false;
     this.frameCache = new VisDataCache();
     this.frameToWaitFor = 0;
     this.lockedForFrame = false;
     this.timeStepSize = 0;
+    this.totalSteps = 0;
+    this.isPlaying = false;
     this.onError = noop;
+    this.onCacheLimitReached = noop;
   }
   return _createClass(VisData, [{
     key: "setOnError",
     value: function setOnError(onError) {
       this.onError = onError;
+    }
+  }, {
+    key: "setOnCacheLimitReached",
+    value: function setOnCacheLimitReached(onCacheLimitReached) {
+      this.onCacheLimitReached = onCacheLimitReached;
     }
   }, {
     key: "currentFrameData",
@@ -58,11 +74,23 @@ var VisData = /*#__PURE__*/function () {
       return this.frameCache.containsTime(time);
     }
   }, {
+    key: "hasLocalCacheForFrame",
+    value: function hasLocalCacheForFrame(frameNumber) {
+      return this.frameCache.containsFrameAtFrameNumber(frameNumber);
+    }
+  }, {
     key: "gotoTime",
     value: function gotoTime(time) {
       var _this$frameCache$getF;
       var frameNumber = (_this$frameCache$getF = this.frameCache.getFrameAtTime(time)) === null || _this$frameCache$getF === void 0 ? void 0 : _this$frameCache$getF.frameNumber;
       if (frameNumber !== undefined) {
+        this.currentFrameNumber = frameNumber;
+      }
+    }
+  }, {
+    key: "gotoFrame",
+    value: function gotoFrame(frameNumber) {
+      if (this.hasLocalCacheForFrame(frameNumber)) {
         this.currentFrameNumber = frameNumber;
       }
     }
@@ -100,6 +128,8 @@ var VisData = /*#__PURE__*/function () {
     key: "clearForNewTrajectory",
     value: function clearForNewTrajectory() {
       this.clearCache();
+      this.currentStreamingHead = -1;
+      this.remoteStreamingHeadPotentiallyOutOfSync = false;
     }
   }, {
     key: "parseAgentsFromVisDataMessage",
@@ -132,7 +162,7 @@ var VisData = /*#__PURE__*/function () {
         this.frameExceedsCacheSizeError(parsedMsg.size);
         return;
       }
-      this.addFrameToCache(parsedMsg);
+      this.validateAndProcessFrame(parsedMsg);
     }
   }, {
     key: "parseAgentsFromFrameData",
@@ -142,7 +172,7 @@ var VisData = /*#__PURE__*/function () {
         if (frame.frameNumber === 0) {
           this.clearCache(); // new data has arrived
         }
-        this.addFrameToCache(frame);
+        this.validateAndProcessFrame(frame);
         return;
       }
       this.parseAgentsFromVisDataMessage(msg);
@@ -161,13 +191,69 @@ var VisData = /*#__PURE__*/function () {
       }
       this.parseAgentsFromFrameData(msg);
     }
+
+    ////////// Incoming frame management //////////////
   }, {
-    key: "addFrameToCache",
-    value: function addFrameToCache(frame) {
+    key: "handleOversizedFrame",
+    value: function handleOversizedFrame(frame) {
       if (this.frameCache.cacheSizeLimited && frame.size > this.frameCache.maxSize) {
         this.frameExceedsCacheSizeError(frame.size);
         return;
       }
+    }
+  }, {
+    key: "trimAndAddFrame",
+    value: function trimAndAddFrame(frame) {
+      this.frameCache.trimCache(this.currentFrameData.size);
+      this.frameCache.addFrame(frame);
+    }
+  }, {
+    key: "resetCacheWithFrame",
+    value: function resetCacheWithFrame(frame) {
+      this.clearCache();
+      this.frameCache.addFrame(frame);
+    }
+  }, {
+    key: "doesFrameCauseCacheOverflow",
+    value: function doesFrameCauseCacheOverflow(frame) {
+      return frame.size + this.frameCache.size > this.frameCache.maxSize;
+    }
+  }, {
+    key: "handleCacheOverflow",
+    value: function handleCacheOverflow(frame) {
+      var playbackFrame = this.currentFrameData;
+      var cacheHeadFrame = this.frameCache.getFirstFrameNumber();
+      var isCacheHeadBehindPlayback = playbackFrame.frameNumber > cacheHeadFrame;
+      if (isCacheHeadBehindPlayback) {
+        this.trimAndAddFrame(frame);
+      } else if (this.isPlaying) {
+        // if currently playing, and cache head is ahead of playback head
+        // we clear the cache and add the frame
+        this.resetCacheWithFrame(frame);
+      } else {
+        // if paused, and we run out of space in the cache
+        // we need to stop streaming, which is handled by the controller
+        this.remoteStreamingHeadPotentiallyOutOfSync = true;
+        this.onCacheLimitReached();
+      }
+    }
+  }, {
+    key: "validateAndProcessFrame",
+    value: function validateAndProcessFrame(frame) {
+      // assumes that if a frame has come in, the back end has set that to be the current frame
+      // todo update when octopus has functionality to move backend "current frame"
+      // via argument on pause() or new message type
+      this.currentStreamingHead = frame.frameNumber;
+      this.handleOversizedFrame(frame);
+      if (this.doesFrameCauseCacheOverflow(frame)) {
+        this.handleCacheOverflow(frame);
+      } else {
+        this.addFrameToCache(frame);
+      }
+    }
+  }, {
+    key: "addFrameToCache",
+    value: function addFrameToCache(frame) {
       this.frameCache.addFrame(frame);
     }
   }, {

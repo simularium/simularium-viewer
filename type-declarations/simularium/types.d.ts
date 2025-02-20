@@ -167,4 +167,15 @@ export interface CacheNode {
     next: CacheNode | null;
     prev: CacheNode | null;
 }
+export interface CacheLog {
+    size: number;
+    numFrames: number;
+    maxSize: number;
+    enabled: boolean;
+    firstFrameNumber: number;
+    firstFrameTime: number;
+    lastFrameNumber: number;
+    lastFrameTime: number;
+    framesInCache: number[];
+}
 export {};

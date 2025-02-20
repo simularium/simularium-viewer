@@ -11,6 +11,7 @@ var VisDataCache = /*#__PURE__*/function () {
     _defineProperty(this, "size", void 0);
     _defineProperty(this, "_maxSize", void 0);
     _defineProperty(this, "_cacheEnabled", void 0);
+    _defineProperty(this, "cacheUpdateCallback", void 0);
     /**
      * maxSize of negative one means no limit on cache size
      * disabledCache means only one frame will be stored at a time
@@ -23,6 +24,7 @@ var VisDataCache = /*#__PURE__*/function () {
     this.size = 0;
     this._maxSize = Infinity;
     this._cacheEnabled = true;
+    this.cacheUpdateCallback = null;
     if (settings) {
       this.changeSettings(settings);
     }
@@ -31,13 +33,45 @@ var VisDataCache = /*#__PURE__*/function () {
     key: "changeSettings",
     value: function changeSettings(options) {
       var maxSize = options.maxSize,
-        cacheEnabled = options.cacheEnabled;
+        cacheEnabled = options.cacheEnabled,
+        onUpdate = options.onUpdate;
       if (cacheEnabled !== undefined) {
         this._cacheEnabled = cacheEnabled;
       }
       if (maxSize !== undefined) {
         this._maxSize = maxSize;
       }
+      if (onUpdate !== undefined) {
+        this.cacheUpdateCallback = onUpdate;
+      }
+    }
+  }, {
+    key: "onCacheUpdate",
+    value: function onCacheUpdate() {
+      if (this.cacheUpdateCallback) {
+        this.cacheUpdateCallback({
+          size: this.size,
+          numFrames: this.numFrames,
+          maxSize: this._maxSize,
+          enabled: this._cacheEnabled,
+          firstFrameNumber: this.getFirstFrameNumber(),
+          firstFrameTime: this.getFirstFrameTime(),
+          lastFrameNumber: this.getLastFrameNumber(),
+          lastFrameTime: this.getLastFrameTime(),
+          framesInCache: this.getListOfCachedFrameNumbers()
+        });
+      }
+    }
+  }, {
+    key: "getListOfCachedFrameNumbers",
+    value: function getListOfCachedFrameNumbers() {
+      var frameNumbers = [];
+      var current = this.head;
+      while (current !== null) {
+        frameNumbers.push(current.data.frameNumber);
+        current = current.next;
+      }
+      return frameNumbers;
     }
   }, {
     key: "maxSize",
@@ -109,14 +143,16 @@ var VisDataCache = /*#__PURE__*/function () {
   }, {
     key: "getFirstFrameNumber",
     value: function getFirstFrameNumber() {
-      var _this$head2;
-      return ((_this$head2 = this.head) === null || _this$head2 === void 0 ? void 0 : _this$head2.data.frameNumber) || -1;
+      if (this.head) {
+        return this.head.data.frameNumber;
+      }
+      return -1;
     }
   }, {
     key: "getFirstFrameTime",
     value: function getFirstFrameTime() {
-      var _this$head3;
-      return ((_this$head3 = this.head) === null || _this$head3 === void 0 ? void 0 : _this$head3.data.time) || -1;
+      var _this$head2;
+      return ((_this$head2 = this.head) === null || _this$head2 === void 0 ? void 0 : _this$head2.data.time) || -1;
     }
   }, {
     key: "getLastFrame",
@@ -194,6 +230,7 @@ var VisDataCache = /*#__PURE__*/function () {
         this.tail = newNode;
         this.numFrames++;
         this.size += data.size;
+        // todo: handle this logic at a higher level
         if (this.size > this._maxSize) {
           this.trimCache();
         }
@@ -207,9 +244,11 @@ var VisDataCache = /*#__PURE__*/function () {
       }
       if (this.hasFrames() && this._cacheEnabled) {
         this.addFrameToEndOfCache(data);
+        this.onCacheUpdate();
         return;
       }
       this.assignSingleFrameToCache(data);
+      this.onCacheUpdate();
     }
 
     // generalized to remove any node, but in theory
@@ -237,6 +276,7 @@ var VisDataCache = /*#__PURE__*/function () {
       }
       this.numFrames--;
       this.size -= node.data.size;
+      this.onCacheUpdate();
     }
   }, {
     key: "trimCache",
@@ -252,6 +292,7 @@ var VisDataCache = /*#__PURE__*/function () {
       this.tail = null;
       this.numFrames = 0;
       this.size = 0;
+      this.onCacheUpdate();
     }
   }]);
 }();
