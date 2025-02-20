@@ -30,6 +30,10 @@ const ColorPicker = ({
         if (!agent) {
             throw new Error("No agent found");
         }
+        if (!agent.displayStates.length) {
+            setSubAgents([{ name: "<unmodified>", id: "<unmodified>" }]);
+            return;
+        }
         setSubAgents(agent.displayStates);
     };
 
