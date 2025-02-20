@@ -12,7 +12,7 @@ import {
     SelectionStateInfo,
     UIDisplayData,
 } from "../simularium/index.js";
-import { AgentData, CacheLog, TrajectoryFileInfoAny } from "../simularium/types.js";
+import { AgentData, CacheLog, Plot, TrajectoryFileInfoAny } from "../simularium/types.js";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers.js";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError.js";
 import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry/index.js";
@@ -50,6 +50,8 @@ type ViewportProps = {
     maxCacheSize?: number;
     onCacheUpdate?: (log: CacheLog) => void;
     onStreamingChange?: (streaming: boolean) => void;
+    onPlotData: (plotData: Plot[]) => void;
+    onMetricsData: (metricsData: Record<string,unknown>) => void;
 } & Partial<DefaultProps>;
 
 const defaultProps = {
@@ -140,6 +142,16 @@ class Viewport extends React.Component<
         if (props.onStreamingChange) {
             this.props.simulariumController.setOnStreamingChangeCallback(
                 props.onStreamingChange
+            );
+        }
+        if (props.onPlotData) {
+            this.props.simulariumController.setOnPlotDataArriveCallback(
+                props.onPlotData
+            );
+        }
+        if (props.onMetricsData) {
+            this.props.simulariumController.setOnMetricsArriveCallback(
+                props.onMetricsData
             );
         }
         this.props.simulariumController.visData.clearCache();
