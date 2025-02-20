@@ -12,6 +12,7 @@ import SimulariumViewer, {
     ErrorLevel,
     NetConnectionParams,
     TrajectoryFileInfo,
+    CacheLog,
     TrajectoryType,
 } from "@aics/simularium-viewer";
 import type {
@@ -36,6 +37,7 @@ import ColorPicker from "./Components/ColorPicker.tsx";
 import RecordMovieComponent from "./Components/RecordMovieComponent.tsx";
 import ConversionForm from "./Components/ConversionForm/index.tsx";
 import AgentMetadata from "./Components/AgentMetadata.tsx";
+import CacheAndStreamingLogsDisplay from "./Components/CacheAndStreamingLogs";
 import FileSelection from "./Components/FileSelect.tsx";
 import AgentSelectionControls from "./Components/AgentSelection.tsx";
 
@@ -65,7 +67,7 @@ interface ViewerState {
     agentColors: number[] | string[];
     showPaths: boolean;
     timeStep: number;
-    totalDuration: number;
+    totalSteps: number;
     filePending: {
         type: TrajectoryType;
         template: { [key: string]: any };
@@ -84,6 +86,9 @@ interface ViewerState {
     firstFrameTime: number;
     followObjectData: AgentData | null;
     conversionFileName: string;
+    cacheLog: CacheLog;
+    playbackPlaying: boolean;
+    isStreaming: boolean;
 }
 
 const simulariumController = new SimulariumController({});
@@ -103,7 +108,7 @@ const initialState: ViewerState = {
     agentColors: agentColors,
     showPaths: true,
     timeStep: 1,
-    totalDuration: 100,
+    totalSteps: 100,
     selectionStateInfo: {
         highlightedAgents: [],
         hiddenAgents: [],
@@ -120,6 +125,19 @@ const initialState: ViewerState = {
     firstFrameTime: 0,
     followObjectData: null,
     conversionFileName: "",
+    cacheLog: {
+        size: 0,
+        numFrames: 0,
+        maxSize: 0,
+        enabled: false,
+        firstFrameNumber: 0,
+        firstFrameTime: 0,
+        lastFrameNumber: 0,
+        lastFrameTime: 0,
+        framesInCache: [],
+    },
+    playbackPlaying: false,
+    isStreaming: false,
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
@@ -416,7 +434,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         }
         this.setState({ currentFrame, currentTime });
         if (currentFrame < 0) {
-            simulariumController.pause();
+            simulariumController.pauseStreaming();
         }
     }
 
@@ -491,9 +509,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             this.receiveConvertedFile();
         }
         // NOTE: Currently incorrectly assumes initial time of 0
-        const totalDuration = (data.totalSteps - 1) * data.timeStepSize;
         this.setState({
-            totalDuration,
+            totalSteps: data.totalSteps,
             timeStep: data.timeStepSize,
             currentFrame: 0,
             currentTime: 0,
@@ -501,8 +518,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         });
     }
 
-    public handleScrubTime(event): void {
-        simulariumController.gotoTime(parseFloat(event.target.value));
+    public handleScrubFrame(event): void {
+        simulariumController.movePlaybackFrame(parseInt(event.target.value));
     }
 
     public handleUIDisplayData(uiDisplayData: UIDisplayData): void {
@@ -534,15 +551,11 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     }
 
     public gotoNextFrame(): void {
-        simulariumController.gotoTime(
-            this.state.currentTime + this.state.timeStep
-        );
+        simulariumController.movePlaybackFrame(this.state.currentFrame + 1);
     }
 
     public gotoPreviousFrame(): void {
-        simulariumController.gotoTime(
-            this.state.currentTime - this.state.timeStep
-        );
+        simulariumController.movePlaybackFrame(this.state.currentFrame - 1);
     }
 
     private translateAgent() {
@@ -766,6 +779,17 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         this.setState({ followObjectData: agentData });
     };
 
+    public handleCacheUpdate = (log: CacheLog) => {
+        this.setState({
+            cacheLog: log,
+            playbackPlaying: simulariumController.isPlaying(),
+        });
+    };
+
+    public handleStreamingChange = (streaming: boolean) => {
+        this.setState({ isStreaming: streaming });
+    };
+
     public updateBrownianSimulator = () => {
         const updateData = {
             data: {
@@ -904,7 +928,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                                 <div>
                                     Currently running a client simulator <br />
                                     <button
-                                        onClick={() => this.updateBrownianSimulator()}
+                                        onClick={() =>
+                                            this.updateBrownianSimulator()
+                                        }
                                     >
                                         Update (Live Mode)
                                     </button>
@@ -921,12 +947,12 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                                         simulariumController.resume()
                                     }
                                 >
-                                    Play
+                                    Play / resume streaming
                                 </button>
                                 <button
                                     onClick={() => simulariumController.pause()}
                                 >
-                                    Pause
+                                    Pause playback
                                 </button>
                                 <button
                                     onClick={() => simulariumController.stop()}
@@ -944,15 +970,19 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                                 <input
                                     name="slider"
                                     type="range"
-                                    min={this.state.firstFrameTime}
-                                    step={this.state.timeStep}
-                                    value={this.state.currentTime}
-                                    max={this.state.totalDuration}
-                                    onChange={this.handleScrubTime}
+                                    min={0}
+                                    step={1}
+                                    value={this.state.currentFrame}
+                                    max={this.state.totalSteps}
+                                    onChange={this.handleScrubFrame}
                                 />
                                 <label htmlFor="slider">
-                                    {this.state.currentTime} /{" "}
-                                    {this.state.totalDuration}
+                                    {this.state.currentFrame *
+                                        this.state.timeStep +
+                                        this.state.firstFrameTime}
+                                    /{" "}
+                                    {this.state.totalSteps *
+                                        this.state.timeStep}
                                 </label>
                             </div>
                         </div>
@@ -1042,7 +1072,18 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                             </button>
                         </div>
                         <div className="logs">
-                            {/* todo add cache and other logs here */}
+                            <CacheAndStreamingLogsDisplay
+                                playbackPlayingState={
+                                    this.state.playbackPlaying
+                                }
+                                isStreamingState={this.state.isStreaming}
+                                cacheLog={this.state.cacheLog}
+                                playbackFrame={
+                                    simulariumController.visData
+                                        .currentFrameNumber
+                                }
+                                streamingHead={simulariumController.currentStreamingHead()}
+                            />
                         </div>
                     </div>
                     <div className="viewer-container">
