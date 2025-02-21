@@ -22,6 +22,7 @@ import type {
     SelectionEntry,
     AgentData,
     IClientSimulatorImpl,
+    Plot,
 } from "@aics/simularium-viewer";
 
 import PointSimulator from "./simulators/PointSimulator.ts";
@@ -32,6 +33,7 @@ import SinglePdbSimulator from "./simulators/SinglePdbSimulator.ts";
 import CurveSimulator from "./simulators/CurveSimulator.ts";
 import SingleCurveSimulator from "./simulators/SingleCurveSimulator.ts";
 import MetaballSimulator from "./simulators/MetaballSimulator.ts";
+import DebugSim from "./simulators/DebugSim.ts";
 
 import ColorPicker from "./Components/ColorPicker.tsx";
 import RecordMovieComponent from "./Components/RecordMovieComponent.tsx";
@@ -41,7 +43,13 @@ import CacheAndStreamingLogsDisplay from "./Components/CacheAndStreamingLogs";
 import FileSelection from "./Components/FileSelect.tsx";
 import AgentSelectionControls from "./Components/AgentSelection.tsx";
 
-import { agentColors, AWAITING_CONVERSION, AWAITING_SMOLDYN_SIM_RUN, TRAJECTORY_OPTIONS } from "./constants.ts";
+import {
+    agentColors,
+    AWAITING_CONVERSION,
+    AWAITING_SMOLDYN_SIM_RUN,
+    TRAJECTORY_OPTIONS,
+} from "./constants.ts";
+import { NetMessage } from "../../type-declarations/simularium/WebsocketClient";
 import { BaseType, CustomType } from "./types.ts";
 import {
     SMOLDYN_TEMPLATE,
@@ -78,7 +86,6 @@ interface ViewerState {
         name: string;
         data: ISimulariumFile | null;
     } | null;
-    clientSimulator: boolean;
     serverHealthy: boolean;
     isRecordingEnabled: boolean;
     trajectoryTitle: string;
@@ -89,6 +96,12 @@ interface ViewerState {
     cacheLog: CacheLog;
     playbackPlaying: boolean;
     isStreaming: boolean;
+    clientSimulator: IClientSimulatorImpl | null;
+    isRemoteClientSimulator: boolean;
+    trajectoryFileInfo: TrajectoryFileInfo | null;
+    plotData: Plot[];
+    metrics: Record<string, unknown> | null;
+    cacheDisabled: boolean;
 }
 
 const simulariumController = new SimulariumController({});
@@ -117,7 +130,6 @@ const initialState: ViewerState = {
     filePending: null,
     selectedFile: "TEST_LIVEMODE_API",
     simulariumFile: null,
-    clientSimulator: false,
     serverHealthy: false,
     isRecordingEnabled: true,
     trajectoryTitle: "",
@@ -138,6 +150,12 @@ const initialState: ViewerState = {
     },
     playbackPlaying: false,
     isStreaming: false,
+    clientSimulator:  null,
+    isRemoteClientSimulator: false,
+    trajectoryFileInfo: null,
+    plotData: [],
+    metrics: null,
+    cacheDisabled: false,
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
@@ -515,7 +533,16 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             currentFrame: 0,
             currentTime: 0,
             trajectoryTitle: data.trajectoryTitle,
+            trajectoryFileInfo: data,
         });
+    }
+
+    public handlePlotData(data: Plot[]): void {
+        this.setState({ plotData: data });
+    }
+
+    public handleMetricsData(data: any): void {
+        this.setState({ metrics: data });
     }
 
     public handleScrubFrame(event): void {
@@ -580,7 +607,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         this.setState({
             selectedFile: "",
             simulariumFile: null,
-            clientSimulator: false,
+            clientSimulator: null,
+            cacheDisabled: false,
         });
     }
 
@@ -618,6 +646,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         kOff: 0.5,
                     },
                 ]);
+                this.setState({ cacheDisabled: true})
                 break;
 
             case "TEST_FIBERS":
@@ -649,7 +678,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     // to run Brownian Motion simulator
     private configureRemoteClientSimulator(fileId: string) {
         this.setState({
-            clientSimulator: true,
+            clientSimulator: null,
             simulariumFile: { name: fileId, data: null },
         });
         simulariumController.changeFile(
@@ -690,9 +719,11 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         if (fileId.clientSimulator) {
             const clientSim = this.configureLocalClientSimulator(fileId.id);
             simulariumController.changeFile(clientSim, fileId.id);
-            this.setState({
-                clientSimulator: true,
-            });
+            if (clientSim.clientSimulator) {
+                this.setState({
+                    clientSimulator: clientSim.clientSimulator,
+                });
+            }
             return;
         } else if (fileId.remoteClientSimulator) {
             this.configureRemoteClientSimulator(fileId.id);
@@ -775,6 +806,43 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         this.setState({ isRecordingEnabled: value });
     };
 
+    public downloadTrajectory = async (useAppliedColors: boolean = false) => {
+        if (this.state.clientSimulator) {
+            // todo pause client simulators before attempting to download
+            // this.state.clientSimulator.sendUpdate(/**pause message */)
+            // todo: point sim live has been updated to provide a correct number of total steps
+            // but this will be on a sim by sim basis
+            this.handleTrajectoryInfo(this.state.clientSimulator?.getInfo());
+        }
+        if (!this.state.trajectoryFileInfo) {
+            console.error("No trajectory info available");
+            return;
+        }
+        if (simulariumController.isWritingToFile) {
+            console.log("Already writing to file, try again soon");
+            return;
+        }
+        try {
+            const blob = await simulariumController.getTrajectoryForDownload(
+                this.state.trajectoryFileInfo,
+                this.state.plotData,
+                this.state.selectionStateInfo.appliedColors,
+                useAppliedColors,
+                !!this.state.clientSimulator
+            );
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download =
+                this.state.simulariumFile?.name ||
+                this.state.trajectoryFileInfo.trajectoryTitle + ".simularium";
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
     public handleFollowObjectData = (agentData: AgentData) => {
         this.setState({ followObjectData: agentData });
     };
@@ -803,6 +871,14 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         };
         simulariumController.sendUpdate(updateData);
     };
+
+    public onAvailableMetricsArrive(msg: NetMessage): void {
+        this.setState({ metrics: msg["metrics"] });
+    }
+
+    public onPlotDataArrive(msg: NetMessage): void {
+        this.setState({ plotData: msg["plotData"] });
+    }
 
     public render(): JSX.Element {
         if (this.state.filePending) {
@@ -919,6 +995,14 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         isRecordingEnabled={this.state.isRecordingEnabled}
                     />
                     <AgentMetadata agentData={this.state.followObjectData} />
+                    <div className="ui-container">
+                        <button onClick={() => this.downloadTrajectory(false)}>
+                            Download Trajectory with default colors
+                        </button>
+                        <button onClick={() => this.downloadTrajectory(true)}>
+                            Download Trajectory with applied colors
+                        </button>
+                    </div>
                 </div>
                 <div className="main-content">
                     <div className="top-container">
@@ -1101,6 +1185,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                                 onTrajectoryFileInfoChanged={this.handleTrajectoryInfo.bind(
                                     this
                                 )}
+                                onPlotData={this.handlePlotData.bind(this)}
+                                onMetricsData={this.handleMetricsData.bind(
+                                    this
+                                )}
                                 selectionStateInfo={
                                     this.state.selectionStateInfo
                                 }
@@ -1121,7 +1209,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                                 onError={this.onError}
                                 backgroundColor={[0, 0, 0]}
                                 lockedCamera={false}
-                                disableCache={false}
+                                disableCache={this.state.cacheDisabled}
                                 onCacheUpdate={this.handleCacheUpdate.bind(
                                     this
                                 )}

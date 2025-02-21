@@ -676,6 +676,59 @@ export default class SimulariumController {
     public currentStreamingHead(): number {
         return this.visData.currentStreamingHead;
     }
+
+    public async getTrajectoryForDownload(
+        trajectoryFileInfo: TrajectoryFileInfo,
+        plotData: Plot[],
+        appliedColors: UIDisplayData,
+        useAppliedColors = true,
+        clientSimulator = false
+    ): Promise<Blob> {
+        if (this.isWritingToFile) {
+            return Promise.reject("Already writing out a file, please wait.");
+        }
+        this.isWritingToFile = true;
+        // if we have a client simulator the totalSteps will be written
+        // to the trajectory info to match the number of frames in the
+        // captured run of the simulator
+        const cachingIncomplete =
+            this.visData.frameCache.numFrames / this.visData.totalSteps < 1;
+        if (!clientSimulator && cachingIncomplete) {
+            // todo implement multi part caching to request
+            // complete set of frames
+            return Promise.reject(
+                "Cannot download trajectory yet, not all frames cached."
+            );
+        }
+
+        const frames: CachedFrame[] = [];
+        const firstFrame = this.visData.frameCache.getFirstFrameNumber();
+        const lastFrame = this.visData.frameCache.getLastFrameNumber();
+        // for pre-computed data this should always(?) be 0 to start
+        // but in the case of a client simulator run where the first part
+        // of the run was trimmed from the cache, the first frame number
+        // might not be zero
+        for (let frameNum = firstFrame; frameNum <= lastFrame; frameNum++) {
+            const frame =
+                this.visData.frameCache.getFrameAtFrameNumber(frameNum);
+            if (frame) {
+                frames.push(frame);
+            }
+        }
+
+        const writer = new JsonFileWriter(
+            trajectoryFileInfo,
+            frames,
+            plotData,
+            appliedColors,
+            useAppliedColors,
+            clientSimulator
+        );
+
+        const blob = writer.getBlob();
+        this.isWritingToFile = false;
+        return blob;
+    }
 }
 
 export { SimulariumController };
