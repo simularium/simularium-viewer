@@ -35,7 +35,7 @@ const AgentSelectionControls: React.FC<AgentSelectionControlsProps> = ({
                 {hideAllAgents ? "Show all agents" : "Hide all agents"}
             </button>
             <div>
-                <div className="agent-boxes">
+                <div className="scroll">
                     {particleTypeNames.map((id) => (
                         <div key={id}>
                             <label htmlFor={`visibility-${id}`}>{id}</label>

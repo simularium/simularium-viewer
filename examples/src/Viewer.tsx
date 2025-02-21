@@ -869,7 +869,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         >
                             Get plot data
                         </button>
-                        <br></br>
                         <span>
                             Tick interval length:{" "}
                             {simulariumController.tickIntervalLength}
@@ -923,10 +922,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 </div>
                 <div className="main-content">
                     <div className="top-container">
-                        <div className="playback">
+                        <div className="playback horizontal">
                             {/* todo configure and organize client specific controls */}
                             {this.state.clientSimulator && (
-                                <div>
+                                <div className="ui-container">
                                     Currently running a client simulator <br />
                                     <button
                                         onClick={() =>
@@ -987,90 +986,98 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                                 </label>
                             </div>
                         </div>
-                        <div className="camera">
-                            <button
-                                onClick={() =>
-                                    this.setState({
-                                        showPaths: !this.state.showPaths,
-                                    })
-                                }
-                            >
-                                ShowPaths
-                            </button>
-                            <button
-                                onClick={() =>
-                                    this.setState({
-                                        renderStyle:
-                                            this.state.renderStyle ===
-                                            RenderStyle.WEBGL1_FALLBACK
-                                                ? RenderStyle.WEBGL2_PREFERRED
-                                                : RenderStyle.WEBGL1_FALLBACK,
-                                    })
-                                }
-                            >
-                                Switch Render
-                            </button>
-                            <button
-                                onClick={() =>
-                                    simulariumController.resetCamera()
-                                }
-                            >
-                                Reset camera
-                            </button>
-                            <button
-                                onClick={() =>
-                                    simulariumController.centerCamera()
-                                }
-                            >
-                                center camera
-                            </button>
-                            <button
-                                onClick={() =>
-                                    simulariumController.reOrientCamera()
-                                }
-                            >
-                                starting orientation
-                            </button>
-                            <button
-                                onClick={() => simulariumController.zoomIn()}
-                            >
-                                +
-                            </button>
-                            <button
-                                onClick={() => simulariumController.zoomOut()}
-                            >
-                                -
-                            </button>
-                            <button
-                                onClick={() => {
-                                    this.panMode = !this.panMode;
-                                    simulariumController.setPanningMode(
-                                        this.panMode
-                                    );
-                                }}
-                            >
-                                Pan/Rotate Mode
-                            </button>
-                            <button
-                                onClick={() => {
-                                    this.focusMode = !this.focusMode;
-                                    simulariumController.setFocusMode(
-                                        this.focusMode
-                                    );
-                                }}
-                            >
-                                Focus Mode
-                            </button>
-                            <button
-                                onClick={() => {
-                                    this.orthoMode = !this.orthoMode;
-                                    simulariumController.setCameraType(
-                                        this.orthoMode
-                                    );
-                                }}
-                            >
-                                Camera mode
-                            </button>
+                        <div className="camera ui-container horizontal">
+                            <div className="vertical">
+                                <button
+                                    onClick={() =>
+                                        this.setState({
+                                            showPaths: !this.state.showPaths,
+                                        })
+                                    }
+                                >
+                                    ShowPaths
+                                </button>
+                                <button
+                                    onClick={() =>
+                                        this.setState({
+                                            renderStyle:
+                                                this.state.renderStyle ===
+                                                RenderStyle.WEBGL1_FALLBACK
+                                                    ? RenderStyle.WEBGL2_PREFERRED
+                                                    : RenderStyle.WEBGL1_FALLBACK,
+                                        })
+                                    }
+                                >
+                                    Switch Render
+                                </button>
+                                <button
+                                    onClick={() =>
+                                        simulariumController.resetCamera()
+                                    }
+                                >
+                                    Reset camera
+                                </button>
+                                <button
+                                    onClick={() =>
+                                        simulariumController.centerCamera()
+                                    }
+                                >
+                                    center camera
+                                </button>
+                                <button
+                                    onClick={() =>
+                                        simulariumController.reOrientCamera()
+                                    }
+                                >
+                                    starting orientation
+                                </button>
+                            </div>
+                            <div className="vertical">
+                                <button
+                                    onClick={() =>
+                                        simulariumController.zoomIn()
+                                    }
+                                >
+                                    +
+                                </button>
+                                <button
+                                    onClick={() =>
+                                        simulariumController.zoomOut()
+                                    }
+                                >
+                                    -
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        this.panMode = !this.panMode;
+                                        simulariumController.setPanningMode(
+                                            this.panMode
+                                        );
+                                    }}
+                                >
+                                    Pan/Rotate Mode
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        this.focusMode = !this.focusMode;
+                                        simulariumController.setFocusMode(
+                                            this.focusMode
+                                        );
+                                    }}
+                                >
+                                    Focus Mode
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        this.orthoMode = !this.orthoMode;
+                                        simulariumController.setCameraType(
+                                            this.orthoMode
+                                        );
+                                    }}
+                                >
+                                    Camera mode
+                                </button>
+                            </div>
                         </div>
                         <div className="logs">
                             <CacheAndStreamingLogsDisplay

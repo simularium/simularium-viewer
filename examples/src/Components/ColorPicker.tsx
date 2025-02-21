@@ -92,7 +92,7 @@ const ColorPicker = ({
 
     return (
         <div className="ui-container">
-            <span>Color change agent selections:</span>
+            <span>Color picker:</span>
             <select id="agentSelect" onChange={handleAgentSelection}>
                 <option value=""> Select Agent</option>
                 {particleTypeNames.map((name: string) => (

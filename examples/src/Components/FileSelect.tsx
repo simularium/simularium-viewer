@@ -78,7 +78,6 @@ const FileSelection = ({
                     <option value={selectedFile}>{selectedFile}</option>
                 )}
             </select>
-            <br></br>
             <button onClick={() => clearFile()}>Clear trajectory </button>
             <button onClick={loadSmoldynFile}>
                 Convert a smoldyn trajectory
@@ -86,7 +85,6 @@ const FileSelection = ({
             <button onClick={loadSmoldynPreConfiguredSim}>
                 Run pre-config Smoldyn sim via BioSimulators API
             </button>
-            <br></br>
             <label>
                 Initial Rabbit Count:
                 <input

@@ -70,7 +70,7 @@ const CacheAndStreamingLogsDisplay: React.FC<StreamingReadoutProps> = ({
         framesInCache,
     } = cacheLog;
     return (
-        <div>
+        <div className="ui-container">
             <button onClick={() => setIsOpen(!isOpen)}>
                 {isOpen
                     ? "Hide Cache and Streaming Info"
@@ -78,7 +78,7 @@ const CacheAndStreamingLogsDisplay: React.FC<StreamingReadoutProps> = ({
             </button>
 
             {isOpen && (
-                <>
+                <div className="scroll">
                     <div>
                         Playback State:{" "}
                         {playbackPlayingState === true ? "playing" : "paused"}
@@ -103,7 +103,7 @@ const CacheAndStreamingLogsDisplay: React.FC<StreamingReadoutProps> = ({
                             maxDisplayLength={10}
                         />
                     </div>
-                </>
+                </div>
             )}
         </div>
     );
