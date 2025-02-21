@@ -5,7 +5,6 @@ interface PlaybackControlsProps {
     simulariumController: any;
     totalSteps: number;
     timeStep: number;
-    firstFrameTime: number;
     currentFrame: number;
     setSpeed: (speed: number) => void;
     currentSpeed: number;
@@ -15,7 +14,6 @@ const PlaybackControls: React.FC<PlaybackControlsProps> = ({
     simulariumController,
     totalSteps,
     timeStep,
-    firstFrameTime,
     currentFrame,
     setSpeed,
     currentSpeed,
@@ -63,7 +61,7 @@ const PlaybackControls: React.FC<PlaybackControlsProps> = ({
                     }
                 />
                 <label htmlFor="slider">
-                    {currentFrame * timeStep + firstFrameTime} /{" "}
+                    {currentFrame * timeStep} /{" "}
                     {totalSteps * timeStep}
                 </label>
             </div>

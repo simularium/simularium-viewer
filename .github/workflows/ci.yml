@@ -40,6 +40,8 @@ jobs:
               with:
                   node-version: ${{env.NODE_VERSION}}
             - run: npm ci
+            - run: cd examples && npm ci
+            - run: npm run generateTypes
             - run: npm run typeCheck --if-present
 
     publish-dev:

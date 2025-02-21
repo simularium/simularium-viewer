@@ -20,39 +20,38 @@ import type {
     UIDisplayData,
     SelectionStateInfo,
     SelectionEntry,
-    AgentData,
 } from "@aics/simularium-viewer";
-import "../../style/style.css";
 
-// local test bed imports
-import PointSimulator from "./simulators/PointSimulator";
-import BindingSimulator from "./simulators/BindingSimulator2D";
-import PointSimulatorLive from "./simulators/PointSimulatorLive";
-import PdbSimulator from "./simulators/PdbSimulator";
-import SinglePdbSimulator from "./simulators/SinglePdbSimulator";
-import CurveSimulator from "./simulators/CurveSimulator";
-import SingleCurveSimulator from "./simulators/SingleCurveSimulator";
-import MetaballSimulator from "./simulators/MetaballSimulator";
+import PointSimulator from "./simulators/PointSimulator.ts";
+import BindingSimulator from "./simulators/BindingSimulator2D.ts";
+import PointSimulatorLive from "./simulators/PointSimulatorLive.ts";
+import PdbSimulator from "./simulators/PdbSimulator.ts";
+import SinglePdbSimulator from "./simulators/SinglePdbSimulator.ts";
+import CurveSimulator from "./simulators/CurveSimulator.ts";
+import SingleCurveSimulator from "./simulators/SingleCurveSimulator.ts";
+import MetaballSimulator from "./simulators/MetaballSimulator.ts";
 
-import ColorPicker from "./Components/ColorPicker";
-import RecordMovieComponent from "./Components/RecordMovieComponent";
-import ConversionForm from "./Components/ConversionForm";
-import AgentMetadata from "./Components/AgentMetadata";
+import ColorPicker from "./Components/ColorPicker.tsx";
+import RecordMovieComponent from "./Components/RecordMovieComponent.tsx";
+import ConversionForm from "./Components/ConversionForm/index.tsx";
+import AgentMetadata from "./Components/AgentMetadata.tsx";
+import CacheAndStreamingLogsDisplay from "./Components/CacheAndStreamingLogs";
+
 import {
     agentColors,
     DEFAULT_PLAYBACK_SPEED_INDEX,
     PLAYBACK_SPEEDS,
-} from "./constants";
-import { BaseType, CustomType } from "./types";
+} from "./constants.ts";
+import { BaseType, CustomType } from "./types.ts";
 import {
     SMOLDYN_TEMPLATE,
     UI_BASE_TYPES,
     UI_CUSTOM_TYPES,
     UI_TEMPLATE_DOWNLOAD_URL_ROOT,
     UI_TEMPLATE_URL_ROOT,
-} from "./api-settings";
-import CacheAndStreamingLogsDisplay from "./Components/CacheAndStreamingLogs";
+} from "./api-settings.ts";
 
+import "@aics/simularium-viewer/style/style.css";
 import "./style.css";
 import PlaybackControls from "./Components/PlaybackControls";
 
@@ -96,7 +95,7 @@ interface ViewerState {
     conversionFileName: string;
     cacheLog: CacheLog;
     playbackPlaying: boolean;
-    streaming: boolean;
+    isStreaming: boolean;
     playbackSpeed: number;
 }
 
@@ -144,7 +143,7 @@ const initialState: ViewerState = {
         framesInCache: [],
     },
     playbackPlaying: false,
-    streaming: false,
+    isStreaming: false,
     playbackSpeed: PLAYBACK_SPEEDS[DEFAULT_PLAYBACK_SPEED_INDEX],
 };
 
@@ -153,6 +152,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     private panMode = false;
     private focusMode = true;
     private orthoMode = false;
+    private smoldynInput = "100";
     private netConnectionSettings: NetConnectionParams;
 
     public constructor(props: InputParams) {
@@ -378,6 +378,28 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             });
     }
 
+    public loadSmoldynSim() {
+        simulariumController.checkServerHealth(
+            this.onHealthCheckResponse,
+            this.netConnectionSettings
+        );
+        const fileName = "smoldyn_sim" + uuidv4() + ".simularium"
+        simulariumController
+            .startSmoldynSim(this.netConnectionSettings, fileName, this.smoldynInput)
+            .then(() => {
+                this.clearPendingFile();
+            })
+            .then(() => {
+                simulariumController.initNewFile(
+                    { netConnectionSettings: this.netConnectionSettings, },
+                    true,
+                )
+            })
+            .catch((err) => {
+                console.error(err);
+            });
+    }
+
     public clearPendingFile() {
         this.setState({ filePending: null });
     }
@@ -455,11 +477,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public receiveConvertedFile(): void {
         simulariumController
-            .changeFile(
+            .initNewFile(
                 {
                     netConnectionSettings: this.netConnectionSettings,
                 },
-                this.state.conversionFileName
             )
             .then(() => {
                 simulariumController.gotoTime(0);
@@ -490,6 +511,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         });
     }
 
+    public handleScrubFrame(event): void {
+        simulariumController.movePlaybackFrame(parseInt(event.target.value));
+    }
+
     public handleUIDisplayData(uiDisplayData: UIDisplayData): void {
         console.log("uiDisplayData", uiDisplayData);
         const allTags = uiDisplayData.reduce(
@@ -516,6 +541,14 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 appliedColors: uiDisplayData,
             },
         });
+    }
+
+    public gotoNextFrame(): void {
+        simulariumController.movePlaybackFrame(this.state.currentFrame + 1);
+    }
+
+    public gotoPreviousFrame(): void {
+        simulariumController.movePlaybackFrame(this.state.currentFrame - 1);
     }
 
     private translateAgent() {
@@ -705,8 +738,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         });
     };
 
-    public handleStreamingChange = (streaming: boolean) => {
-        this.setState({ streaming });
+    public handleStreamingChange = (isStreaming: boolean) => {
+        this.setState({ isStreaming });
     };
 
     public setPlaybackSpeed = (speed: number) => {
@@ -795,11 +828,21 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     Load a smoldyn trajectory
                 </button>
                 <br />
+                <label>
+                    Initial Rabbit Count:
+                    <input
+                        defaultValue="100"
+                        onChange={(event) => {this.smoldynInput = event.target.value}}
+                    />
+                </label>
+                <button onClick={() => this.loadSmoldynSim()}>
+                    Run Smoldyn
+                </button>
+                <br />
                 <PlaybackControls
                     simulariumController={simulariumController}
                     totalSteps={this.state.totalSteps}
                     timeStep={this.state.timeStep}
-                    firstFrameTime={this.state.firstFrameTime}
                     currentFrame={this.state.currentFrame}
                     setSpeed={this.setPlaybackSpeed.bind(this)}
                     currentSpeed={this.state.playbackSpeed}
@@ -976,7 +1019,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 <AgentMetadata agentData={this.state.followObjectData} />
                 <CacheAndStreamingLogsDisplay
                     playbackPlayingState={this.state.playbackPlaying}
-                    isStreamingState={this.state.streaming}
+                    isStreamingState={this.state.isStreaming}
                     cacheLog={this.state.cacheLog}
                     playbackFrame={
                         simulariumController.visData.currentFrameNumber
@@ -1017,10 +1060,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         lockedCamera={false}
                         disableCache={false}
                         //  For no limit use Infinity. Provide limits in bytes, 1MB = 1e6, 1GB = 1e9
-                        maxCacheSize={2e6}
+                        maxCacheSize={Infinity}
                         onCacheUpdate={this.handleCacheUpdate.bind(this)}
-                        onStreamingChange={(streaming) => {
-                            this.handleStreamingChange(streaming);
+                        onStreamingChange={(isStreaming) => {
+                            this.handleStreamingChange(isStreaming);
                         }}
                         playbackSpeed={this.state.playbackSpeed}
                     />
