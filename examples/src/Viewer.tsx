@@ -833,27 +833,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                             this.smoldynInput = count;
                         }}
                     />
-                    <AgentSelectionControls
-                        particleTypeNames={this.state.particleTypeNames}
-                        hiddenAgents={
-                            this.state.selectionStateInfo.hiddenAgents
-                        }
-                        onVisibilityChange={this.turnAgentsOnOff.bind(this)}
-                        onHighlightChange={this.turnAgentHighlightsOnOff.bind(
-                            this
-                        )}
-                        hideAllAgents={this.state.hideAllAgents}
-                        onToggleAllAgents={(hiddenAgents) => {
-                            this.setState({
-                                ...this.state,
-                                hideAllAgents: !this.state.hideAllAgents,
-                                selectionStateInfo: {
-                                    ...this.state.selectionStateInfo,
-                                    hiddenAgents,
-                                },
-                            });
-                        }}
-                    />
                     <div className="ui-container">
                         <button
                             onClick={() =>
@@ -890,6 +869,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         >
                             Get plot data
                         </button>
+                        <br></br>
                         <span>
                             Tick interval length:{" "}
                             {simulariumController.tickIntervalLength}
@@ -919,6 +899,27 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         isRecordingEnabled={this.state.isRecordingEnabled}
                     />
                     <AgentMetadata agentData={this.state.followObjectData} />
+                    <AgentSelectionControls
+                        particleTypeNames={this.state.particleTypeNames}
+                        hiddenAgents={
+                            this.state.selectionStateInfo.hiddenAgents
+                        }
+                        onVisibilityChange={this.turnAgentsOnOff.bind(this)}
+                        onHighlightChange={this.turnAgentHighlightsOnOff.bind(
+                            this
+                        )}
+                        hideAllAgents={this.state.hideAllAgents}
+                        onToggleAllAgents={(hiddenAgents) => {
+                            this.setState({
+                                ...this.state,
+                                hideAllAgents: !this.state.hideAllAgents,
+                                selectionStateInfo: {
+                                    ...this.state.selectionStateInfo,
+                                    hiddenAgents,
+                                },
+                            });
+                        }}
+                    />
                 </div>
                 <div className="main-content">
                     <div className="top-container">

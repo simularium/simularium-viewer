@@ -4,6 +4,7 @@ body {
     padding: 0;
     height: 100%;
     box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
 }
 
 .app-container {
@@ -80,4 +81,9 @@ body {
     padding: 6px;
     border-radius: 6px;
     width: fit-content;
+}
+
+.agent-boxes {
+    max-height: 150px;
+    overflow-y: scroll;
 }
