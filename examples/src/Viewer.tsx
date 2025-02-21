@@ -616,6 +616,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         const config: { clientSimulator?: IClientSimulatorImpl } = {};
 
         switch (selectedFile) {
+            case "DEBUG_SIM":
+                config.clientSimulator = new DebugSim();
+                break;
             case "TEST_LIVEMODE_API":
                 console.log("Using Live Mode API: PointSimulatorLive");
                 config.clientSimulator = new PointSimulatorLive(4, 4);
@@ -646,7 +649,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         kOff: 0.5,
                     },
                 ]);
-                this.setState({ cacheDisabled: true})
+                this.setState({ cacheDisabled: true });
                 break;
 
             case "TEST_FIBERS":
