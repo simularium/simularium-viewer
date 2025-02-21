@@ -37,7 +37,11 @@ import ConversionForm from "./Components/ConversionForm/index.tsx";
 import AgentMetadata from "./Components/AgentMetadata.tsx";
 import CacheAndStreamingLogsDisplay from "./Components/CacheAndStreamingLogs";
 
-import { agentColors } from "./constants.ts";
+import {
+    agentColors,
+    DEFAULT_PLAYBACK_SPEED_INDEX,
+    PLAYBACK_SPEEDS,
+} from "./constants.ts";
 import { BaseType, CustomType } from "./types.ts";
 import {
     SMOLDYN_TEMPLATE,
@@ -49,6 +53,7 @@ import {
 
 import "@aics/simularium-viewer/style/style.css";
 import "./style.css";
+import PlaybackControls from "./Components/PlaybackControls";
 
 let playbackFile = "TEST_LIVEMODE_API";
 let queryStringFile = "";
@@ -91,6 +96,7 @@ interface ViewerState {
     cacheLog: CacheLog;
     playbackPlaying: boolean;
     isStreaming: boolean;
+    playbackSpeed: number;
 }
 
 const simulariumController = new SimulariumController({});
@@ -138,6 +144,7 @@ const initialState: ViewerState = {
     },
     playbackPlaying: false,
     isStreaming: false,
+    playbackSpeed: PLAYBACK_SPEEDS[DEFAULT_PLAYBACK_SPEED_INDEX],
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
@@ -731,8 +738,12 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         });
     };
 
-    public handleStreamingChange = (streaming: boolean) => {
-        this.setState({ isStreaming: streaming });
+    public handleStreamingChange = (isStreaming: boolean) => {
+        this.setState({ isStreaming });
+    };
+
+    public setPlaybackSpeed = (speed: number) => {
+        this.setState({ playbackSpeed: speed });
     };
 
     public render(): JSX.Element {
@@ -828,35 +839,14 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     Run Smoldyn
                 </button>
                 <br />
-                <button onClick={() => simulariumController.resume()}>
-                    Play / resume streaming
-                </button>
-                <button onClick={() => simulariumController.pause()}>
-                    Pause playback
-                </button>
-                <button onClick={() => simulariumController.stop()}>
-                    stop / abort sim
-                </button>
-                <button onClick={this.gotoPreviousFrame.bind(this)}>
-                    Previous Frame
-                </button>
-                <button onClick={this.gotoNextFrame.bind(this)}>
-                    Next Frame
-                </button>
-                <input
-                    name="slider"
-                    type="range"
-                    min={0}
-                    step={1}
-                    value={this.state.currentFrame}
-                    max={this.state.totalSteps}
-                    onChange={this.handleScrubFrame}
+                <PlaybackControls
+                    simulariumController={simulariumController}
+                    totalSteps={this.state.totalSteps}
+                    timeStep={this.state.timeStep}
+                    currentFrame={this.state.currentFrame}
+                    setSpeed={this.setPlaybackSpeed.bind(this)}
+                    currentSpeed={this.state.playbackSpeed}
                 />
-                <label htmlFor="slider">
-                    {this.state.currentFrame * this.state.timeStep +
-                        this.state.firstFrameTime}
-                    / {this.state.totalSteps * this.state.timeStep}
-                </label>
                 <br />
                 {this.state.particleTypeNames.map((id, i) => {
                     return (
@@ -1070,11 +1060,12 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         lockedCamera={false}
                         disableCache={false}
                         //  For no limit use Infinity. Provide limits in bytes, 1MB = 1e6, 1GB = 1e9
-                        maxCacheSize={2e6}
+                        maxCacheSize={Infinity}
                         onCacheUpdate={this.handleCacheUpdate.bind(this)}
-                        onStreamingChange={(streaming) => {
-                            this.handleStreamingChange(streaming);
+                        onStreamingChange={(isStreaming) => {
+                            this.handleStreamingChange(isStreaming);
                         }}
+                        playbackSpeed={this.state.playbackSpeed}
                     />
                 </div>
             </div>

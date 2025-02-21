@@ -64,9 +64,11 @@ const RecordMovieComponent = ({
                         Stop Recording
                     </button>
                     <div>{isRecording ? "Recording..." : ""}</div>
-                    {!browserSupported && (
-                        <div>Browser does not support recording</div>
-                    )}
+                    <div>
+                        {!browserSupported
+                            ? "Browser does not support recording"
+                            : ""}
+                    </div>
                     <div>
                         {isRecording
                             ? "Recording duration:  " +
