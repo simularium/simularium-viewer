@@ -28,7 +28,7 @@ const FileSelection = ({
             const queryStringFile = urlParams.get("file") || "";
             onFileSelect(queryStringFile);
         }
-    }, [onFileSelect]);
+    }, []);
 
     const handleFileSelect = useCallback(
         (file: string) => {
@@ -81,21 +81,22 @@ const FileSelection = ({
             <br></br>
             <button onClick={() => clearFile()}>Clear trajectory </button>
             <button onClick={loadSmoldynFile}>
-                Convert a smoldyn trajectory with
+                Convert a smoldyn trajectory
             </button>
-            <button onClick={loadSmoldynPreConfiguredSim}>
-                Run pre-config Smoldyn sim via BioSimulators API
-            </button>
-            <br></br>
-            <label>
-                Initial Rabbit Count:
-                <input
-                    defaultValue="100"
-                    onChange={(event) => {
-                        setRabbitCount(event.target.value);
-                    }}
-                />
-            </label>
+            <div className="ui-container">
+                <button onClick={loadSmoldynPreConfiguredSim}>
+                    Run pre-config Smoldyn sim via BioSimulators API
+                </button>
+                <label>
+                    Initial Rabbit Count:
+                    <input
+                        defaultValue="100"
+                        onChange={(event) => {
+                            setRabbitCount(event.target.value);
+                        }}
+                    />
+                </label>
+            </div>
         </div>
     );
 };

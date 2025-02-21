@@ -825,25 +825,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         this.smoldynInput = count;
                     }}
                 />
-                <button onClick={() => this.translateAgent()}>
-                    TranslateAgent
-                </button>
-                <button onClick={() => simulariumController.clearFile()}>
-                    Clear
-                </button>
-                <button onClick={() => this.loadSmoldynFile()}>
-                    Convert a smoldyn trajectory
-                </button>
-                <br />
-                <label>
-                    Initial Rabbit Count:
-                    <input
-                        defaultValue="100"
-                        onChange={(event) => {
-                            this.smoldynInput = event.target.value;
-                        }}
-                    />
-                </label>
                 <button onClick={() => simulariumController.resume()}>
                     Play / resume streaming
                 </button>
