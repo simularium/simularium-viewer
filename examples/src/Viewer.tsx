@@ -875,6 +875,13 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         simulariumController.sendUpdate(updateData);
     };
 
+    public addOribitingSphereToDebugSim = () => {
+        const updateData = {
+            data: {newOrbitingSphere: true},
+        };
+        simulariumController.sendUpdate(updateData);
+    };
+
     public onAvailableMetricsArrive(msg: NetMessage): void {
         this.setState({ metrics: msg["metrics"] });
     }
@@ -1019,12 +1026,19 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                                             this.updateBrownianSimulator()
                                         }
                                     >
-                                        Update (Live Mode)
+                                        Update (Brownian sim on octopus)
                                     </button>
                                     <button
                                         onClick={() => this.translateAgent()}
                                     >
                                         Translate Agent (point sim live)
+                                    </button>
+                                    <button
+                                        onClick={() =>
+                                            this.addOribitingSphereToDebugSim()
+                                        }
+                                    >
+                                        Add Oribiting Sphere (debug sim)
                                     </button>
                                 </div>
                             )}

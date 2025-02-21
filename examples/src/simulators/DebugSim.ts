@@ -9,11 +9,8 @@ import {
 } from "@aics/simularium-viewer";
 
 interface FiberDefinition {
-    // The "current" positions of each subpoint
     subPoints: number[];
-    // The "original" (anchor) positions for each subpoint
     originalSubPoints: number[];
-    // A random offset for each subpoint (scaled by sin(orbitAngle))
     randomOffsets: number[];
     typeId: number;
     instanceId: number;
@@ -27,6 +24,15 @@ interface SphereDefinition {
     instanceId: number;
 }
 
+interface OrbitingSphereParams {
+    sphere: SphereDefinition;
+    orbitAngle: number;
+    orbitSpeed: number;
+    radius: number;
+    plane: "xy" | "xz" | "yz";
+}
+
+
 export default class DebugSimBreathingCube implements IClientSimulatorImpl {
     private currentFrame = 0;
     private orbitAngle = 0;
@@ -34,23 +40,84 @@ export default class DebugSimBreathingCube implements IClientSimulatorImpl {
     private cubeEdges: FiberDefinition[] = [];
     private axisFibers: FiberDefinition[] = [];
     private axisSpheres: SphereDefinition[] = [];
-    private orbitingSphere: SphereDefinition;
+    private orbitingSpheres: OrbitingSphereParams[] = [];
 
-    private orbitSpeed = 0.05; // how fast the orbiting sphere completes a circle
-    private deformationAmplitude = 0.2; // max distance from original positions
+    private orbitingSpherePlaneIndex = 0;
+    private nextOrbitSphereInstanceId = 301;
+
+    private orbitSpeed = 0.05;
+    private deformationAmplitude = 0.2;
 
     constructor() {
         this.buildCubeEdges();
         this.buildAxisFibersAndSpheres();
 
-        // Orbiting sphere
-        this.orbitingSphere = {
-            x: 3,
-            y: 0,
-            z: 0,
-            typeId: 5, // orbiting sphere type
-            instanceId: 300, // arbitrary ID
+        this.orbitingSpheres.push({
+            sphere: {
+                x: 3,
+                y: 0,
+                z: 0,
+                typeId: 5, // orbiting sphere type
+                instanceId: 300, // arbitrary ID
+            },
+            orbitAngle: 0,
+            orbitSpeed: 0.05,
+            radius: 3,
+            plane: "xy",
+        });
+    }
+
+    // ------------------------------------------------------------------------
+    // NEW METHOD: Automatically creates and adds an orbiting sphere with:
+    // - A cycling orbit plane ("xy", "xz", "yz")
+    // - A randomized initial angle and orbit speed
+    // ------------------------------------------------------------------------
+    public addAutoOrbitingSphere(): void {
+        const orbitPlanes: ("xy" | "xz" | "yz")[] = ["xy", "xz", "yz"];
+        // Cycle through the available orbit planes.
+        const plane = orbitPlanes[this.orbitingSpherePlaneIndex];
+        this.orbitingSpherePlaneIndex =
+            (this.orbitingSpherePlaneIndex + 1) % orbitPlanes.length;
+
+        // Generate a random initial angle (0 to 2π) and a random orbit speed between 0.01 and 0.1.
+        const angle = Math.random() * 2 * Math.PI;
+        const speed = Math.random() * 0.09 + 0.01;
+        const radius = 3;
+
+        // Calculate the initial position based on the chosen orbit plane.
+        let x = 0,
+            y = 0,
+            z = 0;
+        if (plane === "xy") {
+            x = radius * Math.cos(angle);
+            y = radius * Math.sin(angle);
+            z = 0;
+        } else if (plane === "xz") {
+            x = radius * Math.cos(angle);
+            y = 0;
+            z = radius * Math.sin(angle);
+        } else if (plane === "yz") {
+            x = 0;
+            y = radius * Math.cos(angle);
+            z = radius * Math.sin(angle);
+        }
+
+        const newSphere: OrbitingSphereParams = {
+            sphere: {
+                x,
+                y,
+                z,
+                typeId: 5, // orbiting sphere type
+                instanceId: this.nextOrbitSphereInstanceId,
+            },
+            orbitAngle: angle,
+            orbitSpeed: speed,
+            radius: radius,
+            plane: plane,
         };
+
+        this.nextOrbitSphereInstanceId++;
+        this.orbitingSpheres.push(newSphere);
     }
 
     private buildCubeEdges() {
@@ -206,7 +273,7 @@ export default class DebugSimBreathingCube implements IClientSimulatorImpl {
             positiveEnd,
             nSteps
         );
-        const subPoints = originalSubPoints.slice(); // copy
+        const subPoints = originalSubPoints.slice();
         const randomOffsets: number[] = [];
 
         const totalCoords = nSteps * 3;
@@ -272,7 +339,7 @@ export default class DebugSimBreathingCube implements IClientSimulatorImpl {
 
     // ------------------------------------------------------------------------
     // UPDATE: Each frame:
-    //   1) Move the orbiting sphere
+    //   1) Move the orbiting spheres
     //   2) Deform each fiber to a "breathing" shape by:
     //      subPoints[i] = originalSubPoints[i] + randomOffsets[i] * (sin(orbitAngle) * amplitude)
     //   => So each revolution of orbitAngle (2π) returns to original shape.
@@ -281,8 +348,29 @@ export default class DebugSimBreathingCube implements IClientSimulatorImpl {
         // 1) Move orbiting sphere
         this.orbitAngle += this.orbitSpeed;
         const radius = 3;
-        this.orbitingSphere.x = radius * Math.cos(this.orbitAngle);
-        this.orbitingSphere.y = radius * Math.sin(this.orbitAngle);
+        this.orbitingSpheres.forEach((orbitParams) => {
+            orbitParams.orbitAngle += orbitParams.orbitSpeed;
+            // Update position based on the specified plane.
+            if (orbitParams.plane === "xy") {
+                orbitParams.sphere.x =
+                    orbitParams.radius * Math.cos(orbitParams.orbitAngle);
+                orbitParams.sphere.y =
+                    orbitParams.radius * Math.sin(orbitParams.orbitAngle);
+                // Z remains unchanged.
+            } else if (orbitParams.plane === "xz") {
+                orbitParams.sphere.x =
+                    orbitParams.radius * Math.cos(orbitParams.orbitAngle);
+                orbitParams.sphere.z =
+                    orbitParams.radius * Math.sin(orbitParams.orbitAngle);
+                // Y remains unchanged.
+            } else if (orbitParams.plane === "yz") {
+                orbitParams.sphere.y =
+                    orbitParams.radius * Math.cos(orbitParams.orbitAngle);
+                orbitParams.sphere.z =
+                    orbitParams.radius * Math.sin(orbitParams.orbitAngle);
+                // X remains unchanged.
+            }
+        });
 
         // 2) Update the cube edges
         this.updateFiberPoints(this.cubeEdges);
@@ -332,18 +420,17 @@ export default class DebugSimBreathingCube implements IClientSimulatorImpl {
             agentData.push(0);
         }
 
-        // Orbiting sphere
-        agentData.push(VisTypes.ID_VIS_TYPE_DEFAULT);
-        agentData.push(this.orbitingSphere.instanceId);
-        agentData.push(this.orbitingSphere.typeId);
-        agentData.push(
-            this.orbitingSphere.x,
-            this.orbitingSphere.y,
-            this.orbitingSphere.z
-        );
-        agentData.push(0, 0, 0);
-        agentData.push(0.4);
-        agentData.push(0);
+        // Orbiting spheres
+        for (const orbitParams of this.orbitingSpheres) {
+            const sphere = orbitParams.sphere;
+            agentData.push(VisTypes.ID_VIS_TYPE_DEFAULT);
+            agentData.push(sphere.instanceId);
+            agentData.push(sphere.typeId);
+            agentData.push(sphere.x, sphere.y, sphere.z);
+            agentData.push(0, 0, 0);
+            agentData.push(0.4);
+            agentData.push(0);
+        }
 
         // Return the frame data
         const frameData: VisDataMessage = {
@@ -377,9 +464,12 @@ export default class DebugSimBreathingCube implements IClientSimulatorImpl {
         }
     }
 
-    // If you need to modify these points at runtime:
-    public updateSimulationState(_data: Record<string, unknown>) {
-        // not used in this example
+    public updateSimulationState(data: Record<string, unknown>) {
+        console.log("data", data);
+        if (data.newOrbitingSphere === true) {
+            console.log("Adding new orbiting sphere");
+            this.addAutoOrbitingSphere();
+        }
     }
 
     // Provide type info for Simularium

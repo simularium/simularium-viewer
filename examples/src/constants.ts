@@ -136,6 +136,5 @@ export const TRAJECTORY_OPTIONS: TrajectoryOptions[] = [
     { id: "TEST_PDB", name: "PDB Simulation", clientSimulator: true },
     { id: "TEST_SINGLE_PDB", name: "Single PDB", clientSimulator: true },
     { id: "TEST_METABALLS", name: "Metaballs", clientSimulator: true },
-    { id: "TEST_VALUE_SPHERES", name: "Value Spheres", clientSimulator: true },
     { id: "DEBUG_SIM", name: "Debug Simulation", clientSimulator: true },
 ];
