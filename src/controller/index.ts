@@ -391,7 +391,6 @@ export default class SimulariumController {
 
     public initalizeStreaming(): void {
         if (this.simulator) {
-            this.simulator.requestFrame(0);
             this.simulator.stream();
             this.handleStreamingChange(true);
         }
@@ -500,11 +499,6 @@ export default class SimulariumController {
         // start the simulation paused and get first frame
         if (this.simulator) {
             return this.start()
-                .then(() => {
-                    if (this.simulator) {
-                        this.simulator.requestFrame(0);
-                    }
-                })
                 .then(() => {
                     this.resumeStreaming();
                 })
