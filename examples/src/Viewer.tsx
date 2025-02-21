@@ -42,8 +42,8 @@ import FileSelection from "./Components/FileSelect.tsx";
 
 import {
     agentColors,
-    AWAITING_CONVERSION,
     AWAITING_SMOLDYN_SIM_RUN,
+    SimulatorModes,
     TRAJECTORY_OPTIONS,
 } from "./constants.ts";
 import { BaseType, CustomType } from "./types.ts";
@@ -358,7 +358,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         const fileName = uuidv4() + ".simularium";
         this.setState({
             conversionFileName: fileName,
-            selectedFile: AWAITING_CONVERSION,
+            selectedFile: "",
         });
 
         simulariumController
@@ -378,7 +378,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public loadSmoldynSim() {
         this.clearFile();
-        this.setState({ selectedFile: AWAITING_SMOLDYN_SIM_RUN });
+        this.setState({ conversionFileName: AWAITING_SMOLDYN_SIM_RUN, selectedFile: "" });
         simulariumController.checkServerHealth(
             this.onHealthCheckResponse,
             this.netConnectionSettings
@@ -400,7 +400,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 );
             })
             .then(() => {
-                this.setState({ selectedFile: fileName });
+                this.setState({ selectedFile: fileName, conversionFileName: "" });
             })
             .catch((err) => {
                 console.error("Error starting Smoldyn sim: ", err);
@@ -484,6 +484,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     }
 
     public receiveConvertedFile(): void {
+        this.setState({
+            selectedFile: this.state.conversionFileName,
+            conversionFileName: "",
+        });
         simulariumController
             .initNewFile({
                 netConnectionSettings: this.netConnectionSettings,
@@ -491,12 +495,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             .then(() => {
                 simulariumController.gotoTime(0);
             })
-            .then(() =>
-                this.setState({
-                    selectedFile: this.state.conversionFileName,
-                    conversionFileName: "",
-                })
-            )
             .catch((e) => {
                 console.warn(e);
             });
@@ -504,8 +502,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public handleTrajectoryInfo(data: TrajectoryFileInfo): void {
         console.log("Trajectory info arrived", data);
-        const conversionActive = !!this.state.conversionFileName;
-        if (conversionActive) {
+        const autoConversionActive =
+            !!this.state.conversionFileName &&
+            this.state.conversionFileName !== AWAITING_SMOLDYN_SIM_RUN;
+        if (autoConversionActive) {
             this.receiveConvertedFile();
         }
         // NOTE: Currently incorrectly assumes initial time of 0
@@ -579,6 +579,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         simulariumController.clearFile();
         this.setState({
             selectedFile: "",
+            conversionFileName: "",
             simulariumFile: null,
             clientSimulator: false,
         });
@@ -671,10 +672,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     private configureAndLoad() {
         simulariumController.configureNetwork(this.netConnectionSettings);
-        if (
-            this.state.selectedFile === AWAITING_SMOLDYN_SIM_RUN ||
-            this.state.selectedFile === AWAITING_CONVERSION
-        ) {
+        if (this.state.conversionFileName !== "") {
             return;
         }
         if (this.state.selectedFile.startsWith("http")) {
@@ -687,16 +685,18 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             console.error("Invalid file id");
             return;
         }
-        if (fileId.clientSimulator) {
+        if (fileId.simulatorType === SimulatorModes.localClientSimulator) {
             const clientSim = this.configureLocalClientSimulator(fileId.id);
             simulariumController.changeFile(clientSim, fileId.id);
             this.setState({
                 clientSimulator: true,
             });
             return;
-        } else if (fileId.remoteClientSimulator) {
+        } else if (
+            fileId.simulatorType === SimulatorModes.remoteClientSimulator
+        ) {
             this.configureRemoteClientSimulator(fileId.id);
-        } else if (fileId.networkedTrajectory) {
+        } else if (fileId.simulatorType === SimulatorModes.remotePrecomputed) {
             this.setState({
                 simulariumFile: { name: fileId.id, data: null },
             });
@@ -820,6 +820,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             <div className="container" style={{ height: "90%", width: "75%" }}>
                 <FileSelection
                     selectedFile={this.state.selectedFile}
+                    conversionFileName={this.state.conversionFileName}
                     onFileSelect={(file: string) => {
                         this.handleFileSelect(file);
                     }}

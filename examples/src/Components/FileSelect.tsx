@@ -1,12 +1,9 @@
 import React, { useCallback, useEffect } from "react";
-import {
-    AWAITING_CONVERSION,
-    AWAITING_SMOLDYN_SIM_RUN,
-    TRAJECTORY_OPTIONS,
-} from "../constants";
+import { TRAJECTORY_OPTIONS } from "../constants";
 
 interface FileSelectionProps {
     selectedFile: string;
+    conversionFileName: string;
     onFileSelect: (file: string) => void;
     loadSmoldynFile: () => void;
     clearFile: () => void;
@@ -16,12 +13,15 @@ interface FileSelectionProps {
 
 const FileSelection = ({
     selectedFile,
+    conversionFileName,
     onFileSelect,
     loadSmoldynFile,
     clearFile,
     loadSmoldynPreConfiguredSim,
     setRabbitCount,
 }: FileSelectionProps): JSX.Element => {
+    const [selectValue, setSelectValue] = React.useState("");
+
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has("file")) {
@@ -30,43 +30,41 @@ const FileSelection = ({
         }
     }, []);
 
+    useEffect(() => {
+        if (conversionFileName !== "") {
+            setSelectValue("Awaiting file conversion...");
+        } else {
+            setSelectValue(selectedFile);
+        }
+    }, [selectedFile, conversionFileName]);
+
     const handleFileSelect = useCallback(
         (file: string) => {
-            if (
-                selectedFile === AWAITING_SMOLDYN_SIM_RUN ||
-                selectedFile === AWAITING_CONVERSION
-            ) {
+            if (conversionFileName !== "") {
                 return;
             }
             onFileSelect(file);
         },
-        [selectedFile, onFileSelect]
+        [selectedFile, onFileSelect, conversionFileName]
     );
 
     const notInList =
-        selectedFile &&
-        selectedFile !== AWAITING_SMOLDYN_SIM_RUN &&
-        selectedFile !== AWAITING_CONVERSION &&
-        !TRAJECTORY_OPTIONS.some((t) => t.id === selectedFile);
+        selectedFile && !TRAJECTORY_OPTIONS.some((t) => t.id === selectedFile);
 
     return (
         <div className={"ui-container"}>
             <select
-                value={selectedFile}
+                value={selectValue}
                 onChange={(e) => handleFileSelect(e.target.value as string)}
                 style={{ maxWidth: 200 }}
+                disabled={conversionFileName !== ""}
             >
                 <option value="" disabled>
                     choose a file
                 </option>
-                {selectedFile === AWAITING_SMOLDYN_SIM_RUN && (
-                    <option value={AWAITING_SMOLDYN_SIM_RUN} disabled>
-                        Awaiting Smoldyn Sim Run...
-                    </option>
-                )}
-                {selectedFile === AWAITING_CONVERSION && (
-                    <option value={AWAITING_CONVERSION} disabled>
-                        Awaiting Autoconversion...
+                {conversionFileName !== "" && (
+                    <option value={"Awaiting file conversion..."} disabled>
+                        Awaiting file conversion...
                     </option>
                 )}
                 {Object.values(TRAJECTORY_OPTIONS).map((traj) => (
