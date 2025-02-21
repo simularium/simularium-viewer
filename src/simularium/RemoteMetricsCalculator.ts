@@ -2,20 +2,20 @@
 // simulator and want to calculate metrics anyways
 
 import { FrontEndError } from "./FrontEndError.js";
-import { PlotConfig } from "./types.js";
-import {
-    NetMessageEnum,
-    WebsocketClient,
-    NetMessage,
-} from "./WebsocketClient.js";
+import { Plot, PlotConfig } from "./types.js";
+import { NetMessageEnum, WebsocketClient } from "./WebsocketClient.js";
 
 export class RemoteMetricsCalculator {
     public handleError: (error: FrontEndError) => void | (() => void);
+    public onAvailableMetricsArrive: (msg: Record<string, unknown>) => void;
+    public onPlotDataArrive: (msg: Plot[]) => void;
     private webSocketClient: WebsocketClient;
 
     public constructor(
         webSocketClient: WebsocketClient,
-        errorHandler?: (error: FrontEndError) => void
+        errorHandler?: (error: FrontEndError) => void,
+        metricsHandler?: (msg: Record<string, unknown>) => void,
+        plotDataHandler?: (plotData: Plot[]) => void
     ) {
         this.handleError =
             errorHandler ||
@@ -23,6 +23,16 @@ export class RemoteMetricsCalculator {
                 /* do nothing */
             });
         this.webSocketClient = webSocketClient;
+        this.onAvailableMetricsArrive =
+            metricsHandler ||
+            (() => {
+                /* do nothing */
+            });
+        this.onPlotDataArrive =
+            plotDataHandler ||
+            (() => {
+                /* do nothing */
+            });
     }
 
     public async connectToRemoteServer(): Promise<string> {
@@ -59,25 +69,15 @@ export class RemoteMetricsCalculator {
         );
     }
 
-    public onAvailableMetricsArrive(msg: NetMessage): void {
-        // TODO: implement callback
-        console.log("Available metrics: ", msg["metrics"]);
-    }
-
-    public onPlotDataArrive(msg: NetMessage): void {
-        // TODO: implement callback
-        console.log("Plot data: ", msg["plotData"]);
-    }
-
     private registerJsonMessageHandlers(): void {
         this.webSocketClient.addJsonMessageHandler(
             NetMessageEnum.ID_AVAILABLE_METRICS_RESPONSE,
-            this.onAvailableMetricsArrive
+            (msg) => this.onAvailableMetricsArrive(msg["metrics"])
         );
 
         this.webSocketClient.addJsonMessageHandler(
             NetMessageEnum.ID_PLOT_DATA_RESPONSE,
-            this.onPlotDataArrive
+            (msg) => this.onPlotDataArrive(msg["plotData"])
         );
     }
 }

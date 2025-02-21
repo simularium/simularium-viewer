@@ -4,7 +4,9 @@ import { v4 as uuidv4 } from "uuid";
 import { VisData, RemoteSimulator } from "../simularium/index.js";
 import type {
     NetConnectionParams,
+    Plot,
     TrajectoryFileInfo,
+    UIDisplayData,
 } from "../simularium/index.js";
 import { VisGeometry } from "../visGeometry/index.js";
 import {
@@ -12,6 +14,7 @@ import {
     FILE_STATUS_SUCCESS,
     FILE_STATUS_FAIL,
     PlotConfig,
+    CachedFrame,
 } from "../simularium/types.js";
 
 import { ClientSimulator } from "../simularium/ClientSimulator.js";
@@ -24,6 +27,7 @@ import { WebsocketClient } from "../simularium/WebsocketClient.js";
 import { TrajectoryType } from "../constants.js";
 import { RemoteMetricsCalculator } from "../simularium/RemoteMetricsCalculator.js";
 import { OctopusServicesClient } from "../simularium/OctopusClient.js";
+import { JsonFileWriter } from "../simularium/JsonFileWriter.js";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
@@ -54,6 +58,8 @@ export default class SimulariumController {
     public visGeometry: VisGeometry | undefined;
     public tickIntervalLength: number;
     public handleTrajectoryInfo: (TrajectoryFileInfo) => void;
+    public handleMetrics: (metrics: Record<string, unknown>) => void;
+    public handlePlots: (plots: Plot[]) => void;
     public postConnect: () => void;
     public startRecording: () => void;
     public stopRecording: () => void;
@@ -61,6 +67,7 @@ export default class SimulariumController {
     public onError?: (error: FrontEndError) => void;
 
     public isFileChanging: boolean;
+    public isWritingToFile: boolean;
     public streaming: boolean;
     private playBackFile: string;
 
@@ -72,6 +79,8 @@ export default class SimulariumController {
         this.stopRecording = () => noop;
 
         this.handleTrajectoryInfo = (/*msg: TrajectoryFileInfo*/) => noop;
+        this.handleMetrics = (/*metrics: Record<string, unknown>*/) => noop;
+        this.handlePlots = (/*plots: Plot[]*/) => noop;
         this.onError = (/*errorMessage*/) => noop;
         this.onStreamingChange = (/*streaming: boolean*/) => noop;
 
@@ -111,6 +120,7 @@ export default class SimulariumController {
 
         this.isFileChanging = false;
         this.streaming = false;
+        this.isWritingToFile = false;
         this.playBackFile = params.trajectoryPlaybackFile || "";
         this.zoomIn = this.zoomIn.bind(this);
         this.zoomOut = this.zoomOut.bind(this);
@@ -204,6 +214,18 @@ export default class SimulariumController {
         onStreamingChange: (streaming: boolean) => void
     ): void {
         this.onStreamingChange = onStreamingChange;
+    }
+
+    public setOnMetricsArriveCallback(
+        onMetricsArrive: (metrics: Record<string, unknown>) => void
+    ): void {
+        this.handleMetrics = onMetricsArrive;
+    }
+
+    public setOnPlotDataArriveCallback(
+        onPlotDataArrive: (plots: Plot[]) => void
+    ): void {
+        this.handlePlots = onPlotDataArrive;
     }
 
     private handleStreamingChange(streaming: boolean): void {
@@ -369,7 +391,6 @@ export default class SimulariumController {
 
     public initalizeStreaming(): void {
         if (this.simulator) {
-            this.simulator.requestFrame(0);
             this.simulator.stream();
             this.handleStreamingChange(true);
         }
@@ -479,11 +500,6 @@ export default class SimulariumController {
         if (this.simulator) {
             return this.start()
                 .then(() => {
-                    if (this.simulator) {
-                        this.simulator.requestFrame(0);
-                    }
-                })
-                .then(() => {
                     this.resumeStreaming();
                 })
                 .then(() => ({
@@ -541,7 +557,12 @@ export default class SimulariumController {
             this.remoteWebsocketClient.socketIsValid()
                 ? this.remoteWebsocketClient
                 : new WebsocketClient(config, this.onError);
-        return new RemoteMetricsCalculator(webSocketClient, this.onError);
+        return new RemoteMetricsCalculator(
+            webSocketClient,
+            this.onError,
+            this.handleMetrics,
+            this.handlePlots
+        );
     }
 
     public async getMetrics(config: NetConnectionParams): Promise<void> {
@@ -654,6 +675,59 @@ export default class SimulariumController {
 
     public currentStreamingHead(): number {
         return this.visData.currentStreamingHead;
+    }
+
+    public async getTrajectoryForDownload(
+        trajectoryFileInfo: TrajectoryFileInfo,
+        plotData: Plot[],
+        appliedColors: UIDisplayData,
+        useAppliedColors = true,
+        clientSimulator = false
+    ): Promise<Blob> {
+        if (this.isWritingToFile) {
+            return Promise.reject("Already writing out a file, please wait.");
+        }
+        this.isWritingToFile = true;
+        // if we have a client simulator the totalSteps will be written
+        // to the trajectory info to match the number of frames in the
+        // captured run of the simulator
+        const cachingIncomplete =
+            this.visData.frameCache.numFrames / this.visData.totalSteps < 1;
+        if (!clientSimulator && cachingIncomplete) {
+            // todo implement multi part caching to request
+            // complete set of frames
+            return Promise.reject(
+                "Cannot download trajectory yet, not all frames cached."
+            );
+        }
+
+        const frames: CachedFrame[] = [];
+        const firstFrame = this.visData.frameCache.getFirstFrameNumber();
+        const lastFrame = this.visData.frameCache.getLastFrameNumber();
+        // for pre-computed data this should always(?) be 0 to start
+        // but in the case of a client simulator run where the first part
+        // of the run was trimmed from the cache, the first frame number
+        // might not be zero
+        for (let frameNum = firstFrame; frameNum <= lastFrame; frameNum++) {
+            const frame =
+                this.visData.frameCache.getFrameAtFrameNumber(frameNum);
+            if (frame) {
+                frames.push(frame);
+            }
+        }
+
+        const writer = new JsonFileWriter(
+            trajectoryFileInfo,
+            frames,
+            plotData,
+            appliedColors,
+            useAppliedColors,
+            clientSimulator
+        );
+
+        const blob = writer.getBlob();
+        this.isWritingToFile = false;
+        return blob;
     }
 }
 

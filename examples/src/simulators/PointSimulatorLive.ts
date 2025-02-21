@@ -148,7 +148,7 @@ export default class PointSimLive implements IClientSimulatorImpl {
             msgType: ClientMessageEnum.ID_TRAJECTORY_FILE_INFO,
             version: 2,
             timeStepSize: 1,
-            totalSteps: 1000,
+            totalSteps: this.currentFrame,
             // bounding volume dimensions
             size: {
                 x: 12,
@@ -156,6 +156,7 @@ export default class PointSimLive implements IClientSimulatorImpl {
                 z: 12,
             },
             cameraDefault: DEFAULT_CAMERA_SPEC,
+            trajectoryTitle: "pointSimLiveRun",
             typeMapping: typeMapping,
             spatialUnits: {
                 magnitude: 1,

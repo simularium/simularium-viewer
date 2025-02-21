@@ -53,6 +53,7 @@ export class LocalFileSimulator implements ISimulator {
         try {
             const trajectoryInfo = this.simulariumFile.getTrajectoryFileInfo();
             this.onTrajectoryFileInfoArrive(trajectoryInfo);
+            this.getFrame(0);
         } catch (e) {
             return Promise.reject(e);
         }
