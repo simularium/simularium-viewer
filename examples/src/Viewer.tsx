@@ -40,7 +40,12 @@ import AgentMetadata from "./Components/AgentMetadata.tsx";
 import CacheAndStreamingLogsDisplay from "./Components/CacheAndStreamingLogs";
 import FileSelection from "./Components/FileSelect.tsx";
 
-import { agentColors, AWAITING_CONVERSION, AWAITING_SMOLDYN_SIM_RUN, TRAJECTORY_OPTIONS } from "./constants.ts";
+import {
+    agentColors,
+    AWAITING_CONVERSION,
+    AWAITING_SMOLDYN_SIM_RUN,
+    TRAJECTORY_OPTIONS,
+} from "./constants.ts";
 import { BaseType, CustomType } from "./types.ts";
 import {
     SMOLDYN_TEMPLATE,
@@ -825,6 +830,13 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         this.smoldynInput = count;
                     }}
                 />
+                <button onClick={() => this.updateBrownianSimulator()}>
+                    Update (Remote Brownian Live Mode)
+                </button>
+                <button onClick={() => this.translateAgent()}>
+                    Translate Agent (point sim live)
+                </button>
+                <br />
                 <button onClick={() => simulariumController.resume()}>
                     Play / resume streaming
                 </button>

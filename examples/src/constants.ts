@@ -38,7 +38,7 @@ export interface TrajectoryOptions {
 export const TRAJECTORY_OPTIONS: TrajectoryOptions[] = [
     {
         id: "test_live_mode",
-        name: "test_live_mode",
+        name: "Brownian Motion LIVE (Octopus)",
         remoteClientSimulator: true,
         networkedTrajectory: true,
     },
