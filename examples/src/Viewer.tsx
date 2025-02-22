@@ -378,7 +378,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public loadSmoldynSim() {
         this.clearFile();
-        this.setState({ conversionFileName: AWAITING_SMOLDYN_SIM_RUN, selectedFile: "" });
+        this.setState({
+            conversionFileName: AWAITING_SMOLDYN_SIM_RUN,
+            selectedFile: "",
+        });
         simulariumController.checkServerHealth(
             this.onHealthCheckResponse,
             this.netConnectionSettings
@@ -400,7 +403,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 );
             })
             .then(() => {
-                this.setState({ selectedFile: fileName, conversionFileName: "" });
+                this.setState({
+                    selectedFile: fileName,
+                    conversionFileName: "",
+                });
             })
             .catch((err) => {
                 console.error("Error starting Smoldyn sim: ", err);
@@ -503,7 +509,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     public handleTrajectoryInfo(data: TrajectoryFileInfo): void {
         console.log("Trajectory info arrived", data);
         const autoConversionActive =
-            !!this.state.conversionFileName &&
+            this.state.conversionFileName &&
             this.state.conversionFileName !== AWAITING_SMOLDYN_SIM_RUN;
         if (autoConversionActive) {
             this.receiveConvertedFile();

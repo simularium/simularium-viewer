@@ -20,8 +20,6 @@ const FileSelection = ({
     loadSmoldynPreConfiguredSim,
     setRabbitCount,
 }: FileSelectionProps): JSX.Element => {
-    const [selectValue, setSelectValue] = React.useState("");
-
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has("file")) {
@@ -30,13 +28,10 @@ const FileSelection = ({
         }
     }, []);
 
-    useEffect(() => {
-        if (conversionFileName !== "") {
-            setSelectValue("Awaiting file conversion...");
-        } else {
-            setSelectValue(selectedFile);
-        }
-    }, [selectedFile, conversionFileName]);
+    const isAwaitingFileConversion = conversionFileName !== "";
+    const selectValue = isAwaitingFileConversion
+        ? "Awaiting file conversion..."
+        : selectedFile;
 
     const handleFileSelect = useCallback(
         (file: string) => {
@@ -57,12 +52,12 @@ const FileSelection = ({
                 value={selectValue}
                 onChange={(e) => handleFileSelect(e.target.value as string)}
                 style={{ maxWidth: 200 }}
-                disabled={conversionFileName !== ""}
+                disabled={isAwaitingFileConversion}
             >
                 <option value="" disabled>
                     choose a file
                 </option>
-                {conversionFileName !== "" && (
+                {isAwaitingFileConversion && (
                     <option value={"Awaiting file conversion..."} disabled>
                         Awaiting file conversion...
                     </option>
