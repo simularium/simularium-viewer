@@ -344,7 +344,14 @@ export default class SimulariumController {
         }
         const clampedFrame = this.clampFrameNumber(frameNumber);
         if (this.isFileChanging || !this.simulator) return;
-        if (this.visData.hasLocalCacheForFrame(clampedFrame)) {
+        // sometimes the streaming head is a frame ahead of
+        // what has been sent to the front end, if cache is disabled,
+        // we should always just move to a "clean" frame, regardless of
+        // whether it's in the cache because it needs to be overwritten
+        if (
+            this.visData.hasLocalCacheForFrame(clampedFrame) &&
+            this.visData.frameCache.cacheEnabled
+        ) {
             this.visData.gotoFrame(clampedFrame);
             this.resumeStreaming();
         } else if (this.simulator) {
