@@ -60,8 +60,9 @@ export default class SimulariumController {
     public onError?: (error: FrontEndError) => void;
 
     public isFileChanging: boolean;
-    public streaming: boolean;
+    public _isStreaming: boolean;
     private playBackFile: string;
+    private prefetchingMode: boolean;
 
     public constructor(params: SimulariumControllerParams) {
         this.visData = new VisData();
@@ -109,7 +110,8 @@ export default class SimulariumController {
         }
 
         this.isFileChanging = false;
-        this.streaming = false;
+        this._isStreaming = false;
+        this.prefetchingMode = true;
         this.playBackFile = params.trajectoryPlaybackFile || "";
         this.zoomIn = this.zoomIn.bind(this);
         this.zoomOut = this.zoomOut.bind(this);
@@ -136,6 +138,7 @@ export default class SimulariumController {
             this.simulator.setTrajectoryDataHandler(
                 this.visData.parseAgentsFromNetData.bind(this.visData)
             );
+            this.prefetchingMode = false;
         } else if (localFile) {
             this.simulator = new LocalFileSimulator(
                 this.playBackFile,
@@ -158,6 +161,7 @@ export default class SimulariumController {
             this.simulator.setTrajectoryDataHandler(
                 this.visData.parseAgentsFromNetData.bind(this.visData)
             );
+            this.prefetchingMode = true;
         } else {
             // caught in try/catch block, not sent to front end
             throw new Error(
@@ -201,12 +205,12 @@ export default class SimulariumController {
     }
 
     private handleStreamingChange(streaming: boolean): void {
-        this.streaming = streaming;
+        this._isStreaming = streaming;
         this.onStreamingChange(streaming);
     }
 
     public isStreaming(): boolean {
-        return this.streaming;
+        return this._isStreaming;
     }
 
     // Not called by viewer, but could be called by
@@ -335,7 +339,7 @@ export default class SimulariumController {
     }
 
     public movePlaybackFrame(frameNumber: number): void {
-        if (this.streaming) {
+        if (this._isStreaming) {
             this.pauseStreaming();
         }
         const clampedFrame = this.clampFrameNumber(frameNumber);
@@ -345,7 +349,7 @@ export default class SimulariumController {
             this.resumeStreaming();
         } else if (this.simulator) {
             this.clearLocalCache();
-            this.visData.WaitForFrame(clampedFrame);
+            this.visData.waitForFrame(clampedFrame);
             this.visData.currentFrameNumber = clampedFrame;
             this.resumeStreaming(clampedFrame);
         }
@@ -361,16 +365,8 @@ export default class SimulariumController {
         this.visData.isPlaying = true;
     }
 
-    public initalizeStreaming(): void {
-        if (this.simulator) {
-            this.simulator.requestFrame(0);
-            this.simulator.stream();
-            this.handleStreamingChange(true);
-        }
-    }
-
     public resumeStreaming(startFrame?: number): void {
-        if (this.streaming) {
+        if (this._isStreaming) {
             return;
         }
         let requestFrame: number | null = null;
@@ -391,6 +387,11 @@ export default class SimulariumController {
     // pause playback
     public pause(): void {
         this.visData.isPlaying = false;
+        if (this.prefetchingMode) {
+            this.resumeStreaming();
+        } else {
+            this.pauseStreaming();
+        }
     }
 
     // resume playback
@@ -401,6 +402,7 @@ export default class SimulariumController {
 
     public clearFile(): void {
         this.isFileChanging = false;
+        this.prefetchingMode = false;
         this.playBackFile = "";
         this.visData.clearForNewTrajectory();
         this.simulator?.abort();
@@ -433,7 +435,7 @@ export default class SimulariumController {
         // calls simulator.abort()
         this.stop();
 
-        this.visData.WaitForFrame(0);
+        this.visData.waitForFrame(0);
         this.visData.clearForNewTrajectory();
     }
 
@@ -472,12 +474,9 @@ export default class SimulariumController {
         if (this.simulator) {
             return this.start()
                 .then(() => {
-                    if (this.simulator) {
-                        this.simulator.requestFrame(0);
+                    if (this.prefetchingMode) {
+                        this.resumeStreaming();
                     }
-                })
-                .then(() => {
-                    this.resumeStreaming();
                 })
                 .then(() => ({
                     status: FILE_STATUS_SUCCESS,

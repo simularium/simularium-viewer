@@ -122,7 +122,7 @@ class VisData {
     /**
      * Data management
      * */
-    public WaitForFrame(frameNumber: number): void {
+    public waitForFrame(frameNumber: number): void {
         this.frameToWaitFor = frameNumber;
         this.lockedForFrame = true;
     }
@@ -137,6 +137,7 @@ class VisData {
     public clearForNewTrajectory(): void {
         this.clearCache();
         this.currentStreamingHead = -1;
+        this.isPlaying = false;
         this.remoteStreamingHeadPotentiallyOutOfSync = false;
     }
 
