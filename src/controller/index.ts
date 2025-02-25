@@ -307,7 +307,12 @@ export default class SimulariumController {
     public gotoTime(time: number): void {
         // If in the middle of changing files, ignore any gotoTime requests
         if (this.isFileChanging || !this.simulator) return;
-        if (this.visData.hasLocalCacheForTime(time)) {
+        // if we're not using the cache at all, we shouldn't even
+        // be looking for a frame
+        if (
+            this.visData.hasLocalCacheForTime(time) &&
+            this.visData.frameCache.cacheEnabled
+        ) {
             this.visData.gotoTime(time);
         } else {
             // else reset the local cache,
