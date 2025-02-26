@@ -289,27 +289,34 @@ describe("VisData module", () => {
                 visData.parseAgentsFromNetData(frame);
             });
         });
-
-        test("hasLocalCacheForFrame returns true for cached frames", () => {
-            expect(visData.hasLocalCacheForFrame(0)).toBe(true);
-            expect(visData.hasLocalCacheForFrame(4)).toBe(true);
+        describe("hasLocalCacheForFrame", () => {
+            test("it returns true for cached frames", () => {
+                expect(visData.hasLocalCacheForFrame(0)).toBe(true);
+                expect(visData.hasLocalCacheForFrame(4)).toBe(true);
+            });
+            test("it returns false for non-cached frames", () => {
+                expect(visData.hasLocalCacheForFrame(10)).toBe(false);
+            });
         });
-        test("gotoFrame changes current frame when frame exists in cache", () => {
-            visData.goToFrame(2, false);
-            expect(visData.currentFrameData.frameNumber).toBe(2);
+        describe("gotoFrame", () => {
+            test("it changes current frame when frame exists in cache", () => {
+                visData.goToFrame(2, false);
+                expect(visData.currentFrameData.frameNumber).toBe(2);
+            });
+            test("it clears cache when frame doesn't exist", () => {
+                visData.goToFrame(10, false);
+                expect(visData.currentFrameData.frameNumber).toBe(-1);
+            });
         });
-        test("gotoFrame clears cache when frame doesn't exist", () => {
-            visData.goToFrame(10, false);
-            expect(visData.currentFrameData.frameNumber).toBe(-1);
-        });
-        test("hasLocalCacheForFrame returns false for non-cached frames", () => {
-            expect(visData.hasLocalCacheForFrame(10)).toBe(false);
-        });
-        test("clearForNewTrajectory resets streaming state", () => {
-            visData.clearForNewTrajectory();
-            expect(visData.currentFrameData).toEqual(nullCachedFrame());
-            expect(visData.currentStreamingHead).toBe(-1);
-            expect(visData.remoteStreamingHeadPotentiallyOutOfSync).toBe(false);
+        describe("clearForNewTrajectory", () => {
+            test("it resets streaming state", () => {
+                visData.clearForNewTrajectory();
+                expect(visData.currentFrameData).toEqual(nullCachedFrame());
+                expect(visData.currentStreamingHead).toBe(-1);
+                expect(visData.remoteStreamingHeadPotentiallyOutOfSync).toBe(
+                    false
+                );
+            });
         });
     });
 
