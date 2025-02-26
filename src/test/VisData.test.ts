@@ -298,10 +298,9 @@ describe("VisData module", () => {
             visData.goToFrame(2, false);
             expect(visData.currentFrameData.frameNumber).toBe(2);
         });
-        test("gotoFrame does not change frame when frame doesn't exist", () => {
-            const currentFrame = visData.currentFrameData.frameNumber;
+        test("gotoFrame clears cache when frame doesn't exist", () => {
             visData.goToFrame(10, false);
-            expect(visData.currentFrameData.frameNumber).toBe(currentFrame);
+            expect(visData.currentFrameData.frameNumber).toBe(-1);
         });
         test("hasLocalCacheForFrame returns false for non-cached frames", () => {
             expect(visData.hasLocalCacheForFrame(10)).toBe(false);
