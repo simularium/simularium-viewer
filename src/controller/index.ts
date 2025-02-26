@@ -325,9 +325,8 @@ export default class SimulariumController {
     public goToFrame(frameNumber: number): void {
         if (this.isFileChanging || !this.simulator) return;
 
-        const wasPlaying = this.visData.isPlaying;
-        this.visData.isPlaying = false;
-
+        const wasPlaying = this.isPlaying();
+        this.pause();
         const clampedFrame = this.clampFrameNumber(frameNumber);
         this.visData.goToFrame(clampedFrame, wasPlaying);
 
