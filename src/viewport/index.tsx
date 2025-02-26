@@ -49,7 +49,6 @@ type ViewportProps = {
     onFollowObjectChanged?: (agentData: AgentData) => void; // passes agent data about the followed agent to the front end
     maxCacheSize?: number;
     onCacheUpdate?: (log: CacheLog) => void;
-    onStreamingChange?: (streaming: boolean) => void;
 } & Partial<DefaultProps>;
 
 const defaultProps = {
@@ -136,11 +135,6 @@ class Viewport extends React.Component<
         });
         if (props.onError) {
             this.props.simulariumController.visData.setOnError(props.onError);
-        }
-        if (props.onStreamingChange) {
-            this.props.simulariumController.setOnStreamingChangeCallback(
-                props.onStreamingChange
-            );
         }
         this.props.simulariumController.visData.clearCache();
         this.visGeometry.createMaterials(props.agentColors);

@@ -89,8 +89,6 @@ interface ViewerState {
     followObjectData: AgentData;
     conversionFileName: string;
     cacheLog: CacheLog;
-    playbackPlaying: boolean;
-    isStreaming: boolean;
 }
 
 const simulariumController = new SimulariumController({});
@@ -136,8 +134,6 @@ const initialState: ViewerState = {
         lastFrameTime: 0,
         framesInCache: [],
     },
-    playbackPlaying: false,
-    isStreaming: false,
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
@@ -376,17 +372,21 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             this.onHealthCheckResponse,
             this.netConnectionSettings
         );
-        const fileName = "smoldyn_sim" + uuidv4() + ".simularium"
+        const fileName = "smoldyn_sim" + uuidv4() + ".simularium";
         simulariumController
-            .startSmoldynSim(this.netConnectionSettings, fileName, this.smoldynInput)
+            .startSmoldynSim(
+                this.netConnectionSettings,
+                fileName,
+                this.smoldynInput
+            )
             .then(() => {
                 this.clearPendingFile();
             })
             .then(() => {
                 simulariumController.initNewFile(
-                    { netConnectionSettings: this.netConnectionSettings, },
-                    true,
-                )
+                    { netConnectionSettings: this.netConnectionSettings },
+                    true
+                );
             })
             .catch((err) => {
                 console.error(err);
@@ -418,9 +418,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             this.setState({ initialPlay: false, firstFrameTime: currentTime });
         }
         this.setState({ currentFrame, currentTime });
-        if (currentFrame < 0) {
-            simulariumController.pauseStreaming();
-        }
     }
 
     public turnAgentsOnOff(nameToToggle: string) {
@@ -470,11 +467,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public receiveConvertedFile(): void {
         simulariumController
-            .initNewFile(
-                {
-                    netConnectionSettings: this.netConnectionSettings,
-                },
-            )
+            .initNewFile({
+                netConnectionSettings: this.netConnectionSettings,
+            })
             .then(() => {
                 simulariumController.gotoTime(0);
             })
@@ -505,7 +500,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     }
 
     public handleScrubFrame(event): void {
-        simulariumController.movePlaybackFrame(parseInt(event.target.value));
+        simulariumController.goToFrame(parseInt(event.target.value));
     }
 
     public handleUIDisplayData(uiDisplayData: UIDisplayData): void {
@@ -537,11 +532,11 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     }
 
     public gotoNextFrame(): void {
-        simulariumController.movePlaybackFrame(this.state.currentFrame + 1);
+        simulariumController.goToFrame(this.state.currentFrame + 1);
     }
 
     public gotoPreviousFrame(): void {
-        simulariumController.movePlaybackFrame(this.state.currentFrame - 1);
+        simulariumController.goToFrame(this.state.currentFrame - 1);
     }
 
     private translateAgent() {
@@ -727,12 +722,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     public handleCacheUpdate = (log: CacheLog) => {
         this.setState({
             cacheLog: log,
-            playbackPlaying: simulariumController.isPlaying(),
         });
-    };
-
-    public handleStreamingChange = (streaming: boolean) => {
-        this.setState({ isStreaming: streaming });
     };
 
     public render(): JSX.Element {
@@ -821,7 +811,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     Initial Rabbit Count:
                     <input
                         defaultValue="100"
-                        onChange={(event) => {this.smoldynInput = event.target.value}}
+                        onChange={(event) => {
+                            this.smoldynInput = event.target.value;
+                        }}
                     />
                 </label>
                 <button onClick={() => this.loadSmoldynSim()}>
@@ -1028,13 +1020,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 />
                 <AgentMetadata agentData={this.state.followObjectData} />
                 <CacheAndStreamingLogsDisplay
-                    playbackPlayingState={this.state.playbackPlaying}
-                    isStreamingState={this.state.isStreaming}
                     cacheLog={this.state.cacheLog}
                     playbackFrame={
                         simulariumController.visData.currentFrameNumber
                     }
-                    streamingHead={simulariumController.currentStreamingHead()}
                 />
                 <div className="viewer-container">
                     <SimulariumViewer
@@ -1072,9 +1061,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         //  For no limit use Infinity. Provide limits in bytes, 1MB = 1e6, 1GB = 1e9
                         maxCacheSize={2e6}
                         onCacheUpdate={this.handleCacheUpdate.bind(this)}
-                        onStreamingChange={(streaming) => {
-                            this.handleStreamingChange(streaming);
-                        }}
                     />
                 </div>
             </div>

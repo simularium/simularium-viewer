@@ -295,12 +295,12 @@ describe("VisData module", () => {
             expect(visData.hasLocalCacheForFrame(4)).toBe(true);
         });
         test("gotoFrame changes current frame when frame exists in cache", () => {
-            visData.gotoFrame(2);
+            visData.goToCachedFrame(2);
             expect(visData.currentFrameData.frameNumber).toBe(2);
         });
         test("gotoFrame does not change frame when frame doesn't exist", () => {
             const currentFrame = visData.currentFrameData.frameNumber;
-            visData.gotoFrame(10);
+            visData.goToCachedFrame(10);
             expect(visData.currentFrameData.frameNumber).toBe(currentFrame);
         });
         test("hasLocalCacheForFrame returns false for non-cached frames", () => {
@@ -335,7 +335,7 @@ describe("VisData module", () => {
             });
             visData.parseAgentsFromNetData(testData[0]);
             visData.parseAgentsFromNetData(testData[1]);
-            visData.gotoFrame(1);
+            visData.goToCachedFrame(1);
             visData.parseAgentsFromNetData(testData[2]);
 
             expect(visData.hasLocalCacheForFrame(0)).toBe(false);
