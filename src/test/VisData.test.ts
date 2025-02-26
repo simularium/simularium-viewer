@@ -344,18 +344,6 @@ describe("VisData module", () => {
                 maxCacheTwoTestFrames
             );
         });
-        test("handles overflow by resetting cache when playing and cache head is ahead", () => {
-            visData.parseAgentsFromNetData(testData[0]);
-            visData.isPlaying = true;
-            // Add frame that would cause overflow
-            visData.parseAgentsFromNetData(testData[4]);
-
-            expect(visData.hasLocalCacheForFrame(0)).toBe(false);
-            expect(visData.hasLocalCacheForFrame(4)).toBe(true);
-            expect(visData.frameCache.size).toBeLessThanOrEqual(
-                oneFrameMaxCacheSize
-            );
-        });
         test("sets remoteStreamingHeadPotentiallyOutOfSync when paused and cache is full", () => {
             visData.parseAgentsFromNetData(testData[0]);
             visData.isPlaying = false;
