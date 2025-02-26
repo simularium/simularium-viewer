@@ -113,18 +113,17 @@ class VisData {
         }
     }
 
-    /**
-     *
-     * @param frameNumber
-     * @returns a boolean indicating whether the frame was found in the cache
-     * if the frame was found, the current frame number is advanced to the frame number
-     */
-    public goToCachedFrame(frameNumber: number): boolean {
+    public goToFrame(frameNumber: number, resumeAfterAdvance: boolean): void {
         if (this.hasLocalCacheForFrame(frameNumber)) {
             this.currentFrameNumber = frameNumber;
-            return true;
+        } else {
+            this.clearCache();
+            this.waitForFrame(frameNumber);
+            this.currentFrameNumber = frameNumber;
         }
-        return false;
+        if (resumeAfterAdvance) {
+            this.isPlaying = true;
+        }
     }
 
     public atLatestFrame(): boolean {

@@ -128,6 +128,9 @@ class VisDataCache {
     }
 
     public containsFrameAtFrameNumber(frameNumber: number): boolean {
+        if (this._cacheEnabled === false) {
+            return false;
+        }
         if (
             frameNumber < this.getFirstFrameNumber() ||
             frameNumber > this.getLastFrameNumber()
