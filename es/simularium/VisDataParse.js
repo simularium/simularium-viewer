@@ -48,7 +48,7 @@ function parseVisDataMessage(visDataMsg) {
     writeIndex += FRAME_DATA_SIZE;
 
     // Validate data integrity
-    if (--readIndex + nSubPoints > frame.data.length) {
+    if (readIndex + nSubPoints > frame.data.length) {
       throw new FrontEndError("Your data is malformed, there are too few entries. Found ".concat(frame.data.length, ", expected ").concat(readIndex + nSubPoints, "."), ErrorLevel.ERROR);
     }
 
