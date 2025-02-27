@@ -51,6 +51,7 @@ class VisDataCache {
         if (onUpdate !== undefined) {
             this.cacheUpdateCallback = onUpdate;
         }
+        this.onCacheUpdate();
     }
 
     public onCacheUpdate(): void {

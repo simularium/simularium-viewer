@@ -89,6 +89,7 @@ interface ViewerState {
     followObjectData: AgentData;
     conversionFileName: string;
     cacheLog: CacheLog;
+    cacheDisabled: boolean;
 }
 
 const simulariumController = new SimulariumController({});
@@ -134,6 +135,7 @@ const initialState: ViewerState = {
         lastFrameTime: 0,
         framesInCache: [],
     },
+    cacheDisabled: false,
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
@@ -725,6 +727,12 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         });
     };
 
+    private toggleCacheDisabled = () => {;
+        this.setState({
+            cacheDisabled: !this.state.cacheDisabled,
+        });
+    }
+
     public render(): JSX.Element {
         if (this.state.filePending) {
             const fileType = this.state.filePending.type;
@@ -1024,6 +1032,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     playbackFrame={
                         simulariumController.visData.currentFrameNumber
                     }
+                    toggleCacheDisabled={this.toggleCacheDisabled.bind(this)}
                 />
                 <div className="viewer-container">
                     <SimulariumViewer
@@ -1057,7 +1066,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         onError={this.onError}
                         backgroundColor={[0, 0, 0]}
                         lockedCamera={false}
-                        disableCache={false}
+                        disableCache={this.state.cacheDisabled}
                         //  For no limit use Infinity. Provide limits in bytes, 1MB = 1e6, 1GB = 1e9
                         maxCacheSize={2e6}
                         onCacheUpdate={this.handleCacheUpdate.bind(this)}
