@@ -57,7 +57,7 @@ function parseVisDataMessage(visDataMsg: VisDataMessage): CachedFrame {
         writeIndex += FRAME_DATA_SIZE;
 
         // Validate data integrity
-        if (--readIndex + nSubPoints > frame.data.length) {
+        if (readIndex + nSubPoints > frame.data.length) {
             throw new FrontEndError(
                 `Your data is malformed, there are too few entries. Found ${
                     frame.data.length
