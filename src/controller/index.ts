@@ -56,11 +56,10 @@ export default class SimulariumController {
     public postConnect: () => void;
     public startRecording: () => void;
     public stopRecording: () => void;
-    public onStreamingChange: (streaming: boolean) => void;
     public onError?: (error: FrontEndError) => void;
 
     public isFileChanging: boolean;
-    public streaming: boolean;
+    private isPreFetching: boolean;
     private playBackFile: string;
 
     public constructor(params: SimulariumControllerParams) {
@@ -72,7 +71,6 @@ export default class SimulariumController {
 
         this.handleTrajectoryInfo = (/*msg: TrajectoryFileInfo*/) => noop;
         this.onError = (/*errorMessage*/) => noop;
-        this.onStreamingChange = (/*streaming: boolean*/) => noop;
 
         // might only be used in unit testing
         // TODO: change test so controller isn't initialized with a remoteSimulator
@@ -109,7 +107,7 @@ export default class SimulariumController {
         }
 
         this.isFileChanging = false;
-        this.streaming = false;
+        this.isPreFetching = false;
         this.playBackFile = params.trajectoryPlaybackFile || "";
         this.zoomIn = this.zoomIn.bind(this);
         this.zoomOut = this.zoomOut.bind(this);
@@ -158,6 +156,7 @@ export default class SimulariumController {
             this.simulator.setTrajectoryDataHandler(
                 this.visData.parseAgentsFromNetData.bind(this.visData)
             );
+            this.isPreFetching = this.visData.frameCache.cacheEnabled;
         } else {
             // caught in try/catch block, not sent to front end
             throw new Error(
@@ -172,6 +171,12 @@ export default class SimulariumController {
         );
         this.visData.setOnCacheLimitReached(() => {
             this.pauseStreaming();
+        });
+        // todo this should be removed once octopus supports frame sync
+        this.visData.setOnFrameAdvance(() => {
+            if (this.isPreFetching) {
+                this.resumeStreaming();
+            }
         });
     }
 
@@ -192,21 +197,6 @@ export default class SimulariumController {
 
     public get isChangingFile(): boolean {
         return this.isFileChanging;
-    }
-
-    public setOnStreamingChangeCallback(
-        onStreamingChange: (streaming: boolean) => void
-    ): void {
-        this.onStreamingChange = onStreamingChange;
-    }
-
-    private handleStreamingChange(streaming: boolean): void {
-        this.streaming = streaming;
-        this.onStreamingChange(streaming);
-    }
-
-    public isStreaming(): boolean {
-        return this.streaming;
     }
 
     // Not called by viewer, but could be called by
@@ -246,7 +236,6 @@ export default class SimulariumController {
     public stop(): void {
         if (this.simulator) {
             this.simulator.abort();
-            this.handleStreamingChange(false);
         }
     }
 
@@ -284,9 +273,8 @@ export default class SimulariumController {
         }
     }
 
-    public pauseStreaming(): void {
+    private pauseStreaming(): void {
         if (this.simulator) {
-            this.handleStreamingChange(false);
             // todo add frame argument once octopus supports this
             this.simulator.pause();
         }
@@ -334,63 +322,62 @@ export default class SimulariumController {
         return clampedFrame;
     }
 
-    public movePlaybackFrame(frameNumber: number): void {
-        if (this.streaming) {
-            this.pauseStreaming();
-        }
-        const clampedFrame = this.clampFrameNumber(frameNumber);
+    public goToFrame(frameNumber: number): void {
         if (this.isFileChanging || !this.simulator) return;
-        if (this.visData.hasLocalCacheForFrame(clampedFrame)) {
-            this.visData.gotoFrame(clampedFrame);
-            this.resumeStreaming();
-        } else if (this.simulator) {
-            this.clearLocalCache();
-            this.visData.WaitForFrame(clampedFrame);
-            this.visData.currentFrameNumber = clampedFrame;
+
+        const wasPlaying = this.isPlaying();
+        this.pause();
+        const clampedFrame = this.clampFrameNumber(frameNumber);
+        const hasCachedFrame = this.visData.goToCachedFrame(clampedFrame);
+
+        if (hasCachedFrame) {
+            if (this.isPreFetching || wasPlaying) {
+                this.visData.isPlaying = wasPlaying;
+                this.resumeStreaming();
+            }
+            return;
+        }
+
+        if (this.isPreFetching || wasPlaying) {
+            this.visData.isPlaying = wasPlaying;
             this.resumeStreaming(clampedFrame);
+        } else {
+            this.simulator.requestFrame(clampedFrame);
         }
     }
 
     public gotoTime(time: number): void {
         const targetFrame = this.getFrameAtTime(time);
-        this.movePlaybackFrame(targetFrame);
+        this.goToFrame(targetFrame);
     }
 
     public playFromTime(time: number): void {
         this.gotoTime(time);
-        this.visData.isPlaying = true;
+        this.resume();
     }
 
-    public initalizeStreaming(): void {
-        if (this.simulator) {
-            this.simulator.requestFrame(0);
-            this.simulator.stream();
-            this.handleStreamingChange(true);
-        }
-    }
-
-    public resumeStreaming(startFrame?: number): void {
-        if (this.streaming) {
-            return;
-        }
+    private resumeStreaming(startFrame?: number): void {
         let requestFrame: number | null = null;
         if (startFrame !== undefined) {
             requestFrame = startFrame;
         } else if (this.visData.remoteStreamingHeadPotentiallyOutOfSync) {
             requestFrame = this.visData.currentStreamingHead;
         }
+        this.visData.remoteStreamingHeadPotentiallyOutOfSync = false;
         if (this.simulator) {
             if (requestFrame !== null) {
                 this.simulator.requestFrame(requestFrame);
             }
             this.simulator.stream();
-            this.handleStreamingChange(true);
         }
     }
 
     // pause playback
     public pause(): void {
         this.visData.isPlaying = false;
+        if (!this.isPreFetching) {
+            this.pauseStreaming();
+        }
     }
 
     // resume playback
@@ -401,6 +388,7 @@ export default class SimulariumController {
 
     public clearFile(): void {
         this.isFileChanging = false;
+        this.isPreFetching = false;
         this.playBackFile = "";
         this.visData.clearForNewTrajectory();
         this.simulator?.abort();
@@ -433,7 +421,7 @@ export default class SimulariumController {
         // calls simulator.abort()
         this.stop();
 
-        this.visData.WaitForFrame(0);
+        this.visData.waitForFrame(0);
         this.visData.clearForNewTrajectory();
     }
 
@@ -472,12 +460,9 @@ export default class SimulariumController {
         if (this.simulator) {
             return this.start()
                 .then(() => {
-                    if (this.simulator) {
-                        this.simulator.requestFrame(0);
+                    if (this.isPreFetching) {
+                        this.resumeStreaming();
                     }
-                })
-                .then(() => {
-                    this.resumeStreaming();
                 })
                 .then(() => ({
                     status: FILE_STATUS_SUCCESS,
@@ -639,14 +624,6 @@ export default class SimulariumController {
 
     public isPlaying(): boolean {
         return this.visData.isPlaying;
-    }
-
-    public currentPlaybackHead(): number {
-        return this.visData.currentFrameNumber;
-    }
-
-    public currentStreamingHead(): number {
-        return this.visData.currentStreamingHead;
     }
 }
 

@@ -123,6 +123,7 @@ export class DummyRemoteSimulator extends RemoteSimulator {
             this.fileName = fileName;
             this.isStreamingData = true;
             this.lastRequestedFile = fileName;
+            this.requestFrame(0);
         });
     }
 

@@ -157,6 +157,7 @@ export class ClientSimulator implements ISimulator {
                 jsonData,
                 "Start Trajectory File Playback"
             );
+            this.requestFrame(0);
         });
     }
 

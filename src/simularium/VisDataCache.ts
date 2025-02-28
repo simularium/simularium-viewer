@@ -51,6 +51,7 @@ class VisDataCache {
         if (onUpdate !== undefined) {
             this.cacheUpdateCallback = onUpdate;
         }
+        this.onCacheUpdate();
     }
 
     public onCacheUpdate(): void {
@@ -128,6 +129,9 @@ class VisDataCache {
     }
 
     public containsFrameAtFrameNumber(frameNumber: number): boolean {
+        if (this._cacheEnabled === false) {
+            return false;
+        }
         if (
             frameNumber < this.getFirstFrameNumber() ||
             frameNumber > this.getLastFrameNumber()

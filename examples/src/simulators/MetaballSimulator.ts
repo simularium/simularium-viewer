@@ -144,7 +144,7 @@ export default class MetaballSimulator implements IClientSimulatorImpl {
             msgType: ClientMessageEnum.ID_TRAJECTORY_FILE_INFO,
             version: 2,
             timeStepSize: 1,
-            totalSteps: 1000,
+            totalSteps: Infinity,
             // bounding volume dimensions
             size: {
                 x: 2,

@@ -289,28 +289,34 @@ describe("VisData module", () => {
                 visData.parseAgentsFromNetData(frame);
             });
         });
-
-        test("hasLocalCacheForFrame returns true for cached frames", () => {
-            expect(visData.hasLocalCacheForFrame(0)).toBe(true);
-            expect(visData.hasLocalCacheForFrame(4)).toBe(true);
+        describe("hasLocalCacheForFrame", () => {
+            test("it returns true for cached frames", () => {
+                expect(visData.hasLocalCacheForFrame(0)).toBe(true);
+                expect(visData.hasLocalCacheForFrame(4)).toBe(true);
+            });
+            test("it returns false for non-cached frames", () => {
+                expect(visData.hasLocalCacheForFrame(10)).toBe(false);
+            });
         });
-        test("gotoFrame changes current frame when frame exists in cache", () => {
-            visData.gotoFrame(2);
-            expect(visData.currentFrameData.frameNumber).toBe(2);
+        describe("goToCachedFrame", () => {
+            test("it changes current frame when frame exists in cache", () => {
+                visData.goToCachedFrame(2);
+                expect(visData.currentFrameData.frameNumber).toBe(2);
+            });
+            test("it returns false when frame doesn't exist", () => {
+                visData.goToCachedFrame(10);
+                expect(visData.goToCachedFrame(10)).toBe(false);
+            });
         });
-        test("gotoFrame does not change frame when frame doesn't exist", () => {
-            const currentFrame = visData.currentFrameData.frameNumber;
-            visData.gotoFrame(10);
-            expect(visData.currentFrameData.frameNumber).toBe(currentFrame);
-        });
-        test("hasLocalCacheForFrame returns false for non-cached frames", () => {
-            expect(visData.hasLocalCacheForFrame(10)).toBe(false);
-        });
-        test("clearForNewTrajectory resets streaming state", () => {
-            visData.clearForNewTrajectory();
-            expect(visData.currentFrameData).toEqual(nullCachedFrame());
-            expect(visData.currentStreamingHead).toBe(-1);
-            expect(visData.remoteStreamingHeadPotentiallyOutOfSync).toBe(false);
+        describe("clearForNewTrajectory", () => {
+            test("it resets streaming state", () => {
+                visData.clearForNewTrajectory();
+                expect(visData.currentFrameData).toEqual(nullCachedFrame());
+                expect(visData.currentStreamingHead).toBe(-1);
+                expect(visData.remoteStreamingHeadPotentiallyOutOfSync).toBe(
+                    false
+                );
+            });
         });
     });
 
@@ -335,25 +341,13 @@ describe("VisData module", () => {
             });
             visData.parseAgentsFromNetData(testData[0]);
             visData.parseAgentsFromNetData(testData[1]);
-            visData.gotoFrame(1);
+            visData.goToCachedFrame(1);
             visData.parseAgentsFromNetData(testData[2]);
 
             expect(visData.hasLocalCacheForFrame(0)).toBe(false);
             expect(visData.hasLocalCacheForFrame(2)).toBe(true);
             expect(visData.frameCache.size).toBeLessThanOrEqual(
                 maxCacheTwoTestFrames
-            );
-        });
-        test("handles overflow by resetting cache when playing and cache head is ahead", () => {
-            visData.parseAgentsFromNetData(testData[0]);
-            visData.isPlaying = true;
-            // Add frame that would cause overflow
-            visData.parseAgentsFromNetData(testData[4]);
-
-            expect(visData.hasLocalCacheForFrame(0)).toBe(false);
-            expect(visData.hasLocalCacheForFrame(4)).toBe(true);
-            expect(visData.frameCache.size).toBeLessThanOrEqual(
-                oneFrameMaxCacheSize
             );
         });
         test("sets remoteStreamingHeadPotentiallyOutOfSync when paused and cache is full", () => {
