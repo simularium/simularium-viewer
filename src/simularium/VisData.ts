@@ -17,7 +17,7 @@ class VisData {
     public currentFrameNumber: number; // playback head
     private _currentStreamingHead: number;
     public remoteStreamingHeadPotentiallyOutOfSync: boolean;
-    public isPlaying: boolean;
+    private _isPlaying: boolean;
     public onCacheLimitReached: () => void;
     public onFrameAdvance: () => void;
 
@@ -51,7 +51,7 @@ class VisData {
         this.lockedForFrame = false;
         this.timeStepSize = 0;
         this.totalSteps = 0;
-        this.isPlaying = false;
+        this._isPlaying = false;
 
         this.onError = noop;
         this.onCacheLimitReached = noop;
@@ -113,17 +113,26 @@ class VisData {
         }
     }
 
-    public goToFrame(frameNumber: number, resumeAfterAdvance: boolean): void {
+    /**
+     *
+     * @param frameNumber
+     * @returns a boolean indicating whether the frame was found in the cache
+     * if the frame was found, the current frame number is advanced to the frame number
+     */
+    public goToCachedFrame(frameNumber: number): boolean {
         if (this.hasLocalCacheForFrame(frameNumber)) {
             this.currentFrameNumber = frameNumber;
-        } else {
-            this.clearCache();
-            this.waitForFrame(frameNumber);
-            this.currentFrameNumber = frameNumber;
+            return true;
         }
-        if (resumeAfterAdvance) {
-            this.isPlaying = true;
-        }
+        return false;
+    }
+
+    public set isPlaying(isPlaying: boolean) {
+        this._isPlaying = isPlaying;
+    }
+
+    public get isPlaying(): boolean {
+        return this._isPlaying;
     }
 
     public atLatestFrame(): boolean {
@@ -157,7 +166,7 @@ class VisData {
     public clearForNewTrajectory(): void {
         this.clearCache();
         this._currentStreamingHead = -1;
-        this.isPlaying = false;
+        this._isPlaying = false;
         this.remoteStreamingHeadPotentiallyOutOfSync = false;
     }
 

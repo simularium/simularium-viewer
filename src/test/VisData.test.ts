@@ -298,14 +298,14 @@ describe("VisData module", () => {
                 expect(visData.hasLocalCacheForFrame(10)).toBe(false);
             });
         });
-        describe("gotoFrame", () => {
+        describe("goToCachedFrame", () => {
             test("it changes current frame when frame exists in cache", () => {
-                visData.goToFrame(2, false);
+                visData.goToCachedFrame(2);
                 expect(visData.currentFrameData.frameNumber).toBe(2);
             });
-            test("it clears cache when frame doesn't exist", () => {
-                visData.goToFrame(10, false);
-                expect(visData.currentFrameData.frameNumber).toBe(-1);
+            test("it returns false when frame doesn't exist", () => {
+                visData.goToCachedFrame(10);
+                expect(visData.goToCachedFrame(10)).toBe(false);
             });
         });
         describe("clearForNewTrajectory", () => {
@@ -341,7 +341,7 @@ describe("VisData module", () => {
             });
             visData.parseAgentsFromNetData(testData[0]);
             visData.parseAgentsFromNetData(testData[1]);
-            visData.goToFrame(1, false);
+            visData.goToCachedFrame(1);
             visData.parseAgentsFromNetData(testData[2]);
 
             expect(visData.hasLocalCacheForFrame(0)).toBe(false);
