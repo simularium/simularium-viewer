@@ -19,10 +19,12 @@ export class RemoteSimulator implements ISimulator {
     public onTrajectoryDataArrive: (NetMessage) => void;
     public lastRequestedFile: string;
     public handleError: (error: FrontEndError) => void | (() => void);
+    private jsonResponse: boolean;
 
     public constructor(
         webSocketClient: WebsocketClient,
-        errorHandler?: (error: FrontEndError) => void
+        errorHandler?: (error: FrontEndError) => void,
+        jsonResponse = false
     ) {
         this.webSocketClient = webSocketClient;
         this.lastRequestedFile = "";
@@ -34,6 +36,7 @@ export class RemoteSimulator implements ISimulator {
 
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
+        this.jsonResponse = jsonResponse;
         this.registerBinaryMessageHandlers();
         this.registerJsonMessageHandlers();
 
@@ -291,6 +294,7 @@ export class RemoteSimulator implements ISimulator {
                 msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
                 frameNumber: startFrameNumber,
                 fileName: this.lastRequestedFile,
+                jsonResponse: this.jsonResponse,
             },
             "Request Single Frame"
         );
@@ -302,6 +306,7 @@ export class RemoteSimulator implements ISimulator {
                 msgType: NetMessageEnum.ID_GOTO_SIMULATION_TIME,
                 time: time,
                 fileName: this.lastRequestedFile,
+                jsonResponse: this.jsonResponse,
             },
             "Load single frame at specified Time"
         );
@@ -313,12 +318,20 @@ export class RemoteSimulator implements ISimulator {
             {
                 msgType: NetMessageEnum.ID_INIT_TRAJECTORY_FILE,
                 fileName: fileName,
+                jsonResponse: this.jsonResponse,
             },
             "Initialize trajectory file info"
         );
     }
 
     public sendUpdate(_obj: Record<string, unknown>): Promise<void> {
+        this.webSocketClient.sendWebSocketRequest(
+            {
+                msgType: NetMessageEnum.ID_UPDATE_SIMULATION_STATE,
+                data: _obj,
+            },
+            "Send Update"
+        );
         return Promise.resolve();
     }
 }
