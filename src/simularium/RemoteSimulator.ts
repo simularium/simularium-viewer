@@ -246,8 +246,6 @@ export class RemoteSimulator implements ISimulator {
                     jsonData,
                     "Start Trajectory File Playback"
                 );
-            })
-            .then(() => {
                 this.requestFrame(0);
             })
             .catch((error) => {

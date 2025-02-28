@@ -119,15 +119,12 @@ export class DummyRemoteSimulator extends RemoteSimulator {
     }
 
     public initialize(fileName: string): Promise<void> {
-        return this.connectToRemoteServer()
-            .then(() => {
-                this.fileName = fileName;
-                this.isStreamingData = true;
-                this.lastRequestedFile = fileName;
-            })
-            .then(() => {
-                this.requestFrame(0);
-            });
+        return this.connectToRemoteServer().then(() => {
+            this.fileName = fileName;
+            this.isStreamingData = true;
+            this.lastRequestedFile = fileName;
+            this.requestFrame(0);
+        });
     }
 
     public requestTrajectoryFileInfo(fileName: string): void {

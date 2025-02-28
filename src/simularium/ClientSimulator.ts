@@ -152,16 +152,13 @@ export class ClientSimulator implements ISimulator {
             fileName: fileName,
         };
 
-        return Promise.resolve()
-            .then(() => {
-                this.sendSimulationRequest(
-                    jsonData,
-                    "Start Trajectory File Playback"
-                );
-            })
-            .then(() => {
-                this.requestFrame(0);
-            });
+        return Promise.resolve().then(() => {
+            this.sendSimulationRequest(
+                jsonData,
+                "Start Trajectory File Playback"
+            );
+            this.requestFrame(0);
+        });
     }
 
     public pause(): void {
