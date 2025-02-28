@@ -61,6 +61,7 @@ import {
 
 import "@aics/simularium-viewer/style/style.css";
 import "./style.css";
+import ClaudeBrownian from "./simulators/ClaudeBrownian.ts";
 
 interface ViewerState {
     renderStyle: RenderStyle;
@@ -616,6 +617,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         const config: { clientSimulator?: IClientSimulatorImpl } = {};
 
         switch (selectedFile) {
+            case "CLAUDE_BROWNIAN":
+                config.clientSimulator = new ClaudeBrownian();
+                break;
             case "DEBUG_SIM":
                 config.clientSimulator = new DebugSim();
                 break;
