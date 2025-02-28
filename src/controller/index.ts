@@ -338,11 +338,6 @@ export default class SimulariumController {
             return;
         }
 
-        // Frame not in cache, need to request it
-        this.clearLocalCache();
-        this.visData.waitForFrame(clampedFrame);
-        this.visData.currentFrameNumber = clampedFrame;
-
         if (this.isPreFetching || wasPlaying) {
             this.visData.isPlaying = wasPlaying;
             this.resumeStreaming(clampedFrame);

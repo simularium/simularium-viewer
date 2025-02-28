@@ -124,6 +124,9 @@ class VisData {
             this.currentFrameNumber = frameNumber;
             return true;
         }
+        this.clearCache();
+        this.waitForFrame(frameNumber);
+        this.currentFrameNumber = frameNumber;
         return false;
     }
 
