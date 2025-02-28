@@ -113,6 +113,19 @@ class VisData {
         }
     }
 
+    public goToFrame(frameNumber: number): boolean {
+        let wasCached = false;
+        if (this.hasLocalCacheForFrame(frameNumber)) {
+            this.currentFrameNumber = frameNumber;
+            wasCached = true;
+        } else {
+            this.clearCache();
+            this.waitForFrame(frameNumber);
+            this.currentFrameNumber = frameNumber;
+        }
+        return wasCached;
+    }
+
     /**
      *
      * @param frameNumber

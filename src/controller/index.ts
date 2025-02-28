@@ -324,31 +324,22 @@ export default class SimulariumController {
 
     public goToFrame(frameNumber: number): void {
         if (this.isFileChanging || !this.simulator) return;
-
         const wasPlaying = this.isPlaying();
         this.pause();
         const clampedFrame = this.clampFrameNumber(frameNumber);
-        const hasCachedFrame = this.visData.goToCachedFrame(clampedFrame);
-
-        if (hasCachedFrame) {
-            if (this.isPreFetching || wasPlaying) {
-                this.visData.isPlaying = wasPlaying;
-                this.resumeStreaming();
-            }
-            return;
-        }
-
-        // Frame not in cache, need to request it
-        this.clearLocalCache();
-        this.visData.waitForFrame(clampedFrame);
-        this.visData.currentFrameNumber = clampedFrame;
-
+        const wasCached = this.visData.goToFrame(clampedFrame);
+        const frameToStreamFrom = wasCached ? clampedFrame : undefined;
         if (this.isPreFetching || wasPlaying) {
             this.visData.isPlaying = wasPlaying;
-            this.resumeStreaming(clampedFrame);
+            this.resumePlayFromFrame(frameToStreamFrom);
         } else {
             this.simulator.requestFrame(clampedFrame);
         }
+    }
+
+    private resumePlayFromFrame(frame?: number): void {
+        this.visData.isPlaying = true;
+        this.resumeStreaming(frame);
     }
 
     public gotoTime(time: number): void {
