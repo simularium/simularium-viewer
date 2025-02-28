@@ -9,8 +9,7 @@ export type {
     SimulariumFileFormat,
     Plot,
     AgentData,
-    CacheLog,
-} from "./types";
+} from "./types.js";
 
 export type {
     SelectionStateInfo,
