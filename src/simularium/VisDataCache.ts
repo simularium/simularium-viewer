@@ -1,10 +1,9 @@
 import { compareTimes } from "../util.js";
-import { CachedFrame, CacheNode, CacheLog } from "./types.js";
+import { CachedFrame, CacheNode } from "./types.js";
 
 interface VisDataCacheSettings {
     maxSize: number;
     cacheEnabled: boolean;
-    onUpdate?: (log: CacheLog) => void;
 }
 
 class VisDataCache {
@@ -14,7 +13,6 @@ class VisDataCache {
     public size: number;
     private _maxSize: number;
     private _cacheEnabled: boolean;
-    private cacheUpdateCallback: ((log: CacheLog) => void) | null;
 
     constructor(settings?: Partial<VisDataCacheSettings>) {
         /**
@@ -29,7 +27,6 @@ class VisDataCache {
         this.size = 0;
         this._maxSize = Infinity;
         this._cacheEnabled = true;
-        this.cacheUpdateCallback = null;
 
         if (settings) {
             this.changeSettings(settings);
@@ -39,44 +36,14 @@ class VisDataCache {
     public changeSettings(options: {
         maxSize?: number;
         cacheEnabled?: boolean;
-        onUpdate?: (log: CacheLog) => void;
     }): void {
-        const { maxSize, cacheEnabled, onUpdate } = options;
+        const { maxSize, cacheEnabled } = options;
         if (cacheEnabled !== undefined) {
             this._cacheEnabled = cacheEnabled;
         }
         if (maxSize !== undefined) {
             this._maxSize = maxSize;
         }
-        if (onUpdate !== undefined) {
-            this.cacheUpdateCallback = onUpdate;
-        }
-    }
-
-    public onCacheUpdate(): void {
-        if (this.cacheUpdateCallback) {
-            this.cacheUpdateCallback({
-                size: this.size,
-                numFrames: this.numFrames,
-                maxSize: this._maxSize,
-                enabled: this._cacheEnabled,
-                firstFrameNumber: this.getFirstFrameNumber(),
-                firstFrameTime: this.getFirstFrameTime(),
-                lastFrameNumber: this.getLastFrameNumber(),
-                lastFrameTime: this.getLastFrameTime(),
-                framesInCache: this.getListOfCachedFrameNumbers(),
-            });
-        }
-    }
-
-    private getListOfCachedFrameNumbers(): number[] {
-        const frameNumbers: number[] = [];
-        let current: CacheNode | null = this.head;
-        while (current !== null) {
-            frameNumbers.push(current.data.frameNumber);
-            current = current.next;
-        }
-        return frameNumbers;
     }
 
     public get maxSize(): number {
@@ -144,10 +111,7 @@ class VisDataCache {
     }
 
     public getFirstFrameNumber(): number {
-        if (this.head) {
-            return this.head.data.frameNumber;
-        }
-        return -1;
+        return this.head?.data.frameNumber || -1;
     }
 
     public getFirstFrameTime(): number {
@@ -198,6 +162,7 @@ class VisDataCache {
             next: null,
             prev: null,
         };
+
         this.head = newNode;
         this.tail = newNode;
         this.size = data.size;
@@ -220,7 +185,6 @@ class VisDataCache {
             this.tail = newNode;
             this.numFrames++;
             this.size += data.size;
-            // todo: handle this logic at a higher level
             if (this.size > this._maxSize) {
                 this.trimCache();
             }
@@ -233,11 +197,9 @@ class VisDataCache {
         }
         if (this.hasFrames() && this._cacheEnabled) {
             this.addFrameToEndOfCache(data);
-            this.onCacheUpdate();
             return;
         }
         this.assignSingleFrameToCache(data);
-        this.onCacheUpdate();
     }
 
     // generalized to remove any node, but in theory
@@ -263,10 +225,9 @@ class VisDataCache {
         }
         this.numFrames--;
         this.size -= node.data.size;
-        this.onCacheUpdate();
     }
 
-    public trimCache(incomingDataSize?: number): void {
+    private trimCache(incomingDataSize?: number): void {
         while (
             this.hasFrames() &&
             this.size + (incomingDataSize || 0) > this._maxSize &&
@@ -281,7 +242,6 @@ class VisDataCache {
         this.tail = null;
         this.numFrames = 0;
         this.size = 0;
-        this.onCacheUpdate();
     }
 }
 
