@@ -1,8 +1,7 @@
-import { CachedFrame, CacheLog } from "./types.js";
+import { CachedFrame } from "./types.js";
 interface VisDataCacheSettings {
     maxSize: number;
     cacheEnabled: boolean;
-    onUpdate?: (log: CacheLog) => void;
 }
 declare class VisDataCache {
     private head;
@@ -11,15 +10,11 @@ declare class VisDataCache {
     size: number;
     private _maxSize;
     private _cacheEnabled;
-    private cacheUpdateCallback;
     constructor(settings?: Partial<VisDataCacheSettings>);
     changeSettings(options: {
         maxSize?: number;
         cacheEnabled?: boolean;
-        onUpdate?: (log: CacheLog) => void;
     }): void;
-    onCacheUpdate(): void;
-    private getListOfCachedFrameNumbers;
     get maxSize(): number;
     get cacheEnabled(): boolean;
     get cacheSizeLimited(): boolean;
@@ -45,7 +40,7 @@ declare class VisDataCache {
     private addFrameToEndOfCache;
     addFrame(data: CachedFrame): void;
     private removeNode;
-    trimCache(incomingDataSize?: number): void;
+    private trimCache;
     clear(): void;
 }
 export { VisDataCache };
