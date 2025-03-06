@@ -19,6 +19,8 @@ import type {
     UIDisplayData,
     SelectionStateInfo,
     SelectionEntry,
+    AgentData,
+    IClientSimulatorImpl,
 } from "@aics/simularium-viewer";
 
 import PointSimulator from "./simulators/PointSimulator.ts";
@@ -34,8 +36,14 @@ import ColorPicker from "./Components/ColorPicker.tsx";
 import RecordMovieComponent from "./Components/RecordMovieComponent.tsx";
 import ConversionForm from "./Components/ConversionForm/index.tsx";
 import AgentMetadata from "./Components/AgentMetadata.tsx";
+import FileSelection from "./Components/FileSelect.tsx";
 
-import { agentColors } from "./constants.ts";
+import {
+    agentColors,
+    AWAITING_SMOLDYN_SIM_RUN,
+    SimulatorModes,
+    TRAJECTORY_OPTIONS,
+} from "./constants.ts";
 import { BaseType, CustomType } from "./types.ts";
 import {
     SMOLDYN_TEMPLATE,
@@ -47,14 +55,6 @@ import {
 
 import "@aics/simularium-viewer/style/style.css";
 import "./style.css";
-
-let playbackFile = "TEST_LIVEMODE_API";
-let queryStringFile = "";
-const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.has("file")) {
-    queryStringFile = urlParams.get("file") || "";
-    playbackFile = queryStringFile;
-}
 
 interface ViewerState {
     renderStyle: RenderStyle;
@@ -75,16 +75,18 @@ interface ViewerState {
         template: { [key: string]: any };
         templateData: { [key: string]: any };
     } | null;
+    selectedFile: string;
     simulariumFile: {
         name: string;
         data: ISimulariumFile | null;
     } | null;
+    clientSimulator: boolean;
     serverHealthy: boolean;
     isRecordingEnabled: boolean;
     trajectoryTitle: string;
     initialPlay: boolean;
     firstFrameTime: number;
-    followObjectData: AgentData;
+    followObjectData: AgentData | null;
     conversionFileName: string;
 }
 
@@ -112,7 +114,9 @@ const initialState: ViewerState = {
         appliedColors: [],
     },
     filePending: null,
+    selectedFile: "TEST_LIVEMODE_API",
     simulariumFile: null,
+    clientSimulator: false,
     serverHealthy: false,
     isRecordingEnabled: true,
     trajectoryTitle: "",
@@ -181,11 +185,11 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public onError = (error: FrontEndError) => {
         if (error.level === ErrorLevel.ERROR) {
-            window.alert(
+            console.warn(
                 `ERROR, something is broken: ${error.message} ${error.htmlData}`
             );
         } else if (error.level === ErrorLevel.WARNING) {
-            window.alert(
+            console.warn(
                 `User warning, but not terrible:  ${error.message} ${error.htmlData}`
             );
         } else if (error.level === ErrorLevel.INFO) {
@@ -336,6 +340,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         const fileName = uuidv4() + ".simularium";
         this.setState({
             conversionFileName: fileName,
+            selectedFile: "",
         });
 
         simulariumController
@@ -354,24 +359,40 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     }
 
     public loadSmoldynSim() {
+        this.clearFile();
+        this.setState({
+            conversionFileName: AWAITING_SMOLDYN_SIM_RUN,
+            selectedFile: "",
+        });
         simulariumController.checkServerHealth(
             this.onHealthCheckResponse,
             this.netConnectionSettings
         );
-        const fileName = "smoldyn_sim" + uuidv4() + ".simularium"
+        const fileName = "smoldyn_sim" + uuidv4() + ".simularium";
         simulariumController
-            .startSmoldynSim(this.netConnectionSettings, fileName, this.smoldynInput)
+            .startSmoldynSim(
+                this.netConnectionSettings,
+                fileName,
+                this.smoldynInput
+            )
             .then(() => {
                 this.clearPendingFile();
             })
             .then(() => {
                 simulariumController.initNewFile(
-                    { netConnectionSettings: this.netConnectionSettings, },
-                    true,
-                )
+                    { netConnectionSettings: this.netConnectionSettings },
+                    true
+                );
+            })
+            .then(() => {
+                this.setState({
+                    selectedFile: fileName,
+                    conversionFileName: "",
+                });
             })
             .catch((err) => {
-                console.error(err);
+                console.error("Error starting Smoldyn sim: ", err);
+                this.setState({ selectedFile: "" });
             });
     }
 
@@ -451,20 +472,17 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     }
 
     public receiveConvertedFile(): void {
+        this.setState({
+            selectedFile: this.state.conversionFileName,
+            conversionFileName: "",
+        });
         simulariumController
-            .initNewFile(
-                {
-                    netConnectionSettings: this.netConnectionSettings,
-                },
-            )
+            .initNewFile({
+                netConnectionSettings: this.netConnectionSettings,
+            })
             .then(() => {
                 simulariumController.gotoTime(0);
             })
-            .then(() =>
-                this.setState({
-                    conversionFileName: "",
-                })
-            )
             .catch((e) => {
                 console.warn(e);
             });
@@ -472,8 +490,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public handleTrajectoryInfo(data: TrajectoryFileInfo): void {
         console.log("Trajectory info arrived", data);
-        const conversionActive = !!this.state.conversionFileName;
-        if (conversionActive) {
+        const autoConversionActive =
+            this.state.conversionFileName &&
+            this.state.conversionFileName !== AWAITING_SMOLDYN_SIM_RUN;
+        if (autoConversionActive) {
             this.receiveConvertedFile();
         }
         // NOTE: Currently incorrectly assumes initial time of 0
@@ -548,95 +568,136 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         });
     }
 
+    public clearFile() {
+        simulariumController.clearFile();
+        this.setState({
+            selectedFile: "",
+            conversionFileName: "",
+            simulariumFile: null,
+            clientSimulator: false,
+        });
+    }
+
+    private configureLocalClientSimulator(selectedFile: string) {
+        const config: { clientSimulator?: IClientSimulatorImpl } = {};
+
+        switch (selectedFile) {
+            case "TEST_LIVEMODE_API":
+                console.log("Using Live Mode API: PointSimulatorLive");
+                config.clientSimulator = new PointSimulatorLive(4, 4);
+                break;
+
+            case "TEST_POINTS":
+                config.clientSimulator = new PointSimulator(8000, 4);
+                break;
+
+            case "TEST_BINDING":
+                simulariumController.setCameraType(true);
+                config.clientSimulator = new BindingSimulator([
+                    { id: 0, count: 30, radius: 3, partners: [1, 2] },
+                    {
+                        id: 1,
+                        count: 300,
+                        radius: 1,
+                        partners: [0],
+                        kOn: 0.1,
+                        kOff: 0.5,
+                    },
+                    {
+                        id: 2,
+                        count: 300,
+                        radius: 1,
+                        partners: [0],
+                        kOn: 0.1,
+                        kOff: 0.5,
+                    },
+                ]);
+                break;
+
+            case "TEST_FIBERS":
+                config.clientSimulator = new CurveSimulator(1000, 4);
+                break;
+
+            case "TEST_SINGLE_FIBER":
+                config.clientSimulator = new SingleCurveSimulator();
+                break;
+
+            case "TEST_PDB":
+                config.clientSimulator = new PdbSimulator();
+                break;
+
+            case "TEST_SINGLE_PDB":
+                config.clientSimulator = new SinglePdbSimulator("3IRL");
+                break;
+
+            case "TEST_METABALLS":
+                config.clientSimulator = new MetaballSimulator();
+                break;
+            default:
+                break;
+        }
+        return config;
+    }
+
+    // in development, requires appropriate local branch of octopus
+    // to run Brownian Motion simulator
+    private configureRemoteClientSimulator(fileId: string) {
+        this.setState({
+            clientSimulator: true,
+            simulariumFile: { name: fileId, data: null },
+        });
+        simulariumController.changeFile(
+            {
+                netConnectionSettings: this.netConnectionSettings,
+                requestJson: true,
+            },
+            fileId
+        );
+    }
+
+    private handleFileSelect(file: string) {
+        simulariumController.stop();
+        this.clearFile();
+        this.setState({ selectedFile: file }, () => {
+            this.configureAndLoad();
+        });
+    }
+
     private configureAndLoad() {
         simulariumController.configureNetwork(this.netConnectionSettings);
-        if (playbackFile.startsWith("http")) {
-            return this.loadFromUrl(playbackFile);
+        if (this.state.conversionFileName !== "") {
+            return;
         }
-        if (playbackFile === "TEST_LIVEMODE_API") {
-            simulariumController.changeFile(
-                {
-                    clientSimulator: new PointSimulatorLive(4, 4),
-                },
-                playbackFile
-            );
-        } else if (playbackFile === "TEST_POINTS") {
-            simulariumController.changeFile(
-                {
-                    clientSimulator: new PointSimulator(8000, 4),
-                },
-                playbackFile
-            );
-        } else if (playbackFile === "TEST_BINDING") {
-            simulariumController.setCameraType(true);
-            simulariumController.changeFile(
-                {
-                    clientSimulator: new BindingSimulator([
-                        { id: 0, count: 30, radius: 3, partners: [1, 2] },
-                        {
-                            id: 1,
-                            count: 300,
-                            radius: 1,
-                            partners: [0],
-                            kOn: 0.1,
-                            kOff: 0.5,
-                        },
-                        {
-                            id: 2,
-                            count: 300,
-                            radius: 1,
-                            partners: [0],
-                            kOn: 0.1,
-                            kOff: 0.5,
-                        },
-                    ]),
-                },
-                playbackFile
-            );
-        } else if (playbackFile === "TEST_FIBERS") {
-            simulariumController.changeFile(
-                {
-                    clientSimulator: new CurveSimulator(1000, 4),
-                },
-                playbackFile
-            );
-        } else if (playbackFile === "TEST_SINGLE_FIBER") {
-            simulariumController.changeFile(
-                {
-                    clientSimulator: new SingleCurveSimulator(),
-                },
-                playbackFile
-            );
-        } else if (playbackFile === "TEST_PDB") {
-            simulariumController.changeFile(
-                {
-                    clientSimulator: new PdbSimulator(),
-                },
-                playbackFile
-            );
-        } else if (playbackFile === "TEST_SINGLE_PDB") {
-            simulariumController.changeFile(
-                {
-                    clientSimulator: new SinglePdbSimulator("3IRL"),
-                },
-                playbackFile
-            );
-        } else if (playbackFile === "TEST_METABALLS") {
-            simulariumController.changeFile(
-                {
-                    clientSimulator: new MetaballSimulator(),
-                },
-                playbackFile
-            );
-        } else {
+        if (this.state.selectedFile.startsWith("http")) {
+            return this.loadFromUrl(this.state.selectedFile);
+        }
+        const fileId = TRAJECTORY_OPTIONS.find(
+            (option) => option.id === this.state.selectedFile
+        );
+        if (!fileId) {
+            console.error("Invalid file id");
+            return;
+        }
+        if (fileId.simulatorType === SimulatorModes.localClientSimulator) {
+            const clientSim = this.configureLocalClientSimulator(fileId.id);
+            simulariumController.changeFile(clientSim, fileId.id);
             this.setState({
-                simulariumFile: { name: playbackFile, data: null },
+                clientSimulator: true,
+            });
+            return;
+        } else if (
+            fileId.simulatorType === SimulatorModes.remoteClientSimulator
+        ) {
+            this.configureRemoteClientSimulator(fileId.id);
+        } else if (fileId.simulatorType === SimulatorModes.remotePrecomputed) {
+            this.setState({
+                simulariumFile: { name: fileId.id, data: null },
             });
             simulariumController.changeFile(
                 {
                     netConnectionSettings: this.netConnectionSettings,
                 },
-                playbackFile
+                fileId.id
             );
         }
     }
@@ -711,6 +772,20 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         this.setState({ followObjectData: agentData });
     };
 
+    public updateBrownianSimulator = () => {
+        const updateData = {
+            data: {
+                agents: {
+                    "1": {
+                        _updater: "accumulate",
+                        position: [0.1, 0, 0],
+                    },
+                },
+            },
+        };
+        simulariumController.sendUpdate(updateData);
+    };
+
     public render(): JSX.Element {
         if (this.state.filePending) {
             const fileType = this.state.filePending.type;
@@ -725,84 +800,24 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         }
         return (
             <div className="container" style={{ height: "90%", width: "75%" }}>
-                <select
-                    onChange={(event) => {
-                        simulariumController.pause();
-                        playbackFile = event.target.value;
-                        this.configureAndLoad();
+                <FileSelection
+                    selectedFile={this.state.selectedFile}
+                    conversionFileName={this.state.conversionFileName}
+                    onFileSelect={(file: string) => {
+                        this.handleFileSelect(file);
                     }}
-                    defaultValue={playbackFile}
-                >
-                    <option value={queryStringFile}>{queryStringFile}</option>
-                    <option value="TEST_LIVEMODE_API">
-                        TEST LIVE MODE API
-                    </option>
-                    <option value="actin012_3.h5">Actin 12_3</option>
-                    <option value="listeria_rocketbugs_normal_fine_2_filtered.simularium">
-                        listeria 01
-                    </option>
-                    <option value="kinesin002_01.h5">kinesin 002</option>
-                    <option value="microtubules038_10.h5">MT 38</option>
-                    <option value="microtubules_v2_shrinking.h5">M Tub</option>
-                    <option value="aster.cmo">Aster</option>
-                    <option value="microtubules30_1.h5">MT 30</option>
-                    <option value="endocytosis.simularium">Endocytosis</option>
-                    <option value="pc4covid19.simularium">COVIDLUNG</option>
-                    <option value="nanoparticle_wrapping.simularium">
-                        Nanoparticle wrapping
-                    </option>
-                    <option value="smoldyn_min1.simularium">
-                        Smoldyn min1
-                    </option>
-                    <option value="smoldyn_spine.simularium">
-                        Smoldyn spine
-                    </option>
-                    <option value="medyan_Chandrasekaran_2019_UNI_alphaA_0.1_MA_0.675.simularium">
-                        medyan 625
-                    </option>
-                    <option value="medyan_Chandrasekaran_2019_UNI_alphaA_0.1_MA_0.0225.simularium">
-                        medyan 0225
-                    </option>
-                    <option value="springsalad_condensate_formation_Below_Ksp.simularium">
-                        springsalad below ksp
-                    </option>
-                    <option value="springsalad_condensate_formation_At_Ksp.simularium">
-                        springsalad at ksp
-                    </option>
-                    <option value="springsalad_condensate_formation_Above_Ksp.simularium">
-                        springsalad above ksp
-                    </option>
-                    <option value="blood-plasma-1.0.simularium">
-                        blood plasma
-                    </option>
-                    <option value="TEST_SINGLE_PDB">TEST SINGLE PDB</option>
-                    <option value="TEST_PDB">TEST PDB</option>
-                    <option value="TEST_SINGLE_FIBER">TEST SINGLE FIBER</option>
-                    <option value="TEST_FIBERS">TEST FIBERS</option>
-                    <option value="TEST_POINTS">TEST POINTS</option>
-                    <option value="TEST_METABALLS">TEST METABALLS</option>
-                    <option value="TEST_BINDING">TEST BINDING</option>
-                </select>
-
+                    loadSmoldynFile={() => this.loadSmoldynFile()}
+                    clearFile={this.clearFile.bind(this)}
+                    loadSmoldynPreConfiguredSim={() => this.loadSmoldynSim()}
+                    setRabbitCount={(count) => {
+                        this.smoldynInput = count;
+                    }}
+                />
+                <button onClick={() => this.updateBrownianSimulator()}>
+                    Update (Remote Brownian Live Mode)
+                </button>
                 <button onClick={() => this.translateAgent()}>
-                    TranslateAgent
-                </button>
-                <button onClick={() => simulariumController.clearFile()}>
-                    Clear
-                </button>
-                <button onClick={() => this.loadSmoldynFile()}>
-                    Load a smoldyn trajectory
-                </button>
-                <br />
-                <label>
-                    Initial Rabbit Count:
-                    <input
-                        defaultValue="100"
-                        onChange={(event) => {this.smoldynInput = event.target.value}}
-                    />
-                </label>
-                <button onClick={() => this.loadSmoldynSim()}>
-                    Run Smoldyn
+                    Translate Agent (point sim live)
                 </button>
                 <br />
                 <button onClick={() => simulariumController.resume()}>
