@@ -98,7 +98,7 @@ var SimulariumController = /*#__PURE__*/function () {
   }
   return _createClass(SimulariumController, [{
     key: "createSimulatorConnection",
-    value: function createSimulatorConnection(netConnectionConfig, clientSimulator, localFile, geoAssets) {
+    value: function createSimulatorConnection(netConnectionConfig, clientSimulator, localFile, geoAssets, requestJson) {
       var _this2 = this;
       if (clientSimulator) {
         this.simulator = new ClientSimulator(clientSimulator);
@@ -113,7 +113,7 @@ var SimulariumController = /*#__PURE__*/function () {
         var webSocketClient = new WebsocketClient(netConnectionConfig, this.onError);
         this.remoteWebsocketClient = webSocketClient;
         this.octopusClient = new OctopusServicesClient(webSocketClient);
-        this.simulator = new RemoteSimulator(webSocketClient, this.onError);
+        this.simulator = new RemoteSimulator(webSocketClient, this.onError, requestJson);
         this.simulator.setTrajectoryDataHandler(this.visData.parseAgentsFromNetData.bind(this.visData));
       } else {
         // caught in try/catch block, not sent to front end
@@ -327,7 +327,7 @@ var SimulariumController = /*#__PURE__*/function () {
       if (shouldConfigureNewSimulator) {
         try {
           if (connectionParams) {
-            this.createSimulatorConnection(connectionParams.netConnectionSettings, connectionParams.clientSimulator, connectionParams.simulariumFile, connectionParams.geoAssets);
+            this.createSimulatorConnection(connectionParams.netConnectionSettings, connectionParams.clientSimulator, connectionParams.simulariumFile, connectionParams.geoAssets, connectionParams.requestJson);
             this.isPaused = true;
           } else {
             // caught in following block, not sent to front end

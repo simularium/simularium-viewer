@@ -22,6 +22,7 @@ interface SimulatorConnectionParams {
     geoAssets?: {
         [key: string]: string;
     };
+    requestJson?: boolean;
 }
 export default class SimulariumController {
     simulator?: ISimulator;

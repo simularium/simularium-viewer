@@ -10,6 +10,7 @@ import { NetMessageEnum } from "./WebsocketClient.js";
 // and plays back a trajectory specified in the NetConnectionParams
 export var RemoteSimulator = /*#__PURE__*/function () {
   function RemoteSimulator(webSocketClient, errorHandler) {
+    var jsonResponse = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
     _classCallCheck(this, RemoteSimulator);
     _defineProperty(this, "webSocketClient", void 0);
     _defineProperty(this, "logger", void 0);
@@ -17,6 +18,7 @@ export var RemoteSimulator = /*#__PURE__*/function () {
     _defineProperty(this, "onTrajectoryDataArrive", void 0);
     _defineProperty(this, "lastRequestedFile", void 0);
     _defineProperty(this, "handleError", void 0);
+    _defineProperty(this, "jsonResponse", void 0);
     this.webSocketClient = webSocketClient;
     this.lastRequestedFile = "";
     this.handleError = errorHandler || function () {
@@ -24,6 +26,7 @@ export var RemoteSimulator = /*#__PURE__*/function () {
     };
     this.logger = jsLogger.get("netconnection");
     this.logger.setLevel(jsLogger.DEBUG);
+    this.jsonResponse = jsonResponse;
     this.registerBinaryMessageHandlers();
     this.registerJsonMessageHandlers();
     this.onTrajectoryFileInfoArrive = function () {
@@ -272,7 +275,8 @@ export var RemoteSimulator = /*#__PURE__*/function () {
       this.webSocketClient.sendWebSocketRequest({
         msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
         frameNumber: startFrameNumber,
-        fileName: this.lastRequestedFile
+        fileName: this.lastRequestedFile,
+        jsonResponse: this.jsonResponse
       }, "Request Single Frame");
     }
   }, {
@@ -281,7 +285,8 @@ export var RemoteSimulator = /*#__PURE__*/function () {
       this.webSocketClient.sendWebSocketRequest({
         msgType: NetMessageEnum.ID_GOTO_SIMULATION_TIME,
         time: time,
-        fileName: this.lastRequestedFile
+        fileName: this.lastRequestedFile,
+        jsonResponse: this.jsonResponse
       }, "Load single frame at specified Time");
     }
   }, {
@@ -290,12 +295,17 @@ export var RemoteSimulator = /*#__PURE__*/function () {
       this.lastRequestedFile = fileName;
       this.webSocketClient.sendWebSocketRequest({
         msgType: NetMessageEnum.ID_INIT_TRAJECTORY_FILE,
-        fileName: fileName
+        fileName: fileName,
+        jsonResponse: this.jsonResponse
       }, "Initialize trajectory file info");
     }
   }, {
     key: "sendUpdate",
     value: function sendUpdate(_obj) {
+      this.webSocketClient.sendWebSocketRequest({
+        msgType: NetMessageEnum.ID_UPDATE_SIMULATION_STATE,
+        data: _obj
+      }, "Send Update");
       return Promise.resolve();
     }
   }]);
