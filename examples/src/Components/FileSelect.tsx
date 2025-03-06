@@ -1,12 +1,9 @@
 import React, { useCallback, useEffect } from "react";
-import {
-    AWAITING_CONVERSION,
-    AWAITING_SMOLDYN_SIM_RUN,
-    TRAJECTORY_OPTIONS,
-} from "../constants";
+import { TRAJECTORY_OPTIONS } from "../constants";
 
 interface FileSelectionProps {
     selectedFile: string;
+    conversionFileName: string;
     onFileSelect: (file: string) => void;
     loadSmoldynFile: () => void;
     clearFile: () => void;
@@ -16,6 +13,7 @@ interface FileSelectionProps {
 
 const FileSelection = ({
     selectedFile,
+    conversionFileName,
     onFileSelect,
     loadSmoldynFile,
     clearFile,
@@ -28,45 +26,40 @@ const FileSelection = ({
             const queryStringFile = urlParams.get("file") || "";
             onFileSelect(queryStringFile);
         }
-    }, [onFileSelect]);
+    }, []);
+
+    const isAwaitingFileConversion = conversionFileName !== "";
+    const selectValue = isAwaitingFileConversion
+        ? "Awaiting file conversion..."
+        : selectedFile;
 
     const handleFileSelect = useCallback(
         (file: string) => {
-            if (
-                selectedFile === AWAITING_SMOLDYN_SIM_RUN ||
-                selectedFile === AWAITING_CONVERSION
-            ) {
+            if (conversionFileName !== "") {
                 return;
             }
             onFileSelect(file);
         },
-        [selectedFile, onFileSelect]
+        [selectedFile, onFileSelect, conversionFileName]
     );
 
     const notInList =
-        selectedFile &&
-        selectedFile !== AWAITING_SMOLDYN_SIM_RUN &&
-        selectedFile !== AWAITING_CONVERSION &&
-        !TRAJECTORY_OPTIONS.some((t) => t.id === selectedFile);
+        selectedFile && !TRAJECTORY_OPTIONS.some((t) => t.id === selectedFile);
 
     return (
         <div className={"ui-container"}>
             <select
-                value={selectedFile}
+                value={selectValue}
                 onChange={(e) => handleFileSelect(e.target.value as string)}
                 style={{ maxWidth: 200 }}
+                disabled={isAwaitingFileConversion}
             >
                 <option value="" disabled>
                     choose a file
                 </option>
-                {selectedFile === AWAITING_SMOLDYN_SIM_RUN && (
-                    <option value={AWAITING_SMOLDYN_SIM_RUN} disabled>
-                        Awaiting Smoldyn Sim Run...
-                    </option>
-                )}
-                {selectedFile === AWAITING_CONVERSION && (
-                    <option value={AWAITING_CONVERSION} disabled>
-                        Awaiting Autoconversion...
+                {isAwaitingFileConversion && (
+                    <option value={"Awaiting file conversion..."} disabled>
+                        Awaiting file conversion...
                     </option>
                 )}
                 {Object.values(TRAJECTORY_OPTIONS).map((traj) => (
@@ -78,22 +71,25 @@ const FileSelection = ({
                     <option value={selectedFile}>{selectedFile}</option>
                 )}
             </select>
+            <br></br>
             <button onClick={() => clearFile()}>Clear trajectory </button>
             <button onClick={loadSmoldynFile}>
                 Convert a smoldyn trajectory
             </button>
-            <button onClick={loadSmoldynPreConfiguredSim}>
-                Run pre-config Smoldyn sim via BioSimulators API
-            </button>
-            <label>
-                Initial Rabbit Count:
-                <input
-                    defaultValue="100"
-                    onChange={(event) => {
-                        setRabbitCount(event.target.value);
-                    }}
-                />
-            </label>
+            <div className="ui-container">
+                <button onClick={loadSmoldynPreConfiguredSim}>
+                    Run pre-config Smoldyn sim via BioSimulators API
+                </button>
+                <label>
+                    Initial Rabbit Count:
+                    <input
+                        defaultValue="100"
+                        onChange={(event) => {
+                            setRabbitCount(event.target.value);
+                        }}
+                    />
+                </label>
+            </div>
         </div>
     );
 };

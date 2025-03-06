@@ -12,7 +12,7 @@ import {
     SelectionStateInfo,
     UIDisplayData,
 } from "../simularium/index.js";
-import { AgentData, CacheLog, TrajectoryFileInfoAny } from "../simularium/types.js";
+import { AgentData, TrajectoryFileInfoAny } from "../simularium/types.js";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers.js";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError.js";
 import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry/index.js";
@@ -48,8 +48,6 @@ type ViewportProps = {
     disableCache?: boolean;
     onFollowObjectChanged?: (agentData: AgentData) => void; // passes agent data about the followed agent to the front end
     maxCacheSize?: number;
-    onCacheUpdate?: (log: CacheLog) => void;
-    onStreamingChange?: (streaming: boolean) => void;
 } & Partial<DefaultProps>;
 
 const defaultProps = {
@@ -132,15 +130,9 @@ class Viewport extends React.Component<
         this.props.simulariumController.visData.frameCache.changeSettings({
             cacheEnabled: !props.disableCache,
             maxSize: props.maxCacheSize,
-            onUpdate: props.onCacheUpdate,
         });
         if (props.onError) {
             this.props.simulariumController.visData.setOnError(props.onError);
-        }
-        if (props.onStreamingChange) {
-            this.props.simulariumController.setOnStreamingChangeCallback(
-                props.onStreamingChange
-            );
         }
         this.props.simulariumController.visData.clearCache();
         this.visGeometry.createMaterials(props.agentColors);
@@ -195,7 +187,6 @@ class Viewport extends React.Component<
 
         simulariumController.visData.timeStepSize =
             trajectoryFileInfo.timeStepSize;
-        simulariumController.visData.totalSteps = trajectoryFileInfo.totalSteps;
 
         const bx = trajectoryFileInfo.size.x;
         const by = trajectoryFileInfo.size.y;
@@ -666,7 +657,7 @@ class Viewport extends React.Component<
                 }
             }
 
-            if (!visData.atLatestFrame() && simulariumController.isPlaying()) {
+            if (!visData.atLatestFrame() && !simulariumController.paused()) {
                 visData.gotoNextFrame();
             }
             this.stats.begin();

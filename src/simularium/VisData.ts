@@ -14,14 +14,9 @@ class VisData {
     private frameToWaitFor: number;
     private lockedForFrame: boolean;
 
-    public currentFrameNumber: number; // playback head
-    public currentStreamingHead: number;
-    public remoteStreamingHeadPotentiallyOutOfSync: boolean;
-    public isPlaying: boolean;
-    public onCacheLimitReached: () => void;
+    private currentFrameNumber: number;
 
     public timeStepSize: number;
-    public totalSteps: number;
     public onError: (error: FrontEndError) => void;
 
     private static parseOneBinaryFrame(data: ArrayBuffer): CachedFrame {
@@ -43,25 +38,16 @@ class VisData {
 
     public constructor() {
         this.currentFrameNumber = -1;
-        this.currentStreamingHead = -1;
-        this.remoteStreamingHeadPotentiallyOutOfSync = false;
         this.frameCache = new VisDataCache();
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
         this.timeStepSize = 0;
-        this.totalSteps = 0;
-        this.isPlaying = false;
 
         this.onError = noop;
-        this.onCacheLimitReached = noop;
     }
 
     public setOnError(onError: (error: FrontEndError) => void): void {
         this.onError = onError;
-    }
-
-    public setOnCacheLimitReached(onCacheLimitReached: () => void): void {
-        this.onCacheLimitReached = onCacheLimitReached;
     }
 
     public get currentFrameData(): CachedFrame {
@@ -92,19 +78,9 @@ class VisData {
         return this.frameCache.containsTime(time);
     }
 
-    public hasLocalCacheForFrame(frameNumber: number): boolean {
-        return this.frameCache.containsFrameAtFrameNumber(frameNumber);
-    }
-
     public gotoTime(time: number): void {
         const frameNumber = this.frameCache.getFrameAtTime(time)?.frameNumber;
         if (frameNumber !== undefined) {
-            this.currentFrameNumber = frameNumber;
-        }
-    }
-
-    public gotoFrame(frameNumber: number): void {
-        if (this.hasLocalCacheForFrame(frameNumber)) {
             this.currentFrameNumber = frameNumber;
         }
     }
@@ -136,8 +112,6 @@ class VisData {
 
     public clearForNewTrajectory(): void {
         this.clearCache();
-        this.currentStreamingHead = -1;
-        this.remoteStreamingHeadPotentiallyOutOfSync = false;
     }
 
     private parseAgentsFromVisDataMessage(msg: VisDataMessage): void {
@@ -172,7 +146,7 @@ class VisData {
             this.frameExceedsCacheSizeError(parsedMsg.size);
             return;
         }
-        this.validateAndProcessFrame(parsedMsg);
+        this.addFrameToCache(parsedMsg);
     }
 
     public parseAgentsFromFrameData(msg: VisDataMessage | ArrayBuffer): void {
@@ -181,7 +155,7 @@ class VisData {
             if (frame.frameNumber === 0) {
                 this.clearCache(); // new data has arrived
             }
-            this.validateAndProcessFrame(frame);
+            this.addFrameToCache(frame);
             return;
         }
         this.parseAgentsFromVisDataMessage(msg);
@@ -203,9 +177,7 @@ class VisData {
         this.parseAgentsFromFrameData(msg);
     }
 
-    ////////// Incoming frame management //////////////
-
-    private handleOversizedFrame(frame: CachedFrame): void {
+    private addFrameToCache(frame: CachedFrame): void {
         if (
             this.frameCache.cacheSizeLimited &&
             frame.size > this.frameCache.maxSize
@@ -213,57 +185,6 @@ class VisData {
             this.frameExceedsCacheSizeError(frame.size);
             return;
         }
-    }
-
-    private trimAndAddFrame(frame: CachedFrame): void {
-        this.frameCache.trimCache(this.currentFrameData.size);
-        this.frameCache.addFrame(frame);
-    }
-
-    private resetCacheWithFrame(frame: CachedFrame): void {
-        this.clearCache();
-        this.frameCache.addFrame(frame);
-    }
-
-    private doesFrameCauseCacheOverflow(frame: CachedFrame): boolean {
-        return frame.size + this.frameCache.size > this.frameCache.maxSize;
-    }
-
-    private handleCacheOverflow(frame: CachedFrame): void {
-        const playbackFrame = this.currentFrameData;
-        const cacheHeadFrame = this.frameCache.getFirstFrameNumber();
-        const isCacheHeadBehindPlayback =
-            playbackFrame.frameNumber > cacheHeadFrame;
-
-        if (isCacheHeadBehindPlayback) {
-            this.trimAndAddFrame(frame);
-        } else if (this.isPlaying) {
-            // if currently playing, and cache head is ahead of playback head
-            // we clear the cache and add the frame
-            this.resetCacheWithFrame(frame);
-        } else {
-            // if paused, and we run out of space in the cache
-            // we need to stop streaming, which is handled by the controller
-            this.remoteStreamingHeadPotentiallyOutOfSync = true;
-            this.onCacheLimitReached();
-        }
-    }
-
-    private validateAndProcessFrame(frame: CachedFrame): void {
-        // assumes that if a frame has come in, the back end has set that to be the current frame
-        // todo update when octopus has functionality to move backend "current frame"
-        // via argument on pause() or new message type
-        this.currentStreamingHead = frame.frameNumber;
-        this.handleOversizedFrame(frame);
-
-        if (this.doesFrameCauseCacheOverflow(frame)) {
-            this.handleCacheOverflow(frame);
-        } else {
-            this.addFrameToCache(frame);
-        }
-    }
-
-    private addFrameToCache(frame: CachedFrame): void {
         this.frameCache.addFrame(frame);
     }
 

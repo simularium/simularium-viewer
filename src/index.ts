@@ -12,7 +12,6 @@ export type {
     VisDataMessage,
     Plot,
     AgentData,
-    CacheLog,
 } from "./simularium/index.js";
 export type { ISimulariumFile } from "./simularium/ISimulariumFile.js";
 export type { TimeData } from "./viewport/index.js";
