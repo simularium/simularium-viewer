@@ -87,6 +87,7 @@ class CollectionInput extends React.Component<
         if (data.isBaseType) {
             return (
                 <BaseInput
+                    key={index}
                     options={childItem.options || []}
                     dataType={currentDataType}
                     name={childItem.name}
@@ -102,11 +103,15 @@ class CollectionInput extends React.Component<
             );
         } else if (data.parameters) {
             return map(data.parameters, (childParameter, key) => {
-                return this.renderValueItem(
-                    childParameter,
-                    [...newPath, key],
-                    index,
-                    type
+                return (
+                    <div key={key}>
+                        {this.renderValueItem(
+                            childParameter,
+                            [...newPath, key],
+                            index,
+                            type
+                        )}
+                    </div>
                 );
             });
         }
