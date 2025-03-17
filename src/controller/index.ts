@@ -28,14 +28,6 @@ import { OctopusServicesClient } from "../simularium/OctopusClient.js";
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
 // TODO: refine this as part of the public API for initializing the
-// controller (also see SimulatorConnectionParams below)
-interface SimulariumControllerParams {
-    remoteSimulator?: RemoteSimulator;
-    netConnectionSettings?: NetConnectionParams;
-    trajectoryPlaybackFile?: string;
-}
-
-// TODO: refine this as part of the public API for initializing the
 // controller with a simulator connection
 interface SimulatorConnectionParams {
     netConnectionSettings?: NetConnectionParams;
@@ -54,7 +46,6 @@ export default class SimulariumController {
     public visGeometry: VisGeometry | undefined;
     public tickIntervalLength: number;
     public handleTrajectoryInfo: (TrajectoryFileInfo) => void;
-    public postConnect: () => void;
     public startRecording: () => void;
     public stopRecording: () => void;
     public onError?: (error: FrontEndError) => void;
@@ -63,53 +54,19 @@ export default class SimulariumController {
     private isFileChanging: boolean;
     private playBackFile: string;
 
-    public constructor(params: SimulariumControllerParams) {
+    public constructor() {
         this.visData = new VisData();
         this.tickIntervalLength = 0; // Will be overwritten when a trajectory is loaded
-        this.postConnect = () => noop;
         this.startRecording = () => noop;
         this.stopRecording = () => noop;
 
         this.handleTrajectoryInfo = (/*msg: TrajectoryFileInfo*/) => noop;
         this.onError = (/*errorMessage*/) => noop;
 
-        // might only be used in unit testing
-        // TODO: change test so controller isn't initialized with a remoteSimulator
-        if (params.remoteSimulator) {
-            this.simulator = params.remoteSimulator;
-            this.simulator.setTrajectoryFileInfoHandler(
-                (trajFileInfo: TrajectoryFileInfo) => {
-                    this.handleTrajectoryInfo(trajFileInfo);
-                }
-            );
-            this.simulator.setTrajectoryDataHandler(
-                this.visData.parseAgentsFromNetData.bind(this.visData)
-            );
-            // TODO: probably remove this? We're never initalizing the controller
-            // with any settings on the website.
-        } else if (params.netConnectionSettings) {
-            this.createSimulatorConnection(
-                params.netConnectionSettings,
-                undefined,
-                undefined
-            );
-        } else {
-            // No network information was passed in
-            //  the viewer will be initialized blank
-
-            this.simulator = undefined;
-
-            // @TODO: Pass this warning upwards (to installing app)
-            if (params.trajectoryPlaybackFile) {
-                console.warn(
-                    "trajectoryPlaybackFile param ignored, no network config provided"
-                );
-            }
-        }
-
         this.isPaused = false;
         this.isFileChanging = false;
-        this.playBackFile = params.trajectoryPlaybackFile || "";
+        this.playBackFile = "";
+        this.simulator = undefined;
         this.zoomIn = this.zoomIn.bind(this);
         this.zoomOut = this.zoomOut.bind(this);
         this.resetCamera = this.resetCamera.bind(this);
@@ -196,26 +153,6 @@ export default class SimulariumController {
         return this.isFileChanging;
     }
 
-    // Not called by viewer, but could be called by
-    // parent app
-    // todo candidate for removal? not called in website
-    public connect(): Promise<string> {
-        if (!this.remoteWebsocketClient) {
-            return Promise.reject(
-                new Error(
-                    "No network connection established in simularium controller."
-                )
-            );
-        }
-
-        return this.remoteWebsocketClient
-            .connectToRemoteServer()
-            .then((msg: string) => {
-                this.postConnect();
-                return msg;
-            });
-    }
-
     public start(): Promise<void> {
         if (!this.simulator) {
             return Promise.reject();
@@ -280,12 +217,6 @@ export default class SimulariumController {
 
     public paused(): boolean {
         return this.isPaused;
-    }
-
-    public initializeTrajectoryFile(): void {
-        if (this.simulator) {
-            this.simulator.initialize(this.playBackFile);
-        }
     }
 
     public startSmoldynSim(
