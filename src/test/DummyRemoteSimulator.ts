@@ -28,13 +28,11 @@ export class DummyRemoteSimulator extends RemoteSimulator {
         this.isConnected = false;
         this.frameCounter = 0;
 
-        this.commandLatencyMS = 200;
-        this.connectLatencyMS = 1000;
-
         this.timeStep = 1;
-        this.totalDuration = 99;
-        this.fileName = "";
-
+        this.totalDuration = 100;
+        this.commandLatencyMS = 0;
+        this.connectLatencyMS = 0;
+        this.fileName = "test";
         setInterval(this.broadcast.bind(this), 200);
     }
 

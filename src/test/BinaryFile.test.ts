@@ -1,6 +1,6 @@
 import BinaryFileReader from "../simularium/BinaryFileReader.js";
 
-function pad(buf: ArrayBuffer): ArrayBuffer {
+export function pad(buf: ArrayBuffer): ArrayBuffer {
     if (buf.byteLength % 4 !== 0) {
         const newbuf = new ArrayBuffer(
             buf.byteLength + (4 - (buf.byteLength % 4))
@@ -11,7 +11,10 @@ function pad(buf: ArrayBuffer): ArrayBuffer {
         return newbuf;
     } else return buf;
 }
-function makeBinary(blocks: ArrayBuffer[], blockTypes: number[]): ArrayBuffer {
+export function makeBinary(
+    blocks: ArrayBuffer[],
+    blockTypes: number[]
+): ArrayBuffer {
     const numBlocks = blocks.length;
     const headerfixedLen = 16 + 4 + 4 + 4;
     const tocLen = 3 * numBlocks * 4;

@@ -12,7 +12,7 @@ import { ISimulator } from "./ISimulator.js";
 // a ClientSimulator is a ISimulator that is expected to run purely in procedural javascript in the browser client,
 // with the procedural implementation in a IClientSimulatorImpl
 export class ClientSimulator implements ISimulator {
-    private localSimulator: IClientSimulatorImpl;
+    public localSimulator: IClientSimulatorImpl;
     private simulatorIntervalId = 0;
     // throttle the data interval so that the local client can keep up
     // ideally the client (VisData) needs to be able to handle the data rate
