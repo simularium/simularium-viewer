@@ -1,14 +1,22 @@
 import { TrajectoryType } from "../constants.js";
-import { WebsocketClient, NetMessageEnum } from "./WebsocketClient.js";
+import {
+    WebsocketClient,
+    NetMessageEnum,
+    NetMessage,
+} from "./WebsocketClient.js";
 
 export class OctopusServicesClient {
-    private webSocketClient: WebsocketClient;
-    private lastRequestedFile = "";
+    public webSocketClient: WebsocketClient;
+    public lastRequestedFile = "";
     private healthCheckHandler: () => void;
+    public onConversionComplete: (fileName: string) => void;
 
     constructor(webSocketClient: WebsocketClient) {
         this.webSocketClient = webSocketClient;
         this.healthCheckHandler = () => {
+            /* do nothing */
+        };
+        this.onConversionComplete = () => {
             /* do nothing */
         };
     }
@@ -18,6 +26,21 @@ export class OctopusServicesClient {
         this.webSocketClient.addJsonMessageHandler(
             NetMessageEnum.ID_SERVER_HEALTHY_RESPONSE,
             () => this.healthCheckHandler()
+        );
+    }
+
+    public setOnConversionCompleteHandler(handler: () => void): void {
+        this.onConversionComplete = handler;
+        this.webSocketClient.addJsonMessageHandler(
+            NetMessageEnum.ID_TRAJECTORY_FILE_INFO,
+            (msg: NetMessage) => {
+                if (
+                    this.onConversionComplete &&
+                    msg.fileName === this.lastRequestedFile
+                ) {
+                    this.onConversionComplete(msg.fileName);
+                }
+            }
         );
     }
 
@@ -51,6 +74,9 @@ export class OctopusServicesClient {
             "Cancel the requested autoconversion"
         );
         this.lastRequestedFile = "";
+        this.setOnConversionCompleteHandler(() => {
+            /* do nothing */
+        });
     }
 
     public async checkServerHealth(): Promise<void> {
@@ -77,5 +103,9 @@ export class OctopusServicesClient {
             },
             "Start smoldyn simulation"
         );
+    }
+
+    public socketIsValid(): boolean {
+        return this.webSocketClient.socketIsValid();
     }
 }

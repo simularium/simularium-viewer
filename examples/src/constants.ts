@@ -18,8 +18,6 @@ export const agentColors: string[] = [
     "#00aabf",
 ];
 
-export const AWAITING_SMOLDYN_SIM_RUN = "awaiting_smoldyn_sim_run";
-
 /**
  * to do:
  * work out type of sendUpdate messages per simulator

@@ -45,6 +45,8 @@ const netConnectionSettings = {
     serverPort: 9002,
 };
 
+// todo: update this to describe new flow of initializing blank
+// and calling change file
 const simulariumController = new SimulariumController({
     trajectoryPlaybackFile: "ATPsynthase_9.h5",
     netConnectionSettings: netConnectionSettings,
@@ -89,7 +91,7 @@ class Viewer extends React.Component {
                     onJsonDataArrived={this.handleJsonMeshData}
                     onTrajectoryFileInfoChanged={this.handleTrajectoryInfo}
                     highlightedParticleType={this.state.highlightId}
-                    loadInitialData={true}
+                    // loadInitialData={true}
                     hideAllAgents={this.state.hideAllAgents}
                     showPaths={this.state.showPaths}
                 />)

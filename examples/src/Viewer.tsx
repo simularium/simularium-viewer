@@ -41,7 +41,6 @@ import AgentSelectionControls from "./Components/AgentSelection.tsx";
 
 import {
     agentColors,
-    AWAITING_SMOLDYN_SIM_RUN,
     SimulatorModes,
     TRAJECTORY_OPTIONS,
 } from "./constants.ts";
@@ -88,10 +87,10 @@ interface ViewerState {
     initialPlay: boolean;
     firstFrameTime: number;
     followObjectData: AgentData | null;
-    conversionFileName: string;
+    awaitingFileConversion: boolean;
 }
 
-const simulariumController = new SimulariumController({});
+const simulariumController = new SimulariumController();
 
 let currentFrame = 0;
 let currentTime = 0;
@@ -124,7 +123,7 @@ const initialState: ViewerState = {
     initialPlay: true,
     firstFrameTime: 0,
     followObjectData: null,
-    conversionFileName: "",
+    awaitingFileConversion: false,
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
@@ -344,8 +343,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
         const fileName = uuidv4() + ".simularium";
         this.setState({
-            conversionFileName: fileName,
-            selectedFile: "",
+            awaitingFileConversion: true,
+            selectedFile: fileName,
         });
 
         simulariumController
@@ -365,15 +364,15 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public loadSmoldynSim() {
         this.clearFile();
-        this.setState({
-            conversionFileName: AWAITING_SMOLDYN_SIM_RUN,
-            selectedFile: "",
-        });
         simulariumController.checkServerHealth(
             this.onHealthCheckResponse,
             this.netConnectionSettings
         );
         const fileName = "smoldyn_sim" + uuidv4() + ".simularium";
+        this.setState({
+            awaitingFileConversion: true,
+            selectedFile: fileName,
+        });
         simulariumController
             .startSmoldynSim(
                 this.netConnectionSettings,
@@ -382,18 +381,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             )
             .then(() => {
                 this.clearPendingFile();
-            })
-            .then(() => {
-                simulariumController.initNewFile(
-                    { netConnectionSettings: this.netConnectionSettings },
-                    true
-                );
-            })
-            .then(() => {
-                this.setState({
-                    selectedFile: fileName,
-                    conversionFileName: "",
-                });
             })
             .catch((err) => {
                 console.error("Error starting Smoldyn sim: ", err);
@@ -411,7 +398,11 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             : null;
         this.setState({ initialPlay: true });
         return simulariumController
-            .handleFileChange(simulariumFile, fileName, geoAssets)
+            .changeFile({
+                simulariumFile,
+                fileName,
+                geoAssets,
+            })
             .catch(console.log);
     }
 
@@ -476,31 +467,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         });
     }
 
-    public receiveConvertedFile(): void {
-        this.setState({
-            selectedFile: this.state.conversionFileName,
-            conversionFileName: "",
-        });
-        simulariumController
-            .initNewFile({
-                netConnectionSettings: this.netConnectionSettings,
-            })
-            .then(() => {
-                simulariumController.gotoTime(0);
-            })
-            .catch((e) => {
-                console.warn(e);
-            });
-    }
-
     public handleTrajectoryInfo(data: TrajectoryFileInfo): void {
         console.log("Trajectory info arrived", data);
-        const autoConversionActive =
-            this.state.conversionFileName &&
-            this.state.conversionFileName !== AWAITING_SMOLDYN_SIM_RUN;
-        if (autoConversionActive) {
-            this.receiveConvertedFile();
-        }
+        this.setState({ awaitingFileConversion: false });
         // NOTE: Currently incorrectly assumes initial time of 0
         const totalDuration = (data.totalSteps - 1) * data.timeStepSize;
         this.setState({
@@ -508,7 +477,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             timeStep: data.timeStepSize,
             currentFrame: 0,
             currentTime: 0,
-            trajectoryTitle: data.trajectoryTitle,
+            trajectoryTitle: data.trajectoryTitle || "",
         });
     }
 
@@ -577,28 +546,25 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         simulariumController.clearFile();
         this.setState({
             selectedFile: "",
-            conversionFileName: "",
             simulariumFile: null,
             clientSimulator: false,
         });
     }
-
-    private configureLocalClientSimulator(selectedFile: string) {
-        const config: { clientSimulator?: IClientSimulatorImpl } = {};
-
+    private configureLocalClientSimulatorImpl(selectedFile: string) {
+        let impl: IClientSimulatorImpl | null = null;
         switch (selectedFile) {
             case "TEST_LIVEMODE_API":
                 console.log("Using Live Mode API: PointSimulatorLive");
-                config.clientSimulator = new PointSimulatorLive(4, 4);
+                impl = new PointSimulatorLive(4, 4);
                 break;
 
             case "TEST_POINTS":
-                config.clientSimulator = new PointSimulator(8000, 4);
+                impl = new PointSimulator(8000, 4);
                 break;
 
             case "TEST_BINDING":
                 simulariumController.setCameraType(true);
-                config.clientSimulator = new BindingSimulator([
+                impl = new BindingSimulator([
                     { id: 0, count: 30, radius: 3, partners: [1, 2] },
                     {
                         id: 1,
@@ -620,28 +586,28 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 break;
 
             case "TEST_FIBERS":
-                config.clientSimulator = new CurveSimulator(1000, 4);
+                impl = new CurveSimulator(1000, 4);
                 break;
 
             case "TEST_SINGLE_FIBER":
-                config.clientSimulator = new SingleCurveSimulator();
+                impl = new SingleCurveSimulator();
                 break;
 
             case "TEST_PDB":
-                config.clientSimulator = new PdbSimulator();
+                impl = new PdbSimulator();
                 break;
 
             case "TEST_SINGLE_PDB":
-                config.clientSimulator = new SinglePdbSimulator("3IRL");
+                impl = new SinglePdbSimulator("3IRL");
                 break;
 
             case "TEST_METABALLS":
-                config.clientSimulator = new MetaballSimulator();
+                impl = new MetaballSimulator();
                 break;
             default:
                 break;
         }
-        return config;
+        return impl;
     }
 
     // in development, requires appropriate local branch of octopus
@@ -651,13 +617,11 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             clientSimulator: true,
             simulariumFile: { name: fileId, data: null },
         });
-        simulariumController.changeFile(
-            {
-                netConnectionSettings: this.netConnectionSettings,
-                requestJson: true,
-            },
-            fileId
-        );
+        simulariumController.changeFile({
+            fileName: fileId,
+            netConnectionSettings: this.netConnectionSettings,
+            requestJson: true,
+        });
     }
 
     private handleFileSelect(file: string) {
@@ -669,10 +633,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     }
 
     private configureAndLoad() {
-        simulariumController.configureNetwork(this.netConnectionSettings);
-        if (this.state.conversionFileName !== "") {
-            return;
-        }
         if (this.state.selectedFile.startsWith("http")) {
             return this.loadFromUrl(this.state.selectedFile);
         }
@@ -684,8 +644,17 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             return;
         }
         if (fileId.simulatorType === SimulatorModes.localClientSimulator) {
-            const clientSim = this.configureLocalClientSimulator(fileId.id);
-            simulariumController.changeFile(clientSim, fileId.id);
+            const clientSimulatorImpl = this.configureLocalClientSimulatorImpl(
+                fileId.id
+            );
+            if (!clientSimulatorImpl) {
+                console.warn("No client simulator implementation found");
+                return;
+            }
+            simulariumController.changeFile({
+                fileName: fileId.id,
+                clientSimulatorImpl,
+            });
             this.setState({
                 clientSimulator: true,
             });
@@ -698,12 +667,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             this.setState({
                 simulariumFile: { name: fileId.id, data: null },
             });
-            simulariumController.changeFile(
-                {
-                    netConnectionSettings: this.netConnectionSettings,
-                },
-                fileId.id
-            );
+            simulariumController.changeFile({
+                fileName: fileId.id,
+                netConnectionSettings: this.netConnectionSettings,
+            });
         }
     }
 
@@ -808,7 +775,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 <div className="sidebar">
                     <FileSelection
                         selectedFile={this.state.selectedFile}
-                        conversionFileName={this.state.conversionFileName}
+                        isAwaitingFileConversion={
+                            this.state.awaitingFileConversion
+                        }
                         onFileSelect={(file: string) => {
                             this.handleFileSelect(file);
                         }}
@@ -961,15 +930,15 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                                     min={0}
                                     step={1}
                                     value={this.state.currentFrame}
-                                    max={this.state.totalSteps}
-                                    onChange={this.handleScrubFrame}
+                                    max={this.state.totalDuration}
+                                    onChange={this.handleScrubTime.bind(this)}
                                 />
                                 <label htmlFor="slider">
                                     {this.state.currentFrame *
                                         this.state.timeStep +
                                         this.state.firstFrameTime}
                                     /{" "}
-                                    {this.state.totalSteps *
+                                    {this.state.totalDuration *
                                         this.state.timeStep}
                                 </label>
                             </div>
