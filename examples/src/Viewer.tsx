@@ -1069,7 +1069,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                                 onFollowObjectChanged={this.handleFollowObjectData.bind(
                                     this
                                 )}
-                                loadInitialData={true}
                                 agentColors={this.state.agentColors}
                                 showPaths={this.state.showPaths}
                                 onError={this.onError}

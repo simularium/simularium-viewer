@@ -41,7 +41,6 @@ export default class SimulariumController {
     public visGeometry: VisGeometry | undefined;
     public tickIntervalLength: number;
     public handleTrajectoryInfo: (TrajectoryFileInfo) => void;
-    public postConnect: () => void;
     public startRecording: () => void;
     public stopRecording: () => void;
     public onError?: (error: FrontEndError) => void;
@@ -53,7 +52,6 @@ export default class SimulariumController {
     public constructor() {
         this.visData = new VisData();
         this.tickIntervalLength = 0; // Will be overwritten when a trajectory is loaded
-        this.postConnect = () => noop;
         this.startRecording = () => noop;
         this.stopRecording = () => noop;
 
@@ -190,26 +188,6 @@ export default class SimulariumController {
         return this.isFileChanging;
     }
 
-    // Not called by viewer, but could be called by
-    // parent app
-    // todo candidate for removal? not called in website
-    public connect(): Promise<string> {
-        if (!this.remoteWebsocketClient) {
-            return Promise.reject(
-                new Error(
-                    "No network connection established in simularium controller."
-                )
-            );
-        }
-
-        return this.remoteWebsocketClient
-            .connectToRemoteServer()
-            .then((msg: string) => {
-                this.postConnect();
-                return msg;
-            });
-    }
-
     public async start(): Promise<void> {
         if (!this.simulator) {
             return Promise.reject();
@@ -253,12 +231,6 @@ export default class SimulariumController {
 
     public paused(): boolean {
         return this.isPaused;
-    }
-
-    public initializeTrajectoryFile(): void {
-        if (this.simulator) {
-            this.simulator.initialize(this.playBackFile);
-        }
     }
 
     public gotoTime(time: number): void {
