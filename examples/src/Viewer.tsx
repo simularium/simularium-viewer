@@ -91,7 +91,7 @@ interface ViewerState {
     conversionFileName: string;
 }
 
-const simulariumController = new SimulariumController({});
+const simulariumController = new SimulariumController();
 
 let currentFrame = 0;
 let currentTime = 0;
@@ -1100,7 +1100,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                                 onFollowObjectChanged={this.handleFollowObjectData.bind(
                                     this
                                 )}
-                                loadInitialData={true}
                                 agentColors={this.state.agentColors}
                                 showPaths={this.state.showPaths}
                                 onError={this.onError}
