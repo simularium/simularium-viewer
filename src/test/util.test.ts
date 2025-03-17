@@ -1,10 +1,19 @@
 import { FrontEndError } from "../simularium/index.js";
+import { SimulatorParams } from "../simularium/types.js";
 import {
     checkAndSanitizePath,
     compareTimes,
     getAgentDataFromBuffer,
     getNextAgentOffset,
+    isLocalFileSimulatorParams,
+    isLocalProceduralSimulatorParams,
+    isRemoteSimulatorParams,
 } from "../util.js";
+import {
+    ProceduralSimTestParams,
+    LocalFileTestParams,
+    RemoteSimTestParams,
+} from "./SimulariumController.test.js";
 
 describe("util", () => {
     describe("compareTimes", () => {
@@ -257,6 +266,69 @@ describe("util", () => {
                 expect(() => getAgentDataFromBuffer(view, 0)).toThrow(
                     FrontEndError
                 );
+            });
+        });
+
+        describe("Simulator parameter type guards", () => {
+            describe("isLocalProceduralSimulatorParams()", () => {
+                it("returns true if 'clientSimulatorImpl' key exists", () => {
+                    expect(
+                        isLocalProceduralSimulatorParams(
+                            ProceduralSimTestParams as SimulatorParams
+                        )
+                    ).toBe(true);
+                });
+
+                it("returns false if 'clientSimulatorImpl' key does not exist", () => {
+                    const dummyParams = {
+                        fileName: "dummy",
+                    };
+                    expect(
+                        isLocalProceduralSimulatorParams(
+                            dummyParams as SimulatorParams
+                        )
+                    ).toBe(false);
+                });
+            });
+
+            describe("isLocalFileSimulatorParams()", () => {
+                it("returns true if 'simulariumFile' key exists", () => {
+                    expect(
+                        isLocalFileSimulatorParams(
+                            LocalFileTestParams as SimulatorParams
+                        )
+                    ).toBe(true);
+                });
+
+                it("returns false if 'simulariumFile' key does not exist", () => {
+                    const dummyParams = {
+                        fileName: "local.simularium",
+                    };
+                    expect(
+                        isLocalFileSimulatorParams(
+                            dummyParams as SimulatorParams
+                        )
+                    ).toBe(false);
+                });
+            });
+
+            describe("isRemoteSimulatorParams()", () => {
+                it("returns true if 'netConnectionSettings' key exists", () => {
+                    expect(
+                        isRemoteSimulatorParams(
+                            RemoteSimTestParams as SimulatorParams
+                        )
+                    ).toBe(true);
+                });
+
+                it("returns false if 'netConnectionSettings' key does not exist", () => {
+                    const dummyParams = {
+                        fileName: "remote.simularium",
+                    };
+                    expect(
+                        isRemoteSimulatorParams(dummyParams as SimulatorParams)
+                    ).toBe(false);
+                });
             });
         });
     });

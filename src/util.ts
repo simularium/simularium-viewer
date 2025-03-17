@@ -5,8 +5,12 @@ import {
     AGENT_OBJECT_KEYS,
     AgentData,
     CachedFrame,
+    LocalFileSimulatorParams,
+    LocalProceduralSimulatorParams,
+    RemoteSimulatorParams,
+    SimulatorParams,
 } from "./simularium/types.js";
-import { FrontEndError } from "./simularium/index.js";
+import { FrontEndError, RemoteSimulator } from "./simularium/index.js";
 import VisGeometry from "./visGeometry/index.js";
 
 export const compareTimes = (
@@ -132,4 +136,30 @@ export const getNextAgentOffset = (
 ): number => {
     const nSubPoints = view[currentOffset + AGENT_OBJECT_KEYS.length - 1];
     return currentOffset + AGENT_OBJECT_KEYS.length + nSubPoints;
+};
+
+//// Type guards for SimulatorParams ////
+
+export const isLocalProceduralSimulatorParams = (
+    params: SimulatorParams
+): params is LocalProceduralSimulatorParams => {
+    return "clientSimulatorImpl" in params;
+};
+
+export const isLocalFileSimulatorParams = (
+    params: SimulatorParams
+): params is LocalFileSimulatorParams => {
+    return "simulariumFile" in params;
+};
+
+export const isRemoteSimulator = (
+    sim: RemoteSimulator
+): sim is RemoteSimulator => {
+    return "webSocketClient" in sim && "onTrajectoryFileInfoArrive" in sim;
+};
+
+export const isRemoteSimulatorParams = (
+    params: SimulatorParams
+): params is RemoteSimulatorParams => {
+    return "netConnectionSettings" in params;
 };
