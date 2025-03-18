@@ -209,3 +209,8 @@ export interface CacheNode {
     next: CacheNode | null;
     prev: CacheNode | null;
 }
+
+export interface CacheLog {
+    size: number;
+    framesInCache: number[];
+}

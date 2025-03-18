@@ -50,6 +50,14 @@ class VisData {
         this.onError = onError;
     }
 
+    public isCacheEnabled(): boolean {
+        return this.frameCache.cacheEnabled;
+    }
+
+    public getMaxCacheSize(): number {
+        return this.frameCache.maxSize;
+    }
+
     public get currentFrameData(): CachedFrame {
         if (!this.frameCache.hasFrames()) {
             return nullCachedFrame();
