@@ -75,6 +75,11 @@ class VisData {
      *   Functions to check update
      * */
     public hasLocalCacheForTime(time: number): boolean {
+        // if we're not using the cache at all, we shouldn't even
+        // be looking for a frame
+        if (!this.frameCache.cacheEnabled) {
+            return false;
+        }
         return this.frameCache.containsTime(time);
     }
 
