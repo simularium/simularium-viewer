@@ -550,21 +550,22 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             clientSimulator: false,
         });
     }
-    private configureLocalClientSimulatorImpl(selectedFile: string) {
-        let impl: IClientSimulatorImpl | null = null;
+    private configureLocalClientSimulator(selectedFile: string) {
+        const config: { clientSimulator?: IClientSimulatorImpl } = {};
+
         switch (selectedFile) {
             case "TEST_LIVEMODE_API":
                 console.log("Using Live Mode API: PointSimulatorLive");
-                impl = new PointSimulatorLive(4, 4);
+                config.clientSimulator = new PointSimulatorLive(4, 4);
                 break;
 
             case "TEST_POINTS":
-                impl = new PointSimulator(8000, 4);
+                config.clientSimulator = new PointSimulator(8000, 4);
                 break;
 
             case "TEST_BINDING":
                 simulariumController.setCameraType(true);
-                impl = new BindingSimulator([
+                config.clientSimulator = new BindingSimulator([
                     { id: 0, count: 30, radius: 3, partners: [1, 2] },
                     {
                         id: 1,
@@ -586,28 +587,28 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 break;
 
             case "TEST_FIBERS":
-                impl = new CurveSimulator(1000, 4);
+                config.clientSimulator = new CurveSimulator(1000, 4);
                 break;
 
             case "TEST_SINGLE_FIBER":
-                impl = new SingleCurveSimulator();
+                config.clientSimulator = new SingleCurveSimulator();
                 break;
 
             case "TEST_PDB":
-                impl = new PdbSimulator();
+                config.clientSimulator = new PdbSimulator();
                 break;
 
             case "TEST_SINGLE_PDB":
-                impl = new SinglePdbSimulator("3IRL");
+                config.clientSimulator = new SinglePdbSimulator("3IRL");
                 break;
 
             case "TEST_METABALLS":
-                impl = new MetaballSimulator();
+                config.clientSimulator = new MetaballSimulator();
                 break;
             default:
                 break;
         }
-        return impl;
+        return config;
     }
 
     // in development, requires appropriate local branch of octopus
@@ -644,16 +645,14 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             return;
         }
         if (fileId.simulatorType === SimulatorModes.localClientSimulator) {
-            const clientSimulatorImpl = this.configureLocalClientSimulatorImpl(
-                fileId.id
-            );
-            if (!clientSimulatorImpl) {
+            const { clientSimulator } = this.configureLocalClientSimulator(fileId.id);
+            if (!clientSimulator) {
                 console.warn("No client simulator implementation found");
                 return;
             }
             simulariumController.changeFile({
                 fileName: fileId.id,
-                clientSimulatorImpl,
+                clientSimulatorImpl: clientSimulator,
             });
             this.setState({
                 clientSimulator: true,
