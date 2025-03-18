@@ -12,12 +12,13 @@ import {
     FILE_STATUS_SUCCESS,
     FILE_STATUS_FAIL,
     PlotConfig,
-    SimulatorParams,
 } from "../simularium/types.js";
 
-import { ClientSimulator } from "../simularium/ClientSimulator.js";
-import { ISimulator } from "../simularium/ISimulator.js";
-import { LocalFileSimulator } from "../simularium/LocalFileSimulator.js";
+import {
+    getClassFromParams,
+    ISimulator,
+} from "../simularium/Simulator/ISimulator.js";
+import { LocalFileSimulator } from "../simularium/Simulator/LocalFileSimulator.js";
 import { FrontEndError } from "../simularium/FrontEndError.js";
 import type { ISimulariumFile } from "../simularium/ISimulariumFile.js";
 import { WebsocketClient } from "../simularium/WebsocketClient.js";
@@ -25,10 +26,10 @@ import { TrajectoryType } from "../constants.js";
 import { RemoteMetricsCalculator } from "../simularium/RemoteMetricsCalculator.js";
 import { OctopusServicesClient } from "../simularium/OctopusClient.js";
 import {
-    isLocalProceduralSimulatorParams,
     isLocalFileSimulatorParams,
     isRemoteSimulatorParams,
 } from "../util.js";
+import { SimulatorParams } from "../simularium/Simulator/types.js";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
@@ -75,32 +76,13 @@ export default class SimulariumController {
         this.cancelCurrentFile = this.cancelCurrentFile.bind(this);
     }
 
-    public buildSimulator(params: SimulatorParams): ISimulator {
-        if (isLocalProceduralSimulatorParams(params)) {
-            const simulator = new ClientSimulator(params.clientSimulatorImpl);
-            simulator.setTrajectoryDataHandler(
-                this.visData.parseAgentsFromNetData.bind(this.visData)
-            );
-            return simulator;
-        } else if (isLocalFileSimulatorParams(params)) {
-            const simulator = new LocalFileSimulator(
-                params.fileName,
-                params.simulariumFile
-            );
-            if (
-                this.visGeometry &&
-                params.geoAssets &&
-                !isEmpty(params.geoAssets)
-            ) {
-                this.visGeometry.geometryStore.cacheLocalAssets(
-                    params.geoAssets
-                );
-            }
-            simulator.setTrajectoryDataHandler(
-                this.visData.parseAgentsFromFrameData.bind(this.visData)
-            );
-            return simulator;
-        } else if (isRemoteSimulatorParams(params)) {
+    public buildSimulator(params: SimulatorParams) {
+        const SimulatorClass = getClassFromParams(params);
+        if (!SimulatorClass) {
+            throw new Error("Invalid simulator configuration");
+        }
+        let simulator: ISimulator;
+        if (isRemoteSimulatorParams(params)) {
             if (this.needsNewNetworkConfig(params.netConnectionSettings)) {
                 this.configureNetwork(params.netConnectionSettings);
             }
@@ -108,17 +90,29 @@ export default class SimulariumController {
                 throw new Error("Websocket client not configured");
             }
 
-            const simulator = new RemoteSimulator(
+            simulator = new RemoteSimulator(
                 this.remoteWebsocketClient,
                 this.onError,
                 params.requestJson
             );
-            simulator.setTrajectoryDataHandler(
-                this.visData.parseAgentsFromNetData.bind(this.visData)
-            );
             return simulator;
+        } else {
+            simulator = new SimulatorClass(params);
+
+            if (
+                this.visGeometry &&
+                "geoAssets" in params &&
+                !isEmpty(params.geoAssets)
+            ) {
+                this.visGeometry.geometryStore.cacheLocalAssets(
+                    params.geoAssets
+                );
+            }
         }
-        throw new Error("Invalid simulator configuration");
+        simulator.setTrajectoryDataHandler(
+            this.visData.parseAgentsFromNetData.bind(this.visData)
+        );
+        return simulator;
     }
 
     private createSimulatorConnection(params: SimulatorParams): void {

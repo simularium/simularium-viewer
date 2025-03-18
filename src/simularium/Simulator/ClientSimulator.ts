@@ -1,13 +1,14 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
 
-import { VisDataMessage, TrajectoryFileInfo } from "./types.js";
+import { VisDataMessage, TrajectoryFileInfo } from "../types.js";
 import {
     ClientMessageEnum,
     ClientPlayBackType,
     IClientSimulatorImpl,
-} from "./localSimulators/IClientSimulatorImpl.js";
+} from "../localSimulators/IClientSimulatorImpl.js";
 import { ISimulator } from "./ISimulator.js";
+import { ClientSimulatorParams } from "./types.js";
 
 // a ClientSimulator is a ISimulator that is expected to run purely in procedural javascript in the browser client,
 // with the procedural implementation in a IClientSimulatorImpl
@@ -22,7 +23,11 @@ export class ClientSimulator implements ISimulator {
     public onTrajectoryDataArrive: (msg: VisDataMessage) => void;
     public handleError: (error: Error) => void;
 
-    public constructor(sim: IClientSimulatorImpl) {
+    public constructor(params: ClientSimulatorParams) {
+        const { clientSimulatorImpl } = params;
+        if (!clientSimulatorImpl) {
+            throw new Error("ClientSimulator requires a IClientSimulatorImpl");
+        }
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
 

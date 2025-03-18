@@ -212,27 +212,3 @@ export interface CacheNode {
     next: CacheNode | null;
     prev: CacheNode | null;
 }
-
-export interface BaseSimulatorParams {
-    fileName: string;
-}
-
-export interface RemoteSimulatorParams extends BaseSimulatorParams {
-    netConnectionSettings: NetConnectionParams;
-    requestJson?: boolean;
-    prefetchFrames?: boolean;
-}
-
-export interface LocalProceduralSimulatorParams extends BaseSimulatorParams {
-    clientSimulatorImpl: IClientSimulatorImpl;
-}
-
-export interface LocalFileSimulatorParams extends BaseSimulatorParams {
-    simulariumFile: ISimulariumFile;
-    geoAssets?: { [key: string]: string };
-}
-
-export type SimulatorParams =
-    | RemoteSimulatorParams
-    | LocalProceduralSimulatorParams
-    | LocalFileSimulatorParams;

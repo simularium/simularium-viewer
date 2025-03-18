@@ -1,12 +1,12 @@
 import { FrontEndError } from "../simularium/index.js";
-import { SimulatorParams } from "../simularium/types.js";
+import { SimulatorParams } from "../simularium/Simulator/types.js";
 import {
     checkAndSanitizePath,
     compareTimes,
     getAgentDataFromBuffer,
     getNextAgentOffset,
     isLocalFileSimulatorParams,
-    isLocalProceduralSimulatorParams,
+    isClientSimulatorParams,
     isRemoteSimulatorParams,
 } from "../util.js";
 import {
@@ -273,7 +273,7 @@ describe("util", () => {
             describe("isLocalProceduralSimulatorParams()", () => {
                 it("returns true if 'clientSimulatorImpl' key exists", () => {
                     expect(
-                        isLocalProceduralSimulatorParams(
+                        isClientSimulatorParams(
                             ProceduralSimTestParams as SimulatorParams
                         )
                     ).toBe(true);
@@ -284,9 +284,7 @@ describe("util", () => {
                         fileName: "dummy",
                     };
                     expect(
-                        isLocalProceduralSimulatorParams(
-                            dummyParams as SimulatorParams
-                        )
+                        isClientSimulatorParams(dummyParams as SimulatorParams)
                     ).toBe(false);
                 });
             });

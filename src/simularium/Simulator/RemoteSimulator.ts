@@ -1,14 +1,14 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
-import { FrontEndError, ErrorLevel } from "./FrontEndError.js";
+import { FrontEndError, ErrorLevel } from "../FrontEndError.js";
 import {
     WebsocketClient,
     NetMessageEnum,
     MessageEventLike,
-} from "./WebsocketClient.js";
-import type { NetMessage, ErrorMessage } from "./WebsocketClient.js";
+} from "../WebsocketClient.js";
+import type { NetMessage, ErrorMessage } from "../WebsocketClient.js";
 import { ISimulator } from "./ISimulator.js";
-import { TrajectoryFileInfoV2, VisDataMessage } from "./types.js";
+import { TrajectoryFileInfoV2, VisDataMessage } from "../types.js";
 
 // a RemoteSimulator is a ISimulator that connects to the Octopus backend server
 // and plays back a trajectory specified in the NetConnectionParams
@@ -20,7 +20,6 @@ export class RemoteSimulator implements ISimulator {
     public lastRequestedFile: string;
     public handleError: (error: FrontEndError) => void | (() => void);
     private jsonResponse: boolean;
-
     public constructor(
         webSocketClient: WebsocketClient,
         errorHandler?: (error: FrontEndError) => void,

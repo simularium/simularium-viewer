@@ -1,8 +1,8 @@
 import { describe, expect, beforeEach, vi } from "vitest";
 
 import { WebsocketClient } from "../simularium/WebsocketClient";
-import { ClientSimulator } from "../simularium/ClientSimulator";
-import { LocalFileSimulator } from "../simularium/LocalFileSimulator";
+import { ClientSimulator } from "../simularium/Simulator/ClientSimulator";
+import { LocalFileSimulator } from "../simularium/Simulator/LocalFileSimulator";
 import type { NetConnectionParams } from "../simularium/WebsocketClient";
 import { IClientSimulatorImpl, RemoteSimulator } from "../simularium";
 import { makeBinary, pad } from "./BinaryFile.test";
@@ -13,10 +13,10 @@ import { TrajectoryType } from "../constants";
 import { DummyOctopusServicesClient } from "./DummyOctopusClient";
 import SimulariumController from "../controller";
 import {
+    ClientSimulatorParams,
     LocalFileSimulatorParams,
-    LocalProceduralSimulatorParams,
     RemoteSimulatorParams,
-} from "../simularium/types";
+} from "../simularium/Simulator/types";
 
 // build test binary local file, borrowed from `src/test/BinaryFile.test.ts`
 const buffer = makeBinary(
@@ -45,7 +45,7 @@ export const LocalFileTestParams: LocalFileSimulatorParams = {
     simulariumFile: binarySimFile,
 };
 
-export const ProceduralSimTestParams: LocalProceduralSimulatorParams = {
+export const ProceduralSimTestParams: ClientSimulatorParams = {
     fileName: "procedural",
     clientSimulatorImpl: new TestClientSimulatorImpl(),
 };

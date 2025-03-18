@@ -1,10 +1,24 @@
-import { VisDataMessage, TrajectoryFileInfo } from "./types.js";
+import { VisDataMessage, TrajectoryFileInfo } from "../types.js";
+import { ClientSimulator } from "./ClientSimulator.js";
+import { LocalFileSimulator } from "./LocalFileSimulator.js";
+import { RemoteSimulator } from "./RemoteSimulator.js";
+import { SimulatorParams } from "./types.js";
 
 /**
 From the caller's perspective, this interface is a contract for a 
 simulator that can be used to control set up, tear down, and streaming,
 and to subscribe to data events and error handling.
  */
+
+export const getClassFromParams = (params: SimulatorParams) => {
+    if ("netConnectionSettings" in params) {
+        return RemoteSimulator;
+    } else if ("clientSimulatorImpl" in params) {
+        return ClientSimulator;
+    } else if ("simulariumFile" in params) {
+        return LocalFileSimulator;
+    }
+};
 
 export interface ISimulator {
     /**
