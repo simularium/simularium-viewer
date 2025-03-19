@@ -5,13 +5,15 @@ import {
     AGENT_OBJECT_KEYS,
     AgentData,
     CachedFrame,
-    LocalFileSimulatorParams,
-    LocalProceduralSimulatorParams,
-    RemoteSimulatorParams,
-    SimulatorParams,
 } from "./simularium/types.js";
 import { FrontEndError, RemoteSimulator } from "./simularium/index.js";
 import VisGeometry from "./visGeometry/index.js";
+import {
+    SimulatorParams,
+    ClientSimulatorParams,
+    RemoteSimulatorParams,
+    LocalFileSimulatorParams,
+} from "./simularium/Simulator/types.js";
 
 export const compareTimes = (
     time1: number,
@@ -140,9 +142,9 @@ export const getNextAgentOffset = (
 
 //// Type guards for SimulatorParams ////
 
-export const isLocalProceduralSimulatorParams = (
+export const isClientSimulatorParams = (
     params: SimulatorParams
-): params is LocalProceduralSimulatorParams => {
+): params is ClientSimulatorParams => {
     return "clientSimulatorImpl" in params;
 };
 

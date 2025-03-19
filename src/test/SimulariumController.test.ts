@@ -1,8 +1,8 @@
 import { describe, expect, beforeEach, vi } from "vitest";
 
 import { WebsocketClient } from "../simularium/WebsocketClient";
-import { ClientSimulator } from "../simularium/ClientSimulator";
-import { LocalFileSimulator } from "../simularium/LocalFileSimulator";
+import { ClientSimulator } from "../simularium/Simulator/ClientSimulator";
+import { LocalFileSimulator } from "../simularium/Simulator/LocalFileSimulator";
 import type { NetConnectionParams } from "../simularium/WebsocketClient";
 import { IClientSimulatorImpl, RemoteSimulator } from "../simularium";
 import { makeBinary, pad } from "./BinaryFile.test";
@@ -13,10 +13,9 @@ import { TrajectoryType } from "../constants";
 import { DummyOctopusServicesClient } from "./DummyOctopusClient";
 import SimulariumController from "../controller";
 import {
-    LocalFileSimulatorParams,
-    LocalProceduralSimulatorParams,
+    ClientSimulatorParams,
     RemoteSimulatorParams,
-} from "../simularium/types";
+} from "../simularium/Simulator/types";
 
 // build test binary local file, borrowed from `src/test/BinaryFile.test.ts`
 const buffer = makeBinary(
@@ -40,12 +39,12 @@ const buffer = makeBinary(
 );
 const binarySimFile = new BinaryFileReader(buffer);
 
-export const LocalFileTestParams: LocalFileSimulatorParams = {
+export const LocalFileTestParams: LocalSimulatorParams = {
     fileName: "local.simularium",
     simulariumFile: binarySimFile,
 };
 
-export const ProceduralSimTestParams: LocalProceduralSimulatorParams = {
+export const ProceduralSimTestParams: ClientSimulatorParams = {
     fileName: "procedural",
     clientSimulatorImpl: new TestClientSimulatorImpl(),
 };
@@ -87,21 +86,19 @@ describe("SimulariumController", () => {
 
     describe("buildSimulator()", () => {
         test("should configure a LocalFileSimulator if a local file params are provided", () => {
-            const simulator = controller.buildSimulator(LocalFileTestParams);
+            const simulator = controller.initSimulator(LocalFileTestParams);
             expect(simulator instanceof LocalFileSimulator).toBe(true);
             expect(simulator instanceof ClientSimulator).toBe(false);
             expect(simulator instanceof RemoteSimulator).toBe(false);
         });
         test("should configure a ClientSimulator if a procedural params are provided", () => {
-            const simulator = controller.buildSimulator(
-                ProceduralSimTestParams
-            );
+            const simulator = controller.initSimulator(ProceduralSimTestParams);
             expect(simulator instanceof ClientSimulator).toBe(true);
             expect(simulator instanceof LocalFileSimulator).toBe(false);
             expect(simulator instanceof RemoteSimulator).toBe(false);
         });
         test("should configure a RemoteSimulator if a remote params are provided", () => {
-            const simulator = controller.buildSimulator(RemoteSimTestParams);
+            const simulator = controller.initSimulator(RemoteSimTestParams);
             expect(simulator instanceof RemoteSimulator).toBe(true);
             expect(simulator instanceof ClientSimulator).toBe(false);
             expect(simulator instanceof LocalFileSimulator).toBe(false);
