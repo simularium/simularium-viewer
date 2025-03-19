@@ -45,6 +45,7 @@ import {
     TRAJECTORY_OPTIONS,
 } from "./constants.ts";
 import { BaseType, CustomType } from "./types.ts";
+import { validateUrl, getDownloadUrl, getFileIdentifier } from "./utils.ts";
 import {
     SMOLDYN_TEMPLATE,
     UI_BASE_TYPES,
@@ -79,6 +80,7 @@ interface ViewerState {
     simulariumFile: {
         name: string;
         data: ISimulariumFile | null;
+        geoAssets?: any;
     } | null;
     clientSimulator: boolean;
     serverHealthy: boolean;
@@ -139,7 +141,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         this.viewerRef = React.createRef();
         this.handleJsonMeshData = this.handleJsonMeshData.bind(this);
         this.handleTimeChange = this.handleTimeChange.bind(this);
-        this.loadFile = this.loadFile.bind(this);
         this.clearPendingFile = this.clearPendingFile.bind(this);
         this.convertFile = this.convertFile.bind(this);
         this.onHealthCheckResponse = this.onHealthCheckResponse.bind(this);
@@ -250,7 +251,19 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         return acc;
                     }, {});
                     const fileName = filesArr[simulariumFileIndex].name;
-                    this.loadFile(simulariumFile, fileName, geoAssets);
+                    this.setState(
+                        {
+                            simulariumFile: {
+                                data: simulariumFile,
+                                name: fileName,
+                                geoAssets: geoAssets,
+                            },
+                            selectedFile: fileName,
+                        },
+                        () => {
+                            this.configureAndLoad();
+                        }
+                    );
                 })
                 .catch((error) => {
                     this.onError(error);
@@ -260,25 +273,34 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         }
     };
 
-    public loadFromUrl(url): void {
-        fetch(url)
-            .then((item: Response) => {
-                return item.blob();
-            })
-            .then((blob: Blob) => {
-                return loadSimulariumFile(blob);
-            })
-            .then((simulariumFile: ISimulariumFile) => {
-                const fileName = url;
-                this.setState({
-                    simulariumFile: { data: simulariumFile, name: fileName },
-                });
+    /**
+     * Fetches and processes a file from a URL
+     */
+    public async getFileDataFromUrl(url: string): Promise<{
+        name: string;
+        data: ISimulariumFile;
+    }> {
+        const validUrl = validateUrl(url);
+        if (!validUrl) {
+            throw new Error("Invalid URL format");
+        }
 
-                this.loadFile(simulariumFile, fileName).catch((error) => {
-                    console.log("Error loading file", error);
-                    window.alert(`Error loading file: ${error.message}`);
-                });
-            });
+        const downloadUrl = getDownloadUrl(validUrl);
+        const fileId = getFileIdentifier(downloadUrl);
+
+        try {
+            const response = await fetch(downloadUrl);
+            const blob = await response.blob();
+            const simulariumFile = await loadSimulariumFile(blob);
+
+            return {
+                name: fileId || "",
+                data: simulariumFile,
+            };
+        } catch (error) {
+            console.error("Error fetching file:", error);
+            throw error;
+        }
     }
 
     public async loadUiTemplates(): Promise<{
@@ -390,20 +412,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
     public clearPendingFile() {
         this.setState({ filePending: null });
-    }
-
-    public loadFile(trajectoryFile, fileName, geoAssets?) {
-        const simulariumFile = fileName.includes(".simularium")
-            ? trajectoryFile
-            : null;
-        this.setState({ initialPlay: true });
-        return simulariumController
-            .changeFile({
-                simulariumFile,
-                fileName,
-                geoAssets,
-            })
-            .catch(console.log);
     }
 
     public handleJsonMeshData(jsonData): void {
@@ -633,10 +641,43 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         });
     }
 
-    private configureAndLoad() {
+    private async configureAndLoad() {
+        this.setState({ initialPlay: true });
+        // handle incoming urls with file param
         if (this.state.selectedFile.startsWith("http")) {
-            return this.loadFromUrl(this.state.selectedFile);
+            try {
+                const { name, data } = await this.getFileDataFromUrl(
+                    this.state.selectedFile
+                );
+                this.setState({
+                    simulariumFile: { name, data },
+                    selectedFile: name,
+                });
+                return simulariumController.changeFile({
+                    simulariumFile: data,
+                    fileName: name,
+                });
+            } catch (error) {
+                console.error("Error loading file from URL:", error);
+                return this.onError(
+                    new FrontEndError(
+                        `Error loading file from URL: ${error.message}`
+                    )
+                );
+            }
         }
+        // handle SimulariumFiles that have been placed in state
+        // via drag and drop
+        if (this.state.simulariumFile && this.state.simulariumFile.data) {
+            return simulariumController.changeFile({
+                simulariumFile: this.state.simulariumFile.data,
+                fileName: this.state.simulariumFile.name,
+                geoAssets: this.state.simulariumFile.geoAssets || {},
+            });
+        }
+
+        // handle options from our examples list, precomputed files
+        // and client simulators
         const fileId = TRAJECTORY_OPTIONS.find(
             (option) => option.id === this.state.selectedFile
         );
@@ -645,7 +686,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             return;
         }
         if (fileId.simulatorType === SimulatorModes.localClientSimulator) {
-            const { clientSimulator } = this.configureLocalClientSimulator(fileId.id);
+            const { clientSimulator } = this.configureLocalClientSimulator(
+                fileId.id
+            );
             if (!clientSimulator) {
                 console.warn("No client simulator implementation found");
                 return;
