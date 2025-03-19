@@ -9,6 +9,7 @@ import {
 import { ISimulator } from "./ISimulator.js";
 import type { ISimulariumFile } from "../ISimulariumFile.js";
 import { LocalFileSimulatorParams } from "./types.js";
+import { WebsocketClient } from "../WebsocketClient.js";
 
 // a LocalFileSimulator is a ISimulator that plays back the contents of
 // a drag-n-drop trajectory file (a ISimulariumFile object)
@@ -140,6 +141,10 @@ export class LocalFileSimulator implements ISimulator {
                 fileName: this.fileName,
             };
         }
+    }
+
+    public getWebsocket(): WebsocketClient | null {
+        return null;
     }
 
     public getSimulariumFile(): ISimulariumFile {

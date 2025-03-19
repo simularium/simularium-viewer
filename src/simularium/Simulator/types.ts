@@ -7,17 +7,17 @@ export interface BaseSimulatorParams {
 }
 
 export interface RemoteSimulatorParams extends BaseSimulatorParams {
-    netConnectionSettings: NetConnectionParams;
+    netConnectionSettings?: NetConnectionParams;
     requestJson?: boolean;
     prefetchFrames?: boolean;
 }
 
 export interface ClientSimulatorParams extends BaseSimulatorParams {
-    clientSimulatorImpl: IClientSimulatorImpl;
+    clientSimulatorImpl?: IClientSimulatorImpl;
 }
 
 export interface LocalFileSimulatorParams extends BaseSimulatorParams {
-    simulariumFile: ISimulariumFile;
+    simulariumFile?: ISimulariumFile;
     geoAssets?: { [key: string]: string };
 }
 

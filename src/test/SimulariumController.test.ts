@@ -14,7 +14,6 @@ import { DummyOctopusServicesClient } from "./DummyOctopusClient";
 import SimulariumController from "../controller";
 import {
     ClientSimulatorParams,
-    LocalFileSimulatorParams,
     RemoteSimulatorParams,
 } from "../simularium/Simulator/types";
 
@@ -40,7 +39,7 @@ const buffer = makeBinary(
 );
 const binarySimFile = new BinaryFileReader(buffer);
 
-export const LocalFileTestParams: LocalFileSimulatorParams = {
+export const LocalFileTestParams: LocalSimulatorParams = {
     fileName: "local.simularium",
     simulariumFile: binarySimFile,
 };
@@ -87,21 +86,19 @@ describe("SimulariumController", () => {
 
     describe("buildSimulator()", () => {
         test("should configure a LocalFileSimulator if a local file params are provided", () => {
-            const simulator = controller.buildSimulator(LocalFileTestParams);
+            const simulator = controller.initSimulator(LocalFileTestParams);
             expect(simulator instanceof LocalFileSimulator).toBe(true);
             expect(simulator instanceof ClientSimulator).toBe(false);
             expect(simulator instanceof RemoteSimulator).toBe(false);
         });
         test("should configure a ClientSimulator if a procedural params are provided", () => {
-            const simulator = controller.buildSimulator(
-                ProceduralSimTestParams
-            );
+            const simulator = controller.initSimulator(ProceduralSimTestParams);
             expect(simulator instanceof ClientSimulator).toBe(true);
             expect(simulator instanceof LocalFileSimulator).toBe(false);
             expect(simulator instanceof RemoteSimulator).toBe(false);
         });
         test("should configure a RemoteSimulator if a remote params are provided", () => {
-            const simulator = controller.buildSimulator(RemoteSimTestParams);
+            const simulator = controller.initSimulator(RemoteSimTestParams);
             expect(simulator instanceof RemoteSimulator).toBe(true);
             expect(simulator instanceof ClientSimulator).toBe(false);
             expect(simulator instanceof LocalFileSimulator).toBe(false);

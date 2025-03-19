@@ -11,8 +11,8 @@ import VisGeometry from "./visGeometry/index.js";
 import {
     SimulatorParams,
     ClientSimulatorParams,
-    LocalFileSimulatorParams,
     RemoteSimulatorParams,
+    LocalFileSimulatorParams,
 } from "./simularium/Simulator/types.js";
 
 export const compareTimes = (

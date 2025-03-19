@@ -1,8 +1,14 @@
 import { VisDataMessage, TrajectoryFileInfo } from "../types.js";
+import { WebsocketClient } from "../WebsocketClient.js";
 import { ClientSimulator } from "./ClientSimulator.js";
 import { LocalFileSimulator } from "./LocalFileSimulator.js";
 import { RemoteSimulator } from "./RemoteSimulator.js";
-import { SimulatorParams } from "./types.js";
+import {
+    ClientSimulatorParams,
+    LocalFileSimulatorParams,
+    RemoteSimulatorParams,
+    SimulatorParams,
+} from "./types.js";
 
 /**
 From the caller's perspective, this interface is a contract for a 
@@ -12,11 +18,25 @@ and to subscribe to data events and error handling.
 
 export const getClassFromParams = (params: SimulatorParams) => {
     if ("netConnectionSettings" in params) {
-        return RemoteSimulator;
+        return {
+            simulatorClass: RemoteSimulator,
+            typedParams: params as RemoteSimulatorParams,
+        };
     } else if ("clientSimulatorImpl" in params) {
-        return ClientSimulator;
+        return {
+            simulatorClass: ClientSimulator,
+            typedParams: params as ClientSimulatorParams,
+        };
     } else if ("simulariumFile" in params) {
-        return LocalFileSimulator;
+        return {
+            simulatorClass: LocalFileSimulator,
+            typedParams: params as LocalFileSimulatorParams,
+        };
+    } else {
+        return {
+            simulatorClass: null,
+            typedParams: null,
+        };
     }
 };
 
@@ -60,4 +80,6 @@ export interface ISimulator {
     requestFrameByTime(time: number): void;
     /** request trajectory metadata */
     requestTrajectoryFileInfo(fileName: string): void;
+
+    getWebsocket(): WebsocketClient | null;
 }

@@ -9,6 +9,7 @@ import {
 } from "../localSimulators/IClientSimulatorImpl.js";
 import { ISimulator } from "./ISimulator.js";
 import { ClientSimulatorParams } from "./types.js";
+import { WebsocketClient } from "../WebsocketClient.js";
 
 // a ClientSimulator is a ISimulator that is expected to run purely in procedural javascript in the browser client,
 // with the procedural implementation in a IClientSimulatorImpl
@@ -40,7 +41,11 @@ export class ClientSimulator implements ISimulator {
         this.handleError = () => {
             /* do nothing */
         };
-        this.localSimulator = sim;
+        this.localSimulator = clientSimulatorImpl;
+    }
+
+    public getWebsocket(): WebsocketClient | null {
+        return null;
     }
 
     public setTrajectoryFileInfoHandler(

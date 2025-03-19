@@ -6,9 +6,14 @@ import {
     NetMessageEnum,
     MessageEventLike,
 } from "../WebsocketClient.js";
-import type { NetMessage, ErrorMessage } from "../WebsocketClient.js";
+import type {
+    NetMessage,
+    ErrorMessage,
+    NetConnectionParams,
+} from "../WebsocketClient.js";
 import { ISimulator } from "./ISimulator.js";
 import { TrajectoryFileInfoV2, VisDataMessage } from "../types.js";
+import { RemoteSimulatorParams } from "./types.js";
 
 // a RemoteSimulator is a ISimulator that connects to the Octopus backend server
 // and plays back a trajectory specified in the NetConnectionParams
@@ -21,21 +26,25 @@ export class RemoteSimulator implements ISimulator {
     public handleError: (error: FrontEndError) => void | (() => void);
     private jsonResponse: boolean;
     public constructor(
-        webSocketClient: WebsocketClient,
-        errorHandler?: (error: FrontEndError) => void,
-        jsonResponse = false
+        params: RemoteSimulatorParams,
+        errorHandler?: (error: FrontEndError) => void
     ) {
-        this.webSocketClient = webSocketClient;
+        const { netConnectionSettings, requestJson } = params;
+        if (!netConnectionSettings) {
+            throw new Error("RemoteSimulator requires a NetConnectionParams");
+        }
+
         this.lastRequestedFile = "";
         this.handleError =
             errorHandler ||
             (() => {
                 /* do nothing */
             });
+        this.webSocketClient = this.configureNetwork(netConnectionSettings);
 
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
-        this.jsonResponse = jsonResponse;
+        this.jsonResponse = requestJson || false;
         this.registerBinaryMessageHandlers();
         this.registerJsonMessageHandlers();
 
@@ -45,6 +54,10 @@ export class RemoteSimulator implements ISimulator {
         this.onTrajectoryDataArrive = () => {
             /* do nothing */
         };
+    }
+
+    public getWebsocket(): WebsocketClient | null {
+        return this.webSocketClient;
     }
 
     public setTrajectoryFileInfoHandler(
@@ -186,6 +199,28 @@ export class RemoteSimulator implements ISimulator {
     /**
      * WebSocket Connect
      * */
+
+    private needsNewNetworkConfig(
+        netConnectionConfig: NetConnectionParams
+    ): boolean {
+        const expectedIp = `wss://${netConnectionConfig.serverIp}:${netConnectionConfig.serverPort}/`;
+        return (
+            !this.webSocketClient || this.webSocketClient.getIp() !== expectedIp
+        );
+    }
+    public configureNetwork(config: NetConnectionParams) {
+        if (!this.needsNewNetworkConfig(config)) {
+            return this.webSocketClient;
+        }
+        if (!this.webSocketClient || !this.webSocketClient.socketIsValid()) {
+            this.webSocketClient = new WebsocketClient(
+                config,
+                this.handleError
+            );
+        }
+        return this.webSocketClient;
+    }
+
     public disconnect(): void {
         this.webSocketClient.disconnect();
     }
