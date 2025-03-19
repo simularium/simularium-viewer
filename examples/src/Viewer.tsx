@@ -21,6 +21,7 @@ import type {
     SelectionEntry,
     AgentData,
     IClientSimulatorImpl,
+    CacheLog,
 } from "@aics/simularium-viewer";
 
 import PointSimulator from "./simulators/PointSimulator.ts";
@@ -38,6 +39,7 @@ import ConversionForm from "./Components/ConversionForm/index.tsx";
 import AgentMetadata from "./Components/AgentMetadata.tsx";
 import FileSelection from "./Components/FileSelect.tsx";
 import AgentSelectionControls from "./Components/AgentSelection.tsx";
+import CacheLogDisplay from "./Components/CacheLogDisplay.tsx";
 
 import {
     agentColors,
@@ -89,6 +91,8 @@ interface ViewerState {
     firstFrameTime: number;
     followObjectData: AgentData | null;
     conversionFileName: string;
+    cacheLog: CacheLog;
+    cacheDisabled: boolean;
 }
 
 const simulariumController = new SimulariumController({});
@@ -125,6 +129,11 @@ const initialState: ViewerState = {
     firstFrameTime: 0,
     followObjectData: null,
     conversionFileName: "",
+    cacheLog: {
+        size: 0,
+        framesInCache: [],
+    },
+    cacheDisabled: false,
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
@@ -791,6 +800,12 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         simulariumController.sendUpdate(updateData);
     };
 
+    public handleCacheUpdate = (log: CacheLog) => {
+        this.setState({
+            cacheLog: log,
+        });
+    };
+
     public render(): JSX.Element {
         if (this.state.filePending) {
             const fileType = this.state.filePending.type;
@@ -1068,7 +1083,11 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                             </div>
                         </div>
                         <div className="logs">
-                            {/* todo add cache logs here */}
+                            <CacheLogDisplay
+                                cacheLog={this.state.cacheLog}
+                                cacheEnabled={simulariumController.visData.isCacheEnabled()}
+                                maxSize={simulariumController.visData.getMaxCacheSize()}
+                            />
                         </div>
                     </div>
                     <div className="viewer-container">
@@ -1108,6 +1127,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                                 lockedCamera={false}
                                 disableCache={false}
                                 maxCacheSize={Infinity} //  means no limit, provide limits in bytes, 1MB = 1000000, 1GB = 1000000000
+                                onCacheUpdate={this.handleCacheUpdate.bind(
+                                    this
+                                )}
                             />
                         </div>
                     </div>

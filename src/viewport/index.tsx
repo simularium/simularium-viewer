@@ -12,7 +12,7 @@ import {
     SelectionStateInfo,
     UIDisplayData,
 } from "../simularium/index.js";
-import { AgentData, TrajectoryFileInfoAny } from "../simularium/types.js";
+import { AgentData, CacheLog, TrajectoryFileInfoAny } from "../simularium/types.js";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers.js";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError.js";
 import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry/index.js";
@@ -36,6 +36,7 @@ type ViewportProps = {
         cachedData: TrajectoryFileInfo
     ) => void | undefined;
     onUIDisplayDataChanged: (data: UIDisplayData) => void | undefined;
+    onCacheUpdate?: (log: CacheLog) => void;
     loadInitialData: boolean;
     hideAllAgents: boolean;
     showPaths: boolean;
@@ -130,6 +131,7 @@ class Viewport extends React.Component<
         this.props.simulariumController.visData.frameCache.changeSettings({
             cacheEnabled: !props.disableCache,
             maxSize: props.maxCacheSize,
+            onCacheUpdate: props.onCacheUpdate,
         });
         if (props.onError) {
             this.props.simulariumController.visData.setOnError(props.onError);
