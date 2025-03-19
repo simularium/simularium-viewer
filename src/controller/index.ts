@@ -72,10 +72,25 @@ export default class SimulariumController {
         this.cancelCurrentFile = this.cancelCurrentFile.bind(this);
     }
 
+    private handleError(message: string): void {
+        if (this.onError) {
+            return this.onError(new FrontEndError(message));
+        } else {
+            throw new Error(message);
+        }
+    }
+
     public initSimulator(params: SimulatorParams) {
+        if (!params) {
+            this.handleError("Invalid simulator configuration");
+        }
+        if (!params.fileName) {
+            this.handleError("Invalid simulator configuration: no file name");
+        }
         const { simulatorClass, typedParams } = getClassFromParams(params);
         if (!simulatorClass) {
-            throw new Error("Invalid simulator configuration");
+            this.handleError("Invalid simulator configuration");
+            return;
         }
         if (
             this.visGeometry &&
@@ -89,11 +104,9 @@ export default class SimulariumController {
     }
 
     private createSimulatorConnection(params: SimulatorParams): void {
-        try {
-            this.simulator = this.initSimulator(params);
-        } catch (err) {
-            console.error("createSimulatorConnection failed", err);
-            throw err;
+        this.simulator = this.initSimulator(params);
+        if (!this.simulator) {
+            return;
         }
         this.simulator.setTrajectoryDataHandler(
             this.visData.parseAgentsFromNetData.bind(this.visData)
