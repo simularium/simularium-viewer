@@ -1,8 +1,7 @@
 import { describe, expect, beforeEach, vi } from "vitest";
 
 import { WebsocketClient } from "../simularium/WebsocketClient";
-import { ClientSimulator } from "../simularium/ClientSimulator";
-import { LocalFileSimulator } from "../simularium/LocalFileSimulator";
+
 import type { NetConnectionParams } from "../simularium/WebsocketClient";
 import { IClientSimulatorImpl, RemoteSimulator } from "../simularium";
 import { makeBinary, pad } from "./BinaryFile.test";
@@ -13,11 +12,13 @@ import { TrajectoryType } from "../constants";
 import { DummyOctopusServicesClient } from "./DummyOctopusClient";
 import SimulariumController from "../controller";
 import {
+    ClientSimulatorParams,
     LocalFileSimulatorParams,
-    LocalProceduralSimulatorParams,
     RemoteSimulatorParams,
-} from "../simularium/types";
-
+} from "../simularium/Simulator/types";
+import { ClientSimulator } from "../simularium/Simulator/ClientSimulator";
+import { LocalFileSimulator } from "../simularium/Simulator/LocalFileSimulator";
+// todo fix these tests
 // build test binary local file, borrowed from `src/test/BinaryFile.test.ts`
 const buffer = makeBinary(
     [
@@ -45,7 +46,7 @@ export const LocalFileTestParams: LocalFileSimulatorParams = {
     simulariumFile: binarySimFile,
 };
 
-export const ProceduralSimTestParams: LocalProceduralSimulatorParams = {
+export const ProceduralSimTestParams: ClientSimulatorParams = {
     fileName: "procedural",
     clientSimulatorImpl: new TestClientSimulatorImpl(),
 };
@@ -70,7 +71,7 @@ const makeControllerWithDummyRemote = (): SimulariumController => {
         return Promise.resolve("Connected");
     });
     controller.remoteWebsocketClient = new WebsocketClient();
-    controller.octopusClient = new DummyOctopusServicesClient({});
+    controller._conversionClient = new DummyOctopusServicesClient({});
     return controller;
 };
 
@@ -112,11 +113,15 @@ describe("SimulariumController", () => {
         test("should configure a LocalFileSimulator if a simulariumFile is provided", async () => {
             controller.changeFile(LocalFileTestParams);
             expect(controller.isSimulatorConfigured()).toBe(true);
-            expect(controller.simulator instanceof LocalFileSimulator).toBe(
+            expect(controller._simulator instanceof LocalFileSimulator).toBe(
                 true
             );
-            expect(controller.simulator instanceof ClientSimulator).toBe(false);
-            expect(controller.simulator instanceof RemoteSimulator).toBe(false);
+            expect(controller._simulator instanceof ClientSimulator).toBe(
+                false
+            );
+            expect(controller._simulator instanceof RemoteSimulator).toBe(
+                false
+            );
             expect(controller.getFile()).toBe("local.simularium");
         });
 
@@ -145,11 +150,13 @@ describe("SimulariumController", () => {
         test("configures a ClientSimulator when clientSimulatorImpl is provided", async () => {
             controller.changeFile(ProceduralSimTestParams);
             expect(controller.isSimulatorConfigured()).toBe(true);
-            expect(controller.simulator instanceof ClientSimulator).toBe(true);
-            expect(controller.simulator instanceof LocalFileSimulator).toBe(
+            expect(controller._simulator instanceof ClientSimulator).toBe(true);
+            expect(controller._simulator instanceof LocalFileSimulator).toBe(
                 false
             );
-            expect(controller.simulator instanceof RemoteSimulator).toBe(false);
+            expect(controller._simulator instanceof RemoteSimulator).toBe(
+                false
+            );
             expect(controller.getFile()).toBe("procedural");
         });
         test("sets playBackFile to match incoming params", async () => {
@@ -159,8 +166,8 @@ describe("SimulariumController", () => {
         test("localSimulator on ClientSimulator should match params", async () => {
             controller.changeFile(ProceduralSimTestParams);
             let impl: IClientSimulatorImpl | null = null;
-            if (controller.simulator instanceof ClientSimulator) {
-                impl = controller.simulator.localSimulator;
+            if (controller._simulator instanceof ClientSimulator) {
+                impl = controller._simulator.localSimulator;
             }
             expect(impl instanceof TestClientSimulatorImpl).toBe(true);
         });
@@ -170,9 +177,9 @@ describe("SimulariumController", () => {
         controller.changeFile(LocalFileTestParams);
         controller.changeFile(ProceduralSimTestParams);
         expect(controller.isSimulatorConfigured()).toBe(true);
-        expect(controller.simulator instanceof ClientSimulator).toBe(true);
-        expect(controller.simulator instanceof RemoteSimulator).toBe(false);
-        expect(controller.simulator instanceof LocalFileSimulator).toBe(false);
+        expect(controller._simulator instanceof ClientSimulator).toBe(true);
+        expect(controller._simulator instanceof RemoteSimulator).toBe(false);
+        expect(controller._simulator instanceof LocalFileSimulator).toBe(false);
         expect(controller.getFile()).toBe("procedural");
     });
 
@@ -191,15 +198,15 @@ describe("SimulariumController", () => {
             test("Should configure a RemoteSimulator when remote params are provided", () => {
                 controller.changeFile(RemoteSimTestParams);
                 expect(controller.isSimulatorConfigured()).toBe(true);
-                expect(controller.simulator instanceof RemoteSimulator).toBe(
+                expect(controller._simulator instanceof RemoteSimulator).toBe(
                     true
                 );
-                expect(controller.simulator instanceof ClientSimulator).toBe(
+                expect(controller._simulator instanceof ClientSimulator).toBe(
                     false
                 );
-                expect(controller.simulator instanceof LocalFileSimulator).toBe(
-                    false
-                );
+                expect(
+                    controller._simulator instanceof LocalFileSimulator
+                ).toBe(false);
                 expect(controller.getFile()).toBe("remote");
             });
             test("sets playBackFile to match incoming params", async () => {
@@ -216,7 +223,7 @@ describe("SimulariumController", () => {
                     TrajectoryType.SMOLDYN,
                     "conversion"
                 );
-                expect(controller.simulator instanceof RemoteSimulator).toBe(
+                expect(controller._simulator instanceof RemoteSimulator).toBe(
                     true
                 );
             });
@@ -228,7 +235,7 @@ describe("SimulariumController", () => {
                     TrajectoryType.SMOLDYN,
                     "conversion"
                 );
-                expect(controller.octopusClient?.lastRequestedFile).toBe(
+                expect(controller._conversionClient?.lastRequestedFile).toBe(
                     "conversion"
                 );
             });
@@ -262,11 +269,13 @@ describe("SimulariumController", () => {
                     "file.simularium"
                 );
                 controller.cancelConversion();
-                expect(controller.octopusClient?.lastRequestedFile).toBe("");
+                expect(controller._conversionClient?.lastRequestedFile).toBe(
+                    ""
+                );
                 setTimeout(() => {
-                    expect(controller.octopusClient?.lastRequestedFile).toBe(
-                        ""
-                    );
+                    expect(
+                        controller._conversionClient?.lastRequestedFile
+                    ).toBe("");
                 }, 2500);
             });
             test("after cancel should time should be -1", async () => {
@@ -290,13 +299,15 @@ describe("SimulariumController", () => {
                     "file.simularium"
                 );
                 controller.changeFile(LocalFileTestParams);
-                expect(controller.octopusClient?.lastRequestedFile).toBe("");
+                expect(controller._conversionClient?.lastRequestedFile).toBe(
+                    ""
+                );
                 expect(controller.isSimulatorConfigured()).toBe(true);
                 expect(controller.getFile()).toBe("local.simularium");
                 setTimeout(() => {
-                    expect(controller.octopusClient?.lastRequestedFile).toBe(
-                        ""
-                    );
+                    expect(
+                        controller._conversionClient?.lastRequestedFile
+                    ).toBe("");
                 }, 2500);
             });
             test("changeFile should cancel conversion, set time to -1, and take time to 0 after loading new file", async () => {
@@ -321,7 +332,7 @@ describe("SimulariumController", () => {
                     "bioSimulatorsRun",
                     "inputData"
                 );
-                expect(controller.simulator instanceof RemoteSimulator).toBe(
+                expect(controller._simulator instanceof RemoteSimulator).toBe(
                     true
                 );
             });
@@ -332,7 +343,7 @@ describe("SimulariumController", () => {
                     "bioSimulatorsRun",
                     "inputData"
                 );
-                expect(controller.octopusClient?.lastRequestedFile).toBe(
+                expect(controller._conversionClient?.lastRequestedFile).toBe(
                     "bioSimulatorsRun"
                 );
             });
@@ -391,7 +402,7 @@ describe("SimulariumController", () => {
 
         test("should reject if no simulator exists", async () => {
             await controller.changeFile(LocalFileTestParams);
-            controller.simulator = undefined;
+            controller._simulator = undefined;
             await expect(controller.start()).rejects.toBeUndefined();
         });
     });

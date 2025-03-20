@@ -1,20 +1,18 @@
 import { TrajectoryType } from "../constants.js";
-import { OctopusServicesClient } from "../simularium/OctopusClient.js";
-import {
-    WebsocketClient,
-    NetConnectionParams,
-} from "../simularium/WebsocketClient.js";
+import { ConversionClient } from "../simularium/ConversionClient.js";
+import { NetConnectionParams } from "../simularium/WebsocketClient.js";
 
-export class DummyOctopusServicesClient extends OctopusServicesClient {
-    public webSocketClient: WebsocketClient;
+// todo fix this along with tests that use it
+export class DummyOctopusServicesClient extends ConversionClient {
     public lastRequestedFile = "";
     private conversionCompleteDelay: number;
     public onConversionComplete: (fileName: string) => void;
 
-    constructor(opts: NetConnectionParams) {
-        const webSocketClient = new WebsocketClient(opts);
-        super(webSocketClient);
-        this.webSocketClient = webSocketClient;
+    constructor(
+        netConnectionPArams: NetConnectionParams,
+        lastRequestedFile: string
+    ) {
+        super(netConnectionPArams, lastRequestedFile, () => {});
         this.lastRequestedFile = "";
         this.conversionCompleteDelay = 2000;
         this.onConversionComplete = () => {
@@ -22,7 +20,9 @@ export class DummyOctopusServicesClient extends OctopusServicesClient {
         };
     }
 
-    public setOnConversionCompleteHandler(handler: () => void): void {
+    public setOnConversionCompleteHandler(
+        handler: (fileName: string) => void
+    ): void {
         this.onConversionComplete = handler;
         // waits two seconds, then fires conversion complete
         // mocking a return from the server

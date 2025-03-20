@@ -112,6 +112,8 @@ class VisData {
 
     public clearForNewTrajectory(): void {
         this.clearCache();
+        this.frameToWaitFor = -1;
+        this.lockedForFrame = false;
     }
 
     private parseAgentsFromVisDataMessage(msg: VisDataMessage): void {

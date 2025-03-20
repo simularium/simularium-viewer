@@ -1,35 +1,29 @@
-import { TrajectoryType } from "../constants.js";
 import {
-    WebsocketClient,
+    NetConnectionParams,
     NetMessageEnum,
     NetMessage,
 } from "./WebsocketClient.js";
+import { TrajectoryType } from "../constants.js";
+import { BaseRemoteClient } from "./RemoteClient.js";
+import { FrontEndError } from "./FrontEndError.js";
 
-export class OctopusServicesClient {
-    public webSocketClient: WebsocketClient;
-    public lastRequestedFile = "";
-    private healthCheckHandler: () => void;
+export class ConversionClient extends BaseRemoteClient {
     public onConversionComplete: (fileName: string) => void;
 
-    constructor(webSocketClient: WebsocketClient) {
-        this.webSocketClient = webSocketClient;
-        this.healthCheckHandler = () => {
-            /* do nothing */
-        };
+    constructor(
+        netConnectionSettings: NetConnectionParams,
+        lastRequestedFile: string,
+        errorHandler?: (error: FrontEndError) => void
+    ) {
+        super(netConnectionSettings, lastRequestedFile, errorHandler);
         this.onConversionComplete = () => {
             /* do nothing */
         };
     }
 
-    public setHealthCheckHandler(handler: () => void): void {
-        this.healthCheckHandler = handler;
-        this.webSocketClient.addJsonMessageHandler(
-            NetMessageEnum.ID_SERVER_HEALTHY_RESPONSE,
-            () => this.healthCheckHandler()
-        );
-    }
-
-    public setOnConversionCompleteHandler(handler: () => void): void {
+    public setOnConversionCompleteHandler(
+        handler: (fileName: string) => void
+    ): void {
         this.onConversionComplete = handler;
         this.webSocketClient.addJsonMessageHandler(
             NetMessageEnum.ID_TRAJECTORY_FILE_INFO,
@@ -42,10 +36,6 @@ export class OctopusServicesClient {
                 }
             }
         );
-    }
-
-    public async connectToRemoteServer(): Promise<string> {
-        return this.webSocketClient.connectToRemoteServer();
     }
 
     public async convertTrajectory(
@@ -79,21 +69,11 @@ export class OctopusServicesClient {
         });
     }
 
-    public async checkServerHealth(): Promise<void> {
-        await this.webSocketClient.connectToRemoteServer();
-        this.webSocketClient.sendWebSocketRequest(
-            {
-                msgType: NetMessageEnum.ID_CHECK_HEALTH_REQUEST,
-            },
-            "Request server health check"
-        );
-    }
-
     public async sendSmoldynData(
         outFileName: string,
         smoldynInput: string
     ): Promise<void> {
-        await this.webSocketClient.connectToRemoteServer();
+        await this.connectToRemoteServer();
         this.lastRequestedFile = outFileName;
         this.webSocketClient.sendWebSocketRequest(
             {
@@ -103,9 +83,5 @@ export class OctopusServicesClient {
             },
             "Start smoldyn simulation"
         );
-    }
-
-    public socketIsValid(): boolean {
-        return this.webSocketClient.socketIsValid();
     }
 }

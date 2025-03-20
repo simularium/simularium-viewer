@@ -1,9 +1,14 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
 
-import { VisDataFrame, VisDataMessage, TrajectoryFileInfoV2 } from "./types.js";
+import {
+    VisDataFrame,
+    VisDataMessage,
+    TrajectoryFileInfoV2,
+} from "../types.js";
 import { ISimulator } from "./ISimulator.js";
-import type { ISimulariumFile } from "./ISimulariumFile.js";
+import type { ISimulariumFile } from "../ISimulariumFile.js";
+import { LocalFileSimulatorParams } from "./types.js";
 
 // a LocalFileSimulator is a ISimulator that plays back the contents of
 // a drag-n-drop trajectory file (a ISimulariumFile object)
@@ -18,7 +23,11 @@ export class LocalFileSimulator implements ISimulator {
     private playbackIntervalId = 0;
     private currentPlaybackFrameIndex = 0;
 
-    public constructor(fileName: string, simulariumFile: ISimulariumFile) {
+    public constructor(params: LocalFileSimulatorParams) {
+        const { fileName, simulariumFile } = params;
+        if (!simulariumFile) {
+            throw new Error("LocalFileSimulator requires a ISimulariumFile");
+        }
         this.fileName = fileName;
         this.simulariumFile = simulariumFile;
         this.logger = jsLogger.get("netconnection");
