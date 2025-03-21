@@ -6,6 +6,7 @@ import {
 } from "../simularium/WebsocketClient.js";
 import { RemoteSimulator } from "../simularium/RemoteSimulator.js";
 import { VisDataFrame, VisDataMessage } from "../simularium/types.js";
+import { FrontEndError } from "../simularium/FrontEndError.js";
 
 // Mocks the simularium simulation back-end, w/ latency
 export class DummyRemoteSimulator extends RemoteSimulator {
@@ -17,12 +18,13 @@ export class DummyRemoteSimulator extends RemoteSimulator {
     public totalDuration: number;
     public timeStep: number;
     private fileName: string;
-    public webSocketClient: WebsocketClient;
 
-    public constructor(opts: NetConnectionParams) {
-        const webSocketClient = new WebsocketClient(opts);
-        super(webSocketClient);
-        this.webSocketClient = webSocketClient;
+    public constructor(
+        netConnectionSettings: NetConnectionParams,
+        fileName: string,
+        errorHandler?: (error: FrontEndError) => void
+    ) {
+        super(netConnectionSettings, fileName, errorHandler);
 
         this.isStreamingData = false;
         this.isConnected = false;
@@ -33,7 +35,7 @@ export class DummyRemoteSimulator extends RemoteSimulator {
 
         this.timeStep = 1;
         this.totalDuration = 99;
-        this.fileName = "";
+        this.fileName = fileName;
 
         setInterval(this.broadcast.bind(this), 200);
     }
