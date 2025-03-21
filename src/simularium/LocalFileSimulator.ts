@@ -10,6 +10,7 @@ import {
 import { ISimulator } from "./ISimulator.js";
 import type { ISimulariumFile } from "./ISimulariumFile.js";
 import { RemoteMetricsCalculator } from "./RemoteMetricsCalculator.js";
+import { NetConnectionParams } from "./WebsocketClient.js";
 
 // a LocalFileSimulator is a ISimulator that plays back the contents of
 // a drag-n-drop trajectory file (a ISimulariumFile object)
@@ -142,15 +143,20 @@ export class LocalFileSimulator implements ISimulator {
     }
 
     public async setupMetricsCalculator(
-        metricsCalculator: RemoteMetricsCalculator
+        netConnectionSettings: NetConnectionParams
     ): Promise<void> {
-        this.remoteMetricsCalculator = metricsCalculator;
+        this.remoteMetricsCalculator = new RemoteMetricsCalculator(
+            netConnectionSettings,
+            this.fileName,
+            this.handleError
+        );
+        await this.remoteMetricsCalculator.initialize(this.fileName);
     }
 
     public requestAvailableMetrics(): void {
         if (
             !this.remoteMetricsCalculator ||
-            !this.remoteMetricsCalculator.socketIsValid()
+            !this.remoteMetricsCalculator.isConnectedToRemoteServer()
         ) {
             this.handleError(
                 new Error("Metrics calculator is not configured.")
@@ -167,7 +173,7 @@ export class LocalFileSimulator implements ISimulator {
     ): void {
         if (
             !this.remoteMetricsCalculator ||
-            !this.remoteMetricsCalculator.socketIsValid()
+            !this.remoteMetricsCalculator.isConnectedToRemoteServer()
         ) {
             this.handleError(
                 new Error("Metrics calculator is not configured.")

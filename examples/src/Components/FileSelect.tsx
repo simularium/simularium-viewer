@@ -3,7 +3,7 @@ import { TRAJECTORY_OPTIONS } from "../constants";
 
 interface FileSelectionProps {
     selectedFile: string;
-    conversionFileName: string;
+    awaitingConversion: boolean;
     onFileSelect: (file: string) => void;
     loadSmoldynFile: () => void;
     clearFile: () => void;
@@ -13,7 +13,7 @@ interface FileSelectionProps {
 
 const FileSelection = ({
     selectedFile,
-    conversionFileName,
+    awaitingConversion,
     onFileSelect,
     loadSmoldynFile,
     clearFile,
@@ -28,19 +28,11 @@ const FileSelection = ({
         }
     }, []);
 
-    const isAwaitingFileConversion = conversionFileName !== "";
-    const selectValue = isAwaitingFileConversion
-        ? "Awaiting file conversion..."
-        : selectedFile;
-
     const handleFileSelect = useCallback(
         (file: string) => {
-            if (conversionFileName !== "") {
-                return;
-            }
             onFileSelect(file);
         },
-        [selectedFile, onFileSelect, conversionFileName]
+        [selectedFile, onFileSelect]
     );
 
     const notInList =
@@ -49,15 +41,14 @@ const FileSelection = ({
     return (
         <div className={"ui-container"}>
             <select
-                value={selectValue}
+                value={selectedFile}
                 onChange={(e) => handleFileSelect(e.target.value as string)}
                 style={{ maxWidth: 200 }}
-                disabled={isAwaitingFileConversion}
             >
                 <option value="" disabled>
                     choose a file
                 </option>
-                {isAwaitingFileConversion && (
+                {awaitingConversion && (
                     <option value={"Awaiting file conversion..."} disabled>
                         Awaiting file conversion...
                     </option>
@@ -72,6 +63,7 @@ const FileSelection = ({
                 )}
             </select>
             <br></br>
+            {awaitingConversion && <div>Awaiting file conversion...</div>}
             <button onClick={() => clearFile()}>Clear trajectory </button>
             <button onClick={loadSmoldynFile}>
                 Convert a smoldyn trajectory
