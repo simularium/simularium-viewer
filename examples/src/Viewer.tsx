@@ -325,7 +325,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 type: TrajectoryType.SMOLDYN,
                 template: smoldynTemplate.smoldyn_data,
                 templateData: templateMap,
-            },
+            }
         });
     }
 

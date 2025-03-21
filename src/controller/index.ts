@@ -164,15 +164,17 @@ export default class SimulariumController {
     ///// Conversion Client /////
 
     public get conversionClient(): ConversionClient {
-        if (
-            !this._conversionClient ||
-            !this._conversionClient.isConnectedToRemoteServer()
-        ) {
-            throw new Error(
-                "Conversion client is not configured or socket is invalid."
-            );
+        if (!this._conversionClient) {
+            throw new Error("Conversion client is not configured.");
         }
         return this._conversionClient;
+    }
+
+    private isConversionClientConnnected(): boolean {
+        return (
+            !!this._conversionClient &&
+            this._conversionClient.isConnectedToRemoteServer()
+        );
     }
 
     private async configureConversionClient(
@@ -187,13 +189,6 @@ export default class SimulariumController {
         await this.conversionClient.initialize(this.playBackFile);
     }
 
-    private isConversionClientConfigured(): boolean {
-        return !!(
-            this.conversionClient &&
-            this.conversionClient.isConnectedToRemoteServer()
-        );
-    }
-
     private closeConversionConnection(): void {
         this.conversionClient?.disconnect();
         this._conversionClient = undefined;
@@ -205,7 +200,7 @@ export default class SimulariumController {
     ): Promise<void> {
         this.cancelCurrentFile(fileName);
         try {
-            if (!this.isConversionClientConfigured()) {
+            if (this.isConversionClientConnnected()) {
                 await this.configureConversionClient(netConnectionConfig);
             }
 
@@ -224,9 +219,8 @@ export default class SimulariumController {
     }
 
     public cancelConversion(): void {
-        if (this._conversionClient) {
-            this._conversionClient.cancelConversion();
-        }
+        this.conversionClient.cancelConversion();
+        this.closeConversionConnection();
     }
 
     public async convertTrajectory(
