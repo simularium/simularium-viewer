@@ -26,7 +26,7 @@ export class RemoteMetricsCalculator extends BaseRemoteClient {
             });
     }
 
-    protected onConnected(): void {
+    public onConnected(): void {
         this.registerJsonMessageHandlers();
     }
 

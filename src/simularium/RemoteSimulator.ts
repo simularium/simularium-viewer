@@ -46,7 +46,7 @@ export class RemoteSimulator extends BaseRemoteClient implements ISimulator {
         };
     }
 
-    protected onConnected(): void {
+    public onConnected(): void {
         this.registerBinaryMessageHandlers();
         this.registerJsonMessageHandlers();
         const jsonData = {
@@ -89,7 +89,7 @@ export class RemoteSimulator extends BaseRemoteClient implements ISimulator {
             OFFSET_TO_NAME_LENGTH + nameLength
         );
         const fileName = new TextDecoder("utf-8").decode(fileBytes);
-
+        console.log("file name: ", fileName);
         if (fileName == this.lastRequestedFile) {
             this.onTrajectoryDataArrive(event.data);
         } else {

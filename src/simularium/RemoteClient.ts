@@ -41,7 +41,7 @@ export class BaseRemoteClient {
      * Subclasses can override to register message handlers
      * or do other setup after a successful connection.
      */
-    protected onConnected(): void {
+    public onConnected(): void {
         // default no-op
     }
 
