@@ -5,6 +5,7 @@ import {
     VisDataFrame,
     VisDataMessage,
     TrajectoryFileInfoV2,
+    PlotConfig,
 } from "../types.js";
 import { ISimulator } from "./ISimulator.js";
 import type { ISimulariumFile } from "../ISimulariumFile.js";
@@ -141,5 +142,40 @@ export class LocalFileSimulator implements ISimulator {
 
     public getSimulariumFile(): ISimulariumFile {
         return this.simulariumFile;
+    }
+
+    public requestAvailableMetrics(): void {
+        /*not implemented*/
+    }
+
+    public requestPlotData(
+        _data: Record<string, unknown>,
+        _plots: Array<PlotConfig>
+    ): void {
+        // TODO: implement callback
+        console.log("plot data: ", this.simulariumFile.getPlotData());
+
+        // todo recreate this functinality?
+        // previously a code path allowed passing a local simularium
+        // file and plot config to the remote metrics calculator
+        // need to call:
+        // this.webSocketClient.sendWebSocketRequest(
+        //     {
+        //         msgType: NetMessageEnum.ID_PLOT_DATA_REQUEST,
+        //         fileName: this.fileName,
+        //         data: _data,
+        //         plots: plots,
+        //     },
+        //     "Request plot data for a given trajectory and plot types"
+        // );
+        // make this class extend BaseRemoteClient and take a netconfig param?
+        // if (this.simulator instanceof LocalFileSimulator) {
+        //     const simulariumFile: ISimulariumFile =
+        //         this.simulator.getSimulariumFile();
+        //     this.metricsCalculator.getPlotData(
+        //         simulariumFile["simulariumFile"],
+        //         requestedPlots
+        //     );
+        // }
     }
 }

@@ -1,4 +1,4 @@
-import { VisDataMessage, TrajectoryFileInfo } from "../types.js";
+import { VisDataMessage, TrajectoryFileInfo, PlotConfig } from "../types.js";
 import { ClientSimulator } from "./ClientSimulator.js";
 import { LocalFileSimulator } from "./LocalFileSimulator.js";
 import { RemoteSimulator } from "./RemoteSimulator.js";
@@ -55,6 +55,16 @@ export interface ISimulator {
         handler: (msg: VisDataMessage | ArrayBuffer) => void
     ): void;
 
+    /** todo implement callback pattern for plots and metrics */
+    /** a callback to receive available metrics */
+    // setAvailableMetricsHandler(
+    //     handler: (msg: NetMessage) => void
+    // ): void;
+    // /** a callback to receive plot data */
+    // setPlotDataHandler(
+    //     handler: (msg: NetMessage) => void
+    // ): void;
+
     /** a callback to propagate errors from a simulator to it's implementing context */
     setErrorHandler(handler: (msg: Error) => void): void;
 
@@ -79,6 +89,13 @@ export interface ISimulator {
     requestFrameByTime(time: number): void;
     /** request trajectory metadata */
     requestTrajectoryFileInfo(fileName: string): void;
+    /** request available metrics */
+    requestAvailableMetrics(): void;
+    /** request available plots */
+    requestPlotData(
+        data: Record<string, unknown>,
+        plots: Array<PlotConfig>
+    ): void;
 
     // getWebsocket(): WebsocketClient | null;
 }

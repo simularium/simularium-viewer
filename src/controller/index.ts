@@ -17,11 +17,8 @@ import {
     getClassFromParams,
     ISimulator,
 } from "../simularium/Simulator/ISimulator.js";
-import { LocalFileSimulator } from "../simularium/Simulator/LocalFileSimulator.js";
 import { FrontEndError } from "../simularium/FrontEndError.js";
-import type { ISimulariumFile } from "../simularium/ISimulariumFile.js";
 import { TrajectoryType } from "../constants.js";
-import { RemoteMetricsCalculator } from "../simularium/RemoteMetricsCalculator.js";
 import { ConversionClient } from "../simularium/ConversionClient.js";
 import { SimulatorParams } from "../simularium/Simulator/types.js";
 
@@ -31,7 +28,6 @@ export default class SimulariumController {
     public simulator?: ISimulator;
     private lastNetConnectionConfig: NetConnectionParams | null;
     public _conversionClient?: ConversionClient;
-    public _metricsCalculator?: RemoteMetricsCalculator;
     public visData: VisData;
     public visGeometry: VisGeometry | undefined;
     public tickIntervalLength: number;
@@ -114,18 +110,6 @@ export default class SimulariumController {
                 this.playBackFile = params.fileName;
             }
         );
-    }
-
-    public get metricsCalculator(): RemoteMetricsCalculator {
-        if (
-            !this._metricsCalculator ||
-            !this._metricsCalculator.isConnectedToRemoteServer()
-        ) {
-            throw new Error(
-                "Metrics calculator is not configured or socket is invalid."
-            );
-        }
-        return this._metricsCalculator;
     }
 
     public get isChangingFile(): boolean {
@@ -365,50 +349,20 @@ export default class SimulariumController {
         this.conversionClient.cancelConversion();
     }
 
-    private async setupMetricsCalculator(
-        config: NetConnectionParams
-    ): Promise<void> {
-        this._metricsCalculator = new RemoteMetricsCalculator(
-            config,
-            this.playBackFile,
-            this.onError
-        );
-        await this.metricsCalculator.connectToRemoteServer();
-    }
+    ///// Metrics and plots /////
 
-    public async getMetrics(config: NetConnectionParams): Promise<void> {
-        if (!this.metricsCalculator) {
-            await this.setupMetricsCalculator(config);
-        }
-        this.metricsCalculator.getAvailableMetrics();
-    }
-
-    public async getPlotData(
-        config: NetConnectionParams,
-        requestedPlots: PlotConfig[]
-    ): Promise<void> {
+    public async getMetrics(): Promise<void> {
         if (!this.simulator) {
             return;
         }
-        if (!this.metricsCalculator) {
-            await this.setupMetricsCalculator(config);
-        }
+        this.simulator.requestAvailableMetrics();
+    }
 
-        if (this.simulator instanceof LocalFileSimulator) {
-            const simulariumFile: ISimulariumFile =
-                this.simulator.getSimulariumFile();
-            this.metricsCalculator.getPlotData(
-                simulariumFile["simulariumFile"],
-                requestedPlots
-            );
-        } else if (this.simulator instanceof RemoteSimulator) {
-            // we don't have the simularium file, so we'll just send an empty data object
-            this.metricsCalculator.getPlotData(
-                {},
-                requestedPlots,
-                this.simulator.getLastRequestedFile()
-            );
+    public async getPlotData(requestedPlots: PlotConfig[]): Promise<void> {
+        if (!this.simulator) {
+            return;
         }
+        this.simulator.requestPlotData({}, requestedPlots);
     }
 
     public clearLocalCache(): void {

@@ -1,7 +1,8 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
+import { noop } from "lodash";
 
-import { VisDataMessage, TrajectoryFileInfo } from "../types.js";
+import { VisDataMessage, TrajectoryFileInfo, PlotConfig } from "../types.js";
 import {
     ClientMessageEnum,
     ClientPlayBackType,
@@ -30,15 +31,9 @@ export class ClientSimulator implements ISimulator {
         }
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
-        this.onTrajectoryFileInfoArrive = () => {
-            /* do nothing */
-        };
-        this.onTrajectoryDataArrive = () => {
-            /* do nothing */
-        };
-        this.handleError = () => {
-            /* do nothing */
-        };
+        this.handleError = noop;
+        this.onTrajectoryFileInfoArrive = noop;
+        this.onTrajectoryDataArrive = noop;
         this.localSimulator = clientSimulatorImpl;
     }
 
@@ -214,5 +209,17 @@ export class ClientSimulator implements ISimulator {
             },
             "Initialize trajectory file info"
         );
+    }
+
+    public requestAvailableMetrics(): void {
+        /*not implemented*/
+        // todo add plot or metric msg type to client message enum?
+    }
+
+    public requestPlotData(
+        _data: Record<string, unknown>,
+        _plots: Array<PlotConfig>
+    ): void {
+        /*not implemented*/
     }
 }

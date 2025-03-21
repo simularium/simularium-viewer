@@ -323,7 +323,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 type: TrajectoryType.SMOLDYN,
                 template: smoldynTemplate.smoldyn_data,
                 templateData: templateMap,
-            }
+            },
         });
     }
 
@@ -619,7 +619,9 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             return;
         }
         if (fileId.simulatorType === SimulatorModes.localClientSimulator) {
-            const { clientSimulator } = this.configureLocalClientSimulator(fileId.id);
+            const { clientSimulator } = this.configureLocalClientSimulator(
+                fileId.id
+            );
             if (!clientSimulator) {
                 console.warn("No client simulator implementation found");
                 return;
@@ -763,11 +765,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     />
                     <div className="ui-container">
                         <button
-                            onClick={() =>
-                                simulariumController.getMetrics(
-                                    this.netConnectionSettings
-                                )
-                            }
+                            onClick={() => simulariumController.getMetrics()}
                         >
                             Get available metrics
                         </button>
@@ -777,7 +775,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         <button
                             onClick={() =>
                                 simulariumController.getPlotData(
-                                    this.netConnectionSettings,
                                     // TODO: allow user to select metrics based on results from
                                     // the getMetrics() call
                                     [
