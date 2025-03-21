@@ -1,7 +1,7 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
 
-import { VisDataMessage, TrajectoryFileInfo } from "./types.js";
+import { VisDataMessage, TrajectoryFileInfo, PlotConfig } from "./types.js";
 import {
     ClientMessageEnum,
     ClientPlayBackType,
@@ -210,5 +210,17 @@ export class ClientSimulator implements ISimulator {
             },
             "Initialize trajectory file info"
         );
+    }
+
+    public requestAvailableMetrics(): void {
+        /*not implemented*/
+        // todo add plot or metric msg type to client message enum?
+    }
+
+    public requestPlotData(
+        _data: Record<string, unknown>,
+        _plots: Array<PlotConfig>
+    ): void {
+        /*not implemented*/
     }
 }
