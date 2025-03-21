@@ -1,16 +1,41 @@
 import { TrajectoryType } from "../constants.js";
-import { WebsocketClient, NetMessageEnum } from "./WebsocketClient.js";
+import { FrontEndError } from "./FrontEndError.js";
+import { BaseRemoteClient } from "./RemoteClient.js";
+import {
+    NetMessageEnum,
+    NetConnectionParams,
+    NetMessage,
+} from "./WebsocketClient.js";
 
-export class OctopusServicesClient {
-    private webSocketClient: WebsocketClient;
-    private lastRequestedFile = "";
+export class ConversionClient extends BaseRemoteClient {
+    public onConversionComplete: (fileName: string) => void;
 
-    constructor(webSocketClient: WebsocketClient) {
-        this.webSocketClient = webSocketClient;
+    constructor(
+        netConnectionSettings: NetConnectionParams,
+        lastRequestedFile: string,
+        errorHandler?: (error: FrontEndError) => void
+    ) {
+        super(netConnectionSettings, lastRequestedFile, errorHandler);
+        this.onConversionComplete = () => {
+            /* do nothing */
+        };
     }
 
-    public async connectToRemoteServer(): Promise<string> {
-        return this.webSocketClient.connectToRemoteServer();
+    public setOnConversionCompleteHandler(
+        handler: (fileName: string) => void
+    ): void {
+        this.onConversionComplete = handler;
+        this.webSocketClient.addJsonMessageHandler(
+            NetMessageEnum.ID_TRAJECTORY_FILE_INFO,
+            (msg: NetMessage) => {
+                if (
+                    this.onConversionComplete &&
+                    msg.fileName === this.lastRequestedFile
+                ) {
+                    this.onConversionComplete(msg.fileName);
+                }
+            }
+        );
     }
 
     public async convertTrajectory(
@@ -18,6 +43,7 @@ export class OctopusServicesClient {
         fileType: TrajectoryType,
         fileName: string
     ): Promise<void> {
+        await this.webSocketClient.connectToRemoteServer();
         this.lastRequestedFile = fileName;
         this.webSocketClient.sendWebSocketRequest(
             {
