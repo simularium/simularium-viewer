@@ -765,7 +765,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     />
                     <div className="ui-container">
                         <button
-                            onClick={() => simulariumController.getMetrics()}
+                            onClick={() => simulariumController.getMetrics(this.netConnectionSettings)}
                         >
                             Get available metrics
                         </button>
@@ -775,6 +775,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         <button
                             onClick={() =>
                                 simulariumController.getPlotData(
+                                    this.netConnectionSettings,
                                     // TODO: allow user to select metrics based on results from
                                     // the getMetrics() call
                                     [

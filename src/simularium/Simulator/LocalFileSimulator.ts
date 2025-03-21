@@ -7,6 +7,8 @@ import {
     TrajectoryFileInfoV2,
     PlotConfig,
 } from "../types.js";
+import { NetConnectionParams } from "../WebsocketClient.js";
+import { RemoteMetricsCalculator } from "../RemoteMetricsCalculator.js";
 import { ISimulator } from "./ISimulator.js";
 import type { ISimulariumFile } from "../ISimulariumFile.js";
 import { LocalFileSimulatorParams } from "./types.js";
@@ -16,6 +18,7 @@ import { LocalFileSimulatorParams } from "./types.js";
 export class LocalFileSimulator implements ISimulator {
     protected fileName: string;
     protected simulariumFile: ISimulariumFile;
+    protected remoteMetricsCalculator?: RemoteMetricsCalculator;
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfoV2) => void;
     public onTrajectoryDataArrive: (msg: VisDataMessage | ArrayBuffer) => void;
@@ -144,38 +147,49 @@ export class LocalFileSimulator implements ISimulator {
         return this.simulariumFile;
     }
 
+    public async setupMetricsCalculator(
+        config: NetConnectionParams
+    ): Promise<void> {
+        this.remoteMetricsCalculator = new RemoteMetricsCalculator(
+            config,
+            this.fileName,
+            this.handleError
+        );
+        await this.remoteMetricsCalculator.initialize(this.fileName);
+    }
+
     public requestAvailableMetrics(): void {
-        /*not implemented*/
+        if (
+            !this.remoteMetricsCalculator ||
+            !this.remoteMetricsCalculator.isConnectedToRemoteServer()
+        ) {
+            this.handleError(
+                new Error("Metrics calculator is not configured.")
+            );
+            return;
+        }
+
+        this.remoteMetricsCalculator.getAvailableMetrics();
     }
 
     public requestPlotData(
         _data: Record<string, unknown>,
-        _plots: Array<PlotConfig>
+        plots: Array<PlotConfig>
     ): void {
-        // TODO: implement callback
-        console.log("plot data: ", this.simulariumFile.getPlotData());
+        if (
+            !this.remoteMetricsCalculator ||
+            !this.remoteMetricsCalculator.isConnectedToRemoteServer()
+        ) {
+            this.handleError(
+                new Error("Metrics calculator is not configured.")
+            );
+            return;
+        }
 
-        // todo recreate this functinality?
-        // previously a code path allowed passing a local simularium
-        // file and plot config to the remote metrics calculator
-        // need to call:
-        // this.webSocketClient.sendWebSocketRequest(
-        //     {
-        //         msgType: NetMessageEnum.ID_PLOT_DATA_REQUEST,
-        //         fileName: this.fileName,
-        //         data: _data,
-        //         plots: plots,
-        //     },
-        //     "Request plot data for a given trajectory and plot types"
-        // );
-        // make this class extend BaseRemoteClient and take a netconfig param?
-        // if (this.simulator instanceof LocalFileSimulator) {
-        //     const simulariumFile: ISimulariumFile =
-        //         this.simulator.getSimulariumFile();
-        //     this.metricsCalculator.getPlotData(
-        //         simulariumFile["simulariumFile"],
-        //         requestedPlots
-        //     );
-        // }
+        this.remoteMetricsCalculator.getPlotData(
+            this.simulariumFile["simulariumFile"],
+            plots,
+            this.fileName
+        );
     }
 }

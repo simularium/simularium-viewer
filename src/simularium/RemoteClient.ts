@@ -7,6 +7,10 @@ import { FrontEndError, ErrorLevel } from "./FrontEndError.js";
  * Classes that extend this class can use the websocket connection
  * and override methods as needed.
  * In use by RemoteSimulator, ConversionClient, and RemoteMetricsCalculator.
+ *
+ * To use, create an instance, then call initialize() to connect to the server,
+ * and run any postConnect functionality defined in the implementation,
+ * like registering message handlers.
  */
 export class BaseRemoteClient {
     protected _webSocketClient: WebsocketClient | null;

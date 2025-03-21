@@ -21,6 +21,7 @@ import { FrontEndError } from "../simularium/FrontEndError.js";
 import { TrajectoryType } from "../constants.js";
 import { ConversionClient } from "../simularium/ConversionClient.js";
 import { SimulatorParams } from "../simularium/Simulator/types.js";
+import { LocalFileSimulator } from "../simularium/Simulator/LocalFileSimulator.js";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
@@ -351,18 +352,22 @@ export default class SimulariumController {
 
     ///// Metrics and plots /////
 
-    public async getMetrics(): Promise<void> {
-        if (!this.simulator) {
-            return;
+    public async getMetrics(config: NetConnectionParams): Promise<void> {
+        if (this.simulator instanceof LocalFileSimulator) {
+            await this.simulator.setupMetricsCalculator(config);
         }
-        this.simulator.requestAvailableMetrics();
+
+        this.simulator?.requestAvailableMetrics();
     }
 
-    public async getPlotData(requestedPlots: PlotConfig[]): Promise<void> {
-        if (!this.simulator) {
-            return;
+    public async getPlotData(
+        config: NetConnectionParams,
+        requestedPlots: PlotConfig[]
+    ): Promise<void> {
+        if (this.simulator instanceof LocalFileSimulator) {
+            await this.simulator.setupMetricsCalculator(config);
         }
-        this.simulator.requestPlotData({}, requestedPlots);
+        this.simulator?.requestPlotData({}, requestedPlots);
     }
 
     public clearLocalCache(): void {
