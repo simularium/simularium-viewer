@@ -372,19 +372,6 @@ export default class SimulariumController {
         return this.playBackFile;
     }
 
-    public checkServerHealth(
-        handler: () => void,
-        netConnectionConfig: NetConnectionParams
-    ): void {
-        if (!this.isRemoteOctopusClientConfigured()) {
-            this.configureNetwork(netConnectionConfig);
-        }
-        if (this.octopusClient) {
-            this.octopusClient.setHealthCheckHandler(handler);
-            this.octopusClient.checkServerHealth();
-        }
-    }
-
     public cancelConversion(): void {
         if (this.octopusClient) {
             this.octopusClient.cancelConversion();

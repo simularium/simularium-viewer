@@ -4,21 +4,9 @@ import { WebsocketClient, NetMessageEnum } from "./WebsocketClient.js";
 export class OctopusServicesClient {
     private webSocketClient: WebsocketClient;
     private lastRequestedFile = "";
-    private healthCheckHandler: () => void;
 
     constructor(webSocketClient: WebsocketClient) {
         this.webSocketClient = webSocketClient;
-        this.healthCheckHandler = () => {
-            /* do nothing */
-        };
-    }
-
-    public setHealthCheckHandler(handler: () => void): void {
-        this.healthCheckHandler = handler;
-        this.webSocketClient.addJsonMessageHandler(
-            NetMessageEnum.ID_SERVER_HEALTHY_RESPONSE,
-            () => this.healthCheckHandler()
-        );
     }
 
     public async connectToRemoteServer(): Promise<string> {
@@ -51,16 +39,6 @@ export class OctopusServicesClient {
             "Cancel the requested autoconversion"
         );
         this.lastRequestedFile = "";
-    }
-
-    public async checkServerHealth(): Promise<void> {
-        await this.webSocketClient.connectToRemoteServer();
-        this.webSocketClient.sendWebSocketRequest(
-            {
-                msgType: NetMessageEnum.ID_CHECK_HEALTH_REQUEST,
-            },
-            "Request server health check"
-        );
     }
 
     public async sendSmoldynData(
