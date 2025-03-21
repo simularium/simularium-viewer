@@ -18,7 +18,7 @@ export type {
 } from "./SelectionInterface.js";
 export { ErrorLevel, FrontEndError } from "./FrontEndError.js";
 export { NetMessageEnum } from "./WebsocketClient.js";
-export { RemoteSimulator } from "./RemoteSimulator.js";
+export { RemoteSimulator } from "./Simulator/RemoteSimulator.js";
 export { VisData } from "./VisData.js";
 export { ThreadUtil } from "./ThreadUtil.js";
 export { SelectionInterface } from "./SelectionInterface.js";

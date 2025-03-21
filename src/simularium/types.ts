@@ -1,4 +1,7 @@
 import { GeometryDisplayType } from "../visGeometry/types.js";
+import { ISimulariumFile } from "./ISimulariumFile.js";
+import { IClientSimulatorImpl } from "./localSimulators/IClientSimulatorImpl.js";
+import { NetConnectionParams } from "./WebsocketClient.js";
 
 export interface VisDataFrame {
     data: number[];

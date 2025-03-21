@@ -1,28 +1,41 @@
+import {
+    NetConnectionParams,
+    NetMessageEnum,
+    NetMessage,
+} from "./WebsocketClient.js";
 import { TrajectoryType } from "../constants.js";
-import { WebsocketClient, NetMessageEnum } from "./WebsocketClient.js";
+import { BaseRemoteClient } from "./RemoteClient.js";
+import { FrontEndError } from "./FrontEndError.js";
 
-export class OctopusServicesClient {
-    private webSocketClient: WebsocketClient;
-    private lastRequestedFile = "";
-    private healthCheckHandler: () => void;
+export class ConversionClient extends BaseRemoteClient {
+    public onConversionComplete: (fileName: string) => void;
 
-    constructor(webSocketClient: WebsocketClient) {
-        this.webSocketClient = webSocketClient;
-        this.healthCheckHandler = () => {
+    constructor(
+        netConnectionSettings: NetConnectionParams,
+        lastRequestedFile: string,
+        errorHandler?: (error: FrontEndError) => void
+    ) {
+        super(netConnectionSettings, lastRequestedFile, errorHandler);
+        this.onConversionComplete = () => {
             /* do nothing */
         };
     }
 
-    public setHealthCheckHandler(handler: () => void): void {
-        this.healthCheckHandler = handler;
+    public setOnConversionCompleteHandler(
+        handler: (fileName: string) => void
+    ): void {
+        this.onConversionComplete = handler;
         this.webSocketClient.addJsonMessageHandler(
-            NetMessageEnum.ID_SERVER_HEALTHY_RESPONSE,
-            () => this.healthCheckHandler()
+            NetMessageEnum.ID_TRAJECTORY_FILE_INFO,
+            (msg: NetMessage) => {
+                if (
+                    this.onConversionComplete &&
+                    msg.fileName === this.lastRequestedFile
+                ) {
+                    this.onConversionComplete(msg.fileName);
+                }
+            }
         );
-    }
-
-    public async connectToRemoteServer(): Promise<string> {
-        return this.webSocketClient.connectToRemoteServer();
     }
 
     public async convertTrajectory(
@@ -51,23 +64,16 @@ export class OctopusServicesClient {
             "Cancel the requested autoconversion"
         );
         this.lastRequestedFile = "";
-    }
-
-    public async checkServerHealth(): Promise<void> {
-        await this.webSocketClient.connectToRemoteServer();
-        this.webSocketClient.sendWebSocketRequest(
-            {
-                msgType: NetMessageEnum.ID_CHECK_HEALTH_REQUEST,
-            },
-            "Request server health check"
-        );
+        this.setOnConversionCompleteHandler(() => {
+            /* do nothing */
+        });
     }
 
     public async sendSmoldynData(
         outFileName: string,
         smoldynInput: string
     ): Promise<void> {
-        await this.webSocketClient.connectToRemoteServer();
+        await this.connectToRemoteServer();
         this.lastRequestedFile = outFileName;
         this.webSocketClient.sendWebSocketRequest(
             {

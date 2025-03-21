@@ -1,4 +1,37 @@
-import { VisDataMessage, TrajectoryFileInfo } from "./types.js";
+import { VisDataMessage, TrajectoryFileInfo, PlotConfig } from "../types.js";
+import { ClientSimulator } from "./ClientSimulator.js";
+import { LocalFileSimulator } from "./LocalFileSimulator.js";
+import { RemoteSimulator } from "./RemoteSimulator.js";
+import {
+    SimulatorParams,
+    RemoteSimulatorParams,
+    ClientSimulatorParams,
+    LocalFileSimulatorParams,
+} from "./types.js";
+
+export const getClassFromParams = (params?: SimulatorParams) => {
+    if (!params || !params.fileName) {
+        return { simulatorClass: null, typedParams: null };
+    }
+    if ("netConnectionSettings" in params) {
+        return {
+            simulatorClass: RemoteSimulator,
+            typedParams: params as RemoteSimulatorParams,
+        };
+    } else if ("clientSimulatorImpl" in params) {
+        return {
+            simulatorClass: ClientSimulator,
+            typedParams: params as ClientSimulatorParams,
+        };
+    } else if ("simulariumFile" in params) {
+        return {
+            simulatorClass: LocalFileSimulator,
+            typedParams: params as LocalFileSimulatorParams,
+        };
+    } else {
+        return { simulatorClass: null, typedParams: null };
+    }
+};
 
 /**
 From the caller's perspective, this interface is a contract for a 
@@ -21,6 +54,16 @@ export interface ISimulator {
     setTrajectoryDataHandler(
         handler: (msg: VisDataMessage | ArrayBuffer) => void
     ): void;
+
+    /** todo implement callback pattern for plots and metrics */
+    /** a callback to receive available metrics */
+    // setAvailableMetricsHandler(
+    //     handler: (msg: NetMessage) => void
+    // ): void;
+    // /** a callback to receive plot data */
+    // setPlotDataHandler(
+    //     handler: (msg: NetMessage) => void
+    // ): void;
 
     /** a callback to propagate errors from a simulator to it's implementing context */
     setErrorHandler(handler: (msg: Error) => void): void;
@@ -46,4 +89,11 @@ export interface ISimulator {
     requestFrameByTime(time: number): void;
     /** request trajectory metadata */
     requestTrajectoryFileInfo(fileName: string): void;
+    /** request available metrics */
+    requestAvailableMetrics(): void;
+    // /** request available plots */
+    requestPlotData(
+        data: Record<string, unknown>,
+        plots: Array<PlotConfig>
+    ): void;
 }

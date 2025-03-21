@@ -1,18 +1,20 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
+import { noop } from "lodash";
 
-import { VisDataMessage, TrajectoryFileInfo } from "./types.js";
+import { VisDataMessage, TrajectoryFileInfo, PlotConfig } from "../types.js";
 import {
     ClientMessageEnum,
     ClientPlayBackType,
     IClientSimulatorImpl,
-} from "./localSimulators/IClientSimulatorImpl.js";
+} from "../localSimulators/IClientSimulatorImpl.js";
 import { ISimulator } from "./ISimulator.js";
+import { ClientSimulatorParams } from "./types.js";
 
 // a ClientSimulator is a ISimulator that is expected to run purely in procedural javascript in the browser client,
 // with the procedural implementation in a IClientSimulatorImpl
 export class ClientSimulator implements ISimulator {
-    private localSimulator: IClientSimulatorImpl;
+    public localSimulator: IClientSimulatorImpl;
     private simulatorIntervalId = 0;
     // throttle the data interval so that the local client can keep up
     // ideally the client (VisData) needs to be able to handle the data rate
@@ -22,20 +24,17 @@ export class ClientSimulator implements ISimulator {
     public onTrajectoryDataArrive: (msg: VisDataMessage) => void;
     public handleError: (error: Error) => void;
 
-    public constructor(sim: IClientSimulatorImpl) {
+    public constructor(params: ClientSimulatorParams) {
+        const { clientSimulatorImpl } = params;
+        if (!clientSimulatorImpl) {
+            throw new Error("ClientSimulator requires a IClientSimulatorImpl");
+        }
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
-
-        this.onTrajectoryFileInfoArrive = () => {
-            /* do nothing */
-        };
-        this.onTrajectoryDataArrive = () => {
-            /* do nothing */
-        };
-        this.handleError = () => {
-            /* do nothing */
-        };
-        this.localSimulator = sim;
+        this.handleError = noop;
+        this.onTrajectoryFileInfoArrive = noop;
+        this.onTrajectoryDataArrive = noop;
+        this.localSimulator = clientSimulatorImpl;
     }
 
     public setTrajectoryFileInfoHandler(
@@ -210,5 +209,17 @@ export class ClientSimulator implements ISimulator {
             },
             "Initialize trajectory file info"
         );
+    }
+
+    public requestAvailableMetrics(): void {
+        /*not implemented*/
+        // todo add plot or metric msg type to client message enum?
+    }
+
+    public requestPlotData(
+        _data: Record<string, unknown>,
+        _plots: Array<PlotConfig>
+    ): void {
+        /*not implemented*/
     }
 }

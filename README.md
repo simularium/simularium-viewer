@@ -46,7 +46,6 @@ const netConnectionSettings = {
 };
 
 const simulariumController = new SimulariumController();
-// todo show correct call of changeFile to load trajectory
 
 class Viewer extends React.Component {
 

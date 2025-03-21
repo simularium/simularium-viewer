@@ -1,15 +1,24 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
 
-import { VisDataFrame, VisDataMessage, TrajectoryFileInfoV2 } from "./types.js";
+import {
+    VisDataFrame,
+    VisDataMessage,
+    TrajectoryFileInfoV2,
+    PlotConfig,
+} from "../types.js";
+import { NetConnectionParams } from "../WebsocketClient.js";
+import { RemoteMetricsCalculator } from "../RemoteMetricsCalculator.js";
 import { ISimulator } from "./ISimulator.js";
-import type { ISimulariumFile } from "./ISimulariumFile.js";
+import type { ISimulariumFile } from "../ISimulariumFile.js";
+import { LocalFileSimulatorParams } from "./types.js";
 
 // a LocalFileSimulator is a ISimulator that plays back the contents of
 // a drag-n-drop trajectory file (a ISimulariumFile object)
 export class LocalFileSimulator implements ISimulator {
     protected fileName: string;
     protected simulariumFile: ISimulariumFile;
+    protected remoteMetricsCalculator?: RemoteMetricsCalculator;
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfoV2) => void;
     public onTrajectoryDataArrive: (msg: VisDataMessage | ArrayBuffer) => void;
@@ -18,7 +27,11 @@ export class LocalFileSimulator implements ISimulator {
     private playbackIntervalId = 0;
     private currentPlaybackFrameIndex = 0;
 
-    public constructor(fileName: string, simulariumFile: ISimulariumFile) {
+    public constructor(params: LocalFileSimulatorParams) {
+        const { fileName, simulariumFile } = params;
+        if (!simulariumFile) {
+            throw new Error("LocalFileSimulator requires a ISimulariumFile");
+        }
         this.fileName = fileName;
         this.simulariumFile = simulariumFile;
         this.logger = jsLogger.get("netconnection");
@@ -132,5 +145,51 @@ export class LocalFileSimulator implements ISimulator {
 
     public getSimulariumFile(): ISimulariumFile {
         return this.simulariumFile;
+    }
+
+    public async setupMetricsCalculator(
+        config: NetConnectionParams
+    ): Promise<void> {
+        this.remoteMetricsCalculator = new RemoteMetricsCalculator(
+            config,
+            this.fileName,
+            this.handleError
+        );
+        await this.remoteMetricsCalculator.initialize(this.fileName);
+    }
+
+    public requestAvailableMetrics(): void {
+        if (
+            !this.remoteMetricsCalculator ||
+            !this.remoteMetricsCalculator.isConnectedToRemoteServer()
+        ) {
+            this.handleError(
+                new Error("Metrics calculator is not configured.")
+            );
+            return;
+        }
+
+        this.remoteMetricsCalculator.getAvailableMetrics();
+    }
+
+    public requestPlotData(
+        _data: Record<string, unknown>,
+        plots: Array<PlotConfig>
+    ): void {
+        if (
+            !this.remoteMetricsCalculator ||
+            !this.remoteMetricsCalculator.isConnectedToRemoteServer()
+        ) {
+            this.handleError(
+                new Error("Metrics calculator is not configured.")
+            );
+            return;
+        }
+
+        this.remoteMetricsCalculator.getPlotData(
+            this.simulariumFile["simulariumFile"],
+            plots,
+            this.fileName
+        );
     }
 }
