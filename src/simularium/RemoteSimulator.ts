@@ -8,7 +8,7 @@ import {
 } from "./WebsocketClient.js";
 import type { NetMessage, ErrorMessage } from "./WebsocketClient.js";
 import { ISimulator } from "./ISimulator.js";
-import { TrajectoryFileInfoV2, VisDataMessage } from "./types.js";
+import { PlotConfig, TrajectoryFileInfoV2, VisDataMessage } from "./types.js";
 
 // a RemoteSimulator is a ISimulator that connects to the Octopus backend server
 // and plays back a trajectory specified in the NetConnectionParams
@@ -182,6 +182,14 @@ export class RemoteSimulator implements ISimulator {
             NetMessageEnum.ID_ERROR_MSG,
             (msg) => this.onErrorMsg(msg as ErrorMessage)
         );
+        this.webSocketClient.addJsonMessageHandler(
+            NetMessageEnum.ID_AVAILABLE_METRICS_RESPONSE,
+            (msg) => this.onAvailableMetricsArrive(msg)
+        );
+        this.webSocketClient.addJsonMessageHandler(
+            NetMessageEnum.ID_PLOT_DATA_RESPONSE,
+            (msg) => this.onPlotDataArrive(msg)
+        );
     }
 
     /**
@@ -333,5 +341,39 @@ export class RemoteSimulator implements ISimulator {
             "Send Update"
         );
         return Promise.resolve();
+    }
+
+    public requestAvailableMetrics(): void {
+        this.webSocketClient.sendWebSocketRequest(
+            {
+                msgType: NetMessageEnum.ID_AVAILABLE_METRICS_REQUEST,
+            },
+            "Request available metrics from the metrics service"
+        );
+    }
+
+    public requestPlotData(
+        data: Record<string, unknown>,
+        plots: Array<PlotConfig>
+    ): void {
+        this.webSocketClient.sendWebSocketRequest(
+            {
+                msgType: NetMessageEnum.ID_PLOT_DATA_REQUEST,
+                fileName: this.lastRequestedFile,
+                data: data,
+                plots: plots,
+            },
+            "Request plot data for a given trajectory and plot types"
+        );
+    }
+
+    public onAvailableMetricsArrive(msg: NetMessage): void {
+        // TODO: implement callback
+        console.log("Available metrics: ", msg["metrics"]);
+    }
+
+    public onPlotDataArrive(msg: NetMessage): void {
+        // TODO: implement callback
+        console.log("Plot data: ", msg["plotData"]);
     }
 }
