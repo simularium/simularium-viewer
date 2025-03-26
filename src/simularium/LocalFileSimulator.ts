@@ -9,14 +9,12 @@ import {
 } from "./types.js";
 import { ISimulator } from "./ISimulator.js";
 import type { ISimulariumFile } from "./ISimulariumFile.js";
-import { RemoteMetricsCalculator } from "./RemoteMetricsCalculator.js";
 
 // a LocalFileSimulator is a ISimulator that plays back the contents of
 // a drag-n-drop trajectory file (a ISimulariumFile object)
 export class LocalFileSimulator implements ISimulator {
     protected fileName: string;
     protected simulariumFile: ISimulariumFile;
-    protected remoteMetricsCalculator?: RemoteMetricsCalculator;
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfoV2) => void;
     public onTrajectoryDataArrive: (msg: VisDataMessage | ArrayBuffer) => void;
@@ -141,44 +139,14 @@ export class LocalFileSimulator implements ISimulator {
         return this.simulariumFile;
     }
 
-    public async setupMetricsCalculator(
-        metricsCalculator: RemoteMetricsCalculator
-    ): Promise<void> {
-        this.remoteMetricsCalculator = metricsCalculator;
-    }
-
     public requestAvailableMetrics(): void {
-        if (
-            !this.remoteMetricsCalculator ||
-            !this.remoteMetricsCalculator.socketIsValid()
-        ) {
-            this.handleError(
-                new Error("Metrics calculator is not configured.")
-            );
-            return;
-        }
-
-        this.remoteMetricsCalculator.getAvailableMetrics();
+        /** not implemented */
     }
 
     public requestPlotData(
         _data: Record<string, unknown>,
-        plots: Array<PlotConfig>
+        _plots: Array<PlotConfig>
     ): void {
-        if (
-            !this.remoteMetricsCalculator ||
-            !this.remoteMetricsCalculator.socketIsValid()
-        ) {
-            this.handleError(
-                new Error("Metrics calculator is not configured.")
-            );
-            return;
-        }
-
-        this.remoteMetricsCalculator.getPlotData(
-            this.simulariumFile["simulariumFile"],
-            plots,
-            this.fileName
-        );
+        /** not implemented */
     }
 }

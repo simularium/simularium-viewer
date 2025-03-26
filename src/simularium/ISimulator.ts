@@ -58,7 +58,7 @@ export interface ISimulator {
     requestTrajectoryFileInfo(fileName: string): void;
     /** request available metrics */
     requestAvailableMetrics(): void;
-    // /** request available plots */
+    /** request available plots */
     requestPlotData(
         data: Record<string, unknown>,
         plots: Array<PlotConfig>

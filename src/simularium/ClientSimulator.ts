@@ -214,7 +214,6 @@ export class ClientSimulator implements ISimulator {
 
     public requestAvailableMetrics(): void {
         /*not implemented*/
-        // todo add plot or metric msg type to client message enum?
     }
 
     public requestPlotData(

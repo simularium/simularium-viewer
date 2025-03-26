@@ -22,7 +22,6 @@ import { FrontEndError } from "../simularium/FrontEndError.js";
 import type { ISimulariumFile } from "../simularium/ISimulariumFile.js";
 import { WebsocketClient } from "../simularium/WebsocketClient.js";
 import { TrajectoryType } from "../constants.js";
-import { RemoteMetricsCalculator } from "../simularium/RemoteMetricsCalculator.js";
 import { OctopusServicesClient } from "../simularium/OctopusClient.js";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
@@ -391,28 +390,8 @@ export default class SimulariumController {
         }
     }
 
-    private async setupMetricsCalculator(
-        config: NetConnectionParams
-    ): Promise<RemoteMetricsCalculator> {
-        const webSocketClient =
-            this.remoteWebsocketClient &&
-            this.remoteWebsocketClient.socketIsValid()
-                ? this.remoteWebsocketClient
-                : new WebsocketClient(config, this.onError);
-        const metricsCalculator = new RemoteMetricsCalculator(
-            webSocketClient,
-            this.onError
-        );
-        await metricsCalculator.connectToRemoteServer();
-        return metricsCalculator;
-    }
-
-    public async getMetrics(config: NetConnectionParams): Promise<void> {
-        if (this.simulator instanceof LocalFileSimulator) {
-            const calculator = await this.setupMetricsCalculator(config);
-            await this.simulator.setupMetricsCalculator(calculator);
-        }
-
+    // todo handle config in subsequent work on "last known net settings"
+    public async getMetrics(_config: NetConnectionParams): Promise<void> {
         this.simulator?.requestAvailableMetrics();
     }
 
@@ -420,9 +399,6 @@ export default class SimulariumController {
         config: NetConnectionParams,
         requestedPlots: PlotConfig[]
     ): Promise<void> {
-        if (this.simulator instanceof LocalFileSimulator) {
-            await this.setupMetricsCalculator(config);
-        }
         this.simulator?.requestPlotData({}, requestedPlots);
     }
 
