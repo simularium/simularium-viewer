@@ -3,6 +3,7 @@ import {
     TrajectoryFileInfo,
     PlotConfig,
     Plot,
+    Metrics,
 } from "./types.js";
 
 /**
@@ -29,7 +30,7 @@ export interface ISimulator {
 
     /** todo implement callback pattern for plots and metrics */
     /** a callback to receive available metrics */
-    setMetricsHandler(handler: (msg: Record<string, unknown>) => void): void;
+    setMetricsHandler(handler: (msg: Metrics) => void): void;
 
     // /** a callback to receive plot data */
     setPlotDataHandler(handler: (msg: Plot[]) => void): void;
@@ -61,8 +62,5 @@ export interface ISimulator {
     /** request available metrics */
     requestAvailableMetrics(): void;
     /** request available plots */
-    requestPlotData(
-        data: Record<string, unknown>,
-        plots: Array<PlotConfig>
-    ): void;
+    requestPlotData(plots: PlotConfig[]): void;
 }

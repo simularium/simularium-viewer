@@ -9,6 +9,7 @@ import {
 import type { NetMessage, ErrorMessage } from "./WebsocketClient.js";
 import { ISimulator } from "./ISimulator.js";
 import {
+    Metrics,
     Plot,
     PlotConfig,
     TrajectoryFileInfoV2,
@@ -71,9 +72,7 @@ export class RemoteSimulator implements ISimulator {
     ): void {
         this.onTrajectoryDataArrive = handler;
     }
-    public setMetricsHandler(
-        handler: (msg: Record<string, unknown>) => void
-    ): void {
+    public setMetricsHandler(handler: (msg: Metrics) => void): void {
         this.onAvailableMetricsArrive = handler;
     }
     public setPlotDataHandler(handler: (msg: Plot[]) => void): void {
@@ -373,15 +372,11 @@ export class RemoteSimulator implements ISimulator {
         );
     }
 
-    public requestPlotData(
-        data: Record<string, unknown>,
-        plots: Array<PlotConfig>
-    ): void {
+    public requestPlotData(plots: PlotConfig[]): void {
         this.webSocketClient.sendWebSocketRequest(
             {
                 msgType: NetMessageEnum.ID_PLOT_DATA_REQUEST,
                 fileName: this.lastRequestedFile,
-                data: data,
                 plots: plots,
             },
             "Request plot data for a given trajectory and plot types"

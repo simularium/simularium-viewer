@@ -6,6 +6,7 @@ import {
     TrajectoryFileInfo,
     PlotConfig,
     Plot,
+    Metrics,
 } from "./types.js";
 import {
     ClientMessageEnum,
@@ -25,8 +26,8 @@ export class ClientSimulator implements ISimulator {
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfo) => void;
     public onTrajectoryDataArrive: (msg: VisDataMessage) => void;
-    public onAvailableMetricsArrive: (NetMessage) => void;
-    public onPlotDataArrive: (NetMessage) => void;
+    public onAvailableMetricsArrive: (msg: Metrics) => void;
+    public onPlotDataArrive: (msg: Plot[]) => void;
     public handleError: (error: Error) => void;
 
     public constructor(sim: IClientSimulatorImpl) {
@@ -61,9 +62,7 @@ export class ClientSimulator implements ISimulator {
     ): void {
         this.onTrajectoryDataArrive = handler;
     }
-    public setMetricsHandler(
-        handler: (msg: Record<string, unknown>) => void
-    ): void {
+    public setMetricsHandler(handler: (msg: Metrics) => void): void {
         this.onAvailableMetricsArrive = handler;
     }
     public setPlotDataHandler(handler: (msg: Plot[]) => void): void {
@@ -237,10 +236,7 @@ export class ClientSimulator implements ISimulator {
         /*not implemented*/
     }
 
-    public requestPlotData(
-        _data: Record<string, unknown>,
-        _plots: Array<PlotConfig>
-    ): void {
+    public requestPlotData(_plots: PlotConfig[]): void {
         /*not implemented*/
     }
 }

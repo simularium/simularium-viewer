@@ -13,6 +13,7 @@ import {
     FILE_STATUS_SUCCESS,
     FILE_STATUS_FAIL,
     PlotConfig,
+    Metrics,
 } from "../simularium/types.js";
 
 import { ClientSimulator } from "../simularium/ClientSimulator.js";
@@ -62,7 +63,7 @@ export default class SimulariumController {
         this.stopRecording = () => noop;
 
         this.handleTrajectoryInfo = (/*msg: TrajectoryFileInfo*/) => noop;
-        this.handleMetrics = (/*msg: Record<string, unknown>*/) => noop;
+        this.handleMetrics = (/*msg: Metrics*/) => noop;
         this.handlePlotData = (/*msg: Plot[]*/) => noop;
         this.onError = (/*errorMessage*/) => noop;
 
@@ -134,7 +135,7 @@ export default class SimulariumController {
                 this.handleTrajectoryInfo(trajFileInfo);
             }
         );
-        this.simulator.setMetricsHandler((metrics: Record<string, unknown>) =>
+        this.simulator.setMetricsHandler((metrics: Metrics) =>
             this.handleMetrics(metrics)
         );
         this.simulator.setPlotDataHandler((plots: Plot[]) =>
@@ -401,16 +402,12 @@ export default class SimulariumController {
         }
     }
 
-    // todo handle config in subsequent work on "last known net settings"
-    public async getMetrics(_config: NetConnectionParams): Promise<void> {
+    public async getMetrics(): Promise<void> {
         this.simulator?.requestAvailableMetrics();
     }
 
-    public async getPlotData(
-        config: NetConnectionParams,
-        requestedPlots: PlotConfig[]
-    ): Promise<void> {
-        this.simulator?.requestPlotData({}, requestedPlots);
+    public async getPlotData(requestedPlots: PlotConfig[]): Promise<void> {
+        this.simulator?.requestPlotData(requestedPlots);
     }
 
     public clearLocalCache(): void {
