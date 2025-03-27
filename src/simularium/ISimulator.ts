@@ -32,7 +32,7 @@ export interface ISimulator {
     /** a callback to receive available metrics */
     setMetricsHandler(handler: (msg: Metrics) => void): void;
 
-    // /** a callback to receive plot data */
+    /** a callback to receive plot data */
     setPlotDataHandler(handler: (msg: Plot[]) => void): void;
 
     /** a callback to propagate errors from a simulator to it's implementing context */
