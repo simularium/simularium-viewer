@@ -11,14 +11,12 @@ import {
 } from "./types.js";
 import { ISimulator } from "./ISimulator.js";
 import type { ISimulariumFile } from "./ISimulariumFile.js";
-import { RemoteMetricsCalculator } from "./RemoteMetricsCalculator.js";
 
 // a LocalFileSimulator is a ISimulator that plays back the contents of
 // a drag-n-drop trajectory file (a ISimulariumFile object)
 export class LocalFileSimulator implements ISimulator {
     protected fileName: string;
     protected simulariumFile: ISimulariumFile;
-    protected remoteMetricsCalculator?: RemoteMetricsCalculator;
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfoV2) => void;
     public onTrajectoryDataArrive: (msg: VisDataMessage | ArrayBuffer) => void;
