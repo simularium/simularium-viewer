@@ -138,10 +138,7 @@ class VisDataCache {
     }
 
     public getFirstFrameNumber(): number {
-        if (this.head !== null) {
-            return this.head.data.frameNumber;
-        }
-        return -1;
+        return this.head?.data.frameNumber ?? -1;
     }
 
     public getFirstFrameTime(): number {
@@ -153,10 +150,7 @@ class VisDataCache {
     }
 
     public getLastFrameNumber(): number {
-        if (this.tail !== null) {
-            return this.tail.data.frameNumber;
-        }
-        return -1;
+        return this.tail?.data.frameNumber ?? -1;
     }
 
     public getLastFrameTime(): number {
