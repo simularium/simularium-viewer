@@ -36,7 +36,6 @@ type ViewportProps = {
         cachedData: TrajectoryFileInfo
     ) => void | undefined;
     onUIDisplayDataChanged: (data: UIDisplayData) => void | undefined;
-    loadInitialData: boolean;
     hideAllAgents: boolean;
     showPaths: boolean;
     showBounds: boolean;
@@ -55,7 +54,6 @@ const defaultProps = {
     backgroundColor: [0, 0, 0],
     height: 800,
     width: 800,
-    loadInitialData: true,
     hideAllAgents: false,
     showPaths: true,
     showBounds: true,
@@ -243,7 +241,6 @@ class Viewport extends React.Component<
         const {
             backgroundColor,
             simulariumController,
-            loadInitialData,
             onError,
             lockedCamera,
         } = this.props;
@@ -267,12 +264,6 @@ class Viewport extends React.Component<
             msg: TrajectoryFileInfoAny
         ) => {
             this.onTrajectoryFileInfo(msg);
-        };
-
-        simulariumController.postConnect = () => {
-            if (loadInitialData) {
-                simulariumController.initializeTrajectoryFile();
-            }
         };
         simulariumController.startRecording = this.startRecording.bind(this);
         simulariumController.stopRecording = this.stopRecording.bind(this);
