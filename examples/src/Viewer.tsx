@@ -82,7 +82,6 @@ interface ViewerState {
         data: ISimulariumFile | null;
     } | null;
     clientSimulator: boolean;
-    serverHealthy: boolean;
     isRecordingEnabled: boolean;
     trajectoryTitle: string;
     initialPlay: boolean;
@@ -118,7 +117,6 @@ const initialState: ViewerState = {
     selectedFile: "TEST_LIVEMODE_API",
     simulariumFile: null,
     clientSimulator: false,
-    serverHealthy: false,
     isRecordingEnabled: true,
     trajectoryTitle: "",
     initialPlay: true,
@@ -143,7 +141,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         this.loadFile = this.loadFile.bind(this);
         this.clearPendingFile = this.clearPendingFile.bind(this);
         this.convertFile = this.convertFile.bind(this);
-        this.onHealthCheckResponse = this.onHealthCheckResponse.bind(this);
         this.handleResize = this.handleResize.bind(this);
         this.state = initialState;
 
@@ -317,10 +314,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         return typeMap;
     }
 
-    public onHealthCheckResponse() {
-        this.setState({ serverHealthy: true });
-    }
-
     public async loadSmoldynFile() {
         const smoldynTemplate = await fetch(
             `${UI_TEMPLATE_DOWNLOAD_URL_ROOT}/${SMOLDYN_TEMPLATE}`
@@ -332,13 +325,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 type: TrajectoryType.SMOLDYN,
                 template: smoldynTemplate.smoldyn_data,
                 templateData: templateMap,
-            },
-            serverHealthy: false,
+            }
         });
-        simulariumController.checkServerHealth(
-            this.onHealthCheckResponse,
-            this.netConnectionSettings
-        );
     }
 
     public convertFile(obj: Record<string, any>, fileType: TrajectoryType) {
@@ -369,10 +357,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             conversionFileName: AWAITING_SMOLDYN_SIM_RUN,
             selectedFile: "",
         });
-        simulariumController.checkServerHealth(
-            this.onHealthCheckResponse,
-            this.netConnectionSettings
-        );
         const fileName = "smoldyn_sim" + uuidv4() + ".simularium";
         simulariumController
             .startSmoldynSim(
@@ -807,7 +791,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                     {...this.state.filePending}
                     submitFile={(obj) => this.convertFile(obj, fileType)}
                     onReturned={this.clearPendingFile}
-                    submitDisabled={!this.state.serverHealthy}
                 />
             );
         }
