@@ -1,7 +1,12 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
 
-import { VisDataMessage, TrajectoryFileInfo, PlotConfig } from "./types.js";
+import {
+    VisDataMessage,
+    TrajectoryFileInfo,
+    PlotConfig,
+    Plot,
+} from "./types.js";
 import {
     ClientMessageEnum,
     ClientPlayBackType,
@@ -20,6 +25,8 @@ export class ClientSimulator implements ISimulator {
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfo) => void;
     public onTrajectoryDataArrive: (msg: VisDataMessage) => void;
+    public onAvailableMetricsArrive: (NetMessage) => void;
+    public onPlotDataArrive: (NetMessage) => void;
     public handleError: (error: Error) => void;
 
     public constructor(sim: IClientSimulatorImpl) {
@@ -35,6 +42,12 @@ export class ClientSimulator implements ISimulator {
         this.handleError = () => {
             /* do nothing */
         };
+        this.onAvailableMetricsArrive = () => {
+            /* do nothing */
+        };
+        this.onPlotDataArrive = () => {
+            /* do nothing */
+        };
         this.localSimulator = sim;
     }
 
@@ -47,6 +60,14 @@ export class ClientSimulator implements ISimulator {
         handler: (msg: VisDataMessage) => void
     ): void {
         this.onTrajectoryDataArrive = handler;
+    }
+    public setMetricsHandler(
+        handler: (msg: Record<string, unknown>) => void
+    ): void {
+        this.onAvailableMetricsArrive = handler;
+    }
+    public setPlotDataHandler(handler: (msg: Plot[]) => void): void {
+        this.onPlotDataArrive = handler;
     }
     public setErrorHandler(handler: (msg: Error) => void): void {
         this.handleError = handler;

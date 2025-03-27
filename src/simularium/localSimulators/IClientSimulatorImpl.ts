@@ -7,6 +7,7 @@ export interface IClientSimulatorImpl {
 }
 
 // TODO these should not be needed anywhere except ClientSimulatorConnection
+// todo add msg types for plots/metrics produced by client simulators
 export const enum ClientMessageEnum {
     ID_UNDEFINED_WEB_REQUEST = 0,
     ID_VIS_DATA_ARRIVE = 1,

@@ -791,6 +791,14 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         simulariumController.sendUpdate(updateData);
     };
 
+    private handleMetricsData = (data) => {
+        console.log("Metrics data: ", data);
+    };
+
+    private handlePlotsData = (data) => {
+        console.log("Plot data: ", data);
+    };
+
     public render(): JSX.Element {
         if (this.state.filePending) {
             const fileType = this.state.filePending.type;
@@ -1086,6 +1094,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                                 onTrajectoryFileInfoChanged={this.handleTrajectoryInfo.bind(
                                     this
                                 )}
+                                onMetricsData={this.handleMetricsData.bind(this)}
+                                onPlotsData={this.handlePlotsData.bind(this)}
                                 selectionStateInfo={
                                     this.state.selectionStateInfo
                                 }
