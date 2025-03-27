@@ -8,7 +8,12 @@ import type {
     NetConnectionParams,
 } from "./WebsocketClient.js";
 import { ISimulator } from "./ISimulator.js";
-import { PlotConfig, TrajectoryFileInfoV2, VisDataMessage } from "./types.js";
+import {
+    Plot,
+    PlotConfig,
+    TrajectoryFileInfoV2,
+    VisDataMessage,
+} from "./types.js";
 import { BaseRemoteClient } from "./RemoteClient.js";
 
 // a RemoteSimulator is a ISimulator that connects to the Octopus backend server
@@ -17,6 +22,9 @@ export class RemoteSimulator extends BaseRemoteClient implements ISimulator {
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (NetMessage) => void;
     public onTrajectoryDataArrive: (NetMessage) => void;
+    public onAvailableMetricsArrive: (NetMessage) => void;
+    public onPlotDataArrive: (NetMessage) => void;
+    public lastRequestedFile: string;
     public handleError: (error: FrontEndError) => void | (() => void);
     private jsonResponse: boolean;
 
@@ -44,6 +52,12 @@ export class RemoteSimulator extends BaseRemoteClient implements ISimulator {
         this.onTrajectoryDataArrive = () => {
             /* do nothing */
         };
+        this.onAvailableMetricsArrive = () => {
+            /* do nothing */
+        };
+        this.onPlotDataArrive = () => {
+            /* do nothing */
+        };
     }
 
     public onConnected(): void {
@@ -69,6 +83,21 @@ export class RemoteSimulator extends BaseRemoteClient implements ISimulator {
         handler: (msg: VisDataMessage) => void
     ): void {
         this.onTrajectoryDataArrive = handler;
+    }
+    public setMetricsHandler(
+        handler: (msg: Record<string, unknown>) => void
+    ): void {
+        this.onAvailableMetricsArrive = handler;
+    }
+    public setPlotDataHandler(handler: (msg: Plot[]) => void): void {
+        this.onPlotDataArrive = handler;
+    }
+    public setErrorHandler(handler: (msg: Error) => void): void {
+        this.handleError = handler;
+    }
+
+    public socketIsValid(): boolean {
+        return this.webSocketClient.socketIsValid();
     }
 
     public getLastRequestedFile(): string {
@@ -322,15 +351,5 @@ export class RemoteSimulator extends BaseRemoteClient implements ISimulator {
             },
             "Request plot data for a given trajectory and plot types"
         );
-    }
-
-    public onAvailableMetricsArrive(msg: NetMessage): void {
-        // TODO: implement callback
-        console.log("Available metrics: ", msg["metrics"]);
-    }
-
-    public onPlotDataArrive(msg: NetMessage): void {
-        // TODO: implement callback
-        console.log("Plot data: ", msg["plotData"]);
     }
 }

@@ -1,4 +1,9 @@
-import { VisDataMessage, TrajectoryFileInfo, PlotConfig } from "./types.js";
+import {
+    VisDataMessage,
+    TrajectoryFileInfo,
+    PlotConfig,
+    Plot,
+} from "./types.js";
 
 /**
 From the caller's perspective, this interface is a contract for a 
@@ -24,13 +29,10 @@ export interface ISimulator {
 
     /** todo implement callback pattern for plots and metrics */
     /** a callback to receive available metrics */
-    // setAvailableMetricsHandler(
-    //     handler: (msg: NetMessage) => void
-    // ): void;
+    setMetricsHandler(handler: (msg: Record<string, unknown>) => void): void;
+
     // /** a callback to receive plot data */
-    // setPlotDataHandler(
-    //     handler: (msg: NetMessage) => void
-    // ): void;
+    setPlotDataHandler(handler: (msg: Plot[]) => void): void;
 
     /** a callback to propagate errors from a simulator to it's implementing context */
     setErrorHandler(handler: (msg: Error) => void): void;
@@ -58,7 +60,7 @@ export interface ISimulator {
     requestTrajectoryFileInfo(fileName: string): void;
     /** request available metrics */
     requestAvailableMetrics(): void;
-    // /** request available plots */
+    /** request available plots */
     requestPlotData(
         data: Record<string, unknown>,
         plots: Array<PlotConfig>

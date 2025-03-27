@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { VisData, RemoteSimulator } from "../simularium/index.js";
 import type {
     NetConnectionParams,
+    Plot,
     TrajectoryFileInfo,
 } from "../simularium/index.js";
 import { VisGeometry } from "../visGeometry/index.js";
@@ -42,6 +43,8 @@ export default class SimulariumController {
     public visGeometry: VisGeometry | undefined;
     public tickIntervalLength: number;
     public handleTrajectoryInfo: (TrajectoryFileInfo) => void;
+    public handleMetrics: (Metrics) => void;
+    public handlePlotData: (Plots) => void;
     public startRecording: () => void;
     public stopRecording: () => void;
     public onError?: (error: FrontEndError) => void;
@@ -57,6 +60,8 @@ export default class SimulariumController {
         this.stopRecording = () => noop;
 
         this.handleTrajectoryInfo = (/*msg: TrajectoryFileInfo*/) => noop;
+        this.handleMetrics = (/*msg: Record<string, unknown>*/) => noop;
+        this.handlePlotData = (/*msg: Plot[]*/) => noop;
         this.onError = (/*errorMessage*/) => noop;
 
         this.isPaused = false;
@@ -126,6 +131,12 @@ export default class SimulariumController {
             (trajFileInfo: TrajectoryFileInfo) => {
                 this.handleTrajectoryInfo(trajFileInfo);
             }
+        );
+        this.simulator.setMetricsHandler((metrics: Record<string, unknown>) =>
+            this.handleMetrics(metrics)
+        );
+        this.simulator.setPlotDataHandler((plots: Plot[]) =>
+            this.handlePlotData(plots)
         );
     }
 
@@ -369,11 +380,8 @@ export default class SimulariumController {
         return this.playBackFile;
     }
 
-    public async getMetrics(config: NetConnectionParams): Promise<void> {
-        if (this.simulator instanceof LocalFileSimulator) {
-            await this.simulator.setupMetricsCalculator(config);
-        }
-
+    // todo handle config in subsequent work on "last known net settings"
+    public async getMetrics(_config: NetConnectionParams): Promise<void> {
         this.simulator?.requestAvailableMetrics();
     }
 
@@ -381,9 +389,6 @@ export default class SimulariumController {
         config: NetConnectionParams,
         requestedPlots: PlotConfig[]
     ): Promise<void> {
-        if (this.simulator instanceof LocalFileSimulator) {
-            await this.simulator.setupMetricsCalculator(config);
-        }
         this.simulator?.requestPlotData({}, requestedPlots);
     }
 
@@ -397,6 +402,20 @@ export default class SimulariumController {
         this.handleTrajectoryInfo = callback;
         if (this.simulator) {
             this.simulator.setTrajectoryFileInfoHandler(callback);
+        }
+    }
+
+    public set onMetricsCallback(callback: (msg: unknown) => void) {
+        this.handleMetrics = callback;
+        if (this.simulator) {
+            this.simulator.setMetricsHandler(callback);
+        }
+    }
+
+    public set onPlotDataCallback(callback: (msg: unknown) => void) {
+        this.handlePlotData = callback;
+        if (this.simulator) {
+            this.simulator.setPlotDataHandler(callback);
         }
     }
 
