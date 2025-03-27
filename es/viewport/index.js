@@ -174,7 +174,8 @@ var Viewport = /*#__PURE__*/function (_React$Component) {
     _this.visGeometry = new VisGeometry(loggerLevel);
     _this.props.simulariumController.visData.frameCache.changeSettings({
       cacheEnabled: !props.disableCache,
-      maxSize: props.maxCacheSize
+      maxSize: props.maxCacheSize,
+      onCacheUpdate: props.onCacheUpdate
     });
     if (props.onError) {
       _this.props.simulariumController.visData.setOnError(props.onError);

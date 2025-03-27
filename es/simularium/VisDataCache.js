@@ -11,6 +11,7 @@ var VisDataCache = /*#__PURE__*/function () {
     _defineProperty(this, "size", void 0);
     _defineProperty(this, "_maxSize", void 0);
     _defineProperty(this, "_cacheEnabled", void 0);
+    _defineProperty(this, "logCacheUpdate", void 0);
     /**
      * maxSize of negative one means no limit on cache size
      * disabledCache means only one frame will be stored at a time
@@ -23,6 +24,7 @@ var VisDataCache = /*#__PURE__*/function () {
     this.size = 0;
     this._maxSize = Infinity;
     this._cacheEnabled = true;
+    this.logCacheUpdate = null;
     if (settings) {
       this.changeSettings(settings);
     }
@@ -31,13 +33,38 @@ var VisDataCache = /*#__PURE__*/function () {
     key: "changeSettings",
     value: function changeSettings(options) {
       var maxSize = options.maxSize,
-        cacheEnabled = options.cacheEnabled;
+        cacheEnabled = options.cacheEnabled,
+        onCacheUpdate = options.onCacheUpdate;
       if (cacheEnabled !== undefined) {
         this._cacheEnabled = cacheEnabled;
       }
       if (maxSize !== undefined) {
         this._maxSize = maxSize;
       }
+      if (onCacheUpdate !== undefined) {
+        this.logCacheUpdate = onCacheUpdate;
+      }
+      this.onCacheUpdate();
+    }
+  }, {
+    key: "onCacheUpdate",
+    value: function onCacheUpdate() {
+      var _this$logCacheUpdate;
+      (_this$logCacheUpdate = this.logCacheUpdate) === null || _this$logCacheUpdate === void 0 || _this$logCacheUpdate.call(this, {
+        size: this.size,
+        framesInCache: this.getCachedFrameNumbers()
+      });
+    }
+  }, {
+    key: "getCachedFrameNumbers",
+    value: function getCachedFrameNumbers() {
+      var frameNumbers = [];
+      var current = this.head;
+      while (current !== null) {
+        frameNumbers.push(current.data.frameNumber);
+        current = current.next;
+      }
+      return frameNumbers;
     }
   }, {
     key: "maxSize",
@@ -109,8 +136,8 @@ var VisDataCache = /*#__PURE__*/function () {
   }, {
     key: "getFirstFrameNumber",
     value: function getFirstFrameNumber() {
-      var _this$head2;
-      return ((_this$head2 = this.head) === null || _this$head2 === void 0 ? void 0 : _this$head2.data.frameNumber) || -1;
+      var _this$head$data$frame, _this$head2;
+      return (_this$head$data$frame = (_this$head2 = this.head) === null || _this$head2 === void 0 ? void 0 : _this$head2.data.frameNumber) !== null && _this$head$data$frame !== void 0 ? _this$head$data$frame : -1;
     }
   }, {
     key: "getFirstFrameTime",
@@ -127,8 +154,8 @@ var VisDataCache = /*#__PURE__*/function () {
   }, {
     key: "getLastFrameNumber",
     value: function getLastFrameNumber() {
-      var _this$tail2;
-      return ((_this$tail2 = this.tail) === null || _this$tail2 === void 0 ? void 0 : _this$tail2.data.frameNumber) || -1;
+      var _this$tail$data$frame, _this$tail2;
+      return (_this$tail$data$frame = (_this$tail2 = this.tail) === null || _this$tail2 === void 0 ? void 0 : _this$tail2.data.frameNumber) !== null && _this$tail$data$frame !== void 0 ? _this$tail$data$frame : -1;
     }
   }, {
     key: "getLastFrameTime",
@@ -175,6 +202,7 @@ var VisDataCache = /*#__PURE__*/function () {
       this.tail = newNode;
       this.size = data.size;
       this.numFrames = 1;
+      this.onCacheUpdate();
     }
   }, {
     key: "addFrameToEndOfCache",
@@ -207,9 +235,11 @@ var VisDataCache = /*#__PURE__*/function () {
       }
       if (this.hasFrames() && this._cacheEnabled) {
         this.addFrameToEndOfCache(data);
+        this.onCacheUpdate();
         return;
       }
       this.assignSingleFrameToCache(data);
+      this.onCacheUpdate();
     }
 
     // generalized to remove any node, but in theory
@@ -237,6 +267,7 @@ var VisDataCache = /*#__PURE__*/function () {
       }
       this.numFrames--;
       this.size -= node.data.size;
+      this.onCacheUpdate();
     }
   }, {
     key: "trimCache",
@@ -252,6 +283,7 @@ var VisDataCache = /*#__PURE__*/function () {
       this.tail = null;
       this.numFrames = 0;
       this.size = 0;
+      this.onCacheUpdate();
     }
   }]);
 }();

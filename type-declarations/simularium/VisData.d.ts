@@ -11,6 +11,8 @@ declare class VisData {
     private static parseOneBinaryFrame;
     constructor();
     setOnError(onError: (error: FrontEndError) => void): void;
+    isCacheEnabled(): boolean;
+    getMaxCacheSize(): number;
     get currentFrameData(): CachedFrame;
     /**
      *   Functions to check update

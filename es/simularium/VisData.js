@@ -29,6 +29,16 @@ var VisData = /*#__PURE__*/function () {
       this.onError = onError;
     }
   }, {
+    key: "isCacheEnabled",
+    value: function isCacheEnabled() {
+      return this.frameCache.cacheEnabled;
+    }
+  }, {
+    key: "getMaxCacheSize",
+    value: function getMaxCacheSize() {
+      return this.frameCache.maxSize;
+    }
+  }, {
     key: "currentFrameData",
     get: function get() {
       if (!this.frameCache.hasFrames()) {
