@@ -1,9 +1,10 @@
 import { compareTimes } from "../util.js";
-import { CachedFrame, CacheNode } from "./types.js";
+import { CachedFrame, CacheLog, CacheNode } from "./types.js";
 
 interface VisDataCacheSettings {
     maxSize: number;
     cacheEnabled: boolean;
+    onCacheUpdate?: (log: CacheLog) => void;
 }
 
 class VisDataCache {
@@ -13,6 +14,7 @@ class VisDataCache {
     public size: number;
     private _maxSize: number;
     private _cacheEnabled: boolean;
+    private logCacheUpdate: ((log: CacheLog) => void) | null;
 
     constructor(settings?: Partial<VisDataCacheSettings>) {
         /**
@@ -27,6 +29,7 @@ class VisDataCache {
         this.size = 0;
         this._maxSize = Infinity;
         this._cacheEnabled = true;
+        this.logCacheUpdate = null;
 
         if (settings) {
             this.changeSettings(settings);
@@ -36,14 +39,36 @@ class VisDataCache {
     public changeSettings(options: {
         maxSize?: number;
         cacheEnabled?: boolean;
+        onCacheUpdate?: (log: CacheLog) => void;
     }): void {
-        const { maxSize, cacheEnabled } = options;
+        const { maxSize, cacheEnabled, onCacheUpdate } = options;
         if (cacheEnabled !== undefined) {
             this._cacheEnabled = cacheEnabled;
         }
         if (maxSize !== undefined) {
             this._maxSize = maxSize;
         }
+        if (onCacheUpdate !== undefined) {
+            this.logCacheUpdate = onCacheUpdate;
+        }
+        this.onCacheUpdate();
+    }
+
+    public onCacheUpdate(): void {
+        this.logCacheUpdate?.({
+            size: this.size,
+            framesInCache: this.getCachedFrameNumbers(),
+        });
+    }
+
+    private getCachedFrameNumbers(): number[] {
+        const frameNumbers: number[] = [];
+        let current: CacheNode | null = this.head;
+        while (current !== null) {
+            frameNumbers.push(current.data.frameNumber);
+            current = current.next;
+        }
+        return frameNumbers;
     }
 
     public get maxSize(): number {
@@ -111,7 +136,7 @@ class VisDataCache {
     }
 
     public getFirstFrameNumber(): number {
-        return this.head?.data.frameNumber || -1;
+        return this.head?.data.frameNumber ?? -1;
     }
 
     public getFirstFrameTime(): number {
@@ -123,7 +148,7 @@ class VisDataCache {
     }
 
     public getLastFrameNumber(): number {
-        return this.tail?.data.frameNumber || -1;
+        return this.tail?.data.frameNumber ?? -1;
     }
 
     public getLastFrameTime(): number {
@@ -167,6 +192,7 @@ class VisDataCache {
         this.tail = newNode;
         this.size = data.size;
         this.numFrames = 1;
+        this.onCacheUpdate();
     }
 
     private addFrameToEndOfCache(data: CachedFrame): void {
@@ -197,9 +223,11 @@ class VisDataCache {
         }
         if (this.hasFrames() && this._cacheEnabled) {
             this.addFrameToEndOfCache(data);
+            this.onCacheUpdate();
             return;
         }
         this.assignSingleFrameToCache(data);
+        this.onCacheUpdate();
     }
 
     // generalized to remove any node, but in theory
@@ -225,6 +253,7 @@ class VisDataCache {
         }
         this.numFrames--;
         this.size -= node.data.size;
+        this.onCacheUpdate();
     }
 
     private trimCache(incomingDataSize?: number): void {
@@ -242,6 +271,7 @@ class VisDataCache {
         this.tail = null;
         this.numFrames = 0;
         this.size = 0;
+        this.onCacheUpdate();
     }
 }
 
