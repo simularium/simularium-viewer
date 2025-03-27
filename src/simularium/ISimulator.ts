@@ -1,4 +1,10 @@
-import { VisDataMessage, TrajectoryFileInfo } from "./types.js";
+import {
+    VisDataMessage,
+    TrajectoryFileInfo,
+    PlotConfig,
+    Plot,
+    Metrics,
+} from "./types.js";
 
 /**
 From the caller's perspective, this interface is a contract for a 
@@ -21,6 +27,13 @@ export interface ISimulator {
     setTrajectoryDataHandler(
         handler: (msg: VisDataMessage | ArrayBuffer) => void
     ): void;
+
+    /** todo implement callback pattern for plots and metrics */
+    /** a callback to receive available metrics */
+    setMetricsHandler(handler: (msg: Metrics) => void): void;
+
+    /** a callback to receive plot data */
+    setPlotDataHandler(handler: (msg: Plot[]) => void): void;
 
     /** a callback to propagate errors from a simulator to it's implementing context */
     setErrorHandler(handler: (msg: Error) => void): void;
@@ -46,4 +59,8 @@ export interface ISimulator {
     requestFrameByTime(time: number): void;
     /** request trajectory metadata */
     requestTrajectoryFileInfo(fileName: string): void;
+    /** request available metrics */
+    requestAvailableMetrics(): void;
+    /** request available plots */
+    requestPlotData(plots: PlotConfig[]): void;
 }

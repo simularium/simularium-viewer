@@ -8,7 +8,13 @@ import {
 } from "./WebsocketClient.js";
 import type { NetMessage, ErrorMessage } from "./WebsocketClient.js";
 import { ISimulator } from "./ISimulator.js";
-import { TrajectoryFileInfoV2, VisDataMessage } from "./types.js";
+import {
+    Metrics,
+    Plot,
+    PlotConfig,
+    TrajectoryFileInfoV2,
+    VisDataMessage,
+} from "./types.js";
 
 // a RemoteSimulator is a ISimulator that connects to the Octopus backend server
 // and plays back a trajectory specified in the NetConnectionParams
@@ -17,6 +23,8 @@ export class RemoteSimulator implements ISimulator {
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (NetMessage) => void;
     public onTrajectoryDataArrive: (NetMessage) => void;
+    public onAvailableMetricsArrive: (NetMessage) => void;
+    public onPlotDataArrive: (NetMessage) => void;
     public lastRequestedFile: string;
     public handleError: (error: FrontEndError) => void | (() => void);
     private jsonResponse: boolean;
@@ -46,6 +54,12 @@ export class RemoteSimulator implements ISimulator {
         this.onTrajectoryDataArrive = () => {
             /* do nothing */
         };
+        this.onAvailableMetricsArrive = () => {
+            /* do nothing */
+        };
+        this.onPlotDataArrive = () => {
+            /* do nothing */
+        };
     }
 
     public setTrajectoryFileInfoHandler(
@@ -57,6 +71,12 @@ export class RemoteSimulator implements ISimulator {
         handler: (msg: VisDataMessage) => void
     ): void {
         this.onTrajectoryDataArrive = handler;
+    }
+    public setMetricsHandler(handler: (msg: Metrics) => void): void {
+        this.onAvailableMetricsArrive = handler;
+    }
+    public setPlotDataHandler(handler: (msg: Plot[]) => void): void {
+        this.onPlotDataArrive = handler;
     }
     public setErrorHandler(handler: (msg: Error) => void): void {
         this.handleError = handler;
@@ -181,6 +201,14 @@ export class RemoteSimulator implements ISimulator {
         this.webSocketClient.addJsonMessageHandler(
             NetMessageEnum.ID_ERROR_MSG,
             (msg) => this.onErrorMsg(msg as ErrorMessage)
+        );
+        this.webSocketClient.addJsonMessageHandler(
+            NetMessageEnum.ID_AVAILABLE_METRICS_RESPONSE,
+            (msg) => this.onAvailableMetricsArrive(msg)
+        );
+        this.webSocketClient.addJsonMessageHandler(
+            NetMessageEnum.ID_PLOT_DATA_RESPONSE,
+            (msg) => this.onPlotDataArrive(msg)
         );
     }
 
@@ -333,5 +361,25 @@ export class RemoteSimulator implements ISimulator {
             "Send Update"
         );
         return Promise.resolve();
+    }
+
+    public requestAvailableMetrics(): void {
+        this.webSocketClient.sendWebSocketRequest(
+            {
+                msgType: NetMessageEnum.ID_AVAILABLE_METRICS_REQUEST,
+            },
+            "Request available metrics from the metrics service"
+        );
+    }
+
+    public requestPlotData(plots: PlotConfig[]): void {
+        this.webSocketClient.sendWebSocketRequest(
+            {
+                msgType: NetMessageEnum.ID_PLOT_DATA_REQUEST,
+                fileName: this.lastRequestedFile,
+                plots: plots,
+            },
+            "Request plot data for a given trajectory and plot types"
+        );
     }
 }

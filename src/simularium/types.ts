@@ -209,3 +209,5 @@ export interface CacheNode {
     next: CacheNode | null;
     prev: CacheNode | null;
 }
+
+export type Metrics = Record<string, unknown>;

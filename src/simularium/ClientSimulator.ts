@@ -1,7 +1,13 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
 
-import { VisDataMessage, TrajectoryFileInfo } from "./types.js";
+import {
+    VisDataMessage,
+    TrajectoryFileInfo,
+    PlotConfig,
+    Plot,
+    Metrics,
+} from "./types.js";
 import {
     ClientMessageEnum,
     ClientPlayBackType,
@@ -20,6 +26,8 @@ export class ClientSimulator implements ISimulator {
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfo) => void;
     public onTrajectoryDataArrive: (msg: VisDataMessage) => void;
+    public onAvailableMetricsArrive: (msg: Metrics) => void;
+    public onPlotDataArrive: (msg: Plot[]) => void;
     public handleError: (error: Error) => void;
 
     public constructor(sim: IClientSimulatorImpl) {
@@ -35,6 +43,12 @@ export class ClientSimulator implements ISimulator {
         this.handleError = () => {
             /* do nothing */
         };
+        this.onAvailableMetricsArrive = () => {
+            /* do nothing */
+        };
+        this.onPlotDataArrive = () => {
+            /* do nothing */
+        };
         this.localSimulator = sim;
     }
 
@@ -47,6 +61,12 @@ export class ClientSimulator implements ISimulator {
         handler: (msg: VisDataMessage) => void
     ): void {
         this.onTrajectoryDataArrive = handler;
+    }
+    public setMetricsHandler(handler: (msg: Metrics) => void): void {
+        this.onAvailableMetricsArrive = handler;
+    }
+    public setPlotDataHandler(handler: (msg: Plot[]) => void): void {
+        this.onPlotDataArrive = handler;
     }
     public setErrorHandler(handler: (msg: Error) => void): void {
         this.handleError = handler;
@@ -210,5 +230,13 @@ export class ClientSimulator implements ISimulator {
             },
             "Initialize trajectory file info"
         );
+    }
+
+    public requestAvailableMetrics(): void {
+        /*not implemented*/
+    }
+
+    public requestPlotData(_plots: PlotConfig[]): void {
+        /*not implemented*/
     }
 }
