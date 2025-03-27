@@ -55,12 +55,10 @@ class VisDataCache {
     }
 
     public onCacheUpdate(): void {
-        if (this.logCacheUpdate) {
-            this.logCacheUpdate({
-                size: this.size,
-                framesInCache: this.getListOfCachedFrameNumbers(),
-            });
-        }
+        this.logCacheUpdate?.({
+            size: this.size,
+            framesInCache: this.getListOfCachedFrameNumbers(),
+        });
     }
 
     private getListOfCachedFrameNumbers(): number[] {
