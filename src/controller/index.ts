@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import { VisData, RemoteSimulator } from "../simularium/index.js";
 import type {
     NetConnectionParams,
+    Plot,
     TrajectoryFileInfo,
 } from "../simularium/index.js";
 import { VisGeometry } from "../visGeometry/index.js";
@@ -12,6 +13,7 @@ import {
     FILE_STATUS_SUCCESS,
     FILE_STATUS_FAIL,
     PlotConfig,
+    Metrics,
 } from "../simularium/types.js";
 
 import { ClientSimulator } from "../simularium/ClientSimulator.js";
@@ -22,7 +24,6 @@ import { FrontEndError } from "../simularium/FrontEndError.js";
 import type { ISimulariumFile } from "../simularium/ISimulariumFile.js";
 import { WebsocketClient } from "../simularium/WebsocketClient.js";
 import { TrajectoryType } from "../constants.js";
-import { RemoteMetricsCalculator } from "../simularium/RemoteMetricsCalculator.js";
 import { OctopusServicesClient } from "../simularium/OctopusClient.js";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
@@ -45,6 +46,8 @@ export default class SimulariumController {
     public visGeometry: VisGeometry | undefined;
     public tickIntervalLength: number;
     public handleTrajectoryInfo: (TrajectoryFileInfo) => void;
+    public handleMetrics: (Metrics) => void;
+    public handlePlotData: (Plots) => void;
     public startRecording: () => void;
     public stopRecording: () => void;
     public onError?: (error: FrontEndError) => void;
@@ -60,6 +63,8 @@ export default class SimulariumController {
         this.stopRecording = () => noop;
 
         this.handleTrajectoryInfo = (/*msg: TrajectoryFileInfo*/) => noop;
+        this.handleMetrics = (/*msg: Metrics*/) => noop;
+        this.handlePlotData = (/*msg: Plot[]*/) => noop;
         this.onError = (/*errorMessage*/) => noop;
 
         this.isPaused = false;
@@ -129,6 +134,12 @@ export default class SimulariumController {
             (trajFileInfo: TrajectoryFileInfo) => {
                 this.handleTrajectoryInfo(trajFileInfo);
             }
+        );
+        this.simulator.setMetricsHandler((metrics: Metrics) =>
+            this.handleMetrics(metrics)
+        );
+        this.simulator.setPlotDataHandler((plots: Plot[]) =>
+            this.handlePlotData(plots)
         );
     }
 
@@ -378,39 +389,12 @@ export default class SimulariumController {
         }
     }
 
-    private async setupMetricsCalculator(
-        config: NetConnectionParams
-    ): Promise<RemoteMetricsCalculator> {
-        const webSocketClient =
-            this.remoteWebsocketClient &&
-            this.remoteWebsocketClient.socketIsValid()
-                ? this.remoteWebsocketClient
-                : new WebsocketClient(config, this.onError);
-        const metricsCalculator = new RemoteMetricsCalculator(
-            webSocketClient,
-            this.onError
-        );
-        await metricsCalculator.connectToRemoteServer();
-        return metricsCalculator;
-    }
-
-    public async getMetrics(config: NetConnectionParams): Promise<void> {
-        if (this.simulator instanceof LocalFileSimulator) {
-            const calculator = await this.setupMetricsCalculator(config);
-            await this.simulator.setupMetricsCalculator(calculator);
-        }
-
+    public async getMetrics(): Promise<void> {
         this.simulator?.requestAvailableMetrics();
     }
 
-    public async getPlotData(
-        config: NetConnectionParams,
-        requestedPlots: PlotConfig[]
-    ): Promise<void> {
-        if (this.simulator instanceof LocalFileSimulator) {
-            await this.setupMetricsCalculator(config);
-        }
-        this.simulator?.requestPlotData({}, requestedPlots);
+    public async getPlotData(requestedPlots: PlotConfig[]): Promise<void> {
+        this.simulator?.requestPlotData(requestedPlots);
     }
 
     public clearLocalCache(): void {
@@ -423,6 +407,20 @@ export default class SimulariumController {
         this.handleTrajectoryInfo = callback;
         if (this.simulator) {
             this.simulator.setTrajectoryFileInfoHandler(callback);
+        }
+    }
+
+    public set onMetricsCallback(callback: (msg: unknown) => void) {
+        this.handleMetrics = callback;
+        if (this.simulator) {
+            this.simulator.setMetricsHandler(callback);
+        }
+    }
+
+    public set onPlotDataCallback(callback: (msg: unknown) => void) {
+        this.handlePlotData = callback;
+        if (this.simulator) {
+            this.simulator.setPlotDataHandler(callback);
         }
     }
 

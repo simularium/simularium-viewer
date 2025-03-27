@@ -8,7 +8,13 @@ import {
 } from "./WebsocketClient.js";
 import type { NetMessage, ErrorMessage } from "./WebsocketClient.js";
 import { ISimulator } from "./ISimulator.js";
-import { PlotConfig, TrajectoryFileInfoV2, VisDataMessage } from "./types.js";
+import {
+    Metrics,
+    Plot,
+    PlotConfig,
+    TrajectoryFileInfoV2,
+    VisDataMessage,
+} from "./types.js";
 
 // a RemoteSimulator is a ISimulator that connects to the Octopus backend server
 // and plays back a trajectory specified in the NetConnectionParams
@@ -17,6 +23,8 @@ export class RemoteSimulator implements ISimulator {
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (NetMessage) => void;
     public onTrajectoryDataArrive: (NetMessage) => void;
+    public onAvailableMetricsArrive: (NetMessage) => void;
+    public onPlotDataArrive: (NetMessage) => void;
     public lastRequestedFile: string;
     public handleError: (error: FrontEndError) => void | (() => void);
     private jsonResponse: boolean;
@@ -46,6 +54,12 @@ export class RemoteSimulator implements ISimulator {
         this.onTrajectoryDataArrive = () => {
             /* do nothing */
         };
+        this.onAvailableMetricsArrive = () => {
+            /* do nothing */
+        };
+        this.onPlotDataArrive = () => {
+            /* do nothing */
+        };
     }
 
     public setTrajectoryFileInfoHandler(
@@ -57,6 +71,12 @@ export class RemoteSimulator implements ISimulator {
         handler: (msg: VisDataMessage) => void
     ): void {
         this.onTrajectoryDataArrive = handler;
+    }
+    public setMetricsHandler(handler: (msg: Metrics) => void): void {
+        this.onAvailableMetricsArrive = handler;
+    }
+    public setPlotDataHandler(handler: (msg: Plot[]) => void): void {
+        this.onPlotDataArrive = handler;
     }
     public setErrorHandler(handler: (msg: Error) => void): void {
         this.handleError = handler;
@@ -352,28 +372,14 @@ export class RemoteSimulator implements ISimulator {
         );
     }
 
-    public requestPlotData(
-        data: Record<string, unknown>,
-        plots: Array<PlotConfig>
-    ): void {
+    public requestPlotData(plots: PlotConfig[]): void {
         this.webSocketClient.sendWebSocketRequest(
             {
                 msgType: NetMessageEnum.ID_PLOT_DATA_REQUEST,
                 fileName: this.lastRequestedFile,
-                data: data,
                 plots: plots,
             },
             "Request plot data for a given trajectory and plot types"
         );
-    }
-
-    public onAvailableMetricsArrive(msg: NetMessage): void {
-        // TODO: implement callback
-        console.log("Available metrics: ", msg["metrics"]);
-    }
-
-    public onPlotDataArrive(msg: NetMessage): void {
-        // TODO: implement callback
-        console.log("Plot data: ", msg["plotData"]);
     }
 }

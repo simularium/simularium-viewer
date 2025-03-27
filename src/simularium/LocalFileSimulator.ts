@@ -6,6 +6,8 @@ import {
     VisDataMessage,
     TrajectoryFileInfoV2,
     PlotConfig,
+    Plot,
+    Metrics,
 } from "./types.js";
 import { ISimulator } from "./ISimulator.js";
 import type { ISimulariumFile } from "./ISimulariumFile.js";
@@ -20,6 +22,8 @@ export class LocalFileSimulator implements ISimulator {
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfoV2) => void;
     public onTrajectoryDataArrive: (msg: VisDataMessage | ArrayBuffer) => void;
+    public onAvailableMetricsArrive: (msg: Metrics) => void;
+    public onPlotDataArrive: (msg: Plot[]) => void;
     public handleError: (error: Error) => void;
     // setInterval is the playback engine for now
     private playbackIntervalId = 0;
@@ -39,6 +43,12 @@ export class LocalFileSimulator implements ISimulator {
         this.handleError = () => {
             /* do nothing */
         };
+        this.onAvailableMetricsArrive = () => {
+            /* do nothing */
+        };
+        this.onPlotDataArrive = () => {
+            /* do nothing */
+        };
         console.log("NEW LOCALFILECONNECTION");
     }
 
@@ -51,6 +61,12 @@ export class LocalFileSimulator implements ISimulator {
         handler: (msg: VisDataMessage | ArrayBuffer) => void
     ): void {
         this.onTrajectoryDataArrive = handler;
+    }
+    public setMetricsHandler(handler: (msg: Metrics) => void): void {
+        this.onAvailableMetricsArrive = handler;
+    }
+    public setPlotDataHandler(handler: (msg: Plot[]) => void): void {
+        this.onPlotDataArrive = handler;
     }
     public setErrorHandler(handler: (msg: Error) => void): void {
         this.handleError = handler;
@@ -141,44 +157,11 @@ export class LocalFileSimulator implements ISimulator {
         return this.simulariumFile;
     }
 
-    public async setupMetricsCalculator(
-        metricsCalculator: RemoteMetricsCalculator
-    ): Promise<void> {
-        this.remoteMetricsCalculator = metricsCalculator;
-    }
-
     public requestAvailableMetrics(): void {
-        if (
-            !this.remoteMetricsCalculator ||
-            !this.remoteMetricsCalculator.socketIsValid()
-        ) {
-            this.handleError(
-                new Error("Metrics calculator is not configured.")
-            );
-            return;
-        }
-
-        this.remoteMetricsCalculator.getAvailableMetrics();
+        /** not implemented */
     }
 
-    public requestPlotData(
-        _data: Record<string, unknown>,
-        plots: Array<PlotConfig>
-    ): void {
-        if (
-            !this.remoteMetricsCalculator ||
-            !this.remoteMetricsCalculator.socketIsValid()
-        ) {
-            this.handleError(
-                new Error("Metrics calculator is not configured.")
-            );
-            return;
-        }
-
-        this.remoteMetricsCalculator.getPlotData(
-            this.simulariumFile["simulariumFile"],
-            plots,
-            this.fileName
-        );
+    public requestPlotData(_plots: PlotConfig[]): void {
+        this.onPlotDataArrive(this.simulariumFile.getPlotData());
     }
 }
