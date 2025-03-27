@@ -9,6 +9,7 @@ import type {
 } from "./WebsocketClient.js";
 import { ISimulator } from "./ISimulator.js";
 import {
+    Metrics,
     Plot,
     PlotConfig,
     TrajectoryFileInfoV2,
@@ -84,9 +85,7 @@ export class RemoteSimulator extends BaseRemoteClient implements ISimulator {
     ): void {
         this.onTrajectoryDataArrive = handler;
     }
-    public setMetricsHandler(
-        handler: (msg: Record<string, unknown>) => void
-    ): void {
+    public setMetricsHandler(handler: (msg: Metrics) => void): void {
         this.onAvailableMetricsArrive = handler;
     }
     public setPlotDataHandler(handler: (msg: Plot[]) => void): void {
@@ -227,6 +226,27 @@ export class RemoteSimulator extends BaseRemoteClient implements ISimulator {
     }
 
     /**
+     * WebSocket Connect
+     * */
+    public disconnect(): void {
+        this.webSocketClient.disconnect();
+    }
+
+    public getIp(): string {
+        return this.webSocketClient.getIp();
+    }
+
+    public isConnectedToRemoteServer(): boolean {
+        return this.webSocketClient.socketIsValid();
+    }
+
+    public async connectToRemoteServer(): Promise<string> {
+        this.registerBinaryMessageHandlers();
+        this.registerJsonMessageHandlers();
+        return this.webSocketClient.connectToRemoteServer();
+    }
+
+    /**
      * Websocket Update Parameters
      */
     public sendTimeStepUpdate(newTimeStep: number): void {
@@ -338,15 +358,11 @@ export class RemoteSimulator extends BaseRemoteClient implements ISimulator {
         );
     }
 
-    public requestPlotData(
-        data: Record<string, unknown>,
-        plots: Array<PlotConfig>
-    ): void {
+    public requestPlotData(plots: PlotConfig[]): void {
         this.webSocketClient.sendWebSocketRequest(
             {
                 msgType: NetMessageEnum.ID_PLOT_DATA_REQUEST,
                 fileName: this.lastRequestedFile,
-                data: data,
                 plots: plots,
             },
             "Request plot data for a given trajectory and plot types"

@@ -7,6 +7,7 @@ import {
     TrajectoryFileInfoV2,
     PlotConfig,
     Plot,
+    Metrics,
 } from "./types.js";
 import { ISimulator } from "./ISimulator.js";
 import type { ISimulariumFile } from "./ISimulariumFile.js";
@@ -19,8 +20,8 @@ export class LocalFileSimulator implements ISimulator {
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfoV2) => void;
     public onTrajectoryDataArrive: (msg: VisDataMessage | ArrayBuffer) => void;
-    public onAvailableMetricsArrive: (NetMessage) => void;
-    public onPlotDataArrive: (NetMessage) => void;
+    public onAvailableMetricsArrive: (msg: Metrics) => void;
+    public onPlotDataArrive: (msg: Plot[]) => void;
     public handleError: (error: Error) => void;
     // setInterval is the playback engine for now
     private playbackIntervalId = 0;
@@ -59,9 +60,7 @@ export class LocalFileSimulator implements ISimulator {
     ): void {
         this.onTrajectoryDataArrive = handler;
     }
-    public setMetricsHandler(
-        handler: (msg: Record<string, unknown>) => void
-    ): void {
+    public setMetricsHandler(handler: (msg: Metrics) => void): void {
         this.onAvailableMetricsArrive = handler;
     }
     public setPlotDataHandler(handler: (msg: Plot[]) => void): void {
@@ -160,10 +159,7 @@ export class LocalFileSimulator implements ISimulator {
         /** not implemented */
     }
 
-    public requestPlotData(
-        _data: Record<string, unknown>,
-        _plots: Array<PlotConfig>
-    ): void {
+    public requestPlotData(_plots: PlotConfig[]): void {
         this.onPlotDataArrive(this.simulariumFile.getPlotData());
     }
 }

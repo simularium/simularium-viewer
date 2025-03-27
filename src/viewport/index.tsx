@@ -12,7 +12,7 @@ import {
     SelectionStateInfo,
     UIDisplayData,
 } from "../simularium/index.js";
-import { AgentData, Plot, TrajectoryFileInfoAny } from "../simularium/types.js";
+import { AgentData, Metrics, Plot, TrajectoryFileInfoAny } from "../simularium/types.js";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers.js";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError.js";
 import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry/index.js";
@@ -36,7 +36,7 @@ type ViewportProps = {
         cachedData: TrajectoryFileInfo
     ) => void | undefined;
     onUIDisplayDataChanged: (data: UIDisplayData) => void | undefined;
-    onMetricsData(data: Record<string, unknown>): void;
+    onMetricsData(data: Metrics): void;
     onPlotsData(data: Plot[]): void;
     hideAllAgents: boolean;
     showPaths: boolean;
