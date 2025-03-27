@@ -57,11 +57,11 @@ class VisDataCache {
     public onCacheUpdate(): void {
         this.logCacheUpdate?.({
             size: this.size,
-            framesInCache: this.getListOfCachedFrameNumbers(),
+            framesInCache: this.getCachedFrameNumbers(),
         });
     }
 
-    private getListOfCachedFrameNumbers(): number[] {
+    private getCachedFrameNumbers(): number[] {
         const frameNumbers: number[] = [];
         let current: CacheNode | null = this.head;
         while (current !== null) {
