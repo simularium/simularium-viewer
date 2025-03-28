@@ -39,7 +39,7 @@ export class RemoteSimulator extends WebsocketClient implements ISimulator {
         jsonResponse = false
     ) {
         super(netConnectionSettings, errorHandler);
-        this.lastRequestedFile = "";
+        this.lastRequestedFile = fileName;
         this.handleError =
             errorHandler ||
             (() => {
