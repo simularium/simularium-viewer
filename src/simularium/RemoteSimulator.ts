@@ -1,7 +1,11 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
 import { FrontEndError, ErrorLevel } from "./FrontEndError.js";
-import { NetMessageEnum, MessageEventLike } from "./WebsocketClient.js";
+import {
+    NetMessageEnum,
+    MessageEventLike,
+    WebsocketClient,
+} from "./WebsocketClient.js";
 import type {
     NetMessage,
     ErrorMessage,
@@ -15,11 +19,10 @@ import {
     TrajectoryFileInfoV2,
     VisDataMessage,
 } from "./types.js";
-import { BaseRemoteClient } from "./RemoteClient.js";
 
 // a RemoteSimulator is a ISimulator that connects to the Octopus backend server
 // and plays back a trajectory specified in the NetConnectionParams
-export class RemoteSimulator extends BaseRemoteClient implements ISimulator {
+export class RemoteSimulator extends WebsocketClient implements ISimulator {
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (NetMessage) => void;
     public onTrajectoryDataArrive: (NetMessage) => void;
@@ -35,7 +38,7 @@ export class RemoteSimulator extends BaseRemoteClient implements ISimulator {
         errorHandler?: (error: FrontEndError) => void,
         jsonResponse = false
     ) {
-        super(netConnectionSettings, fileName, errorHandler);
+        super(netConnectionSettings, errorHandler);
         this.lastRequestedFile = "";
         this.handleError =
             errorHandler ||
@@ -61,20 +64,6 @@ export class RemoteSimulator extends BaseRemoteClient implements ISimulator {
         };
     }
 
-    public onConnected(): void {
-        this.registerBinaryMessageHandlers();
-        this.registerJsonMessageHandlers();
-        const jsonData = {
-            msgType: NetMessageEnum.ID_INIT_TRAJECTORY_FILE,
-            fileName: this.lastRequestedFile,
-        };
-
-        this.webSocketClient.sendWebSocketRequest(
-            jsonData,
-            "Start Trajectory File Playback"
-        );
-    }
-
     public setTrajectoryFileInfoHandler(
         handler: (msg: TrajectoryFileInfoV2) => void
     ): void {
@@ -95,8 +84,36 @@ export class RemoteSimulator extends BaseRemoteClient implements ISimulator {
         this.handleError = handler;
     }
 
-    public socketIsValid(): boolean {
-        return this.webSocketClient.socketIsValid();
+    /**
+     * WebSocket Simulation Control
+     */
+    public async initialize(fileName: string): Promise<void> {
+        this.lastRequestedFile = fileName;
+        try {
+            await this.connectToRemoteServer();
+            this.registerBinaryMessageHandlers();
+            this.registerJsonMessageHandlers();
+        } catch (error) {
+            this.handleError(error as FrontEndError);
+        }
+
+        const jsonData = {
+            msgType: NetMessageEnum.ID_INIT_TRAJECTORY_FILE,
+            fileName: fileName,
+        };
+
+        // begins a stream which will include a TrajectoryFileInfo and a series of VisDataMessages
+        // Note that it is possible for the first vis data to arrive before the TrajectoryFileInfo...
+        return Promise.resolve("Connected to remote server")
+            .then(() => {
+                this.sendWebSocketRequest(
+                    jsonData,
+                    "Start Trajectory File Playback"
+                );
+            })
+            .catch((error) => {
+                throw new FrontEndError(error.message, ErrorLevel.ERROR);
+            });
     }
 
     public getLastRequestedFile(): string {
@@ -117,7 +134,7 @@ export class RemoteSimulator extends BaseRemoteClient implements ISimulator {
             OFFSET_TO_NAME_LENGTH + nameLength
         );
         const fileName = new TextDecoder("utf-8").decode(fileBytes);
-        console.log("file name: ", fileName);
+
         if (fileName == this.lastRequestedFile) {
             this.onTrajectoryDataArrive(event.data);
         } else {
@@ -131,7 +148,7 @@ export class RemoteSimulator extends BaseRemoteClient implements ISimulator {
     }
 
     public onHeartbeatPing(msg: NetMessage): void {
-        this.webSocketClient.sendWebSocketRequest(
+        this.sendWebSocketRequest(
             {
                 connId: msg.connId,
                 msgType: NetMessageEnum.ID_HEARTBEAT_PONG,
@@ -174,76 +191,49 @@ export class RemoteSimulator extends BaseRemoteClient implements ISimulator {
     }
 
     private registerBinaryMessageHandlers(): void {
-        this.webSocketClient.addBinaryMessageHandler(
-            NetMessageEnum.ID_VIS_DATA_ARRIVE,
-            (msg) => this.onBinaryIdVisDataArrive(msg)
+        this.addBinaryMessageHandler(NetMessageEnum.ID_VIS_DATA_ARRIVE, (msg) =>
+            this.onBinaryIdVisDataArrive(msg)
         );
     }
 
     private registerJsonMessageHandlers(): void {
-        this.webSocketClient.addJsonMessageHandler(
+        this.addJsonMessageHandler(
             NetMessageEnum.ID_TRAJECTORY_FILE_INFO,
             (msg) => this.onTrajectoryFileInfoArrive(msg)
         );
 
-        this.webSocketClient.addJsonMessageHandler(
-            NetMessageEnum.ID_HEARTBEAT_PING,
-            (msg) => this.onHeartbeatPing(msg)
+        this.addJsonMessageHandler(NetMessageEnum.ID_HEARTBEAT_PING, (msg) =>
+            this.onHeartbeatPing(msg)
         );
 
-        this.webSocketClient.addJsonMessageHandler(
-            NetMessageEnum.ID_VIS_DATA_ARRIVE,
-            (msg) => this.onJsonIdVisDataArrive(msg)
+        this.addJsonMessageHandler(NetMessageEnum.ID_VIS_DATA_ARRIVE, (msg) =>
+            this.onJsonIdVisDataArrive(msg)
         );
 
-        this.webSocketClient.addJsonMessageHandler(
-            NetMessageEnum.ID_UPDATE_TIME_STEP,
-            (_msg) => this.updateTimestep()
+        this.addJsonMessageHandler(NetMessageEnum.ID_UPDATE_TIME_STEP, (_msg) =>
+            this.updateTimestep()
         );
 
-        this.webSocketClient.addJsonMessageHandler(
+        this.addJsonMessageHandler(
             NetMessageEnum.ID_UPDATE_RATE_PARAM,
             (_msg) => this.updateRateParam()
         );
 
-        this.webSocketClient.addJsonMessageHandler(
-            NetMessageEnum.ID_MODEL_DEFINITION,
-            (_msg) => this.onModelDefinitionArrive()
+        this.addJsonMessageHandler(NetMessageEnum.ID_MODEL_DEFINITION, (_msg) =>
+            this.onModelDefinitionArrive()
         );
 
-        this.webSocketClient.addJsonMessageHandler(
-            NetMessageEnum.ID_ERROR_MSG,
-            (msg) => this.onErrorMsg(msg as ErrorMessage)
+        this.addJsonMessageHandler(NetMessageEnum.ID_ERROR_MSG, (msg) =>
+            this.onErrorMsg(msg as ErrorMessage)
         );
-        this.webSocketClient.addJsonMessageHandler(
+        this.addJsonMessageHandler(
             NetMessageEnum.ID_AVAILABLE_METRICS_RESPONSE,
             (msg) => this.onAvailableMetricsArrive(msg)
         );
-        this.webSocketClient.addJsonMessageHandler(
+        this.addJsonMessageHandler(
             NetMessageEnum.ID_PLOT_DATA_RESPONSE,
             (msg) => this.onPlotDataArrive(msg)
         );
-    }
-
-    /**
-     * WebSocket Connect
-     * */
-    public disconnect(): void {
-        this.webSocketClient.disconnect();
-    }
-
-    public getIp(): string {
-        return this.webSocketClient.getIp();
-    }
-
-    public isConnectedToRemoteServer(): boolean {
-        return this.webSocketClient.socketIsValid();
-    }
-
-    public async connectToRemoteServer(): Promise<string> {
-        this.registerBinaryMessageHandlers();
-        this.registerJsonMessageHandlers();
-        return this.webSocketClient.connectToRemoteServer();
     }
 
     /**
@@ -254,7 +244,7 @@ export class RemoteSimulator extends BaseRemoteClient implements ISimulator {
             msgType: NetMessageEnum.ID_UPDATE_TIME_STEP,
             timeStep: newTimeStep,
         };
-        this.webSocketClient.sendWebSocketRequest(jsonData, "Update Time-Step");
+        this.sendWebSocketRequest(jsonData, "Update Time-Step");
     }
 
     public sendParameterUpdate(paramName: string, paramValue: number): void {
@@ -263,14 +253,11 @@ export class RemoteSimulator extends BaseRemoteClient implements ISimulator {
             paramName: paramName,
             paramValue: paramValue,
         };
-        this.webSocketClient.sendWebSocketRequest(
-            jsonData,
-            "Rate Parameter Update"
-        );
+        this.sendWebSocketRequest(jsonData, "Rate Parameter Update");
     }
 
     public pause(): void {
-        this.webSocketClient.sendWebSocketRequest(
+        this.sendWebSocketRequest(
             {
                 msgType: NetMessageEnum.ID_VIS_DATA_PAUSE,
                 fileName: this.lastRequestedFile,
@@ -280,7 +267,7 @@ export class RemoteSimulator extends BaseRemoteClient implements ISimulator {
     }
 
     public stream(): void {
-        this.webSocketClient.sendWebSocketRequest(
+        this.sendWebSocketRequest(
             {
                 msgType: NetMessageEnum.ID_VIS_DATA_RESUME,
                 fileName: this.lastRequestedFile,
@@ -290,10 +277,10 @@ export class RemoteSimulator extends BaseRemoteClient implements ISimulator {
     }
 
     public abort(): void {
-        if (!this.isConnectedToRemoteServer()) {
+        if (!this.socketIsValid()) {
             return;
         }
-        this.webSocketClient.sendWebSocketRequest(
+        this.sendWebSocketRequest(
             {
                 msgType: NetMessageEnum.ID_VIS_DATA_ABORT,
                 fileName: this.lastRequestedFile,
@@ -303,7 +290,7 @@ export class RemoteSimulator extends BaseRemoteClient implements ISimulator {
     }
 
     public requestFrame(startFrameNumber: number): void {
-        this.webSocketClient.sendWebSocketRequest(
+        this.sendWebSocketRequest(
             {
                 msgType: NetMessageEnum.ID_VIS_DATA_REQUEST,
                 frameNumber: startFrameNumber,
@@ -315,7 +302,7 @@ export class RemoteSimulator extends BaseRemoteClient implements ISimulator {
     }
 
     public requestFrameByTime(time: number): void {
-        this.webSocketClient.sendWebSocketRequest(
+        this.sendWebSocketRequest(
             {
                 msgType: NetMessageEnum.ID_GOTO_SIMULATION_TIME,
                 time: time,
@@ -328,7 +315,7 @@ export class RemoteSimulator extends BaseRemoteClient implements ISimulator {
 
     public requestTrajectoryFileInfo(fileName: string): void {
         this.lastRequestedFile = fileName;
-        this.webSocketClient.sendWebSocketRequest(
+        this.sendWebSocketRequest(
             {
                 msgType: NetMessageEnum.ID_INIT_TRAJECTORY_FILE,
                 fileName: fileName,
@@ -339,7 +326,7 @@ export class RemoteSimulator extends BaseRemoteClient implements ISimulator {
     }
 
     public sendUpdate(_obj: Record<string, unknown>): Promise<void> {
-        this.webSocketClient.sendWebSocketRequest(
+        this.sendWebSocketRequest(
             {
                 msgType: NetMessageEnum.ID_UPDATE_SIMULATION_STATE,
                 data: _obj,
@@ -350,7 +337,7 @@ export class RemoteSimulator extends BaseRemoteClient implements ISimulator {
     }
 
     public requestAvailableMetrics(): void {
-        this.webSocketClient.sendWebSocketRequest(
+        this.sendWebSocketRequest(
             {
                 msgType: NetMessageEnum.ID_AVAILABLE_METRICS_REQUEST,
             },
@@ -359,7 +346,7 @@ export class RemoteSimulator extends BaseRemoteClient implements ISimulator {
     }
 
     public requestPlotData(plots: PlotConfig[]): void {
-        this.webSocketClient.sendWebSocketRequest(
+        this.sendWebSocketRequest(
             {
                 msgType: NetMessageEnum.ID_PLOT_DATA_REQUEST,
                 fileName: this.lastRequestedFile,

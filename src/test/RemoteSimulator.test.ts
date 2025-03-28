@@ -4,7 +4,6 @@ import {
     MessageEventLike,
 } from "../simularium/WebsocketClient.js";
 import { RemoteSimulator } from "../index.js";
-import { WebsocketClient } from "../simularium/WebsocketClient.js";
 
 describe("RemoteSimulator", () => {
     // Silence console.debug messages like this in Vitest output:
@@ -17,12 +16,9 @@ describe("RemoteSimulator", () => {
     };
 
     let simulator;
-    let websocketClient;
 
     beforeEach(() => {
         simulator = new RemoteSimulator(CONNECTION_SETTINGS, "trajectory.sim");
-        websocketClient = new WebsocketClient(CONNECTION_SETTINGS);
-        simulator["_webSocketClient"] = websocketClient;
     });
 
     const createFakeBinary = () => {
@@ -48,35 +44,35 @@ describe("RemoteSimulator", () => {
             vi.spyOn(simulator, "connectToRemoteServer").mockResolvedValue(
                 "Connected to remote server"
             );
-            vi.spyOn(
-                websocketClient,
-                "sendWebSocketRequest"
-            ).mockImplementation(() => {
-                /* stubbed */
-            });
+            vi.spyOn(simulator, "sendWebSocketRequest").mockImplementation(
+                () => {
+                    /* stubbed */
+                }
+            );
         });
-        test("calls onConnected and sends initial trajectory file request", async () => {
-            simulator["_webSocketClient"] = websocketClient;
-            vi.spyOn(simulator, "onConnected").mockImplementation(() => {
-                websocketClient.sendWebSocketRequest(
-                    {
-                        msgType: NetMessageEnum.ID_INIT_TRAJECTORY_FILE,
-                        fileName: "trajectory.sim",
-                    },
-                    "Start Trajectory File Playback"
-                );
-                return "onConnected";
-            });
-
+        test("sends initial trajectory file request", async () => {
             await simulator.initialize("trajectory.sim");
-            expect(simulator.onConnected).toHaveBeenCalled();
-            expect(websocketClient.sendWebSocketRequest).toHaveBeenCalledWith(
+
+            expect(simulator.sendWebSocketRequest).toHaveBeenCalledWith(
                 {
                     msgType: NetMessageEnum.ID_INIT_TRAJECTORY_FILE,
                     fileName: "trajectory.sim",
                 },
                 "Start Trajectory File Playback"
             );
+        });
+        test("registers message handlers", async () => {
+            await simulator.initialize("trajectory.sim");
+            expect(
+                simulator.binaryMessageHandlers[
+                    NetMessageEnum.ID_VIS_DATA_ARRIVE
+                ]
+            ).toBeTruthy();
+            expect(
+                simulator.jsonMessageHandlers[
+                    NetMessageEnum.ID_TRAJECTORY_FILE_INFO
+                ]
+            ).toBeTruthy();
         });
 
         test("handleError is called if connectToRemoteServer fails", async () => {

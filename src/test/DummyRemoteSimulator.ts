@@ -2,7 +2,6 @@ import {
     NetConnectionParams,
     NetMessage,
     NetMessageEnum,
-    WebsocketClient,
 } from "../simularium/WebsocketClient.js";
 import { RemoteSimulator } from "../simularium/RemoteSimulator.js";
 import { VisDataFrame, VisDataMessage } from "../simularium/types.js";

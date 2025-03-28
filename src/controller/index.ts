@@ -107,11 +107,6 @@ export default class SimulariumController {
                 this.visData.parseAgentsFromFrameData.bind(this.visData)
             );
         } else if (netConnectionConfig) {
-            this._conversionClient = new ConversionClient(
-                netConnectionConfig,
-                this.playBackFile,
-                this.onError
-            );
             this.simulator = new RemoteSimulator(
                 netConnectionConfig,
                 this.playBackFile,
@@ -138,22 +133,6 @@ export default class SimulariumController {
         );
         this.simulator.setPlotDataHandler((plots: Plot[]) =>
             this.handlePlotData(plots)
-        );
-    }
-
-    public configureNetwork(config: NetConnectionParams): void {
-        if (this.simulator) {
-            this.simulator.abort();
-        }
-
-        this.createSimulatorConnection(config);
-    }
-
-    public isRemoteOctopusClientConfigured(): boolean {
-        return !!(
-            this.simulator &&
-            this.octopusClient &&
-            this.remoteWebsocketClient?.socketIsValid()
         );
     }
 
@@ -198,13 +177,6 @@ export default class SimulariumController {
         return this._conversionClient;
     }
 
-    private isConversionClientConnnected(): boolean {
-        return (
-            !!this._conversionClient &&
-            this._conversionClient.isConnectedToRemoteServer()
-        );
-    }
-
     private async configureConversionClient(
         config: NetConnectionParams
     ): Promise<void> {
@@ -228,9 +200,7 @@ export default class SimulariumController {
     ): Promise<void> {
         this.cancelCurrentFile(fileName);
         try {
-            if (this.isConversionClientConnnected()) {
-                await this.configureConversionClient(netConnectionConfig);
-            }
+            await this.configureConversionClient(netConnectionConfig);
 
             return this.conversionClient.setOnConversionCompleteHandler(() => {
                 this.changeFile(
