@@ -91,7 +91,7 @@ describe("RemoteSimulator", () => {
     });
 
     describe("onBinaryIdVisDataArrive", () => {
-        function setupBinaryTest(fileName) {
+        function setupBinaryTest() {
             const buffer = createFakeBinary();
             const fakeEvent = { data: buffer } as MessageEventLike;
             return { buffer, fakeEvent };
@@ -99,7 +99,7 @@ describe("RemoteSimulator", () => {
 
         test("calls onTrajectoryDataArrive when file name matches", () => {
             simulator.lastRequestedFile = "fileA";
-            const { buffer, fakeEvent } = setupBinaryTest("fileA");
+            const { buffer, fakeEvent } = setupBinaryTest();
 
             const dataSpy = vi.spyOn(simulator, "onTrajectoryDataArrive");
             simulator.onBinaryIdVisDataArrive(fakeEvent);
@@ -109,7 +109,7 @@ describe("RemoteSimulator", () => {
 
         test("does not call onTrajectoryDataArrive when file name does not match", () => {
             simulator.lastRequestedFile = "otherFile";
-            const { fakeEvent } = setupBinaryTest("fileA");
+            const { fakeEvent } = setupBinaryTest();
 
             const dataSpy = vi.spyOn(simulator, "onTrajectoryDataArrive");
             simulator.onBinaryIdVisDataArrive(fakeEvent);
