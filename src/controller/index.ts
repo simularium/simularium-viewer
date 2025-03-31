@@ -23,7 +23,7 @@ import { LocalFileSimulator } from "../simularium/LocalFileSimulator.js";
 import { FrontEndError } from "../simularium/FrontEndError.js";
 import type { ISimulariumFile } from "../simularium/ISimulariumFile.js";
 import { TrajectoryType } from "../constants.js";
-import { ConversionClient } from "../simularium/OctopusClient.js";
+import { ConversionClient } from "../simularium/ConversionClient.js";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
@@ -177,18 +177,6 @@ export default class SimulariumController {
         return this._conversionClient;
     }
 
-    private async configureConversionClient(
-        config: NetConnectionParams
-    ): Promise<void> {
-        this._conversionClient = new ConversionClient(
-            config,
-            this.playBackFile,
-            this.onError
-        );
-
-        await this.conversionClient.initialize(this.playBackFile);
-    }
-
     private closeConversionConnection(): void {
         this.conversionClient?.disconnect();
         this._conversionClient = undefined;
@@ -199,21 +187,21 @@ export default class SimulariumController {
         fileName: string
     ): Promise<void> {
         this.cancelCurrentFile(fileName);
-        try {
-            await this.configureConversionClient(netConnectionConfig);
 
-            return this.conversionClient.setOnConversionCompleteHandler(() => {
-                this.changeFile(
-                    {
-                        netConnectionSettings: netConnectionConfig,
-                    },
-                    this.playBackFile
-                );
-                this.closeConversionConnection();
-            });
-        } catch (e) {
-            return Promise.reject(e);
-        }
+        this._conversionClient = new ConversionClient(
+            netConnectionConfig,
+            this.onError
+        );
+
+        this.conversionClient.setOnConversionCompleteHandler(() => {
+            this.changeFile(
+                {
+                    netConnectionSettings: netConnectionConfig,
+                },
+                this.playBackFile
+            );
+            this.closeConversionConnection();
+        });
     }
 
     public cancelConversion(): void {

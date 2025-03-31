@@ -15,7 +15,6 @@ export class ConversionClient {
 
     constructor(
         netConnectionSettings: NetConnectionParams,
-        lastRequestedFile: string,
         errorHandler?: (error: FrontEndError) => void
     ) {
         this.webSocketClient = new WebsocketClient(
@@ -27,7 +26,7 @@ export class ConversionClient {
             (() => {
                 /* do nothing */
             });
-        this.lastRequestedFile = lastRequestedFile;
+        this.lastRequestedFile = "";
         this.onConversionComplete = () => {
             /* do nothing */
         };
@@ -35,15 +34,6 @@ export class ConversionClient {
 
     public disconnect(): void {
         this.webSocketClient.disconnect();
-    }
-
-    public async initialize(fileName: string): Promise<void> {
-        this.lastRequestedFile = fileName;
-        try {
-            await this.webSocketClient.connectToRemoteServer();
-        } catch (error) {
-            this.handleError(error as FrontEndError);
-        }
     }
 
     public setOnConversionCompleteHandler(
