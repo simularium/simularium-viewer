@@ -42,11 +42,11 @@ describe("RemoteSimulator", () => {
     describe("initialize", () => {
         beforeEach(() => {
             vi.spyOn(
-                simulator.websocketClient,
+                simulator.webSocketClient,
                 "connectToRemoteServer"
             ).mockResolvedValue("Connected to remote server");
             vi.spyOn(
-                simulator.websocketClient,
+                simulator.webSocketClient,
                 "sendWebSocketRequest"
             ).mockImplementation(() => {
                 /* stubbed */
@@ -56,7 +56,7 @@ describe("RemoteSimulator", () => {
             await simulator.initialize("trajectory.sim");
 
             expect(
-                simulator.websocketClient.sendWebSocketRequest
+                simulator.webSocketClient.sendWebSocketRequest
             ).toHaveBeenCalledWith(
                 {
                     msgType: NetMessageEnum.ID_INIT_TRAJECTORY_FILE,
@@ -68,12 +68,12 @@ describe("RemoteSimulator", () => {
         test("registers message handlers", async () => {
             await simulator.initialize("trajectory.sim");
             expect(
-                simulator.websocketClient.binaryMessageHandlers[
+                simulator.webSocketClient.binaryMessageHandlers[
                     NetMessageEnum.ID_VIS_DATA_ARRIVE
                 ]
             ).toBeTruthy();
             expect(
-                simulator.websocketClient.jsonMessageHandlers[
+                simulator.webSocketClient.jsonMessageHandlers[
                     NetMessageEnum.ID_TRAJECTORY_FILE_INFO
                 ]
             ).toBeTruthy();
