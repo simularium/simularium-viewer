@@ -8,7 +8,7 @@ import {
 } from "./WebsocketClient.js";
 
 export class ConversionClient {
-    private websocketClient: WebsocketClient;
+    private webSocketClient: WebsocketClient;
     public onConversionComplete: (fileName: string) => void;
     public handleError: (error: FrontEndError) => void | (() => void);
     public lastRequestedFile: string;
@@ -18,7 +18,7 @@ export class ConversionClient {
         lastRequestedFile: string,
         errorHandler?: (error: FrontEndError) => void
     ) {
-        this.websocketClient = new WebsocketClient(
+        this.webSocketClient = new WebsocketClient(
             netConnectionSettings,
             errorHandler
         );
@@ -34,13 +34,13 @@ export class ConversionClient {
     }
 
     public disconnect(): void {
-        this.websocketClient.disconnect();
+        this.webSocketClient.disconnect();
     }
 
     public async initialize(fileName: string): Promise<void> {
         this.lastRequestedFile = fileName;
         try {
-            await this.websocketClient.connectToRemoteServer();
+            await this.webSocketClient.connectToRemoteServer();
         } catch (error) {
             this.handleError(error as FrontEndError);
         }
@@ -50,7 +50,7 @@ export class ConversionClient {
         handler: (fileName: string) => void
     ): void {
         this.onConversionComplete = handler;
-        this.websocketClient.addJsonMessageHandler(
+        this.webSocketClient.addJsonMessageHandler(
             NetMessageEnum.ID_TRAJECTORY_FILE_INFO,
             (msg: NetMessage) => {
                 if (
@@ -68,9 +68,9 @@ export class ConversionClient {
         fileType: TrajectoryType,
         fileName: string
     ): Promise<void> {
-        await this.websocketClient.connectToRemoteServer();
+        await this.webSocketClient.connectToRemoteServer();
         this.lastRequestedFile = fileName;
-        this.websocketClient.sendWebSocketRequest(
+        this.webSocketClient.sendWebSocketRequest(
             {
                 msgType: NetMessageEnum.ID_CONVERT_TRAJECTORY_FILE,
                 trajType: fileType.toLowerCase(),
@@ -82,7 +82,7 @@ export class ConversionClient {
     }
 
     public cancelConversion(): void {
-        this.websocketClient.sendWebSocketRequest(
+        this.webSocketClient.sendWebSocketRequest(
             {
                 msgType: NetMessageEnum.ID_CANCEL_CONVERSION,
                 fileName: this.lastRequestedFile,
@@ -96,9 +96,9 @@ export class ConversionClient {
         outFileName: string,
         smoldynInput: string
     ): Promise<void> {
-        await this.websocketClient.connectToRemoteServer();
+        await this.webSocketClient.connectToRemoteServer();
         this.lastRequestedFile = outFileName;
-        this.websocketClient.sendWebSocketRequest(
+        this.webSocketClient.sendWebSocketRequest(
             {
                 msgType: NetMessageEnum.ID_START_SMOLDYN,
                 fileName: outFileName,

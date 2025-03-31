@@ -87,7 +87,7 @@ describe("RemoteSimulator", () => {
                 errorHandler
             );
             vi.spyOn(
-                simulator.websocketClient,
+                simulator.webSocketClient,
                 "connectToRemoteServer"
             ).mockRejectedValue(new Error("Connection failed"));
             await simulator.initialize("trajectory.sim");
