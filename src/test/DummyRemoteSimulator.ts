@@ -120,7 +120,7 @@ export class DummyRemoteSimulator extends RemoteSimulator {
     }
 
     public initialize(fileName: string): Promise<void> {
-        return this.websocketClient.connectToRemoteServer().then(() => {
+        return this.webSocketClient.connectToRemoteServer().then(() => {
             this.fileName = fileName;
             this.isStreamingData = true;
             this.lastRequestedFile = fileName;
