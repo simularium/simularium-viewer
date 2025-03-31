@@ -93,14 +93,14 @@ export class DummyRemoteSimulator extends RemoteSimulator {
         return this.isConnected;
     }
 
-    public connectToRemoteServer(): Promise<string> {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                this.isConnected = true;
-                resolve(this.getIp());
-            }, this.connectLatencyMS);
-        });
-    }
+    // public connectToRemoteServer(): Promise<string> {
+    //     return new Promise((resolve) => {
+    //         setTimeout(() => {
+    //             this.isConnected = true;
+    //             resolve(this.getIp());
+    //         }, this.connectLatencyMS);
+    //     });
+    // }
 
     public disconnect(): void {
         setTimeout(() => {
@@ -120,7 +120,7 @@ export class DummyRemoteSimulator extends RemoteSimulator {
     }
 
     public initialize(fileName: string): Promise<void> {
-        return this.connectToRemoteServer().then(() => {
+        return this.websocketClient.connectToRemoteServer().then(() => {
             this.fileName = fileName;
             this.isStreamingData = true;
             this.lastRequestedFile = fileName;

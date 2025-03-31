@@ -24,7 +24,7 @@ import {
 // and plays back a trajectory specified in the NetConnectionParams
 export class RemoteSimulator implements ISimulator {
     protected logger: ILogger;
-    private websocketClient: WebsocketClient;
+    public websocketClient: WebsocketClient;
     public onTrajectoryFileInfoArrive: (NetMessage) => void;
     public onTrajectoryDataArrive: (NetMessage) => void;
     public onAvailableMetricsArrive: (NetMessage) => void;

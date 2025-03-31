@@ -41,19 +41,23 @@ describe("RemoteSimulator", () => {
 
     describe("initialize", () => {
         beforeEach(() => {
-            vi.spyOn(simulator, "connectToRemoteServer").mockResolvedValue(
-                "Connected to remote server"
-            );
-            vi.spyOn(simulator, "sendWebSocketRequest").mockImplementation(
-                () => {
-                    /* stubbed */
-                }
-            );
+            vi.spyOn(
+                simulator.websocketClient,
+                "connectToRemoteServer"
+            ).mockResolvedValue("Connected to remote server");
+            vi.spyOn(
+                simulator.websocketClient,
+                "sendWebSocketRequest"
+            ).mockImplementation(() => {
+                /* stubbed */
+            });
         });
         test("sends initial trajectory file request", async () => {
             await simulator.initialize("trajectory.sim");
 
-            expect(simulator.sendWebSocketRequest).toHaveBeenCalledWith(
+            expect(
+                simulator.websocketClient.sendWebSocketRequest
+            ).toHaveBeenCalledWith(
                 {
                     msgType: NetMessageEnum.ID_INIT_TRAJECTORY_FILE,
                     fileName: "trajectory.sim",
@@ -64,12 +68,12 @@ describe("RemoteSimulator", () => {
         test("registers message handlers", async () => {
             await simulator.initialize("trajectory.sim");
             expect(
-                simulator.binaryMessageHandlers[
+                simulator.websocketClient.binaryMessageHandlers[
                     NetMessageEnum.ID_VIS_DATA_ARRIVE
                 ]
             ).toBeTruthy();
             expect(
-                simulator.jsonMessageHandlers[
+                simulator.websocketClient.jsonMessageHandlers[
                     NetMessageEnum.ID_TRAJECTORY_FILE_INFO
                 ]
             ).toBeTruthy();
@@ -82,9 +86,10 @@ describe("RemoteSimulator", () => {
                 "trajectory.sim",
                 errorHandler
             );
-            vi.spyOn(simulator, "connectToRemoteServer").mockRejectedValue(
-                new Error("Connection failed")
-            );
+            vi.spyOn(
+                simulator.websocketClient,
+                "connectToRemoteServer"
+            ).mockRejectedValue(new Error("Connection failed"));
             await simulator.initialize("trajectory.sim");
             expect(errorHandler).toHaveBeenCalled();
         });
