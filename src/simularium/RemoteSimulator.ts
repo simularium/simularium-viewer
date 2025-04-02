@@ -35,7 +35,6 @@ export class RemoteSimulator implements ISimulator {
 
     public constructor(
         netConnectionSettings: NetConnectionParams,
-        fileName: string,
         errorHandler?: (error: FrontEndError) => void,
         jsonResponse = false
     ) {
@@ -43,7 +42,7 @@ export class RemoteSimulator implements ISimulator {
             netConnectionSettings,
             errorHandler
         );
-        this.lastRequestedFile = fileName;
+        this.lastRequestedFile = "";
         this.handleError =
             errorHandler ||
             (() => {

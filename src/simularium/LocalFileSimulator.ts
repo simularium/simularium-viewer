@@ -27,8 +27,8 @@ export class LocalFileSimulator implements ISimulator {
     private playbackIntervalId = 0;
     private currentPlaybackFrameIndex = 0;
 
-    public constructor(fileName: string, simulariumFile: ISimulariumFile) {
-        this.fileName = fileName;
+    public constructor(simulariumFile: ISimulariumFile) {
+        this.fileName = "";
         this.simulariumFile = simulariumFile;
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
@@ -70,7 +70,8 @@ export class LocalFileSimulator implements ISimulator {
         this.handleError = handler;
     }
 
-    public initialize(_fileName: string): Promise<void> {
+    public initialize(fileName: string): Promise<void> {
+        this.fileName = fileName;
         try {
             const trajectoryInfo = this.simulariumFile.getTrajectoryFileInfo();
             this.onTrajectoryFileInfoArrive(trajectoryInfo);

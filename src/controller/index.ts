@@ -95,10 +95,7 @@ export default class SimulariumController {
                 this.visData.parseAgentsFromNetData.bind(this.visData)
             );
         } else if (localFile) {
-            this.simulator = new LocalFileSimulator(
-                this.playBackFile,
-                localFile
-            );
+            this.simulator = new LocalFileSimulator(localFile);
             if (this.visGeometry && geoAssets && !isEmpty(geoAssets)) {
                 this.visGeometry.geometryStore.cacheLocalAssets(geoAssets);
             }
@@ -108,7 +105,6 @@ export default class SimulariumController {
         } else if (netConnectionConfig) {
             this.simulator = new RemoteSimulator(
                 netConnectionConfig,
-                this.playBackFile,
                 this.onError,
                 requestJson
             );

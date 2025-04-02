@@ -18,7 +18,7 @@ describe("RemoteSimulator", () => {
     let simulator;
 
     beforeEach(() => {
-        simulator = new RemoteSimulator(CONNECTION_SETTINGS, "trajectory.sim");
+        simulator = new RemoteSimulator(CONNECTION_SETTINGS);
     });
 
     const createFakeBinary = () => {
@@ -83,7 +83,6 @@ describe("RemoteSimulator", () => {
             const errorHandler = vi.fn();
             const simulator = new RemoteSimulator(
                 CONNECTION_SETTINGS,
-                "trajectory.sim",
                 errorHandler
             );
             vi.spyOn(

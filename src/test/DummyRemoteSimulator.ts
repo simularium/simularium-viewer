@@ -23,7 +23,7 @@ export class DummyRemoteSimulator extends RemoteSimulator {
         fileName: string,
         errorHandler?: (error: FrontEndError) => void
     ) {
-        super(netConnectionSettings, fileName, errorHandler);
+        super(netConnectionSettings, errorHandler);
 
         this.isStreamingData = false;
         this.isConnected = false;
