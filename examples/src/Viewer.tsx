@@ -41,7 +41,6 @@ import AgentSelectionControls from "./Components/AgentSelection.tsx";
 
 import {
     agentColors,
-    AWAITING_SMOLDYN_SIM_RUN,
     SimulatorModes,
     TRAJECTORY_OPTIONS,
 } from "./constants.ts";

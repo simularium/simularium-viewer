@@ -80,7 +80,6 @@ export default class SimulariumController {
         this.setCameraType = this.setCameraType.bind(this);
         this.startSmoldynSim = this.startSmoldynSim.bind(this);
         this.cancelCurrentFile = this.cancelCurrentFile.bind(this);
-        this.initNewFile = this.initNewFile.bind(this);
     }
 
     private createSimulatorConnection(
@@ -309,9 +308,12 @@ export default class SimulariumController {
         this.visData.clearForNewTrajectory();
     }
 
-    public initNewFile(
-        connectionParams: SimulatorConnectionParams
+    public changeFile(
+        connectionParams: SimulatorConnectionParams,
+        // TODO: push newFileName into connectionParams
+        newFileName: string
     ): Promise<FileReturn> {
+        this.cancelCurrentFile(newFileName);
         this.createSimulatorConnection(
             connectionParams.netConnectionSettings,
             connectionParams.clientSimulator,
@@ -336,15 +338,6 @@ export default class SimulariumController {
         return Promise.reject({
             status: FILE_STATUS_FAIL,
         });
-    }
-
-    public changeFile(
-        connectionParams: SimulatorConnectionParams,
-        // TODO: push newFileName into connectionParams
-        newFileName: string
-    ): Promise<FileReturn> {
-        this.cancelCurrentFile(newFileName);
-        return this.initNewFile(connectionParams);
     }
 
     public markFileChangeAsHandled(): void {
