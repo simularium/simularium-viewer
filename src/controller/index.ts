@@ -39,7 +39,7 @@ interface SimulatorConnectionParams {
 
 export default class SimulariumController {
     public simulator?: ISimulator;
-    public _conversionClient?: ConversionClient;
+    private _conversionClient?: ConversionClient;
     public visData: VisData;
     public visGeometry: VisGeometry | undefined;
     public tickIntervalLength: number;
