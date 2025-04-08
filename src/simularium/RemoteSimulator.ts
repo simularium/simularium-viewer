@@ -2,11 +2,15 @@ import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
 import { FrontEndError, ErrorLevel } from "./FrontEndError.js";
 import {
-    WebsocketClient,
     NetMessageEnum,
     MessageEventLike,
+    WebsocketClient,
 } from "./WebsocketClient.js";
-import type { NetMessage, ErrorMessage } from "./WebsocketClient.js";
+import type {
+    NetMessage,
+    ErrorMessage,
+    NetConnectionParams,
+} from "./WebsocketClient.js";
 import { ISimulator } from "./ISimulator.js";
 import {
     Metrics,
@@ -19,8 +23,8 @@ import {
 // a RemoteSimulator is a ISimulator that connects to the Octopus backend server
 // and plays back a trajectory specified in the NetConnectionParams
 export class RemoteSimulator implements ISimulator {
-    public webSocketClient: WebsocketClient;
     protected logger: ILogger;
+    public webSocketClient: WebsocketClient;
     public onTrajectoryFileInfoArrive: (NetMessage) => void;
     public onTrajectoryDataArrive: (NetMessage) => void;
     public onAvailableMetricsArrive: (NetMessage) => void;
@@ -30,11 +34,14 @@ export class RemoteSimulator implements ISimulator {
     private jsonResponse: boolean;
 
     public constructor(
-        webSocketClient: WebsocketClient,
+        netConnectionSettings: NetConnectionParams,
         errorHandler?: (error: FrontEndError) => void,
         jsonResponse = false
     ) {
-        this.webSocketClient = webSocketClient;
+        this.webSocketClient = new WebsocketClient(
+            netConnectionSettings,
+            errorHandler
+        );
         this.lastRequestedFile = "";
         this.handleError =
             errorHandler ||
@@ -45,8 +52,6 @@ export class RemoteSimulator implements ISimulator {
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
         this.jsonResponse = jsonResponse;
-        this.registerBinaryMessageHandlers();
-        this.registerJsonMessageHandlers();
 
         this.onTrajectoryFileInfoArrive = () => {
             /* do nothing */
@@ -82,8 +87,36 @@ export class RemoteSimulator implements ISimulator {
         this.handleError = handler;
     }
 
-    public socketIsValid(): boolean {
-        return this.webSocketClient.socketIsValid();
+    /**
+     * WebSocket Simulation Control
+     */
+    public async initialize(fileName: string): Promise<void> {
+        this.lastRequestedFile = fileName;
+        try {
+            await this.webSocketClient.connectToRemoteServer();
+            this.registerBinaryMessageHandlers();
+            this.registerJsonMessageHandlers();
+        } catch (error) {
+            this.handleError(error as FrontEndError);
+        }
+
+        const jsonData = {
+            msgType: NetMessageEnum.ID_INIT_TRAJECTORY_FILE,
+            fileName: fileName,
+        };
+
+        // begins a stream which will include a TrajectoryFileInfo and a series of VisDataMessages
+        // Note that it is possible for the first vis data to arrive before the TrajectoryFileInfo...
+        return Promise.resolve("Connected to remote server")
+            .then(() => {
+                this.webSocketClient.sendWebSocketRequest(
+                    jsonData,
+                    "Start Trajectory File Playback"
+                );
+            })
+            .catch((error) => {
+                throw new FrontEndError(error.message, ErrorLevel.ERROR);
+            });
     }
 
     public getLastRequestedFile(): string {
@@ -213,27 +246,6 @@ export class RemoteSimulator implements ISimulator {
     }
 
     /**
-     * WebSocket Connect
-     * */
-    public disconnect(): void {
-        this.webSocketClient.disconnect();
-    }
-
-    public getIp(): string {
-        return this.webSocketClient.getIp();
-    }
-
-    public isConnectedToRemoteServer(): boolean {
-        return this.webSocketClient.socketIsValid();
-    }
-
-    public async connectToRemoteServer(): Promise<string> {
-        this.registerBinaryMessageHandlers();
-        this.registerJsonMessageHandlers();
-        return this.webSocketClient.connectToRemoteServer();
-    }
-
-    /**
      * Websocket Update Parameters
      */
     public sendTimeStepUpdate(newTimeStep: number): void {
@@ -254,33 +266,6 @@ export class RemoteSimulator implements ISimulator {
             jsonData,
             "Rate Parameter Update"
         );
-    }
-
-    /**
-     * WebSocket Simulation Control
-     */
-    public initialize(fileName: string): Promise<void> {
-        if (!this.isConnectedToRemoteServer()) {
-            this.connectToRemoteServer();
-        }
-        this.lastRequestedFile = fileName;
-        const jsonData = {
-            msgType: NetMessageEnum.ID_INIT_TRAJECTORY_FILE,
-            fileName: fileName,
-        };
-
-        // begins a stream which will include a TrajectoryFileInfo and a series of VisDataMessages
-        // Note that it is possible for the first vis data to arrive before the TrajectoryFileInfo...
-        return this.connectToRemoteServer()
-            .then(() => {
-                this.webSocketClient.sendWebSocketRequest(
-                    jsonData,
-                    "Start Trajectory File Playback"
-                );
-            })
-            .catch((error) => {
-                throw new FrontEndError(error.message, ErrorLevel.ERROR);
-            });
     }
 
     public pause(): void {
@@ -304,7 +289,7 @@ export class RemoteSimulator implements ISimulator {
     }
 
     public abort(): void {
-        if (!this.socketIsValid()) {
+        if (!this.webSocketClient.socketIsValid()) {
             return;
         }
         this.webSocketClient.sendWebSocketRequest(

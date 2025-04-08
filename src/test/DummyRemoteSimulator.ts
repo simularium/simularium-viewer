@@ -2,10 +2,10 @@ import {
     NetConnectionParams,
     NetMessage,
     NetMessageEnum,
-    WebsocketClient,
 } from "../simularium/WebsocketClient.js";
 import { RemoteSimulator } from "../simularium/RemoteSimulator.js";
 import { VisDataFrame, VisDataMessage } from "../simularium/types.js";
+import { FrontEndError } from "../simularium/FrontEndError.js";
 
 // Mocks the simularium simulation back-end, w/ latency
 export class DummyRemoteSimulator extends RemoteSimulator {
@@ -17,12 +17,13 @@ export class DummyRemoteSimulator extends RemoteSimulator {
     public totalDuration: number;
     public timeStep: number;
     private fileName: string;
-    public webSocketClient: WebsocketClient;
 
-    public constructor(opts: NetConnectionParams) {
-        const webSocketClient = new WebsocketClient(opts);
-        super(webSocketClient);
-        this.webSocketClient = webSocketClient;
+    public constructor(
+        netConnectionSettings: NetConnectionParams,
+        fileName: string,
+        errorHandler?: (error: FrontEndError) => void
+    ) {
+        super(netConnectionSettings, errorHandler);
 
         this.isStreamingData = false;
         this.isConnected = false;
@@ -33,7 +34,7 @@ export class DummyRemoteSimulator extends RemoteSimulator {
 
         this.timeStep = 1;
         this.totalDuration = 99;
-        this.fileName = "";
+        this.fileName = fileName;
 
         setInterval(this.broadcast.bind(this), 200);
     }
@@ -92,15 +93,6 @@ export class DummyRemoteSimulator extends RemoteSimulator {
         return this.isConnected;
     }
 
-    public connectToRemoteServer(): Promise<string> {
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                this.isConnected = true;
-                resolve(this.getIp());
-            }, this.connectLatencyMS);
-        });
-    }
-
     public disconnect(): void {
         setTimeout(() => {
             this.isConnected = false;
@@ -119,7 +111,7 @@ export class DummyRemoteSimulator extends RemoteSimulator {
     }
 
     public initialize(fileName: string): Promise<void> {
-        return this.connectToRemoteServer().then(() => {
+        return this.webSocketClient.connectToRemoteServer().then(() => {
             this.fileName = fileName;
             this.isStreamingData = true;
             this.lastRequestedFile = fileName;
