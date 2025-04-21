@@ -18,7 +18,10 @@ describe("RemoteSimulator", () => {
     let simulator;
 
     beforeEach(() => {
-        simulator = new RemoteSimulator(CONNECTION_SETTINGS, "trajectory.sim");
+        simulator = new RemoteSimulator({
+            netConnectionSettings: CONNECTION_SETTINGS,
+            fileName: "trajectory.sim",
+        });
     });
 
     const createFakeBinary = () => {
@@ -82,8 +85,10 @@ describe("RemoteSimulator", () => {
         test("handleError is called if connectToRemoteServer fails", async () => {
             const errorHandler = vi.fn();
             const simulator = new RemoteSimulator(
-                CONNECTION_SETTINGS,
-                "trajectory.sim",
+                {
+                    netConnectionSettings: CONNECTION_SETTINGS,
+                    fileName: "trajectory.sim",
+                },
                 errorHandler
             );
             vi.spyOn(

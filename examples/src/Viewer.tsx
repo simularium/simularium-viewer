@@ -41,7 +41,6 @@ import AgentSelectionControls from "./Components/AgentSelection.tsx";
 
 import {
     agentColors,
-    AWAITING_SMOLDYN_SIM_RUN,
     SimulatorModes,
     TRAJECTORY_OPTIONS,
 } from "./constants.ts";
@@ -139,7 +138,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         this.handleJsonMeshData = this.handleJsonMeshData.bind(this);
         this.handleTimeChange = this.handleTimeChange.bind(this);
         this.loadFile = this.loadFile.bind(this);
-        this.clearPendingFile = this.clearPendingFile.bind(this);
         this.convertFile = this.convertFile.bind(this);
         this.handleResize = this.handleResize.bind(this);
         this.state = initialState;
@@ -342,7 +340,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 fileName
             )
             .then(() => {
-                this.clearPendingFile();
                 this.setState({ awaitingConversion: true });
             })
             .catch((err) => {
@@ -361,7 +358,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 this.smoldynInput
             )
             .then(() => {
-                this.clearPendingFile();
                 this.setState({ awaitingConversion: true });
             })
             .catch((err) => {
@@ -370,17 +366,17 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             });
     }
 
-    public clearPendingFile() {
-        this.setState({ filePending: null });
-    }
-
     public loadFile(trajectoryFile, fileName, geoAssets?) {
         const simulariumFile = fileName.includes(".simularium")
             ? trajectoryFile
             : null;
         this.setState({ initialPlay: true });
         return simulariumController
-            .handleFileChange(simulariumFile, fileName, geoAssets)
+            .changeFile({
+                simulariumFile,
+                fileName,
+                geoAssets,
+            })
             .catch(console.log);
     }
 
@@ -598,13 +594,11 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             clientSimulator: true,
             simulariumFile: { name: fileId, data: null },
         });
-        simulariumController.changeFile(
-            {
-                netConnectionSettings: this.netConnectionSettings,
-                requestJson: true,
-            },
-            fileId
-        );
+        simulariumController.changeFile({
+            fileName: fileId,
+            netConnectionSettings: this.netConnectionSettings,
+            requestJson: true,
+        });
     }
 
     private handleFileSelect(file: string) {
@@ -627,8 +621,17 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             return;
         }
         if (fileId.simulatorType === SimulatorModes.localClientSimulator) {
-            const clientSim = this.configureLocalClientSimulator(fileId.id);
-            simulariumController.changeFile(clientSim, fileId.id);
+            const { clientSimulator } = this.configureLocalClientSimulator(
+                fileId.id
+            );
+            if (!clientSimulator) {
+                console.warn("No client simulator implementation found");
+                return;
+            }
+            simulariumController.changeFile({
+                fileName: fileId.id,
+                clientSimulatorImpl: clientSimulator,
+            });
             this.setState({
                 clientSimulator: true,
             });
@@ -641,12 +644,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             this.setState({
                 simulariumFile: { name: fileId.id, data: null },
             });
-            simulariumController.changeFile(
-                {
-                    netConnectionSettings: this.netConnectionSettings,
-                },
-                fileId.id
-            );
+            simulariumController.changeFile({
+                fileName: fileId.id,
+                netConnectionSettings: this.netConnectionSettings,
+            });
         }
     }
 
@@ -749,7 +750,6 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 <ConversionForm
                     {...this.state.filePending}
                     submitFile={(obj) => this.convertFile(obj, fileType)}
-                    onReturned={this.clearPendingFile}
                 />
             );
         }

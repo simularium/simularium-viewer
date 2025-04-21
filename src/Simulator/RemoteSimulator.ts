@@ -1,16 +1,15 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
-import { FrontEndError, ErrorLevel } from "./FrontEndError.js";
+import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError.js";
 import {
     NetMessageEnum,
     MessageEventLike,
     WebsocketClient,
-} from "./WebsocketClient.js";
+} from "../simularium/WebsocketClient.js";
 import type {
     NetMessage,
     ErrorMessage,
-    NetConnectionParams,
-} from "./WebsocketClient.js";
+} from "../simularium/WebsocketClient.js";
 import { ISimulator } from "./ISimulator.js";
 import {
     Metrics,
@@ -18,7 +17,8 @@ import {
     PlotConfig,
     TrajectoryFileInfoV2,
     VisDataMessage,
-} from "./types.js";
+} from "../simularium/types.js";
+import { RemoteSimulatorParams } from "./types.js";
 
 // a RemoteSimulator is a ISimulator that connects to the Octopus backend server
 // and plays back a trajectory specified in the NetConnectionParams
@@ -34,11 +34,15 @@ export class RemoteSimulator implements ISimulator {
     private jsonResponse: boolean;
 
     public constructor(
-        netConnectionSettings: NetConnectionParams,
-        fileName: string,
-        errorHandler?: (error: FrontEndError) => void,
-        jsonResponse = false
+        params: RemoteSimulatorParams,
+        errorHandler?: (error: FrontEndError) => void
     ) {
+        const { netConnectionSettings, fileName, requestJson = false } = params;
+        if (!params.netConnectionSettings || !params.fileName) {
+            throw new FrontEndError(
+                "RemoteSimulator requires NetConnectionParams and file name."
+            );
+        }
         this.webSocketClient = new WebsocketClient(
             netConnectionSettings,
             errorHandler
@@ -52,7 +56,7 @@ export class RemoteSimulator implements ISimulator {
 
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
-        this.jsonResponse = jsonResponse;
+        this.jsonResponse = requestJson;
 
         this.onTrajectoryFileInfoArrive = () => {
             /* do nothing */
@@ -86,6 +90,10 @@ export class RemoteSimulator implements ISimulator {
     }
     public setErrorHandler(handler: (msg: Error) => void): void {
         this.handleError = handler;
+    }
+
+    public isConnectedToRemoteServer(): boolean {
+        return this.webSocketClient.socketIsValid();
     }
 
     /**

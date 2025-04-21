@@ -1,24 +1,25 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
 
+import { ISimulator } from "../Simulator/ISimulator.js";
 import {
-    VisDataMessage,
-    TrajectoryFileInfo,
-    PlotConfig,
-    Plot,
-    Metrics,
-} from "./types.js";
-import {
-    ClientMessageEnum,
-    ClientPlayBackType,
     IClientSimulatorImpl,
-} from "./localSimulators/IClientSimulatorImpl.js";
-import { ISimulator } from "./ISimulator.js";
+    ClientMessageEnum,
+} from "../simularium/index.js";
+import { ClientPlayBackType } from "../simularium/localSimulators/IClientSimulatorImpl.js";
+import {
+    TrajectoryFileInfo,
+    VisDataMessage,
+    Metrics,
+    Plot,
+    PlotConfig,
+} from "../simularium/types.js";
+import { ClientSimulatorParams } from "./types.js";
 
 // a ClientSimulator is a ISimulator that is expected to run purely in procedural javascript in the browser client,
 // with the procedural implementation in a IClientSimulatorImpl
 export class ClientSimulator implements ISimulator {
-    private localSimulator: IClientSimulatorImpl;
+    public localSimulator: IClientSimulatorImpl;
     private simulatorIntervalId = 0;
     // throttle the data interval so that the local client can keep up
     // ideally the client (VisData) needs to be able to handle the data rate
@@ -30,7 +31,11 @@ export class ClientSimulator implements ISimulator {
     public onPlotDataArrive: (msg: Plot[]) => void;
     public handleError: (error: Error) => void;
 
-    public constructor(sim: IClientSimulatorImpl) {
+    public constructor(params: ClientSimulatorParams) {
+        const { clientSimulatorImpl } = params;
+        if (!clientSimulatorImpl) {
+            throw new Error("ClientSimulator requires a IClientSimulatorImpl");
+        }
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
 
@@ -49,7 +54,7 @@ export class ClientSimulator implements ISimulator {
         this.onPlotDataArrive = () => {
             /* do nothing */
         };
-        this.localSimulator = sim;
+        this.localSimulator = clientSimulatorImpl;
     }
 
     public setTrajectoryFileInfoHandler(
