@@ -1,8 +1,4 @@
-import {
-    NetConnectionParams,
-    NetMessage,
-    NetMessageEnum,
-} from "../simularium/WebsocketClient.js";
+import { NetMessage, NetMessageEnum } from "../simularium/WebsocketClient.js";
 import { RemoteSimulator } from "../Simulator/RemoteSimulator.js";
 import { VisDataFrame, VisDataMessage } from "../simularium/types.js";
 import { FrontEndError } from "../simularium/FrontEndError.js";
@@ -17,7 +13,6 @@ export class DummyRemoteSimulator extends RemoteSimulator {
     public connectLatencyMS: number;
     public totalDuration: number;
     public timeStep: number;
-    private fileName: string;
 
     public constructor(
         params: RemoteSimulatorParams,
@@ -33,7 +28,7 @@ export class DummyRemoteSimulator extends RemoteSimulator {
 
         this.timeStep = 1;
         this.totalDuration = 99;
-        this.fileName = params.fileName;
+        this.lastRequestedFile = params.fileName;
 
         setInterval(this.broadcast.bind(this), 200);
     }

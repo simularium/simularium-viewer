@@ -1,5 +1,4 @@
 import { describe, expect, beforeEach, vi } from "vitest";
-import { makeBinary, pad } from "./BinaryFile.test";
 import TestClientSimulatorImpl from "./TestClientSimulatorImpl";
 import { DummyRemoteSimulator } from "./DummyRemoteSimulator";
 import type { NetConnectionParams } from "../simularium/WebsocketClient";
@@ -20,6 +19,7 @@ import {
 } from "../simularium";
 import { TrajectoryType } from "../constants";
 import SimulariumController from "../controller";
+import { pad, makeBinary } from "./utils";
 
 const buffer = makeBinary(
     [
@@ -185,6 +185,7 @@ describe("SimulariumController", () => {
             await controller.changeFile(ClientSimTestParams);
             let clientSim: IClientSimulatorImpl | null = null;
             if (controller.simulator instanceof ClientSimulator) {
+                // @ts-expect-error testing private property
                 clientSim = controller.simulator.localSimulator;
             }
             expect(clientSim instanceof TestClientSimulatorImpl).toBe(true);

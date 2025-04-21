@@ -6,7 +6,6 @@ import {
     IClientSimulatorImpl,
     ClientMessageEnum,
 } from "../simularium/index.js";
-import { ClientPlayBackType } from "../simularium/localSimulators/IClientSimulatorImpl.js";
 import {
     TrajectoryFileInfo,
     VisDataMessage,
@@ -19,7 +18,7 @@ import { ClientSimulatorParams } from "./types.js";
 // a ClientSimulator is a ISimulator that is expected to run purely in procedural javascript in the browser client,
 // with the procedural implementation in a IClientSimulatorImpl
 export class ClientSimulator implements ISimulator {
-    public localSimulator: IClientSimulatorImpl;
+    private localSimulator: IClientSimulatorImpl;
     private simulatorIntervalId = 0;
     // throttle the data interval so that the local client can keep up
     // ideally the client (VisData) needs to be able to handle the data rate
@@ -173,7 +172,6 @@ export class ClientSimulator implements ISimulator {
     public initialize(fileName: string): Promise<void> {
         const jsonData = {
             msgType: ClientMessageEnum.ID_VIS_DATA_REQUEST,
-            mode: ClientPlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
             fileName: fileName,
         };
 
@@ -210,7 +208,6 @@ export class ClientSimulator implements ISimulator {
         this.sendSimulationRequest(
             {
                 msgType: ClientMessageEnum.ID_VIS_DATA_REQUEST,
-                mode: ClientPlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
                 frameNumber: startFrameNumber,
             },
             "Request Single Frame"
