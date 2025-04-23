@@ -1,7 +1,7 @@
 import { forEach } from "lodash";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import jsLogger, { ILogger, ILogLevel } from "js-logger";
-import { createVolumeLoader, LoadSpec } from "@aics/volume-viewer";
+import { LoadSpec, VolumeLoaderContext } from "@aics/vole-core";
 import {
     BufferGeometry,
     Object3D,
@@ -50,6 +50,7 @@ class GeometryStore {
     private _geoLoadAttempted: Map<string, boolean>;
     private _cachedAssets: Map<string, string>;
     private _registry: Registry;
+    private volumeLoaderContext?: VolumeLoaderContext;
     public mlogger: ILogger;
     public static sphereGeometry: SphereGeometry = new SphereGeometry(
         1,
@@ -384,15 +385,29 @@ class GeometryStore {
         });
     }
 
+    /** Don't start a volume load worker until we know we need it */
+    private async getVolumeLoaderContext(): Promise<VolumeLoaderContext> {
+        if (!this.volumeLoaderContext) {
+            // TODO this is missing optional config properties:
+            //   `maxCacheSize`, `maxActiveRequests`, `maxLowPriorityRequests`.
+            //   Do we want to set our own values for these?
+            this.volumeLoaderContext = new VolumeLoaderContext();
+            await this.volumeLoaderContext.onOpen();
+        }
+        return this.volumeLoaderContext;
+    }
+
     private async fetchVolume(url: string): Promise<VolumeModel> {
         // TODO should this be in a worker? Are we already in a worker here?
         //   Should this class get a `VolumeLoaderContext` going?
         const model = new VolumeModel();
         this.setGeometryInRegistry(url, model, GeometryDisplayType.VOLUME);
-        const loader = await createVolumeLoader(url);
-        // TODO onChannelLoaded callback?
-        const volume = await loader.createVolume(new LoadSpec());
+        const context = await this.getVolumeLoaderContext();
+        const loader = await context.createLoader(url);
+        const loadCallback = model.onChannelLoaded.bind(model);
+        const volume = await loader.createVolume(new LoadSpec(), loadCallback);
         model.setImage(volume);
+        model.loadInitialData();
         return model;
     }
 
