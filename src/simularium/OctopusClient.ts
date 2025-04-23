@@ -62,4 +62,20 @@ export class OctopusServicesClient {
             "Request server health check"
         );
     }
+
+    public async sendSmoldynData(
+        outFileName: string,
+        smoldynInput: string
+    ): Promise<void> {
+        await this.webSocketClient.connectToRemoteServer();
+        this.lastRequestedFile = outFileName;
+        this.webSocketClient.sendWebSocketRequest(
+            {
+                msgType: NetMessageEnum.ID_START_SMOLDYN,
+                fileName: outFileName,
+                smoldynInputVal: smoldynInput ?? undefined,
+            },
+            "Start smoldyn simulation"
+        );
+    }
 }

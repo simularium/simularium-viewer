@@ -3,10 +3,13 @@
     "version": "1.0.0",
     "description": "",
     "main": "index.js",
+    "type": "module",
     "scripts": {
-        "serve-example": "webpack serve --config webpack.dev.js",
+        "serve-example": "vite --config ./vite.config.ts",
+        "serve-example_old": "webpack serve --config webpack.dev.js",
         "prebuild-example": "npm install",
-        "build-example": "webpack --config webpack.dev.js",
+        "build-example": "vite build --config ./vite.config.ts",
+        "build-example_old": "webpack --config webpack.dev.js",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "author": "",
@@ -18,10 +21,12 @@
         "react-dom": "^18.2.0"
     },
     "devDependencies": {
+        "@vitejs/plugin-react": "4.3.4",
         "copy-webpack-plugin": "^12.0.2",
         "css-loader": "^6.9.1",
         "html-webpack-plugin": "^5.6.0",
         "mini-css-extract-plugin": "^2.7.7",
+        "vite": "^6.2.5",
         "webpack": "^5.95.0",
         "webpack-cli": "^5.1.4",
         "webpack-dev-server": "^5.0.4"
