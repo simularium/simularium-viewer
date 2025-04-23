@@ -1,7 +1,7 @@
 import { forEach } from "lodash";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import jsLogger, { ILogger, ILogLevel } from "js-logger";
-import { LoadSpec, VolumeLoaderContext } from "@aics/volume-viewer";
+import { LoadSpec, VolumeLoaderContext } from "@aics/vole-core";
 import {
     BufferGeometry,
     Object3D,
