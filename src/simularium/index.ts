@@ -9,6 +9,7 @@ export type {
     SimulariumFileFormat,
     Plot,
     AgentData,
+    CacheLog,
 } from "./types.js";
 
 export type {

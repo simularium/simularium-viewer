@@ -30,6 +30,10 @@ const ColorPicker = ({
         if (!agent) {
             throw new Error("No agent found");
         }
+        if (agent.displayStates.length === 0) {
+            setSubAgents([{ name: "<unmodified>", id: "<unmodified>" }]);
+            return;
+        }
         setSubAgents(agent.displayStates);
     };
 
@@ -92,7 +96,7 @@ const ColorPicker = ({
 
     return (
         <div className="ui-container">
-            <span>Color change agent selections:</span>
+            <span>Color picker:</span>
             <select id="agentSelect" onChange={handleAgentSelection}>
                 <option value=""> Select Agent</option>
                 {particleTypeNames.map((name: string) => (
