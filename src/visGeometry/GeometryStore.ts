@@ -221,7 +221,7 @@ class GeometryStore {
             // TODO:
             // Can we confirm that the rcsb.org servers have every id as a cif file?
             // If so, then we don't need to do this second try and we can always use .cif.
-            actualUrl = `https://files.rcsb.org/download/${pdbID}-assembly1.cif`;
+            actualUrl = `https://files.rcsb.org/download${pdbID}-assembly1.cif`;
         }
         return fetch(actualUrl)
             .then((response) => {
@@ -229,7 +229,7 @@ class GeometryStore {
                     return response.text();
                 } else if (pdbID) {
                     // try again as pdb
-                    actualUrl = `https://files.rcsb.org/download/${pdbID}.pdb1`;
+                    actualUrl = `https://files.rcsb.org/download${pdbID}.pdb1`;
                     return fetch(actualUrl).then((response) => {
                         if (!response.ok) {
                             // error will be caught by the function that calls this
