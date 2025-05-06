@@ -7,7 +7,6 @@ import { RemoteSimulator } from "../index.js";
 
 describe("RemoteSimulator", () => {
     // Silence console.debug messages like this in Vitest output:
-    // Silence console.debug messages like this in Vitest output:
     // "[netconnection] WS Connection Request Sent:  wss://..."
     vi.spyOn(global.console, "debug").mockImplementation(() => vi.fn());
 

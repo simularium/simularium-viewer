@@ -78,33 +78,19 @@ vi.mock("../simularium/ConversionClient.js", () => ({
     ConversionClient: vi.fn().mockImplementation(() => mockConversionClient),
 }));
 
-// Mock the getClassFromParams function to include DummyRemoteSimulator
 vi.mock("../Simulator/ISimulator", async () => {
-    const actual = await vi.importActual("../Simulator/ISimulator");
+    const actual = await vi.importActual<
+        typeof import("../Simulator/ISimulator")
+    >("../Simulator/ISimulator");
+
     return {
         ...actual,
         getSimulatorClassFromParams: (params?: SimulatorParams) => {
-            if (!params || !params.fileName) {
-                return { simulatorClass: null, typedParams: null };
+            const result = actual.getSimulatorClassFromParams(params);
+            if (result.simulatorClass === RemoteSimulator) {
+                return { ...result, simulatorClass: DummyRemoteSimulator };
             }
-            if ("netConnectionSettings" in params) {
-                return {
-                    simulatorClass: DummyRemoteSimulator,
-                    typedParams: params as RemoteSimulatorParams,
-                };
-            } else if ("clientSimulatorImpl" in params) {
-                return {
-                    simulatorClass: ClientSimulator,
-                    typedParams: params as ClientSimulatorParams,
-                };
-            } else if ("simulariumFile" in params) {
-                return {
-                    simulatorClass: LocalFileSimulator,
-                    typedParams: params as LocalFileSimulatorParams,
-                };
-            } else {
-                return { simulatorClass: null, typedParams: null };
-            }
+            return result;
         },
     };
 });

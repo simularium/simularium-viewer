@@ -28,7 +28,7 @@ jsLogger.setHandler(jsLogger.createDefaultHandler());
 export default class SimulariumController {
     public simulator?: ISimulator;
     private lastNetConnectionConfig: NetConnectionParams | null;
-    protected _conversionClient?: ConversionClient;
+    private _conversionClient?: ConversionClient;
     public visData: VisData;
     public visGeometry: VisGeometry | undefined;
     public tickIntervalLength: number;
