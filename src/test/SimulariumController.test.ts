@@ -63,7 +63,9 @@ export const RemoteSimTestParams: RemoteSimulatorParams = {
 };
 
 const mockConversionClient = {
-    setOnConversionCompleteHandler: vi.fn().mockImplementation(() => {}),
+    setOnConversionCompleteHandler: vi.fn().mockImplementation(() => {
+        console.log("mocked handler");
+    }),
     cancelConversion: vi.fn(),
     disconnect: vi.fn(),
     convertTrajectory: vi.fn().mockResolvedValue(undefined),
@@ -148,7 +150,9 @@ describe("SimulariumController", () => {
                     fileName: "notSimularium.txt",
                     simulariumFile: binarySimFile,
                 })
-                .catch(() => {});
+                .catch(() => {
+                    console.log("error");
+                });
             expect(errorHandler).toHaveBeenCalled();
             expect(errorHandler.mock.calls[0][0]).toBeInstanceOf(FrontEndError);
             expect(errorHandler.mock.calls[0][0].message).toBe(
