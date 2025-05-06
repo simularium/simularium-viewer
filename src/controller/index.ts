@@ -22,9 +22,8 @@ import { ISimulator } from "../simularium/ISimulator.js";
 import { LocalFileSimulator } from "../simularium/LocalFileSimulator.js";
 import { FrontEndError } from "../simularium/FrontEndError.js";
 import type { ISimulariumFile } from "../simularium/ISimulariumFile.js";
-import { WebsocketClient } from "../simularium/WebsocketClient.js";
 import { TrajectoryType } from "../constants.js";
-import { OctopusServicesClient } from "../simularium/OctopusClient.js";
+import { ConversionClient } from "../simularium/ConversionClient.js";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
@@ -40,8 +39,7 @@ interface SimulatorConnectionParams {
 
 export default class SimulariumController {
     public simulator?: ISimulator;
-    public remoteWebsocketClient?: WebsocketClient;
-    public octopusClient?: OctopusServicesClient;
+    private _conversionClient?: ConversionClient;
     public visData: VisData;
     public visGeometry: VisGeometry | undefined;
     public tickIntervalLength: number;
@@ -82,7 +80,6 @@ export default class SimulariumController {
         this.setCameraType = this.setCameraType.bind(this);
         this.startSmoldynSim = this.startSmoldynSim.bind(this);
         this.cancelCurrentFile = this.cancelCurrentFile.bind(this);
-        this.initNewFile = this.initNewFile.bind(this);
     }
 
     private createSimulatorConnection(
@@ -98,10 +95,7 @@ export default class SimulariumController {
                 this.visData.parseAgentsFromNetData.bind(this.visData)
             );
         } else if (localFile) {
-            this.simulator = new LocalFileSimulator(
-                this.playBackFile,
-                localFile
-            );
+            this.simulator = new LocalFileSimulator(localFile);
             if (this.visGeometry && geoAssets && !isEmpty(geoAssets)) {
                 this.visGeometry.geometryStore.cacheLocalAssets(geoAssets);
             }
@@ -109,14 +103,8 @@ export default class SimulariumController {
                 this.visData.parseAgentsFromFrameData.bind(this.visData)
             );
         } else if (netConnectionConfig) {
-            const webSocketClient = new WebsocketClient(
-                netConnectionConfig,
-                this.onError
-            );
-            this.remoteWebsocketClient = webSocketClient;
-            this.octopusClient = new OctopusServicesClient(webSocketClient);
             this.simulator = new RemoteSimulator(
-                webSocketClient,
+                netConnectionConfig,
                 this.onError,
                 requestJson
             );
@@ -143,22 +131,6 @@ export default class SimulariumController {
         );
     }
 
-    public configureNetwork(config: NetConnectionParams): void {
-        if (this.simulator) {
-            this.simulator.abort();
-        }
-
-        this.createSimulatorConnection(config);
-    }
-
-    public isRemoteOctopusClientConfigured(): boolean {
-        return !!(
-            this.simulator &&
-            this.octopusClient &&
-            this.remoteWebsocketClient?.socketIsValid()
-        );
-    }
-
     public get isChangingFile(): boolean {
         return this.isFileChanging;
     }
@@ -182,6 +154,7 @@ export default class SimulariumController {
         if (this.simulator) {
             this.simulator.abort();
         }
+        this.simulator = undefined;
     }
 
     public sendUpdate(obj: Record<string, unknown>): void {
@@ -190,32 +163,69 @@ export default class SimulariumController {
         }
     }
 
-    public convertTrajectory(
+    ///// Conversion Client /////
+
+    public get conversionClient(): ConversionClient {
+        if (!this._conversionClient) {
+            throw new Error("Conversion client is not configured.");
+        }
+        return this._conversionClient;
+    }
+
+    private closeConversionConnection(): void {
+        this.conversionClient?.disconnect();
+        this._conversionClient = undefined;
+    }
+
+    private async setupConversion(
+        netConnectionConfig: NetConnectionParams,
+        fileName: string
+    ): Promise<void> {
+        this.cancelCurrentFile(fileName);
+
+        this._conversionClient = new ConversionClient(
+            netConnectionConfig,
+            this.onError
+        );
+
+        this.conversionClient.setOnConversionCompleteHandler(() => {
+            this.changeFile(
+                {
+                    netConnectionSettings: netConnectionConfig,
+                },
+                this.playBackFile
+            );
+            this.closeConversionConnection();
+        });
+    }
+
+    public cancelConversion(): void {
+        this.conversionClient.cancelConversion();
+        this.closeConversionConnection();
+    }
+
+    public async convertTrajectory(
         netConnectionConfig: NetConnectionParams,
         dataToConvert: Record<string, unknown>,
         fileType: TrajectoryType,
         providedFileName?: string
     ): Promise<void> {
         const fileName = providedFileName ?? `${uuidv4()}.simularium`;
-        this.cancelCurrentFile(fileName);
-        try {
-            if (!this.isRemoteOctopusClientConfigured()) {
-                this.configureNetwork(netConnectionConfig);
-            }
-            if (!this.octopusClient) {
-                throw new Error("Octopus client not configured");
-            }
-            if (!this.simulator) {
-                throw new Error("Simulator not initialized");
-            }
-            return this.octopusClient.convertTrajectory(
-                dataToConvert,
-                fileType,
-                fileName
-            );
-        } catch (e) {
-            return Promise.reject(e);
-        }
+        await this.setupConversion(netConnectionConfig, fileName);
+        return this.conversionClient.convertTrajectory(
+            dataToConvert,
+            fileType,
+            fileName
+        );
+    }
+
+    public async startSmoldynSim(
+        netConnectionConfig: NetConnectionParams,
+        fileName: string,
+        smoldynInput: string
+    ): Promise<void> {
+        await this.setupConversion(netConnectionConfig, fileName);
+        return this.conversionClient.sendSmoldynData(fileName, smoldynInput);
     }
 
     public pause(): void {
@@ -227,28 +237,6 @@ export default class SimulariumController {
 
     public paused(): boolean {
         return this.isPaused;
-    }
-
-    public startSmoldynSim(
-        netConnectionConfig: NetConnectionParams,
-        fileName: string,
-        smoldynInput: string
-    ): Promise<void> {
-        this.cancelCurrentFile(fileName);
-        try {
-            if (!this.isRemoteOctopusClientConfigured()) {
-                this.configureNetwork(netConnectionConfig);
-            }
-            if (!this.octopusClient) {
-                throw new Error("Octopus client not configured");
-            }
-            if (!this.simulator) {
-                throw new Error("Simulator not initialized");
-            }
-            return this.octopusClient.sendSmoldynData(fileName, smoldynInput);
-        } catch (e) {
-            return Promise.reject(e);
-        }
     }
 
     public gotoTime(time: number): void {
@@ -277,6 +265,7 @@ export default class SimulariumController {
     }
 
     public clearFile(): void {
+        this.stop();
         this.isFileChanging = false;
         this.playBackFile = "";
         this.visData.clearForNewTrajectory();
@@ -315,37 +304,19 @@ export default class SimulariumController {
         this.visData.clearForNewTrajectory();
     }
 
-    public initNewFile(
+    public changeFile(
         connectionParams: SimulatorConnectionParams,
-        keepRemoteConnection = false
+        // TODO: push newFileName into connectionParams
+        newFileName: string
     ): Promise<FileReturn> {
-        const shouldConfigureNewSimulator = !(
-            keepRemoteConnection && this.isRemoteOctopusClientConfigured()
+        this.cancelCurrentFile(newFileName);
+        this.createSimulatorConnection(
+            connectionParams.netConnectionSettings,
+            connectionParams.clientSimulator,
+            connectionParams.simulariumFile,
+            connectionParams.geoAssets,
+            connectionParams.requestJson
         );
-        // don't create simulator if client wants to keep remote simulator and the
-        // current simulator is a remote simulator
-        if (shouldConfigureNewSimulator) {
-            try {
-                if (connectionParams) {
-                    this.createSimulatorConnection(
-                        connectionParams.netConnectionSettings,
-                        connectionParams.clientSimulator,
-                        connectionParams.simulariumFile,
-                        connectionParams.geoAssets,
-                        connectionParams.requestJson
-                    );
-                    this.isPaused = true;
-                } else {
-                    // caught in following block, not sent to front end
-                    throw new Error("incomplete simulator config provided");
-                }
-            } catch (e) {
-                const error = e as Error;
-                this.simulator = undefined;
-                console.warn(error.message);
-                this.isPaused = false;
-            }
-        }
 
         // start the simulation paused and get first frame
         if (this.simulator) {
@@ -365,28 +336,12 @@ export default class SimulariumController {
         });
     }
 
-    public changeFile(
-        connectionParams: SimulatorConnectionParams,
-        // TODO: push newFileName into connectionParams
-        newFileName: string,
-        keepRemoteConnection = false
-    ): Promise<FileReturn> {
-        this.cancelCurrentFile(newFileName);
-        return this.initNewFile(connectionParams, keepRemoteConnection);
-    }
-
     public markFileChangeAsHandled(): void {
         this.isFileChanging = false;
     }
 
     public getFile(): string {
         return this.playBackFile;
-    }
-
-    public cancelConversion(): void {
-        if (this.octopusClient) {
-            this.octopusClient.cancelConversion();
-        }
     }
 
     public async getMetrics(): Promise<void> {

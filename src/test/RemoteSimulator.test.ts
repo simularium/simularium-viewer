@@ -1,15 +1,12 @@
-import { vi } from "vitest";
-
+import { vi, describe, test, expect } from "vitest";
 import {
-    CONNECTION_SUCCESS_MSG,
-    CONNECTION_FAIL_MSG,
+    NetMessageEnum,
+    MessageEventLike,
 } from "../simularium/WebsocketClient.js";
-import { FrontEndError } from "../simularium/FrontEndError.js";
 import { RemoteSimulator } from "../index.js";
-import { WebsocketClient } from "../simularium/WebsocketClient.js";
 
 describe("RemoteSimulator", () => {
-    // Silence console.debug messages like this in Jest output:
+    // Silence console.debug messages like this in Vitest output:
     // "[netconnection] WS Connection Request Sent:  wss://..."
     vi.spyOn(global.console, "debug").mockImplementation(() => vi.fn());
 
@@ -18,127 +15,110 @@ describe("RemoteSimulator", () => {
         serverPort: 1234,
     };
 
-    describe("createWebSocket", () => {
-        test("creates a WebSocket object", () => {
-            const websocketClient = new WebsocketClient(CONNECTION_SETTINGS);
-            const simulator = new RemoteSimulator(websocketClient);
-            expect(simulator.socketIsValid()).toBe(false);
+    let simulator;
 
-            websocketClient.createWebSocket(simulator.getIp());
-            expect(simulator.socketIsValid()).toBe(true);
-        });
+    beforeEach(() => {
+        simulator = new RemoteSimulator(CONNECTION_SETTINGS);
     });
 
-    describe("checkConnection", () => {
-        const timeout = 1000;
+    const createFakeBinary = () => {
+        const encoder = new TextEncoder();
+        const fileNameBytes = encoder.encode("fileA");
+        const nameLength = fileNameBytes.length;
+        const totalLength = 8 + nameLength;
+        const paddedLength =
+            totalLength % 4 === 0
+                ? totalLength
+                : totalLength + (4 - (totalLength % 4));
+        const buffer = new ArrayBuffer(paddedLength);
+        const floatView = new Float32Array(buffer);
+        floatView[1] = nameLength;
+        const byteView = new Uint8Array(buffer);
+        byteView.set(fileNameBytes, 8);
 
-        test("returns true if connection succeeds within allotted time with no retries", async () => {
-            const websocketClient = new WebsocketClient(CONNECTION_SETTINGS);
-            const simulator = new RemoteSimulator(websocketClient);
-            vi.spyOn(websocketClient, "waitForWebSocket").mockResolvedValue(
-                true
-            );
-
-            const isConnected = await websocketClient.checkConnection(
-                simulator.getIp(),
-                timeout
-            );
-            expect(isConnected).toBe(true);
-            expect(simulator.webSocketClient.connectionTimeWaited).toBe(
-                timeout
-            );
-            expect(simulator.webSocketClient.connectionRetries).toBe(0);
-        });
-        test("returns false if connection does not succeed within allotted time and number of retries", async () => {
-            const websocketClient = new WebsocketClient(CONNECTION_SETTINGS);
-            const simulator = new RemoteSimulator(websocketClient);
-            vi.spyOn(websocketClient, "waitForWebSocket").mockResolvedValue(
-                false
-            );
-
-            const isConnected = await websocketClient.checkConnection(
-                simulator.getIp(),
-                timeout
-            );
-            expect(isConnected).toBe(false);
-            // Expect 4 timeouts on initial connection + 1 timeout on retry connection
-            expect(simulator.webSocketClient.connectionTimeWaited).toBe(
-                timeout * 5
-            );
-            expect(simulator.webSocketClient.connectionRetries).toBe(1);
-        });
-        test("returns true if connection succeeds on the retry", async () => {
-            const websocketClient = new WebsocketClient(CONNECTION_SETTINGS);
-            const simulator = new RemoteSimulator(websocketClient);
-            const waitForWebSocket = vi.spyOn(
-                websocketClient,
-                "waitForWebSocket"
-            );
-            waitForWebSocket.mockResolvedValueOnce(false);
-            waitForWebSocket.mockResolvedValueOnce(false);
-            waitForWebSocket.mockResolvedValueOnce(false);
-            waitForWebSocket.mockResolvedValueOnce(false);
-            waitForWebSocket.mockResolvedValueOnce(true);
-
-            const isConnected = await websocketClient.checkConnection(
-                simulator.getIp(),
-                timeout
-            );
-            expect(isConnected).toBe(true);
-            // Expect 4 timeouts on initial connection + 1 timeout on retry connection
-            expect(websocketClient.connectionTimeWaited).toBe(timeout * 5);
-            expect(websocketClient.connectionRetries).toBe(1);
-        });
-    });
-
-    describe("connectToRemoteServer", () => {
-        test("emits a 'connection success' message if connection succeeds", async () => {
-            const websocketClient = new WebsocketClient(CONNECTION_SETTINGS);
-            vi.spyOn(websocketClient, "checkConnection").mockResolvedValue(
-                true
-            );
-
-            const message = await websocketClient.connectToRemoteServer();
-            expect(message).toEqual(CONNECTION_SUCCESS_MSG);
-        });
-        test("emits error if connecting to server is unsuccessful", async () => {
-            const websocketClient = new WebsocketClient(CONNECTION_SETTINGS);
-            vi.spyOn(websocketClient, "checkConnection").mockResolvedValue(
-                false
-            );
-
-            try {
-                await websocketClient.connectToRemoteServer();
-            } catch (error) {
-                expect(error).toEqual(new Error(CONNECTION_FAIL_MSG));
-            }
-        });
-    });
+        return buffer;
+    };
 
     describe("initialize", () => {
-        test("does not throw error if connectToRemoteServer succeeds", async () => {
-            const websocketClient = new WebsocketClient(CONNECTION_SETTINGS);
-            const simulator = new RemoteSimulator(websocketClient);
-            vi.spyOn(simulator, "connectToRemoteServer").mockResolvedValue(
-                CONNECTION_SUCCESS_MSG
-            );
+        beforeEach(() => {
+            vi.spyOn(
+                simulator.webSocketClient,
+                "connectToRemoteServer"
+            ).mockResolvedValue("Connected to remote server");
+            vi.spyOn(
+                simulator.webSocketClient,
+                "sendWebSocketRequest"
+            ).mockImplementation(() => {
+                /* stubbed */
+            });
+        });
+        test("sends initial trajectory file request", async () => {
+            await simulator.initialize("trajectory.sim");
 
             expect(
-                async () => await simulator.initialize("endocytosis.simularium")
-            ).not.toThrow();
-        });
-        test("throws error emitted by connectToRemoteServer as a FrontEndError if connection fails", async () => {
-            const websocketClient = new WebsocketClient(CONNECTION_SETTINGS);
-            const simulator = new RemoteSimulator(websocketClient);
-            vi.spyOn(simulator, "connectToRemoteServer").mockRejectedValue(
-                new Error("Mock error message")
+                simulator.webSocketClient.sendWebSocketRequest
+            ).toHaveBeenCalledWith(
+                {
+                    msgType: NetMessageEnum.ID_INIT_TRAJECTORY_FILE,
+                    fileName: "trajectory.sim",
+                },
+                "Start Trajectory File Playback"
             );
+        });
+        test("registers message handlers", async () => {
+            await simulator.initialize("trajectory.sim");
+            expect(
+                simulator.webSocketClient.binaryMessageHandlers[
+                    NetMessageEnum.ID_VIS_DATA_ARRIVE
+                ]
+            ).toBeTruthy();
+            expect(
+                simulator.webSocketClient.jsonMessageHandlers[
+                    NetMessageEnum.ID_TRAJECTORY_FILE_INFO
+                ]
+            ).toBeTruthy();
+        });
 
-            try {
-                await simulator.initialize("endocytosis.simularium");
-            } catch (error) {
-                expect(error).toEqual(new FrontEndError("Mock error message"));
-            }
+        test("handleError is called if connectToRemoteServer fails", async () => {
+            const errorHandler = vi.fn();
+            const simulator = new RemoteSimulator(
+                CONNECTION_SETTINGS,
+                errorHandler
+            );
+            vi.spyOn(
+                simulator.webSocketClient,
+                "connectToRemoteServer"
+            ).mockRejectedValue(new Error("Connection failed"));
+            await simulator.initialize("trajectory.sim");
+            expect(errorHandler).toHaveBeenCalled();
+        });
+    });
+
+    describe("onBinaryIdVisDataArrive", () => {
+        function setupBinaryTest() {
+            const buffer = createFakeBinary();
+            const fakeEvent = { data: buffer } as MessageEventLike;
+            return { buffer, fakeEvent };
+        }
+
+        test("calls onTrajectoryDataArrive when file name matches", () => {
+            simulator.lastRequestedFile = "fileA";
+            const { buffer, fakeEvent } = setupBinaryTest();
+
+            const dataSpy = vi.spyOn(simulator, "onTrajectoryDataArrive");
+            simulator.onBinaryIdVisDataArrive(fakeEvent);
+
+            expect(dataSpy).toHaveBeenCalledWith(buffer);
+        });
+
+        test("does not call onTrajectoryDataArrive when file name does not match", () => {
+            simulator.lastRequestedFile = "otherFile";
+            const { fakeEvent } = setupBinaryTest();
+
+            const dataSpy = vi.spyOn(simulator, "onTrajectoryDataArrive");
+            simulator.onBinaryIdVisDataArrive(fakeEvent);
+
+            expect(dataSpy).not.toHaveBeenCalled();
         });
     });
 });

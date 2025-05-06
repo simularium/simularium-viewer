@@ -28,7 +28,6 @@ export interface ISimulator {
         handler: (msg: VisDataMessage | ArrayBuffer) => void
     ): void;
 
-    /** todo implement callback pattern for plots and metrics */
     /** a callback to receive available metrics */
     setMetricsHandler(handler: (msg: Metrics) => void): void;
 
