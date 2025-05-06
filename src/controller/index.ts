@@ -141,6 +141,7 @@ export default class SimulariumController {
         if (this.simulator) {
             this.simulator.abort();
         }
+        this.simulator = undefined;
     }
 
     public sendUpdate(obj: Record<string, unknown>): void {

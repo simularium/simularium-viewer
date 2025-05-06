@@ -75,7 +75,8 @@ export class LocalFileSimulator implements ISimulator {
         this.handleError = handler;
     }
 
-    public initialize(_fileName: string): Promise<void> {
+    public initialize(fileName: string): Promise<void> {
+        this.fileName = fileName;
         try {
             const trajectoryInfo = this.simulariumFile.getTrajectoryFileInfo();
             this.onTrajectoryFileInfoArrive(trajectoryInfo);
