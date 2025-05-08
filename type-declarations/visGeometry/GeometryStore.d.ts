@@ -29,6 +29,7 @@ declare class GeometryStore {
     static sphereGeometry: SphereGeometry;
     static cubeGeometry: BoxGeometry;
     private static shouldLoadPrimitive;
+    private static getPdbUrlFromSanitizedPdbId;
     constructor(loggerLevel?: ILogLevel);
     reset(): void;
     get registry(): Registry;

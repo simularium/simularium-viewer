@@ -172,14 +172,14 @@ var GeometryStore = /*#__PURE__*/function () {
         // TODO:
         // Can we confirm that the rcsb.org servers have every id as a cif file?
         // If so, then we don't need to do this second try and we can always use .cif.
-        actualUrl = "https://files.rcsb.org/download/".concat(pdbID, "-assembly1.cif");
+        actualUrl = GeometryStore.getPdbUrlFromSanitizedPdbId(pdbID, true);
       }
       return fetch(actualUrl).then(function (response) {
         if (response.ok) {
           return response.text();
         } else if (pdbID) {
           // try again as pdb
-          actualUrl = "https://files.rcsb.org/download/".concat(pdbID, ".pdb1");
+          actualUrl = GeometryStore.getPdbUrlFromSanitizedPdbId(pdbID, false);
           return fetch(actualUrl).then(function (response) {
             if (!response.ok) {
               // error will be caught by the function that calls this
@@ -445,5 +445,13 @@ _defineProperty(GeometryStore, "shouldLoadPrimitive", function (displayType, url
     return false;
   }
   return true;
+});
+_defineProperty(GeometryStore, "getPdbUrlFromSanitizedPdbId", function (pdbId, isCif) {
+  // Note: pdbId will have a leading backslash, which was prepended
+  // in checkAndSanitizePath
+  if (isCif) {
+    return "https://files.rcsb.org/download".concat(pdbId, "-assembly1.cif");
+  }
+  return "https://files.rcsb.org/download".concat(pdbId, ".pdb1");
 });
 export default GeometryStore;
