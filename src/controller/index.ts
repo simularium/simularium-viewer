@@ -14,10 +14,8 @@ import {
     PlotConfig,
 } from "../simularium/types.js";
 
-import {
-    getSimulatorClassFromParams,
-    ISimulator,
-} from "../Simulator/ISimulator.js";
+import { ISimulator } from "../Simulator/ISimulator.js";
+import { getSimulatorClassFromParams } from "../Simulator/SimulatorFactory.js";
 import { FrontEndError } from "../simularium/FrontEndError.js";
 import { TrajectoryType } from "../constants.js";
 import { ConversionClient } from "../simularium/ConversionClient.js";
@@ -280,7 +278,7 @@ export default class SimulariumController {
             "netConnectionSettings" in params &&
             this.simulator instanceof RemoteSimulator &&
             this.simulator.isConnectedToRemoteServer() &&
-            this.lastNetConnectionConfig === params.netConnectionSettings
+            this.lastNetConnectionConfig == params.netConnectionSettings
         );
     }
 

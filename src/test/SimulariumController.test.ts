@@ -78,10 +78,10 @@ vi.mock("../simularium/ConversionClient.js", () => ({
     ConversionClient: vi.fn().mockImplementation(() => mockConversionClient),
 }));
 
-vi.mock("../Simulator/ISimulator", async () => {
+vi.mock("../Simulator/SimulatorFactory", async () => {
     const actual = await vi.importActual<
-        typeof import("../Simulator/ISimulator")
-    >("../Simulator/ISimulator");
+        typeof import("../Simulator/SimulatorFactory")
+    >("../Simulator/SimulatorFactory");
 
     return {
         ...actual,
