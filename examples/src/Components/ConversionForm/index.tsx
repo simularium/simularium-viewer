@@ -7,7 +7,6 @@ interface InputFormProps {
     templateData: { [key: string]: any };
     type: string;
     submitFile: (data) => void;
-    onReturned: () => void;
 }
 
 class InputForm extends React.Component<InputFormProps> {

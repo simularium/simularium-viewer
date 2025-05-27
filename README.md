@@ -46,7 +46,6 @@ const netConnectionSettings = {
 };
 
 const simulariumController = new SimulariumController();
-// todo show correct call of changeFile to load trajectory
 
 class Viewer extends React.Component {
 
@@ -64,6 +63,16 @@ class Viewer extends React.Component {
                 timeStep: 1,
                 totalDuration: 100,
                 }
+    }
+
+    public componentDidMount(): void {
+    // Load a trajectory by calling `changeFile`.
+    // You can do this here in a lifecycle method or call it later,
+    // whenever you’re ready to switch files.
+        simulariumController.changeFile({
+            fileName: "actin012_3.h5",
+            netConnectionSettings: netConnectionSettings,
+        });
     }
 
     handleTimeChange = (timeData) => {
@@ -92,6 +101,7 @@ class Viewer extends React.Component {
                     showPaths={this.state.showPaths}
                 />)
     }
+}
 ```
 
 ## Run an example app locally

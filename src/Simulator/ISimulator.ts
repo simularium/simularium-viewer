@@ -4,7 +4,7 @@ import {
     PlotConfig,
     Plot,
     Metrics,
-} from "./types.js";
+} from "../simularium/types.js";
 
 /**
 From the caller's perspective, this interface is a contract for a 
