@@ -37,6 +37,10 @@
         "registry": "https://registry.npmjs.org/",
         "access": "public"
     },
+    "exports": {
+        ".": "./es/index.js",
+        "./style/style.css": "./style/style.css"
+    },
     "repository": {
         "type": "git",
         "url": "https://github.com/simularium/simularium-viewer.git"
