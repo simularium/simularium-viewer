@@ -31,7 +31,7 @@ export class LocalFileSimulator implements ISimulator {
     public constructor(params: LocalFileSimulatorParams) {
         const { fileName, simulariumFile } = params;
         if (!simulariumFile) {
-            throw new Error("LocalFileSimulator requires a ISimulariumFile");
+            throw new Error("LocalFileSimulator requires a ISimulariumFile in its LocalFileSimulatorParams");
         }
         this.fileName = fileName;
         this.simulariumFile = simulariumFile;
