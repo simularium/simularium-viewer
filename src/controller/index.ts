@@ -273,12 +273,27 @@ export default class SimulariumController {
         this.clearFileResources();
     }
 
+    // export interface NetConnectionParams {
+    // serverIp?: string;
+    // serverPort?: number;
+    // }
+
     private shouldReuseSimulator(params: SimulatorParams): boolean {
+        const newConfig =
+            "netConnectionSettings" in params
+                ? params.netConnectionSettings
+                : undefined;
+        const lastConfig = this.lastNetConnectionConfig;
+
         return (
-            "netConnectionSettings" in params &&
             this.simulator instanceof RemoteSimulator &&
             this.simulator.isConnectedToRemoteServer() &&
-            this.lastNetConnectionConfig == params.netConnectionSettings
+            lastConfig?.serverIp != null &&
+            lastConfig?.serverPort != null &&
+            newConfig?.serverIp != null &&
+            newConfig?.serverPort != null &&
+            lastConfig.serverIp === newConfig.serverIp &&
+            lastConfig.serverPort === newConfig.serverPort
         );
     }
 
