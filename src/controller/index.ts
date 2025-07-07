@@ -4,7 +4,6 @@ import { v4 as uuidv4 } from "uuid";
 import { VisData, RemoteSimulator } from "../simularium/index.js";
 import type {
     NetConnectionParams,
-    Plot,
     TrajectoryFileInfo,
 } from "../simularium/index.js";
 import { VisGeometry } from "../visGeometry/index.js";
@@ -13,32 +12,20 @@ import {
     FILE_STATUS_SUCCESS,
     FILE_STATUS_FAIL,
     PlotConfig,
-    Metrics,
 } from "../simularium/types.js";
 
-import { ClientSimulator } from "../simularium/ClientSimulator.js";
-import { IClientSimulatorImpl } from "../simularium/localSimulators/IClientSimulatorImpl.js";
-import { ISimulator } from "../simularium/ISimulator.js";
-import { LocalFileSimulator } from "../simularium/LocalFileSimulator.js";
+import { ISimulator } from "../Simulator/ISimulator.js";
+import { getSimulatorClassFromParams } from "../Simulator/SimulatorFactory.js";
 import { FrontEndError } from "../simularium/FrontEndError.js";
-import type { ISimulariumFile } from "../simularium/ISimulariumFile.js";
 import { TrajectoryType } from "../constants.js";
 import { ConversionClient } from "../simularium/ConversionClient.js";
+import { SimulatorParams } from "../Simulator/types.js";
 
 jsLogger.setHandler(jsLogger.createDefaultHandler());
 
-// TODO: refine this as part of the public API for initializing the
-// controller with a simulator connection
-interface SimulatorConnectionParams {
-    netConnectionSettings?: NetConnectionParams;
-    clientSimulator?: IClientSimulatorImpl;
-    simulariumFile?: ISimulariumFile;
-    geoAssets?: { [key: string]: string };
-    requestJson?: boolean;
-}
-
 export default class SimulariumController {
     public simulator?: ISimulator;
+    private lastNetConnectionConfig: NetConnectionParams | null;
     private _conversionClient?: ConversionClient;
     public visData: VisData;
     public visGeometry: VisGeometry | undefined;
@@ -67,6 +54,7 @@ export default class SimulariumController {
 
         this.isPaused = false;
         this.isFileChanging = false;
+        this.lastNetConnectionConfig = null;
         this.playBackFile = "";
         this.simulator = undefined;
         this.zoomIn = this.zoomIn.bind(this);
@@ -79,71 +67,67 @@ export default class SimulariumController {
         this.convertTrajectory = this.convertTrajectory.bind(this);
         this.setCameraType = this.setCameraType.bind(this);
         this.startSmoldynSim = this.startSmoldynSim.bind(this);
-        this.cancelCurrentFile = this.cancelCurrentFile.bind(this);
     }
 
-    private createSimulatorConnection(
-        netConnectionConfig?: NetConnectionParams,
-        clientSimulator?: IClientSimulatorImpl,
-        localFile?: ISimulariumFile,
-        geoAssets?: { [key: string]: string },
-        requestJson?: boolean
-    ): void {
-        if (clientSimulator) {
-            this.simulator = new ClientSimulator(clientSimulator);
-            this.simulator.setTrajectoryDataHandler(
-                this.visData.parseAgentsFromNetData.bind(this.visData)
-            );
-        } else if (localFile) {
-            this.simulator = new LocalFileSimulator(localFile);
-            if (this.visGeometry && geoAssets && !isEmpty(geoAssets)) {
-                this.visGeometry.geometryStore.cacheLocalAssets(geoAssets);
-            }
-            this.simulator.setTrajectoryDataHandler(
-                this.visData.parseAgentsFromFrameData.bind(this.visData)
-            );
-        } else if (netConnectionConfig) {
-            this.simulator = new RemoteSimulator(
-                netConnectionConfig,
-                this.onError,
-                requestJson
-            );
-            this.simulator.setTrajectoryDataHandler(
-                this.visData.parseAgentsFromNetData.bind(this.visData)
-            );
+    /**
+     * @param error a string or an Error object, which can be of type
+     * "unknown" if passed by a catch block
+     */
+    private handleError(error: unknown | string): void {
+        let message: string;
+
+        if (typeof error === "string") {
+            message = error;
+        } else if (error instanceof Error) {
+            message = error.message;
         } else {
-            // caught in try/catch block, not sent to front end
-            throw new Error(
-                "Insufficient data to determine and configure simulator connection"
-            );
+            message = "An unknown error occurred.";
         }
 
-        this.simulator.setTrajectoryFileInfoHandler(
-            (trajFileInfo: TrajectoryFileInfo) => {
-                this.handleTrajectoryInfo(trajFileInfo);
-            }
+        if (this.onError) {
+            this.onError(new FrontEndError(message));
+        } else throw new Error(message);
+    }
+
+    private createSimulatorConnection(params: SimulatorParams): void {
+        const { simulatorClass, typedParams } =
+            getSimulatorClassFromParams(params);
+        if (!simulatorClass) {
+            this.handleError("Invalid simulator configuration");
+            return;
+        }
+        this.lastNetConnectionConfig =
+            "netConnectionSettings" in params &&
+            params.netConnectionSettings !== undefined
+                ? params.netConnectionSettings
+                : null;
+        if (
+            this.visGeometry &&
+            "geoAssets" in params &&
+            !isEmpty(params.geoAssets)
+        ) {
+            this.visGeometry.geometryStore.cacheLocalAssets(params.geoAssets);
+        }
+        // will throw an error if the params are invalid
+        this.simulator = new simulatorClass(typedParams, this.onError);
+        this.simulator.setTrajectoryDataHandler(
+            this.visData.parseAgentsFromNetData.bind(this.visData)
         );
-        this.simulator.setMetricsHandler((metrics: Metrics) =>
-            this.handleMetrics(metrics)
-        );
-        this.simulator.setPlotDataHandler((plots: Plot[]) =>
-            this.handlePlotData(plots)
-        );
+        this.simulator.setTrajectoryFileInfoHandler(this.handleTrajectoryInfo);
+        this.simulator.setMetricsHandler(this.handleMetrics);
+        this.simulator.setPlotDataHandler(this.handlePlotData);
     }
 
     public get isChangingFile(): boolean {
         return this.isFileChanging;
     }
 
-    public start(): Promise<void> {
+    private async start(): Promise<void> {
         if (!this.simulator) {
             return Promise.reject();
         }
-
-        this.isPaused = false;
-        this.visData.clearCache();
-
-        return this.simulator.initialize(this.playBackFile);
+        await this.simulator.initialize(this.playBackFile);
+        this.simulator.requestFrame(0);
     }
 
     public time(): number {
@@ -151,10 +135,10 @@ export default class SimulariumController {
     }
 
     public stop(): void {
+        this.pause();
         if (this.simulator) {
             this.simulator.abort();
         }
-        this.simulator = undefined;
     }
 
     public sendUpdate(obj: Record<string, unknown>): void {
@@ -173,15 +157,22 @@ export default class SimulariumController {
     }
 
     private closeConversionConnection(): void {
-        this.conversionClient?.disconnect();
-        this._conversionClient = undefined;
+        if (this._conversionClient) {
+            this._conversionClient.cancelConversion();
+            this._conversionClient.disconnect();
+            this._conversionClient = undefined;
+        }
     }
 
     private async setupConversion(
         netConnectionConfig: NetConnectionParams,
         fileName: string
     ): Promise<void> {
-        this.cancelCurrentFile(fileName);
+        const reuseSimulator = this.shouldReuseSimulator({
+            netConnectionSettings: netConnectionConfig,
+            fileName,
+        });
+        this.clearFileResources(reuseSimulator);
 
         this._conversionClient = new ConversionClient(
             netConnectionConfig,
@@ -189,18 +180,15 @@ export default class SimulariumController {
         );
 
         this.conversionClient.setOnConversionCompleteHandler(() => {
-            this.changeFile(
-                {
-                    netConnectionSettings: netConnectionConfig,
-                },
-                this.playBackFile
-            );
+            this.changeFile({
+                netConnectionSettings: netConnectionConfig,
+                fileName: fileName,
+            });
             this.closeConversionConnection();
         });
     }
 
     public cancelConversion(): void {
-        this.conversionClient.cancelConversion();
         this.closeConversionConnection();
     }
 
@@ -231,8 +219,8 @@ export default class SimulariumController {
     public pause(): void {
         if (this.simulator) {
             this.simulator.pause();
-            this.isPaused = true;
         }
+        this.isPaused = true;
     }
 
     public paused(): boolean {
@@ -264,76 +252,73 @@ export default class SimulariumController {
         }
     }
 
-    public clearFile(): void {
+    ///// File Changing /////
+
+    private clearFileResources(reuseSimulator = false): void {
+        this.closeConversionConnection();
         this.stop();
-        this.isFileChanging = false;
+        if (!reuseSimulator) {
+            this.simulator = undefined;
+        }
         this.playBackFile = "";
         this.visData.clearForNewTrajectory();
-        this.simulator?.abort();
-        this.pause();
         if (this.visGeometry) {
             this.visGeometry.clearForNewTrajectory();
             this.visGeometry.resetCamera();
         }
     }
 
-    public handleFileChange(
-        simulariumFile: ISimulariumFile,
-        fileName: string,
-        geoAssets?: { [key: string]: string }
-    ): Promise<FileReturn> {
-        if (!fileName.includes(".simularium")) {
-            throw new Error("File must be a .simularium file");
-        }
-
-        if (geoAssets) {
-            return this.changeFile({ simulariumFile, geoAssets }, fileName);
-        } else {
-            return this.changeFile({ simulariumFile }, fileName);
-        }
+    public clearFile(): void {
+        this.isFileChanging = false;
+        this.clearFileResources();
     }
 
-    public cancelCurrentFile(newFileName: string): void {
-        this.isFileChanging = true;
-        this.playBackFile = newFileName;
+    // export interface NetConnectionParams {
+    // serverIp?: string;
+    // serverPort?: number;
+    // }
 
-        // calls simulator.abort()
-        this.stop();
+    private shouldReuseSimulator(params: SimulatorParams): boolean {
+        const newConfig =
+            "netConnectionSettings" in params
+                ? params.netConnectionSettings
+                : undefined;
+        const lastConfig = this.lastNetConnectionConfig;
 
-        this.visData.WaitForFrame(0);
-        this.visData.clearForNewTrajectory();
-    }
-
-    public changeFile(
-        connectionParams: SimulatorConnectionParams,
-        // TODO: push newFileName into connectionParams
-        newFileName: string
-    ): Promise<FileReturn> {
-        this.cancelCurrentFile(newFileName);
-        this.createSimulatorConnection(
-            connectionParams.netConnectionSettings,
-            connectionParams.clientSimulator,
-            connectionParams.simulariumFile,
-            connectionParams.geoAssets,
-            connectionParams.requestJson
+        return (
+            this.simulator instanceof RemoteSimulator &&
+            this.simulator.isConnectedToRemoteServer() &&
+            lastConfig?.serverIp != null &&
+            lastConfig?.serverPort != null &&
+            newConfig?.serverIp != null &&
+            newConfig?.serverPort != null &&
+            lastConfig.serverIp === newConfig.serverIp &&
+            lastConfig.serverPort === newConfig.serverPort
         );
+    }
 
-        // start the simulation paused and get first frame
-        if (this.simulator) {
-            return this.start() // will reject if no simulator
-                .then(() => {
-                    if (this.simulator) {
-                        this.simulator.requestFrame(0);
-                    }
-                })
-                .then(() => ({
-                    status: FILE_STATUS_SUCCESS,
-                }));
+    public async changeFile(params: SimulatorParams): Promise<FileReturn> {
+        if (
+            "simulariumFile" in params &&
+            !params.fileName.includes(".simularium")
+        ) {
+            this.handleError("File must be a .simularium file");
+            return Promise.reject({ status: FILE_STATUS_FAIL });
         }
-
-        return Promise.reject({
-            status: FILE_STATUS_FAIL,
-        });
+        this.isFileChanging = true;
+        const reuseSimulator = this.shouldReuseSimulator(params);
+        this.clearFileResources(reuseSimulator);
+        if (!reuseSimulator) {
+            this.createSimulatorConnection(params);
+        }
+        this.playBackFile = params.fileName;
+        try {
+            await this.start();
+            return { status: FILE_STATUS_SUCCESS };
+        } catch (e) {
+            this.handleError(e);
+            return { status: FILE_STATUS_FAIL };
+        }
     }
 
     public markFileChangeAsHandled(): void {

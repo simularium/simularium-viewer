@@ -1,19 +1,19 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
 
-import {
-    VisDataMessage,
-    TrajectoryFileInfo,
-    PlotConfig,
-    Plot,
-    Metrics,
-} from "./types.js";
-import {
-    ClientMessageEnum,
-    ClientPlayBackType,
-    IClientSimulatorImpl,
-} from "./localSimulators/IClientSimulatorImpl.js";
 import { ISimulator } from "./ISimulator.js";
+import {
+    IClientSimulatorImpl,
+    ClientMessageEnum,
+} from "../simularium/index.js";
+import {
+    TrajectoryFileInfo,
+    VisDataMessage,
+    Metrics,
+    Plot,
+    PlotConfig,
+} from "../simularium/types.js";
+import { ClientSimulatorParams } from "./types.js";
 
 // a ClientSimulator is a ISimulator that is expected to run purely in procedural javascript in the browser client,
 // with the procedural implementation in a IClientSimulatorImpl
@@ -30,7 +30,11 @@ export class ClientSimulator implements ISimulator {
     public onPlotDataArrive: (msg: Plot[]) => void;
     public handleError: (error: Error) => void;
 
-    public constructor(sim: IClientSimulatorImpl) {
+    public constructor(params: ClientSimulatorParams) {
+        const { clientSimulatorImpl } = params;
+        if (!clientSimulatorImpl) {
+            throw new Error("ClientSimulator requires a IClientSimulatorImpl");
+        }
         this.logger = jsLogger.get("netconnection");
         this.logger.setLevel(jsLogger.DEBUG);
 
@@ -49,7 +53,7 @@ export class ClientSimulator implements ISimulator {
         this.onPlotDataArrive = () => {
             /* do nothing */
         };
-        this.localSimulator = sim;
+        this.localSimulator = clientSimulatorImpl;
     }
 
     public setTrajectoryFileInfoHandler(
@@ -168,7 +172,6 @@ export class ClientSimulator implements ISimulator {
     public initialize(fileName: string): Promise<void> {
         const jsonData = {
             msgType: ClientMessageEnum.ID_VIS_DATA_REQUEST,
-            mode: ClientPlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
             fileName: fileName,
         };
 
@@ -205,7 +208,6 @@ export class ClientSimulator implements ISimulator {
         this.sendSimulationRequest(
             {
                 msgType: ClientMessageEnum.ID_VIS_DATA_REQUEST,
-                mode: ClientPlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
                 frameNumber: startFrameNumber,
             },
             "Request Single Frame"
