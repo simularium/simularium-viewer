@@ -1,7 +1,7 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
 
-import { ISimulator } from "../Simulator/ISimulator.js";
+import { ISimulator } from "./ISimulator.js";
 import {
     IClientSimulatorImpl,
     ClientMessageEnum,
