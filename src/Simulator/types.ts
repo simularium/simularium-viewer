@@ -1,21 +1,19 @@
 import { NetConnectionParams, IClientSimulatorImpl } from "../simularium";
 import { ISimulariumFile } from "../simularium/ISimulariumFile";
-
-export interface BaseSimulatorParams {
+export interface RemoteSimulatorParams {
     fileName: string;
-}
-
-export interface RemoteSimulatorParams extends BaseSimulatorParams {
     netConnectionSettings?: NetConnectionParams;
     requestJson?: boolean;
     prefetchFrames?: boolean;
 }
 
-export interface ClientSimulatorParams extends BaseSimulatorParams {
+export interface ClientSimulatorParams {
+    fileName: string;
     clientSimulatorImpl?: IClientSimulatorImpl;
 }
 
-export interface LocalFileSimulatorParams extends BaseSimulatorParams {
+export interface LocalFileSimulatorParams {
+    fileName: string;
     simulariumFile?: ISimulariumFile;
     geoAssets?: { [key: string]: string };
 }
