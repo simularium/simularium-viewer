@@ -1,5 +1,4 @@
 import Viewport from "./viewport/index.js";
-import "../style/style.css";
 
 export type {
     SelectionStateInfo,
