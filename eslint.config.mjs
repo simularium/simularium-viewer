@@ -15,83 +15,112 @@ const compat = new FlatCompat({
     allConfig: js.configs.all
 });
 
-export default [{
-    ignores: ["examples/webpack.dev.js", "**/.eslintrc.js", "**/babel.config.js"],
-}, ...compat.extends("plugin:@typescript-eslint/recommended", "plugin:react/recommended"), {
-    plugins: {
-        "@typescript-eslint": typescriptEslint,
-        react,
+export default [
+    {
+        ignores: [
+            "examples/webpack.dev.js",
+            "**/.eslintrc.js",
+            "**/babel.config.js",
+            "src/style/**",
+            "**/*.css",
+        ],
     },
-
-    languageOptions: {
-        globals: {
-            ...globals.mocha,
-            ...globals.browser,
+    ...compat.extends(
+        "plugin:@typescript-eslint/recommended",
+        "plugin:react/recommended"
+    ),
+    {
+        plugins: {
+            "@typescript-eslint": typescriptEslint,
+            react,
         },
 
-        parser: tsParser,
-        ecmaVersion: 5,
-        sourceType: "script",
+        languageOptions: {
+            globals: {
+                ...globals.mocha,
+                ...globals.browser,
+            },
 
-        parserOptions: {
-            project: ["./tsconfig.json", "./src/visGeometry/workers/tsconfig.json"],
+            parser: tsParser,
+            ecmaVersion: 5,
+            sourceType: "script",
+
+            parserOptions: {
+                project: [
+                    "./tsconfig.json",
+                    "./src/visGeometry/workers/tsconfig.json",
+                ],
+            },
+        },
+
+        settings: {
+            react: {
+                version: "detect",
+            },
+        },
+
+        rules: {
+            "@typescript-eslint/no-empty-object-type": ["warn"],
+            "@typescript-eslint/no-unsafe-function-type": ["warn"],
+            "@typescript-eslint/no-wrapper-object-types": ["warn"],
+
+            "@typescript-eslint/naming-convention": [
+                "warn",
+                {
+                    selector: "default",
+                    format: ["camelCase", "PascalCase"],
+                },
+                {
+                    selector: "variable",
+                    format: ["camelCase", "UPPER_CASE", "PascalCase"],
+                },
+                {
+                    selector: "property",
+                    format: ["camelCase", "UPPER_CASE"],
+                    leadingUnderscore: "allow",
+                },
+                {
+                    selector: "property",
+                    format: null,
+                    filter: {
+                        regex: "^[0-9]+$",
+                        match: true,
+                    },
+                },
+                {
+                    selector: "typeLike",
+                    format: ["PascalCase"],
+                },
+                {
+                    selector: "interface",
+                    format: ["PascalCase"],
+                },
+                {
+                    selector: "enumMember",
+                    format: ["UPPER_CASE"],
+                },
+                {
+                    selector: "parameter",
+                    format: ["camelCase"],
+                    leadingUnderscore: "allow",
+                },
+            ],
+
+            "@typescript-eslint/indent": ["off"],
+            "@typescript-eslint/no-empty-function": ["warn"],
+            "@typescript-eslint/no-inferrable-types": ["warn"],
+            "@typescript-eslint/no-this-alias": ["warn"],
+            "prefer-const": ["warn"],
+            "prefer-spread": ["warn"],
+            "no-var": ["warn"],
+            "no-unused-vars": "off",
+
+            "@typescript-eslint/no-unused-vars": [
+                "warn",
+                {
+                    argsIgnorePattern: "^_",
+                },
+            ],
         },
     },
-
-    settings: {
-        react: {
-            version: "detect",
-        },
-    },
-
-    rules: {
-        "@typescript-eslint/no-empty-object-type": ["warn"],
-        "@typescript-eslint/no-unsafe-function-type": ["warn"],
-        "@typescript-eslint/no-wrapper-object-types": ["warn"],
-
-        "@typescript-eslint/naming-convention": ["warn", {
-            selector: "default",
-            format: ["camelCase", "PascalCase"],
-        }, {
-            selector: "variable",
-            format: ["camelCase", "UPPER_CASE", "PascalCase"],
-        }, {
-            selector: "property",
-            format: ["camelCase", "UPPER_CASE"],
-            leadingUnderscore: "allow",
-        }, {
-            selector: "property",
-            format: null,
-            filter: {
-                regex: "^[0-9]+$",
-                match: true,
-            }
-        }, {
-            selector: "typeLike",
-            format: ["PascalCase"],
-        }, {
-            selector: "interface",
-            format: ["PascalCase"],
-        }, {
-            selector: "enumMember",
-            format: ["UPPER_CASE"],
-        }, {
-            selector: "parameter",
-            format: ["camelCase"],
-            leadingUnderscore: "allow",
-        }],
-
-        "@typescript-eslint/indent": ["off"],
-        "@typescript-eslint/no-empty-function": ["warn"],
-        "@typescript-eslint/no-inferrable-types": ["warn"],
-        "@typescript-eslint/no-this-alias": ["warn"],
-        "prefer-const": ["warn"],
-        "prefer-spread": ["warn"],
-        "no-var": ["warn"],
-        "no-unused-vars": "off",
-
-        "@typescript-eslint/no-unused-vars": ["warn", {
-            argsIgnorePattern: "^_",
-        }],
-    },
-}];
+];
