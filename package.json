@@ -18,7 +18,7 @@
         "processCSS": "postcss src/style/style.css --output es/style/style.css",
         "copy-build": "copyfiles 'es/**/*' 'type-declarations/**/*' package.json README.md dev-build",
         "gh-build": "npm run processCSS && cd examples && npm run build-example",
-        "lint": "eslint src/**",
+        "lint": "eslint 'src/**/*.{js,jsx,ts,tsx}'",
         "test": "vitest run",
         "coverage": "vitest run --coverage",
         "typeCheck": "tsc -p tsconfig.json --noEmit",
