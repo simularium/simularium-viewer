@@ -1605,6 +1605,8 @@ var VisGeometry = /*#__PURE__*/function () {
   }, {
     key: "clearForNewTrajectory",
     value: function clearForNewTrajectory() {
+      // only gets called by the parent app by calling
+      // clearFile on the controller
       this.legacyRenderer.beginUpdate(this.scene);
       this.legacyRenderer.endUpdate(this.scene);
       this.resetMapping();
@@ -1613,6 +1615,7 @@ var VisGeometry = /*#__PURE__*/function () {
       this.visAgentInstances.clear();
       this.visAgents = [];
       this.currentSceneData = nullCachedFrame();
+      this.availableAgentPool = [];
       this.dehighlight();
     }
   }, {
