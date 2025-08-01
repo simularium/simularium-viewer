@@ -41,8 +41,13 @@
         "url": "https://github.com/simularium/simularium-viewer.git"
     },
     "exports": {
-        ".": "./es/index.js",
-        "./style/style.css": "./es/style/style.css"
+        "./style/style.css": "./es/style/style.css",
+        ".": {
+            "import": {
+                "types": "./type-declarations/index.d.ts",
+                "default": "./es/index.js"
+            }
+        }
     },
     "author": "",
     "license": "MIT",
