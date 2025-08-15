@@ -24,7 +24,7 @@ class VisData {
         const intView = new Uint32Array(data);
         const frameData: CachedFrame = {
             data: data,
-            frameNumber: floatView[0],
+            frameNumber: intView[0],
             time: floatView[1],
             agentCount: intView[2],
             size: 0,
