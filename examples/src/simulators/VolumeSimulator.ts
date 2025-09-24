@@ -1,4 +1,5 @@
 import { GeometryDisplayType } from "@aics/simularium-viewer";
+import "@aics/vole-core/es/workers/VolumeLoadWorker.js";
 import {
     IClientSimulatorImpl,
     ClientMessageEnum,
