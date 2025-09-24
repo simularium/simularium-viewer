@@ -78,6 +78,18 @@ class GeometryStore {
         return true;
     };
 
+    private static getPdbUrlFromSanitizedPdbId = (
+        pdbId: string,
+        isCif: boolean
+    ) => {
+        // Note: pdbId will have a leading backslash, which was prepended
+        // in checkAndSanitizePath
+        if (isCif) {
+            return `https://files.rcsb.org/download${pdbId}-assembly1.cif`;
+        }
+        return `https://files.rcsb.org/download${pdbId}.pdb1`;
+    };
+
     constructor(loggerLevel?: ILogLevel) {
         this._geoLoadAttempted = new Map<string, boolean>();
         this._cachedAssets = new Map<string, string>();
@@ -228,47 +240,54 @@ class GeometryStore {
             // TODO:
             // Can we confirm that the rcsb.org servers have every id as a cif file?
             // If so, then we don't need to do this second try and we can always use .cif.
-            actualUrl = `https://files.rcsb.org/download/${pdbID}-assembly1.cif`;
+            actualUrl = GeometryStore.getPdbUrlFromSanitizedPdbId(pdbID, true);
         }
-
-        let data: string;
-        const response = await fetch(actualUrl);
-        if (response.ok) {
-            data = await response.text();
-        } else if (pdbID) {
-            // try again as pdb
-            actualUrl = `https://files.rcsb.org/download/${pdbID}.pdb1`;
-            const response = await fetch(actualUrl);
-            if (!response.ok) {
-                // error will be caught by the function that calls this
-                throw new Error(
-                    `Failed to fetch ${pdbModel.filePath} from ${actualUrl}`
-                );
-            }
-            data = await response.text();
-        } else {
-            // error will be caught by function that calls this
-            throw new Error(`Failed to fetch ${pdbModel.filePath} from ${url}`);
-        }
-
-        if (pdbModel.cancelled) {
-            this._registry.delete(url);
-            return undefined;
-        }
-        pdbModel.parse(data, getFileExtension(actualUrl));
-        const pdbEntry = this._registry.get(url);
-        if (pdbEntry && pdbEntry.geometry === pdbModel) {
-            this.mlogger.info("Finished downloading pdb: ", url);
-            return pdbModel;
-        } else {
-            // This seems like some kind of terrible error if we get here.
-            // Alternatively, we could try re-adding the registry entry.
-            // Or reject.
-            this.mlogger.warn(
-                `After download, GeometryStore PDB entry not found for ${url}`
-            );
-            return undefined;
-        }
+        return fetch(actualUrl)
+            .then((response) => {
+                if (response.ok) {
+                    return response.text();
+                } else if (pdbID) {
+                    // try again as pdb
+                    actualUrl = GeometryStore.getPdbUrlFromSanitizedPdbId(
+                        pdbID,
+                        false
+                    );
+                    return fetch(actualUrl).then((response) => {
+                        if (!response.ok) {
+                            // error will be caught by the function that calls this
+                            throw new Error(
+                                `Failed to fetch ${pdbModel.filePath} from ${actualUrl}`
+                            );
+                        }
+                        return response.text();
+                    });
+                } else {
+                    // error will be caught by function that calls this
+                    throw new Error(
+                        `Failed to fetch ${pdbModel.filePath} from ${url}`
+                    );
+                }
+            })
+            .then((data) => {
+                if (pdbModel.cancelled) {
+                    this._registry.delete(url);
+                    return Promise.resolve(undefined);
+                }
+                pdbModel.parse(data, getFileExtension(actualUrl));
+                const pdbEntry = this._registry.get(url);
+                if (pdbEntry && pdbEntry.geometry === pdbModel) {
+                    this.mlogger.info("Finished downloading pdb: ", url);
+                    return pdbModel;
+                } else {
+                    // This seems like some kind of terrible error if we get here.
+                    // Alternatively, we could try re-adding the registry entry.
+                    // Or reject.
+                    this.mlogger.warn(
+                        `After download, GeometryStore PDB entry not found for ${url}`
+                    );
+                    return Promise.resolve(undefined);
+                }
+            });
     }
 
     private prepMeshRegistryForNewObj(meshName: string): void {
