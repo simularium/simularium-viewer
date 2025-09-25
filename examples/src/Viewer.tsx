@@ -122,7 +122,7 @@ const initialState: ViewerState = {
         appliedColors: [],
     },
     filePending: null,
-    selectedFile: "TEST_LIVEMODE_API",
+    selectedFile: "TEST_VOLUME",
     simulariumFile: null,
     clientSimulator: false,
     serverHealthy: false,
@@ -650,7 +650,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             case "TEST_METABALLS":
                 config.clientSimulator = new MetaballSimulator();
                 break;
-            
+
             case "TEST_VOLUME":
                 config.clientSimulator = new VolumeSimulator();
                 break;
