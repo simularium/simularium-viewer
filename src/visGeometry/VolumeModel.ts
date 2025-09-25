@@ -43,9 +43,9 @@ export default class VolumeModel {
         this.volume = volumeObject;
         this.drawable = new VolumeDrawable(this.volume, {});
         this.volume.addVolumeDataObserver(this);
-        this.drawable.setBrightness(0.7);
+        this.drawable.setBrightness(0.5);
         this.drawable.setGamma(0.15, 0.9, 1.0);
-        this.drawable.setDensity(0.7);
+        this.drawable.setDensity(0.1);
     }
 
     public setAgentData(data: AgentData): void {
@@ -64,6 +64,7 @@ export default class VolumeModel {
                 const numPoints = data.subpoints.length;
                 const time = numPoints > 0 ? data.subpoints[0] : 0;
                 if (this.volume.loadSpec.time !== time) {
+                    console.log(`Updating volume to time ${time}`);
                     this.volume.updateRequiredData({ time });
                 }
                 // If there are more subpoints, they are enabled channel idxes.
