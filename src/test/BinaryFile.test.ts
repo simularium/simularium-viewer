@@ -1,4 +1,4 @@
-import BinaryFileReader from "../simularium/BinaryFileReader";
+import BinaryFileReader from "../simularium/BinaryFileReader.js";
 
 function pad(buf: ArrayBuffer): ArrayBuffer {
     if (buf.byteLength % 4 !== 0) {

@@ -8,11 +8,11 @@ import {
     Quaternion,
 } from "three";
 
-import InstancedMeshShader from "./InstancedMeshShader";
-import { MRTShaders } from "./MultipassMaterials";
-import PDBGBufferShaders from "./PDBGBufferShaders";
+import InstancedMeshShader from "./InstancedMeshShader.js";
+import { MRTShaders } from "./MultipassMaterials.js";
+import PDBGBufferShaders from "./PDBGBufferShaders.js";
 
-import { GeometryInstanceContainer } from "../types";
+import { GeometryInstanceContainer } from "../types.js";
 
 const tmpQuaternion = new Quaternion();
 const tmpEuler = new Euler();

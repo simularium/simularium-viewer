@@ -1,6 +1,6 @@
-import { VisDataMessage, AGENT_OBJECT_KEYS, CachedFrame } from "./types";
-import { FrontEndError, ErrorLevel } from "./FrontEndError";
-import { AGENT_HEADER_SIZE } from "../constants";
+import { VisDataMessage, AGENT_OBJECT_KEYS, CachedFrame } from "./types.js";
+import { FrontEndError, ErrorLevel } from "./FrontEndError.js";
+import { AGENT_HEADER_SIZE } from "../constants.js";
 
 const FRAME_DATA_SIZE = AGENT_OBJECT_KEYS.length;
 
@@ -57,7 +57,7 @@ function parseVisDataMessage(visDataMsg: VisDataMessage): CachedFrame {
         writeIndex += FRAME_DATA_SIZE;
 
         // Validate data integrity
-        if (--readIndex + nSubPoints > frame.data.length) {
+        if (readIndex + nSubPoints > frame.data.length) {
             throw new FrontEndError(
                 `Your data is malformed, there are too few entries. Found ${
                     frame.data.length

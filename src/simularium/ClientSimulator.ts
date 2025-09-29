@@ -1,13 +1,13 @@
 import jsLogger from "js-logger";
 import { ILogger } from "js-logger";
 
-import { VisDataMessage, TrajectoryFileInfo } from "./types";
+import { VisDataMessage, TrajectoryFileInfo } from "./types.js";
 import {
     ClientMessageEnum,
     ClientPlayBackType,
     IClientSimulatorImpl,
-} from "./localSimulators/IClientSimulatorImpl";
-import { ISimulator } from "./ISimulator";
+} from "./localSimulators/IClientSimulatorImpl.js";
+import { ISimulator } from "./ISimulator.js";
 
 // a ClientSimulator is a ISimulator that is expected to run purely in procedural javascript in the browser client,
 // with the procedural implementation in a IClientSimulatorImpl
@@ -20,6 +20,7 @@ export class ClientSimulator implements ISimulator {
     protected logger: ILogger;
     public onTrajectoryFileInfoArrive: (msg: TrajectoryFileInfo) => void;
     public onTrajectoryDataArrive: (msg: VisDataMessage) => void;
+    public handleError: (error: Error) => void;
 
     public constructor(sim: IClientSimulatorImpl) {
         this.logger = jsLogger.get("netconnection");
@@ -29,6 +30,9 @@ export class ClientSimulator implements ISimulator {
             /* do nothing */
         };
         this.onTrajectoryDataArrive = () => {
+            /* do nothing */
+        };
+        this.handleError = () => {
             /* do nothing */
         };
         this.localSimulator = sim;
@@ -44,40 +48,14 @@ export class ClientSimulator implements ISimulator {
     ): void {
         this.onTrajectoryDataArrive = handler;
     }
-
-    public socketIsValid(): boolean {
-        return true;
-    }
-
-    /**
-     * Connect
-     * */
-    public disconnect(): void {
-        if (!this.socketIsValid()) {
-            this.logger.warn("disconnect failed, client is not connected");
-            return;
-        }
-    }
-
-    public getIp(): string {
-        return "";
-    }
-
-    public isConnectedToRemoteServer(): boolean {
-        return false;
-    }
-
-    public connectToRemoteServer(_address: string): Promise<string> {
-        return Promise.resolve("Local client sim successfully started");
+    public setErrorHandler(handler: (msg: Error) => void): void {
+        this.handleError = handler;
     }
 
     private sendSimulationRequest(
         jsonData: Record<string, unknown>,
         _requestDescription: string
     ): void {
-        // do processing, then return!
-        //this.logWebSocketRequest(requestDescription, jsonData);
-
         switch (jsonData.msgType) {
             case ClientMessageEnum.ID_UPDATE_TIME_STEP:
                 break;
@@ -145,10 +123,6 @@ export class ClientSimulator implements ISimulator {
     }
 
     public sendTimeStepUpdate(newTimeStep: number): void {
-        if (!this.socketIsValid()) {
-            return;
-        }
-
         const jsonData = {
             msgType: ClientMessageEnum.ID_UPDATE_TIME_STEP,
             timeStep: newTimeStep,
@@ -156,24 +130,10 @@ export class ClientSimulator implements ISimulator {
         this.sendSimulationRequest(jsonData, "Update Time-Step");
     }
 
-    public sendUpdate(obj: Record<string, unknown>): void {
-        if (!this.socketIsValid()) {
-            return;
-        }
+    public sendUpdate(obj: Record<string, unknown>): Promise<void> {
         obj.msgType = ClientMessageEnum.ID_UPDATE_SIMULATION_STATE;
         this.sendSimulationRequest(obj, "Simulation State Update");
-    }
-
-    public sendModelDefinition(model: string): void {
-        if (!this.socketIsValid()) {
-            return;
-        }
-
-        const dataToSend = {
-            model: model,
-            msgType: ClientMessageEnum.ID_MODEL_DEFINITION,
-        };
-        this.sendSimulationRequest(dataToSend, "Model Definition");
+        return Promise.resolve();
     }
 
     /**
@@ -185,38 +145,14 @@ export class ClientSimulator implements ISimulator {
      *  Trajectory File: No simulation run, stream a result file piecemeal
      *
      */
-    public startRemoteSimPreRun(timeStep: number, numTimeSteps: number): void {
-        const jsonData = {
-            msgType: ClientMessageEnum.ID_VIS_DATA_REQUEST,
-            mode: ClientPlayBackType.ID_PRE_RUN_SIMULATION,
-            timeStep: timeStep,
-            numTimeSteps: numTimeSteps,
-        };
-
-        this.connectToRemoteServer(this.getIp()).then(() => {
-            this.sendSimulationRequest(jsonData, "Start Simulation Pre-Run");
-        });
-    }
-
-    public startRemoteSimLive(): void {
-        const jsonData = {
-            msgType: ClientMessageEnum.ID_VIS_DATA_REQUEST,
-            mode: ClientPlayBackType.ID_LIVE_SIMULATION,
-        };
-
-        this.connectToRemoteServer(this.getIp()).then(() => {
-            this.sendSimulationRequest(jsonData, "Start Simulation Live");
-        });
-    }
-
-    public startRemoteTrajectoryPlayback(fileName: string): Promise<void> {
+    public initialize(fileName: string): Promise<void> {
         const jsonData = {
             msgType: ClientMessageEnum.ID_VIS_DATA_REQUEST,
             mode: ClientPlayBackType.ID_TRAJECTORY_FILE_PLAYBACK,
-            "file-name": fileName,
+            fileName: fileName,
         };
 
-        return this.connectToRemoteServer(this.getIp()).then(() => {
+        return Promise.resolve().then(() => {
             this.sendSimulationRequest(
                 jsonData,
                 "Start Trajectory File Playback"
@@ -224,37 +160,28 @@ export class ClientSimulator implements ISimulator {
         });
     }
 
-    public pauseRemoteSim(): void {
-        if (!this.socketIsValid()) {
-            return;
-        }
+    public pause(): void {
         this.sendSimulationRequest(
             { msgType: ClientMessageEnum.ID_VIS_DATA_PAUSE },
             "Pause Simulation"
         );
     }
 
-    public resumeRemoteSim(): void {
-        if (!this.socketIsValid()) {
-            return;
-        }
+    public stream(): void {
         this.sendSimulationRequest(
             { msgType: ClientMessageEnum.ID_VIS_DATA_RESUME },
             "Resume Simulation"
         );
     }
 
-    public abortRemoteSim(): void {
-        if (!this.socketIsValid()) {
-            return;
-        }
+    public abort(): void {
         this.sendSimulationRequest(
             { msgType: ClientMessageEnum.ID_VIS_DATA_ABORT },
             "Abort Simulation"
         );
     }
 
-    public requestSingleFrame(startFrameNumber: number): void {
+    public requestFrame(startFrameNumber: number): void {
         this.sendSimulationRequest(
             {
                 msgType: ClientMessageEnum.ID_VIS_DATA_REQUEST,
@@ -265,7 +192,7 @@ export class ClientSimulator implements ISimulator {
         );
     }
 
-    public gotoRemoteSimulationTime(time: number): void {
+    public requestFrameByTime(time: number): void {
         this.sendSimulationRequest(
             {
                 msgType: ClientMessageEnum.ID_GOTO_SIMULATION_TIME,

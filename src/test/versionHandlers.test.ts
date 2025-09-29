@@ -1,11 +1,11 @@
-import { FrontEndError } from "../simularium/FrontEndError";
+import { FrontEndError } from "../simularium/FrontEndError.js";
 import {
     makeMissingDisplayTypeErrorMessage,
     makeMissingUrlErrorMessage,
     sanitizeAgentMapGeometryData,
     updateTrajectoryFileInfoFormat,
-} from "../simularium/versionHandlers";
-import { GeometryDisplayType } from "../visGeometry/types";
+} from "../simularium/versionHandlers.js";
+import { GeometryDisplayType } from "../visGeometry/types.js";
 
 const invalidVersionData = {
     connId: "7496831076a233f0-2c337fed-4493-ad92-79f194744174ba05635426fd",

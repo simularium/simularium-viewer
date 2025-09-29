@@ -1,5 +1,5 @@
 import WEBGL from "three/examples/jsm/capabilities/WebGL.js";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import {
     Box3,
     Box3Helper,
@@ -32,19 +32,18 @@ import jsLogger from "js-logger";
 import { ILogger, ILogLevel } from "js-logger";
 import { cloneDeep, noop } from "lodash";
 
-import VisAgent from "./VisAgent";
-import VisTypes from "../simularium/VisTypes";
-import PDBModel from "./PDBModel";
-import VolumeModel from "./VolumeModel";
-import AgentPath from "./agentPath";
-import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError";
+import VisAgent from "./VisAgent.js";
+import VisTypes from "../simularium/VisTypes.js";
+import PDBModel from "./PDBModel.js";
+import VolumeModel from "./VolumeModel.js";
+import AgentPath from "./agentPath.js";
+import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError.js";
 
 import {
     DEFAULT_CAMERA_Z_POSITION,
     DEFAULT_CAMERA_SPEC,
-    nullAgent,
     AGENT_HEADER_SIZE,
-} from "../constants";
+} from "../constants.js";
 import {
     AgentData,
     AgentDisplayDataWithGeometry,
@@ -53,12 +52,12 @@ import {
     Coordinates3d,
     EncodedTypeMapping,
     PerspectiveCameraSpec,
-} from "../simularium/types";
+} from "../simularium/types.js";
 
-import SimulariumRenderer from "./rendering/SimulariumRenderer";
-import { InstancedFiberGroup } from "./rendering/InstancedFiber";
-import { LegacyRenderer } from "./rendering/LegacyRenderer";
-import GeometryStore from "./GeometryStore";
+import SimulariumRenderer from "./rendering/SimulariumRenderer.js";
+import { InstancedFiberGroup } from "./rendering/InstancedFiber.js";
+import { LegacyRenderer } from "./rendering/LegacyRenderer.js";
+import GeometryStore from "./GeometryStore.js";
 import {
     AgentGeometry,
     ColorAssignment,
@@ -67,14 +66,14 @@ import {
     MeshGeometry,
     MeshLoadRequest,
     PDBGeometry,
-} from "./types";
+} from "./types.js";
 import {
     checkAndSanitizePath,
     getAgentDataFromBuffer,
     getNextAgentOffset,
     nullCachedFrame,
-} from "../util";
-import ColorHandler from "./ColorHandler";
+} from "../util.js";
+import ColorHandler from "./ColorHandler.js";
 
 const MAX_PATH_LEN = 32;
 const MAX_MESHES = 100000;
@@ -95,6 +94,20 @@ const MIN_ZOOM = 0.16;
 
 const CANVAS_INITIAL_WIDTH = 100;
 const CANVAS_INITIAL_HEIGHT = 100;
+
+const NULL_AGENT = {
+    visType: -1,
+    instanceId: NO_AGENT,
+    type: -1,
+    x: 0,
+    y: 0,
+    z: 0,
+    xrot: 0,
+    yrot: 0,
+    zrot: 0,
+    cr: 0,
+    subpoints: [],
+};
 
 export enum RenderStyle {
     WEBGL1_FALLBACK,
@@ -140,6 +153,9 @@ export const isOrthographicCamera = (
 type Bounds = readonly [number, number, number, number, number, number];
 
 class VisGeometry {
+    static getNullAgent(): AgentData {
+        return { ...NULL_AGENT };
+    }
     public onError: (error: FrontEndError) => void;
     public renderStyle: RenderStyle;
     public backgroundColor: Color;
@@ -170,6 +186,7 @@ class VisGeometry {
     public hemiLight: HemisphereLight;
     public boundingBox!: Box3;
     public boundingBoxMesh!: Box3Helper;
+    public showBounds: boolean;
     public tickMarksMesh!: LineSegments;
     public tickIntervalLength: number;
     // front and back of transformed bounds in camera space
@@ -258,6 +275,7 @@ class VisGeometry {
         this.volumeGroup.name = "volumes";
         this.scene.add(this.volumeGroup);
 
+        this.showBounds = true;
         this.resetBounds(DEFAULT_VOLUME_DIMENSIONS);
 
         this.dl = new DirectionalLight(0xffffff, 0.6);
@@ -470,6 +488,7 @@ class VisGeometry {
                 g: this.backgroundColor.g * 255,
                 b: this.backgroundColor.b * 255,
             },
+            showBounds: true,
         };
 
         this.gui.addInput(settings, "bgcolor").on("change", (event) => {
@@ -478,6 +497,9 @@ class VisGeometry {
                 event.value.g / 255.0,
                 event.value.b / 255.0,
             ]);
+        });
+        this.gui.addInput(settings, "showBounds").on("change", (event) => {
+            this.setShowBounds(event.value);
         });
         this.gui.addButton({ title: "Capture Frame" }).on("click", () => {
             this.render(0);
@@ -696,9 +718,13 @@ class VisGeometry {
     }
 
     public getObjectData(id: number): AgentData {
+        if (id === NO_AGENT) {
+            // initial state
+            return VisGeometry.getNullAgent();
+        }
         const data = this.visAgentInstances.get(id);
         if (!data) {
-            return nullAgent();
+            return VisGeometry.getNullAgent();
         }
         return data.agentData;
     }
@@ -1123,8 +1149,8 @@ class VisGeometry {
             );
 
             // final pass, add extra stuff on top: bounding box and line paths
-            this.boundingBoxMesh.visible = true;
-            this.tickMarksMesh.visible = true;
+            this.boundingBoxMesh.visible = this.showBounds;
+            this.tickMarksMesh.visible = this.showBounds;
             this.agentPathGroup.visible = true;
             this.volumeGroup.visible = true;
 
@@ -1287,7 +1313,6 @@ class VisGeometry {
         boundsAsTuple: Bounds
     ): void {
         const [minX, minY, minZ, maxX, maxY, maxZ] = boundsAsTuple;
-        const visible = this.tickMarksMesh ? this.tickMarksMesh.visible : true;
 
         const longestEdgeLength = Math.max(...volumeDimensions);
         // Use the length of the longest bounding box edge to determine the tick interval (scale bar) length
@@ -1417,14 +1442,11 @@ class VisGeometry {
             color: BOUNDING_BOX_COLOR,
         });
         this.tickMarksMesh = new LineSegments(lineGeometry, lineMaterial);
-        this.tickMarksMesh.visible = visible;
+        this.tickMarksMesh.visible = this.showBounds;
     }
 
     public createBoundingBox(boundsAsTuple: Bounds): void {
         const [minX, minY, minZ, maxX, maxY, maxZ] = boundsAsTuple;
-        const visible = this.boundingBoxMesh
-            ? this.boundingBoxMesh.visible
-            : true;
         this.boundingBox = new Box3(
             new Vector3(minX, minY, minZ),
             new Vector3(maxX, maxY, maxZ)
@@ -1433,7 +1455,7 @@ class VisGeometry {
             this.boundingBox,
             BOUNDING_BOX_COLOR
         );
-        this.boundingBoxMesh.visible = visible;
+        this.boundingBoxMesh.visible = this.showBounds;
     }
 
     public resetBounds(volumeDimensions?: number[]): void {
@@ -1959,8 +1981,7 @@ class VisGeometry {
     }
 
     public setShowBounds(showBounds: boolean): void {
-        this.boundingBoxMesh.visible = showBounds;
-        this.tickMarksMesh.visible = showBounds;
+        this.showBounds = showBounds;
     }
 
     public showPathForAgent(id: number, visible: boolean): void {
@@ -1971,6 +1992,8 @@ class VisGeometry {
     }
 
     public clearForNewTrajectory(): void {
+        // only gets called by the parent app by calling
+        // clearFile on the controller
         this.legacyRenderer.beginUpdate(this.scene);
         this.legacyRenderer.endUpdate(this.scene);
         this.resetMapping();
@@ -1979,7 +2002,7 @@ class VisGeometry {
         this.visAgentInstances.clear();
         this.visAgents = [];
         this.currentSceneData = nullCachedFrame();
-
+        this.availableAgentPool = [];
         this.dehighlight();
     }
 

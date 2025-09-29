@@ -1,4 +1,4 @@
-import Viewport from "./viewport";
+import Viewport from "./viewport/index.js";
 
 export type {
     SelectionStateInfo,
@@ -12,13 +12,14 @@ export type {
     VisDataMessage,
     Plot,
     AgentData,
-} from "./simularium";
-export type { ISimulariumFile } from "./simularium/ISimulariumFile";
-export type { TimeData } from "./viewport";
-export { GeometryDisplayType } from "./visGeometry/types";
-export { VolumeLoadingMode } from "./visGeometry";
-export { RenderStyle } from "./viewport";
-export { SimulariumController } from "./controller";
+    CacheLog,
+} from "./simularium/index.js";
+export type { ISimulariumFile } from "./simularium/ISimulariumFile.js";
+export type { TimeData } from "./viewport/index.js";
+export { VolumeLoadingMode } from "./visGeometry/index.js";
+export { GeometryDisplayType } from "./visGeometry/types.js";
+export { RenderStyle } from "./viewport/index.js";
+export { SimulariumController } from "./controller/index.js";
 export {
     Orchestrator,
     RemoteSimulator,
@@ -26,8 +27,8 @@ export {
     FrontEndError,
     VisTypes,
     ClientMessageEnum,
-} from "./simularium";
-export { compareTimes, loadSimulariumFile } from "./util";
-export { DEFAULT_CAMERA_SPEC } from "./constants";
+} from "./simularium/index.js";
+export { compareTimes, loadSimulariumFile } from "./util.js";
+export { DEFAULT_CAMERA_SPEC, TrajectoryType } from "./constants.js";
 
 export default Viewport;

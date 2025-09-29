@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { UIDisplayData } from "../../src";
+
+import { UIDisplayData } from "@aics/simularium-viewer";
 
 type ColorPickerProps = {
     uiDisplayData: UIDisplayData;
@@ -28,6 +29,10 @@ const ColorPicker = ({
         );
         if (!agent) {
             throw new Error("No agent found");
+        }
+        if (agent.displayStates.length === 0) {
+            setSubAgents([{ name: "<unmodified>", id: "<unmodified>" }]);
+            return;
         }
         setSubAgents(agent.displayStates);
     };
@@ -90,8 +95,8 @@ const ColorPicker = ({
     };
 
     return (
-        <>
-            <span>Color change agent selections:</span>
+        <div className="ui-container">
+            <span>Color picker:</span>
             <select id="agentSelect" onChange={handleAgentSelection}>
                 <option value=""> Select Agent</option>
                 {particleTypeNames.map((name: string) => (
@@ -139,7 +144,7 @@ const ColorPicker = ({
             <button onClick={() => addColorToColorArray(colorToAppend)}>
                 Add color to color array
             </button>
-        </>
+        </div>
     );
 };
 

@@ -3,7 +3,7 @@
 
 name: Node.js CI
 env:
-    NODE_VERSION: "16.x"
+    NODE_VERSION: "20.x"
 
 on: [push]
 
@@ -12,9 +12,9 @@ jobs:
         name: ✅ Lint
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
             - name: Setup Node
-              uses: actions/setup-node@v3
+              uses: actions/setup-node@v4
               with:
                   node-version: ${{env.NODE_VERSION}}
             - run: npm ci
@@ -23,9 +23,9 @@ jobs:
         name: Unit Test
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
             - name: Setup Node
-              uses: actions/setup-node@v3
+              uses: actions/setup-node@v4
               with:
                   node-version: ${{env.NODE_VERSION}}
             - run: npm ci
@@ -34,12 +34,14 @@ jobs:
         name: Type Check
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
+            - uses: actions/checkout@v4
             - name: Setup Node
-              uses: actions/setup-node@v3
+              uses: actions/setup-node@v4
               with:
                   node-version: ${{env.NODE_VERSION}}
             - run: npm ci
+            - run: cd examples && npm ci
+            - run: npm run generateTypes
             - run: npm run typeCheck --if-present
 
     publish-dev:
@@ -47,8 +49,8 @@ jobs:
         needs: [lint, typeCheck, test]
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
-            - uses: actions/setup-node@v3
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
               with:
                   node-version: ${{env.NODE_VERSION}}
             - run: npm ci
@@ -58,18 +60,18 @@ jobs:
             - name: Push to branch
               uses: moodiest/push-to-branch-action@develop
               env:
-                 REPO: self
-                 BRANCH: build
-                 FOLDER: dev-build
-                 GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  REPO: self
+                  BRANCH: build
+                  FOLDER: dev-build
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     publish-stable:
         if: startsWith(github.ref, 'refs/tags/v')
         needs: [lint, typeCheck, test]
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v3
-            - uses: actions/setup-node@v3
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
               with:
                   node-version: ${{env.NODE_VERSION}}
                   registry-url: https://registry.npmjs.org/

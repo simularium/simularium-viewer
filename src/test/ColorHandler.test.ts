@@ -5,8 +5,8 @@
     so we need to disable the eslint rule here
 */
 
-import ColorHandler from "../visGeometry/ColorHandler";
-import { convertColorStringToNumber } from "../visGeometry/ColorHandler";
+import ColorHandler from "../visGeometry/ColorHandler.js";
+import { convertColorStringToNumber } from "../visGeometry/ColorHandler.js";
 import { Color } from "three";
 
 const initialColorData = ["#000000", "#000001", "#000002", "#000003"];

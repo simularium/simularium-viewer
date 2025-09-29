@@ -1,12 +1,12 @@
 import { noop } from "lodash";
 
-import { nullCachedFrame } from "../util";
+import { nullCachedFrame } from "../util.js";
 
-import { VisDataMessage, CachedFrame } from "./types";
-import { parseVisDataMessage } from "./VisDataParse";
-import { VisDataCache } from "./VisDataCache";
-import { ErrorLevel, FrontEndError } from "./FrontEndError";
-import { BYTE_SIZE_64_BIT_NUM } from "../constants";
+import { VisDataMessage, CachedFrame } from "./types.js";
+import { parseVisDataMessage } from "./VisDataParse.js";
+import { VisDataCache } from "./VisDataCache.js";
+import { ErrorLevel, FrontEndError } from "./FrontEndError.js";
+import { BYTE_SIZE_64_BIT_NUM } from "../constants.js";
 
 class VisData {
     public frameCache: VisDataCache;
@@ -24,7 +24,7 @@ class VisData {
         const intView = new Uint32Array(data);
         const frameData: CachedFrame = {
             data: data,
-            frameNumber: floatView[0],
+            frameNumber: intView[0],
             time: floatView[1],
             agentCount: intView[2],
             size: 0,
@@ -48,6 +48,14 @@ class VisData {
 
     public setOnError(onError: (error: FrontEndError) => void): void {
         this.onError = onError;
+    }
+
+    public isCacheEnabled(): boolean {
+        return this.frameCache.cacheEnabled;
+    }
+
+    public getMaxCacheSize(): number {
+        return this.frameCache.maxSize;
     }
 
     public get currentFrameData(): CachedFrame {

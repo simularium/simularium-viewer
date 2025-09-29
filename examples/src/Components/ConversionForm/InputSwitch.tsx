@@ -40,7 +40,7 @@ const InputSwitch = (props: InputSwitchProps) => {
                     dataType={currentDataType}
                     options={currentParameter.options || []}
                     name={currentParameter.name}
-                    handler={(value) => {                
+                    handler={(value) => {
                         return handler(path, key, value);
                     }}
                 />
@@ -60,7 +60,7 @@ const InputSwitch = (props: InputSwitchProps) => {
     };
     const hasChildren = !!templateData[dataType].parameters;
     return (
-        <div style={{ borderTop: "1px solid black", padding: 20}}>
+        <div style={{ borderTop: "1px solid black", padding: 20 }}>
             {path.length <= 1 ? (
                 <h3>
                     {parameter.name}{" "}
@@ -84,11 +84,15 @@ const InputSwitch = (props: InputSwitchProps) => {
                       templateData[dataType].parameters,
                       (childParameter, key) => {
                           const currentDataType = childParameter.data_type;
-                          return renderParameter(
-                              currentDataType,
-                              key,
-                              childParameter,
-                              true
+                          return (
+                              <div key={key}>
+                                  {renderParameter(
+                                      currentDataType,
+                                      key,
+                                      childParameter,
+                                      true
+                                  )}
+                              </div>
                           );
                       }
                   )
