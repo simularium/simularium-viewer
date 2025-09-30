@@ -64,10 +64,10 @@ import "@aics/simularium-viewer/style/style.css";
 import "./style.css";
 
 const volumeLoadingModes = {
-    "none": VolumeLoadingMode.NONE,
-    "wait": VolumeLoadingMode.WAIT,
-    "hide": VolumeLoadingMode.HIDE,
-}
+    none: VolumeLoadingMode.NONE,
+    wait: VolumeLoadingMode.WAIT,
+    hide: VolumeLoadingMode.HIDE,
+};
 
 interface ViewerState {
     renderStyle: RenderStyle;
@@ -991,7 +991,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                                     step={1}
                                     value={this.state.currentFrame}
                                     max={this.state.totalSteps}
-                                    onChange={this.handleScrubFrame}
+                                    onChange={this.handleScrubTime}
                                 />
                                 <label htmlFor="slider">
                                     {this.state.currentFrame *
@@ -1001,6 +1001,20 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                                     {this.state.totalSteps *
                                         this.state.timeStep}
                                 </label>
+                            </div>
+                            <div className="ui-container">
+                                Volume loading mode:{" "}
+                                <select
+                                    onChange={({ target }) =>
+                                        simulariumController.setVolumeLoadingMode(
+                                            volumeLoadingModes[target.value]
+                                        )
+                                    }
+                                >
+                                    <option value="none">None</option>
+                                    <option value="wait">Wait</option>
+                                    <option value="hide">Hide</option>
+                                </select>
                             </div>
                         </div>
                         <div className="camera ui-container horizontal">
