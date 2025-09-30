@@ -2,7 +2,7 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const path = require("path");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const webpack = require('webpack');
+const webpack = require("webpack");
 
 module.exports = {
     entry: "./src/index.tsx",
@@ -28,11 +28,13 @@ module.exports = {
             ],
         }),
         new webpack.DefinePlugin({
-            SIMULARIUM_USE_LOCAL_BACKEND: Boolean(process.env.npm_config_localserver),
+            SIMULARIUM_USE_LOCAL_BACKEND: Boolean(
+                process.env.npm_config_localserver
+            ),
         }),
     ],
     devServer: {
-        devMiddleware:{
+        devMiddleware: {
             publicPath: "/public/",
         },
         open: ["public/"],
@@ -48,6 +50,9 @@ module.exports = {
                         loader: "babel-loader",
                     },
                 ],
+                resolve: {
+                    fullySpecified: false,
+                },
             },
             {
                 test: /\.css/,

@@ -10,12 +10,12 @@ import {
     Vector4,
     WebGLRenderer,
 } from "three";
-import { MarchingCubes } from "three/examples/jsm/objects/MarchingCubes";
+import { MarchingCubes } from "three/examples/jsm/objects/MarchingCubes.js";
 
-import MetaballMeshShaders from "./MetaballMeshShader";
-import { MRTShaders } from "./MultipassMaterials";
+import MetaballMeshShaders from "./MetaballMeshShader.js";
+import { MRTShaders } from "./MultipassMaterials.js";
 
-import { GeometryInstanceContainer } from "../types";
+import { GeometryInstanceContainer } from "../types.js";
 
 class MetaballMesh implements GeometryInstanceContainer {
     private drawable: Group;

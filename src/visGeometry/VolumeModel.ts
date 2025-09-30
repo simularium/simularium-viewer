@@ -8,7 +8,7 @@ import {
     WebGLRenderer,
 } from "three";
 
-import { Lut, Volume, VolumeDrawable } from "@aics/volume-viewer";
+import { Lut, Volume, VolumeDrawable } from "@aics/vole-core";
 
 import { AgentData } from "../simularium/types";
 

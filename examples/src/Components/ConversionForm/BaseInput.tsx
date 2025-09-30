@@ -36,7 +36,9 @@ const BaseInput = (props: BaseInputProps) => {
             return (
                 <select onChange={(e) => props.handler(e.target.value)}>
                     {options.map((id) => (
-                        <option value={id}>{id}</option>
+                        <option key={id} value={id}>
+                            {id}
+                        </option>
                     ))}
                 </select>
             );

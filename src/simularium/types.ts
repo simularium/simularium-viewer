@@ -1,4 +1,4 @@
-import { GeometryDisplayType } from "../visGeometry/types";
+import { GeometryDisplayType } from "../visGeometry/types.js";
 
 export interface VisDataFrame {
     data: number[];
@@ -208,4 +208,9 @@ export interface CacheNode {
     data: CachedFrame;
     next: CacheNode | null;
     prev: CacheNode | null;
+}
+
+export interface CacheLog {
+    size: number;
+    framesInCache: number[];
 }

@@ -1,7 +1,7 @@
 import { map, reduce } from "lodash";
 import React from "react";
 import BaseInput from "./BaseInput";
-import { CustomParameters } from "../Viewer";
+import { CustomParameters } from "../../types";
 
 interface CollectionParameters extends CustomParameters {
     length: number;
@@ -87,6 +87,7 @@ class CollectionInput extends React.Component<
         if (data.isBaseType) {
             return (
                 <BaseInput
+                    key={index}
                     options={childItem.options || []}
                     dataType={currentDataType}
                     name={childItem.name}
@@ -102,11 +103,15 @@ class CollectionInput extends React.Component<
             );
         } else if (data.parameters) {
             return map(data.parameters, (childParameter, key) => {
-                return this.renderValueItem(
-                    childParameter,
-                    [...newPath, key],
-                    index,
-                    type
+                return (
+                    <div key={key}>
+                        {this.renderValueItem(
+                            childParameter,
+                            [...newPath, key],
+                            index,
+                            type
+                        )}
+                    </div>
                 );
             });
         }
@@ -147,7 +152,9 @@ class CollectionInput extends React.Component<
         }
         if (parameter.extendible) {
             jsx.push(
-                <button key={name} onClick={this.addItem}>Add another {name} item</button>
+                <button key={name} onClick={this.addItem}>
+                    Add another {name} item
+                </button>
             );
         }
         return jsx;

@@ -3,51 +3,85 @@ import {
     VisDataMessage,
     NetMessageEnum,
     FrontEndError,
-} from "../simularium";
+} from "../simularium/index.js";
 import {
     calculateBufferSize,
     parseVisDataMessage,
-} from "../simularium/VisDataParse";
-import { AGENT_OBJECT_KEYS, CachedFrame } from "../simularium/types";
-import { nullCachedFrame } from "../util";
+} from "../simularium/VisDataParse.js";
+import { AGENT_OBJECT_KEYS, CachedFrame } from "../simularium/types.js";
+import { nullCachedFrame } from "../util.js";
 
 // Sample data of a single agent of type '7'
 //  moving linearly from (0,0,0) to (5,5,5)
 //  and rotating 0-90 degrees around the x axis
 //  over 5 frames from time 0-20
-const testData = {
-    fileName: "",
-    msgType: 1,
-    bundleSize: 5,
-    bundleStart: 0,
-    bundleData: [
-        {
-            frameNumber: 0,
-            time: 0,
-            data: [1000, 0, 7, 1, 1, 1, 0, 0, 0, 1, 0],
-        },
-        {
-            frameNumber: 1,
-            time: 5,
-            data: [1000, 0, 7, 2, 2, 2, 0, 22.5, 0, 1, 0],
-        },
-        {
-            frameNumber: 2,
-            time: 10,
-            data: [1000, 0, 7, 3, 3, 3, 0, 45, 0, 1, 0],
-        },
-        {
-            frameNumber: 3,
-            time: 15,
-            data: [1000, 0, 7, 4, 4, 4, 0, 67.5, 0, 1, 0],
-        },
-        {
-            frameNumber: 4,
-            time: 20,
-            data: [1000, 0, 7, 5, 5, 5, 0, 90, 0, 1, 0],
-        },
-    ],
-};
+const testData = [
+    {
+        fileName: "",
+        msgType: 1,
+        bundleSize: 1,
+        bundleStart: 0,
+        bundleData: [
+            {
+                frameNumber: 0,
+                time: 0,
+                data: [1000, 0, 7, 1, 1, 1, 0, 0, 0, 1, 0],
+            },
+        ],
+    },
+    {
+        fileName: "",
+        msgType: 1,
+        bundleSize: 1,
+        bundleStart: 1,
+        bundleData: [
+            {
+                frameNumber: 1,
+                time: 5,
+                data: [1000, 0, 7, 2, 2, 2, 0, 22.5, 0, 1, 0],
+            },
+        ],
+    },
+    {
+        fileName: "",
+        msgType: 1,
+        bundleSize: 1,
+        bundleStart: 2,
+        bundleData: [
+            {
+                frameNumber: 2,
+                time: 10,
+                data: [1000, 0, 7, 3, 3, 3, 0, 45, 0, 1, 0],
+            },
+        ],
+    },
+    {
+        fileName: "",
+        msgType: 1,
+        bundleSize: 1,
+        bundleStart: 3,
+        bundleData: [
+            {
+                frameNumber: 3,
+                time: 15,
+                data: [1000, 0, 7, 4, 4, 4, 0, 67.5, 0, 1, 0],
+            },
+        ],
+    },
+    {
+        fileName: "",
+        msgType: 1,
+        bundleSize: 1,
+        bundleStart: 4,
+        bundleData: [
+            {
+                frameNumber: 4,
+                time: 20,
+                data: [1000, 0, 7, 5, 5, 5, 0, 90, 0, 1, 0],
+            },
+        ],
+    },
+];
 
 describe("VisData module", () => {
     describe("VisData parse", () => {
@@ -203,7 +237,9 @@ describe("VisData module", () => {
         });
         test("can find frames in cache by time", () => {
             const visData = new VisData();
-            visData.parseAgentsFromNetData(testData);
+            testData.forEach((frame) => {
+                visData.parseAgentsFromNetData(frame);
+            });
 
             const i = 0;
             while (!visData.atLatestFrame()) {
