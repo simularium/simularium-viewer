@@ -51,23 +51,71 @@ const sphereAgentData = (time: number): number[] => [
 ];
 
 export default class VolumeSim implements IClientSimulatorImpl {
-    size = [25, 25, 25];
-    time = 0;
+    agentdata: number[];
+    size: [number, number, number];
+    curFrame: number = 0;
 
-    update(t?: number): VisDataMessage {
-        this.time = (t ?? this.time + 1) % NUM_TIMESTEPS;
+    constructor() {
+        this.agentdata = [
+            // AGENT 1 ("volume")
+            VisTypes.ID_VIS_TYPE_DEFAULT, // vis type - TODO swap to volume when/if available
+            0, // instance id
+            0, // type
+            0, // x
+            0, // y
+            0, // z
+            0, // rx
+            0, // ry
+            0, // rz
+            10.0, // collision radius
+            4, // subpoints
+            0,
+            0,
+            1,
+            2,
+
+            // AGENT 2 (sphere, to test volume-mesh intersection)
+            VisTypes.ID_VIS_TYPE_DEFAULT, // vis type
+            1, // instance id
+            1, // type
+            0, // x
+            0, // y
+            3, // z
+            0, // rx
+            0, // ry
+            0, // rz
+            1.0, // collision radius
+            0, // subpoints
+        ];
+        this.size = [25, 25, 25];
+    }
+
+    updateAgentPos(agentIndex: number, x: number, y: number, z: number) {
+        const OFFSET_TO_FIRST_AGENT = 15;
+        const baseIndex = OFFSET_TO_FIRST_AGENT + agentIndex * 11;
+        this.agentdata[baseIndex + 3] = x;
+        this.agentdata[baseIndex + 4] = y;
+        this.agentdata[baseIndex + 5] = z;
+    }
+    updateVolumeT(t: number) {
+        this.agentdata[11] = t;
+    }
+
+    update(_dt: number): VisDataMessage {
+        this.updateAgentPos(0, 0, 0, 3 * Math.sin(this.curFrame / 10));
+        this.updateVolumeT(this.curFrame);
+        this.curFrame++;
+        // cycle 200 frames
+        this.curFrame = this.curFrame % 200;
         return {
             msgType: ClientMessageEnum.ID_VIS_DATA_ARRIVE,
             bundleStart: this.time,
             bundleSize: 1, // frames
             bundleData: [
                 {
-                    data: [
-                        ...volumeAgentData(this.time),
-                        ...sphereAgentData(this.time),
-                    ],
-                    frameNumber: this.time,
-                    time: this.time,
+                    data: this.agentdata,
+                    frameNumber: this.curFrame,
+                    time: this.curFrame, // in seconds
                 },
             ],
             fileName: "hello world",
@@ -79,7 +127,7 @@ export default class VolumeSim implements IClientSimulatorImpl {
                 name: "volume",
                 geometry: {
                     displayType: GeometryDisplayType.VOLUME,
-                    url: "https://animatedcell-test-data.s3.us-west-2.amazonaws.com/20200323_F01_001/P13-C4.zarr/",
+                    url: "https://s3.us-west-2.amazonaws.com/production.files.allencell.org/982/70e/0ba/ecd/e7a/06a/e41/de6/29a/1af/30/3500007062_20250207_20X_Timelapse-01(P17-G3).ome.zarr",
                     color: "ffff00",
                 },
             },

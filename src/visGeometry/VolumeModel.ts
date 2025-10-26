@@ -75,9 +75,9 @@ export default class VolumeModel {
         this.volume = volumeObject;
         this.drawable = new VolumeDrawable(this.volume, {});
         this.volume.addVolumeDataObserver(this);
-        this.drawable.setBrightness(0.7);
+        this.drawable.setBrightness(0.5);
         this.drawable.setGamma(0.15, 0.9, 1.0);
-        this.drawable.setDensity(0.7);
+        this.drawable.setDensity(0.1);
     }
 
     public async setAgentData(
