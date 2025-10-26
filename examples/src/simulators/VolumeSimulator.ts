@@ -23,7 +23,7 @@ const volumeAgentData = (time: number): number[] => [
     0, // type
     0, // x
     0, // y
-    time * 0.3, // z
+    0,// time * 0.3, // z
     0, // rx
     0, // ry
     0, // rz
@@ -46,7 +46,7 @@ const sphereAgentData = (time: number): number[] => [
     0, // rx
     0, // ry
     0, // rz
-    time / 2 + 5, // collision radius
+    1.0,// time / 2 + 5, // collision radius
     0, // subpoints
 ];
 
@@ -98,7 +98,7 @@ export default class VolumeSim implements IClientSimulatorImpl {
         this.agentdata[baseIndex + 5] = z;
     }
     updateVolumeT(t: number) {
-        this.agentdata[11] = t;
+        this.agentdata[11] = t % 120;
     }
 
     update(_dt: number): VisDataMessage {
@@ -109,7 +109,7 @@ export default class VolumeSim implements IClientSimulatorImpl {
         this.curFrame = this.curFrame % 200;
         return {
             msgType: ClientMessageEnum.ID_VIS_DATA_ARRIVE,
-            bundleStart: this.time,
+            bundleStart: this.curFrame,
             bundleSize: 1, // frames
             bundleData: [
                 {
