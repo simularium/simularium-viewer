@@ -42,7 +42,7 @@ const sphereAgentData = (time: number): number[] => [
     1, // type
     0, // x
     0, // y
-    3, // z
+    3 * Math.sin(time / 10) , //z
     0, // rx
     0, // ry
     0, // rz
@@ -51,69 +51,24 @@ const sphereAgentData = (time: number): number[] => [
 ];
 
 export default class VolumeSim implements IClientSimulatorImpl {
-    agentdata: number[];
     size: [number, number, number];
     curFrame: number = 0;
 
     constructor() {
-        this.agentdata = [
-            // AGENT 1 ("volume")
-            VisTypes.ID_VIS_TYPE_DEFAULT, // vis type - TODO swap to volume when/if available
-            0, // instance id
-            0, // type
-            0, // x
-            0, // y
-            0, // z
-            0, // rx
-            0, // ry
-            0, // rz
-            10.0, // collision radius
-            4, // subpoints
-            0,
-            0,
-            1,
-            2,
-
-            // AGENT 2 (sphere, to test volume-mesh intersection)
-            VisTypes.ID_VIS_TYPE_DEFAULT, // vis type
-            1, // instance id
-            1, // type
-            0, // x
-            0, // y
-            3, // z
-            0, // rx
-            0, // ry
-            0, // rz
-            1.0, // collision radius
-            0, // subpoints
-        ];
         this.size = [25, 25, 25];
     }
 
-    updateAgentPos(agentIndex: number, x: number, y: number, z: number) {
-        const OFFSET_TO_FIRST_AGENT = 15;
-        const baseIndex = OFFSET_TO_FIRST_AGENT + agentIndex * 11;
-        this.agentdata[baseIndex + 3] = x;
-        this.agentdata[baseIndex + 4] = y;
-        this.agentdata[baseIndex + 5] = z;
-    }
-    updateVolumeT(t: number) {
-        this.agentdata[11] = t % 120;
-    }
-
     update(_dt: number): VisDataMessage {
-        this.updateAgentPos(0, 0, 0, 3 * Math.sin(this.curFrame / 10));
-        this.updateVolumeT(this.curFrame);
         this.curFrame++;
-        // cycle 200 frames
-        this.curFrame = this.curFrame % 200;
+        // cycle 120 frames
+        this.curFrame = this.curFrame % 120;
         return {
             msgType: ClientMessageEnum.ID_VIS_DATA_ARRIVE,
             bundleStart: this.curFrame,
             bundleSize: 1, // frames
             bundleData: [
                 {
-                    data: this.agentdata,
+                    data: [...volumeAgentData(this.curFrame), ...sphereAgentData(this.curFrame)],
                     frameNumber: this.curFrame,
                     time: this.curFrame, // in seconds
                 },
