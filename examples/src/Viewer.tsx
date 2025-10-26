@@ -24,7 +24,7 @@ import type {
     IClientSimulatorImpl,
     CacheLog,
 } from "@aics/simularium-viewer";
-import "../../style/style.css";
+import "../../es/style/style.css";
 
 // local test bed imports
 import PointSimulator from "./simulators/PointSimulator.ts";

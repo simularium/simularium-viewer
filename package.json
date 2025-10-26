@@ -7,7 +7,7 @@
     "module": "es/index.js",
     "types": "type-declarations",
     "scripts": {
-        "start": "npm run run-p 'processCSS -- --watch' 'transpileES -- --watch' 'generateTypes -- --watch' serve-example",
+        "start": "'run-p' 'processCSS -- --watch' 'transpileES -- --watch' 'generateTypes -- --watch' serve-example",
         "dev": "npm install && npm run build && npm run install-examples && npm run start",
         "serve-example": "cd examples && npm run serve-example",
         "install-examples": "npm install && cd examples && npm install",
