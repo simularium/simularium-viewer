@@ -82,6 +82,7 @@ interface ViewerState {
     agentColors: number[] | string[];
     showPaths: boolean;
     timeStep: number;
+    totalSteps: number;
     totalDuration: number;
     filePending: {
         type: TrajectoryType;
@@ -527,12 +528,14 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             timeStep: data.timeStepSize,
             currentFrame: 0,
             currentTime: 0,
+            totalSteps: data.totalSteps,
             trajectoryTitle: data.trajectoryTitle,
         });
     }
 
-    public handleScrubTime(event): void {
-        simulariumController.gotoTime(parseFloat(event.target.value));
+    public handleScrubTime(event: React.ChangeEvent<HTMLInputElement>): void {
+        simulariumController.gotoTime(parseFloat(event.target.value) * this.state.timeStep +
+                                        this.state.firstFrameTime);
     }
 
     public handleUIDisplayData(uiDisplayData: UIDisplayData): void {

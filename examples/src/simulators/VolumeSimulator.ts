@@ -11,7 +11,7 @@ import {
 } from "../../../src/simularium/types";
 import VisTypes from "../../../src/simularium/VisTypes";
 
-const NUM_TIMESTEPS = 5;
+const NUM_TIMESTEPS = 120;
 
 const FOV_DEGREES = 75;
 const DEGREES_TO_RADIANS = 3.14159265 / 180.0;
@@ -23,7 +23,7 @@ const volumeAgentData = (time: number): number[] => [
     0, // type
     0, // x
     0, // y
-    0,// time * 0.3, // z
+    0, // time * 0.3, // z
     0, // rx
     0, // ry
     0, // rz
@@ -42,11 +42,11 @@ const sphereAgentData = (time: number): number[] => [
     1, // type
     0, // x
     0, // y
-    3 * Math.sin(time / 10) , //z
+    3 * Math.sin(time / 10), //z
     0, // rx
     0, // ry
     0, // rz
-    1.0,// time / 2 + 5, // collision radius
+    1.0, // time / 2 + 5, // collision radius
     0, // subpoints
 ];
 
@@ -60,15 +60,18 @@ export default class VolumeSim implements IClientSimulatorImpl {
 
     update(_dt: number): VisDataMessage {
         this.curFrame++;
-        // cycle 120 frames
-        this.curFrame = this.curFrame % 120;
+        // cycle NUM_TIMESTEPS frames
+        this.curFrame = this.curFrame % NUM_TIMESTEPS;
         return {
             msgType: ClientMessageEnum.ID_VIS_DATA_ARRIVE,
             bundleStart: this.curFrame,
             bundleSize: 1, // frames
             bundleData: [
                 {
-                    data: [...volumeAgentData(this.curFrame), ...sphereAgentData(this.curFrame)],
+                    data: [
+                        ...volumeAgentData(this.curFrame),
+                        ...sphereAgentData(this.curFrame),
+                    ],
                     frameNumber: this.curFrame,
                     time: this.curFrame, // in seconds
                 },
