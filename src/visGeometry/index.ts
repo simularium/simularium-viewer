@@ -1830,16 +1830,23 @@ class VisGeometry {
     }
 
     public removePathForAgent(id: number): void {
-        if (!this.agentPaths.delete(id)) {
+        const path = this.agentPaths.get(id);
+        if (!path) {
             this.logger.warn(
                 "attempted to remove path for agent " +
                     id +
                     " that doesn't exist."
             );
+            return;
         }
+        this.agentPathGroup.remove(path.line);
+        this.agentPaths.delete(id);
     }
 
     private removeAllPaths() {
+        this.agentPaths.forEach((path) => {
+            this.agentPathGroup.remove(path.line);
+        });
         this.agentPaths.clear();
     }
 
