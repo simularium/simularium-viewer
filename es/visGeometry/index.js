@@ -1540,13 +1540,21 @@ var VisGeometry = /*#__PURE__*/function () {
   }, {
     key: "removePathForAgent",
     value: function removePathForAgent(id) {
-      if (!this.agentPaths["delete"](id)) {
+      var path = this.agentPaths.get(id);
+      if (!path) {
         this.logger.warn("attempted to remove path for agent " + id + " that doesn't exist.");
+        return;
       }
+      this.agentPathGroup.remove(path.line);
+      this.agentPaths["delete"](id);
     }
   }, {
     key: "removeAllPaths",
     value: function removeAllPaths() {
+      var _this6 = this;
+      this.agentPaths.forEach(function (path) {
+        _this6.agentPathGroup.remove(path.line);
+      });
       this.agentPaths.clear();
     }
   }, {
