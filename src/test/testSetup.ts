@@ -1,7 +1,10 @@
 // to be loaded by jest config's setupFiles
-import { Blob } from "blob-polyfill";
-global.Blob = Blob;
-import { TextDecoder, TextEncoder } from "util";
-/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-(global as any).TextDecoder = TextDecoder;
-global.TextEncoder = TextEncoder;
+import { Blob as CustomBlob } from "blob-polyfill";
+Blob = CustomBlob;
+// import {
+//     TextDecoder as CustomTextDecoder,
+//     TextEncoder as CustomTextEncoder,
+// } from "util";
+// /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+// TextDecoder = CustomTextDecoder;
+// TextEncoder = CustomTextEncoder;
