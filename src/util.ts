@@ -118,11 +118,27 @@ export const getAgentDataFromBuffer = (
         );
     }
     agentData.subpoints = Array.from(
-        view.subarray(
-            offset + AGENT_OBJECT_KEYS.length,
-            offset + AGENT_OBJECT_KEYS.length + nSubPoints
-        )
+        view.subarray(subpointsStart, subpointsEnd)
     );
+
+    // Per-agent features follow subpoints: [nFeatures, features...]
+    // nFeatures is always present in the internal CachedFrame buffer
+    // (defaulted to 0 when the source trajectory has no features).
+    const featureCountIndex = subpointsEnd;
+    if (featureCountIndex + 1 > view.length) {
+        throw new FrontEndError(
+            "Invalid offset: Not enough data in the buffer for nFeatures."
+        );
+    }
+    const nFeatures = view[featureCountIndex];
+    const featuresStart = featureCountIndex + 1;
+    const featuresEnd = featuresStart + nFeatures;
+    if (featuresEnd > view.length) {
+        throw new FrontEndError(
+            "Invalid offset: Not enough data in the buffer for features."
+        );
+    }
+    agentData.features = Array.from(view.subarray(featuresStart, featuresEnd));
     return agentData;
 };
 
@@ -131,5 +147,7 @@ export const getNextAgentOffset = (
     currentOffset: number
 ): number => {
     const nSubPoints = view[currentOffset + AGENT_OBJECT_KEYS.length - 1];
-    return currentOffset + AGENT_OBJECT_KEYS.length + nSubPoints;
+    const subpointsEnd = currentOffset + AGENT_OBJECT_KEYS.length + nSubPoints;
+    const nFeatures = view[subpointsEnd];
+    return subpointsEnd + 1 + nFeatures;
 };

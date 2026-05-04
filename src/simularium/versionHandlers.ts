@@ -5,6 +5,7 @@ import { DEFAULT_CAMERA_SPEC_PERSPECTIVE } from "../constants.js";
 import { FrontEndError, ErrorLevel } from "./FrontEndError.js";
 import {
     AgentDisplayDataWithGeometry,
+    ColormapSpec,
     TrajectoryFileInfo,
     TrajectoryFileInfoAny,
     TrajectoryFileInfoV1,
@@ -16,6 +17,8 @@ export interface AgentTypeVisDataPreProcessing {
     displayType?: GeometryDisplayType;
     url?: string;
     color?: string;
+    featureNames?: string[];
+    colormap?: ColormapSpec;
 }
 
 export interface AgentDisplayDataPreProcessing {
@@ -27,9 +30,10 @@ export interface EncodedTypeMappingPreProcessing {
 }
 /*
 Handles different trajectory file format versions.
-Currently supported versions: 1, 2
+Currently supported versions: 1, 2, 3, 4
+Version 4 adds optional per-agent feature values and per-type colormaps.
 */
-const LATEST_VERSION = 3;
+const LATEST_VERSION = 4;
 const VERSION_NUM_ERROR = "Invalid version number in TrajectoryFileInfo:";
 export const makeMissingDisplayTypeErrorMessage = (
     key: string,
@@ -96,6 +100,8 @@ export const sanitizeAgentMapGeometryData = (
                     displayType,
                     url,
                     color: value.geometry.color || "",
+                    featureNames: value.geometry.featureNames,
+                    colormap: value.geometry.colormap,
                 };
             } else {
                 geometry = {
@@ -124,6 +130,8 @@ export const updateTrajectoryFileInfoFormat = (
 
     switch (msg.version) {
         case LATEST_VERSION:
+            break;
+        case 3:
             break;
         case 2:
             break;

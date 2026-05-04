@@ -184,7 +184,7 @@ const typeMappingMissingUrl = {
 const v3Data = {
     ...v2Data,
     typeMapping: typeMappingWithDefaultGeo,
-    version: 3,
+    version: 4,
 };
 
 describe("Version handlers", () => {

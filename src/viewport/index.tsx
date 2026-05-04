@@ -189,6 +189,9 @@ class Viewport extends React.Component<
 
         simulariumController.visData.timeStepSize =
             trajectoryFileInfo.timeStepSize;
+        // V4+ trajectories carry per-agent feature values.
+        simulariumController.visData.hasFeatures =
+            (trajectoryFileInfo.version || 0) >= 4;
 
         const bx = trajectoryFileInfo.size.x;
         const by = trajectoryFileInfo.size.y;

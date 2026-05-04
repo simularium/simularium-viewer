@@ -3,6 +3,7 @@ import { FrontEndError, ErrorLevel } from "./FrontEndError.js";
 import { AGENT_HEADER_SIZE } from "../constants.js";
 
 const FRAME_DATA_SIZE = AGENT_OBJECT_KEYS.length;
+const N_SUBPOINTS_INDEX = AGENT_OBJECT_KEYS.indexOf("nSubPoints");
 
 /**
  * This function serves as a translation layer, it takes in a VisDataMessage
@@ -15,68 +16,102 @@ const FRAME_DATA_SIZE = AGENT_OBJECT_KEYS.length;
  * as local files will automatically pre-cache frames and not deal with
  * network latency.
  *
+ * Internal CachedFrame layout per agent (always):
+ *   [ AGENT_OBJECT_KEYS fields | subpoints[nSubPoints] | nFeatures | features[nFeatures] ]
+ *
+ * For trajectory format versions < 4 (no features), the source data only
+ * carries the fixed fields and subpoints; we inject nFeatures=0 per agent.
+ *
  * todo: VisDataMessage.bundleData should only ever be a single frame
  * regardless of whether or not the data is JSON or binary, so we
  * should be able to adjust the typing of VisDataMessage to reflect that.
  */
 
-function parseVisDataMessage(visDataMsg: VisDataMessage): CachedFrame {
+function parseVisDataMessage(
+    visDataMsg: VisDataMessage,
+    hasFeatures = false
+): CachedFrame {
     const frame = visDataMsg.bundleData[0];
-    const visData = [...frame.data];
-
-    let nSubPoints = visData[AGENT_OBJECT_KEYS.indexOf("nSubPoints")];
-    let chunkLength = FRAME_DATA_SIZE + nSubPoints;
+    const visData = frame.data;
 
     // make ArrayBuffer from number[] to use in cache
-    const totalSize = calculateBufferSize(frame.data);
+    const totalSize = calculateBufferSize(visData, hasFeatures);
     const buffer = new ArrayBuffer(totalSize);
     const view = new Float32Array(buffer);
 
     let agentCount = 0;
-    let offset = 0;
-    let currentAgentData = visData.slice(offset, offset + chunkLength);
-    while (currentAgentData.length) {
-        let writeIndex = AGENT_HEADER_SIZE + offset;
-        let readIndex = offset;
-        if (currentAgentData.length < chunkLength) {
+    let readIndex = 0;
+    let writeIndex = AGENT_HEADER_SIZE;
+
+    while (readIndex < visData.length) {
+        if (readIndex + FRAME_DATA_SIZE > visData.length) {
             throw new FrontEndError(
-                `Your data is malformed, there are too few entries. Found ${currentAgentData.length} entries, expected ${chunkLength}.`,
+                `Your data is malformed: not enough entries for an agent header. ` +
+                    `Found ${
+                        visData.length - readIndex
+                    }, expected ${FRAME_DATA_SIZE}.`,
                 ErrorLevel.ERROR
             );
+        }
+
+        const nSubPoints = visData[readIndex + N_SUBPOINTS_INDEX];
+
+        // Copy the AGENT_OBJECT_KEYS fields
+        for (let i = 0; i < FRAME_DATA_SIZE; i++) {
+            view[writeIndex + i] = visData[readIndex + i];
+        }
+        writeIndex += FRAME_DATA_SIZE;
+        readIndex += FRAME_DATA_SIZE;
+
+        // Copy subpoints
+        if (readIndex + nSubPoints > visData.length) {
+            throw new FrontEndError(
+                `Your data is malformed: not enough entries for subpoints. ` +
+                    `Found ${visData.length}, expected ${
+                        readIndex + nSubPoints
+                    }.`,
+                ErrorLevel.ERROR
+            );
+        }
+        for (let i = 0; i < nSubPoints; i++) {
+            view[writeIndex + i] = visData[readIndex + i];
+        }
+        writeIndex += nSubPoints;
+        readIndex += nSubPoints;
+
+        // Read or inject nFeatures + features
+        let nFeatures = 0;
+        if (hasFeatures) {
+            if (readIndex + 1 > visData.length) {
+                throw new FrontEndError(
+                    `Your data is malformed: missing nFeatures.`,
+                    ErrorLevel.ERROR
+                );
+            }
+            nFeatures = visData[readIndex];
+            readIndex += 1;
+        }
+        view[writeIndex] = nFeatures;
+        writeIndex += 1;
+
+        if (hasFeatures && nFeatures > 0) {
+            if (readIndex + nFeatures > visData.length) {
+                throw new FrontEndError(
+                    `Your data is malformed: not enough entries for features. ` +
+                        `Found ${visData.length}, expected ${
+                            readIndex + nFeatures
+                        }.`,
+                    ErrorLevel.ERROR
+                );
+            }
+            for (let i = 0; i < nFeatures; i++) {
+                view[writeIndex + i] = visData[readIndex + i];
+            }
+            writeIndex += nFeatures;
+            readIndex += nFeatures;
         }
 
         agentCount++;
-
-        // Copy agent data
-        const agentData = frame.data.slice(
-            readIndex,
-            readIndex + FRAME_DATA_SIZE
-        );
-        view.set(agentData, writeIndex);
-        readIndex += FRAME_DATA_SIZE;
-        writeIndex += FRAME_DATA_SIZE;
-
-        // Validate data integrity
-        if (readIndex + nSubPoints > frame.data.length) {
-            throw new FrontEndError(
-                `Your data is malformed, there are too few entries. Found ${
-                    frame.data.length
-                }, expected ${readIndex + nSubPoints}.`,
-                ErrorLevel.ERROR
-            );
-        }
-
-        // Copy subpoints
-        const subpoints = frame.data.slice(readIndex, readIndex + nSubPoints);
-        view.set(subpoints, writeIndex);
-        readIndex += nSubPoints;
-        writeIndex += nSubPoints;
-
-        // Adjust offsets relative to next agent's # of subpoints
-        offset += chunkLength;
-        nSubPoints = visData[offset + AGENT_OBJECT_KEYS.indexOf("nSubPoints")];
-        chunkLength = FRAME_DATA_SIZE + nSubPoints;
-        currentAgentData = visData.slice(offset, offset + chunkLength);
     }
 
     // Write header data
@@ -96,16 +131,24 @@ function parseVisDataMessage(visDataMsg: VisDataMessage): CachedFrame {
     return frameData;
 }
 
-function calculateBufferSize(data: number[]): number {
+function calculateBufferSize(data: number[], hasFeatures = false): number {
     let size = AGENT_HEADER_SIZE * 4; // Header size in bytes
     let index = 0;
 
     while (index < data.length) {
-        size += FRAME_DATA_SIZE * 4; // Agent header size in bytes
-        const nSubPoints =
-            data[index + AGENT_OBJECT_KEYS.indexOf("nSubPoints")];
+        size += FRAME_DATA_SIZE * 4; // Agent fixed-fields size in bytes
+        const nSubPoints = data[index + N_SUBPOINTS_INDEX];
         size += nSubPoints * 4; // Subpoints size in bytes
         index += FRAME_DATA_SIZE + nSubPoints;
+
+        // nFeatures slot is always present in the internal buffer.
+        size += 4;
+        if (hasFeatures) {
+            const nFeatures = data[index];
+            index += 1;
+            size += nFeatures * 4;
+            index += nFeatures;
+        }
     }
 
     return size;

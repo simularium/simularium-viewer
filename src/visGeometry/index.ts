@@ -106,6 +106,7 @@ const NULL_AGENT = {
     zrot: 0,
     cr: 0,
     subpoints: [],
+    features: [],
 };
 
 export enum RenderStyle {

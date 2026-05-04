@@ -35,6 +35,7 @@ export default class VisAgent {
             type: 0,
             cr: 1.0,
             subpoints: [],
+            features: [],
         };
         this.name = name;
         this.color = new Color(VisAgent.UNASSIGNED_MESH_COLOR);
@@ -73,6 +74,7 @@ export default class VisAgent {
             type: 0,
             cr: 1.0,
             subpoints: [],
+            features: [],
         };
     }
 

@@ -101,7 +101,8 @@ describe("VisData module", () => {
             ];
             const HEADER_SIZE = 3; // frameNumber, time, agentCount
             const FRAME_DATA_SIZE = AGENT_OBJECT_KEYS.length;
-            const expectedSize = (HEADER_SIZE + FRAME_DATA_SIZE) * 4;
+            // +1 float per agent for the always-present nFeatures slot
+            const expectedSize = (HEADER_SIZE + FRAME_DATA_SIZE + 1) * 4;
             const result = calculateBufferSize(testData);
             expect(result).toEqual(expectedSize);
         });
@@ -124,8 +125,9 @@ describe("VisData module", () => {
             const HEADER_SIZE = 3; // frameNumber, time, agentCount
             const FRAME_DATA_SIZE = AGENT_OBJECT_KEYS.length;
             const nSubpoints = testData[10];
+            // +1 float per agent for the always-present nFeatures slot
             const expectedSize =
-                (HEADER_SIZE + FRAME_DATA_SIZE + nSubpoints) * 4;
+                (HEADER_SIZE + FRAME_DATA_SIZE + nSubpoints + 1) * 4;
             const result = calculateBufferSize(testData);
             expect(result).toEqual(expectedSize);
         });

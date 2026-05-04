@@ -93,6 +93,7 @@ describe("util", () => {
                 60, //"subpoint-1" (agent 1)
                 61, //"subpoint-2" (agent 1)
                 62, //"subpoint-3" (agent 1)
+                0, // nFeatures (agent 1)
 
                 11, //"visType" (agent 2)
                 16, //"instanceId" (agent 2)
@@ -107,6 +108,7 @@ describe("util", () => {
                 2, // "nSubPoints" (agent 2)
                 63, //"subpoint-1" (agent 2)
                 64, //"subpoint-2" (agent 2)
+                0, // nFeatures (agent 2)
             ];
             const view = new Float32Array(twoAgentTestData);
 
@@ -114,8 +116,8 @@ describe("util", () => {
             const firstAgentOffset = 0;
             const nextOffset = getNextAgentOffset(view, firstAgentOffset);
 
-            // The first agent has 11 standard fields + 3 subpoints, so the next offset should be 13
-            expect(nextOffset).toBe(14);
+            // 11 fixed fields + 3 subpoints + 1 (nFeatures) + 0 features = 15
+            expect(nextOffset).toBe(15);
         });
 
         describe("getAgentDataFromBuffer", () => {
@@ -135,6 +137,9 @@ describe("util", () => {
                     60, //"subpoint-1",
                     61, //"subpoint-2",
                     62, //"subpoint-3",
+                    2, // nFeatures
+                    0.5, // feature 0
+                    1.5, // feature 1
                 ];
                 const view = new Float32Array(singleAgentTestData);
                 const parsedData = getAgentDataFromBuffer(view, 0);
@@ -151,6 +156,7 @@ describe("util", () => {
                     cr: 50, //"cr",
                     nSubPoints: 3,
                     subpoints: [60, 61, 62], //"subpoint-1", "subpoint-2", "subpoint-3"],
+                    features: [0.5, 1.5],
                 });
             });
             test("it returns the correct AgentData object for the second agent based on updated offset", () => {
@@ -169,6 +175,7 @@ describe("util", () => {
                     60, //"subpoint-1" (agent 1)
                     61, //"subpoint-2" (agent 1)
                     62, //"subpoint-3" (agent 1)
+                    0, // nFeatures (agent 1)
 
                     11, //"visType" (agent 2)
                     16, //"instanceId" (agent 2)
@@ -183,6 +190,7 @@ describe("util", () => {
                     2, // "nSubPoints" (agent 2)
                     63, //"subpoint-1" (agent 2)
                     64, //"subpoint-2" (agent 2)
+                    0, // nFeatures (agent 2)
                 ];
                 const view = new Float32Array(twoAgentTestData);
 
@@ -213,6 +221,7 @@ describe("util", () => {
                     cr: 51, //"cr"
                     nSubPoints: 2,
                     subpoints: [63, 64], //"subpoint-1", "subpoint-2"
+                    features: [],
                 });
             });
             test("it throws an error if the data doesn't have the right shape", () => {

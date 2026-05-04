@@ -17,6 +17,12 @@ class VisData {
     private currentFrameNumber: number;
 
     public timeStepSize: number;
+    /**
+     * Whether incoming JSON frames carry per-agent feature counts and floats
+     * (trajectory format version >= 4). When false, parseVisDataMessage will
+     * inject nFeatures=0 per agent into the internal CachedFrame layout.
+     */
+    public hasFeatures: boolean;
     public onError: (error: FrontEndError) => void;
 
     private static parseOneBinaryFrame(data: ArrayBuffer): CachedFrame {
@@ -42,6 +48,7 @@ class VisData {
         this.frameToWaitFor = 0;
         this.lockedForFrame = false;
         this.timeStepSize = 0;
+        this.hasFeatures = false;
 
         this.onError = noop;
     }
@@ -146,7 +153,10 @@ class VisData {
                 this.frameToWaitFor = 0;
             }
         }
-        const parsedMsg: CachedFrame = parseVisDataMessage(visDataMsg);
+        const parsedMsg: CachedFrame = parseVisDataMessage(
+            visDataMsg,
+            this.hasFeatures
+        );
         if (
             this.frameCache.cacheSizeLimited &&
             parsedMsg.size > this.frameCache.maxSize

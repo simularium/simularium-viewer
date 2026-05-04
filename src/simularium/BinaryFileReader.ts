@@ -1,6 +1,8 @@
 import type { ISimulariumFile } from "./ISimulariumFile.js";
 import type { Plot, TrajectoryFileInfo, VisDataFrame } from "./types.js";
+import { AGENT_OBJECT_KEYS } from "./types.js";
 import { compareTimes } from "../util.js";
+import { AGENT_HEADER_SIZE } from "../constants.js";
 
 const enum BlockTypeEnum {
     // type = 0 : spatial data block in JSON
@@ -27,6 +29,13 @@ const SIGNATURE = "SIMULARIUMBINARY";
 // each block has a type and a size
 const BLOCK_HEADER_SIZE = 8;
 
+// Spatial-data block versions:
+//   1 = legacy: agent records have only AGENT_OBJECT_KEYS fields + subpoints
+//   2 = features: agent records additionally include nFeatures + features
+const SPATIAL_DATA_VERSION_FEATURES = 2;
+const N_SUBPOINTS_INDEX = AGENT_OBJECT_KEYS.indexOf("nSubPoints");
+const FRAME_DATA_SIZE = AGENT_OBJECT_KEYS.length;
+
 export default class BinaryFileReader implements ISimulariumFile {
     fileContents: ArrayBuffer;
     dataView: DataView;
@@ -37,10 +46,13 @@ export default class BinaryFileReader implements ISimulariumFile {
     frameOffsets: number[];
     frameLengths: number[];
     spatialDataBlock: DataView; // ideally this is really a Float32Array but alignment is not guaranteed yet
+    /** Spatial-data block version. >= 2 means per-agent records include features. */
+    spatialDataVersion: number;
     constructor(fileContents: ArrayBuffer) {
         this.nFrames = 0;
         this.frameOffsets = [];
         this.frameLengths = [];
+        this.spatialDataVersion = 1;
         this.fileContents = fileContents;
         this.dataView = new DataView(fileContents);
         this.header = this.readHeader();
@@ -63,7 +75,7 @@ export default class BinaryFileReader implements ISimulariumFile {
                 const blockData = this.getBlockContent(block);
                 let byteOffset = 0;
                 // Spatial data version (4-byte int)
-                // const version = blockData.getUint32(byteOffset, true);
+                this.spatialDataVersion = blockData.getUint32(byteOffset, true);
                 byteOffset += 4;
                 // Number of frames (4-byte int)
                 this.nFrames = blockData.getUint32(byteOffset, true);
@@ -260,7 +272,13 @@ export default class BinaryFileReader implements ISimulariumFile {
             totalOffset,
             totalOffset + frameSize
         );
-        return frameContents;
+        if (this.spatialDataVersion >= SPATIAL_DATA_VERSION_FEATURES) {
+            return frameContents;
+        }
+        // Legacy V1: source frame has no per-agent features section. Transform
+        // to the internal CachedFrame layout by injecting nFeatures=0 after
+        // each agent's subpoints.
+        return injectEmptyFeatures(frameContents);
     }
 
     getPlotData(): Plot[] {
@@ -272,4 +290,47 @@ export default class BinaryFileReader implements ISimulariumFile {
             type: "text/plain;charset=utf-8",
         });
     }
+}
+
+/**
+ * Convert a legacy (spatial-data v1) frame ArrayBuffer to the internal
+ * CachedFrame layout by appending nFeatures=0 after each agent's subpoints.
+ * Frame layout in: [frameNumber, time, agentCount, (agent fields, subpoints)*]
+ * Frame layout out: [frameNumber, time, agentCount, (agent fields, subpoints, 0)*]
+ */
+function injectEmptyFeatures(frameContents: ArrayBuffer): ArrayBuffer {
+    const src = new Float32Array(frameContents);
+    if (src.length < AGENT_HEADER_SIZE) {
+        return frameContents;
+    }
+    const agentCount = src[2];
+    // Output is the same as input plus one extra float per agent.
+    const outLength = src.length + agentCount;
+    const out = new Float32Array(outLength);
+    // Copy header
+    out[0] = src[0];
+    out[1] = src[1];
+    out[2] = src[2];
+
+    let readIndex = AGENT_HEADER_SIZE;
+    let writeIndex = AGENT_HEADER_SIZE;
+    for (let a = 0; a < agentCount; a++) {
+        // copy fixed fields
+        for (let i = 0; i < FRAME_DATA_SIZE; i++) {
+            out[writeIndex + i] = src[readIndex + i];
+        }
+        const nSubPoints = src[readIndex + N_SUBPOINTS_INDEX];
+        readIndex += FRAME_DATA_SIZE;
+        writeIndex += FRAME_DATA_SIZE;
+        // copy subpoints
+        for (let i = 0; i < nSubPoints; i++) {
+            out[writeIndex + i] = src[readIndex + i];
+        }
+        readIndex += nSubPoints;
+        writeIndex += nSubPoints;
+        // inject nFeatures=0
+        out[writeIndex] = 0;
+        writeIndex += 1;
+    }
+    return out.buffer;
 }

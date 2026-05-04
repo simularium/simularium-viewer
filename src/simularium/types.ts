@@ -63,10 +63,46 @@ type PlotData = {
     data: Plot[];
 };
 
+/**
+ * Built-in colormap names recognized by the viewer.
+ * Custom colormaps may be supplied via `stops` instead.
+ */
+export type ColormapName =
+    | "viridis"
+    | "plasma"
+    | "magma"
+    | "inferno"
+    | "turbo"
+    | "gray";
+
+export type RgbStop = [number, number, number]; // each component in [0,1]
+
+/**
+ * Per-agent-type colormap. When present on an AgentTypeVisData,
+ * the viewer renders agents of that type using their feature value
+ * mapped through the colormap LUT, instead of the solid `color`.
+ */
+export interface ColormapSpec {
+    /** built-in colormap name; ignored if `stops` is provided */
+    name?: ColormapName;
+    /** explicit RGB stops (each in [0,1]); overrides `name` */
+    stops?: RgbStop[];
+    /** which entry of agentData.features to sample (default 0) */
+    featureIndex: number;
+    /** value mapped to colormap position 0.0 */
+    min: number;
+    /** value mapped to colormap position 1.0 */
+    max: number;
+}
+
 export interface AgentTypeVisData {
     displayType: GeometryDisplayType;
     url: string;
     color: string;
+    /** optional human-readable labels for each entry of agentData.features */
+    featureNames?: string[];
+    /** if set, agents of this type are rendered via colormap lookup */
+    colormap?: ColormapSpec;
 }
 
 export interface AgentDisplayDataWithGeometry {
@@ -182,6 +218,12 @@ export interface AgentData {
     type: number;
     cr: number;
     subpoints: number[];
+    /**
+     * Per-agent feature values. Length is per-agent (may be 0).
+     * Used in conjunction with AgentTypeVisData.colormap to drive
+     * a per-agent color via colormap lookup.
+     */
+    features: number[];
 }
 
 export interface FrameData {
