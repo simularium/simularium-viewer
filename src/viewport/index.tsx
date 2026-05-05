@@ -1,4 +1,4 @@
-import * as React from "react";
+import React from "react";
 import jsLogger from "js-logger";
 import Stats from "three/examples/jsm/libs/stats.module.js";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -12,7 +12,11 @@ import {
     SelectionStateInfo,
     UIDisplayData,
 } from "../simularium/index.js";
-import { AgentData, CacheLog, TrajectoryFileInfoAny } from "../simularium/types.js";
+import {
+    AgentData,
+    CacheLog,
+    TrajectoryFileInfoAny,
+} from "../simularium/types.js";
 import { updateTrajectoryFileInfoFormat } from "../simularium/versionHandlers.js";
 import { FrontEndError, ErrorLevel } from "../simularium/FrontEndError.js";
 import { RenderStyle, VisGeometry, NO_AGENT } from "../visGeometry/index.js";

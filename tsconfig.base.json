@@ -4,7 +4,7 @@
         "declaration": true,
         "declarationDir": "type-declarations",
         "downlevelIteration": true,
-        "jsx": "preserve",
+        "jsx": "react",
         "lib": [
             "DOM",
             "ES2017",
