@@ -10,6 +10,9 @@ export type {
     Plot,
     AgentData,
     CacheLog,
+    ColormapName,
+    ColormapSpec,
+    RgbStop,
 } from "./types.js";
 
 export type {

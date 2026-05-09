@@ -1173,12 +1173,21 @@ class VisGeometry {
     public setColormapForType(agentType: number, spec: ColormapSpec): void {
         this.colorHandler.setColormapForType(agentType, spec);
         this.updateColormapAtlas();
+        // Per-instance feature attributes are written by addInstance during
+        // updateScene. Re-run it now so the change is visible even when no
+        // new frame is being delivered (e.g. paused).
+        if (this.currentSceneData) {
+            this.updateScene(this.currentSceneData);
+        }
     }
 
     /** Revert the given agent type to solid-color rendering. */
     public clearColormapForType(agentType: number): void {
         this.colorHandler.clearColormapForType(agentType);
         this.updateColormapAtlas();
+        if (this.currentSceneData) {
+            this.updateScene(this.currentSceneData);
+        }
     }
 
     public applyColorToAgents(colorAssignments: ColorAssignment[]): void {

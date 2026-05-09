@@ -2,6 +2,7 @@ import {
     Color,
     DataTexture,
     FloatType,
+    NearestFilter,
     OrthographicCamera,
     PerspectiveCamera,
     RGBAFormat,
@@ -174,15 +175,13 @@ class CompositePass {
                 vec4 normalSample = texture(normalTex, texCoords);
                 float lutRowEncoded = posSample.w;
                 if (lutRowEncoded >= 1.5 && colormapAtlasSize.y > 0.0) {
-                    float lutRow = lutRowEncoded - 2.0;
+                    int lutRow = int(lutRowEncoded - 2.0 + 0.5);
                     float featureValue = clamp(normalSample.w, 0.0, 1.0);
-                    // Sample atlas at (featureValue, (row+0.5)/rows). Width is
-                    // colormapAtlasSize.x; we want the texel at integer column
-                    // round(featureValue * (width-1)).
-                    float u = (floor(featureValue * (colormapAtlasSize.x - 1.0)) + 0.5)
-                              / colormapAtlasSize.x;
-                    float v = (lutRow + 0.5) / colormapAtlasSize.y;
-                    col = texture(colormapAtlas, vec2(u, v));
+                    // Snap to the nearest LUT texel column. texelFetch + a
+                    // NearestFilter texture avoids float-linear-filter
+                    // portability issues across platforms.
+                    int u = int(floor(featureValue * (colormapAtlasSize.x - 1.0) + 0.5));
+                    col = texelFetch(colormapAtlas, ivec2(u, lutRow), 0);
                 }
 
                 float eyeDepth = -col0.z;
@@ -277,9 +276,12 @@ class CompositePass {
         lutAtlasRows: number,
         atlasData: Float32Array
     ): void {
+        const oldTex = this.pass.material.uniforms.colormapAtlas
+            .value as DataTexture | null;
         if (lutAtlasRows === 0) {
             this.pass.material.uniforms.colormapAtlas.value = null;
             this.pass.material.uniforms.colormapAtlasSize.value.set(0, 0);
+            if (oldTex) oldTex.dispose();
             return;
         }
         const tex = new DataTexture(
@@ -289,12 +291,18 @@ class CompositePass {
             RGBAFormat,
             FloatType
         );
+        // Float textures don't support linear filtering on all platforms.
+        // The shader does explicit per-texel `texelFetch`, so nearest is fine.
+        tex.minFilter = NearestFilter;
+        tex.magFilter = NearestFilter;
+        tex.generateMipmaps = false;
         tex.needsUpdate = true;
         this.pass.material.uniforms.colormapAtlas.value = tex;
         this.pass.material.uniforms.colormapAtlasSize.value.set(
             lutWidth,
             lutAtlasRows
         );
+        if (oldTex) oldTex.dispose();
     }
 
     public setBgHueOffset(value: number): void {

@@ -183,15 +183,18 @@ class Viewport extends React.Component<
             onError,
             agentColors,
         } = this.props;
-        // Update TrajectoryFileInfo format to latest version
+        // Update TrajectoryFileInfo format to latest version. Note that the
+        // upgrade rewrites `version` to LATEST_VERSION, so we must check the
+        // *incoming* message's version to decide whether the wire data carries
+        // per-agent features.
+        const sourceVersion = msg.version || 0;
         const trajectoryFileInfo: TrajectoryFileInfo =
             updateTrajectoryFileInfoFormat(msg, onError);
 
         simulariumController.visData.timeStepSize =
             trajectoryFileInfo.timeStepSize;
         // V4+ trajectories carry per-agent feature values.
-        simulariumController.visData.hasFeatures =
-            (trajectoryFileInfo.version || 0) >= 4;
+        simulariumController.visData.hasFeatures = sourceVersion >= 4;
 
         const bx = trajectoryFileInfo.size.x;
         const by = trajectoryFileInfo.size.y;

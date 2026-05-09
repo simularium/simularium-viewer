@@ -10,13 +10,16 @@ import {
 
 /**
  * A small demo simulator that emits per-agent features so colormaps can be
- * tested. Each agent has 2 features: distance from origin (changes over time)
- * and a static random value.
+ * tested. Each agent has 2 features:
+ *   0: distance from origin (changes via the random-walk position update)
+ *   1: a smooth oscillation in [0,1] with a per-agent phase, so it varies
+ *      gradually over time.
  */
 export default class PointFeatureSimulator implements IClientSimulatorImpl {
     nPoints: number;
     pointsData: number[];
-    staticFeature: number[];
+    /** per-agent phase offset for the oscillating feature, in radians */
+    phase: number[];
     currentFrame: number;
     nTypes: number;
 
@@ -24,12 +27,12 @@ export default class PointFeatureSimulator implements IClientSimulatorImpl {
         this.nPoints = nPoints;
         this.nTypes = nTypes;
         this.pointsData = [];
-        this.staticFeature = [];
+        this.phase = [];
         for (let i = 0; i < nPoints; ++i) {
             this.pointsData.push(this.rand(-4, 4));
             this.pointsData.push(this.rand(-4, 4));
             this.pointsData.push(this.rand(-4, 4));
-            this.staticFeature.push(Math.random());
+            this.phase.push(Math.random() * Math.PI * 2);
         }
         this.currentFrame = 0;
     }
@@ -45,12 +48,15 @@ export default class PointFeatureSimulator implements IClientSimulatorImpl {
             this.pointsData[ii * 3 + 1] += this.rand(-amplitude, amplitude);
             this.pointsData[ii * 3 + 2] += this.rand(-amplitude, amplitude);
         }
+        // Smoothly varying oscillation feature in [0,1]. Period ~250 frames.
+        const t = (this.currentFrame * (Math.PI * 2)) / 250;
         const agentData: number[] = [];
         for (let ii = 0; ii < this.nPoints; ++ii) {
             const x = this.pointsData[ii * 3 + 0];
             const y = this.pointsData[ii * 3 + 1];
             const z = this.pointsData[ii * 3 + 2];
             const distance = Math.sqrt(x * x + y * y + z * z);
+            const oscillation = 0.5 + 0.5 * Math.sin(t + this.phase[ii]);
 
             agentData.push(VisTypes.ID_VIS_TYPE_DEFAULT); // vis type
             agentData.push(ii); // instance id
@@ -63,10 +69,10 @@ export default class PointFeatureSimulator implements IClientSimulatorImpl {
             agentData.push(0); // rz
             agentData.push(0.5); // collision radius
             agentData.push(0); // nSubpoints
-            // 2 features: distance and a static random value.
+            // 2 features: distance and an oscillating value.
             agentData.push(2);
             agentData.push(distance);
-            agentData.push(this.staticFeature[ii]);
+            agentData.push(oscillation);
         }
         const frameData: VisDataMessage = {
             msgType: ClientMessageEnum.ID_VIS_DATA_ARRIVE,
@@ -95,7 +101,7 @@ export default class PointFeatureSimulator implements IClientSimulatorImpl {
                 name: `point${i}`,
                 geometry: {
                     displayType: undefined as unknown as never,
-                    featureNames: ["distance", "static"],
+                    featureNames: ["distance", "oscillation"],
                 },
             };
             if (i === 0) {

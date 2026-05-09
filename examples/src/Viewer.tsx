@@ -35,6 +35,9 @@ import SingleCurveSimulator from "./simulators/SingleCurveSimulator.ts";
 import MetaballSimulator from "./simulators/MetaballSimulator.ts";
 
 import ColorPicker from "./Components/ColorPicker.tsx";
+import ColormapControls, {
+    ColormapTypeBinding,
+} from "./Components/ColormapControls.tsx";
 import RecordMovieComponent from "./Components/RecordMovieComponent.tsx";
 import ConversionForm from "./Components/ConversionForm/index.tsx";
 import AgentMetadata from "./Components/AgentMetadata.tsx";
@@ -59,6 +62,47 @@ import {
 
 import "@aics/simularium-viewer/style/style.css";
 import "./style.css";
+
+// Bindings for the TEST_FEATURES demo simulator. Must match the type ids and
+// feature layout produced by PointFeatureSimulator.
+const FEATURE_DEMO_BINDINGS: ColormapTypeBinding[] = [
+    {
+        typeId: 0,
+        label: "point0",
+        featureName: "distance",
+        featureIndex: 0,
+        min: 0,
+        max: 8,
+        initialColormap: "viridis",
+    },
+    {
+        typeId: 1,
+        label: "point1",
+        featureName: "distance",
+        featureIndex: 0,
+        min: 0,
+        max: 8,
+        initialColormap: null,
+    },
+    {
+        typeId: 2,
+        label: "point2",
+        featureName: "oscillation",
+        featureIndex: 1,
+        min: 0,
+        max: 1,
+        initialColormap: null,
+    },
+    {
+        typeId: 3,
+        label: "point3",
+        featureName: "oscillation",
+        featureIndex: 1,
+        min: 0,
+        max: 1,
+        initialColormap: null,
+    },
+];
 
 interface ViewerState {
     renderStyle: RenderStyle;
@@ -891,6 +935,12 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         updateAgentColorArray={this.updateAgentColorArray}
                         setColorSelectionInfo={this.setColorSelectionInfo}
                     />
+                    {this.state.selectedFile === "TEST_FEATURES" && (
+                        <ColormapControls
+                            controller={simulariumController}
+                            bindings={FEATURE_DEMO_BINDINGS}
+                        />
+                    )}
                     <RecordMovieComponent
                         startRecordingHandler={
                             simulariumController.startRecording
