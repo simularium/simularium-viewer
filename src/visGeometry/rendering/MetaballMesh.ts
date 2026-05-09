@@ -6,6 +6,7 @@ import {
     Group,
     Quaternion,
     Scene,
+    Vector2,
     Vector3,
     Vector4,
     WebGLRenderer,
@@ -67,7 +68,8 @@ class MetaballMesh implements GeometryInstanceContainer {
         uniqueAgentId: number,
         typeId: number,
         lodScale = 1,
-        subPoints: number[] = []
+        subPoints: number[] = [],
+        instanceFeature: [number, number] = [0, 1]
     ): void {
         // MARCHING CUBES
 
@@ -80,6 +82,10 @@ class MetaballMesh implements GeometryInstanceContainer {
             uniqueAgentId,
             typeId,
             lodScale
+        );
+        mat.uniforms.instanceFeature.value = new Vector2(
+            instanceFeature[0],
+            instanceFeature[1]
         );
 
         // what is a good value here?

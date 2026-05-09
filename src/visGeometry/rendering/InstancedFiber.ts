@@ -135,6 +135,11 @@ class InstancedFiber {
     private positionAttribute: InstancedBufferAttribute; // x,y,z,scale
     private rotationAttribute: InstancedBufferAttribute; // quaternion
     private instanceAttribute: InstancedBufferAttribute; // instance id, type id (color index)
+    /**
+     * Per-instance colormap state. (featureValue, lutRowEncoded). See
+     * InstancedMesh for the encoding.
+     */
+    private instanceFeatureAttribute: InstancedBufferAttribute;
 
     // holds control points for all the curves
     private curveData: DataTexture;
@@ -167,6 +172,10 @@ class InstancedFiber {
             1
         );
         this.instanceAttribute = new InstancedBufferAttribute(
+            Uint8Array.from([]),
+            1
+        );
+        this.instanceFeatureAttribute = new InstancedBufferAttribute(
             Uint8Array.from([]),
             1
         );
@@ -268,6 +277,24 @@ class InstancedFiber {
             "instanceAndTypeId",
             this.instanceAttribute
         );
+
+        // (featureValue, lutRowEncoded). Default for new slots: solid (1).
+        const newFeat = new Float32Array(2 * n);
+        const oldFeatLen = this.instanceFeatureAttribute.array.length;
+        newFeat.set(this.instanceFeatureAttribute.array);
+        for (let i = oldFeatLen; i < 2 * n; i += 2) {
+            newFeat[i] = 0;
+            newFeat[i + 1] = 1;
+        }
+        this.instanceFeatureAttribute = new InstancedBufferAttribute(
+            newFeat,
+            2,
+            false
+        );
+        this.instancedGeometry.setAttribute(
+            "instanceFeature",
+            this.instanceFeatureAttribute
+        );
     }
 
     dispose(): void {
@@ -309,7 +336,8 @@ class InstancedFiber {
         ry: number,
         rz: number,
         uniqueAgentId: number,
-        typeId: number
+        typeId: number,
+        instanceFeature: [number, number] = [0, 1]
     ): void {
         const offset = this.currentInstance;
         this.checkRealloc(this.currentInstance + 1);
@@ -321,6 +349,11 @@ class InstancedFiber {
             uniqueAgentId,
             typeId,
             this.currentInstance
+        );
+        this.instanceFeatureAttribute.setXY(
+            offset,
+            instanceFeature[0],
+            instanceFeature[1]
         );
         const nPts = Math.min(curvePts.length / 3, this.nCurvePoints);
         for (let i = 0; i < nPts; ++i) {
@@ -341,6 +374,7 @@ class InstancedFiber {
         this.instanceAttribute.needsUpdate = true;
         this.positionAttribute.needsUpdate = true;
         this.rotationAttribute.needsUpdate = true;
+        this.instanceFeatureAttribute.needsUpdate = true;
         this.curveData.needsUpdate = true;
         this.isUpdating = false;
     }
@@ -398,7 +432,8 @@ class InstancedFiberGroup {
         ry: number,
         rz: number,
         uniqueAgentId: number,
-        typeId: number
+        typeId: number,
+        instanceFeature: [number, number] = [0, 1]
     ): void {
         if (!this.fibers[nCurvePts]) {
             // create new
@@ -414,7 +449,8 @@ class InstancedFiberGroup {
             ry,
             rz,
             uniqueAgentId,
-            typeId
+            typeId,
+            instanceFeature
         );
     }
 

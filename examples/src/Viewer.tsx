@@ -25,6 +25,7 @@ import type {
 } from "@aics/simularium-viewer";
 
 import PointSimulator from "./simulators/PointSimulator.ts";
+import PointFeatureSimulator from "./simulators/PointFeatureSimulator.ts";
 import BindingSimulator from "./simulators/BindingSimulator2D.ts";
 import PointSimulatorLive from "./simulators/PointSimulatorLive.ts";
 import PdbSimulator from "./simulators/PdbSimulator.ts";
@@ -603,6 +604,10 @@ class Viewer extends React.Component<InputParams, ViewerState> {
 
             case "TEST_POINTS":
                 config.clientSimulator = new PointSimulator(8000, 4);
+                break;
+
+            case "TEST_FEATURES":
+                config.clientSimulator = new PointFeatureSimulator(2000, 4);
                 break;
 
             case "TEST_BINDING":

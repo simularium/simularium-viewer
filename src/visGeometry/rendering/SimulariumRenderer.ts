@@ -299,6 +299,18 @@ class SimulariumRenderer {
         this.compositePass.updateColors(numColors, colorsData);
     }
 
+    public updateColormapAtlas(
+        lutWidth: number,
+        lutAtlasRows: number,
+        atlasData: Float32Array
+    ): void {
+        this.compositePass.updateColormapAtlas(
+            lutWidth,
+            lutAtlasRows,
+            atlasData
+        );
+    }
+
     public setMeshGroups(
         instancedMeshGroup: Group,
         fibers: InstancedFiberGroup,
@@ -432,7 +444,9 @@ class SimulariumRenderer {
             compositeTarget,
             this.ssaoBufferBlurred,
             this.ssaoBufferBlurred2,
-            this.gbuffer.textures[AGENTBUFFER]
+            this.gbuffer.textures[AGENTBUFFER],
+            this.gbuffer.textures[NORMALBUFFER],
+            this.gbuffer.textures[POSITIONBUFFER]
         );
 
         this.contourPass.render(

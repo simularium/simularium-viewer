@@ -31,6 +31,12 @@ class InstancedMesh implements GeometryInstanceContainer {
     private positionAttribute: InstancedBufferAttribute; // x,y,z,scale
     private rotationAttribute: InstancedBufferAttribute; // quaternion
     private instanceAttribute: InstancedBufferAttribute; // instance id, type id (color index), lod scale
+    /**
+     * Per-instance colormap state. (featureValue, lutRowEncoded).
+     * lutRowEncoded == 1 means "solid color, ignore featureValue".
+     * lutRowEncoded >= 2 means "sample colormap atlas at row (lutRowEncoded - 2)".
+     */
+    private instanceFeatureAttribute: InstancedBufferAttribute;
 
     // while updating instances
     private currentInstance: number;
@@ -70,6 +76,10 @@ class InstancedMesh implements GeometryInstanceContainer {
             1
         );
         this.instanceAttribute = new InstancedBufferAttribute(
+            Uint8Array.from([]),
+            1
+        );
+        this.instanceFeatureAttribute = new InstancedBufferAttribute(
             Uint8Array.from([]),
             1
         );
@@ -149,6 +159,25 @@ class InstancedMesh implements GeometryInstanceContainer {
             "instanceAndTypeId",
             this.instanceAttribute
         );
+
+        // (featureValue, lutRowEncoded) per instance. Default for newly-grown
+        // slots: featureValue=0, lutRowEncoded=1 (solid mode).
+        const newFeat = new Float32Array(2 * n);
+        const oldFeatLen = this.instanceFeatureAttribute.array.length;
+        newFeat.set(this.instanceFeatureAttribute.array);
+        for (let i = oldFeatLen; i < 2 * n; i += 2) {
+            newFeat[i] = 0;
+            newFeat[i + 1] = 1;
+        }
+        this.instanceFeatureAttribute = new InstancedBufferAttribute(
+            newFeat,
+            2,
+            false
+        );
+        this.instancedGeometry.setAttribute(
+            "instanceFeature",
+            this.instanceFeatureAttribute
+        );
     }
 
     dispose(): void {
@@ -191,7 +220,8 @@ class InstancedMesh implements GeometryInstanceContainer {
         uniqueAgentId: number,
         typeId: number,
         lodScale = 1,
-        _subPoints: number[] = []
+        _subPoints: number[] = [],
+        instanceFeature: [number, number] = [0, 1]
     ): void {
         const offset = this.currentInstance;
         this.checkRealloc(this.currentInstance + 1);
@@ -199,6 +229,11 @@ class InstancedMesh implements GeometryInstanceContainer {
         const q = tmpQuaternion.setFromEuler(tmpEuler.set(rx, ry, rz));
         this.rotationAttribute.setXYZW(offset, q.x, q.y, q.z, q.w);
         this.instanceAttribute.setXYZ(offset, uniqueAgentId, typeId, lodScale);
+        this.instanceFeatureAttribute.setXY(
+            offset,
+            instanceFeature[0],
+            instanceFeature[1]
+        );
 
         this.currentInstance++;
     }
@@ -210,6 +245,7 @@ class InstancedMesh implements GeometryInstanceContainer {
         this.instanceAttribute.needsUpdate = true;
         this.positionAttribute.needsUpdate = true;
         this.rotationAttribute.needsUpdate = true;
+        this.instanceFeatureAttribute.needsUpdate = true;
         this.isUpdating = false;
     }
 }

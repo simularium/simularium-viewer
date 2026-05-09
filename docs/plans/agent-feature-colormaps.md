@@ -4,19 +4,19 @@ Add per-agent floating-point "features" to the trajectory format and a per-agent
 
 ## Status
 
-- [x] **Phase A — Data model & format** (complete; 144/144 tests pass, typecheck clean)
-- [ ] **Phase B — Colormap infrastructure (CPU)**
-- [ ] **Phase C — Rendering pipeline**
-- [ ] **Phase D — Public API & example**
+-   [x] **Phase A — Data model & format** (complete; 144/144 tests pass, typecheck clean)
+-   [ ] **Phase B — Colormap infrastructure (CPU)**
+-   [ ] **Phase C — Rendering pipeline**
+-   [ ] **Phase D — Public API & example**
 
 ## Decisions
 
-- **Feature transport**: bumped trajectory format. Each per-agent record gets `nFeatures` followed by that many floats, after subpoints. Internal `CachedFrame` always carries this section (legacy V1/V2/V3 sources get `nFeatures = 0` injected).
-- **Colormap scope**: per agent type, declared in `AgentTypeVisData.colormap`.
-- **Colormap representation**: built-in name (`viridis`, `plasma`, `magma`, `inferno`, `turbo`, `gray`) OR user-supplied list of RGB stops in [0,1].
-- **Mode**: per-type toggle — a type is solid-color OR colormapped (no blending).
-- **Normalization**: user-specified `min`/`max` per (type, featureIndex). No auto-ranging in v1.
-- **Out of scope (v1)**: per-instance colormap overrides, auto-ranging, animated/interpolated colormaps, runtime-injected features without a format-version bump, UI panels in the example app beyond a minimal demo.
+-   **Feature transport**: bumped trajectory format. Each per-agent record gets `nFeatures` followed by that many floats, after subpoints. Internal `CachedFrame` always carries this section (legacy V1/V2/V3 sources get `nFeatures = 0` injected).
+-   **Colormap scope**: per agent type, declared in `AgentTypeVisData.colormap`.
+-   **Colormap representation**: built-in name (`viridis`, `plasma`, `magma`, `inferno`, `turbo`, `gray`) OR user-supplied list of RGB stops in [0,1].
+-   **Mode**: per-type toggle — a type is solid-color OR colormapped (no blending).
+-   **Normalization**: user-specified `min`/`max` per (type, featureIndex). No auto-ranging in v1.
+-   **Out of scope (v1)**: per-instance colormap overrides, auto-ranging, animated/interpolated colormaps, runtime-injected features without a format-version bump, UI panels in the example app beyond a minimal demo.
 
 ---
 
@@ -35,66 +35,66 @@ Add per-agent floating-point "features" to the trajectory format and a per-agent
 ### Phase B — Colormap infrastructure (CPU side)
 
 8. New module `src/visGeometry/Colormaps.ts`:
-   - Named built-in LUTs (256-stop `Float32Array` RGBA per name): `viridis`, `plasma`, `magma`, `inferno`, `turbo`, `gray`.
-   - `buildColormapLut(spec: ColormapSpec): Float32Array` — handles either named LUTs or interpolating user-supplied stops to a fixed width (256 RGBA entries).
+    - Named built-in LUTs (256-stop `Float32Array` RGBA per name): `viridis`, `plasma`, `magma`, `inferno`, `turbo`, `gray`.
+    - `buildColormapLut(spec: ColormapSpec): Float32Array` — handles either named LUTs or interpolating user-supplied stops to a fixed width (256 RGBA entries).
 9. Extend [src/visGeometry/ColorHandler.ts](../../src/visGeometry/ColorHandler.ts):
-   - Track per-type mode: `Map<typeId, { mode: "solid" | "colormap"; spec?: ColormapSpec; lutRow?: number; min: number; max: number; featureIndex: number }>`.
-   - Build a single 2D LUT atlas (`Float32Array`, 256 wide, one row per active colormap) accessible to the renderer for upload as a `DataTexture`.
-   - Public methods:
-     - `setColormapForType(typeId, spec | null)` — `null` reverts to solid.
-     - `getColormapInfoForType(typeId)` — used during instance upload.
-   - Emit changes via the existing color-update mechanism so the renderer rebuilds textures.
+    - Track per-type mode: `Map<typeId, { mode: "solid" | "colormap"; spec?: ColormapSpec; lutRow?: number; min: number; max: number; featureIndex: number }>`.
+    - Build a single 2D LUT atlas (`Float32Array`, 256 wide, one row per active colormap) accessible to the renderer for upload as a `DataTexture`.
+    - Public methods:
+        - `setColormapForType(typeId, spec | null)` — `null` reverts to solid.
+        - `getColormapInfoForType(typeId)` — used during instance upload.
+    - Emit changes via the existing color-update mechanism so the renderer rebuilds textures.
 10. Wire colormap setup in [src/visGeometry/index.ts](../../src/visGeometry/index.ts) `handleAgentGeometry` so any type whose `AgentTypeVisData.colormap` is present is auto-registered.
 11. Tests: extend [src/test/color-utils.test.ts](../../src/test/color-utils.test.ts) with LUT-build tests and ColorHandler colormap-mode tests.
 
-*B8 standalone. B9 depends on B8. B10 depends on B9. B11 depends on B9/B10.*
+_B8 standalone. B9 depends on B8. B10 depends on B9. B11 depends on B9/B10._
 
 ### Phase C — Rendering pipeline
 
 12. Extend instance attributes in [src/visGeometry/rendering/InstancedMesh.ts](../../src/visGeometry/rendering/InstancedMesh.ts):
-    - Add a new `instanceFeature` attribute (`vec2`): `(featureValue, lutRow)` where `lutRow < 0` means "no colormap, use solid".
+    -   Add a new `instanceFeature` attribute (`vec2`): `(featureValue, lutRow)` where `lutRow < 0` means "no colormap, use solid".
 13. In `addInstance()` ([src/visGeometry/index.ts](../../src/visGeometry/index.ts) ~lines 1485–1510):
-    - Look up the type's colormap state from ColorHandler.
-    - Read `agentData.features[featureIndex]`, normalize `(v - min) / (max - min)` (clamped), pass as the feature value.
-    - Pass the LUT row index (or `-1` for solid).
+    -   Look up the type's colormap state from ColorHandler.
+    -   Read `agentData.features[featureIndex]`, normalize `(v - min) / (max - min)` (clamped), pass as the feature value.
+    -   Pass the LUT row index (or `-1` for solid).
 14. Update G-buffer shaders ([InstancedMeshShader.ts](../../src/visGeometry/rendering/InstancedMeshShader.ts) and the PDB equivalents) to forward `instanceFeature` through unused `w` channels of `gNormal` and `gPos`.
 15. Modify [CompositePass.ts](../../src/visGeometry/rendering/CompositePass.ts):
-    - New uniforms `colormapAtlas` (`sampler2D`) and `colormapAtlasSize` (`vec2`).
-    - Fragment shader: if `lutRow >= 0`, sample `colormapAtlas` at `(featureValue, lutRow)` instead of `colorsBuffer`. Otherwise keep the current solid path.
-    - Wire LUT atlas `DataTexture` upload from ColorHandler.
+    -   New uniforms `colormapAtlas` (`sampler2D`) and `colormapAtlasSize` (`vec2`).
+    -   Fragment shader: if `lutRow >= 0`, sample `colormapAtlas` at `(featureValue, lutRow)` instead of `colorsBuffer`. Otherwise keep the current solid path.
+    -   Wire LUT atlas `DataTexture` upload from ColorHandler.
 16. Visual smoke test via [examples/src/Viewer.tsx](../../examples/src/Viewer.tsx) using a synthesized trajectory.
 
-*C12–C14 are sequential. C15 depends on C14 and B9. C16 depends on C15.*
+_C12–C14 are sequential. C15 depends on C14 and B9. C16 depends on C15._
 
 ### Phase D — Public API & example
 
 17. Controller surface ([src/controller/index.ts](../../src/controller/index.ts)):
-    - `setColormapForType(typeId: number, spec: ColormapSpec | null): void` — passthrough to VisGeometry/ColorHandler.
-    - `clearColormapForType(typeId: number): void`.
-    - Document that colormaps declared in `AgentTypeVisData.colormap` are auto-applied on load and these APIs override at runtime.
+    -   `setColormapForType(typeId: number, spec: ColormapSpec | null): void` — passthrough to VisGeometry/ColorHandler.
+    -   `clearColormapForType(typeId: number): void`.
+    -   Document that colormaps declared in `AgentTypeVisData.colormap` are auto-applied on load and these APIs override at runtime.
 18. Minimal example in [examples/src/Viewer.tsx](../../examples/src/Viewer.tsx) with a simulator under [examples/src/simulators/](../../examples/src/simulators/) that emits 2–3 features per agent and toggles a colormap on one type.
 
-*D17 depends on Phase C. D18 depends on D17.*
+_D17 depends on Phase C. D18 depends on D17._
 
 ---
 
 ## Relevant files
 
-- [src/simularium/types.ts](../../src/simularium/types.ts) — `AgentData`, `AgentTypeVisData`, `ColormapSpec`.
-- [src/simularium/versionHandlers.ts](../../src/simularium/versionHandlers.ts) — `LATEST_VERSION`, sanitizer pass-through.
-- [src/simularium/BinaryFileReader.ts](../../src/simularium/BinaryFileReader.ts) — spatial-data version, legacy frame transform.
-- [src/simularium/VisDataParse.ts](../../src/simularium/VisDataParse.ts) — `parseVisDataMessage(msg, hasFeatures)`.
-- [src/simularium/VisData.ts](../../src/simularium/VisData.ts) — `hasFeatures` flag.
-- [src/util.ts](../../src/util.ts) — `getAgentDataFromBuffer`, `getNextAgentOffset`.
-- [src/visGeometry/Colormaps.ts](../../src/visGeometry/Colormaps.ts) — NEW (Phase B).
-- [src/visGeometry/ColorHandler.ts](../../src/visGeometry/ColorHandler.ts) — per-type mode, LUT atlas, set/get colormap.
-- [src/visGeometry/index.ts](../../src/visGeometry/index.ts) — auto-register colormaps; per-instance feature/lutRow upload.
-- [src/visGeometry/rendering/InstancedMesh.ts](../../src/visGeometry/rendering/InstancedMesh.ts) — `instanceFeature` attribute.
-- [src/visGeometry/rendering/InstancedMeshShader.ts](../../src/visGeometry/rendering/InstancedMeshShader.ts), PDB G-buffer shader — forward feature/lutRow.
-- [src/visGeometry/rendering/CompositePass.ts](../../src/visGeometry/rendering/CompositePass.ts) — colormap atlas sampling.
-- [src/controller/index.ts](../../src/controller/index.ts) — public API.
-- [src/test/BinaryFile.test.ts](../../src/test/BinaryFile.test.ts), [src/test/color-utils.test.ts](../../src/test/color-utils.test.ts), [src/test/util.test.ts](../../src/test/util.test.ts), [src/test/VisData.test.ts](../../src/test/VisData.test.ts), [src/test/versionHandlers.test.ts](../../src/test/versionHandlers.test.ts).
-- [examples/src/Viewer.tsx](../../examples/src/Viewer.tsx), [examples/src/simulators/](../../examples/src/simulators/).
+-   [src/simularium/types.ts](../../src/simularium/types.ts) — `AgentData`, `AgentTypeVisData`, `ColormapSpec`.
+-   [src/simularium/versionHandlers.ts](../../src/simularium/versionHandlers.ts) — `LATEST_VERSION`, sanitizer pass-through.
+-   [src/simularium/BinaryFileReader.ts](../../src/simularium/BinaryFileReader.ts) — spatial-data version, legacy frame transform.
+-   [src/simularium/VisDataParse.ts](../../src/simularium/VisDataParse.ts) — `parseVisDataMessage(msg, hasFeatures)`.
+-   [src/simularium/VisData.ts](../../src/simularium/VisData.ts) — `hasFeatures` flag.
+-   [src/util.ts](../../src/util.ts) — `getAgentDataFromBuffer`, `getNextAgentOffset`.
+-   [src/visGeometry/Colormaps.ts](../../src/visGeometry/Colormaps.ts) — NEW (Phase B).
+-   [src/visGeometry/ColorHandler.ts](../../src/visGeometry/ColorHandler.ts) — per-type mode, LUT atlas, set/get colormap.
+-   [src/visGeometry/index.ts](../../src/visGeometry/index.ts) — auto-register colormaps; per-instance feature/lutRow upload.
+-   [src/visGeometry/rendering/InstancedMesh.ts](../../src/visGeometry/rendering/InstancedMesh.ts) — `instanceFeature` attribute.
+-   [src/visGeometry/rendering/InstancedMeshShader.ts](../../src/visGeometry/rendering/InstancedMeshShader.ts), PDB G-buffer shader — forward feature/lutRow.
+-   [src/visGeometry/rendering/CompositePass.ts](../../src/visGeometry/rendering/CompositePass.ts) — colormap atlas sampling.
+-   [src/controller/index.ts](../../src/controller/index.ts) — public API.
+-   [src/test/BinaryFile.test.ts](../../src/test/BinaryFile.test.ts), [src/test/color-utils.test.ts](../../src/test/color-utils.test.ts), [src/test/util.test.ts](../../src/test/util.test.ts), [src/test/VisData.test.ts](../../src/test/VisData.test.ts), [src/test/versionHandlers.test.ts](../../src/test/versionHandlers.test.ts).
+-   [examples/src/Viewer.tsx](../../examples/src/Viewer.tsx), [examples/src/simulators/](../../examples/src/simulators/).
 
 ---
 

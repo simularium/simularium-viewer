@@ -48,6 +48,7 @@ import {
     AgentDisplayDataWithGeometry,
     CachedFrame,
     CameraSpec,
+    ColormapSpec,
     Coordinates3d,
     EncodedTypeMapping,
     PerspectiveCameraSpec,
@@ -980,7 +981,12 @@ class VisGeometry {
                         visAgent.agentData.instanceId,
                         visAgent.signedTypeId(),
                         // a scale value for LODs
-                        0.25 + index * 0.25
+                        0.25 + index * 0.25,
+                        undefined,
+                        this.getInstanceFeature(
+                            visAgent.agentData.type,
+                            agentData
+                        )
                     );
                     break;
                 }
@@ -1153,6 +1159,28 @@ class VisGeometry {
         this.setAgentColors();
     }
 
+    /**
+     * Push the current colormap LUT atlas (if any) to the renderer so that
+     * agents tagged with a colormap row are colored via per-feature lookup.
+     */
+    private updateColormapAtlas(): void {
+        const { lutAtlas, lutAtlasRows, lutWidth } =
+            this.colorHandler.getLutAtlas();
+        this.renderer.updateColormapAtlas(lutWidth, lutAtlasRows, lutAtlas);
+    }
+
+    /** Apply a colormap to the given agent type. */
+    public setColormapForType(agentType: number, spec: ColormapSpec): void {
+        this.colorHandler.setColormapForType(agentType, spec);
+        this.updateColormapAtlas();
+    }
+
+    /** Revert the given agent type to solid-color rendering. */
+    public clearColormapForType(agentType: number): void {
+        this.colorHandler.clearColormapForType(agentType);
+        this.updateColormapAtlas();
+    }
+
     public applyColorToAgents(colorAssignments: ColorAssignment[]): void {
         colorAssignments.forEach((color) => {
             const newColorData = this.colorHandler.setColorForAgentTypes(
@@ -1199,6 +1227,13 @@ class VisGeometry {
             const lookupKey = url ? checkAndSanitizePath(url) : displayType;
             // map id --> lookupKey
             this.visGeomMap.set(Number(id), lookupKey);
+            // Auto-register any per-type colormap declared on the type.
+            if (entry.geometry.colormap) {
+                this.colorHandler.setColormapForType(
+                    Number(id),
+                    entry.geometry.colormap
+                );
+            }
             // get geom for lookupKey,
             // will only load each geometry once, so may return nothing
             // if the same geometry is assigned to more than one agent
@@ -1254,6 +1289,7 @@ class VisGeometry {
                     this.logger.info(reason);
                 });
         });
+        this.updateColormapAtlas();
         this.updateScene(this.currentSceneData);
     }
 
@@ -1456,6 +1492,26 @@ class VisGeometry {
         return 1;
     }
 
+    /**
+     * Compute the per-instance feature attribute (featureValue, lutRowEncoded)
+     * for an agent. Returns the default `(0, 1)` (solid mode) when the type
+     * is not registered with a colormap.
+     */
+    private getInstanceFeature(
+        typeId: number,
+        agentData: AgentData
+    ): [number, number] {
+        const cm = this.colorHandler.getColormapInfoForType(typeId);
+        if (!cm) return [0, 1];
+        const v = agentData.features[cm.featureIndex] ?? 0;
+        const range = cm.max - cm.min;
+        const t = range !== 0 ? (v - cm.min) / range : 0;
+        const clamped = Math.max(0, Math.min(1, t));
+        // Solid path uses 1.0; colormap rows are encoded as row + 2.0 so they
+        // remain >=1.0 (required by SSAO/Blur valid-pixel checks).
+        return [clamped, cm.lutRow + 2];
+    }
+
     private createAgent(): VisAgent {
         // TODO limit the number
         const i = this.visAgents.length;
@@ -1521,7 +1577,8 @@ class VisGeometry {
                     visAgent.agentData.instanceId,
                     visAgent.signedTypeId(),
                     1,
-                    agentData.subpoints
+                    agentData.subpoints,
+                    this.getInstanceFeature(typeId, agentData)
                 );
             }
         }
@@ -1554,7 +1611,8 @@ class VisGeometry {
                 agentData.yrot,
                 agentData.zrot,
                 visAgent.agentData.instanceId,
-                visAgent.signedTypeId()
+                visAgent.signedTypeId(),
+                this.getInstanceFeature(typeId, agentData)
             );
         }
     }

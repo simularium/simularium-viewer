@@ -4,6 +4,7 @@ import {
     Matrix3,
     Matrix4,
     RawShaderMaterial,
+    Vector2,
     Vector3,
     Vector4,
 } from "three";
@@ -16,6 +17,7 @@ precision highp float;
 out vec3 IN_viewPos;
 out vec3 IN_viewNormal;
 out vec2 IN_instanceAndTypeId;
+out vec2 IN_instanceFeature;
 
 in vec4 position;
 in vec3 normal;
@@ -25,6 +27,8 @@ uniform vec4 translateAndScale; // xyz trans, w scale
 uniform vec4 rotation; // quaternion
 // instanceID, typeId
 uniform vec3 instanceAndTypeId;
+// (featureValue, lutRowEncoded). 1 = solid; >=2 = colormap row + 2.
+uniform vec2 instanceFeature;
 
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
@@ -36,7 +40,7 @@ vec3 applyQuaternionToVector( vec4 q, vec3 v ) {
 
 void main() {
     vec3 p = position.xyz;
-    
+
     // per-instance transform
     p *= translateAndScale.w;
     p = applyQuaternionToVector(rotation, p);
@@ -46,7 +50,8 @@ void main() {
     IN_viewPos = modelViewPosition.xyz;
     IN_viewNormal = normalMatrix * normal.xyz;
     IN_instanceAndTypeId = instanceAndTypeId.xy;
-  
+    IN_instanceFeature = instanceFeature;
+
     gl_Position = projectionMatrix * modelViewPosition;
 
 }
@@ -58,6 +63,7 @@ precision highp float;
 in vec3 IN_viewPos;
 in vec3 IN_viewNormal;
 in vec2 IN_instanceAndTypeId;
+in vec2 IN_instanceFeature;
 
 layout(location = 0) out vec4 gAgentInfo;
 layout(location = 1) out vec4 gNormal;
@@ -80,9 +86,11 @@ void main() {
     vec3 normal = IN_viewNormal;
     normal = normalize(normal);
     vec3 normalOut = normal * 0.5 + 0.5;
-    gNormal = vec4(normalOut, 1.0);
+    // gNormal.w = per-instance feature value.
+    gNormal = vec4(normalOut, IN_instanceFeature.x);
 
-    gPos = vec4(fragViewPos.x, fragViewPos.y, fragViewPos.z, 1.0);
+    // gPos.w = encoded LUT row (1 = solid, >=2 = colormap row + 2).
+    gPos = vec4(fragViewPos.x, fragViewPos.y, fragViewPos.z, IN_instanceFeature.y);
 
 }
 `;
@@ -102,6 +110,8 @@ const multiMaterial = new RawShaderMaterial({
         rotation: { value: new Vector4(0, 0, 0, 0) }, // quaternion
         // instanceID, typeId
         instanceAndTypeId: { value: new Vector3(0, 0, 0) },
+        // (featureValue, lutRowEncoded); default = solid
+        instanceFeature: { value: new Vector2(0, 1) },
     },
 });
 

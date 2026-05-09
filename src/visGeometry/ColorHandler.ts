@@ -1,6 +1,12 @@
 import { map, round, isEqual } from "lodash";
 import { Color } from "three";
 import { AgentColorInfo } from "./types.js";
+import { ColormapSpec } from "../simularium/types.js";
+import {
+    COLORMAP_LUT_FLOATS,
+    COLORMAP_LUT_SIZE,
+    buildColormapLut,
+} from "./Colormaps.js";
 
 export function convertColorStringToNumber(color: number | string): number {
     if (typeof color !== "string") {
@@ -24,15 +30,42 @@ export const checkHexColor = (color: string): string => {
     return color;
 };
 
+/**
+ * Per-type colormap state. When a type has an entry here, it is rendered via
+ * colormap lookup instead of its solid color. `lutRow` indexes the row in
+ * the LUT atlas where this colormap's 256-entry RGBA palette lives.
+ */
+export interface ColormapTypeState {
+    spec: ColormapSpec;
+    lutRow: number;
+    featureIndex: number;
+    min: number;
+    max: number;
+}
+
 class ColorHandler {
     public agentTypeToColorId: Map<number, number>;
     private colorsData: Float32Array;
+    /**
+     * agentType -> colormap state, when the type is colormapped.
+     * Types not in this map render via the solid-color path.
+     */
+    private agentTypeToColormap: Map<number, ColormapTypeState>;
+    /**
+     * 2D LUT atlas (rows of 256 RGBA entries) packed into a Float32Array.
+     * Length = lutAtlasRows * COLORMAP_LUT_FLOATS.
+     */
+    private lutAtlas: Float32Array;
+    private lutAtlasRows: number;
 
     constructor() {
         this.agentTypeToColorId = new Map<number, number>();
         // will be set by makeColorDataArray, but need to initialize
         // so that typescript doesn't complain
         this.colorsData = new Float32Array(0);
+        this.agentTypeToColormap = new Map<number, ColormapTypeState>();
+        this.lutAtlas = new Float32Array(0);
+        this.lutAtlasRows = 0;
     }
 
     private get numberOfColors(): number {
@@ -200,6 +233,88 @@ class ColorHandler {
     public resetDefaultColorsData(defaultColors: (number | string)[]): void {
         this.clearColorMapping();
         this.updateColorArray(defaultColors);
+    }
+
+    /**
+     * Register or replace a colormap for an agent type. When a type has a
+     * colormap, instances of that type render via colormap lookup using
+     * `agentData.features[spec.featureIndex]` normalized into `[spec.min,
+     * spec.max]`.
+     *
+     * Returns the row in the LUT atlas where this colormap was placed, plus
+     * the current atlas contents so the caller can rebuild the GPU texture.
+     */
+    public setColormapForType(
+        agentType: number,
+        spec: ColormapSpec
+    ): { lutAtlas: Float32Array; lutAtlasRows: number; lutRow: number } {
+        const lut = buildColormapLut(spec);
+        const existing = this.agentTypeToColormap.get(agentType);
+        let lutRow: number;
+        if (existing) {
+            lutRow = existing.lutRow;
+            this.lutAtlas.set(lut, lutRow * COLORMAP_LUT_FLOATS);
+        } else {
+            lutRow = this.lutAtlasRows;
+            const newRows = this.lutAtlasRows + 1;
+            const newAtlas = new Float32Array(newRows * COLORMAP_LUT_FLOATS);
+            newAtlas.set(this.lutAtlas, 0);
+            newAtlas.set(lut, lutRow * COLORMAP_LUT_FLOATS);
+            this.lutAtlas = newAtlas;
+            this.lutAtlasRows = newRows;
+        }
+        this.agentTypeToColormap.set(agentType, {
+            spec,
+            lutRow,
+            featureIndex: spec.featureIndex,
+            min: spec.min,
+            max: spec.max,
+        });
+        return {
+            lutAtlas: this.lutAtlas,
+            lutAtlasRows: this.lutAtlasRows,
+            lutRow,
+        };
+    }
+
+    /**
+     * Remove a type's colormap, reverting it to solid-color rendering.
+     * The type's LUT row is left in place (the row index remains valid for
+     * any other types that might share it in the future); only the per-type
+     * mapping is cleared.
+     */
+    public clearColormapForType(agentType: number): void {
+        this.agentTypeToColormap.delete(agentType);
+    }
+
+    /**
+     * Returns the colormap state for an agent type, or null if the type is
+     * rendered with a solid color.
+     */
+    public getColormapInfoForType(agentType: number): ColormapTypeState | null {
+        return this.agentTypeToColormap.get(agentType) ?? null;
+    }
+
+    /** True if any type currently has a colormap registered. */
+    public hasAnyColormap(): boolean {
+        return this.agentTypeToColormap.size > 0;
+    }
+
+    /**
+     * Return the current LUT atlas. Each row is COLORMAP_LUT_SIZE RGBA entries.
+     * Caller may upload this to a `DataTexture` of size
+     * `(COLORMAP_LUT_SIZE, lutAtlasRows)`.
+     */
+    public getLutAtlas(): {
+        lutAtlas: Float32Array;
+        lutAtlasRows: number;
+        lutWidth: number;
+    } {
+        return {
+            lutAtlas: this.lutAtlas,
+            lutAtlasRows: this.lutAtlasRows,
+            lutWidth: COLORMAP_LUT_SIZE,
+        };
     }
 }
 

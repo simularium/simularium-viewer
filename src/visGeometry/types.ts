@@ -18,7 +18,8 @@ export interface GeometryInstanceContainer {
         uniqueAgentId: number,
         typeId: number,
         lodScale: number,
-        subPoints: number[]
+        subPoints: number[],
+        instanceFeature?: [number, number]
     ) => void;
     instanceCount: () => number;
     getShaders: () => MRTShaders;

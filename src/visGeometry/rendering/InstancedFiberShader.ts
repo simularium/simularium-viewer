@@ -15,10 +15,13 @@ in vec4 translateAndScale; // xyz trans, w scale
 in vec4 rotation; // quaternion
 // instanceID, typeId, and which row of texture contains this curve
 in vec3 instanceAndTypeId;
+// (featureValue, lutRowEncoded). 1 = solid; >=2 = colormap row + 2.
+in vec2 instanceFeature;
 
 out vec3 IN_viewPos;
 out vec3 IN_viewNormal;
 out vec2 IN_instanceAndTypeId;
+out vec2 IN_instanceFeature;
 
 // built-in uniforms from ThreeJS camera and Object3D
 uniform mat4 projectionMatrix;
@@ -274,7 +277,7 @@ void createTube (float t, vec2 volume, out vec3 offset, out vec3 normal) {
     B = normalize(cross(T, next + prev));
   }
   else {
-    // special case for which N and B are not well defined. 
+    // special case for which N and B are not well defined.
     // so we will just pick something
     float min = 1.0;
     if (abs(T.x) <= min) {
@@ -341,6 +344,7 @@ void main() {
   IN_viewPos = mvPosition.xyz;
   IN_viewNormal = normalize(transformedNormal);
   IN_instanceAndTypeId = instanceAndTypeId.xy;
+  IN_instanceFeature = instanceFeature;
 
   gl_Position = projectionMatrix * mvPosition;
 }
@@ -353,6 +357,7 @@ precision highp float;
 in vec3 IN_viewPos;
 in vec3 IN_viewNormal;
 in vec2 IN_instanceAndTypeId;
+in vec2 IN_instanceFeature;
 
 layout(location = 0) out vec4 gAgentInfo;
 layout(location = 1) out vec4 gNormal;
@@ -362,7 +367,7 @@ uniform mat4 projectionMatrix;
 
 void main()	{
     vec3 fragViewPos = IN_viewPos;
-  
+
     vec4 fragPosClip = projectionMatrix * vec4(fragViewPos, 1.0);
     vec3 fragPosNDC = fragPosClip.xyz / fragPosClip.w;
     float n = gl_DepthRange.near;
@@ -375,9 +380,11 @@ void main()	{
 
     vec3 normal = IN_viewNormal;
     normal = normalize(normal);
-    gNormal = vec4(normal * 0.5 + 0.5, 1.0);
+    // gNormal.w = per-instance feature value (used by composite for colormap sampling).
+    gNormal = vec4(normal * 0.5 + 0.5, IN_instanceFeature.x);
 
-    gPos = vec4(fragViewPos.x, fragViewPos.y, fragViewPos.z, 1.0);
+    // gPos.w = encoded LUT row (1 = solid, >=2 = colormap row + 2).
+    gPos = vec4(fragViewPos.x, fragViewPos.y, fragViewPos.z, IN_instanceFeature.y);
 }
 `;
 

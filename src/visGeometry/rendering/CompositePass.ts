@@ -5,6 +5,7 @@ import {
     OrthographicCamera,
     PerspectiveCamera,
     RGBAFormat,
+    Vector2,
     Vector3,
     WebGLRenderer,
     WebGLRenderTarget,
@@ -22,6 +23,13 @@ class CompositePass {
                 ssaoTex1: { value: null },
                 // colors indexed by particle type id
                 colorsBuffer: { value: null },
+                // gNormal and gPos textures, used for per-instance feature/lutRow
+                normalTex: { value: null },
+                posTex: { value: null },
+                // colormap LUT atlas (rows of 256 RGBA entries)
+                colormapAtlas: { value: null },
+                // (atlas width = 256, atlas rows = N). 0 rows => no colormaps active.
+                colormapAtlasSize: { value: new Vector2(0, 0) },
                 backgroundColor: { value: new Color(1, 1, 1) },
                 bgHCLoffset: bgHCLoffset
                     ? {
@@ -45,6 +53,10 @@ class CompositePass {
             uniform sampler2D ssaoTex1;
 
             uniform sampler2D colorsBuffer;
+            uniform sampler2D normalTex;
+            uniform sampler2D posTex;
+            uniform sampler2D colormapAtlas;
+            uniform vec2 colormapAtlasSize; // (width, rows)
 
             uniform float zNear;
             uniform float zFar;
@@ -155,6 +167,24 @@ class CompositePass {
                 ivec2 ncols = textureSize(colorsBuffer, 0);
                 vec4 col = texelFetch(colorsBuffer, ivec2(agentColorIndex % ncols.x, 0), 0);
 
+                // Per-instance colormap override:
+                // gPos.w encodes the LUT row: 1.0 means "solid", >= 2.0 means "row = gPos.w - 2.0".
+                // gNormal.w carries the normalized feature value in [0,1].
+                vec4 posSample = texture(posTex, texCoords);
+                vec4 normalSample = texture(normalTex, texCoords);
+                float lutRowEncoded = posSample.w;
+                if (lutRowEncoded >= 1.5 && colormapAtlasSize.y > 0.0) {
+                    float lutRow = lutRowEncoded - 2.0;
+                    float featureValue = clamp(normalSample.w, 0.0, 1.0);
+                    // Sample atlas at (featureValue, (row+0.5)/rows). Width is
+                    // colormapAtlasSize.x; we want the texel at integer column
+                    // round(featureValue * (width-1)).
+                    float u = (floor(featureValue * (colormapAtlasSize.x - 1.0)) + 0.5)
+                              / colormapAtlasSize.x;
+                    float v = (lutRow + 0.5) / colormapAtlasSize.y;
+                    col = texture(colormapAtlas, vec2(u, v));
+                }
+
                 float eyeDepth = -col0.z;
 
                 // atomColor is the "true" color
@@ -238,6 +268,35 @@ class CompositePass {
         this.pass.material.uniforms.colorsBuffer.value.needsUpdate = true;
     }
 
+    /**
+     * Update the colormap LUT atlas. Each row is `lutWidth` RGBA entries.
+     * Pass `lutAtlasRows = 0` to disable colormap sampling.
+     */
+    public updateColormapAtlas(
+        lutWidth: number,
+        lutAtlasRows: number,
+        atlasData: Float32Array
+    ): void {
+        if (lutAtlasRows === 0) {
+            this.pass.material.uniforms.colormapAtlas.value = null;
+            this.pass.material.uniforms.colormapAtlasSize.value.set(0, 0);
+            return;
+        }
+        const tex = new DataTexture(
+            atlasData,
+            lutWidth,
+            lutAtlasRows,
+            RGBAFormat,
+            FloatType
+        );
+        tex.needsUpdate = true;
+        this.pass.material.uniforms.colormapAtlas.value = tex;
+        this.pass.material.uniforms.colormapAtlasSize.value.set(
+            lutWidth,
+            lutAtlasRows
+        );
+    }
+
     public setBgHueOffset(value: number): void {
         this.pass.material.uniforms.bgHCLoffset.value.x = value;
     }
@@ -267,13 +326,21 @@ class CompositePass {
         target: WebGLRenderTarget,
         ssaoBuffer1: WebGLRenderTarget,
         ssaoBuffer2: WebGLRenderTarget,
-        colorBuffer: WebGLTexture
+        colorBuffer: WebGLTexture,
+        normalBuffer?: WebGLTexture,
+        posBuffer?: WebGLTexture
     ): void {
         this.pass.material.uniforms.zNear.value = camera.near;
         this.pass.material.uniforms.zFar.value = camera.far;
 
         this.pass.material.uniforms.colorTex.value = colorBuffer;
         this.pass.material.uniforms.ssaoTex1.value = ssaoBuffer1.texture;
+        if (normalBuffer) {
+            this.pass.material.uniforms.normalTex.value = normalBuffer;
+        }
+        if (posBuffer) {
+            this.pass.material.uniforms.posTex.value = posBuffer;
+        }
 
         // const c = renderer.getClearColor().clone();
         // const a = renderer.getClearAlpha();

@@ -12,6 +12,7 @@ import {
     FILE_STATUS_SUCCESS,
     FILE_STATUS_FAIL,
     PlotConfig,
+    ColormapSpec,
 } from "../simularium/types.js";
 
 import { ClientSimulator } from "../simularium/ClientSimulator.js";
@@ -570,6 +571,19 @@ export default class SimulariumController {
 
     public setCameraType(ortho: boolean): void {
         this.visGeometry?.setCameraType(ortho);
+    }
+
+    /**
+     * Apply a colormap to the given agent type id. Agents of this type will
+     * be colored by sampling the colormap at their feature value.
+     */
+    public setColormapForType(agentType: number, spec: ColormapSpec): void {
+        this.visGeometry?.setColormapForType(agentType, spec);
+    }
+
+    /** Revert an agent type back to solid-color rendering. */
+    public clearColormapForType(agentType: number): void {
+        this.visGeometry?.clearColormapForType(agentType);
     }
 }
 

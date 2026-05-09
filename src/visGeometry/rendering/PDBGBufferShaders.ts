@@ -15,30 +15,34 @@ precision highp float;
     out vec3 IN_viewPos;
     out float IN_radius;
     out vec2 IN_instanceAndTypeId;
+    out vec2 IN_instanceFeature;
 
     // per instance attributes
     in vec4 translateAndScale; // xyz trans, w scale
     in vec4 rotation; // quaternion
     // instanceID, typeId, lod_scale
-    in vec3 instanceAndTypeId; 
+    in vec3 instanceAndTypeId;
+    // (featureValue, lutRowEncoded). lutRowEncoded == 1 -> solid; >= 2 -> colormap row (lutRowEncoded - 2)
+    in vec2 instanceFeature;
 
     vec3 applyQuaternionToVector( vec4 q, vec3 v ) {
         return v + 2.0 * cross( q.xyz, cross( q.xyz, v ) + q.w * v );
     }
-    
+
     void main()	{
         vec3 p = position.xyz;
-    
+
         // per-instance transform
         p *= translateAndScale.w;
         p = applyQuaternionToVector(rotation, p);
         p += translateAndScale.xyz;
-    
+
         float radius = instanceAndTypeId.z;
 
         vec4 modelViewPosition = modelViewMatrix * vec4(p, 1.0);
         IN_viewPos = modelViewPosition.xyz;
         IN_instanceAndTypeId = instanceAndTypeId.xy;
+        IN_instanceFeature = instanceFeature;
 
         gl_Position = projectionMatrix * modelViewPosition;
 
@@ -53,16 +57,17 @@ precision highp float;
 in vec3 IN_viewPos;
 in float IN_radius;
 in vec2 IN_instanceAndTypeId;
+in vec2 IN_instanceFeature;
 
 layout(location = 0) out vec4 gAgentInfo;
 layout(location = 1) out vec4 gNormal;
 layout(location = 2) out vec4 gPos;
 
     uniform vec2 iResolution;
-    
+
     uniform float scale;
     uniform mat4 projectionMatrix;
-    
+
     void main()	{
         // gl_PointCoord spans (0,0)..(1,1)
         // uv spans (-1,-1)..(1,1)
@@ -76,7 +81,7 @@ layout(location = 2) out vec4 gPos;
         vec3 fragViewPos = IN_viewPos;
         // adding pushes Z back. so "center" of sphere is "frontmost"
         fragViewPos.z += IN_radius * scale * sqrt(1.0 - lensqr);
-      
+
         vec4 fragPosClip = projectionMatrix * vec4(fragViewPos, 1.0);
         vec3 fragPosNDC = fragPosClip.xyz / fragPosClip.w;
         float n = gl_DepthRange.near;
@@ -89,9 +94,11 @@ layout(location = 2) out vec4 gPos;
         //gAgentInfo = vec4(IN_radius*4.0, IN_instanceAndTypeId.x, fragViewPos.z, fragPosDepth);
 
         gAgentInfo = vec4(IN_instanceAndTypeId.y, IN_instanceAndTypeId.x, fragViewPos.z, fragPosDepth);
-        
-        gNormal = vec4(normal * 0.5 + 0.5, 1.0);
-        gPos = vec4(fragViewPos.x, fragViewPos.y, fragViewPos.z, 1.0);
+
+        // gNormal.w = per-instance feature value (used by composite for colormap sampling).
+        gNormal = vec4(normal * 0.5 + 0.5, IN_instanceFeature.x);
+        // gPos.w = encoded LUT row (1 = solid, >=2 = colormap row + 2).
+        gPos = vec4(fragViewPos.x, fragViewPos.y, fragViewPos.z, IN_instanceFeature.y);
     }
 
 `;

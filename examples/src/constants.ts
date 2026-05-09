@@ -140,6 +140,11 @@ export const TRAJECTORY_OPTIONS: TrajectoryOptions[] = [
         simulatorType: SimulatorModes.localClientSimulator,
     },
     {
+        id: "TEST_FEATURES",
+        name: "Point Simulation w/ Colormap Feature",
+        simulatorType: SimulatorModes.localClientSimulator,
+    },
+    {
         id: "TEST_LIVEMODE_API",
         name: "Point Simulation LIVE",
         simulatorType: SimulatorModes.localClientSimulator,
