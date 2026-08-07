@@ -55,6 +55,8 @@ jobs:
         if: github.ref == 'refs/heads/main'
         needs: [lint, typeCheck, test]
         runs-on: ubuntu-latest
+        permissions:
+            contents: write
         steps:
             - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 #4.3.1
             - uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 #v6.2.0
