@@ -11,7 +11,7 @@ import { WebsocketClient } from "../simularium/WebsocketClient.js";
 describe("RemoteSimulator", () => {
     // Silence console.debug messages like this in Jest output:
     // "[netconnection] WS Connection Request Sent:  wss://..."
-    vi.spyOn(global.console, "debug").mockImplementation(() => vi.fn());
+    vi.spyOn(console, "debug").mockImplementation(() => vi.fn());
 
     const CONNECTION_SETTINGS = {
         serverIp: "dummy.uri.com",

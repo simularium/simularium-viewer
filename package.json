@@ -68,7 +68,7 @@
         "@types/three": "^0.170.0",
         "@typescript-eslint/eslint-plugin": "~8.15.0",
         "@typescript-eslint/parser": "~8.15.0",
-        "@vitest/coverage-v8": "^2.1.5",
+        "@vitest/coverage-v8": "^4.1.4",
         "acorn": "^8.7.0",
         "auto-changelog": "^2.3.0",
         "babel-loader": "~8.2.2",
@@ -76,7 +76,7 @@
         "blob-polyfill": "^6.0.20211015",
         "copyfiles": "^2.4.1",
         "cross-env": "7.0.3",
-        "esbuild": "^0.25.0",
+        "esbuild": "^0.28.1",
         "eslint-config-prettier": "^9.1.0",
         "eslint-plugin-react": "^7.37.2",
         "globals": "^15.12.0",
@@ -94,7 +94,7 @@
         "rimraf": "^6.0.1",
         "ts-node": "~10.1.0",
         "typescript": "^5.6.2",
-        "vitest": "^2.1.5"
+        "vitest": "^4.1.4"
     },
     "peerDependencies": {
         "react": "^18.2.0",
