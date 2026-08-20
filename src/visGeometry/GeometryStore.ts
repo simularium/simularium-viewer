@@ -23,6 +23,7 @@ import {
     MeshLoadRequest,
 } from "./types.js";
 import { MetaballMesh } from "./rendering/MetaballMesh.js";
+import { loadVtkPolyData } from "./VtkPolyDataLoader.js";
 
 export const DEFAULT_MESH_NAME = "SPHERE";
 
@@ -397,6 +398,31 @@ class GeometryStore {
         });
     }
 
+    private async fetchVtk(url: string): Promise<MeshLoadRequest> {
+        /** Request VTK POLYDATA from an external source. */
+        this.prepMeshRegistryForNewObj(url);
+        try {
+            const geom = await loadVtkPolyData(url, (loaded, total) => {
+                if (total > 0) {
+                    this.mlogger.info(
+                        url,
+                        " ",
+                        `${(loaded / total) * 100}% loaded`
+                    );
+                }
+            });
+            const meshLoadRequest = this.handleObjResponse(url, new Mesh(geom));
+            if (!meshLoadRequest) {
+                throw new Error("Mesh load was cancelled");
+            }
+            return meshLoadRequest;
+        } catch (error) {
+            // If the request fails, leave the agent as a sphere by default.
+            this.mlogger.warn("Failed to load mesh: ", error, url);
+            throw `Failed to load mesh: ${url}`;
+        }
+    }
+
     private attemptToLoadGeometry(
         urlOrPath: string,
         displayType: GeometryDisplayType
@@ -451,7 +477,13 @@ class GeometryStore {
                         return pdbModel;
                     });
                 case GeometryDisplayType.OBJ:
-                    return this.fetchObj(urlOrPath);
+                    if (urlOrPath.endsWith(".obj")) {
+                        return this.fetchObj(urlOrPath);
+                    } else if (urlOrPath.endsWith(".vtk")) {
+                        return this.fetchVtk(urlOrPath);
+                    } else {
+                        return this.fetchObj(urlOrPath);
+                    }
                 default:
                     // will replace geom in registry is sphere
                     return Promise.reject(
