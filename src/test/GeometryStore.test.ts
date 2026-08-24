@@ -1,4 +1,4 @@
-import { Mesh } from "three";
+import { BufferGeometry, Float32BufferAttribute, Mesh } from "three";
 
 import {
     InstancedMesh,
@@ -7,8 +7,20 @@ import {
 import GeometryStore, {
     DEFAULT_MESH_NAME,
 } from "../visGeometry/GeometryStore.js";
-import { GeometryDisplayType } from "../visGeometry/types.js";
+import { GeometryDisplayType, MeshLoadRequest } from "../visGeometry/types.js";
 import PDBModel from "../visGeometry/PDBModel.js";
+
+vi.mock("../visGeometry/VtkPolyDataLoader.js", () => ({
+    loadVtkPolyData: vi.fn(async () => {
+        const geometry = new BufferGeometry();
+        geometry.setAttribute(
+            "position",
+            new Float32BufferAttribute([0, 0, 0, 1, 0, 0, 0, 1, 0], 3)
+        );
+        geometry.computeVertexNormals();
+        return geometry;
+    }),
+}));
 
 describe("GeometryStore module", () => {
     test("it creates a registry with a single mesh", () => {
@@ -182,6 +194,27 @@ describe("GeometryStore module", () => {
                 );
                 expect(returned.errorMessage).toEqual(
                     "Failed to load mesh: /test"
+                );
+            }
+        });
+        test("replaces the placeholder from a VTK Object3D", async () => {
+            const store = new GeometryStore();
+            const url = "https://example.test/surface.vtk";
+
+            const returned = await store.mapKeyToGeom(1, {
+                displayType: GeometryDisplayType.OBJ,
+                url,
+                color: "",
+            });
+
+            expect(returned).toBeTruthy();
+            const saved = store.registry.get(url);
+            expect(saved).toBeTruthy();
+            if (saved && saved.displayType !== GeometryDisplayType.PDB) {
+                const meshRequest = saved.geometry as MeshLoadRequest;
+                const drawable = meshRequest.instances.getMesh() as Mesh;
+                expect(drawable.geometry.getAttribute("position").count).toBe(
+                    3
                 );
             }
         });

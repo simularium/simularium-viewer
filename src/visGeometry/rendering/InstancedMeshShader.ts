@@ -1,4 +1,4 @@
-import { FrontSide, GLSL3, Matrix3, Matrix4, RawShaderMaterial } from "three";
+import { DoubleSide, GLSL3, Matrix3, Matrix4, RawShaderMaterial } from "three";
 
 import { MRTShaders } from "./MultipassMaterials.js";
 
@@ -69,8 +69,12 @@ void main() {
 
     gAgentInfo = vec4(IN_instanceAndTypeId.y, IN_instanceAndTypeId.x, fragViewPos.z, fragPosDepth);
 
-    vec3 normal = IN_viewNormal;
-    normal = normalize(normal);
+    vec3 normal = normalize(IN_viewNormal);
+    // Surface meshes can be open, inward-wound, or viewed from inside. Keep
+    // their lighting normal pointed toward the visible side of the fragment.
+    if (!gl_FrontFacing) {
+        normal = -normal;
+    }
     gNormal = vec4(normal * 0.5 + 0.5, 1.0);
 
     gPos = vec4(fragViewPos.x, fragViewPos.y, fragViewPos.z, 1.0);
@@ -82,7 +86,9 @@ const multiMaterial = new RawShaderMaterial({
     glslVersion: GLSL3,
     vertexShader: vertexShader,
     fragmentShader: fragmentShader,
-    side: FrontSide,
+    // VTK surface meshes are not guaranteed to use the winding convention
+    // expected by Three.js, and closed surfaces may be viewed from within.
+    side: DoubleSide,
     transparent: false,
     defines: {},
     uniforms: {

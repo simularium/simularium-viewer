@@ -3,6 +3,7 @@ import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import jsLogger, { ILogger, ILogLevel } from "js-logger";
 import {
     BufferGeometry,
+    Group,
     Object3D,
     Mesh,
     SphereGeometry,
@@ -411,7 +412,15 @@ class GeometryStore {
                     );
                 }
             });
-            const meshLoadRequest = this.handleObjResponse(url, new Mesh(geom));
+            this.mlogger.info(
+                `Finished parsing VTK mesh: ${url} ` +
+                    `(${geom.getAttribute("position").count} vertices)`
+            );
+            // Match OBJLoader's Object3D structure and use the same registry
+            // replacement path for both mesh formats.
+            const object = new Group();
+            object.add(new Mesh(geom));
+            const meshLoadRequest = this.handleObjResponse(url, object);
             if (!meshLoadRequest) {
                 throw new Error("Mesh load was cancelled");
             }

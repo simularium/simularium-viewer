@@ -104,9 +104,15 @@ class InstancedMesh implements GeometryInstanceContainer {
     public replaceGeometry(geometry: BufferGeometry, name: string): void {
         // TODO this does not handle changing mesh to points or vice versa.
         // e.g you can't have PDBs start out as spheres and then async transition to PDBs
+        const activeInstanceCount = this.instanceCount();
         this.drawable.name = name;
         this.baseGeometry = geometry;
         this.reallocate(this.getCapacity());
+        // Mesh files can finish loading after the current frame's instances
+        // have already been populated. Reallocation creates a fresh
+        // InstancedBufferGeometry with a draw count of zero, so restore the
+        // active count to make the replacement visible immediately.
+        this.updateInstanceCount(activeInstanceCount);
     }
 
     public reallocate(n: number): void {
