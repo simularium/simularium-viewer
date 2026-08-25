@@ -1,4 +1,4 @@
-import * as React from "react";
+import React from "react";
 import SimulariumController from "../controller/index.js";
 import { TrajectoryFileInfo, SelectionStateInfo, UIDisplayData } from "../simularium/index.js";
 import { AgentData, CacheLog } from "../simularium/types.js";
