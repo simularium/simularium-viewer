@@ -7,6 +7,12 @@ interface RecordMovieComponentProps {
     isRecordingEnabled: boolean;
 }
 
+const formatElapsed = (seconds: number): string => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${String(s).padStart(2, "0")}`;
+};
+
 const RecordMovieComponent = ({
     startRecordingHandler,
     stopRecordingHandler,
@@ -40,44 +46,56 @@ const RecordMovieComponent = ({
     };
 
     const stopRecording = () => {
-        setOutputStatus("Recording complete");
+        setOutputStatus("Saved to downloads as .mp4");
         setIsRecording(false);
         setRecordingTimeElapsed(0);
         stopRecordingHandler();
     };
 
+    if (!browserSupported) {
+        return (
+            <div className="note">
+                This browser can&apos;t encode video (no VideoEncoder API).
+            </div>
+        );
+    }
+
     return (
-        <div className="ui-container">
-            <button onClick={() => setRecordingEnabled()}>
-                {isRecordingEnabled ? "Disable" : "Enable"} Recording
-            </button>
-            <button
-                onClick={startRecording}
-                disabled={
-                    isRecording || !browserSupported || !isRecordingEnabled
-                }
-            >
-                Start Recording
-            </button>
-            <button
-                onClick={stopRecording}
-                disabled={!isRecording || !browserSupported}
-            >
-                Stop Recording
-            </button>
-            <div>{isRecording ? "Recording..." : ""}</div>
-            <div>
-                {!browserSupported ? "Browser does not support recording" : ""}
+        <>
+            <div className="switch-row">
+                <span className="switch-label">Capture enabled</span>
+                <button
+                    className={`switch${isRecordingEnabled ? " on" : ""}`}
+                    onClick={() => setRecordingEnabled()}
+                    role="switch"
+                    aria-checked={isRecordingEnabled}
+                    aria-label="Enable recording"
+                />
             </div>
-            <div>
-                {isRecording
-                    ? "Recording duration:  " +
-                      recordingTimeElapsed +
-                      " seconds"
-                    : ""}
+            <div className="row">
+                {!isRecording ? (
+                    <button
+                        onClick={startRecording}
+                        disabled={!isRecordingEnabled}
+                    >
+                        Start recording
+                    </button>
+                ) : (
+                    <button onClick={stopRecording}>
+                        <span className="rec-dot" />
+                        Stop &amp; save
+                    </button>
+                )}
+                {isRecording && (
+                    <span className="readout">
+                        <span className="v accent">
+                            {formatElapsed(recordingTimeElapsed)}
+                        </span>
+                    </span>
+                )}
             </div>
-            <div>{outputStatus}</div>
-        </div>
+            {outputStatus && <div className="note">{outputStatus}</div>}
+        </>
     );
 };
 

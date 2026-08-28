@@ -13,19 +13,32 @@ const CacheLogDisplay: React.FC<CacheLogDisplayProps> = ({
     maxSize,
 }) => {
     const { size, framesInCache } = cacheLog;
+    const first = framesInCache[0];
+    const last = framesInCache[framesInCache.length - 1];
 
     return (
-        <div className="ui-container">
-            <div>Cache Enabled: {cacheEnabled ? "Yes" : "No"}</div>
-            <div>Current cache size: {size}</div>
-            <div> Max Size: {maxSize}</div>
-            <div>First Frame Number: {framesInCache[0]}</div>
+        <div className="readout">
             <div>
-                Last Frame Number: {framesInCache[framesInCache.length - 1]}
+                <span className="k">cache </span>
+                <span className="v">{cacheEnabled ? "on" : "off"}</span>
+                <span className="k"> · size </span>
+                <span className="v">{size}</span>
+                <span className="k"> / </span>
+                <span className="v">
+                    {Number.isFinite(maxSize) ? maxSize : "∞"}
+                </span>
             </div>
             <div>
-                {framesInCache.length} frames in Cache:{" "}
-                {framesInCache.join(", ")}
+                <span className="k">frames </span>
+                <span className="v">{framesInCache.length}</span>
+                {framesInCache.length > 0 && (
+                    <>
+                        <span className="k"> · range </span>
+                        <span className="v">
+                            {first}–{last}
+                        </span>
+                    </>
+                )}
             </div>
         </div>
     );

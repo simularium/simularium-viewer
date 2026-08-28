@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect } from "react";
 import { TRAJECTORY_OPTIONS } from "../constants";
+import { ClearIcon, UploadIcon } from "./Icons";
 
 interface FileSelectionProps {
     selectedFile: string;
@@ -7,18 +8,15 @@ interface FileSelectionProps {
     onFileSelect: (file: string) => void;
     loadSmoldynFile: () => void;
     clearFile: () => void;
-    loadSmoldynPreConfiguredSim: () => void;
-    setRabbitCount: (count: string) => void;
 }
 
+// header trajectory picker; supports ?file=<id or url> in the query string
 const FileSelection = ({
     selectedFile,
     conversionFileName,
     onFileSelect,
     loadSmoldynFile,
     clearFile,
-    loadSmoldynPreConfiguredSim,
-    setRabbitCount,
 }: FileSelectionProps): JSX.Element => {
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -47,15 +45,17 @@ const FileSelection = ({
         selectedFile && !TRAJECTORY_OPTIONS.some((t) => t.id === selectedFile);
 
     return (
-        <div className={"ui-container"}>
+        <div className="trajectory-picker">
+            <span className="picker-label">Trajectory</span>
             <select
                 value={selectValue}
                 onChange={(e) => handleFileSelect(e.target.value as string)}
-                style={{ maxWidth: 200 }}
+                style={{ maxWidth: 260 }}
                 disabled={isAwaitingFileConversion}
+                aria-label="Choose a trajectory"
             >
                 <option value="" disabled>
-                    choose a file
+                    Choose a trajectory
                 </option>
                 {isAwaitingFileConversion && (
                     <option value={"Awaiting file conversion..."} disabled>
@@ -71,25 +71,18 @@ const FileSelection = ({
                     <option value={selectedFile}>{selectedFile}</option>
                 )}
             </select>
-            <br></br>
-            <button onClick={() => clearFile()}>Clear trajectory </button>
-            <button onClick={loadSmoldynFile}>
-                Convert a smoldyn trajectory
+            <button
+                className="ghost icon-btn"
+                onClick={() => clearFile()}
+                title="Clear trajectory"
+                aria-label="Clear trajectory"
+            >
+                <ClearIcon />
             </button>
-            <div className="ui-container">
-                <button onClick={loadSmoldynPreConfiguredSim}>
-                    Run pre-config Smoldyn sim via BioSimulators API
-                </button>
-                <label>
-                    Initial Rabbit Count:
-                    <input
-                        defaultValue="100"
-                        onChange={(event) => {
-                            setRabbitCount(event.target.value);
-                        }}
-                    />
-                </label>
-            </div>
+            <button onClick={loadSmoldynFile} title="Convert a Smoldyn output file via the remote conversion service">
+                <UploadIcon />
+                Convert Smoldyn file
+            </button>
         </div>
     );
 };

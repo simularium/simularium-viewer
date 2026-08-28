@@ -28,7 +28,8 @@ const ColorPicker = ({
             (element) => element.name === agentName
         );
         if (!agent) {
-            throw new Error("No agent found");
+            setSubAgents([{ name: "<unmodified>", id: "<unmodified>" }]);
+            return;
         }
         if (agent.displayStates.length === 0) {
             setSubAgents([{ name: "<unmodified>", id: "<unmodified>" }]);
@@ -39,112 +40,138 @@ const ColorPicker = ({
 
     const handleAgentSelection = (event) => {
         const value = event.target.value;
-        getSubAgentsforAgent(value);
+        if (value) {
+            getSubAgentsforAgent(value);
+        }
         setSelectedAgent(value);
     };
 
     const assignColorToAgent = () => {
-        if (!selectedAgent) {
-            throw new Error("No agent selected");
-        } else if (!selectedColor) {
-            throw new Error("No color selected");
-        } else {
-            let subAgent: string[] = selectedSubagent ? [selectedSubagent] : [];
-            // hooks doesn't save an empty string
-            // but an empty string is a possible tag
-            // that represents the unmodified state
-            if (selectedSubagent === "<unmodified>") {
-                subAgent = [""];
-            }
-            const appliedColors = uiDisplayData.map((agent) => {
-                const newAgent = { ...agent };
-                if (agent.name === selectedAgent) {
-                    if (subAgent.includes("")) {
-                        newAgent.color = selectedColor;
-                    }
-                    const newDisplayStates = agent.displayStates.map(
-                        (state: any) => {
-                            if (
-                                subAgent.includes(state.id) ||
-                                !subAgent.length
-                            ) {
-                                return {
-                                    ...state,
-                                    color: selectedColor,
-                                };
-                            }
-                            return state;
-                        }
-                    );
-                    newAgent.displayStates = newDisplayStates;
-                }
-                return newAgent;
-            });
-            setColorSelectionInfo(appliedColors);
+        if (!selectedAgent || !selectedColor) {
+            return;
         }
+        let subAgent: string[] = selectedSubagent ? [selectedSubagent] : [];
+        // hooks doesn't save an empty string
+        // but an empty string is a possible tag
+        // that represents the unmodified state
+        if (selectedSubagent === "<unmodified>") {
+            subAgent = [""];
+        }
+        const appliedColors = uiDisplayData.map((agent) => {
+            const newAgent = { ...agent };
+            if (agent.name === selectedAgent) {
+                if (subAgent.includes("")) {
+                    newAgent.color = selectedColor;
+                }
+                const newDisplayStates = agent.displayStates.map(
+                    (state: any) => {
+                        if (subAgent.includes(state.id) || !subAgent.length) {
+                            return {
+                                ...state,
+                                color: selectedColor,
+                            };
+                        }
+                        return state;
+                    }
+                );
+                newAgent.displayStates = newDisplayStates;
+            }
+            return newAgent;
+        });
+        setColorSelectionInfo(appliedColors);
     };
 
     const addColorToColorArray = (customColor: string) => {
         const hexColorCodeRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
-        const color = customColor;
-        if (hexColorCodeRegex.test(color)) {
-            updateAgentColorArray(color);
+        if (hexColorCodeRegex.test(customColor)) {
+            updateAgentColorArray(customColor);
+            setSelectedColor(customColor);
+            setColorToAppend("");
         } else {
-            alert("Please enter a valid hex color code");
+            alert("Enter a hex color like #e08838");
         }
     };
 
     return (
-        <div className="ui-container">
-            <span>Color picker:</span>
-            <select id="agentSelect" onChange={handleAgentSelection}>
-                <option value=""> Select Agent</option>
-                {particleTypeNames.map((name: string) => (
-                    <option key={name} value={name}>
-                        {name}
-                    </option>
+        <>
+            <div className="row">
+                <select
+                    id="agentSelect"
+                    onChange={handleAgentSelection}
+                    style={{ flex: 1, minWidth: 0 }}
+                    aria-label="Agent to recolor"
+                >
+                    <option value="">Agent…</option>
+                    {particleTypeNames.map((name: string) => (
+                        <option key={name} value={name}>
+                            {name}
+                        </option>
+                    ))}
+                </select>
+                <select
+                    id="subAgentSelect"
+                    onChange={(event) =>
+                        setSelectedSubAgent(event.target.value)
+                    }
+                    style={{ flex: 1, minWidth: 0 }}
+                    aria-label="Sub-agent state"
+                >
+                    <option value="">All states</option>
+                    {subAgents.map((subAgent) => (
+                        <option
+                            key={subAgent.name}
+                            value={subAgent.id || subAgent.name}
+                        >
+                            {subAgent.name}
+                        </option>
+                    ))}
+                </select>
+            </div>
+            <div className="swatch-grid">
+                {agentColors.map((color) => (
+                    <button
+                        key={color}
+                        className={`swatch-btn${
+                            selectedColor === color ? " selected" : ""
+                        }`}
+                        style={{ background: String(color) }}
+                        onClick={() => setSelectedColor(String(color))}
+                        title={String(color)}
+                        aria-label={`Select color ${color}`}
+                    />
                 ))}
-            </select>
-            <select
-                id="subAgentSelect"
-                onChange={(event) => setSelectedSubAgent(event.target.value)}
-            >
-                <option value="">Select Sub-Agent</option>
-                {subAgents.map((subAgent) => (
-                    <option
-                        key={subAgent.name}
-                        value={subAgent.id || subAgent.name}
-                    >
-                        {subAgent.name}
-                    </option>
-                ))}
-            </select>
-            <select
-                id="colorSelect"
-                onChange={(event) => setSelectedColor(event.target.value)}
-                defaultValue={selectedColor}
-                style={{ backgroundColor: selectedColor }}
-            >
-                <option value="">Select Color</option>
-                {agentColors.map((name) => (
-                    <option key={name} value={name}>
-                        {name}
-                    </option>
-                ))}
-            </select>
-            <button onClick={assignColorToAgent}> Apply Color to Agent</button>
-            <input
-                id="colorAddition"
-                type="text"
-                placeholder="add Hex Color"
-                onChange={(event) => {
-                    setColorToAppend(event.target.value);
-                }}
-            ></input>
-            <button onClick={() => addColorToColorArray(colorToAppend)}>
-                Add color to color array
-            </button>
-        </div>
+            </div>
+            <div className="row">
+                <input
+                    id="colorAddition"
+                    type="text"
+                    placeholder="#hex"
+                    value={colorToAppend}
+                    style={{ width: 80 }}
+                    onChange={(event) => {
+                        setColorToAppend(event.target.value);
+                    }}
+                    onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                            addColorToColorArray(colorToAppend);
+                        }
+                    }}
+                />
+                <button
+                    className="ghost"
+                    onClick={() => addColorToColorArray(colorToAppend)}
+                >
+                    Add color
+                </button>
+                <button
+                    onClick={assignColorToAgent}
+                    disabled={!selectedAgent || !selectedColor}
+                    style={{ marginLeft: "auto" }}
+                >
+                    Apply
+                </button>
+            </div>
+        </>
     );
 };
 

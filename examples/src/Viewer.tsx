@@ -40,6 +40,10 @@ import AgentMetadata from "./Components/AgentMetadata.tsx";
 import FileSelection from "./Components/FileSelect.tsx";
 import AgentSelectionControls from "./Components/AgentSelection.tsx";
 import CacheLogDisplay from "./Components/CacheLogDisplay.tsx";
+import Section from "./Components/Section.tsx";
+import TransportBar from "./Components/TransportBar.tsx";
+import CameraControls from "./Components/CameraControls.tsx";
+import { DownloadIcon, FilamentGlyph } from "./Components/Icons.tsx";
 
 import {
     agentColors,
@@ -93,6 +97,10 @@ interface ViewerState {
     conversionFileName: string;
     cacheLog: CacheLog;
     cacheDisabled: boolean;
+    isPlaying: boolean;
+    panMode: boolean;
+    focusMode: boolean;
+    orthoMode: boolean;
 }
 
 const simulariumController = new SimulariumController({});
@@ -134,13 +142,14 @@ const initialState: ViewerState = {
         framesInCache: [],
     },
     cacheDisabled: false,
+    isPlaying: false,
+    panMode: false,
+    focusMode: true,
+    orthoMode: false,
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
     private viewerRef: React.RefObject<SimulariumViewer>;
-    private panMode = false;
-    private focusMode = true;
-    private orthoMode = false;
     private smoldynInput = "100";
     private netConnectionSettings: NetConnectionParams;
 
@@ -418,7 +427,8 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         const simulariumFile = fileName.includes(".simularium")
             ? trajectoryFile
             : null;
-        this.setState({ initialPlay: true });
+        // a dropped/loaded file replaces any running client simulator
+        this.setState({ initialPlay: true, clientSimulator: false });
         return simulariumController
             .handleFileChange(simulariumFile, fileName, geoAssets)
             .catch(console.log);
@@ -810,17 +820,25 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         if (this.state.filePending) {
             const fileType = this.state.filePending.type;
             return (
-                <ConversionForm
-                    {...this.state.filePending}
-                    submitFile={(obj) => this.convertFile(obj, fileType)}
-                    onReturned={this.clearPendingFile}
-                    submitDisabled={!this.state.serverHealthy}
-                />
+                <div className="conversion-container">
+                    <ConversionForm
+                        {...this.state.filePending}
+                        submitFile={(obj) => this.convertFile(obj, fileType)}
+                        onReturned={this.clearPendingFile}
+                        submitDisabled={!this.state.serverHealthy}
+                    />
+                </div>
             );
         }
         return (
             <div className="app-container">
-                <div className="sidebar">
+                <header className="app-header">
+                    <div className="wordmark">
+                        <FilamentGlyph />
+                        <span className="brand">
+                            TRAJECTORY <em>BENCH</em>
+                        </span>
+                    </div>
                     <FileSelection
                         selectedFile={this.state.selectedFile}
                         conversionFileName={this.state.conversionFileName}
@@ -829,311 +847,334 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                         }}
                         loadSmoldynFile={() => this.loadSmoldynFile()}
                         clearFile={this.clearFile.bind(this)}
-                        loadSmoldynPreConfiguredSim={() =>
-                            this.loadSmoldynSim()
-                        }
-                        setRabbitCount={(count) => {
-                            this.smoldynInput = count;
-                        }}
                     />
-                    <div className="ui-container">
-                        <button
-                            onClick={() =>
-                                simulariumController.getMetrics(
-                                    this.netConnectionSettings
-                                )
-                            }
-                        >
-                            Get available metrics
-                        </button>
-                        <button onClick={this.downloadFile.bind(this)}>
-                            download
-                        </button>
-                        <button
-                            onClick={() =>
-                                simulariumController.getPlotData(
-                                    this.netConnectionSettings,
-                                    // TODO: allow user to select metrics based on results from
-                                    // the getMetrics() call
-                                    [
-                                        {
-                                            plotType: "scatter",
-                                            metricsIdx: 0,
-                                            metricsIdy: 2,
-                                            scatterPlotMode: "lines",
-                                        },
-                                        {
-                                            plotType: "histogram",
-                                            metricsIdx: 3,
-                                        },
-                                    ]
-                                )
-                            }
-                        >
-                            Get plot data
-                        </button>
-                        <span>
-                            Tick interval length:{" "}
-                            {simulariumController.tickIntervalLength}
-                        </span>
+                    <div className="header-spacer" />
+                    <button
+                        className="ghost"
+                        onClick={this.downloadFile.bind(this)}
+                        disabled={!this.state.simulariumFile}
+                        title="Download the loaded .simularium file"
+                    >
+                        <DownloadIcon />
+                        Download
+                    </button>
+                    <div
+                        className="header-status"
+                        title="Remote simularium services (conversion, metrics, live sims)"
+                    >
+                        <span
+                            className={`status-dot${
+                                this.state.serverHealthy ? " ok" : ""
+                            }`}
+                        />
+                        {this.state.serverHealthy
+                            ? "backend online"
+                            : "backend offline"}
                     </div>
-                    <ColorPicker
-                        uiDisplayData={
-                            this.state.selectionStateInfo.appliedColors
+                </header>
+                <nav className="rail">
+                    <Section
+                        title="Agents"
+                        hint={
+                            this.state.particleTypeNames.length
+                                ? String(this.state.particleTypeNames.length)
+                                : undefined
                         }
-                        particleTypeNames={this.state.particleTypeNames}
-                        agentColors={this.state.agentColors}
-                        updateAgentColorArray={this.updateAgentColorArray}
-                        setColorSelectionInfo={this.setColorSelectionInfo}
-                    />
-                    <RecordMovieComponent
-                        startRecordingHandler={
-                            simulariumController.startRecording
-                        }
-                        stopRecordingHandler={
-                            simulariumController.stopRecording
-                        }
-                        setRecordingEnabled={() => {
-                            this.setRecordingEnabled(
-                                !this.state.isRecordingEnabled
-                            );
-                        }}
-                        isRecordingEnabled={this.state.isRecordingEnabled}
-                    />
-                    <AgentMetadata agentData={this.state.followObjectData} />
-                    <AgentSelectionControls
-                        particleTypeNames={this.state.particleTypeNames}
-                        hiddenAgents={
-                            this.state.selectionStateInfo.hiddenAgents
-                        }
-                        onVisibilityChange={this.turnAgentsOnOff.bind(this)}
-                        onHighlightChange={this.turnAgentHighlightsOnOff.bind(
-                            this
-                        )}
-                        hideAllAgents={this.state.hideAllAgents}
-                        onToggleAllAgents={(hiddenAgents) => {
-                            this.setState({
-                                ...this.state,
-                                hideAllAgents: !this.state.hideAllAgents,
-                                selectionStateInfo: {
-                                    ...this.state.selectionStateInfo,
-                                    hiddenAgents,
-                                },
-                            });
-                        }}
-                    />
-                </div>
-                <div className="main-content">
-                    <div className="top-container">
-                        <div className="playback horizontal">
-                            {/* todo configure and organize client specific controls */}
-                            {this.state.clientSimulator && (
-                                <div className="ui-container">
-                                    Currently running a client simulator <br />
-                                    <button
-                                        onClick={() =>
-                                            this.updateBrownianSimulator()
-                                        }
-                                    >
-                                        Update (Live Mode)
-                                    </button>
-                                    <button
-                                        onClick={() => this.translateAgent()}
-                                    >
-                                        Translate Agent (point sim live)
-                                    </button>
-                                </div>
+                    >
+                        <AgentSelectionControls
+                            particleTypeNames={this.state.particleTypeNames}
+                            uiDisplayData={
+                                this.state.selectionStateInfo.appliedColors
+                            }
+                            agentColors={this.state.agentColors}
+                            hiddenAgents={
+                                this.state.selectionStateInfo.hiddenAgents
+                            }
+                            highlightedAgents={
+                                this.state.selectionStateInfo.highlightedAgents
+                            }
+                            onVisibilityChange={this.turnAgentsOnOff.bind(this)}
+                            onHighlightChange={this.turnAgentHighlightsOnOff.bind(
+                                this
                             )}
-                            <div className="ui-container">
-                                <button
-                                    onClick={() =>
-                                        simulariumController.resume()
-                                    }
-                                >
-                                    Play / resume streaming
-                                </button>
-                                <button
-                                    onClick={() => simulariumController.pause()}
-                                >
-                                    Pause playback
-                                </button>
-                                <button
-                                    onClick={() => simulariumController.stop()}
-                                >
-                                    stop
-                                </button>
-                                <button
-                                    onClick={this.gotoPreviousFrame.bind(this)}
-                                >
-                                    Previous Frame
-                                </button>
-                                <button onClick={this.gotoNextFrame.bind(this)}>
-                                    Next Frame
-                                </button>
+                            hideAllAgents={this.state.hideAllAgents}
+                            onToggleAllAgents={(hiddenAgents) => {
+                                this.setState({
+                                    ...this.state,
+                                    hideAllAgents: !this.state.hideAllAgents,
+                                    selectionStateInfo: {
+                                        ...this.state.selectionStateInfo,
+                                        hiddenAgents,
+                                    },
+                                });
+                            }}
+                        />
+                    </Section>
+                    <Section title="Color" defaultOpen={false}>
+                        <ColorPicker
+                            uiDisplayData={
+                                this.state.selectionStateInfo.appliedColors
+                            }
+                            particleTypeNames={this.state.particleTypeNames}
+                            agentColors={this.state.agentColors}
+                            updateAgentColorArray={this.updateAgentColorArray}
+                            setColorSelectionInfo={this.setColorSelectionInfo}
+                        />
+                    </Section>
+                    <Section title="Display">
+                        <div className="switch-row">
+                            <span className="switch-label">Agent paths</span>
+                            <button
+                                className={`switch${
+                                    this.state.showPaths ? " on" : ""
+                                }`}
+                                role="switch"
+                                aria-checked={this.state.showPaths}
+                                aria-label="Show agent paths"
+                                onClick={() =>
+                                    this.setState({
+                                        showPaths: !this.state.showPaths,
+                                    })
+                                }
+                            />
+                        </div>
+                        <div className="switch-row">
+                            <span className="switch-label">
+                                WebGL 2 renderer
+                            </span>
+                            <button
+                                className={`switch${
+                                    this.state.renderStyle ===
+                                    RenderStyle.WEBGL2_PREFERRED
+                                        ? " on"
+                                        : ""
+                                }`}
+                                role="switch"
+                                aria-checked={
+                                    this.state.renderStyle ===
+                                    RenderStyle.WEBGL2_PREFERRED
+                                }
+                                aria-label="Prefer WebGL 2 renderer"
+                                onClick={() =>
+                                    this.setState({
+                                        renderStyle:
+                                            this.state.renderStyle ===
+                                            RenderStyle.WEBGL1_FALLBACK
+                                                ? RenderStyle.WEBGL2_PREFERRED
+                                                : RenderStyle.WEBGL1_FALLBACK,
+                                    })
+                                }
+                            />
+                        </div>
+                    </Section>
+                    <Section title="Record" defaultOpen={false}>
+                        <RecordMovieComponent
+                            startRecordingHandler={
+                                simulariumController.startRecording
+                            }
+                            stopRecordingHandler={
+                                simulariumController.stopRecording
+                            }
+                            setRecordingEnabled={() => {
+                                this.setRecordingEnabled(
+                                    !this.state.isRecordingEnabled
+                                );
+                            }}
+                            isRecordingEnabled={this.state.isRecordingEnabled}
+                        />
+                    </Section>
+                    <Section title="Inspect">
+                        <AgentMetadata
+                            agentData={this.state.followObjectData}
+                        />
+                    </Section>
+                    <Section title="Remote" defaultOpen={false}>
+                        <div className="row">
+                            <button
+                                onClick={() =>
+                                    simulariumController.getMetrics(
+                                        this.netConnectionSettings
+                                    )
+                                }
+                            >
+                                Get metrics
+                            </button>
+                            <button
+                                onClick={() =>
+                                    simulariumController.getPlotData(
+                                        this.netConnectionSettings,
+                                        // TODO: allow user to select metrics based on results from
+                                        // the getMetrics() call
+                                        [
+                                            {
+                                                plotType: "scatter",
+                                                metricsIdx: 0,
+                                                metricsIdy: 2,
+                                                scatterPlotMode: "lines",
+                                            },
+                                            {
+                                                plotType: "histogram",
+                                                metricsIdx: 3,
+                                            },
+                                        ]
+                                    )
+                                }
+                            >
+                                Get plot data
+                            </button>
+                        </div>
+                        <div className="row">
+                            <button onClick={() => this.loadSmoldynSim()}>
+                                Run Smoldyn demo sim
+                            </button>
+                            <label>
+                                rabbits{" "}
                                 <input
-                                    name="slider"
-                                    type="range"
-                                    min={0}
-                                    step={1}
-                                    value={this.state.currentFrame}
-                                    max={this.state.totalSteps}
-                                    onChange={this.handleScrubFrame}
+                                    type="text"
+                                    defaultValue="100"
+                                    style={{ width: 48 }}
+                                    onChange={(event) => {
+                                        this.smoldynInput = event.target.value;
+                                    }}
                                 />
-                                <label htmlFor="slider">
-                                    {this.state.currentFrame *
-                                        this.state.timeStep +
-                                        this.state.firstFrameTime}
-                                    /{" "}
-                                    {this.state.totalSteps *
-                                        this.state.timeStep}
-                                </label>
-                            </div>
+                            </label>
                         </div>
-                        <div className="camera ui-container horizontal">
-                            <div className="vertical">
-                                <button
-                                    onClick={() =>
-                                        this.setState({
-                                            showPaths: !this.state.showPaths,
-                                        })
-                                    }
-                                >
-                                    ShowPaths
-                                </button>
-                                <button
-                                    onClick={() =>
-                                        this.setState({
-                                            renderStyle:
-                                                this.state.renderStyle ===
-                                                RenderStyle.WEBGL1_FALLBACK
-                                                    ? RenderStyle.WEBGL2_PREFERRED
-                                                    : RenderStyle.WEBGL1_FALLBACK,
-                                        })
-                                    }
-                                >
-                                    Switch Render
-                                </button>
-                                <button
-                                    onClick={() =>
-                                        simulariumController.resetCamera()
-                                    }
-                                >
-                                    Reset camera
-                                </button>
-                                <button
-                                    onClick={() =>
-                                        simulariumController.centerCamera()
-                                    }
-                                >
-                                    center camera
-                                </button>
-                                <button
-                                    onClick={() =>
-                                        simulariumController.reOrientCamera()
-                                    }
-                                >
-                                    starting orientation
-                                </button>
-                            </div>
-                            <div className="vertical">
-                                <button
-                                    onClick={() =>
-                                        simulariumController.zoomIn()
-                                    }
-                                >
-                                    +
-                                </button>
-                                <button
-                                    onClick={() =>
-                                        simulariumController.zoomOut()
-                                    }
-                                >
-                                    -
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        this.panMode = !this.panMode;
-                                        simulariumController.setPanningMode(
-                                            this.panMode
-                                        );
-                                    }}
-                                >
-                                    Pan/Rotate Mode
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        this.focusMode = !this.focusMode;
-                                        simulariumController.setFocusMode(
-                                            this.focusMode
-                                        );
-                                    }}
-                                >
-                                    Focus Mode
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        this.orthoMode = !this.orthoMode;
-                                        simulariumController.setCameraType(
-                                            this.orthoMode
-                                        );
-                                    }}
-                                >
-                                    Camera mode
-                                </button>
-                            </div>
+                        <div className="readout">
+                            <span className="k">tick interval </span>
+                            <span className="v">
+                                {simulariumController.tickIntervalLength}
+                            </span>
                         </div>
-                        <div className="logs">
-                            <CacheLogDisplay
-                                cacheLog={this.state.cacheLog}
-                                cacheEnabled={simulariumController.visData.isCacheEnabled()}
-                                maxSize={simulariumController.visData.getMaxCacheSize()}
-                            />
-                        </div>
+                    </Section>
+                    <Section title="System" defaultOpen={false}>
+                        <CacheLogDisplay
+                            cacheLog={this.state.cacheLog}
+                            cacheEnabled={simulariumController.visData.isCacheEnabled()}
+                            maxSize={simulariumController.visData.getMaxCacheSize()}
+                        />
+                    </Section>
+                </nav>
+                <div className="viewer-container">
+                    <div className="viewer">
+                        <SimulariumViewer
+                            ref={this.viewerRef}
+                            renderStyle={this.state.renderStyle}
+                            height={this.state.height}
+                            width={this.state.width}
+                            loggerLevel="debug"
+                            onTimeChange={this.handleTimeChange.bind(this)}
+                            simulariumController={simulariumController}
+                            onJsonDataArrived={this.handleJsonMeshData}
+                            showCameraControls={false}
+                            onTrajectoryFileInfoChanged={this.handleTrajectoryInfo.bind(
+                                this
+                            )}
+                            selectionStateInfo={this.state.selectionStateInfo}
+                            onUIDisplayDataChanged={this.handleUIDisplayData.bind(
+                                this
+                            )}
+                            onRecordedMovie={
+                                this.state.isRecordingEnabled
+                                    ? this.onRecordedMovie
+                                    : undefined
+                            }
+                            onFollowObjectChanged={this.handleFollowObjectData.bind(
+                                this
+                            )}
+                            loadInitialData={true}
+                            agentColors={this.state.agentColors}
+                            showPaths={this.state.showPaths}
+                            onError={this.onError}
+                            backgroundColor={[0, 0, 0]}
+                            lockedCamera={false}
+                            disableCache={false}
+                            maxCacheSize={Infinity} //  means no limit, provide limits in bytes, 1MB = 1000000, 1GB = 1000000000
+                            onCacheUpdate={this.handleCacheUpdate.bind(this)}
+                        />
                     </div>
-                    <div className="viewer-container">
-                        <div className="viewer">
-                            <SimulariumViewer
-                                ref={this.viewerRef}
-                                renderStyle={this.state.renderStyle}
-                                height={this.state.height}
-                                width={this.state.width}
-                                loggerLevel="debug"
-                                onTimeChange={this.handleTimeChange.bind(this)}
-                                simulariumController={simulariumController}
-                                onJsonDataArrived={this.handleJsonMeshData}
-                                showCameraControls={false}
-                                onTrajectoryFileInfoChanged={this.handleTrajectoryInfo.bind(
-                                    this
-                                )}
-                                selectionStateInfo={
-                                    this.state.selectionStateInfo
-                                }
-                                onUIDisplayDataChanged={this.handleUIDisplayData.bind(
-                                    this
-                                )}
-                                onRecordedMovie={
-                                    this.state.isRecordingEnabled
-                                        ? this.onRecordedMovie
-                                        : undefined
-                                }
-                                onFollowObjectChanged={this.handleFollowObjectData.bind(
-                                    this
-                                )}
-                                loadInitialData={true}
-                                agentColors={this.state.agentColors}
-                                showPaths={this.state.showPaths}
-                                onError={this.onError}
-                                backgroundColor={[0, 0, 0]}
-                                lockedCamera={false}
-                                disableCache={false}
-                                maxCacheSize={Infinity} //  means no limit, provide limits in bytes, 1MB = 1000000, 1GB = 1000000000
-                                onCacheUpdate={this.handleCacheUpdate.bind(
-                                    this
-                                )}
-                            />
+                    {this.state.trajectoryTitle && (
+                        <div className="stage-title">
+                            {this.state.trajectoryTitle}
                         </div>
+                    )}
+                    <div className="drop-hint">
+                        drop a .simularium file to load it
                     </div>
+                    <CameraControls
+                        onZoomIn={() => simulariumController.zoomIn()}
+                        onZoomOut={() => simulariumController.zoomOut()}
+                        onResetCamera={() => simulariumController.resetCamera()}
+                        onCenterCamera={() =>
+                            simulariumController.centerCamera()
+                        }
+                        onReOrientCamera={() =>
+                            simulariumController.reOrientCamera()
+                        }
+                        panMode={this.state.panMode}
+                        onTogglePan={() => {
+                            const panMode = !this.state.panMode;
+                            simulariumController.setPanningMode(panMode);
+                            this.setState({ panMode });
+                        }}
+                        focusMode={this.state.focusMode}
+                        onToggleFocus={() => {
+                            const focusMode = !this.state.focusMode;
+                            simulariumController.setFocusMode(focusMode);
+                            this.setState({ focusMode });
+                        }}
+                        orthoMode={this.state.orthoMode}
+                        onToggleOrtho={() => {
+                            const orthoMode = !this.state.orthoMode;
+                            simulariumController.setCameraType(orthoMode);
+                            this.setState({ orthoMode });
+                        }}
+                    />
                 </div>
+                <TransportBar
+                    isPlaying={this.state.isPlaying}
+                    onPlay={() => {
+                        simulariumController.resume();
+                        this.setState({ isPlaying: true });
+                    }}
+                    onPause={() => {
+                        simulariumController.pause();
+                        this.setState({ isPlaying: false });
+                    }}
+                    onStop={() => {
+                        simulariumController.stop();
+                        this.setState({ isPlaying: false });
+                    }}
+                    onPrevFrame={this.gotoPreviousFrame.bind(this)}
+                    onNextFrame={this.gotoNextFrame.bind(this)}
+                    onScrub={(time: number) =>
+                        simulariumController.gotoTime(time)
+                    }
+                    currentTime={this.state.currentTime}
+                    firstFrameTime={this.state.firstFrameTime}
+                    totalDuration={this.state.totalDuration}
+                    timeStep={this.state.timeStep}
+                    cacheLog={this.state.cacheLog}
+                >
+                    {this.state.clientSimulator && (
+                        <>
+                            <span className="live-badge">LIVE</span>
+                            <button
+                                className="ghost"
+                                onClick={() => this.updateBrownianSimulator()}
+                                title="Send an update to the live simulator"
+                            >
+                                Send update
+                            </button>
+                            <button
+                                className="ghost"
+                                onClick={() => this.translateAgent()}
+                                title="Translate agents in the live point sim"
+                            >
+                                Translate
+                            </button>
+                        </>
+                    )}
+                </TransportBar>
             </div>
         );
     }
