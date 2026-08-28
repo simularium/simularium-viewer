@@ -21,6 +21,9 @@ interface TransportBarProps {
     totalDuration: number;
     timeStep: number;
     cacheLog: CacheLog;
+    playbackSpeed: number;
+    speedPresets: number[];
+    onSpeedChange: (speed: number) => void;
     children?: React.ReactNode;
 }
 
@@ -58,6 +61,9 @@ const TransportBar = ({
     totalDuration,
     timeStep,
     cacheLog,
+    playbackSpeed,
+    speedPresets,
+    onSpeedChange,
     children,
 }: TransportBarProps): JSX.Element => {
     const duration = totalDuration > 0 ? totalDuration : 0;
@@ -146,6 +152,21 @@ const TransportBar = ({
                 t {formatTime(currentTime, timeStep)}
                 <span className="total"> / {formatTime(endTime, timeStep)}</span>
             </div>
+            <select
+                className="speed-select"
+                value={playbackSpeed}
+                onChange={(event) =>
+                    onSpeedChange(parseFloat(event.target.value))
+                }
+                title="Playback speed ( [ slower · ] faster )"
+                aria-label="Playback speed"
+            >
+                {speedPresets.map((speed) => (
+                    <option key={speed} value={speed}>
+                        {speed}×
+                    </option>
+                ))}
+            </select>
             <div
                 className="buffer-readout"
                 title="Frames in streaming cache"

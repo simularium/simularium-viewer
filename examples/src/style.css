@@ -774,6 +774,13 @@ label {
     color: var(--faint);
 }
 
+.speed-select {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 3px 20px 3px 7px;
+    background-position: right 6px center;
+}
+
 .buffer-readout {
     font-family: var(--font-mono);
     font-size: 10.5px;

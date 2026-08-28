@@ -101,6 +101,7 @@ interface ViewerState {
     panMode: boolean;
     focusMode: boolean;
     orthoMode: boolean;
+    playbackSpeed: number;
 }
 
 const simulariumController = new SimulariumController({});
@@ -146,6 +147,7 @@ const initialState: ViewerState = {
     panMode: false,
     focusMode: true,
     orthoMode: false,
+    playbackSpeed: 1,
 };
 
 class Viewer extends React.Component<InputParams, ViewerState> {
@@ -179,8 +181,11 @@ class Viewer extends React.Component<InputParams, ViewerState> {
     }
 
     public componentDidMount(): void {
+        // console access to the controller for poking at playback state
+        (window as any).simulariumController = simulariumController;
         this.handleResize();
         window.addEventListener("resize", this.handleResize);
+        window.addEventListener("keydown", this.handleKeyDown);
         const viewerContainer = document.querySelector(".viewer-container");
         if (viewerContainer) {
             viewerContainer.addEventListener("drop", this.onDrop);
@@ -188,6 +193,106 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         }
         this.configureAndLoad();
     }
+
+    public componentWillUnmount(): void {
+        window.removeEventListener("resize", this.handleResize);
+        window.removeEventListener("keydown", this.handleKeyDown);
+    }
+
+    private speedPresets = [0.25, 0.5, 1, 2, 4];
+
+    public play = (): void => {
+        simulariumController.resume();
+        this.setState({ isPlaying: true });
+    };
+
+    public pause = (): void => {
+        simulariumController.pause();
+        this.setState({ isPlaying: false });
+    };
+
+    public togglePlay = (): void => {
+        if (this.state.isPlaying) {
+            this.pause();
+        } else {
+            this.play();
+        }
+    };
+
+    public setPlaybackSpeed = (speed: number): void => {
+        simulariumController.playbackSpeed = speed;
+        this.setState({ playbackSpeed: speed });
+    };
+
+    // space play/pause · arrows step (shift = 10 frames) · home/end jump
+    // · [ ] slower/faster
+    public handleKeyDown = (event: KeyboardEvent): void => {
+        const target = event.target;
+        if (
+            target instanceof HTMLElement &&
+            target.closest(
+                "input, select, textarea, button, [contenteditable]"
+            )
+        ) {
+            return;
+        }
+        // some environments deliver key events with an empty `key`;
+        // fall back to the physical `code`
+        const codeToKey: { [code: string]: string } = {
+            Space: " ",
+            BracketLeft: "[",
+            BracketRight: "]",
+        };
+        const key = event.key || codeToKey[event.code] || event.code;
+        const { currentTime, timeStep, firstFrameTime, totalDuration } =
+            this.state;
+        switch (key) {
+            case " ":
+                event.preventDefault();
+                this.togglePlay();
+                break;
+            case "ArrowRight":
+                event.preventDefault();
+                simulariumController.gotoTime(
+                    currentTime + (event.shiftKey ? 10 : 1) * timeStep
+                );
+                break;
+            case "ArrowLeft":
+                event.preventDefault();
+                simulariumController.gotoTime(
+                    currentTime - (event.shiftKey ? 10 : 1) * timeStep
+                );
+                break;
+            case "Home":
+                event.preventDefault();
+                simulariumController.gotoTime(firstFrameTime);
+                break;
+            case "End":
+                event.preventDefault();
+                simulariumController.gotoTime(firstFrameTime + totalDuration);
+                break;
+            case "[": {
+                const index = this.speedPresets.indexOf(
+                    this.state.playbackSpeed
+                );
+                if (index > 0) {
+                    this.setPlaybackSpeed(this.speedPresets[index - 1]);
+                }
+                break;
+            }
+            case "]": {
+                const index = this.speedPresets.indexOf(
+                    this.state.playbackSpeed
+                );
+                if (index >= 0 && index < this.speedPresets.length - 1) {
+                    this.setPlaybackSpeed(this.speedPresets[index + 1]);
+                }
+                break;
+            }
+            default:
+                break;
+        }
+    };
 
     private handleResize(): void {
         const container = document.querySelector(".viewer");
@@ -1132,18 +1237,15 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                 </div>
                 <TransportBar
                     isPlaying={this.state.isPlaying}
-                    onPlay={() => {
-                        simulariumController.resume();
-                        this.setState({ isPlaying: true });
-                    }}
-                    onPause={() => {
-                        simulariumController.pause();
-                        this.setState({ isPlaying: false });
-                    }}
+                    onPlay={this.play}
+                    onPause={this.pause}
                     onStop={() => {
                         simulariumController.stop();
                         this.setState({ isPlaying: false });
                     }}
+                    playbackSpeed={this.state.playbackSpeed}
+                    speedPresets={this.speedPresets}
+                    onSpeedChange={this.setPlaybackSpeed}
                     onPrevFrame={this.gotoPreviousFrame.bind(this)}
                     onNextFrame={this.gotoNextFrame.bind(this)}
                     onScrub={(time: number) =>

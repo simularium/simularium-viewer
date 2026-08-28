@@ -107,6 +107,7 @@ class Viewport extends React.Component<
     private recorder: FrameRecorder | null;
     private lastRenderTime: number;
     private startTime: number;
+    private frameStepAccumulator = 0;
     private vdomRef: React.RefObject<HTMLDivElement>;
     private handlers: { [key: string]: (e: Event) => void };
 
@@ -664,7 +665,16 @@ class Viewport extends React.Component<
             }
 
             if (!visData.atLatestFrame() && !simulariumController.paused()) {
-                visData.gotoNextFrame();
+                // playbackSpeed is trajectory frames advanced per render tick;
+                // fractional speeds accumulate until a whole frame is due
+                this.frameStepAccumulator +=
+                    simulariumController.playbackSpeed ?? 1;
+                let advances = Math.floor(this.frameStepAccumulator);
+                this.frameStepAccumulator -= advances;
+                while (advances > 0 && !visData.atLatestFrame()) {
+                    visData.gotoNextFrame();
+                    advances -= 1;
+                }
             }
             this.stats.begin();
             this.visGeometry.render(totalElapsedTime);

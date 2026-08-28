@@ -53,6 +53,9 @@ export default class SimulariumController {
     public visData: VisData;
     public visGeometry: VisGeometry | undefined;
     public tickIntervalLength: number;
+    // trajectory frames advanced per render tick (1 = realtime at 60fps,
+    // 0.5 = half speed, 2 = double); read by the viewport animate loop
+    public playbackSpeed = 1;
     public handleTrajectoryInfo: (TrajectoryFileInfo) => void;
     public postConnect: () => void;
     public startRecording: () => void;
