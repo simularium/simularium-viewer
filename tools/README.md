@@ -45,16 +45,18 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r tools/requirements.txt
 
-python tools/smoldyn_filaments_to_simularium.py baseline_frames.txt baseline
+python tools/smoldyn_filaments_to_simularium.py baseline_frames.txt baseline --stride 10
 ```
 
-That writes `baseline.simularium`. `simulariumio` is stock upstream — no lab
-fork is needed.
+That writes `baseline.simularium` in about 4 seconds. `simulariumio` is stock
+upstream — no lab fork is needed.
 
 Useful options:
 
 | Option | What it does |
 | --- | --- |
+| `--stride N` | keep every Nth frame. **Usually required** — see below |
+| `--max-time T` | drop frames after time T |
 | `--color-by generation` | seed filaments dark, later branch generations lighter (default) |
 | `--color-by capped` | colour by capped vs growing barbed end |
 | `--radius R` | filament display radius, in post-scaling viewer units |
@@ -63,9 +65,22 @@ Useful options:
 
 Run with `-h` for the full list.
 
-**Large runs:** a `printFilaments` dump grows with filament count × frames. The
-compression baseline is 43 MB and converts fine; runs with tens of thousands of
-filaments are impractical to convert and are better rendered as a 2D plot or GIF.
+### Why `--stride` matters
+
+Conversion cost scales with **agent-frames** = frames × filaments per frame, and
+it grows faster than linearly. In a branching simulation the filament count rises
+exponentially, so the last few frames dominate everything. Measured on the
+compression baseline (43 MB, 351 frames, 3 → 3,606 filaments):
+
+| Setting | Frames | Agent-frames | Time | Output |
+| --- | --- | --- | --- | --- |
+| `--stride 10` | 36 | 19,340 | **4 s** | 2.4 MB |
+| `--stride 5` | 71 | 36,762 | 13 s | 4.6 MB |
+| none (`--stride 1`) | 351 | ~208,000 | **did not finish in 8 min** | — |
+
+Start at `--stride 10`. The script prints its agent-frame count and warns above
+50,000. If you only care about the early part of a run, `--max-time` is cheaper
+than a small stride because it removes the expensive frames outright.
 
 ## 3. Run the viewer locally
 

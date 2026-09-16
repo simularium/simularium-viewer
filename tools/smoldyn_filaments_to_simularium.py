@@ -236,6 +236,13 @@ def main():
                    help="override the auto viewer scale factor")
     p.add_argument("--color-by", choices=["generation", "capped"],
                    default="generation")
+    p.add_argument("--stride", type=int, default=1, metavar="N",
+                   help="keep every Nth frame (default 1 = all). Conversion cost "
+                        "scales with frames x filaments, so a long branching run "
+                        "usually needs this.")
+    p.add_argument("--max-time", type=float, default=None, metavar="T",
+                   help="drop frames after time T. Useful when filament count "
+                        "runs away late in a branching simulation.")
     p.add_argument("--time-units", default="s")
     p.add_argument("--spatial-units", default="um")
     p.add_argument("--type-radius", action="append", default=[],
@@ -253,6 +260,24 @@ def main():
                          (s.split("=", 1) for s in args.type_radius)}
 
     frames, dim = parse_filament_file(args.input)
+
+    # Subsample before anything else touches the data. Conversion cost scales with
+    # the total agent-frame count (frames x filaments per frame), and a branching
+    # run's filament count grows exponentially, so the last few frames dominate.
+    if args.max_time is not None:
+        frames = OrderedDict((t, r) for t, r in frames.items() if t <= args.max_time)
+    if args.stride > 1:
+        frames = OrderedDict((t, r) for i, (t, r) in enumerate(frames.items())
+                             if i % args.stride == 0)
+    if not frames:
+        raise SystemExit("no frames left after --stride/--max-time filtering")
+    agent_frames = sum(len(r) for r in frames.values())
+    print(f"{len(frames)} frames, {agent_frames} agent-frames "
+          f"(t = {min(frames):g}..{max(frames):g})")
+    if agent_frames > 50000:
+        print(f"  warning: {agent_frames} agent-frames is large; conversion may "
+              f"take many minutes. Consider --stride or --max-time.")
+
     if args.radius is None:  # something visible relative to the data
         pts = np.vstack([r["nodes"] for t in frames for r in frames[t]])
         args.radius = max(float((pts.max(axis=0) - pts.min(axis=0)).max()) / 150.0,
