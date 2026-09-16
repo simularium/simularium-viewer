@@ -1,0 +1,5 @@
+# Python deps for the Smoldyn -> Simularium converter.
+#   python3 -m venv .venv && source .venv/bin/activate
+#   pip install -r tools/requirements.txt
+simulariumio>=1.7
+numpy
