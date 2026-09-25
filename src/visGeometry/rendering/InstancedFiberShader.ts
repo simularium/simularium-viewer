@@ -243,6 +243,42 @@ void createTube (float t, vec2 volume, out vec3 outPosition, out vec3 outNormal)
   outPosition.xyz = point + B * volume.x * circX + N * volume.y * circY;
 }
 #else
+#if NUM_POINTS == 2
+// ------
+// Straight fiber: the "curve" is a single line segment between the two
+// control points. Build the frame directly from the control points and a
+// deterministic reference axis so every vertex uses the exact same B/N,
+// producing a clean untwisted cylinder.
+// ------
+void createTube (float t, vec2 volume, out vec3 offset, out vec3 normal) {
+  vec3 p0 = points[0];
+  vec3 p1 = points[1];
+  vec3 T = normalize(p1 - p0);
+
+  // Pick a world axis that is least aligned with T. Ties are broken in a
+  // fixed order (x, y, z) so the choice is identical for every vertex.
+  vec3 absT = abs(T);
+  vec3 refAxis;
+  if (absT.x <= absT.y && absT.x <= absT.z) {
+    refAxis = vec3(1.0, 0.0, 0.0);
+  } else if (absT.y <= absT.z) {
+    refAxis = vec3(0.0, 1.0, 0.0);
+  } else {
+    refAxis = vec3(0.0, 0.0, 1.0);
+  }
+
+  vec3 B = normalize(cross(T, refAxis));
+  vec3 N = -normalize(cross(B, T));
+
+  float tubeAngle = angle;
+  float circX = cos(tubeAngle);
+  float circY = sin(tubeAngle);
+
+  vec3 center = mix(p0, p1, t);
+  normal.xyz = normalize(B * circX + N * circY);
+  offset.xyz = center + B * volume.x * circX + N * volume.y * circY;
+}
+#else
 // ------
 // Fast version; computes the local Frenet-Serret frame
 // ------
@@ -304,6 +340,7 @@ void createTube (float t, vec2 volume, out vec3 offset, out vec3 normal) {
   normal.xyz = normalize(B * circX + N * circY);
   offset.xyz = sampleCurve(t) + B * volume.x * circX + N * volume.y * circY;
 }
+#endif
 #endif
 
 vec3 applyQuaternionToVector( vec4 q, vec3 v ) {
