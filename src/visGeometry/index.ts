@@ -213,6 +213,7 @@ class VisGeometry {
     private fibers: InstancedFiberGroup;
     private focusMode: boolean;
     private volumeLoadingMode: VolumeLoadingMode;
+    private visibleVolumes: Set<VolumeModel>;
     public gui?: Pane;
 
     private cam1: CameraSpec;
@@ -249,6 +250,7 @@ class VisGeometry {
         // will store data for all agents that are drawing paths
         this.agentPaths = new Map<number, AgentPath>();
         this.volumeLoadingMode = VolumeLoadingMode.NONE;
+        this.visibleVolumes = new Set();
 
         this.fibers = new InstancedFiberGroup();
 
@@ -1668,6 +1670,7 @@ class VisGeometry {
         // Clear draw lists
         this.agentsWithPdbsToDraw = [];
         this.agentPdbsToDraw = [];
+        const nextVisibleVolumes = new Set<VolumeModel>();
 
         // Mark all agents as inactive and invisible
         for (let i = 0; i < MAX_MESHES && i < this.visAgents.length; i++) {
@@ -1743,6 +1746,7 @@ class VisGeometry {
                 if (geometry && displayType === GeometryDisplayType.PDB) {
                     this.addPdbToDrawList(typeId, visAgent, geometry);
                 } else if (displayType === GeometryDisplayType.VOLUME) {
+                    nextVisibleVolumes.add(geometry);
                     if (volumeLoadingMode !== VolumeLoadingMode.WAIT) {
                         const hide =
                             volumeLoadingMode === VolumeLoadingMode.HIDE;
@@ -1778,6 +1782,18 @@ class VisGeometry {
             newVisAgentInstances.set(instanceId, visAgent);
             offset = getNextAgentOffset(view, offset);
         }
+        for (const volume of this.visibleVolumes) {
+            if (!nextVisibleVolumes.has(volume)) {
+                volume.setVisible(false);
+            }
+        }
+        for (const volume of nextVisibleVolumes) {
+            if (!this.visibleVolumes.has(volume)) {
+                volume.setVisible(true);
+            }
+        }
+        this.visibleVolumes = nextVisibleVolumes;
+
         for (const [key, visAgent] of this.visAgentInstances) {
             if (!newVisAgentInstances.has(key)) {
                 visAgent.resetAgent();
@@ -1995,6 +2011,10 @@ class VisGeometry {
     public clearForNewTrajectory(): void {
         // only gets called by the parent app by calling
         // clearFile on the controller
+        for (const volume of this.visibleVolumes) {
+            volume.setVisible(false);
+        }
+        this.visibleVolumes.clear();
         this.legacyRenderer.beginUpdate(this.scene);
         this.legacyRenderer.endUpdate(this.scene);
         this.resetMapping();

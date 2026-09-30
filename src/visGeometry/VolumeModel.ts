@@ -21,6 +21,7 @@ export default class VolumeModel {
     private channelsEnabled: Set<number> = new Set();
     /** When true, this model just shows up as an empty bounding box */
     private hidden = false;
+    private visible = false;
     private scale = 1;
 
     /**
@@ -75,6 +76,7 @@ export default class VolumeModel {
     public setImage(volumeObject: Volume): void {
         this.volume = volumeObject;
         this.drawable = new VolumeDrawable(this.volume, {});
+        this.drawable.sceneRoot.visible = this.visible;
         this.volume.addVolumeDataObserver(this);
         this.drawable.setBrightness(0.5);
         this.drawable.setGamma(0.15, 0.9, 1.0);
@@ -135,6 +137,13 @@ export default class VolumeModel {
 
     public getObject3D(): Object3D | undefined {
         return this.drawable?.sceneRoot;
+    }
+
+    public setVisible(visible: boolean): void {
+        this.visible = visible;
+        if (this.drawable) {
+            this.drawable.sceneRoot.visible = visible;
+        }
     }
 
     public onChannelLoaded(_vol: Volume, channelIndex: number): void {
