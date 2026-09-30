@@ -58,10 +58,15 @@ export default class VolumeSim implements IClientSimulatorImpl {
         this.size = [25, 25, 25];
     }
 
-    update(_dt: number): VisDataMessage {
-        this.curFrame++;
-        // cycle NUM_TIMESTEPS frames
-        this.curFrame = this.curFrame % NUM_TIMESTEPS;
+    update(requestedTime?: number): VisDataMessage {
+        if (requestedTime === undefined) {
+            this.curFrame = (this.curFrame + 1) % NUM_TIMESTEPS;
+        } else {
+            this.curFrame = Math.max(
+                0,
+                Math.min(NUM_TIMESTEPS - 1, Math.round(requestedTime))
+            );
+        }
         return {
             msgType: ClientMessageEnum.ID_VIS_DATA_ARRIVE,
             bundleStart: this.curFrame,
