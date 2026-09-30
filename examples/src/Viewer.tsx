@@ -159,6 +159,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         super(props);
         this.viewerRef = React.createRef();
         this.handleJsonMeshData = this.handleJsonMeshData.bind(this);
+        this.handleScrubTime = this.handleScrubTime.bind(this);
         this.handleTimeChange = this.handleTimeChange.bind(this);
         this.loadFile = this.loadFile.bind(this);
         this.clearPendingFile = this.clearPendingFile.bind(this);
