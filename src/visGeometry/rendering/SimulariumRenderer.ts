@@ -18,7 +18,6 @@ import {
     RGBAFormat,
     Scene,
     Texture,
-    WebGLMultipleRenderTargets,
     WebGLRenderer,
     WebGLRenderTarget,
 } from "three";
