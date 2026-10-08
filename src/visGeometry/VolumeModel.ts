@@ -204,6 +204,9 @@ export default class VolumeModel {
     ): void {
         this.drawable?.onChannelAdded(newChannelIndex);
     }
+    public onVolumeChannelRemoved(_volume: Volume, idx: number): void {
+        this.drawable?.onChannelRemoved(idx);
+    }
 
     public onVolumeLoadError(_volume: Volume, error: unknown): void {
         console.error("Volume load error", error);
