@@ -114,6 +114,25 @@ export enum RenderStyle {
     WEBGL2_PREFERRED,
 }
 
+/**
+ * How to approach the problem of updating volume agents, which may need to
+ * load large amounts of new data on every timestep to display correctly.
+ */
+export const enum VolumeLoadingMode {
+    /**
+     * Take no special measures. Allow the volume data shown to be out of sync
+     * with the current timestep.
+     */
+    NONE,
+    /** Delay updating to the next timestep until volume data is ready. */
+    WAIT,
+    /**
+     * Hide the volume until data for the current frame is ready. Hidden
+     * volumes display an outline of their bounding box rather than real data.
+     */
+    HIDE,
+}
+
 function removeByName(group: Group, name: string): void {
     const childrenToRemove: Object3D[] = [];
     group.traverse((child) => {
@@ -193,6 +212,8 @@ class VisGeometry {
     private cameraDefault: CameraSpec;
     private fibers: InstancedFiberGroup;
     private focusMode: boolean;
+    private volumeLoadingMode: VolumeLoadingMode;
+    private visibleVolumes: Set<VolumeModel>;
     public gui?: Pane;
 
     private cam1: CameraSpec;
@@ -228,6 +249,8 @@ class VisGeometry {
         this.rotateDistance = DEFAULT_CAMERA_Z_POSITION;
         // will store data for all agents that are drawing paths
         this.agentPaths = new Map<number, AgentPath>();
+        this.volumeLoadingMode = VolumeLoadingMode.NONE;
+        this.visibleVolumes = new Set();
 
         this.fibers = new InstancedFiberGroup();
 
@@ -692,6 +715,10 @@ class VisGeometry {
         this.focusMode = focus;
     }
 
+    public setVolumeLoadingMode(mode: VolumeLoadingMode): void {
+        this.volumeLoadingMode = mode;
+    }
+
     public getObjectData(id: number): AgentData {
         if (id === NO_AGENT) {
             // initial state
@@ -1080,7 +1107,8 @@ class VisGeometry {
                         );
                         entry.geometry.onBeforeRender(
                             this.threejsrenderer,
-                            this.camera
+                            this.camera,
+                            this.renderer.getPositionTexture()
                         );
                         this.volumeGroup.add(volObj);
                     }
@@ -1580,12 +1608,50 @@ class VisGeometry {
     }
 
     /**
+     * Updates only volumes in the scene, and returns a promise which resolves
+     * when they've all loaded.
+     */
+    private async updateVolumesOnly(
+        view: Float32Array,
+        agentCount: number
+    ): Promise<void> {
+        const volumeLoadPromises: Promise<void>[] = [];
+        let offset = AGENT_HEADER_SIZE;
+        for (let i = 0; i < agentCount; i++) {
+            const agentData = getAgentDataFromBuffer(view, offset);
+            const { visType, type } = agentData;
+            if (visType === VisTypes.ID_VIS_TYPE_DEFAULT) {
+                const response = this.getGeoForAgentType(type);
+                if (
+                    response &&
+                    response.displayType === GeometryDisplayType.VOLUME
+                ) {
+                    const { geometry } = response;
+                    if (geometry) {
+                        const prom = geometry.setAgentData(agentData, true);
+                        volumeLoadPromises.push(prom);
+                    }
+                }
+            }
+            offset = getNextAgentOffset(view, offset);
+        }
+        await Promise.all(volumeLoadPromises);
+    }
+
+    /**
      *   Update Scene
      **/
-    private updateScene(frameData: CachedFrame): void {
+    private async updateScene(
+        frameData: CachedFrame,
+        volumeLoadingMode = VolumeLoadingMode.NONE
+    ): Promise<void> {
         this.currentSceneData = frameData;
         const view = new Float32Array(frameData.data);
         const agentCount = frameData.agentCount;
+
+        if (volumeLoadingMode === VolumeLoadingMode.WAIT) {
+            await this.updateVolumesOnly(view, agentCount);
+        }
 
         // values for updating agent path
         let dx = 0,
@@ -1604,6 +1670,7 @@ class VisGeometry {
         // Clear draw lists
         this.agentsWithPdbsToDraw = [];
         this.agentPdbsToDraw = [];
+        const nextVisibleVolumes = new Set<VolumeModel>();
 
         // Mark all agents as inactive and invisible
         for (let i = 0; i < MAX_MESHES && i < this.visAgents.length; i++) {
@@ -1614,9 +1681,7 @@ class VisGeometry {
         const newVisAgentInstances = new Map<number, VisAgent>();
         for (let i = 0; i < agentCount; i++) {
             const agentData = getAgentDataFromBuffer(view, offset);
-            const visType = agentData.visType;
-            const instanceId = agentData.instanceId;
-            const typeId = agentData.type;
+            const { visType, instanceId, type: typeId } = agentData;
 
             lastx = agentData.x;
             lasty = agentData.y;
@@ -1681,8 +1746,12 @@ class VisGeometry {
                 if (geometry && displayType === GeometryDisplayType.PDB) {
                     this.addPdbToDrawList(typeId, visAgent, geometry);
                 } else if (displayType === GeometryDisplayType.VOLUME) {
-                    // Hmm... is anyone gonna want to instance a volume?
-                    geometry.setAgentData(agentData);
+                    nextVisibleVolumes.add(geometry);
+                    if (volumeLoadingMode !== VolumeLoadingMode.WAIT) {
+                        const hide =
+                            volumeLoadingMode === VolumeLoadingMode.HIDE;
+                        geometry.setAgentData(agentData, false, hide);
+                    }
                 } else {
                     this.addMeshToDrawList(
                         typeId,
@@ -1713,6 +1782,18 @@ class VisGeometry {
             newVisAgentInstances.set(instanceId, visAgent);
             offset = getNextAgentOffset(view, offset);
         }
+        for (const volume of this.visibleVolumes) {
+            if (!nextVisibleVolumes.has(volume)) {
+                volume.setVisible(false);
+            }
+        }
+        for (const volume of nextVisibleVolumes) {
+            if (!this.visibleVolumes.has(volume)) {
+                volume.setVisible(true);
+            }
+        }
+        this.visibleVolumes = nextVisibleVolumes;
+
         for (const [key, visAgent] of this.visAgentInstances) {
             if (!newVisAgentInstances.has(key)) {
                 visAgent.resetAgent();
@@ -1930,6 +2011,10 @@ class VisGeometry {
     public clearForNewTrajectory(): void {
         // only gets called by the parent app by calling
         // clearFile on the controller
+        for (const volume of this.visibleVolumes) {
+            volume.setVisible(false);
+        }
+        this.visibleVolumes.clear();
         this.legacyRenderer.beginUpdate(this.scene);
         this.legacyRenderer.endUpdate(this.scene);
         this.resetMapping();
@@ -1966,8 +2051,8 @@ class VisGeometry {
         }
     }
 
-    public update(agents: CachedFrame): void {
-        this.updateScene(agents);
+    public update(agents: CachedFrame): Promise<void> {
+        return this.updateScene(agents, this.volumeLoadingMode);
     }
 }
 

@@ -67,7 +67,10 @@ function parseVisDataMessage(visDataMsg: VisDataMessage): CachedFrame {
         }
 
         // Copy subpoints
-        const subpoints = frame.data.slice(readIndex, readIndex + nSubPoints);
+        const subpoints = frame.data.slice(
+            readIndex,
+            readIndex + nSubPoints
+        );
         view.set(subpoints, writeIndex);
         readIndex += nSubPoints;
         writeIndex += nSubPoints;

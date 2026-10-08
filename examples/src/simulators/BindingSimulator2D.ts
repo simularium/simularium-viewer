@@ -262,7 +262,7 @@ export default class BindingSimulator implements IClientSimulatorImpl {
         // },
     }
 
-    public update(_dt: number): VisDataMessage {
+    public update(_dt?: number | undefined): VisDataMessage {
         for (let ii = 0; ii < this.instances.length; ++ii) {
             this.instances[ii].oneStep();
         }

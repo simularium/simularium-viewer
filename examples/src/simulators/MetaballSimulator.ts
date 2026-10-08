@@ -82,7 +82,7 @@ export default class MetaballSimulator implements IClientSimulatorImpl {
         }
     }
 
-    public update(_dt: number): VisDataMessage {
+    public update(_dt?: number): VisDataMessage {
         // fill agent data.
         const agentData: number[] = [];
         for (let ii = 0; ii < this.nAgents; ++ii) {

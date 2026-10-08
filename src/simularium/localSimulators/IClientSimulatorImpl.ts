@@ -1,7 +1,7 @@
 import { TrajectoryFileInfo, VisDataMessage } from "../types.js";
 
 export interface IClientSimulatorImpl {
-    update(dt: number): VisDataMessage;
+    update(dt?: number): VisDataMessage;
     getInfo(): TrajectoryFileInfo;
     updateSimulationState(data: Record<string, unknown>);
 }
