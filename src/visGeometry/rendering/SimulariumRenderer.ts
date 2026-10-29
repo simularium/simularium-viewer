@@ -17,6 +17,7 @@ import {
     PerspectiveCamera,
     RGBAFormat,
     Scene,
+    Texture,
     WebGLRenderer,
     WebGLRenderTarget,
 } from "three";
@@ -266,6 +267,10 @@ class SimulariumRenderer {
             });
     }
 
+    public getPositionTexture(): Texture {
+        return this.gbuffer.textures[POSITIONBUFFER];
+    }
+
     public setBackgroundColor(color: Color): void {
         this.compositePass.setBackgroundColor(color);
     }
@@ -295,7 +300,10 @@ class SimulariumRenderer {
     }
 
     // colorsData is a Float32Array of rgb triples
-    public updateColors(numColors: number, colorsData: Float32Array): void {
+    public updateColors(
+        numColors: number,
+        colorsData: Float32Array<ArrayBuffer>
+    ): void {
         this.compositePass.updateColors(numColors, colorsData);
     }
 

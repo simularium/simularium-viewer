@@ -11,6 +11,20 @@ import {
 import { AGENT_OBJECT_KEYS, CachedFrame } from "../simularium/types.js";
 import { nullCachedFrame } from "../util.js";
 
+function areArrayBuffersEqual(buffer1, buffer2) {
+  if (buffer1.byteLength !== buffer2.byteLength) {
+    return false;
+  }
+  const view1 = new Uint8Array(buffer1);
+  const view2 = new Uint8Array(buffer2);
+  for (let i = 0; i < view1.byteLength; i++) {
+    if (view1[i] !== view2[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 // Sample data of a single agent of type '7'
 //  moving linearly from (0,0,0) to (5,5,5)
 //  and rotating 0-90 degrees around the x axis
@@ -146,8 +160,14 @@ describe("VisData module", () => {
                 61, //"subpoint-2",
                 62, //"subpoint-3",
             ];
+            const buffer = new ArrayBuffer(calculateBufferSize(testData));
+            const view = new Float32Array(buffer);
+            view[0] = 0;
+            view[1] = 0;
+            view[2] = 1; // agent count
+            view.set(testData, 3);
             const expectedFrame: CachedFrame = {
-                data: expect.any(ArrayBuffer),
+                data: buffer,
                 frameNumber: 0,
                 time: 0,
                 agentCount: 1,
@@ -167,6 +187,7 @@ describe("VisData module", () => {
                 fileName: "",
             };
             const result = parseVisDataMessage(visDataMsg);
+            expect(areArrayBuffersEqual(result.data, expectedFrame.data)).toBe(true);
             expect(result).toMatchObject(expectedFrame);
         });
         test("should throw error when there are too few subpoints", () => {

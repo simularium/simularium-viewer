@@ -3,6 +3,7 @@ import {
     Object3D,
     OrthographicCamera,
     PerspectiveCamera,
+    Texture,
     Vector3,
     WebGLRenderer,
 } from "three";
@@ -11,68 +12,197 @@ import { Lut, Volume, VolumeDrawable } from "@aics/vole-core";
 
 import { AgentData } from "../simularium/types";
 
+// [r, g, b] in 0-255, as used by vole-core channel colors
+const DISTINCT_CHANNEL_COLORS: [number, number, number][] = [
+    [255, 0, 255],
+    [0, 255, 255],
+    [255, 255, 0],
+    [255, 128, 0],
+    [0, 255, 0],
+    [0, 128, 255],
+];
+
 export default class VolumeModel {
     // TODO what to do with this `cancelled` property? Type check fails without it.
     // When should it be set, if ever; what should it be used for, if anything?
     public cancelled = false;
     private drawable?: VolumeDrawable;
     private volume?: Volume;
-    private channelsEnabled: boolean[] = [];
+    private channelsEnabled: Set<number> = new Set();
+    /** When true, this model just shows up as an empty bounding box */
+    private hidden = false;
+    private visible = false;
     private scale = 1;
+    /** The most recently requested data, which may not be loaded yet. */
+    private targetLoad?: { time: number; channels: number[] };
+    /** Settles when the in-flight load chain has caught up to `targetLoad`. */
+    private loading?: Promise<void>;
 
-    private setEnabledChannels(channels: number[]): void {
+    /**
+     * Syncs the current value of `this.channelsEnabled` and `this.hidden` to
+     * the volume object.
+     *
+     * Not to be confused with `setChannelsEnabled`, which sets
+     * `this.channelsEnabled` first, or with `setHidden`, which sets
+     * `this.hidden` first. You probably want to use one of those instead!
+     */
+    private applyChannelsEnabled(
+        volume: Volume,
+        drawable: VolumeDrawable
+    ): void {
+        const { numChannels } = volume.imageInfo;
+        for (let c = 0; c < numChannels; c++) {
+            drawable.setChannelOptions(c, {
+                enabled: this.hidden ? false : this.channelsEnabled.has(c),
+            });
+        }
+    }
+
+    /** Sets currently enabled channels. */
+    private setChannelsEnabled(channels: number[]): void {
         if (!this.volume || !this.drawable) {
-            this.channelsEnabled = [];
+            if (this.channelsEnabled.size > 0) {
+                this.channelsEnabled = new Set();
+            }
             return;
         }
         const { numChannels } = this.volume.imageInfo;
-        this.channelsEnabled = new Array(numChannels).fill(false);
+        this.channelsEnabled = new Set(channels.filter((c) => c < numChannels));
 
-        for (const channel of channels) {
-            if (channel < numChannels) {
-                this.channelsEnabled[channel] = true;
-            }
-        }
+        this.applyChannelsEnabled(this.volume, this.drawable);
+    }
 
-        for (const [channelIndex, enabled] of this.channelsEnabled.entries()) {
-            this.drawable.setVolumeChannelEnabled(channelIndex, enabled);
+    /**
+     * Sets whether this model is hidden. A hidden model shows a bounding box
+     * outline rather than a rendered volume.
+     */
+    private setHidden(hidden: boolean): void {
+        if (this.hidden === hidden || !this.drawable || !this.volume) {
+            return;
         }
+        this.hidden = hidden;
+
+        this.applyChannelsEnabled(this.volume, this.drawable);
+        this.drawable.setBoundingBoxColor([1, 1, 1]);
+        this.drawable.setShowBoundingBox(hidden);
     }
 
     public setImage(volumeObject: Volume): void {
         this.volume = volumeObject;
         this.drawable = new VolumeDrawable(this.volume, {});
+        this.drawable.sceneRoot.visible = this.visible;
         this.volume.addVolumeDataObserver(this);
         this.drawable.setBrightness(0.5);
         this.drawable.setGamma(0.15, 0.9, 1.0);
         this.drawable.setDensity(0.1);
+        this.applyDistinctChannelColors(volumeObject, this.drawable);
     }
 
-    public setAgentData(data: AgentData): void {
-        if (this.drawable) {
-            this.drawable.setTranslation(new Vector3(data.x, data.y, data.z));
-            this.drawable.setRotation(
-                new Euler(data.xrot, data.yrot, data.zrot)
-            );
-            this.scale = data.cr * 2;
-            this.drawable.setScale(
-                new Vector3(this.scale, this.scale, this.scale)
-            );
-            // Always defined if `drawable` is, but ts doesn't know that.
-            if (this.volume) {
-                // Volume agent data may use subpoint 0 as time
-                const numPoints = data.subpoints.length;
-                const time = numPoints > 0 ? data.subpoints[0] : 0;
-                if (this.volume.loadSpec.time !== time) {
-                    console.log(`Updating volume to time ${time}`);
-                    this.volume.updateRequiredData({ time });
-                }
-                // If there are more subpoints, they are enabled channel idxes.
-                // Otherwise, just channel 0 is enabled.
-                const channels = numPoints > 1 ? data.subpoints.slice(1) : [0];
-                this.setEnabledChannels(channels);
-            }
+    /**
+     * If the image metadata gives every channel the same color (e.g. all
+     * white), the channels are indistinguishable when combined, so fall back
+     * to a palette of distinct colors.
+     */
+    private applyDistinctChannelColors(
+        volume: Volume,
+        drawable: VolumeDrawable
+    ): void {
+        const colors = volume.channelColorsDefault;
+        if (colors.length < 2) {
+            return;
         }
+        const [r, g, b] = colors[0];
+        const allSame = colors.every(
+            (c) => c[0] === r && c[1] === g && c[2] === b
+        );
+        if (!allSame) {
+            return;
+        }
+        for (let c = 0; c < colors.length; c++) {
+            drawable.updateChannelColor(
+                c,
+                DISTINCT_CHANNEL_COLORS[c % DISTINCT_CHANNEL_COLORS.length]
+            );
+        }
+    }
+
+    /**
+     * Loads `this.targetLoad`, keeping at most one load in flight. vole-core
+     * cancels a load in progress when a new one starts, so during fast
+     * playback no load would ever finish (or get cached). Instead, requests
+     * that arrive mid-load just replace `targetLoad`, and when the current load
+     * finishes we load whatever the latest target is.
+     */
+    private startLoading(volume: Volume): Promise<void> {
+        if (this.loading) {
+            return this.loading;
+        }
+        this.loading = (async () => {
+            let target = this.targetLoad;
+            while (target) {
+                try {
+                    // SEMI-HACK: `setHidden` disables all channels, including
+                    // ones we want to load. So, when hidden, force those
+                    // channels to load anyway.
+                    await volume.updateRequiredData({
+                        time: target.time,
+                        channels: target.channels,
+                    });
+                } catch (e) {
+                    console.error("Volume load failed", e);
+                    break;
+                }
+                if (this.targetLoad === target) {
+                    break;
+                }
+                target = this.targetLoad;
+            }
+            this.targetLoad = undefined;
+            this.loading = undefined;
+            this.setHidden(false);
+        })();
+        return this.loading;
+    }
+
+    public async setAgentData(
+        data: AgentData,
+        syncLoading?: boolean,
+        hideWhileLoading?: boolean
+    ): Promise<void> {
+        if (!this.volume || !this.drawable) {
+            return;
+        }
+
+        // Volume agent data may use subpoint 0 as time
+        const numPoints = data.subpoints.length;
+        const time = numPoints > 0 ? data.subpoints[0] : 0;
+        // If there are more subpoints, they are enabled channel idxes.
+        // Otherwise, just channel 0 is enabled.
+        const { numChannels } = this.volume.imageInfo;
+        const channels =
+            numPoints > 1
+                ? data.subpoints.slice(1).filter((c) => c < numChannels)
+                : [0];
+
+        const latestTime = this.targetLoad?.time ?? this.volume.loadSpec.time;
+        if (latestTime !== time) {
+            if (hideWhileLoading) {
+                this.setHidden(true);
+            }
+            this.targetLoad = { time, channels };
+            const loading = this.startLoading(this.volume);
+            if (syncLoading) {
+                await loading;
+            }
+        } else if (syncLoading && this.loading) {
+            await this.loading;
+        }
+
+        this.setChannelsEnabled(channels);
+        this.drawable.setTranslation(new Vector3(data.x, data.y, data.z));
+        this.drawable.setRotation(new Euler(data.xrot, data.yrot, data.zrot));
+        this.scale = data.cr * 2;
+        this.drawable.setScale(new Vector3(this.scale, this.scale, this.scale));
     }
 
     public loadInitialData(): void {
@@ -83,10 +213,17 @@ export default class VolumeModel {
         return this.drawable?.sceneRoot;
     }
 
+    public setVisible(visible: boolean): void {
+        this.visible = visible;
+        if (this.drawable) {
+            this.drawable.sceneRoot.visible = visible;
+        }
+    }
+
     public onChannelLoaded(_vol: Volume, channelIndex: number): void {
         if (this.drawable) {
-            const isEnabled = this.channelsEnabled[channelIndex];
-            this.drawable.setVolumeChannelEnabled(channelIndex, isEnabled);
+            const enabled = this.channelsEnabled[channelIndex];
+            this.drawable.setChannelOptions(channelIndex, { enabled });
             this.drawable.updateScale();
             this.drawable.onChannelLoaded([channelIndex]);
             if (this.volume) {
@@ -118,9 +255,10 @@ export default class VolumeModel {
 
     public onBeforeRender(
         renderer: WebGLRenderer,
-        camera: PerspectiveCamera | OrthographicCamera
+        camera: PerspectiveCamera | OrthographicCamera,
+        positionTexture: Texture
     ): void {
-        this.drawable?.onAnimate(renderer, camera, undefined);
+        this.drawable?.onAnimate(renderer, camera, positionTexture);
     }
 
     public setSize(width: number, height: number): void {
@@ -139,6 +277,9 @@ export default class VolumeModel {
         newChannelIndex: number
     ): void {
         this.drawable?.onChannelAdded(newChannelIndex);
+    }
+    public onVolumeChannelRemoved(_volume: Volume, idx: number): void {
+        this.drawable?.onChannelRemoved(idx);
     }
 
     public onVolumeLoadError(_volume: Volume, error: unknown): void {

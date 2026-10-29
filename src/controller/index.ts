@@ -6,7 +6,7 @@ import type {
     NetConnectionParams,
     TrajectoryFileInfo,
 } from "../simularium/index.js";
-import { VisGeometry } from "../visGeometry/index.js";
+import { VisGeometry, VolumeLoadingMode } from "../visGeometry/index.js";
 import {
     FileReturn,
     FILE_STATUS_SUCCESS,
@@ -527,6 +527,10 @@ export default class SimulariumController {
         if (this.simulator) {
             this.simulator.setTrajectoryFileInfoHandler(callback);
         }
+    }
+
+    public setVolumeLoadingMode(mode: VolumeLoadingMode): void {
+        this.visGeometry?.setVolumeLoadingMode(mode);
     }
 
     /**

@@ -16,6 +16,7 @@ export type {
 } from "./simularium/index.js";
 export type { ISimulariumFile } from "./simularium/ISimulariumFile.js";
 export type { TimeData } from "./viewport/index.js";
+export { VolumeLoadingMode } from "./visGeometry/index.js";
 export { GeometryDisplayType } from "./visGeometry/types.js";
 export { RenderStyle } from "./viewport/index.js";
 export { SimulariumController } from "./controller/index.js";

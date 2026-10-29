@@ -109,6 +109,7 @@ class Viewport extends React.Component<
     private hit: boolean;
     private animationRequestID: number;
     private lastRenderedAgentTime: number;
+    private waitingForFrame: boolean;
 
     private stats: Stats;
     public static defaultProps = defaultProps;
@@ -157,6 +158,7 @@ class Viewport extends React.Component<
         this.hit = false;
         this.animationRequestID = 0;
         this.lastRenderedAgentTime = -1;
+        this.waitingForFrame = false;
         this.selectionInterface = new SelectionInterface();
         this.state = {
             lastClick: {
@@ -627,7 +629,7 @@ class Viewport extends React.Component<
         }
     }
 
-    public animate(): void {
+    public async animate(): Promise<void> {
         const { simulariumController } = this.props;
         const { visData } = simulariumController;
         const framesPerSecond = DEFAULT_FRAME_RATE; // how often the view-port rendering is refreshed per second
@@ -635,32 +637,39 @@ class Viewport extends React.Component<
         const now = Date.now();
         const elapsedTime = now - this.lastRenderTime;
         const totalElapsedTime = now - this.startTime;
+
+        this.animationRequestID = requestAnimationFrame(this.animate);
+
         if (elapsedTime > timePerFrame) {
             if (simulariumController.isChangingFile) {
                 this.visGeometry.render(totalElapsedTime);
                 this.lastRenderTime = Date.now();
                 this.lastRenderedAgentTime = -1;
                 simulariumController.markFileChangeAsHandled();
-
-                this.animationRequestID = requestAnimationFrame(this.animate);
-
                 return;
             }
             const currentFrame = visData.currentFrameData;
-            if (currentFrame.time != this.lastRenderedAgentTime) {
-                if (currentFrame.agentCount > 0) {
-                    this.dispatchUpdatedTime({
-                        time: currentFrame.time,
-                        frameNumber: currentFrame.frameNumber,
-                    });
-                    this.visGeometry.update(currentFrame);
-                    this.lastRenderedAgentTime = currentFrame.time;
-                    this.updateFollowObjectData();
+            if (!this.waitingForFrame) {
+                if (currentFrame.time != this.lastRenderedAgentTime) {
+                    if (currentFrame.agentCount > 0) {
+                        this.dispatchUpdatedTime({
+                            time: currentFrame.time,
+                            frameNumber: currentFrame.frameNumber,
+                        });
+                        this.waitingForFrame = true;
+                        await this.visGeometry.update(currentFrame);
+                        this.waitingForFrame = false;
+                        this.lastRenderedAgentTime = currentFrame.time;
+                        this.updateFollowObjectData();
+                    }
                 }
-            }
 
-            if (!visData.atLatestFrame() && !simulariumController.paused()) {
-                visData.gotoNextFrame();
+                if (
+                    !visData.atLatestFrame() &&
+                    !simulariumController.paused()
+                ) {
+                    visData.gotoNextFrame();
+                }
             }
             this.stats.begin();
             this.visGeometry.render(totalElapsedTime);
@@ -670,8 +679,6 @@ class Viewport extends React.Component<
             this.stats.end();
             this.lastRenderTime = Date.now();
         }
-
-        this.animationRequestID = requestAnimationFrame(this.animate);
     }
 
     public renderViewControls(): React.ReactElement {

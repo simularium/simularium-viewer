@@ -92,9 +92,19 @@ export class ClientSimulator implements ISimulator {
                 break;
             case ClientMessageEnum.ID_VIS_DATA_RESUME:
                 {
+                    window.clearInterval(this.simulatorIntervalId);
+                    const { totalSteps } = this.localSimulator.getInfo();
                     this.simulatorIntervalId = window.setInterval(() => {
-                        const frame = this.localSimulator.update(0);
+                        const frame = this.localSimulator.update();
                         this.onTrajectoryDataArrive(frame);
+                        // stop streaming once the last frame has been sent
+                        const lastFrameNumber =
+                            frame.bundleData[frame.bundleData.length - 1]
+                                ?.frameNumber;
+                        if (lastFrameNumber >= totalSteps - 1) {
+                            window.clearInterval(this.simulatorIntervalId);
+                            this.simulatorIntervalId = 0;
+                        }
                     }, this.dataInterval);
                 }
                 break;

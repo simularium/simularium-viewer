@@ -12,6 +12,7 @@ import SimulariumViewer, {
     ErrorLevel,
     NetConnectionParams,
     TrajectoryFileInfo,
+    VolumeLoadingMode,
     TrajectoryType,
 } from "@aics/simularium-viewer";
 import type {
@@ -23,7 +24,7 @@ import type {
     IClientSimulatorImpl,
     CacheLog,
 } from "@aics/simularium-viewer";
-import "../../style/style.css";
+import "../../es/style/style.css";
 
 // local test bed imports
 import PointSimulator from "./simulators/PointSimulator.ts";
@@ -62,6 +63,12 @@ import {
 import "@aics/simularium-viewer/style/style.css";
 import "./style.css";
 
+const volumeLoadingModes = {
+    none: VolumeLoadingMode.NONE,
+    wait: VolumeLoadingMode.WAIT,
+    hide: VolumeLoadingMode.HIDE,
+};
+
 interface ViewerState {
     renderStyle: RenderStyle;
     particleTypeNames: string[];
@@ -75,6 +82,7 @@ interface ViewerState {
     agentColors: number[] | string[];
     showPaths: boolean;
     timeStep: number;
+    totalSteps: number;
     totalDuration: number;
     filePending: {
         type: TrajectoryType;
@@ -151,6 +159,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
         super(props);
         this.viewerRef = React.createRef();
         this.handleJsonMeshData = this.handleJsonMeshData.bind(this);
+        this.handleScrubTime = this.handleScrubTime.bind(this);
         this.handleTimeChange = this.handleTimeChange.bind(this);
         this.loadFile = this.loadFile.bind(this);
         this.clearPendingFile = this.clearPendingFile.bind(this);
@@ -520,12 +529,14 @@ class Viewer extends React.Component<InputParams, ViewerState> {
             timeStep: data.timeStepSize,
             currentFrame: 0,
             currentTime: 0,
+            totalSteps: data.totalSteps,
             trajectoryTitle: data.trajectoryTitle,
         });
     }
 
-    public handleScrubTime(event): void {
-        simulariumController.gotoTime(parseFloat(event.target.value));
+    public handleScrubTime(event: React.ChangeEvent<HTMLInputElement>): void {
+        simulariumController.gotoTime(parseFloat(event.target.value) * this.state.timeStep +
+                                        this.state.firstFrameTime);
     }
 
     public handleUIDisplayData(uiDisplayData: UIDisplayData): void {
@@ -984,7 +995,7 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                                     step={1}
                                     value={this.state.currentFrame}
                                     max={this.state.totalSteps}
-                                    onChange={this.handleScrubFrame}
+                                    onChange={this.handleScrubTime}
                                 />
                                 <label htmlFor="slider">
                                     {this.state.currentFrame *
@@ -994,6 +1005,20 @@ class Viewer extends React.Component<InputParams, ViewerState> {
                                     {this.state.totalSteps *
                                         this.state.timeStep}
                                 </label>
+                            </div>
+                            <div className="ui-container">
+                                Volume loading mode:{" "}
+                                <select
+                                    onChange={({ target }) =>
+                                        simulariumController.setVolumeLoadingMode(
+                                            volumeLoadingModes[target.value]
+                                        )
+                                    }
+                                >
+                                    <option value="none">None</option>
+                                    <option value="wait">Wait</option>
+                                    <option value="hide">Hide</option>
+                                </select>
                             </div>
                         </div>
                         <div className="camera ui-container horizontal">

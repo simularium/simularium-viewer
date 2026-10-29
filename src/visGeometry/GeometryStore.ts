@@ -1,7 +1,12 @@
 import { forEach } from "lodash";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import jsLogger, { ILogger, ILogLevel } from "js-logger";
-import { LoadSpec, VolumeLoaderContext } from "@aics/vole-core";
+import {
+    LoadSpec,
+    PrefetchDirection,
+    VolumeLoaderContext,
+    type ZarrLoaderFetchOptions,
+} from "@aics/vole-core";
 import {
     BufferGeometry,
     Object3D,
@@ -27,6 +32,20 @@ import { MetaballMesh } from "./rendering/MetaballMesh.js";
 import VolumeModel from "./VolumeModel.js";
 
 export const DEFAULT_MESH_NAME = "SPHERE";
+// Added to the multiscale level index vole-core picks for volumes. Positive
+// values load coarser (lower resolution) levels, which load faster.
+const VOLUME_SCALE_LEVEL_BIAS = 1;
+// Max size in bytes of the volume data cache shared by all volume loaders.
+// Large enough to hold many timesteps of a volume, so playback can reuse them.
+const VOLUME_CACHE_MAX_SIZE = 1_500_000_000;
+// Prefetch further ahead in time than vole-core's defaults (12 timesteps, 30
+// chunks), which cover only a few timesteps of a multichannel volume. Playback
+// runs forward, so prefetch upcoming timesteps first.
+const VOLUME_FETCH_OPTIONS: ZarrLoaderFetchOptions = {
+    maxPrefetchDistance: [20, 5, 5, 5], // TZYX
+    maxPrefetchChunks: 120,
+    priorityDirections: [PrefetchDirection.T_PLUS],
+};
 
 type Registry = Map<string, AgentGeometry>;
 
@@ -408,9 +427,11 @@ class GeometryStore {
     private async getVolumeLoaderContext(): Promise<VolumeLoaderContext> {
         if (!this.volumeLoaderContext) {
             // TODO this is missing optional config properties:
-            //   `maxCacheSize`, `maxActiveRequests`, `maxLowPriorityRequests`.
+            //   `maxActiveRequests`, `maxLowPriorityRequests`.
             //   Do we want to set our own values for these?
-            this.volumeLoaderContext = new VolumeLoaderContext();
+            this.volumeLoaderContext = new VolumeLoaderContext(
+                VOLUME_CACHE_MAX_SIZE
+            );
             await this.volumeLoaderContext.onOpen();
         }
         return this.volumeLoaderContext;
@@ -422,9 +443,14 @@ class GeometryStore {
         const model = new VolumeModel();
         this.setGeometryInRegistry(url, model, GeometryDisplayType.VOLUME);
         const context = await this.getVolumeLoaderContext();
-        const loader = await context.createLoader(url);
+        const loader = await context.createLoader(url, {
+            fetchOptions: VOLUME_FETCH_OPTIONS,
+        });
+        loader.syncMultichannelLoading(true);
         const loadCallback = model.onChannelLoaded.bind(model);
-        const volume = await loader.createVolume(new LoadSpec(), loadCallback);
+        const loadSpec = new LoadSpec();
+        loadSpec.scaleLevelBias = VOLUME_SCALE_LEVEL_BIAS;
+        const volume = await loader.createVolume(loadSpec, loadCallback);
         model.setImage(volume);
         model.loadInitialData();
         return model;
