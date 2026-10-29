@@ -26,7 +26,7 @@ export const checkHexColor = (color: string): string => {
 
 class ColorHandler {
     public agentTypeToColorId: Map<number, number>;
-    private colorsData: Float32Array;
+    private colorsData: Float32Array<ArrayBuffer>;
 
     constructor() {
         this.agentTypeToColorId = new Map<number, number>();
@@ -39,7 +39,9 @@ class ColorHandler {
         return this.colorsData.length / 4;
     }
 
-    private makeColorDataArray(colors: (number | string)[]): Float32Array {
+    private makeColorDataArray(
+        colors: (number | string)[]
+    ): Float32Array<ArrayBuffer> {
         const colorNumbers = colors.map(convertColorStringToNumber);
         const numberOfColors = colors.length;
         // fill buffer of colors:
@@ -157,7 +159,7 @@ class ColorHandler {
     }
 
     public updateColorArray(colors: (number | string)[]): {
-        colorArray: Float32Array;
+        colorArray: Float32Array<ArrayBuffer>;
         numberOfColors: number;
     } {
         this.colorsData = this.makeColorDataArray(colors);
@@ -174,7 +176,7 @@ class ColorHandler {
     public setColorForAgentTypes(
         agentTypes: number[],
         color: string | number
-    ): { colorArray: Float32Array; numberOfColors: number } {
+    ): { colorArray: Float32Array<ArrayBuffer>; numberOfColors: number } {
         const colorString = convertColorNumberToString(color);
         const colorId = this.getColorId(colorString);
         /**

@@ -12,6 +12,16 @@ import { Lut, Volume, VolumeDrawable } from "@aics/vole-core";
 
 import { AgentData } from "../simularium/types";
 
+// [r, g, b] in 0-255, as used by vole-core channel colors
+const DISTINCT_CHANNEL_COLORS: [number, number, number][] = [
+    [255, 0, 255],
+    [0, 255, 255],
+    [255, 255, 0],
+    [255, 128, 0],
+    [0, 255, 0],
+    [0, 128, 255],
+];
+
 export default class VolumeModel {
     // TODO what to do with this `cancelled` property? Type check fails without it.
     // When should it be set, if ever; what should it be used for, if anything?
@@ -23,6 +33,10 @@ export default class VolumeModel {
     private hidden = false;
     private visible = false;
     private scale = 1;
+    /** The most recently requested data, which may not be loaded yet. */
+    private targetLoad?: { time: number; channels: number[] };
+    /** Settles when the in-flight load chain has caught up to `targetLoad`. */
+    private loading?: Promise<void>;
 
     /**
      * Syncs the current value of `this.channelsEnabled` and `this.hidden` to
@@ -81,6 +95,73 @@ export default class VolumeModel {
         this.drawable.setBrightness(0.5);
         this.drawable.setGamma(0.15, 0.9, 1.0);
         this.drawable.setDensity(0.1);
+        this.applyDistinctChannelColors(volumeObject, this.drawable);
+    }
+
+    /**
+     * If the image metadata gives every channel the same color (e.g. all
+     * white), the channels are indistinguishable when combined, so fall back
+     * to a palette of distinct colors.
+     */
+    private applyDistinctChannelColors(
+        volume: Volume,
+        drawable: VolumeDrawable
+    ): void {
+        const colors = volume.channelColorsDefault;
+        if (colors.length < 2) {
+            return;
+        }
+        const [r, g, b] = colors[0];
+        const allSame = colors.every(
+            (c) => c[0] === r && c[1] === g && c[2] === b
+        );
+        if (!allSame) {
+            return;
+        }
+        for (let c = 0; c < colors.length; c++) {
+            drawable.updateChannelColor(
+                c,
+                DISTINCT_CHANNEL_COLORS[c % DISTINCT_CHANNEL_COLORS.length]
+            );
+        }
+    }
+
+    /**
+     * Loads `this.targetLoad`, keeping at most one load in flight. vole-core
+     * cancels a load in progress when a new one starts, so during fast
+     * playback no load would ever finish (or get cached). Instead, requests
+     * that arrive mid-load just replace `targetLoad`, and when the current load
+     * finishes we load whatever the latest target is.
+     */
+    private startLoading(volume: Volume): Promise<void> {
+        if (this.loading) {
+            return this.loading;
+        }
+        this.loading = (async () => {
+            let target = this.targetLoad;
+            while (target) {
+                try {
+                    // SEMI-HACK: `setHidden` disables all channels, including
+                    // ones we want to load. So, when hidden, force those
+                    // channels to load anyway.
+                    await volume.updateRequiredData({
+                        time: target.time,
+                        channels: target.channels,
+                    });
+                } catch (e) {
+                    console.error("Volume load failed", e);
+                    break;
+                }
+                if (this.targetLoad === target) {
+                    break;
+                }
+                target = this.targetLoad;
+            }
+            this.targetLoad = undefined;
+            this.loading = undefined;
+            this.setHidden(false);
+        })();
+        return this.loading;
     }
 
     public async setAgentData(
@@ -103,25 +184,18 @@ export default class VolumeModel {
                 ? data.subpoints.slice(1).filter((c) => c < numChannels)
                 : [0];
 
-        if (this.volume.loadSpec.time !== time) {
-            const volume = this.volume;
-
+        const latestTime = this.targetLoad?.time ?? this.volume.loadSpec.time;
+        if (latestTime !== time) {
             if (hideWhileLoading) {
                 this.setHidden(true);
             }
-
-            const promise: Promise<void> = new Promise((resolve) => {
-                // SEMI-HACK: `setHidden` above disables all channels, including ones we want to load.
-                // So, when hidden, force those channels to load anyway.
-                volume.updateRequiredData({ time, channels }, () => {
-                    this.setHidden(false);
-                    resolve();
-                });
-            });
-
+            this.targetLoad = { time, channels };
+            const loading = this.startLoading(this.volume);
             if (syncLoading) {
-                await promise;
+                await loading;
             }
+        } else if (syncLoading && this.loading) {
+            await this.loading;
         }
 
         this.setChannelsEnabled(channels);

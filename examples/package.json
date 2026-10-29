@@ -17,8 +17,8 @@
     "dependencies": {
         "@aics/simularium-viewer": "file:../",
         "detect-collisions": "^9.2.3",
-        "react": "^18.2.0",
-        "react-dom": "^18.2.0"
+        "react": "^19.3.0",
+        "react-dom": "^19.3.0"
     },
     "devDependencies": {
         "@vitejs/plugin-react": "4.3.4",
